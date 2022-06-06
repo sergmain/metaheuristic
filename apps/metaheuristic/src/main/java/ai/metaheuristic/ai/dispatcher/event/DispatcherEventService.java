@@ -79,7 +79,7 @@ public class DispatcherEventService {
             return;
         }
         DispatcherEventYaml.TaskEventData taskEventData = new DispatcherEventYaml.TaskEventData();
-        taskEventData.processorId = coreId;
+        taskEventData.coreId = coreId;
         taskEventData.taskId = taskId;
         taskEventData.execContextId = execContextId;
         applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, taskEventData));
@@ -108,14 +108,18 @@ public class DispatcherEventService {
         applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, companyUniqueId, contextId, batchEventData));
     }
 
-    public void publishTaskEvent(EnumsApi.DispatcherEventType event, @Nullable Long coreId, Long taskId, Long execContextId) {
+    public void publishTaskEvent(
+            EnumsApi.DispatcherEventType event, @Nullable Long coreId, Long taskId, Long execContextId,
+            @Nullable EnumsApi.FunctionExecContext context, @Nullable String funcCode) {
         if (!globals.eventEnabled) {
             return;
         }
         DispatcherEventYaml.TaskEventData taskEventData = new DispatcherEventYaml.TaskEventData();
-        taskEventData.processorId = coreId;
+        taskEventData.coreId = coreId;
         taskEventData.taskId = taskId;
         taskEventData.execContextId = execContextId;
+        taskEventData.context = context;
+        taskEventData.funcCode = funcCode;
         applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, taskEventData));
     }
 

@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.commons.yaml.event;
 
-import ai.metaheuristic.api.data.event.DispatcherEventYamlV1;
+import ai.metaheuristic.api.data.event.DispatcherEventYaml;
 import ai.metaheuristic.api.data.event.DispatcherEventYamlV2;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
@@ -30,30 +30,30 @@ import org.yaml.snakeyaml.Yaml;
  * Date: 6/17/2019
  * Time: 12:10 AM
  */
-public class DispatcherEventYamlUtilsV1
-        extends AbstractParamsYamlUtils<DispatcherEventYamlV1, DispatcherEventYamlV2, DispatcherEventYamlUtilsV2, Void, Void, Void> {
+public class DispatcherEventYamlUtilsV2
+        extends AbstractParamsYamlUtils<DispatcherEventYamlV2, DispatcherEventYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(DispatcherEventYamlV1.class);
+        return YamlUtils.init(DispatcherEventYamlV2.class);
     }
 
     @NonNull
     @Override
-    public DispatcherEventYamlV2 upgradeTo(@NonNull DispatcherEventYamlV1 src) {
+    public DispatcherEventYaml upgradeTo(@NonNull DispatcherEventYamlV2 src) {
         src.checkIntegrity();
-        DispatcherEventYamlV2 trg = new DispatcherEventYamlV2();
+        DispatcherEventYaml trg = new DispatcherEventYaml();
         trg.createdOn = src.createdOn;
         trg.event = src.event;
         trg.contextId = src.contextId;
         if (src.batchData!=null) {
-            trg.batchData = new DispatcherEventYamlV2.BatchEventDataV2();
+            trg.batchData = new DispatcherEventYaml.BatchEventData();
             trg.batchData.batchId = src.batchData.batchId;
             trg.batchData.execContextId = src.batchData.execContextId;
             trg.batchData.username = src.batchData.username;
@@ -62,10 +62,12 @@ public class DispatcherEventYamlUtilsV1
             trg.batchData.companyId = src.batchData.companyId;
         }
         if (src.taskData!=null) {
-            trg.taskData = new DispatcherEventYamlV2.TaskEventDataV2();
-            trg.taskData.coreId = src.taskData.processorId;
+            trg.taskData = new DispatcherEventYaml.TaskEventData();
+            trg.taskData.coreId = src.taskData.coreId;
             trg.taskData.taskId = src.taskData.taskId;
             trg.taskData.execContextId = src.taskData.execContextId;
+            trg.taskData.context = src.taskData.context;
+            trg.taskData.funcCode = src.taskData.funcCode;
         }
         trg.checkIntegrity();
         return trg;
@@ -78,8 +80,8 @@ public class DispatcherEventYamlUtilsV1
     }
 
     @Override
-    public DispatcherEventYamlUtilsV2 nextUtil() {
-        return (DispatcherEventYamlUtilsV2) DispatcherEventYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -88,18 +90,18 @@ public class DispatcherEventYamlUtilsV1
     }
 
     @Override
-    public String toString(@NonNull DispatcherEventYamlV1 yaml) {
+    public String toString(@NonNull DispatcherEventYamlV2 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public DispatcherEventYamlV1 to(@NonNull String yaml) {
+    public DispatcherEventYamlV2 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
         //noinspection UnnecessaryLocalVariable
-        final DispatcherEventYamlV1 p = getYaml().load(yaml);
+        final DispatcherEventYamlV2 p = getYaml().load(yaml);
         return p;
     }
 

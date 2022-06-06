@@ -115,9 +115,10 @@ public class TaskFinishingService {
                 log.warn("#319.145 task #{} was already finished", taskId);
                 return;
             }
+            TaskParamsYaml taskParamYaml=null;
             try {
                 //noinspection unused
-                final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             } catch (YAMLException e) {
                 String es = S.f("#319.160 Task #%s has broken params yaml, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
                 log.error(es, e.getMessage());
@@ -125,7 +126,8 @@ public class TaskFinishingService {
 
             finishTaskAsError(task, console, targetState);
 
-            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR, task.coreId, task.id, task.execContextId);
+            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR, task.coreId, task.id, task.execContextId,
+                    taskParamYaml==null ? null : taskParamYaml.task.context, taskParamYaml==null ? null : taskParamYaml.task.function.code );
         } catch (Throwable th) {
             log.warn("#319.165 Error while processing the task #{} with internal function. Error: {}", taskId, th.getMessage());
             log.warn("#319.170 Error", th);

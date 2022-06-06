@@ -21,8 +21,12 @@ import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -84,7 +88,17 @@ public class TaskExecStateService {
                 throw new IllegalStateException("#305.160 Right now it must be initialized somewhere else. state: " + state);
         }
 
-        eventPublisherService.publishSetTaskExecStateTxEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState)));
+
+        final SetTaskExecStateTxEvent event;
+        final EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.execState);
+        if (execState== EnumsApi.TaskExecState.OK || execState== EnumsApi.TaskExecState.ERROR) {
+            TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            event = new SetTaskExecStateTxEvent(task.execContextId, task.id, execState, task.coreId, taskParams.task.context, taskParams.task.function.code);
+        }
+        else {
+            event = new SetTaskExecStateTxEvent(task.execContextId, task.id, execState, task.coreId, null, null);
+        }
+        eventPublisherService.publishSetTaskExecStateTxEvent(event);
         return task;
     }
 

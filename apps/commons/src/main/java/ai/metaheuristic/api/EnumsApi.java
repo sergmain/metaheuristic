@@ -361,6 +361,7 @@ public class EnumsApi {
 
     }
 
+    // don't create TASK_CREATE type because a support of such type would dramatically decrease performance of transactions
     public enum DispatcherEventType {
         BATCH_FILE_UPLOADED,
         BATCH_CREATED,

@@ -33,7 +33,8 @@ public class DispatcherEventYaml implements BaseParams {
     // representation of LocalDateTime
     public String createdOn;
     public EnumsApi.DispatcherEventType event;
-    public @Nullable String contextId;
+    @Nullable
+    public String contextId;
 
     public BatchEventData batchData;
     public TaskEventData taskData;
@@ -45,11 +46,15 @@ public class DispatcherEventYaml implements BaseParams {
 
     @Data
     public static class BatchEventData {
-        public @Nullable Long size;
-        public @Nullable String filename;
+        @Nullable
+        public Long size;
+        @Nullable
+        public String filename;
         public String username;
-        public @Nullable Long batchId;
-        public @Nullable Long execContextId;
+        @Nullable
+        public Long batchId;
+        @Nullable
+        public Long execContextId;
 
         // This field contains a value from MH_COMPANY.UNIQUE_ID, !NOT! from ID field
         public Long companyId;
@@ -57,10 +62,12 @@ public class DispatcherEventYaml implements BaseParams {
 
     @Data
     public static class TaskEventData {
-        // actually this is a coreId but won't be changed because of compatibility with 3rd party apps reason
-        @Nullable
-        public Long processorId;
+        public Long coreId;
         public Long taskId;
         public Long execContextId;
+        @Nullable
+        public EnumsApi.FunctionExecContext context;
+        @Nullable
+        public String funcCode;
     }
 }

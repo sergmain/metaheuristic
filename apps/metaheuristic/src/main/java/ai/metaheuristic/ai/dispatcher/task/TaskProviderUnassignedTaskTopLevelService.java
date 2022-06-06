@@ -78,7 +78,7 @@ public class TaskProviderUnassignedTaskTopLevelService {
         TaskData.AssignedTask task = findUnassignedTaskAndAssignInternal(coreId, psy, csy, isAcceptOnlySigned, quotas);
 
         if (task!=null) {
-            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, coreId, task.task.id, task.task.execContextId);
+            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, coreId, task.task.id, task.task.execContextId, null, null);
         }
         return task;
     }

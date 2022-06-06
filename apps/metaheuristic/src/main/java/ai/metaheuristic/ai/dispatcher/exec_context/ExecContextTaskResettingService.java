@@ -155,7 +155,9 @@ public class ExecContextTaskResettingService {
             variableService.resetVariable(execContext.id, output.id);
         }
 
-        eventPublisherService.publishSetTaskExecStateTxEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState)));
+        eventPublisherService.publishSetTaskExecStateTxEvent(
+                new SetTaskExecStateTxEvent(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState), null, null, null));
+
         // we don't have to un-register task because it could un-register already de-registered task.
         // actual deregistering will be done via reconsiliationService
 //        eventPublisherService.publishUnAssignTaskTxEventAfterCommit(new UnAssignTaskTxAfterCommitEvent(task.execContextId, task.id));

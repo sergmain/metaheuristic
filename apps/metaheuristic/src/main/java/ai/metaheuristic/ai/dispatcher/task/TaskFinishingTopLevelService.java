@@ -114,8 +114,6 @@ public class TaskFinishingTopLevelService {
                 TaskSyncService.getWithSyncVoid(task.id,
                         () -> finishWithErrorWithInternal(
                                 taskId, StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>"));
-
-                dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR, null, task.id, task.execContextId);
                 return;
             }
         }

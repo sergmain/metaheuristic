@@ -45,8 +45,11 @@ public class EventsBoundedToTx {
     public void handleSetTaskExecStateTxEvent(SetTaskExecStateTxEvent event) {
         log.debug("call EventsBoundedToTx.handleSetTaskExecStateTxEvent(execContextId:#{}, taskId:#{}, state:{})", event.execContextId, event.taskId, event.state);
         eventPublisher.publishEvent(event.to());
-        if (event.state== EnumsApi.TaskExecState.OK) {
-            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_FINISHED, null, event.taskId, event.execContextId);
+        if (event.state== EnumsApi.TaskExecState.OK || event.state== EnumsApi.TaskExecState.ERROR) {
+            dispatcherEventService.publishTaskEvent(
+                    event.state== EnumsApi.TaskExecState.OK ? EnumsApi.DispatcherEventType.TASK_FINISHED : EnumsApi.DispatcherEventType.TASK_ERROR,
+                    event.coreId, event.taskId,
+                    event.execContextId, event.context, event.funcCode);
         }
     }
 
