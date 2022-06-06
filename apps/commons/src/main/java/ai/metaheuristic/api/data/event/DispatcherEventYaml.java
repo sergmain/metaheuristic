@@ -28,7 +28,7 @@ import org.springframework.lang.Nullable;
  */
 @Data
 public class DispatcherEventYaml implements BaseParams {
-    public final int version = 1;
+    public final int version = 2;
 
     // representation of LocalDateTime
     public String createdOn;
