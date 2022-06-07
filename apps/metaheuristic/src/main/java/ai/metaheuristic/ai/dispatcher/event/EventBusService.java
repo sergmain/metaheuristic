@@ -22,17 +22,17 @@ import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVar
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTopLevelService;
+import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * @author Serge
@@ -119,28 +119,28 @@ public class EventBusService {
                 log.warn("#448.020 Error while closing stream", th);
             }
         }
-        for (File file : event.files) {
-            if (file.isDirectory()) {
-                log.error("#448.030 error in code. path {} is a directory", file.getAbsolutePath());
+        for (Path file : event.files) {
+            if (Files.isDirectory(file)) {
+                log.error("#448.030 error in code. path {} is a directory", file.normalize());
                 continue;
             }
             try {
-                Files.delete(file.toPath());
+                Files.delete(file);
             }
             catch(Throwable th)  {
-                log.warn("#448.040 Error while deleting file "+ file.getAbsolutePath(), th);
+                log.warn("#448.040 Error while deleting file "+ file.normalize(), th);
             }
         }
-        for (File dir : event.dirs) {
-            if (dir.isFile()) {
-                log.error("#448.060 error in code. path {} is a file", dir.getAbsolutePath());
+        for (Path dir : event.dirs) {
+            if (!Files.isDirectory(dir)) {
+                log.error("#448.060 error in code. path {} is a file", dir.normalize());
                 continue;
             }
             try {
-                FileUtils.deleteDirectory(dir);
+                DirUtils.deletePathAsync(dir);
             }
             catch(Throwable th)  {
-                log.warn("#448.080 Error while deleting dir "+ dir.getAbsolutePath(), th);
+                log.warn("#448.080 Error while deleting dir "+ dir.normalize(), th);
             }
         }
     }

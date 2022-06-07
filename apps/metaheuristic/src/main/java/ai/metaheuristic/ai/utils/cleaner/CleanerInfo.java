@@ -25,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 
 import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,7 +39,7 @@ import java.util.List;
 @NoArgsConstructor
 public class CleanerInfo extends BaseDataClass {
     public ResponseEntity<AbstractResource> entity;
-    public List<File> toClean = new ArrayList<>();
+    public List<Path> toClean = new ArrayList<>();
     public List<InputStream> inputStreams = new ArrayList<>();
 
     public CleanerInfo(String error) {

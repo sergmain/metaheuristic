@@ -70,7 +70,7 @@ public class BatchSplitterTxService {
     private final VariableService variableService;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
-    public void loadFilesFromDirAfterZip(ExecContextData.SimpleExecContext simpleExecContext, File srcDir,
+    public void loadFilesFromDirAfterZip(ExecContextData.SimpleExecContext simpleExecContext, Path srcDir,
                                          final Map<String, String> mapping, TaskParamsYaml taskParamsYaml, Long taskId) {
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, taskId);
@@ -98,7 +98,7 @@ public class BatchSplitterTxService {
 
         try {
             // do not remove try(Stream<Path>){}
-            try (final Stream<Path> list = Files.list(srcDir.toPath())) {
+            try (final Stream<Path> list = Files.list(srcDir)) {
                 list
                         .forEach(dataFilePath -> {
                             File file = dataFilePath.toFile();

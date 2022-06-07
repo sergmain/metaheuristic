@@ -19,11 +19,9 @@ package ai.metaheuristic.commons.utils;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
-import org.apache.commons.io.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -57,10 +55,10 @@ public class TaskFileParamsUtils {
     }
 
     public static VariableArrayParamsYaml getInputVariablesAsArray(TaskFileParamsYaml params, TaskFileParamsYaml.InputVariable arrayVariable) throws IOException {
-        File arrayVariableFile = Path.of(
-                params.task.workingPath, arrayVariable.dataType.toString(), arrayVariable.id).toFile();
+        Path arrayVariableFile = Path.of(
+                params.task.workingPath, arrayVariable.dataType.toString(), arrayVariable.id);
 
-        String arrayVariableContent = FileUtils.readFileToString(arrayVariableFile, StandardCharsets.UTF_8);
+        String arrayVariableContent = Files.readString(arrayVariableFile);
         VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(arrayVariableContent);
         return vapy;
     }

@@ -51,7 +51,6 @@ import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -68,6 +67,8 @@ import org.yaml.snakeyaml.Yaml;
 import javax.persistence.EntityManager;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Blob;
 import java.sql.Timestamp;
 import java.util.*;
@@ -434,11 +435,11 @@ public class VariableService {
 
     @Nullable
     @Transactional(readOnly = true)
-    public Void storeToFileWithTx(Long variableId, File trgFile) {
+    public Void storeToFileWithTx(Long variableId, Path trgFile) {
         return storeToFile(variableId, trgFile);
     }
 
-    public Void storeToFile(Long variableId, File trgFile) {
+    public Void storeToFile(Long variableId, Path trgFile) {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
@@ -447,7 +448,7 @@ public class VariableService {
                 throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
             }
             try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-                FileUtils.copyInputStreamToFile(bis, trgFile);
+                Files.copy(bis, trgFile);
             }
         } catch (CommonErrorWithDataException e) {
             throw e;

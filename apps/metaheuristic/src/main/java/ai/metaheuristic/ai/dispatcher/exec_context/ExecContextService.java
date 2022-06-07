@@ -22,7 +22,10 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
-import ai.metaheuristic.ai.dispatcher.event.*;
+import ai.metaheuristic.ai.dispatcher.event.DeleteExecContextInListTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
+import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
@@ -53,9 +56,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
-import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -272,12 +276,14 @@ public class ExecContextService {
                 return resource;
             }
 
-            File resultDir = DirUtils.createMhTempDir("prepare-file-processing-result-");
+            Path resultDir = DirUtils.createMhTempPath("prepare-file-processing-result-");
+            if (resultDir==null) {
+                throw new RuntimeException("#705.290 can't create temp directory");
+            }
             resource.toClean.add(resultDir);
 
-            File zipDir = new File(resultDir, "zip");
-            //noinspection ResultOfMethodCallIgnored
-            zipDir.mkdir();
+            Path zipDir = resultDir.resolve("zip");
+            Files.createDirectory(zipDir);
 
             SourceCodeImpl sc = sourceCodeCache.findById(execContext.sourceCodeId);
             if (sc==null) {
@@ -297,7 +303,7 @@ public class ExecContextService {
 
             String filename = S.f("variable-%s-%s%s", variableId, variable.variable, ext);
 
-            File varFile = new File(resultDir, "variable-"+variableId+".bin");
+            Path varFile = resultDir.resolve("variable-"+variableId+".bin");
             variableService.storeToFileWithTx(variable.id, varFile);
 
             HttpHeaders httpHeaders = new HttpHeaders();
@@ -305,7 +311,7 @@ public class ExecContextService {
             // https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
             httpHeaders.setContentDisposition(ContentDisposition.parse(
                     "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8.toString())));
-            resource.entity = new ResponseEntity<>(new FileSystemResource(varFile), RestUtils.getHeader(httpHeaders, varFile.length()), HttpStatus.OK);
+            resource.entity = new ResponseEntity<>(new FileSystemResource(varFile), RestUtils.getHeader(httpHeaders, Files.size(varFile)), HttpStatus.OK);
             return resource;
         } catch (VariableDataNotFoundException e) {
             log.error("#705.350 Variable #{}, context: {}, {}", e.variableId, e.context, e.getMessage());

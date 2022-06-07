@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
@@ -152,7 +153,7 @@ public class ExecContextTaskResettingService {
             if (output.context== EnumsApi.VariableContext.global) {
                 throw new IllegalStateException("(output.context== EnumsApi.VariableContext.global)");
             }
-            variableService.resetVariable(execContext.id, output.id);
+            VariableSyncService.getWithSyncVoidForCreation(output.id, ()->variableService.resetVariable(execContext.id, output.id));
         }
 
         eventPublisherService.publishSetTaskExecStateTxEvent(

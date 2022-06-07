@@ -22,10 +22,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @Slf4j
 public class TestProcessTimeout {
@@ -33,12 +36,13 @@ public class TestProcessTimeout {
     @Test
     public void testProcessTimeout() throws IOException, InterruptedException {
 
-        File tempDir = DirUtils.createMhTempDir("test-process-timeout-");
+        Path tempDir = DirUtils.createMhTempPath("test-process-timeout-");
+        assertNotNull(tempDir);
 
         List<String> cmd = List.of("jshell");
         ProcessBuilder pb = new ProcessBuilder();
         pb.command(cmd);
-        pb.directory(tempDir);
+        pb.directory(tempDir.toFile());
         pb.redirectErrorStream(true);
         final Process process = pb.start();
 

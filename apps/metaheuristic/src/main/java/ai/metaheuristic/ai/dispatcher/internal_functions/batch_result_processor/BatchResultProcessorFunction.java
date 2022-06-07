@@ -66,7 +66,7 @@ public class BatchResultProcessorFunction implements InternalFunction {
 
         ArtifactCleanerAtDispatcher.setBusy();
         try {
-            ExecContextSyncService.getWithSyncNullable(simpleExecContext.execContextId,
+            ExecContextSyncService.getWithSyncVoid(simpleExecContext.execContextId,
                     () -> batchResultProcessorTxService.process(simpleExecContext, taskContextId, taskParamsYaml));
         }
         finally {

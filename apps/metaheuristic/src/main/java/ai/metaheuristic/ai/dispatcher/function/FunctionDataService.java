@@ -26,7 +26,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.springframework.context.annotation.Profile;
@@ -37,8 +36,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Blob;
 import java.sql.Timestamp;
 import java.util.Optional;
@@ -59,7 +59,7 @@ public class FunctionDataService {
 
     @Nullable
     @Transactional(readOnly = true)
-    public Void storeToFile(String code, File trgFile) {
+    public Void storeToFile(String code, Path trgFile) {
         try {
             Blob blob = functionDataRepository.getDataAsStreamByCode(code);
             if (blob==null) {
@@ -67,7 +67,7 @@ public class FunctionDataService {
                 throw new FunctionDataNotFoundException(code, "#088.010 Function data wasn't found, code: " + code);
             }
             try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-                FileUtils.copyInputStreamToFile(bis, trgFile);
+                Files.copy(bis, trgFile);
             }
         } catch (CommonErrorWithDataException e) {
             throw e;

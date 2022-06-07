@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.test.tx;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
 import ai.metaheuristic.ai.dispatcher.beans.*;
@@ -28,9 +27,9 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
-import ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -65,9 +64,7 @@ public class TxSupportForTestingService {
     private final VariableService variableService;
     private final ExecContextService execContextService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
-    private final ExecContextFSM execContextFSM;
     private final ExecContextGraphService execContextGraphService;
-    private final TaskVariableTopLevelService taskVariableTopLevelService;
     private final FunctionCache functionCache;
     private final FunctionDataService functionDataService;
     private final ProcessorCache processorCache;
@@ -136,7 +133,7 @@ public class TxSupportForTestingService {
             throw new IllegalStateException("(v==null || v.inited)");
         }
         byte[] bytes = variableData.getBytes();
-        variableService.update(new ByteArrayInputStream(bytes), bytes.length, variable);
+        VariableSyncService.getWithSyncVoidForCreation(variable.id, ()-> variableService.update(new ByteArrayInputStream(bytes), bytes.length, variable));
 
         v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variableName, taskContextId, execContextId);
         if (v==null) {

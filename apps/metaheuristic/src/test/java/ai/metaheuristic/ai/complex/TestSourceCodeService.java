@@ -33,6 +33,7 @@ import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
@@ -408,7 +409,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(variable);
 
         byte[] bytes = variableData.getBytes();
-        variableService.updateWithTx(new ByteArrayInputStream(bytes), bytes.length, variable.id);
+        VariableSyncService.getWithSyncVoidForCreation(variable.id, ()->variableService.updateWithTx(new ByteArrayInputStream(bytes), bytes.length, variable.id));
 
 
 

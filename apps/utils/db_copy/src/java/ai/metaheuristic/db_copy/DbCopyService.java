@@ -24,7 +24,8 @@ import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -54,9 +55,9 @@ public class DbCopyService {
             System.out.println("migrate " + functionData.getFunctionCode());
 
             System.out.print("\tcopy to file");
-            File f = File.createTempFile("db-copy-", ".bin");
+            Path f = Files.createTempFile("db-copy-", ".bin");
             dbCopyTxService.storeToFileFromPrimary(functionData.getFunctionCode(), f);
-            System.out.println(" OK, lenght: " + f.length());
+            System.out.println(" OK, lenght: " + Files.size(f));
 
             System.out.println("\tpersist to db");
 /*
@@ -88,9 +89,9 @@ public class DbCopyService {
 
             final String child = (functionData.functionCode + ".jar").replace(':', '-');
             System.out.print("\tcopy to file " + child);
-            File f = new File("data", child);
+            Path f = Path.of("data", child);
             dbCopyTxService.storeToFileFromPrimary(functionData.getFunctionCode(), f);
-            System.out.println(" OK, lenght: " + f.length());
+            System.out.println(" OK, length: " + Files.size(f));
         }
 
     }

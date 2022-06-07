@@ -23,6 +23,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.SecUtils;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -90,7 +91,7 @@ public class Globals {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class DispatcherDir {
-        public File dir = new File("target"+ File.separatorChar + "mh-dispatcher");
+        public Path dir = Path.of("target", "mh-dispatcher");
     }
 
     @Data
@@ -132,10 +133,8 @@ public class Globals {
     public static class DispatcherDirConverter implements Converter<String, DispatcherDir> {
         @Override
         public DispatcherDir convert(String from) {
-            if (S.b(from)) {
-                return new DispatcherDir();
-            }
-            return new DispatcherDir(toFile(from));
+            final File file = toFile(from);
+            return file!=null ? new DispatcherDir(file.toPath()) : new DispatcherDir();
         }
     }
 
@@ -508,12 +507,13 @@ public class Globals {
     public boolean eventEnabled = false;
 
     // some fields
-    public File dispatcherTempDir;
+    public Path dispatcherTempDir;
     public File dispatcherResourcesDir;
     public File processorResourcesDir;
 
     public EnumsApi.OS os = EnumsApi.OS.unknown;
 
+    @SneakyThrows
     @PostConstruct
     public void postConstruct() {
         if (dispatcher.enabled && dispatcher.functionSignatureRequired && dispatcher.publicKey==null ) {
@@ -550,10 +550,10 @@ public class Globals {
         }
 
         if (dispatcher.enabled) {
-            dispatcherTempDir = new File(dispatcher.dir.dir, "temp");
-            dispatcherTempDir.mkdirs();
+            dispatcherTempDir = dispatcher.dir.dir.resolve("temp");
+            PathUtils.createParentDirectories(dispatcherTempDir);
 
-            dispatcherResourcesDir = new File(dispatcher.dir.dir, Consts.RESOURCES_DIR);
+            dispatcherResourcesDir = new File(dispatcher.dir.dir.toFile(), Consts.RESOURCES_DIR);
             dispatcherResourcesDir.mkdirs();
         }
         initOperationSystem();
@@ -609,7 +609,7 @@ public class Globals {
 
     @Nullable
     private static File toFile(@Nullable String dirAsString) {
-        if (StringUtils.isBlank(dirAsString)) {
+        if (S.b(dirAsString)) {
             return null;
         }
 
@@ -724,7 +724,7 @@ public class Globals {
         log.info("'\tdispatcher.enabled: {}", dispatcher.enabled);
         log.info("'\tdispatcher.sslRequired: {}", dispatcher.sslRequired);
         log.info("'\tdispatcher.functionSignatureRequired: {}", dispatcher.functionSignatureRequired);
-        log.info("'\tdispatcher.dir: {}", dispatcher.dir.dir!=null ? dispatcher.dir.dir.getAbsolutePath() : "<dispatcher dir is null>");
+        log.info("'\tdispatcher.dir: {}", dispatcher.dir.dir!=null ? dispatcher.dir.dir.normalize() : "<dispatcher dir is null>");
         log.info("'\tdispatcher.masterUsername: {}", dispatcher.masterUsername);
         log.info("'\tdispatcher.publicKey: {}", dispatcher.publicKey!=null ? "provided" : "wasn't provided");
         log.info("'\tdispatcher.chunkSize: {}", dispatcher.chunkSize);
@@ -759,17 +759,5 @@ public class Globals {
         log.info("'\tprocessor.timeout.taskProcessor: {}", processor.timeout.taskProcessor);
         log.info("'\tprocessor.timeout.dispatcherContextInfo: {}", processor.timeout.dispatcherContextInfo);
         log.info("'\tprocessor.dir: {}", processor.dir.dir !=null ? processor.dir.dir.getAbsolutePath() : "<processor dir is null>");
-    }
-
-    // TODO 2019-07-20 should method createTempFileForDispatcher() be moved to other class/package?
-    private static final Random r = new Random();
-    public File createTempFileForDispatcher(String prefix) {
-        if (StringUtils.isBlank(prefix)) {
-            throw new IllegalStateException("Prefix is blank");
-        }
-        File tempFile = new File(dispatcherTempDir,
-                prefix + r.nextInt(99999999) + '-' + System.nanoTime()
-        );
-        return tempFile;
     }
 }

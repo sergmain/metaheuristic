@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -50,7 +50,7 @@ public class InternalFunctionVariableService {
     private final GlobalVariableRepository globalVariableRepository;
     private final GlobalVariableService globalVariableService;
 
-    public void storeToFile(VariableUtils.VariableHolder holder, File file) {
+    public void storeToFile(VariableUtils.VariableHolder holder, Path file) {
         if (holder.variable!=null) {
             variableService.storeToFileWithTx(Objects.requireNonNull(holder.variable).id, file);
         }

@@ -40,6 +40,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
@@ -87,9 +89,9 @@ public class TaskWithInternalContextTopLevelService {
         if (ec == null) {
             throw new InternalFunctionException(exec_context_not_found, "#992.045 ExecContext Not found, #"+task.execContextId);
         }
-        File tempDir = null;
+        Path tempDir = null;
         try {
-            tempDir = DirUtils.createMhTempDir("mh-exec-source-code-result-");
+            tempDir = DirUtils.createMhTempPath("mh-exec-source-code-result-");
             if (tempDir == null) {
                 throw new InternalFunctionException(system_error,
                                 "#992.100 Can't create temporary directory in dir " + SystemUtils.JAVA_IO_TMPDIR);
@@ -120,7 +122,7 @@ public class TaskWithInternalContextTopLevelService {
                     variableTopLevelService.setAsNullFunction(output.id, event, ec.execContextVariableStateId);
                 }
                 else {
-                    File tempFile = File.createTempFile("output-", ".bin", tempDir);
+                    Path tempFile = Files.createTempFile(tempDir, "output-", ".bin");
                     variableService.storeToFileWithTx(variableHolder.variable.id, tempFile);
                     execContextVariableService.storeDataInVariable(output, tempFile);
                 }
@@ -131,7 +133,7 @@ public class TaskWithInternalContextTopLevelService {
             throw new InternalFunctionException(system_error, "#992.240 error: " + e.getMessage());
         }
         finally {
-            DirUtils.deleteAsync(tempDir);
+            DirUtils.deletePathAsync(tempDir);
         }
     }
 }

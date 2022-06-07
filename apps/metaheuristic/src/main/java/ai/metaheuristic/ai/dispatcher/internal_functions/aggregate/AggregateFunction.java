@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -36,16 +37,17 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -95,6 +97,7 @@ public class AggregateFunction implements InternalFunction {
         }
     }
 
+    @SneakyThrows
     private void processInternal(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
                                  TaskParamsYaml taskParamsYaml) {
 
@@ -116,27 +119,28 @@ public class AggregateFunction implements InternalFunction {
 
         List<SimpleVariable> list = variableRepository.getIdAndStorageUrlInVarsForExecContext(simpleExecContext.execContextId, names);
 
-        File tempDir = null;
+        Path tempDir = null;
         try {
-            tempDir = DirUtils.createMhTempDir("mh-aggregate-internal-context-");
+            tempDir = DirUtils.createMhTempPath("mh-aggregate-internal-context-");
             if (tempDir==null) {
                 throw new InternalFunctionException(
                         system_error, "#979.100 Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR);
             }
 
             TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
-            File outputDir = new File(tempDir, outputVariable.name);
-            if (!outputDir.mkdirs()) {
-                throw new InternalFunctionException(
-                        system_error, "#979.120 Can't create output directory  "+ outputDir.getAbsolutePath());
-            }
+            Path outputDir = tempDir.resolve(outputVariable.name);
+            Files.createDirectory(outputDir);
 
             list.stream().map(o->o.taskContextId).collect(Collectors.toSet())
                     .forEach(contextId->{
-                        File taskContextDir = new File(outputDir, contextId);
+                        Path taskContextDir = outputDir.resolve(contextId);
                         MetadataAggregateFunctionParamsYaml mafpy = new MetadataAggregateFunctionParamsYaml();
-                        //noinspection ResultOfMethodCallIgnored
-                        taskContextDir.mkdirs();
+                        try {
+                            Files.createDirectory(taskContextDir);
+                        }
+                        catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
                         list.stream().filter(t-> contextId.equals(t.taskContextId))
                                 .forEach( v->{
                                     if (v.nullified) {
@@ -144,9 +148,9 @@ public class AggregateFunction implements InternalFunction {
                                     }
                                     try {
                                         String ext = execContextUtilsService.getExtensionForVariable(simpleExecContext.execContextVariableStateId, v.id, "");
-                                        File varFile = new File(taskContextDir, v.variable+ext);
+                                        Path varFile = taskContextDir.resolve(v.variable+ext);
                                         if (produceMetadata) {
-                                            mafpy.mapping.add(Map.of(varFile.getName(), v.variable));
+                                            mafpy.mapping.add(Map.of(varFile.getFileName().toString(), v.variable));
                                         }
                                         variableService.storeToFileWithTx(v.id, varFile);
                                     } catch (VariableDataNotFoundException e) {
@@ -157,9 +161,9 @@ public class AggregateFunction implements InternalFunction {
                                     }
                                 });
                         if (produceMetadata) {
-                            File metadataFile = new File(taskContextDir, Consts.MH_METADATA_YAML_FILE_NAME);
+                            Path metadataFile = taskContextDir.resolve(Consts.MH_METADATA_YAML_FILE_NAME);
                             try {
-                                FileUtils.writeStringToFile(metadataFile, MetadataAggregateFunctionParamsYamlUtils.BASE_YAML_UTILS.toString(mafpy), StandardCharsets.UTF_8);
+                                Files.writeString(metadataFile, MetadataAggregateFunctionParamsYamlUtils.BASE_YAML_UTILS.toString(mafpy));
                             } catch (IOException e) {
                                 final String es = "#979.200 error";
                                 log.error(es, e);
@@ -171,15 +175,15 @@ public class AggregateFunction implements InternalFunction {
 
                     });
 
-            File zipFile = new File(tempDir, "result-for-"+outputVariable.name+".zip");
-            ZipUtils.createZip(outputDir.toPath(), zipFile.toPath());
+            Path zipFile = tempDir.resolve("result-for-"+outputVariable.name+".zip");
+            ZipUtils.createZip(outputDir, zipFile);
 
-            execContextVariableService.storeDataInVariable(outputVariable, zipFile);
+            VariableSyncService.getWithSyncVoidForCreation(outputVariable.id, ()->execContextVariableService.storeDataInVariable(outputVariable, zipFile));
         }
         finally {
             if (tempDir!=null) {
                 try {
-                    FileUtils.deleteDirectory(tempDir);
+                    PathUtils.deleteDirectory(tempDir);
                 } catch (Throwable th) {
                     log.error("Error", th);
                 }

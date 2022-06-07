@@ -40,7 +40,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
+import java.nio.file.Path;
 
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.number_of_inputs_is_incorrect;
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.number_of_outputs_is_incorrect;
@@ -90,14 +90,14 @@ public class ReduceVariablesFunction implements InternalFunction {
         ReduceVariablesData.Request request = initRequestData(simpleExecContext.execContextId, taskContextId, config);
 
 
-        File tempDir = DirUtils.createMhTempDir("reduce-variables-");
+        Path tempDir = DirUtils.createMhTempPath("reduce-variables-");
         if (tempDir==null) {
             throw new RuntimeException("(tempDir==null)");
         }
-        File zipFile = new File(tempDir, "zip.zip");
+        Path zipFile = tempDir.resolve("zip.zip");
         variableService.storeToFile(input.id, zipFile);
 
-        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(tempDir.toPath(), zipFile.toPath(), config, request);
+        ReduceVariablesData.ReduceVariablesResult result = ReduceVariablesUtils.reduceVariables(tempDir, zipFile, config, request);
 
 
 /*

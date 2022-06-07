@@ -17,11 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.el;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
-import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
@@ -44,9 +41,9 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -169,13 +166,13 @@ public class EvaluateExpressionLanguage {
                     }
                     try {
                         if (variableHolderInput!=null) {
-                            File tempDir = null;
+                            Path tempDir = null;
                             try {
-                                tempDir = DirUtils.createMhTempDir("mh-evaluation-");
+                                tempDir = DirUtils.createMhTempPath("mh-evaluation-");
                                 if (tempDir == null) {
                                     throw new InternalFunctionException(system_error, "#509.050 can't create a temporary file");
                                 }
-                                File tempFile = File.createTempFile("input-", ".bin", tempDir);
+                                Path tempFile = Files.createTempFile(tempDir, "input-", ".bin");
                                 if (variableHolderInput.globalVariable != null) {
                                     globalVariableService.storeToFileWithTx(variableHolderInput.globalVariable.id, tempFile);
                                 } else if (variableHolderInput.variable != null) {
@@ -183,11 +180,11 @@ public class EvaluateExpressionLanguage {
                                 } else {
                                     throw new InternalFunctionException(system_error, "#509.052 both local and global variables are null");
                                 }
-                                try (InputStream is = new FileInputStream(tempFile)) {
-                                    variableService.updateWithTx(is, tempFile.length(), variableHolderOutput.variable.id);
+                                try (InputStream is = Files.newInputStream(tempFile)) {
+                                    variableService.updateWithTx(is, Files.size(tempFile), variableHolderOutput.variable.id);
                                 }
                             } finally {
-                                DirUtils.deleteAsync(tempDir);
+                                DirUtils.deletePathAsync(tempDir);
                             }
                             return;
                         }

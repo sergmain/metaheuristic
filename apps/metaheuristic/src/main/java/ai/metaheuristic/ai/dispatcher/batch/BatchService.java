@@ -70,6 +70,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -300,7 +302,7 @@ public class BatchService {
                 return new BatchData.Status(batchId, status, true);
             }
             finally {
-                DirUtils.deleteFiles(cleanerInfo.toClean);
+                DirUtils.deletePaths(cleanerInfo.toClean);
             }
         } catch (Throwable th) {
             String es = S.f("#981.380 Error while getting status for batch #%d, error: %s", batchId, th.getMessage());
@@ -344,12 +346,14 @@ public class BatchService {
 
         CleanerInfo resource = new CleanerInfo();
         try {
-            File resultDir = DirUtils.createMhTempDir("prepare-file-processing-result-");
+            Path resultDir = DirUtils.createMhTempPath("prepare-file-processing-result-");
+            if (resultDir==null) {
+                throw new RuntimeException("#981.430 can't create temp directory");
+            }
             resource.toClean.add(resultDir);
 
-            File zipDir = new File(resultDir, "zip");
-            //noinspection ResultOfMethodCallIgnored
-            zipDir.mkdir();
+            Path zipDir = resultDir.resolve("zip");
+            Files.createDirectory(zipDir);
 
             SourceCodeImpl sc = sourceCodeCache.findById(batch.sourceCodeId);
             if (sc==null) {
@@ -378,7 +382,7 @@ public class BatchService {
                 }
             }
 
-            File zipFile = new File(resultDir, Consts.RESULT_ZIP);
+            Path zipFile = resultDir.resolve(Consts.RESULT_ZIP);
             variableService.storeToFile(variable.id, zipFile);
 
             HttpHeaders httpHeaders = new HttpHeaders();
@@ -386,7 +390,7 @@ public class BatchService {
             // https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
             httpHeaders.setContentDisposition(ContentDisposition.parse(
                     "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8.toString())));
-            resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, zipFile.length()), HttpStatus.OK);
+            resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, Files.size(zipFile)), HttpStatus.OK);
             return resource;
         } catch (VariableDataNotFoundException e) {
             log.error("Variable #{}, context: {}, {}", e.variableId, e.context, e.getMessage());

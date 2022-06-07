@@ -28,7 +28,6 @@ import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.engine.spi.SessionImplementor;
@@ -42,9 +41,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -127,11 +127,11 @@ public class GlobalVariableService {
 
     @Nullable
     @Transactional(readOnly = true)
-    public Void storeToFileWithTx(Long variableId, File trgFile) {
+    public Void storeToFileWithTx(Long variableId, Path trgFile) {
         return storeToFile(variableId, trgFile);
     }
 
-    public Void storeToFile(Long variableId, File trgFile) {
+    public Void storeToFile(Long variableId, Path trgFile) {
         try {
             Blob blob = globalVariableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
@@ -139,7 +139,7 @@ public class GlobalVariableService {
                 throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.global, "#089.040 Binary data wasn't found, variableId: " + variableId);
             }
             try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-                FileUtils.copyInputStreamToFile(bis, trgFile);
+                Files.copy(bis, trgFile);
             }
         } catch (CommonErrorWithDataException e) {
             throw e;

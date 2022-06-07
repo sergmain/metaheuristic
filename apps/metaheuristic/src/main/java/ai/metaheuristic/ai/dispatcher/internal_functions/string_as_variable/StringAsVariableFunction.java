@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -131,7 +132,7 @@ public class StringAsVariableFunction implements InternalFunction {
                     .findFirst()
                     .orElseThrow(()->new InternalFunctionException(variable_not_found, "#513.380 output variable not found '"+inlineAsVar.output+"'"));
 
-            execContextVariableService.storeStringInVariable(outputVariable, value);
+            VariableSyncService.getWithSyncVoid(outputVariable.id, ()->execContextVariableService.storeStringInVariable(outputVariable, value));
         }
 
         //noinspection unused

@@ -508,7 +508,7 @@ public class TaskProcessor {
 
             // Exec function
             systemExecResult = SystemProcessLauncher.execCommand(
-                    cmd, taskDir, consoleLogFile, taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
+                    cmd, taskDir, consoleLogFile.toPath(), taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
                     globals.processor.taskConsoleOutputMaxLines, List.of(execContextDeletionCheck));
 
         }

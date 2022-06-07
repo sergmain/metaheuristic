@@ -69,10 +69,10 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -126,7 +126,7 @@ public class SouthbridgeService {
     public CleanerInfo deliverData(@Nullable Long taskId, final EnumsApi.DataType binaryType, final String dataId, @Nullable final String chunkSize, final int chunkNum) {
 
         AssetFile assetFile;
-        BiFunction<String, File, Void> dataSaver;
+        BiFunction<String, Path, Void> dataSaver;
         switch (binaryType) {
             case function:
                 assetFile = AssetUtils.prepareFunctionFile(globals.dispatcherResourcesDir, dataId, null);
@@ -138,7 +138,7 @@ public class SouthbridgeService {
                 dataSaver = functionDataService::storeToFile;
                 break;
             case variable:
-                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, ""+ EnumsApi.DataType.variable+'-'+dataId, null, binaryType);
+                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir.toFile(), ""+ EnumsApi.DataType.variable+'-'+dataId, null, binaryType);
                 if (assetFile.isError) {
                     String es = "#444.120 Resource with id " + dataId + " is broken";
                     log.error(es);
@@ -150,7 +150,7 @@ public class SouthbridgeService {
                 }
                 break;
             case global_variable:
-                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, ""+ EnumsApi.DataType.global_variable+'-'+dataId, null, binaryType);
+                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir.toFile(), ""+ EnumsApi.DataType.global_variable+'-'+dataId, null, binaryType);
                 if (assetFile.isError) {
                     String es = "#444.140 Global variable with id " + dataId + " is broken";
                     log.error(es);
@@ -164,7 +164,7 @@ public class SouthbridgeService {
 
         if (!assetFile.isContent) {
             try {
-                getWithSync(binaryType, dataId, () -> dataSaver.apply(dataId, assetFile.file));
+                getWithSync(binaryType, dataId, () -> dataSaver.apply(dataId, assetFile.file.toPath()));
             } catch (CommonErrorWithDataException e) {
                 log.error("#444.180 Error store data to temp file, data doesn't exist in db, id " + dataId + ", file: " + assetFile.file.getPath());
                 throw e;

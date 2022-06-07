@@ -25,6 +25,7 @@ import org.springframework.web.servlet.AsyncHandlerInterceptor;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -38,9 +39,9 @@ public class CleanerInterceptor implements AsyncHandlerInterceptor {
     @SuppressWarnings("unchecked")
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable Exception ex) {
-        List<File> toClean = (List<File>) request.getAttribute(Consts.RESOURCES_TO_CLEAN);
+        List<Path> toClean = (List<Path>) request.getAttribute(Consts.RESOURCES_TO_CLEAN);
         if (toClean!=null && !toClean.isEmpty()) {
-            DirUtils.deleteFiles(toClean);
+            DirUtils.deletePaths(toClean);
         }
     }
 

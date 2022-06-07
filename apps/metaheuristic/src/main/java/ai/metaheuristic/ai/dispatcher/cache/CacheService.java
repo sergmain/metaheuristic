@@ -38,6 +38,7 @@ import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.CountingInputStream;
 import org.apache.commons.lang3.StringUtils;
@@ -47,6 +48,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Blob;
 import java.util.List;
 import java.util.function.Function;
@@ -82,6 +85,7 @@ public class CacheService {
         cacheProcessRepository.deleteAllByIdIn(page);
     }
 
+    @SneakyThrows
     public void storeVariables(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
         TxUtils.checkTxExists();
 
@@ -113,7 +117,7 @@ public class CacheService {
         cacheProcess = cacheProcessRepository.save(cacheProcess);
 
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-            final File tempFile;
+            final Path tempFile;
 
             SimpleVariable simple = variableRepository.findByIdAsSimple(output.id);
             if (simple==null) {
@@ -124,7 +128,7 @@ public class CacheService {
             }
             else {
                 try {
-                    tempFile = File.createTempFile("var-" + output.id + "-", ".bin", globals.dispatcherTempDir);
+                    tempFile = Files.createTempFile(globals.dispatcherTempDir, "var-" + output.id + "-", ".bin");
                 } catch (IOException e) {
                     String es = "#611.060 Error: " + e.getMessage();
                     log.error(es, e);
@@ -135,7 +139,7 @@ public class CacheService {
                 InputStream is;
                 BufferedInputStream bis;
                 try {
-                    is = new FileInputStream(tempFile); bis = new BufferedInputStream(is, 0x8000);
+                    is = Files.newInputStream(tempFile); bis = new BufferedInputStream(is, 0x8000);
                 } catch (IOException e) {
                     String es = "#611.080 Error: " + e.getMessage();
                     log.error(es, e);
@@ -143,7 +147,7 @@ public class CacheService {
                     throw new VariableCommonException(es, output.id);
                 }
                 eventPublisher.publishEvent(new ResourceCloseTxEvent(List.of(bis, is), tempFile));
-                cacheVariableService.createInitialized(cacheProcess.id, is, tempFile.length(), output.name);
+                cacheVariableService.createInitialized(cacheProcess.id, is, Files.size(tempFile), output.name);
             }
         }
     }

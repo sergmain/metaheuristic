@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -107,14 +106,15 @@ public class ZipUtils {
     public static void createZip(File directory, OutputStream os, Map<String, String> renameTo)  {
 
         try {
-            final File mhTempDir = DirUtils.createMhTempDir("zip-dir-");
-            File tempFile = new File(mhTempDir, "zip.zip");
-            createZip(List.of(tempFile.toPath()), directory.toPath(), renameTo);
+            final Path mhTempDir = DirUtils.createMhTempPath("zip-dir-");
+            if (mhTempDir==null) {
+                throw new RuntimeException("(mhTempDir==null)");
+            }
+            Path tempFile = mhTempDir.resolve("zip.zip");
+            createZip(List.of(tempFile), directory.toPath(), renameTo);
 
-            try (FileInputStream fis = new FileInputStream(tempFile);
-                 BufferedInputStream bis = new BufferedInputStream(fis);
-                 BufferedOutputStream bos = new BufferedOutputStream(os)) {
-                IOUtils.copy(bis, bos);
+            try (BufferedOutputStream bos = new BufferedOutputStream(os)) {
+                Files.copy(tempFile, bos);
             }
         }
         catch (ZipArchiveException e) {

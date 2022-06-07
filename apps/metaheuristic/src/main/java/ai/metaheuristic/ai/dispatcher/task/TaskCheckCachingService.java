@@ -141,11 +141,11 @@ public class TaskCheckCachingService {
                 try {
                     VariableData.StoredVariable storedVariable = new VariableData.StoredVariable( ((Number)obj[0]).longValue(), (String)obj[1], Boolean.TRUE.equals(obj[2]));
                     if (storedVariable.nullified) {
-                        VariableSyncService.getWithSyncNullableForCreationVoid(output.id,
+                        VariableSyncService.getWithSyncVoidForCreation(output.id,
                                 () -> variableService.setVariableAsNull(taskId, output.id));
                     }
                     else {
-                        VariableSyncService.getWithSyncNullableForCreationVoid(output.id,
+                        VariableSyncService.getWithSyncVoidForCreation(output.id,
                                 () -> variableDatabaseSpecificService.copyData(storedVariable, output));
                     }
 

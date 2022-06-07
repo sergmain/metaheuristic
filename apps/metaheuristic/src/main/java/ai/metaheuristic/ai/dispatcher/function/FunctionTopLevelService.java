@@ -40,7 +40,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -54,11 +53,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static ai.metaheuristic.ai.Consts.*;
 import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Element;
@@ -263,17 +264,17 @@ public class FunctionTopLevelService {
                     "#424.050 only '.zip', '.yml' and '.yaml' files are supported, filename: " + originFilename);
         }
 
-        File tempDir = null;
+        Path tempDir = null;
         try {
-            tempDir = DirUtils.createMhTempDir("function-upload-");
-            if (tempDir==null || tempDir.isFile()) {
+            tempDir = DirUtils.createMhTempPath("function-upload-");
+            if (tempDir==null || !Files.isDirectory(tempDir)) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         "#424.060 can't create temporary directory in " + System.getProperty("java.io.tmpdir"));
             }
-            final File zipFile = new File(tempDir, "functions" + ext);
+            final Path zipFile = tempDir.resolve( "functions" + ext);
             log.debug("Start storing an uploaded function to disk");
             long size;
-            try (InputStream is = file.getInputStream(); OutputStream os = new FileOutputStream(zipFile)) {
+            try (InputStream is = file.getInputStream(); OutputStream os = Files.newOutputStream(zipFile)) {
                 size = IOUtils.copy(is, os, 64000);
                 os.flush();
             }
@@ -282,7 +283,7 @@ public class FunctionTopLevelService {
             List<FunctionApiData.FunctionConfigStatus> statuses;
             if (ZIP_EXT.equals(ext)) {
                 log.debug("Start unzipping archive");
-                ZipUtils.unzipFolder(zipFile.toPath(), tempDir.toPath());
+                ZipUtils.unzipFolder(zipFile, tempDir);
                 log.debug("Start loading function data to db");
                 statuses = new ArrayList<>();
                 loadFunctionsRecursively(statuses, tempDir);
@@ -302,7 +303,7 @@ public class FunctionTopLevelService {
                     "#424.070 can't load functions, Error: " + e.getMessage());
         }
         finally {
-            DirUtils.deleteAsync(tempDir);
+            DirUtils.deletePathAsync(tempDir);
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
@@ -315,12 +316,12 @@ public class FunctionTopLevelService {
         return statuses.stream().filter(o->!o.isOk).findFirst().orElse(null)!=null;
     }
 
-    private void loadFunctionsRecursively(List<FunctionApiData.FunctionConfigStatus> statuses, File startDir) throws IOException {
-        final File[] dirs = startDir.listFiles(File::isDirectory);
+    private void loadFunctionsRecursively(List<FunctionApiData.FunctionConfigStatus> statuses, Path startDir) throws IOException {
+        try (final Stream<Path> list = Files.list(startDir)) {
+            final List<Path> dirs = list.filter(Files::isDirectory).collect(Collectors.toList());
 
-        if (dirs!=null) {
-            for (File dir : dirs) {
-                log.info("#295.060 Load functions from {}", dir.getPath());
+            for (Path dir : dirs) {
+                log.info("#295.060 Load functions from {}", dir);
                 statuses.addAll(loadFunctionsFromDir(dir));
                 loadFunctionsRecursively(statuses, dir);
             }
@@ -333,14 +334,14 @@ public class FunctionTopLevelService {
      * @param srcDir File
      */
     @SuppressWarnings("Duplicates")
-    private List<FunctionApiData.FunctionConfigStatus> loadFunctionsFromDir(File srcDir) throws IOException {
-        File yamlConfigFile = new File(srcDir, "functions.yaml");
-        if (!yamlConfigFile.exists()) {
-            log.error("#295.080 File 'functions.yaml' wasn't found in dir {}", srcDir.getAbsolutePath());
+    private List<FunctionApiData.FunctionConfigStatus> loadFunctionsFromDir(Path srcDir) throws IOException {
+        Path yamlConfigFile = srcDir.resolve("functions.yaml");
+        if (Files.notExists(yamlConfigFile)) {
+            log.error("#295.080 File 'functions.yaml' wasn't found in dir {}", srcDir.normalize());
             return Collections.emptyList();
         }
 
-        String cfg = FileUtils.readFileToString(yamlConfigFile, StandardCharsets.UTF_8);
+        String cfg = Files.readString(yamlConfigFile);
         String errorString = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
         if (errorString!=null) {
             return List.of(new FunctionApiData.FunctionConfigStatus(false, errorString));
@@ -357,7 +358,7 @@ public class FunctionTopLevelService {
                     continue;
                 }
                 String sum=null;
-                File file = null;
+                Path file = null;
                 if (globals.dispatcher.functionSignatureRequired) {
                     // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing right noww
                     final EnumsApi.HashAlgo hashAlgo = EnumsApi.HashAlgo.SHA256WithSignature;
@@ -394,14 +395,14 @@ public class FunctionTopLevelService {
                                 sum = Checksum.getChecksum(hashAlgo, new ByteArrayInputStream(s.getBytes()));
                             }
                             else {
-                                file = new File(srcDir, functionConfig.file);
-                                if (!file.exists()) {
+                                file = srcDir.resolve(functionConfig.file);
+                                if (Files.notExists(file)) {
                                     final String es = "#295.160 Function has a sourcing as 'dispatcher' but file " + functionConfig.file + " wasn't found.";
                                     statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
-                                    log.warn(es+" Temp dir: " + srcDir.getAbsolutePath());
+                                    log.warn(es+" Temp dir: " + srcDir.normalize());
                                     continue;
                                 }
-                                try (InputStream inputStream = new FileInputStream(file)) {
+                                try (InputStream inputStream = Files.newInputStream(file)) {
                                     sum = Checksum.getChecksum(hashAlgo, inputStream);
                                 }
                             }
@@ -444,8 +445,8 @@ public class FunctionTopLevelService {
                 else {
                     FunctionConfigYaml scy = FunctionCoreUtils.to(functionConfig);
                     if (file != null) {
-                        try (InputStream is = new FileInputStream(file); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-                            functionService.persistFunction(scy, bis, file.length());
+                        try (InputStream is = Files.newInputStream(file); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
+                            functionService.persistFunction(scy, bis, Files.size(file));
                         }
                     }
                     else {

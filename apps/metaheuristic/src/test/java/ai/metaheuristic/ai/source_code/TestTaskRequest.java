@@ -54,7 +54,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("dispatcher")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TestTaskRequest extends FeatureMethods {
 

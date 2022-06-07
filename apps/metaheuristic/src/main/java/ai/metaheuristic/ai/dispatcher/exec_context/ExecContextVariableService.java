@@ -32,6 +32,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
@@ -39,6 +40,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 
@@ -127,18 +130,19 @@ public class ExecContextVariableService {
         }
     }
 
+    @SneakyThrows
     @Transactional
-    public void storeDataInVariable(TaskParamsYaml.OutputVariable outputVariable, File file) {
+    public void storeDataInVariable(TaskParamsYaml.OutputVariable outputVariable, Path file) {
         Variable variable = getVariable(outputVariable);
 
         final ResourceCloseTxEvent resourceCloseTxEvent = new ResourceCloseTxEvent();
         eventPublisher.publishEvent(resourceCloseTxEvent);
         try {
-            InputStream is = new FileInputStream(file);
+            InputStream is = Files.newInputStream(file);
             resourceCloseTxEvent.add(is);
-            variableService.update(is, file.length(), variable);
+            variableService.update(is, Files.size(file), variable);
         } catch (FileNotFoundException e) {
-            throw new InternalFunctionException(system_error, "#697.180 Can't open file   "+ file.getAbsolutePath());
+            throw new InternalFunctionException(system_error, "#697.180 Can't open file   "+ file.normalize());
         }
     }
 

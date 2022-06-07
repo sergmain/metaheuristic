@@ -17,25 +17,23 @@
 package ai.metaheuristic.db_copy;
 
 import ai.metaheuristic.db_copy.primary.repo.PrimaryFunctionDataRepository;
-import ai.metaheuristic.db_copy.secondary.beans.FunctionData;
 import ai.metaheuristic.db_copy.secondary.repo.SecondaryFunctionDataRepository;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
 import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.sql.Blob;
 import java.sql.Timestamp;
 
@@ -62,14 +60,14 @@ public class DbCopyTxService {
 
     @Transactional(readOnly = true, value="primaryTransactionManager")
     @SneakyThrows
-    public void storeToFileFromPrimary(String code, File trgFile) {
+    public void storeToFileFromPrimary(String code, Path trgFile) {
         Blob blob = primaryFunctionDataRepository.getDataAsStreamByCode(code);
         if (blob==null) {
             log.warn("#088.010 Binary data for code {} wasn't found", code);
             throw new RuntimeException("#088.010 Function data wasn't found, code: " + code);
         }
         try (InputStream is = blob.getBinaryStream()) {
-            FileUtils.copyInputStreamToFile(is, trgFile);
+            Files.copy(is, trgFile, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 

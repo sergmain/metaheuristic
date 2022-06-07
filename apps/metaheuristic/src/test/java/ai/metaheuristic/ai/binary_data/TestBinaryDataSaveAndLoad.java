@@ -32,10 +32,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -76,26 +76,27 @@ public class TestBinaryDataSaveAndLoad {
     }
 
     @Test
-    public void testSaveAndLoad(@TempDir File tempDir) throws IOException {
+    public void testSaveAndLoad(@TempDir Path tempDir) throws IOException {
 
         byte[] bytes = new byte[ARRAY_SIZE];
         r.nextBytes(bytes);
 
-        File dataFile = new File(tempDir, DATA_FILE_BIN);
-        FileUtils.writeByteArrayToFile(dataFile, bytes);
+        Path dataFile = tempDir.resolve(DATA_FILE_BIN);
+        Files.write(dataFile, bytes);
 
         Variable variable;
-        try (InputStream is = new FileInputStream(dataFile)) {
+        try (InputStream is = Files.newInputStream(dataFile)) {
+            final long size = Files.size(dataFile);
             variable = ExecContextSyncService.getWithSync(1L,
-                    ()-> txSupportForTestingService.createInitializedWithTx(is, dataFile.length(), TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3"));
+                    ()-> txSupportForTestingService.createInitializedWithTx(is, size, TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3"));
         }
         assertNotNull(variable);
         assertNotNull(variable.id);
 
-        File trgFile = new File(tempDir, TRG_DATA_FILE_BIN);
+        Path trgFile = tempDir.resolve(TRG_DATA_FILE_BIN);
         variableService.storeToFileWithTx(variable.id, trgFile);
 
-        assertTrue(FileUtils.contentEquals(dataFile, trgFile));
+        assertTrue(FileUtils.contentEquals(dataFile.toFile(), trgFile.toFile()));
 
     }
 }

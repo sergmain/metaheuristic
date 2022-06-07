@@ -58,7 +58,6 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
@@ -70,10 +69,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -127,8 +125,9 @@ public class BatchResultProcessorTxService {
         }
     }
 
+    @SneakyThrows
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
-    public Void process(
+    public void process(
             ExecContextData.SimpleExecContext simpleExecContext, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
 
@@ -136,7 +135,7 @@ public class BatchResultProcessorTxService {
 
         ExecContextImpl execContext = execContextCache.findById(simpleExecContext.execContextId);
         if (execContext==null) {
-            return null;
+            return;
         }
 
         // key is name of variable
@@ -173,15 +172,14 @@ public class BatchResultProcessorTxService {
         Map<String, ItemWithStatusWithMapping> prepared = groupByTaskContextId(vars, nameToVar, List.of(Consts.TOP_LEVEL_CONTEXT_ID),
                 outputTypes::contains, statusTypes::contains, mappingTypes::contains);
 
-        File resultDir = DirUtils.createMhTempDir("batch-result-processing-");
+        Path resultDir = DirUtils.createMhTempPath("batch-result-processing-");
         if (resultDir == null) {
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, "#993.030 temp can't be created");
         }
         eventPublisher.publishEvent(new ResourceCloseTxEvent(resultDir));
 
-        File zipDir = new File(resultDir, "zip");
-        //noinspection ResultOfMethodCallIgnored
-        zipDir.mkdir();
+        Path zipDir = resultDir.resolve("zip");
+        Files.createDirectory(zipDir);
 
         storeGlobalBatchStatus(execContext, taskContextId, taskParamsYaml, zipDir);
 
@@ -195,17 +193,16 @@ public class BatchResultProcessorTxService {
             }
         }
 
-        File zipFile = new File(resultDir, Consts.RESULT_ZIP);
-        ZipUtils.createZip(zipDir.toPath(), zipFile.toPath());
+        Path zipFile = resultDir.resolve(Consts.RESULT_ZIP);
+        ZipUtils.createZip(zipDir, zipFile);
 
         storeBatchResult(simpleExecContext.sourceCodeId, simpleExecContext.execContextId, simpleExecContext.paramsYaml, taskContextId, taskParamsYaml, zipFile);
-        return null;
     }
 
     @SneakyThrows
     private void storeBatchResult(
             Long sourceCodeId, Long execContextId, ExecContextParamsYaml ecpy, String taskContextId, TaskParamsYaml taskParamsYaml,
-            File zipFile) {
+            Path zipFile) {
         String batchResultVarName = taskParamsYaml.task.outputs.stream().filter(o-> BATCH_RESULT.equals(o.type)).findFirst().map(o->o.name).orElse(null);
         if (S.b(batchResultVarName)) {
             throw new InternalFunctionException(
@@ -233,21 +230,22 @@ public class BatchResultProcessorTxService {
         final String originBatchFilename = name;
 
         // this stream will be closed outside of this transaction
-        FileInputStream fis = new FileInputStream(zipFile);
+        InputStream fis = Files.newInputStream(zipFile);
         eventPublisher.publishEvent(new ResourceCloseTxEvent(fis));
 
-        VariableSyncService.getWithSyncNullableForCreationVoid(batchResultVar.id,
-                () -> variableService.storeData(fis, zipFile.length(), batchResultVar.id, originBatchFilename));
+        final long size = Files.size(zipFile);
+        VariableSyncService.getWithSyncVoidForCreation(batchResultVar.id,
+                () -> variableService.storeData(fis, size, batchResultVar.id, originBatchFilename));
     }
 
     @SneakyThrows
     private void storeGlobalBatchStatus(
-            ExecContextImpl execContext, String taskContextId, TaskParamsYaml taskParamsYaml, File zipDir) {
+            ExecContextImpl execContext, String taskContextId, TaskParamsYaml taskParamsYaml, Path zipDir) {
         // TODO 2021-03-23 refactor as event
         BatchStatusProcessor status = prepareStatus(execContext);
 
-        File statusFile = new File(zipDir, "status.txt");
-        FileUtils.write(statusFile, status.getStatus(), StandardCharsets.UTF_8);
+        Path statusFile = zipDir.resolve("status.txt");
+        Files.writeString(statusFile, status.getStatus());
 
         String batchStatusVarName = taskParamsYaml.task.outputs.stream().filter(o-> BATCH_STATUS.equals(o.type)).findFirst().map(o->o.name).orElse(null);
         if (S.b(batchStatusVarName)) {
@@ -268,7 +266,7 @@ public class BatchResultProcessorTxService {
         // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
         eventPublisher.publishEvent(new ResourceCloseTxEvent(inputStream));
 
-        VariableSyncService.getWithSyncNullableForCreationVoid(batchStatusVar.id,
+        VariableSyncService.getWithSyncVoidForCreation(batchStatusVar.id,
                 () -> variableService.storeData(inputStream, bytes.length, batchStatusVar.id, null));
     }
 
@@ -341,7 +339,7 @@ public class BatchResultProcessorTxService {
         return map;
     }
 
-    private void storeResultVariables(File zipDir, Long execContextId, ItemWithStatusWithMapping item) {
+    private void storeResultVariables(Path zipDir, Long execContextId, ItemWithStatusWithMapping item) throws IOException {
 
         if (item.status==null) {
             log.error(S.f("#993.180 TaskContextId #%s has been skipped, (item.status==null).", item.taskContextId));
@@ -383,13 +381,13 @@ public class BatchResultProcessorTxService {
 
         fixPathInMapping(bimy);
 
-        File resultDir = new File(zipDir, bimy.targetDir);
-        if (!resultDir.getAbsolutePath().startsWith(zipDir.getAbsolutePath())) {
+        Path resultDir = zipDir.resolve(bimy.targetDir);
+        if (!resultDir.normalize().startsWith(zipDir.normalize())) {
             throw new IllegalStateException(
                     S.f("#993.213 Attempt to create a file outside of zip tree structure, zipDir: %s, resultDir: %s",
-                            zipDir.getAbsolutePath(), resultDir.getAbsolutePath()));
+                            zipDir.normalize(), resultDir.normalize()));
         }
-        resultDir.mkdir();
+        Files.createDirectories(resultDir);
 
         storeVariableToFile(bimy, resultDir, item.items);
         storeVariableToFile(bimy, resultDir, List.of(item.status));
@@ -424,7 +422,7 @@ public class BatchResultProcessorTxService {
         bimy.filenames = newMap;
     }
 
-    private void storeVariableToFile(BatchItemMappingYaml bimy, File resultDir, List<SimpleVariable> simpleVariables) {
+    private void storeVariableToFile(BatchItemMappingYaml bimy, Path resultDir, List<SimpleVariable> simpleVariables) {
         for (SimpleVariable simpleVariable : simpleVariables) {
             if (simpleVariable.nullified) {
                 log.info("#993.215 Variable #{} {} is null", simpleVariable.id, simpleVariable.variable);
@@ -434,7 +432,7 @@ public class BatchResultProcessorTxService {
             if (S.b(itemFilename)) {
                 itemFilename = simpleVariable.id.toString();
             }
-            File file = new File(resultDir, itemFilename);
+            Path file = resultDir.resolve(itemFilename);
             variableService.storeToFile(simpleVariable.id, file);
         }
     }

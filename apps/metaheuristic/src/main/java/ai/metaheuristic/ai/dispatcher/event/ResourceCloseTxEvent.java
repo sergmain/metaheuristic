@@ -18,8 +18,9 @@ package ai.metaheuristic.ai.dispatcher.event;
 
 import lombok.NoArgsConstructor;
 
-import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,23 +32,23 @@ import java.util.List;
 @NoArgsConstructor
 public class ResourceCloseTxEvent {
     private final List<InputStream> inputStreams = new ArrayList<>();
-    private final List<File> files = new ArrayList<>();
-    private final List<File> dirs = new ArrayList<>();
+    private final List<Path> files = new ArrayList<>();
+    private final List<Path> dirs = new ArrayList<>();
 
     public ResourceCloseTxEvent(InputStream inputStream) {
         this.inputStreams.add(inputStream);
     }
 
-    public ResourceCloseTxEvent(File tempFile) {
+    public ResourceCloseTxEvent(Path tempFile) {
         add(tempFile);
     }
 
-    public ResourceCloseTxEvent(InputStream is, File tempFile) {
+    public ResourceCloseTxEvent(InputStream is, Path tempFile) {
         this.inputStreams.add(is);
         add(tempFile);
     }
 
-    public ResourceCloseTxEvent(List<InputStream> iss, File tempFile) {
+    public ResourceCloseTxEvent(List<InputStream> iss, Path tempFile) {
         this.inputStreams.addAll(iss);
         add(tempFile);
     }
@@ -56,12 +57,12 @@ public class ResourceCloseTxEvent {
         this.inputStreams.add(inputStream);
     }
 
-    public void add(File path) {
-        if (path.isFile()) {
-            this.files.add(path);
+    public void add(Path path) {
+        if (Files.isDirectory(path)) {
+            this.dirs.add(path);
         }
         else {
-            this.dirs.add(path);
+            this.files.add(path);
         }
     }
 

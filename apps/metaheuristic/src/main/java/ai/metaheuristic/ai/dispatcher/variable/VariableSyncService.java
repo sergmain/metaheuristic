@@ -95,7 +95,7 @@ public class VariableSyncService {
         }
     }
 
-    public static void getWithSyncNullableForCreationVoid(Long variableId, Runnable runnable) {
+    public static void getWithSyncVoidForCreation(Long variableId, Runnable runnable) {
         checkWriteLockNotPresent(variableId);
 
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock(variableId);
