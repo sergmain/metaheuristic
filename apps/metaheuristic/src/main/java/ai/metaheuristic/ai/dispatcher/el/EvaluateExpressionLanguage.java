@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariabl
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -201,7 +202,8 @@ public class EvaluateExpressionLanguage {
                         }
 
                         try (InputStream is = new ByteArrayInputStream(bytes)) {
-                            variableService.storeData(is, bytes.length, variableHolderOutput.variable.id, null);
+                            VariableSyncService.getWithSyncVoid(variableHolderOutput.variable.id,
+                                    ()->variableService.storeData(is, bytes.length, variableHolderOutput.variable.id, null));
                         }
                         variableHolderOutput.variable.inited = true;
                     }

@@ -58,7 +58,6 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
     public void copyData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) {
         TxUtils.checkTxExists();
 
-
         final Path tempFile;
         try {
             tempFile = Files.createTempFile(globals.dispatcherTempDir, "var-" +srcVariable.id + "-", ".bin");
