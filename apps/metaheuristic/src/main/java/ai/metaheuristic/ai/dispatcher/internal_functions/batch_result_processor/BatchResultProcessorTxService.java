@@ -389,8 +389,8 @@ public class BatchResultProcessorTxService {
         }
         Files.createDirectories(resultDir);
 
-        storeVariableToFile(bimy, resultDir, item.items);
-        storeVariableToFile(bimy, resultDir, List.of(item.status));
+        variableService.storeVariableToFile(bimy, resultDir, item.items);
+        variableService.storeVariableToFile(bimy, resultDir, List.of(item.status));
     }
 
     private static void fixPathInMapping(BatchItemMappingYaml bimy) {
@@ -420,21 +420,6 @@ public class BatchResultProcessorTxService {
             newMap.put(entry.getKey(), value);
         }
         bimy.filenames = newMap;
-    }
-
-    private void storeVariableToFile(BatchItemMappingYaml bimy, Path resultDir, List<SimpleVariable> simpleVariables) {
-        for (SimpleVariable simpleVariable : simpleVariables) {
-            if (simpleVariable.nullified) {
-                log.info("#993.215 Variable #{} {} is null", simpleVariable.id, simpleVariable.variable);
-                continue;
-            }
-            String itemFilename = bimy.filenames.get(simpleVariable.id.toString());
-            if (S.b(itemFilename)) {
-                itemFilename = simpleVariable.id.toString();
-            }
-            Path file = resultDir.resolve(itemFilename);
-            variableService.storeToFile(simpleVariable.id, file);
-        }
     }
 
     private static String getResultDirNameFromTaskContextId(String taskContextId) {

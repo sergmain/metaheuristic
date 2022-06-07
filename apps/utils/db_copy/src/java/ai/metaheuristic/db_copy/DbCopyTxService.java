@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.db_copy;
 
+import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.db_copy.primary.repo.PrimaryFunctionDataRepository;
 import ai.metaheuristic.db_copy.secondary.repo.SecondaryFunctionDataRepository;
 import lombok.SneakyThrows;
@@ -29,11 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import java.io.File;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.sql.Blob;
 import java.sql.Timestamp;
 
@@ -67,7 +65,7 @@ public class DbCopyTxService {
             throw new RuntimeException("#088.010 Function data wasn't found, code: " + code);
         }
         try (InputStream is = blob.getBinaryStream()) {
-            Files.copy(is, trgFile, StandardCopyOption.REPLACE_EXISTING);
+            DirUtils.copy(is, trgFile);
         }
     }
 

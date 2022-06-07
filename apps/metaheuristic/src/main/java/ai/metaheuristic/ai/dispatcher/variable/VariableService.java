@@ -45,11 +45,14 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
+import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -67,9 +70,7 @@ import org.yaml.snakeyaml.Yaml;
 import javax.persistence.EntityManager;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.sql.Blob;
 import java.sql.Timestamp;
 import java.util.*;
@@ -434,6 +435,29 @@ public class VariableService {
         }
     }
 
+    @SneakyThrows
+    @Transactional(readOnly = true)
+    public void storeVariableToFileWithTx(BatchItemMappingYaml bimy, Path resultDir, List<SimpleVariable> simpleVariables) {
+        storeVariableToFile(bimy, resultDir, simpleVariables);
+    }
+
+    public void storeVariableToFile(BatchItemMappingYaml bimy, Path resultDir, List<SimpleVariable> simpleVariables) throws IOException {
+        TxUtils.checkTxExists();
+
+        for (SimpleVariable simpleVariable : simpleVariables) {
+            if (simpleVariable.nullified) {
+                log.info("#993.215 Variable #{} {} is null", simpleVariable.id, simpleVariable.variable);
+                continue;
+            }
+            String itemFilename = bimy.filenames.get(simpleVariable.id.toString());
+            if (S.b(itemFilename)) {
+                itemFilename = simpleVariable.id.toString();
+            }
+            Path file = resultDir.resolve(itemFilename);
+            storeToFile(simpleVariable.id, file);
+        }
+    }
+
     @Nullable
     @Transactional(readOnly = true)
     public Void storeToFileWithTx(Long variableId, Path trgFile) {
@@ -448,8 +472,8 @@ public class VariableService {
                 log.warn(es);
                 throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
             }
-            try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-                Files.copy(bis, trgFile, StandardCopyOption.REPLACE_EXISTING);
+            try (InputStream is = blob.getBinaryStream()) {
+                DirUtils.copy(is, trgFile);
             }
         } catch (CommonErrorWithDataException e) {
             throw e;

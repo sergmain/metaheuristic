@@ -530,7 +530,7 @@ public class Globals {
             }
         }
 
-        if (processor.dir.dir ==null) {
+        if (processor.dir==null || processor.dir.dir ==null) {
             log.warn("Processor will be disabled, processorDir is null, processorEnabled: {}", processor.enabled);
             processor.enabled = false;
         }

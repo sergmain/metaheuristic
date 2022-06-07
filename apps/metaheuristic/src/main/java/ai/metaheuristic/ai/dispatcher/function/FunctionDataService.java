@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.exceptions.FunctionDataNotFoundException;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
@@ -35,9 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
-import java.io.BufferedInputStream;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Blob;
 import java.sql.Timestamp;
@@ -66,8 +65,8 @@ public class FunctionDataService {
                 log.warn("#088.010 Binary data for code {} wasn't found", code);
                 throw new FunctionDataNotFoundException(code, "#088.010 Function data wasn't found, code: " + code);
             }
-            try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-                Files.copy(bis, trgFile);
+            try (InputStream is = blob.getBinaryStream()) {
+                DirUtils.copy(is, trgFile);
             }
         } catch (CommonErrorWithDataException e) {
             throw e;

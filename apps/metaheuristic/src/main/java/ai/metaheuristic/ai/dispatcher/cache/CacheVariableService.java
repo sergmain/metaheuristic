@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
@@ -32,10 +33,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
-import java.io.*;
-import java.nio.file.Files;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.sql.Blob;
 import java.sql.SQLException;
 
@@ -61,8 +61,8 @@ public class CacheVariableService {
             log.warn(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }
-        try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-            Files.copy(bis, trgFile, StandardCopyOption.REPLACE_EXISTING);
+        try (InputStream is = blob.getBinaryStream()) {
+            DirUtils.copy(is, trgFile);
         }
     }
 

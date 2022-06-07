@@ -20,20 +20,33 @@ import ai.metaheuristic.commons.S;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.lang.Nullable;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
 @Slf4j
 public class DirUtils {
+
+    @SneakyThrows
+    public static void copy(InputStream is, Path to) {
+        final Path parent = to.getParent();
+        if (Files.notExists(parent)) {
+            Files.createDirectories(parent);
+        }
+        try (BufferedInputStream bis = new BufferedInputStream(is, 0x4000);
+             OutputStream os = Files.newOutputStream(to); BufferedOutputStream bos = new BufferedOutputStream(os, 0x4000)) {
+            IOUtils.copy(bis, bos);
+        }
+    }
 
     public static void deletePathAsync(@Nullable final Path fileOrDir) {
         if (fileOrDir != null) {
@@ -56,7 +69,13 @@ public class DirUtils {
     @SneakyThrows
     @Nullable
     public static Path createMhTempPath(String prefix) {
-        Path trgDir = SystemUtils.getJavaIoTmpDir().toPath().resolve(CommonConsts.METAHEURISTIC_TEMP);
+        return createMhTempPath(SystemUtils.getJavaIoTmpDir().toPath(), prefix);
+    }
+
+    @SneakyThrows
+    @Nullable
+    public static Path createMhTempPath(Path base, String prefix) {
+        Path trgDir = base.resolve(CommonConsts.METAHEURISTIC_TEMP);
         if (Files.notExists(trgDir)) {
             Files.createDirectories(trgDir);
         }

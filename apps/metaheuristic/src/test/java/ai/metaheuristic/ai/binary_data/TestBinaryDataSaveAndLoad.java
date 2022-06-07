@@ -18,8 +18,11 @@ package ai.metaheuristic.ai.binary_data;
 
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -36,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -55,12 +59,16 @@ public class TestBinaryDataSaveAndLoad {
     private static final String DATA_FILE_BIN = "data-file.bin";
     private static final String TRG_DATA_FILE_BIN = "trg-data-file.bin";
     private static final String TEST_VARIABLE = "test-variable";
+    public static final String SYSTEM_PARAMS_V_2_YAML = "system/params-v2.yaml";
 
     @Autowired
     private VariableService variableService;
 
     @Autowired
     private TxSupportForTestingService txSupportForTestingService;
+
+    @Autowired
+    private VariableRepository variableRepository;
 
     private static final int ARRAY_SIZE = 1_000_000;
     private static final Random r = new Random();
@@ -76,8 +84,16 @@ public class TestBinaryDataSaveAndLoad {
     }
 
     @Test
-    public void testSaveAndLoad(@TempDir Path tempDir) throws IOException {
+    public void testSaveAndLoadToTempFile(@TempDir Path tempDir) throws IOException {
+        storeAndVerify(tempDir, Files.createTempFile(tempDir, "variable-", ".bin"));
+    }
 
+    @Test
+    public void testSaveAndLoad(@TempDir Path tempDir) throws IOException {
+        storeAndVerify(tempDir, tempDir.resolve(TRG_DATA_FILE_BIN));
+    }
+
+    private void storeAndVerify(Path tempDir, Path trgFile) throws IOException {
         byte[] bytes = new byte[ARRAY_SIZE];
         r.nextBytes(bytes);
 
@@ -93,10 +109,38 @@ public class TestBinaryDataSaveAndLoad {
         assertNotNull(variable);
         assertNotNull(variable.id);
 
-        Path trgFile = tempDir.resolve(TRG_DATA_FILE_BIN);
         variableService.storeToFileWithTx(variable.id, trgFile);
 
         assertTrue(FileUtils.contentEquals(dataFile.toFile(), trgFile.toFile()));
-
     }
+
+    @Test
+    public void testSaveAndLoad1(@TempDir Path tempDir) throws IOException {
+        byte[] bytes = new byte[ARRAY_SIZE];
+        r.nextBytes(bytes);
+
+        Path dataFile = tempDir.resolve(DATA_FILE_BIN);
+        Files.write(dataFile, bytes);
+
+        Variable variable;
+        try (InputStream is = Files.newInputStream(dataFile)) {
+            final long size = Files.size(dataFile);
+            variable = ExecContextSyncService.getWithSync(1L,
+                    ()-> txSupportForTestingService.createInitializedWithTx(is, size, TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3"));
+        }
+        assertNotNull(variable);
+        assertNotNull(variable.id);
+
+        BatchItemMappingYaml bimy = new BatchItemMappingYaml();
+        bimy.filenames.put(variable.id.toString(), SYSTEM_PARAMS_V_2_YAML);
+
+        SimpleVariable sv = variableRepository.findByIdAsSimple(variable.id);
+        assertNotNull(sv);
+
+        variableService.storeVariableToFileWithTx(bimy, tempDir, List.of(sv));
+
+        Path trgFile = tempDir.resolve(SYSTEM_PARAMS_V_2_YAML);
+        assertTrue(FileUtils.contentEquals(dataFile.toFile(), trgFile.toFile()));
+    }
+
 }

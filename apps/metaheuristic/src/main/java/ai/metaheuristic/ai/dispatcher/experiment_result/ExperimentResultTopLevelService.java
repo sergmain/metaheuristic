@@ -130,7 +130,7 @@ public class ExperimentResultTopLevelService {
         try {
             Path importFile = resultDir.resolve("import.zip");
             try (InputStream is = file.getInputStream()) {
-                Files.copy(is, importFile);
+                DirUtils.copy(is, importFile);
             }
             ZipUtils.unzipFolder(importFile, resultDir);
 
