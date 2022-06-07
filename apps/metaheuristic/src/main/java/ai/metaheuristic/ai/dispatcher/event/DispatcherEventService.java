@@ -165,13 +165,13 @@ public class DispatcherEventService {
         }
         resource.toClean.add(tempDir);
         Path filesDir = tempDir.resolve("files");
+        Files.createDirectory(filesDir);
 
         List<Long> ids = dispatcherEventRepository.findIdByPeriod(periods);
         if (!ids.isEmpty()) {
             Yaml yaml = YamlUtils.init(ListOfEvents.class);
 
             for (int i = 0; i < ids.size() / PAGE_SIZE + 1; i++) {
-                Path f = filesDir.resolve("event-file-" + i + ".yaml");
                 int fromIndex = i * PAGE_SIZE;
                 List<Long> subList = ids.subList(fromIndex, Math.min(ids.size(), fromIndex + PAGE_SIZE));
                 List<DispatcherEvent> events = dispatcherEventRepository.findByIds(subList);
@@ -180,6 +180,7 @@ public class DispatcherEventService {
                 for (DispatcherEvent event : events) {
                     listOfEvents.events.add(event.params);
                 }
+                Path f = filesDir.resolve("event-file-" + i + ".yaml");
                 Files.writeString(f, yaml.dumpAsMap(listOfEvents));
             }
         }
