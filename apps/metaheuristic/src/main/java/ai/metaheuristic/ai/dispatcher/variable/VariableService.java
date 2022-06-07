@@ -69,6 +69,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.sql.Blob;
 import java.sql.Timestamp;
 import java.util.*;
@@ -448,7 +449,7 @@ public class VariableService {
                 throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
             }
             try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-                Files.copy(bis, trgFile);
+                Files.copy(bis, trgFile, StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (CommonErrorWithDataException e) {
             throw e;
