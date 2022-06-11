@@ -117,7 +117,7 @@ public class ExecContextTaskResettingTopLevelService {
     public void resetTasksWithErrorForRecovery(Long execContextId) {
         TxUtils.checkTxNotExists();
 
-        List<Long> taskIds = taskRepository.findTaksForErrorWithRecoveryState(execContextId);
+        List<Long> taskIds = taskRepository.findTaskForErrorWithRecoveryState(execContextId);
         if (taskIds.isEmpty()) {
             return;
         }

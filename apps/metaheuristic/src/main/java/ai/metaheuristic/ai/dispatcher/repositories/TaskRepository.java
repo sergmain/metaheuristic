@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Repository
 @Profile("dispatcher")
@@ -35,7 +36,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
     @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
     @Query("SELECT t.id FROM TaskImpl t where t.execContextId=:execContextId and t.execState=7")
-    List<Long> findTaksForErrorWithRecoveryState(Long execContextId);
+    List<Long> findTaskForErrorWithRecoveryState(Long execContextId);
 
     @Query(value="select t.execState, count(*) as count_records from TaskImpl t, ExecContextImpl e " +
             "where (e.rootExecContextId=:execContextId or e.id=:execContextId) and e.id = t.execContextId " +
@@ -71,6 +72,11 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query(value="select t.id, t.execState, t.execContextId from TaskImpl t where t.coreId=:coreId and t.execState=1")
     @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     List<Object[]> findExecStateByCoreId(Long coreId);
+
+    // IN_PROGRESS(1)
+    @Query(value="select t.coreId from TaskImpl t where t.execState=1")
+    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+    Set<Long> findCoreIdsWithInProgress();
 
     @Query(value="select t.id from TaskImpl t where t.coreId=:coreId")
     @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)

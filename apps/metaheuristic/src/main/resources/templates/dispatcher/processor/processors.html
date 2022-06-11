@@ -91,7 +91,7 @@
                 <tr>
                     <td>
                         <div th:each="c : ${r.cores}" th:remove="tag" >
-                            <div th:text="${'#' + c.id + ': ' + c.code}">Processor's Id and Code</div>
+                            <div th:text="${'#' + c.id + ': ' + c.code}" th:class="${'no-wrap ' + (c.busy ? 'alert-success' : 'alert-secondary')}">Processor's Id, Code, Busy</div>
                         </div>
                     </td>
                 </tr>

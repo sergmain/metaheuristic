@@ -182,6 +182,7 @@ public class ProcessorTopLevelService {
         ProcessorData.ProcessorsResult result = new ProcessorData.ProcessorsResult();
         Slice<Long> ids = processorRepository.findAllByOrderByUpdatedOnDescId(pageable);
         List<ProcessorData.ProcessorStatus> ss = new ArrayList<>(pageable.getPageSize()+1);
+        Set<Long> busyCoreIds = taskRepository.findCoreIdsWithInProgress();
         for (Long processorId : ids) {
             Processor processor = processorCache.findById(processorId);
             if (processor ==null) {
@@ -208,10 +209,11 @@ public class ProcessorTopLevelService {
             ss.add(processorStatus);
 
             List<Object[]> coreIds = processorCoreRepository.findIdsAndCodesByProcessorId(Consts.PAGE_REQUEST_100_REC, processor.id);
+
             for (Object[] obj : coreIds) {
                 Long coreId = ((Number)obj[0]).longValue();
                 String code = obj[1]==null ? "<unknown>" : obj[1].toString();
-                processorStatus.cores.add(new ProcessorData.ProcessorCore(coreId, code));
+                processorStatus.cores.add(new ProcessorData.ProcessorCore(coreId, code, busyCoreIds.contains(coreId)));
             }
             processorStatus.cores.sort((o1, o2)-> Objects.equals(o1, o2) || o1==null || o2==null ? 0 :  o1.code().compareTo(o2.code()) );
         }
