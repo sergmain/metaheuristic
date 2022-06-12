@@ -51,6 +51,14 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query(value="delete from TaskImpl t where t.id=:id")
     void deleteById(Long id);
 
+//    ERROR(-2),          // some error in configuration
+//    FINISHED(5),        // finished
+    @Query(value= """
+            select t.id
+            from TaskImpl t, ExecContextImpl e
+            where t.execContextId=e.id and t.execState=1 and (e.state=5 or e.state=-2)""")
+    List<Long> getUnfinishedTaskForFinishedExecContext();
+
     @Query(value="select distinct t.execContextId from TaskImpl t")
     List<Long> getAllExecContextIds();
 
@@ -104,5 +112,10 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Modifying
     @Query("update TaskImpl t set t.accessByProcessorOn = :mills where t.id = :taskId")
     void updateAccessByProcessorOn(Long taskId, long mills);
+
+    @Modifying
+    @Transactional
+    @Query("update TaskImpl t set t.execState=5 where t.id in (:ids)")
+    void updateTaskAsFinished(List<Long> ids);
 }
 

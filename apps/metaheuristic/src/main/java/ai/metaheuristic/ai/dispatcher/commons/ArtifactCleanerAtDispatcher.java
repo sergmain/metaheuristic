@@ -244,6 +244,9 @@ public class ArtifactCleanerAtDispatcher {
         // all running tasks at processor will be terminated only if a related ExecContext doesn't exist
         deleteOrphanExecContexts(execContextIds);
 
+        // this operation isn't complex so don't need to use isBusy()
+        markTasksAsFinishedForFinishedExecContext();
+
         if (isBusy()) {
             return;
         }
@@ -256,6 +259,23 @@ public class ArtifactCleanerAtDispatcher {
             return;
         }
         deleteOrphanExecContextVariableState(execContextIds);
+    }
+
+    private void markTasksAsFinishedForFinishedExecContext() {
+        List<Long> forUpdating = taskRepository.getUnfinishedTaskForFinishedExecContext();
+        List<List<Long>> pages = CollectionUtils.parseAsPages(forUpdating, 5);
+        for (List<Long> page : pages) {
+            if (page.isEmpty()) {
+                continue;
+            }
+            log.info("Found tasks with lost state, tasks #{}", page);
+            try {
+                taskRepository.updateTaskAsFinished(page);
+            }
+            catch (Throwable th) {
+                log.error("taskRepository.updateTaskAsFinished("+page+")", th);
+            }
+        }
     }
 
     private void deleteOrphanExecContexts(List<Long> execContextIds) {
