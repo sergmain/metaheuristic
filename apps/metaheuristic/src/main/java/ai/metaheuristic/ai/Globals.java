@@ -217,17 +217,14 @@ public class Globals {
             return batchDeletion.toSeconds() >= 7 && batchDeletion.toSeconds() <= 180 ? batchDeletion : DAYS_14;
         }
 
-        //        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.dispatcher.timeout.artifactCleaner.toSeconds(), 30, 300)*1000 }")
         public Duration getArtifactCleaner() {
             return artifactCleaner.toSeconds() >= 60 && artifactCleaner.toSeconds() <=600 ? artifactCleaner : SECONDS_60;
         }
 
-//        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.dispatcher.timeout.gc.toSeconds(), 600, 3600*24*7)*1000 }")
         public Duration getGc() {
             return gc.toSeconds() >= 600 && gc.toSeconds() <= 3600*24*7 ? gc : SECONDS_3600;
         }
 
-//        @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( @Globals.dispatcher.timeout.updateBatchStatuses.toSeconds(), 5, 60)*1000 }")
         public Duration getUpdateBatchStatuses() {
             return updateBatchStatuses.toSeconds() >= 5 && updateBatchStatuses.toSeconds() <=60 ? updateBatchStatuses : SECONDS_23;
         }
@@ -758,6 +755,6 @@ public class Globals {
         log.info("'\tprocessor.timeout.taskAssigner: {}", processor.timeout.taskAssigner);
         log.info("'\tprocessor.timeout.taskProcessor: {}", processor.timeout.taskProcessor);
         log.info("'\tprocessor.timeout.dispatcherContextInfo: {}", processor.timeout.dispatcherContextInfo);
-        log.info("'\tprocessor.dir: {}", processor.dir.dir !=null ? processor.dir.dir.getAbsolutePath() : "<processor dir is null>");
+        log.info("'\tprocessor.dir: {}", processor.dir!=null && processor.dir.dir !=null ? processor.dir.dir.getAbsolutePath() : "<processor dir is null>");
     }
 }

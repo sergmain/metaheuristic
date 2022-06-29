@@ -119,7 +119,9 @@ public class ReplicationCoreService {
             }
             final HttpEntity entity = httpResponse.getEntity();
             if (entity != null) {
-                return getReplicationAsset(entity.getContent(), clazz);
+                try (final InputStream content = entity.getContent()) {
+                    return getReplicationAsset(content, clazz);
+                }
             }
             else {
                 return new ReplicationData.AssetAcquiringError( S.f("Entry is null, url %s",

@@ -56,6 +56,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -290,7 +291,10 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             }
             final HttpEntity entity = httpResponse.getEntity();
             if (entity != null) {
-                String value = IOUtils.toString(entity.getContent(), StandardCharsets.UTF_8);
+                String value;
+                try (final InputStream content = entity.getContent()) {
+                    value = IOUtils.toString(content, StandardCharsets.UTF_8);
+                }
                 // right now uri /variable-status returns value of 'inited' field
 
                 return switch (value) {

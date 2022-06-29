@@ -36,24 +36,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ConcurrentTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.*;
@@ -66,7 +58,6 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.stream.Collectors;
 
 /**
  * User: Serg
@@ -182,9 +173,9 @@ public class Config {
 
         private void checkProfiles() {
             List<String> profiles = Arrays.stream(StringUtils.split(activeProfiles, ", "))
-                    .filter(o-> !POSSIBLE_PROFILES.contains(o))
-                    .peek(o-> log.error(S.f("\n!!! Unknown profile: %s\n", o)))
-                    .collect(Collectors.toList());
+                    .filter(o -> !POSSIBLE_PROFILES.contains(o))
+                    .peek(o -> log.error(S.f("\n!!! Unknown profile: %s\n", o)))
+                    .toList();
 
             if (!profiles.isEmpty()) {
                 log.error("\nUnknown profile(s) was encountered in property spring.profiles.active.\nNeed to be fixed.\n" +
