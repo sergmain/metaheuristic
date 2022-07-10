@@ -232,7 +232,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             if (status!=null) {
                 switch(status) {
                     case VARIABLE_NOT_FOUND:
-                        // right we will assume that it's ok to set as UploadedAndCompleted
+                        // right now we will assume that it's ok to set as UploadedAndCompleted
                     case OK:
                         log.info("Variable #{} was successfully uploaded to server, {}, {} ", finalTask.variableId, task.getDispatcherUrl(), task.taskId);
                         processorTaskService.setVariableUploadedAndCompleted(task.core, task.taskId, finalTask.variableId);

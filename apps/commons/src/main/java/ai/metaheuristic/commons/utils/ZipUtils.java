@@ -204,20 +204,22 @@ public class ZipUtils {
     @SneakyThrows
     public static Path createTargetFile(Path zipDestinationFolder, String name) {
         Path destinationPath = zipDestinationFolder.resolve(name);
-        if (name.endsWith(File.separator)) {
-            if (!Files.isDirectory(destinationPath)) {
+        if (name.charAt(name.length()-1)=='\\' || name.charAt(name.length()-1)=='/') {
+            if (Files.notExists(destinationPath)) {
                 Files.createDirectories(destinationPath);
+            }
+            else if (!Files.isDirectory(destinationPath)) {
+                throw new IllegalStateException("(!Files.isDirectory(destinationPath)), " + destinationPath);
             }
             return destinationPath;
         }
-        // TODO 2019-06-27 what is that?
-        else if (name.indexOf(File.separatorChar) != -1) {
-            // Create the the parent directory if it doesn't exist
-//            if (true) throw new IllegalStateException("need investigate this case");
-
+        else if (name.indexOf('\\')!=-1 || name.indexOf('/')!=-1) {
             Path parentFolder = destinationPath.getParent();
-            if (!Files.isDirectory(parentFolder)) {
+            if (Files.notExists(parentFolder)) {
                 Files.createDirectories(parentFolder);
+            }
+            else if (!Files.isDirectory(parentFolder)) {
+                throw new IllegalStateException("(!Files.isDirectory(parentFolder)), " + parentFolder);
             }
         }
         return destinationPath;
@@ -385,6 +387,32 @@ public class ZipUtils {
                 }
             }
             return mapping;
+        }
+        catch (Throwable th) {
+            log.error("Unzipping error", th);
+            throw new UnzipArchiveException("Unzip failed, error: " + th.getMessage(), th);
+        }
+    }
+
+    public static List<String> listNameOfEntries(Path archivePath) {
+        if (log.isDebugEnabled()) {
+            log.debug("Start unzipping archive file");
+            log.debug("'\tzip archive file: {}", archivePath.normalize());
+            log.debug("'\t\texists: {}", Files.exists(archivePath));
+            log.debug("'\t\tis writable: {}", Files.isWritable(archivePath));
+            log.debug("'\t\tis readable: {}", Files.isReadable(archivePath));
+        }
+        List<String> names = new ArrayList<>();
+        try (SeekableByteChannel inChannel = Files.newByteChannel(archivePath, EnumSet.of(READ)); MyZipFile zipFile = new MyZipFile(inChannel)) {
+            Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
+            while (entries.hasMoreElements()) {
+                ZipArchiveEntry zipEntry = entries.nextElement();
+                String name = zipEntry.getName();
+                if (!zipEntry.isDirectory()) {
+                    names.add(name);
+                }
+            }
+            return names;
         }
         catch (Throwable th) {
             log.error("Unzipping error", th);

@@ -50,32 +50,34 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 6/5/2019
  * Time: 12:24 PM
  */
-class TestZipUtils {
+@SuppressWarnings("UnusedReturnValue")
+class ZipUtilsTest {
 
     private static int currentBufferSize = ZipUtils.BUFFER_SIZE + 256;
     private static char separatorChar = File.separatorChar;
 
     @Test
     public void testBuffer() throws IOException {
-        FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
-        Path temp = fs.getPath("/temp");
-        Path actualTemp = Files.createDirectory(temp);
+        try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
+            Path temp = fs.getPath("/temp");
+            Path actualTemp = Files.createDirectory(temp);
 
-        Path text = actualTemp.resolve("test.txt");
-        Files.writeString(text, StrUtils.randomAlphanumeric(10000), StandardCharsets.UTF_8);
+            Path text = actualTemp.resolve("test.txt");
+            Files.writeString(text, StrUtils.randomAlphanumeric(10000), StandardCharsets.UTF_8);
 
-        assertTimeoutPreemptively(Duration.ofSeconds(1), ()-> {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            try (ReadableByteChannel rbc = Files.newByteChannel(text, EnumSet.of(READ))) {
+            assertTimeoutPreemptively(Duration.ofSeconds(1), () -> {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                try (ReadableByteChannel rbc = Files.newByteChannel(text, EnumSet.of(READ))) {
 
-                final ByteBuffer buffer = ByteBuffer.wrap(new byte[256]);
-                int n;
-                while (-1 != (n = rbc.read(buffer))) {
-                    baos.write(buffer.array(), 0, n);
-                    buffer.clear();
+                    final ByteBuffer buffer = ByteBuffer.wrap(new byte[256]);
+                    int n;
+                    while (-1 != (n = rbc.read(buffer))) {
+                        baos.write(buffer.array(), 0, n);
+                        buffer.clear();
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     // test zip with hierarchy
@@ -98,28 +100,28 @@ class TestZipUtils {
     public void testCreateZipInIimfs_unix() throws IOException {
         currentBufferSize = ZipUtils.BUFFER_SIZE * 2;
         separatorChar = '/';
-        createZipInIimfs_unix(TestZipUtils::testCreateZipInternal);
+        createZipInIimfs_unix(ZipUtilsTest::testCreateZipInternal);
     }
 
     @Test
     public void testCreateZipInIimfs_unix_1() throws IOException {
         currentBufferSize = ZipUtils.BUFFER_SIZE / 2;
         separatorChar = '/';
-        createZipInIimfs_unix(TestZipUtils::testCreateZipInternal);
+        createZipInIimfs_unix(ZipUtilsTest::testCreateZipInternal);
     }
 
     @Test
     public void testCreateZipInIimfs_win() throws IOException {
         currentBufferSize = ZipUtils.BUFFER_SIZE * 2;
         separatorChar = '\\';
-        createZipInIimfs_win(TestZipUtils::testCreateZipInternal);
+        createZipInIimfs_win(ZipUtilsTest::testCreateZipInternal);
     }
 
     @Test
     public void testCreateZipInIimfs_win_1() throws IOException {
         currentBufferSize = ZipUtils.BUFFER_SIZE / 2;
         separatorChar = '\\';
-        createZipInIimfs_win(TestZipUtils::testCreateZipInternal);
+        createZipInIimfs_win(ZipUtilsTest::testCreateZipInternal);
     }
 
     // test zip with plain structure
@@ -142,48 +144,95 @@ class TestZipUtils {
     public void testCreateZipInIimfs_unix_plain() throws IOException {
         currentBufferSize = ZipUtils.BUFFER_SIZE * 2;
         separatorChar = '/';
-        createZipInIimfs_unix(TestZipUtils::testCreatePlainZipInternal);
+        createZipInIimfs_unix(ZipUtilsTest::testCreatePlainZipInternal);
     }
 
     @Test
     public void testCreateZipInIimfs_unix_1_plain() throws IOException {
         currentBufferSize = ZipUtils.BUFFER_SIZE / 2;
         separatorChar = '/';
-        createZipInIimfs_unix(TestZipUtils::testCreatePlainZipInternal);
+        createZipInIimfs_unix(ZipUtilsTest::testCreatePlainZipInternal);
     }
 
     @Test
     public void testCreateZipInIimfs_win_plain() throws IOException {
         currentBufferSize = ZipUtils.BUFFER_SIZE * 2;
         separatorChar = '\\';
-        createZipInIimfs_win(TestZipUtils::testCreatePlainZipInternal);
+        createZipInIimfs_win(ZipUtilsTest::testCreatePlainZipInternal);
     }
 
     @Test
     public void testCreateZipInIimfs_win_1_plain() throws IOException {
         currentBufferSize = ZipUtils.BUFFER_SIZE / 2;
         separatorChar = '\\';
-        createZipInIimfs_win(TestZipUtils::testCreatePlainZipInternal);
+        createZipInIimfs_win(ZipUtilsTest::testCreatePlainZipInternal);
     }
+
+    // test listing of name of archive
+
+    @Test
+    public void testListNameZipInIimfs_unix() throws IOException {
+        currentBufferSize = ZipUtils.BUFFER_SIZE * 2;
+        separatorChar = '/';
+        try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
+            // https://github.com/google/jimfs/issues/69
+            // with windows configuration an absolute path isn't working rn
+            Path temp = fs.getPath("temp");
+            Path actualTemp = Files.createDirectory(temp);
+            Path zipFile = ZipUtilsTest.testCreateZipInternal(actualTemp);
+            List<String> names = ZipUtils.listNameOfEntries(zipFile);
+            names.forEach(System.out::println);
+            checkNames(names);
+        }
+    }
+
+    @Test
+    public void testListNameZipInIimfs_win() throws IOException {
+        currentBufferSize = ZipUtils.BUFFER_SIZE * 2;
+        separatorChar = '\\';
+        try (FileSystem fs = Jimfs.newFileSystem(Configuration.windows())) {
+            // https://github.com/google/jimfs/issues/69
+            // with windows configuration an absolute path isn't working rn
+            Path temp = fs.getPath("temp");
+            Path actualTemp = Files.createDirectory(temp);
+            Path zipFile = ZipUtilsTest.testCreateZipInternal(actualTemp);
+            List<String> names = ZipUtils.listNameOfEntries(zipFile);
+            names.forEach(System.out::println);
+            checkNames(names);
+        }
+    }
+
+    private void checkNames(List<String> names) {
+        assertEquals(6, names.size());
+        assertTrue(names.contains("zip/natürlich/natürlich.txt"));
+        assertTrue(names.contains("zip/natürlich.txt"));
+        assertTrue(names.contains("zip/ИИИ/ИИИ.txt"));
+        assertTrue(names.contains("zip/ИИИ.txt"));
+        assertTrue(names.contains("zip/日本語/日本語.txt"));
+        assertTrue(names.contains("zip/日本語.txt"));
+    }
+
 
     // ====================
 
     private static void createZipInIimfs_unix(Consumer<Path> createZipFunc) throws IOException {
-        FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
-        Path temp = fs.getPath("/temp");
-        Path actualTemp = Files.createDirectory(temp);
+        try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
+            Path temp = fs.getPath("/temp");
+            Path actualTemp = Files.createDirectory(temp);
 
-        createZipFunc.accept(actualTemp);
+            createZipFunc.accept(actualTemp);
+        }
     }
 
     private static void createZipInIimfs_win(Consumer<Path> createZipFunc) throws IOException {
-        FileSystem fs = Jimfs.newFileSystem(Configuration.windows());
-        // https://github.com/google/jimfs/issues/69
-        // with windows configuration an absolute path isn't working rn
-        Path temp = fs.getPath("temp");
-        Path actualTemp = Files.createDirectory(temp);
+        try (FileSystem fs = Jimfs.newFileSystem(Configuration.windows())) {
+            // https://github.com/google/jimfs/issues/69
+            // with windows configuration an absolute path isn't working rn
+            Path temp = fs.getPath("temp");
+            Path actualTemp = Files.createDirectory(temp);
 
-        createZipFunc.accept(actualTemp);
+            createZipFunc.accept(actualTemp);
+        }
     }
 
     @SneakyThrows
@@ -208,7 +257,7 @@ class TestZipUtils {
         Files.createDirectories(zip1);
         Map<String, String> renamedTo = ZipUtils.unzipFolder(zipFile, zip1, true, List.of(), true);
 
-        List<Path> paths = PathUtils.walk(zip1, FileFileFilter.INSTANCE, Integer.MAX_VALUE, false).collect(Collectors.toList());
+        List<Path> paths = PathUtils.walk(zip1, FileFileFilter.INSTANCE, Integer.MAX_VALUE, false).toList();
         assertEquals(6, paths.size(), paths.stream().map(p-> S.f("%-50s %s", p.toString(), getSize(p))).collect(Collectors.joining("\n")));
 
         for (Path path : paths) {
@@ -227,7 +276,7 @@ class TestZipUtils {
 
         assertTrue(renamedTo.containsValue("zip/日本語.txt"));
         String key = renamedTo.entrySet().stream().filter(o->o.getValue().equals("zip/日本語.txt")).findFirst().map(Map.Entry::getKey).orElseThrow();
-        assertTrue(key.startsWith("zip"+ separatorChar));
+        assertTrue(key.startsWith("zip"+ separatorChar), key);
 
         assertTrue(renamedTo.containsValue("zip/日本語/日本語.txt"));
         key = renamedTo.entrySet().stream().filter(o->o.getValue().equals("zip/日本語/日本語.txt")).findFirst().map(Map.Entry::getKey).orElseThrow();
@@ -276,7 +325,7 @@ class TestZipUtils {
         Files.createDirectories(zip1);
         Map<String, String> renamedTo = ZipUtils.unzipFolder(zipFile, zip1, true, List.of(), true);
 
-        List<Path> paths = PathUtils.walk(zip1, FileFileFilter.INSTANCE, Integer.MAX_VALUE, false).collect(Collectors.toList());
+        List<Path> paths = PathUtils.walk(zip1, FileFileFilter.INSTANCE, Integer.MAX_VALUE, false).toList();
         assertEquals(3, paths.size(), paths.stream().map(p-> S.f("%-50s %s", p.toString(), getSize(p))).collect(Collectors.joining("\n")));
 
         for (Path path : paths) {

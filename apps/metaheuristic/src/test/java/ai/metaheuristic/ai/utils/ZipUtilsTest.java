@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.commons.utils.ZipUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.util.FileCopyUtils;
@@ -38,14 +39,14 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 6/5/2019
  * Time: 12:24 PM
  */
-class TestZipUtils {
+class ZipUtilsTest {
 
     // test how validator is working
     @Test
     public void validateZip(@TempDir File dir) throws IOException {
         final File tempZipFile = File.createTempFile("temp-zip-file-", ".zip", dir);
         try (FileOutputStream fos = new FileOutputStream(tempZipFile);
-             InputStream is = TestZipUtils.class.getResourceAsStream("/bin/test-zip.zip")) {
+             InputStream is = ZipUtilsTest.class.getResourceAsStream("/bin/test-zip.zip")) {
             assertNotNull(is);
             FileCopyUtils.copy(is, fos);
         }
@@ -54,6 +55,7 @@ class TestZipUtils {
         assertFalse(errors.isEmpty());
     }
 
+    @Disabled
     @Test
     public void testUzipping(@TempDir File temp) throws IOException {
         final File tempZipFile = new File("D:\\2\\220422_173128.zip");
