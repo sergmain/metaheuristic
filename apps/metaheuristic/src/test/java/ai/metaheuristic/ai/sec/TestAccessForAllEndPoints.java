@@ -26,6 +26,10 @@ import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -33,6 +37,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.context.WebApplicationContext;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -94,18 +101,18 @@ public class TestAccessForAllEndPoints {
     };
 
     private static final AccessUrl[] EXPERIMENT_RESULT_URLS = new AccessUrl[]{
-            new AccessUrl("/dispatcher/experiment-result/experiment-results", AccessMethod.GET),
-            new AccessUrl("/dispatcher/experiment-result/experiment-results-part", AccessMethod.POST),
-            new AccessUrl("/dispatcher/experiment-result/experiment-result-info/1", AccessMethod.GET),
-            new AccessUrl("/dispatcher/experiment-result/experiment-result-delete/1", AccessMethod.GET),
-            new AccessUrl("/dispatcher/experiment-result/experiment-result-delete-commit", AccessMethod.POST),
-            new AccessUrl("/dispatcher/experiment-result/experiment-result-upload-from-file", AccessMethod.POST),
-            new AccessUrl("/dispatcher/experiment-result/experiment-result-export/experiment-result-1.yaml", AccessMethod.GET),
-            new AccessUrl("/dispatcher/experiment-result/experiment-result-export-import/1", AccessMethod.GET),
-            new AccessUrl("/dispatcher/experiment-result/experiment-result-feature-progress/1/1/1", AccessMethod.GET),
-            new AccessUrl("/dispatcher/experiment-result/experiment-result-feature-plot-data-part/1/1/1/1/1/part", AccessMethod.POST),
-            new AccessUrl("/dispatcher/experiment-result/experiment-result-feature-progress-console-part/1/1", AccessMethod.POST),
-            new AccessUrl("/dispatcher/experiment-result/experiment-result-feature-progress-part/1/1/1/1/part", AccessMethod.POST),
+            new AccessUrl("/dispatcher/ai/experiment-result/experiment-results", AccessMethod.GET),
+            new AccessUrl("/dispatcher/ai/experiment-result/experiment-results-part", AccessMethod.POST),
+            new AccessUrl("/dispatcher/ai/experiment-result/experiment-result-info/1", AccessMethod.GET),
+            new AccessUrl("/dispatcher/ai/experiment-result/experiment-result-delete/1", AccessMethod.GET),
+            new AccessUrl("/dispatcher/ai/experiment-result/experiment-result-delete-commit", AccessMethod.POST),
+            new AccessUrl("/dispatcher/ai/experiment-result/experiment-result-upload-from-file", AccessMethod.POST),
+            new AccessUrl("/dispatcher/ai/experiment-result/experiment-result-export/experiment-result-1.yaml", AccessMethod.GET),
+            new AccessUrl("/dispatcher/ai/experiment-result/experiment-result-export-import/1", AccessMethod.GET),
+            new AccessUrl("/dispatcher/ai/experiment-result/experiment-result-feature-progress/1/1/1", AccessMethod.GET),
+            new AccessUrl("/dispatcher/ai/experiment-result/experiment-result-feature-plot-data-part/1/1/1/1/1/part", AccessMethod.POST),
+            new AccessUrl("/dispatcher/ai/experiment-result/experiment-result-feature-progress-console-part/1/1", AccessMethod.POST),
+            new AccessUrl("/dispatcher/ai/experiment-result/experiment-result-feature-progress-part/1/1/1/1/part", AccessMethod.POST),
     };
 
     private static final AccessUrl[] EXPERIMENT_RESULT_REST_URLS = new AccessUrl[]{
@@ -119,7 +126,6 @@ public class TestAccessForAllEndPoints {
     };
 
     private static final AccessUrl[] SERVER_REST_URLS = new AccessUrl[]{
-            new AccessUrl("/rest/v1/srv/1", AccessMethod.POST),
             new AccessUrl("/rest/v1/srv-v2/1", AccessMethod.POST),
             new AccessUrl("/rest/v1/payload/resource/1/1", AccessMethod.GET),
             new AccessUrl("/rest/v1/payload/resource/variable/1/1", AccessMethod.GET),
