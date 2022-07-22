@@ -24,10 +24,10 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
@@ -75,18 +75,18 @@ public class MultiHttpSecurityConfig {
         return source;
     }
 
+    private static final String REST_REALM = "REST realm";
+
     @Configuration
-    @Order(1)
     @RequiredArgsConstructor
-    public static class RestAuthSecurityConfig extends WebSecurityConfigurerAdapter {
+    public static class AuthSecurityConfig {
 
-        private static final String REST_REALM = "REST realm";
+        public final Globals globals;
+        private final CsrfTokenRepository csrfTokenRepository;
 
-        private final Globals globals;
-
-        @Override
-        protected void configure(HttpSecurity http) throws Exception {
-
+        @Bean
+        @Order(0)
+        public SecurityFilterChain restFilterChain(HttpSecurity http) throws Exception {
             http
                     .antMatcher("/rest/**/**").cors()
                     .and()
@@ -103,20 +103,12 @@ public class MultiHttpSecurityConfig {
             if (globals.dispatcher.sslRequired) {
                 http.requiresChannel().antMatchers("/**").requiresSecure();
             }
+            return http.build();
         }
-    }
 
-    @Configuration
-    @Order
-    @RequiredArgsConstructor
-    public static class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
-
-        private final CsrfTokenRepository csrfTokenRepository;
-        private final Globals globals;
-
-        @Override
-        protected void configure(HttpSecurity http) throws Exception {
-
+        @Bean
+        @Order(1)
+        public SecurityFilterChain defaultFilterChain(HttpSecurity http) throws Exception {
             http
                     .csrf().csrfTokenRepository(csrfTokenRepository)
                     .and()
@@ -148,6 +140,7 @@ public class MultiHttpSecurityConfig {
             if (globals.dispatcher.sslRequired) {
                 http.requiresChannel().antMatchers("/**").requiresSecure();
             }
+            return http.build();
         }
     }
 }
