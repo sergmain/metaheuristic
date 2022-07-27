@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -119,12 +120,14 @@ public class TaskWithInternalContextTopLevelService {
                 }
                 if (variableHolder.variable.nullified) {
                     VariableUploadedEvent event = new VariableUploadedEvent(ec.id, task.id, output.id, true);
-                    variableTopLevelService.setAsNullFunction(output.id, event, ec.execContextVariableStateId);
+                    VariableSyncService.getWithSyncVoidForCreation(output.id,
+                            ()->variableTopLevelService.setAsNullFunction(output.id, event, ec.execContextVariableStateId));
                 }
                 else {
                     Path tempFile = Files.createTempFile(tempDir, "output-", ".bin");
                     variableService.storeToFileWithTx(variableHolder.variable.id, tempFile);
-                    execContextVariableService.storeDataInVariable(output, tempFile);
+                    VariableSyncService.getWithSyncVoidForCreation(output.id,
+                            ()->execContextVariableService.storeDataInVariable(output, tempFile));
                 }
             }
         }

@@ -178,7 +178,8 @@ public class AggregateFunction implements InternalFunction {
             Path zipFile = tempDir.resolve("result-for-"+outputVariable.name+".zip");
             ZipUtils.createZip(outputDir, zipFile);
 
-            VariableSyncService.getWithSyncVoidForCreation(outputVariable.id, ()->execContextVariableService.storeDataInVariable(outputVariable, zipFile));
+            VariableSyncService.getWithSyncVoidForCreation(outputVariable.id,
+                    ()->execContextVariableService.storeDataInVariable(outputVariable, zipFile));
         }
         finally {
             if (tempDir!=null) {
