@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -103,7 +104,8 @@ public class EvaluationFunction implements InternalFunction {
         Object obj = EvaluateExpressionLanguage.evaluate(
                 taskContextId, expression, simpleExecContext.execContextId,
                 this.internalFunctionVariableService, this.globalVariableService, this.variableService, this.execContextVariableService, variableRepository,
-                (v) -> variableService.setVariableAsNull(v.id));
+                (v) -> VariableSyncService.getWithSyncVoidForCreation(v.id,
+                        ()->variableService.setVariableAsNull(v.id)));
 
         System.out.println("mh.evaluation, expression: "+expression+", result:" + obj);
         int i=0;

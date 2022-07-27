@@ -35,6 +35,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -295,7 +296,8 @@ public class TaskWithInternalContextEventService {
                 Object obj = EvaluateExpressionLanguage.evaluate(
                         taskParamsYaml.task.taskContextId, p.condition, simpleExecContext.execContextId,
                         internalFunctionVariableService, globalVariableService, variableService, this.execContextVariableService, variableRepository,
-                        (v) -> variableService.setVariableAsNull(v.id));
+                        (v) -> VariableSyncService.getWithSyncVoidForCreation(v.id,
+                                ()->variableService.setVariableAsNull(v.id)));
                 if (obj!=null && !(obj instanceof Boolean)) {
                     final String es = "#706.300 condition '" + p.condition + " has returned not boolean value but " + obj.getClass().getSimpleName();
                     log.error(es);
