@@ -182,7 +182,9 @@ public class EvaluateExpressionLanguage {
                                     throw new InternalFunctionException(system_error, "#509.052 both local and global variables are null");
                                 }
                                 try (InputStream is = Files.newInputStream(tempFile)) {
-                                    variableService.updateWithTx(is, Files.size(tempFile), variableHolderOutput.variable.id);
+                                    final long size = Files.size(tempFile);
+                                    VariableSyncService.getWithSyncVoid(variableHolderOutput.variable.id,
+                                            ()-> variableService.updateWithTx(is, size, variableHolderOutput.variable.id));
                                 }
                             } finally {
                                 DirUtils.deletePathAsync(tempDir);

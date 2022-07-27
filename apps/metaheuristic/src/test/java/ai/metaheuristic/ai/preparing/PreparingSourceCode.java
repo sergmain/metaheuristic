@@ -186,7 +186,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         // try execute mh.finish if it hasn't yet
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
 
-        ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
+        ExecContextSyncService.getWithSyncNullable(getExecContextForTest().id, () -> {
             verifyGraphIntegrity();
             List<Long> taskIds = getUnfinishedTaskVertices(getExecContextForTest());
             assertEquals(0, taskIds.size());
