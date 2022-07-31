@@ -48,7 +48,14 @@ public class EnumsApi {
     }
 
     public enum FunctionExecContext { external, internal, long_running }
-    public enum FunctionRefType { code, type }
+
+    // defines meaning in field value in SourceCodeParamsYaml.FunctionDefForSourceCode.code
+    public enum FunctionRefType {
+        //  reference to function is by code
+        code,
+        // reference to function is by type
+        type
+    }
 
     /**
      * local - all assets are managed locally
