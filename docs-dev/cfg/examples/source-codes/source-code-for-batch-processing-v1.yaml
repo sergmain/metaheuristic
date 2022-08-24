@@ -10,7 +10,6 @@ source:
         context: internal
       metas:
         - input-batch: input-data
-        - output-is-dynamic: true
         - output-variable: var-batch-item
       subProcesses:
         logic: and

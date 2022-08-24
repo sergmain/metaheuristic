@@ -22,7 +22,6 @@ source:
         context: internal
       metas:
         - variables-for-permutation: cosine
-        - output-is-dynamic: true
         - inline-key: mh.hyper-params
         - permute-inline: false
         - output-variable: var-dataset

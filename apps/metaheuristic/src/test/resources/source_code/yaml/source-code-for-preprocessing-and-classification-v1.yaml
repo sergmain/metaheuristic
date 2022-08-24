@@ -61,7 +61,6 @@ source:
           - name: feature-processing_matrix
           - name: feature-processing_cluster_size_1
       metas:
-        - output-is-dynamic: true
         - variables-for-permutation: feature-processing_matrix, feature-processing_cluster_size_1
         - inline-key: mh.hyper-params
         - permute-inline: true

@@ -32,6 +32,7 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -129,12 +130,12 @@ public class ZipUtils {
         }
     }
 
-    public static void createZip(Path directoryPath, Path zipPath) {
-        createZip(List.of(directoryPath), zipPath, Collections.emptyMap());
+    public static int createZip(Path directoryPath, Path zipPath) {
+        return createZip(List.of(directoryPath), zipPath, Collections.emptyMap());
     }
 
-    public static void createZip(List<Path> directoryPaths, Path zipPath) {
-        createZip(directoryPaths, zipPath, Collections.emptyMap());
+    public static int createZip(List<Path> directoryPaths, Path zipPath) {
+        return createZip(directoryPaths, zipPath, Collections.emptyMap());
     }
 
     /**
@@ -145,14 +146,16 @@ public class ZipUtils {
      * @param zipPath File for output stream for writing result
      * @throws ZipArchiveException If anything goes wrong
      */
-    public static void createZip(List<Path> directoryPaths, Path zipPath, Map<String, String> renameTo)  {
+    public static int createZip(List<Path> directoryPaths, Path zipPath, Map<String, String> renameTo)  {
+        final AtomicInteger counter = new AtomicInteger();
         try {
             try (SeekableByteChannel seekableByteChannel = Files.newByteChannel(zipPath, EnumSet.of(CREATE, WRITE, READ, TRUNCATE_EXISTING));
                  ZipArchiveOutputStream tOut = new ZipArchiveOutputStream(seekableByteChannel) ) {
                 for (Path directoryPath : directoryPaths) {
-                    addFileToZip(tOut, directoryPath, "", renameTo);
+                    addFileToZip(tOut, directoryPath, "", renameTo, counter);
                 }
             }
+            return counter.get();
         }
         catch (ZipArchiveException e) {
             log.error("Zipping error, " + e.getMessage(), e);
@@ -165,7 +168,7 @@ public class ZipUtils {
     }
 
     @SneakyThrows
-    private static void addFileToZip(ZipArchiveOutputStream zOut, Path path, String base, Map<String, String> renameMapping) {
+    private static void addFileToZip(ZipArchiveOutputStream zOut, Path path, String base, Map<String, String> renameMapping, AtomicInteger counter) {
         final String fileName = path.getFileName().toString();
         String entryName = base + fileName;
         if (renameMapping.containsKey(entryName)) {
@@ -176,6 +179,8 @@ public class ZipUtils {
         zOut.putArchiveEntry(zipEntry);
 
         if (!Files.isDirectory(path)) {
+            counter.incrementAndGet();
+
             try (ReadableByteChannel rbc = Files.newByteChannel(path, EnumSet.of(READ))) {
 
                 final ByteBuffer buffer = ByteBuffer.wrap(new byte[BUFFER_SIZE]);
@@ -191,7 +196,7 @@ public class ZipUtils {
             final String newEntryName = entryName;
             // do not remove try(Stream<Path>){}
             try (final Stream<Path> list = Files.list(path) ) {
-                list.forEach(child -> addFileToZip(zOut, child, newEntryName + "/", renameMapping));
+                list.forEach(child -> addFileToZip(zOut, child, newEntryName + "/", renameMapping, counter));
             }
         }
     }

@@ -246,7 +246,8 @@ class ZipUtilsTest {
         fillFile(zip, "natürlich", true);
 
         Path zipFile = actualTemp.resolve("zip.zip");
-        ZipUtils.createZip(zip, zipFile);
+        int fileCount = ZipUtils.createZip(zip, zipFile);
+        assertEquals(6, fileCount);
 
         final Path target = Files.createTempFile("copy-", ".zip");
         System.out.println("zip storead at " + target.toFile().getAbsolutePath());

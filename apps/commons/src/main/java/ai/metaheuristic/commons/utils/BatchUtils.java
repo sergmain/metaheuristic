@@ -17,8 +17,11 @@
 package ai.metaheuristic.commons.utils;
 
 import ai.metaheuristic.api.ConstsApi;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BatchApiData;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
+import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import lombok.SneakyThrows;
 
 import java.io.File;
@@ -40,8 +43,13 @@ public class BatchUtils {
     public static BatchApiData.TaskVariables getTaskVariables(TaskFileParamsYaml params, List<String> processedType, String statusType, String mappingType) {
         BatchApiData.TaskVariables taskVariables = new BatchApiData.TaskVariables();
 
-        TaskFileParamsYaml.InputVariable arrayVariable = params.task.inputs.get(0);
-        taskVariables.inputVariables = TaskFileParamsUtils.getInputVariablesAsArray(params, arrayVariable).array;
+        TaskFileParamsYaml.InputVariable inputVariable = params.task.inputs.get(0);
+        if (inputVariable.array) {
+            taskVariables.inputVariables = TaskFileParamsUtils.getInputVariablesAsArray(params, inputVariable).array;
+        }
+        else {
+            taskVariables.inputVariables = List.of(toInputVariable(inputVariable));
+        }
 
         taskVariables.sourceFiles = taskVariables.inputVariables.stream()
                 .map(o->Path.of(params.task.workingPath, o.dataType.toString(), o.id).toFile())
@@ -60,4 +68,18 @@ public class BatchUtils {
 
         return taskVariables;
     }
+
+    public static VariableArrayParamsYaml.Variable toInputVariable(TaskFileParamsYaml.InputVariable v1) {
+        VariableArrayParamsYaml.Variable  v = new VariableArrayParamsYaml.Variable();
+        v.id = v1.id;
+        v.dataType = v1.dataType;
+        v.name = v1.name;
+        v.disk = v1.disk;
+        v.git = v1.git;
+        v.sourcing = v1.sourcing;
+        v.filename = v1.filename;
+        return v;
+    }
+
+
 }
