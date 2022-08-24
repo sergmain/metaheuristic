@@ -54,22 +54,4 @@ class ZipUtilsTest {
         System.out.println(errors);
         assertFalse(errors.isEmpty());
     }
-
-    @Disabled
-    @Test
-    public void testUzipping(@TempDir File temp) throws IOException {
-        final File tempZipFile = new File("D:\\2\\220422_173128.zip");
-        final Path zipFile = tempZipFile.toPath();
-        List<String> errors = ZipUtils.validate(zipFile, VALIDATE_ZIP_FUNCTION);
-        System.out.println(errors);
-        assertTrue(errors.isEmpty());
-
-        Path actualTemp = temp.toPath();
-
-        System.out.println("renamedTo:");
-        Path zip1 = actualTemp.resolve("zip1");
-        Files.createDirectories(zip1);
-        Map<String, String> renamedTo = ZipUtils.unzipFolder(zipFile, zip1, true, List.of(), true);
-
-    }
 }

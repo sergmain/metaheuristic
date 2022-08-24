@@ -593,6 +593,10 @@ public class ExecContextGraphService {
         });
     }
 
+    /**
+     *
+     * @return Map - key - taskContextId, value - ExecContextData.TaskWithState
+     */
     public Map<String, List<ExecContextData.TaskWithState>> findVerticesByTaskContextIds(Long execContextGraphId, Long execContextTaskStateId, Collection<String> taskContextIds) {
         ExecContextGraph execContextGraph = prepareExecContextGraph(execContextGraphId);
         ExecContextTaskState execContextTaskState = prepareExecContextTaskState(execContextTaskStateId);

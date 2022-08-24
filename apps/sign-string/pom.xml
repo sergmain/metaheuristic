@@ -49,7 +49,7 @@
         <dependency>
             <groupId>ai.metaheuristic</groupId>
             <artifactId>mh-commons</artifactId>
-            <version>4.10.16</version>
+            <version>4.10.17</version>
         </dependency>
 
         <dependency>

@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.binary_data;
 
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.internal_functions.batch_result_processor.BatchResultProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
@@ -41,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -132,12 +134,17 @@ public class TestBinaryDataSaveAndLoad {
         assertNotNull(variable.id);
 
         BatchItemMappingYaml bimy = new BatchItemMappingYaml();
+        bimy.targetDir = tempDir.getFileName().toString();
+        bimy.targetPath = tempDir;
         bimy.filenames.put(variable.id.toString(), SYSTEM_PARAMS_V_2_YAML);
 
         SimpleVariable sv = variableRepository.findByIdAsSimple(variable.id);
         assertNotNull(sv);
 
-        variableService.storeVariableToFileWithTx(bimy, tempDir, List.of(sv));
+        final Path defaultPath = tempDir.resolve("default-path-for-variables");
+        Function<SimpleVariable, Path> mappingFunc = (simpleVariable) -> BatchResultProcessorTxService.resolvePathFromMapping(List.of(bimy), defaultPath, sv);
+
+        variableService.storeVariableToFileWithTx(mappingFunc, List.of(sv));
 
         Path trgFile = tempDir.resolve(SYSTEM_PARAMS_V_2_YAML);
         assertTrue(FileUtils.contentEquals(dataFile.toFile(), trgFile.toFile()));

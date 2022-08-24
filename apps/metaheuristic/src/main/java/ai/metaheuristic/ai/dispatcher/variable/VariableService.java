@@ -74,6 +74,7 @@ import java.nio.file.Path;
 import java.sql.Blob;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
@@ -437,11 +438,11 @@ public class VariableService {
 
     @SneakyThrows
     @Transactional(readOnly = true)
-    public void storeVariableToFileWithTx(BatchItemMappingYaml bimy, Path resultDir, List<SimpleVariable> simpleVariables) {
-        storeVariableToFile(bimy, resultDir, simpleVariables);
+    public void storeVariableToFileWithTx(Function<SimpleVariable, Path> mappingFunc, List<SimpleVariable> simpleVariables) {
+        storeVariableToFile(mappingFunc, simpleVariables);
     }
 
-    public void storeVariableToFile(BatchItemMappingYaml bimy, Path resultDir, List<SimpleVariable> simpleVariables) throws IOException {
+    public void storeVariableToFile(Function<SimpleVariable, Path> mappingFunc, List<SimpleVariable> simpleVariables) {
         TxUtils.checkTxExists();
 
         for (SimpleVariable simpleVariable : simpleVariables) {
@@ -449,11 +450,7 @@ public class VariableService {
                 log.info("#993.215 Variable #{} {} is null", simpleVariable.id, simpleVariable.variable);
                 continue;
             }
-            String itemFilename = bimy.filenames.get(simpleVariable.id.toString());
-            if (S.b(itemFilename)) {
-                itemFilename = simpleVariable.id.toString();
-            }
-            Path file = resultDir.resolve(itemFilename);
+            Path file = mappingFunc.apply(simpleVariable);
             storeToFile(simpleVariable.id, file);
         }
     }

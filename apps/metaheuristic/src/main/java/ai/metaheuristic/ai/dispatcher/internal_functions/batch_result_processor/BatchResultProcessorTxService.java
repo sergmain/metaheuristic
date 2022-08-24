@@ -61,6 +61,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -116,9 +117,9 @@ public class BatchResultProcessorTxService {
     @Data
     public static class ItemWithStatusWithMapping {
         public String taskContextId;
-        public List<SimpleVariable> items = new ArrayList<>();
-        public SimpleVariable status;
-        public SimpleVariable mapping;
+        public final List<SimpleVariable> items = new ArrayList<>();
+        public final List<SimpleVariable> statuses = new ArrayList<>();
+        public final List<SimpleVariable> mappings = new ArrayList<>();
 
         public ItemWithStatusWithMapping(String taskContextId) {
             this.taskContextId = taskContextId;
@@ -149,7 +150,7 @@ public class BatchResultProcessorTxService {
                     new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
                             S.f("#993.025 Meta '%s' wasn't found in ExecContext #%s", BATCH_ITEM_PROCESSED_FILE, simpleExecContext.execContextId)));
         }
-        final List<String> outputTypes = Stream.of(StringUtils.split(processedFileTypes, ", ")).collect(Collectors.toList());
+        final List<String> outputTypes = Stream.of(StringUtils.split(processedFileTypes, ", ")).toList();
 
         String statusFileTypes = MetaUtils.getValue(taskParamsYaml.task.metas, BATCH_ITEM_PROCESSING_STATUS);
         if (S.b(statusFileTypes)) {
@@ -183,6 +184,7 @@ public class BatchResultProcessorTxService {
 
         storeGlobalBatchStatus(execContext, taskContextId, taskParamsYaml, zipDir);
 
+        // key - taskContextId, value - ExecContextData.TaskWithState
         Map<String, List<ExecContextData.TaskWithState>> vertices = execContextGraphService.findVerticesByTaskContextIds(
                 simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId, prepared.keySet());
         for (Map.Entry<String, List<ExecContextData.TaskWithState>> entry : vertices.entrySet()) {
@@ -308,10 +310,10 @@ public class BatchResultProcessorTxService {
                 v.items.add(simpleVariable);
             }
             else if (statusTypeFunc.apply(varFromExecContext.type)) {
-                v.status = simpleVariable;
+                v.statuses.add(simpleVariable);
             }
             else if (mappingTypeFunc.apply(varFromExecContext.type)) {
-                v.mapping = simpleVariable;
+                v.mappings.add(simpleVariable);
             }
             else {
                 log.info(S.f("Skip variable %s with type %s", simpleVariable.variable, varFromExecContext.type));
@@ -319,14 +321,14 @@ public class BatchResultProcessorTxService {
         }
 
         for (ItemWithStatusWithMapping value : map.values()) {
-            if (value.status==null) {
-                log.error(S.f("#993.180 TaskContextId #%s has been skipped, (item.status==null)", value.taskContextId));
+            if (value.statuses.isEmpty()) {
+                log.error(S.f("#993.180 TaskContextId #%s has been skipped, (value.statuses.isEmpty())", value.taskContextId));
             }
-            if (value.items ==null) {
-                log.error(S.f("#993.185 TaskContextId #%s has been skipped, (item.items==null)", value.taskContextId));
+            if (value.items.isEmpty()) {
+                log.error(S.f("#993.185 TaskContextId #%s has been skipped, (value.items.isEmpty()) ", value.taskContextId));
             }
-            if (value.mapping==null) {
-                log.warn(S.f("#993.170 TaskContextId #%s doesn't have a mapping for files. VariableId will be used as a file name", value.taskContextId));
+            if (value.mappings.isEmpty()) {
+                log.warn(S.f("#993.170 TaskContextId #%s doesn't have any mapping for files. VariableId will be used as a file name", value.taskContextId));
             }
         }
         return map;
@@ -340,57 +342,78 @@ public class BatchResultProcessorTxService {
     }
 
     private void storeResultVariables(Path zipDir, Long execContextId, ItemWithStatusWithMapping item) throws IOException {
-
-        if (item.status==null) {
-            log.error(S.f("#993.180 TaskContextId #%s has been skipped, (item.status==null).", item.taskContextId));
+        if (item.statuses.isEmpty()) {
+            log.error(S.f("#993.180 TaskContextId #%s has been skipped, (item.statuses.isEmpty()).", item.taskContextId));
             return;
         }
-        if (item.items ==null) {
-            log.error(S.f("#993.185 TaskContextId #%s has been skipped, (item.items==null).", item.taskContextId));
+        if (item.items.isEmpty()) {
+            log.error(S.f("#993.185 TaskContextId #%s has been skipped, (item.items.isEmpty()).", item.taskContextId));
             return;
         }
-        if (item.mapping==null) {
-            log.warn(S.f("#993.190 TaskContextId #%s doesn't have a mapping for files. VariableId will be used as a file name.", item.taskContextId));
+        if (item.mappings.isEmpty()) {
+            log.warn(S.f("#993.190 TaskContextId #%s doesn't have any mapping for files. VariableId will be used as a file name.", item.taskContextId));
         }
 
-        BatchItemMappingYaml bimy = new BatchItemMappingYaml();
-        bimy.targetDir = getResultDirNameFromTaskContextId(item.taskContextId);
+        List<BatchItemMappingYaml> bimys = new ArrayList<>();
 
-        if (item.mapping!=null) {
-            SimpleVariable sv = item.mapping;
-            if (!sv.nullified) {
-                String mapping = null;
-                try {
-                    mapping = variableService.getVariableDataAsString(sv.id);
-                    if (!S.b(mapping)) {
-                        bimy = BatchItemMappingYamlUtils.BASE_YAML_UTILS.to(mapping);
-                    }
-                }
-                catch (CommonErrorWithDataException e) {
-                    log.warn("#993.200 no mapping variables with id #{} were found in execContextId #{}", sv.id, execContextId);
-                }
-                catch (WrongVersionOfParamsException e) {
-                    log.warn("#993.205 error parsing a mapping variable #{} {}:  #{}", sv.id, sv.variable, mapping);
-                    throw e;
-                }
-            }
-            else {
+        for (SimpleVariable sv : item.mappings) {
+            if (sv.nullified) {
                 log.info("#993.210 Variable #{} {} is null", sv.id, sv.variable);
+                continue;
+            }
+
+            String mapping = null;
+            try {
+                mapping = variableService.getVariableDataAsString(sv.id);
+                if (!S.b(mapping)) {
+                    BatchItemMappingYaml bimy = BatchItemMappingYamlUtils.BASE_YAML_UTILS.to(mapping);
+                    if (bimy.key!= EnumsApi.BatchMappingKey.id) {
+                        throw new IllegalStateException("Mapping with different type but id isn't supported, current value: " + bimy.key);
+                    }
+                    fixPathInMapping(bimy);
+
+                    bimy.targetPath = zipDir.resolve(bimy.targetDir);
+                    if (!bimy.targetPath.normalize().startsWith(zipDir.normalize())) {
+                        throw new IllegalStateException(
+                                S.f("#993.213 Attempt to create a file outside of zip tree structure, zipDir: %s, resultDir: %s",
+                                        zipDir.normalize(), bimy.targetPath.normalize()));
+                    }
+                    Files.createDirectories(bimy.targetPath);
+
+                    bimys.add(bimy);
+                }
+            }
+            catch (CommonErrorWithDataException e) {
+                log.warn("#993.200 no mapping variables with id #{} were found in execContextId #{}", sv.id, execContextId);
+            }
+            catch (WrongVersionOfParamsException e) {
+                log.warn("#993.205 error parsing a mapping variable #{} {}:  #{}", sv.id, sv.variable, mapping);
+                throw e;
             }
         }
 
-        fixPathInMapping(bimy);
+        final Path defaultPath = zipDir.resolve(getResultDirNameFromTaskContextId(item.taskContextId));
+        Function<SimpleVariable, Path> mappingFunc = (sv) -> resolvePathFromMapping(bimys, defaultPath, sv);
 
-        Path resultDir = zipDir.resolve(bimy.targetDir);
-        if (!resultDir.normalize().startsWith(zipDir.normalize())) {
-            throw new IllegalStateException(
-                    S.f("#993.213 Attempt to create a file outside of zip tree structure, zipDir: %s, resultDir: %s",
-                            zipDir.normalize(), resultDir.normalize()));
+        variableService.storeVariableToFile(mappingFunc, item.items);
+        variableService.storeVariableToFile(mappingFunc, item.statuses);
+    }
+
+    public static Path resolvePathFromMapping(List<BatchItemMappingYaml> bimys, Path defaultPath, SimpleVariable sv) {
+        BatchItemMappingYaml bimy = null;
+        final String variableId = sv.id.toString();
+        for (BatchItemMappingYaml o : bimys) {
+            if (o.filenames.containsKey(variableId)) {
+                bimy = o;
+                break;
+            }
         }
-        Files.createDirectories(resultDir);
 
-        variableService.storeVariableToFile(bimy, resultDir, item.items);
-        variableService.storeVariableToFile(bimy, resultDir, List.of(item.status));
+        String itemFilename = bimy == null ? variableId : bimy.filenames.get(variableId);
+        Path targetPath = bimy == null ? defaultPath : bimy.targetPath;
+
+        Path file = targetPath.resolve(itemFilename);
+        return file;
     }
 
     private static void fixPathInMapping(BatchItemMappingYaml bimy) {
