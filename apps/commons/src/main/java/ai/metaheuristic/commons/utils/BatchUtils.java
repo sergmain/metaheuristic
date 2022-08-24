@@ -39,16 +39,28 @@ import static ai.metaheuristic.commons.utils.TaskFileParamsUtils.getOutputVariab
 @SuppressWarnings("unused")
 public class BatchUtils {
 
-    @SneakyThrows
     public static BatchApiData.TaskVariables getTaskVariables(TaskFileParamsYaml params, List<String> processedType, String statusType, String mappingType) {
+        return getTaskVariables(params, processedType, statusType, mappingType, false);
+    }
+
+    @SneakyThrows
+    public static BatchApiData.TaskVariables getTaskVariables(TaskFileParamsYaml params, List<String> processedType, String statusType, String mappingType, boolean processAllInputs) {
         BatchApiData.TaskVariables taskVariables = new BatchApiData.TaskVariables();
 
-        TaskFileParamsYaml.InputVariable inputVariable = params.task.inputs.get(0);
-        if (inputVariable.array) {
-            taskVariables.inputVariables = TaskFileParamsUtils.getInputVariablesAsArray(params, inputVariable).array;
+        if (params.task.inputs.isEmpty()) {
+            throw new IllegalStateException("(params.task.inputs.isEmpty())");
         }
-        else {
-            taskVariables.inputVariables = List.of(toInputVariable(inputVariable));
+
+        for (TaskFileParamsYaml.InputVariable input : params.task.inputs) {
+            if (input.array) {
+                taskVariables.inputVariables.addAll(TaskFileParamsUtils.getInputVariablesAsArray(params, input).array);
+            }
+            else {
+                taskVariables.inputVariables.add(toInputVariable(input));
+            }
+            if (!processAllInputs) {
+                break;
+            }
         }
 
         taskVariables.sourceFiles = taskVariables.inputVariables.stream()

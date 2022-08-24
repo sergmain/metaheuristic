@@ -21,6 +21,7 @@ import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import lombok.Data;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +34,7 @@ public class BatchApiData {
 
     @Data
     public static class TaskVariables {
-        public List<VariableArrayParamsYaml.Variable> inputVariables;
+        public List<VariableArrayParamsYaml.Variable> inputVariables = new ArrayList<>();
         public List<File> sourceFiles;
 
         public Map<String, List<TaskFileParamsYaml.OutputVariable>> processedVars;
