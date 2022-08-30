@@ -52,6 +52,10 @@ public class BatchUtils {
         }
 
         for (TaskFileParamsYaml.InputVariable input : params.task.inputs) {
+            if (input.empty) {
+                continue;
+            }
+
             if (input.array) {
                 taskVariables.inputVariables.addAll(TaskFileParamsUtils.getInputVariablesAsArray(params, input).array);
             }
