@@ -19,11 +19,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.MetaheuristicThreadLocal;
 import ai.metaheuristic.ai.data.DispatcherData;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Processor;
-import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.QuotasData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.*;
@@ -31,15 +27,19 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
 import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -57,6 +57,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -82,6 +83,7 @@ public class TaskProviderTopLevelService {
     private final ExecContextService execContextService;
     private final ApplicationEventPublisher eventPublisher;
     private final TaskProviderUnassignedTaskTopLevelService taskProviderUnassignedTaskTopLevelService;
+    private final VariableService variableService;
 
     public void registerTask(ExecContextImpl execContext, Long taskId) {
         TaskQueueSyncStaticService.getWithSyncVoid(()-> {
@@ -356,11 +358,19 @@ public class TaskProviderTopLevelService {
             String params;
             try {
                 TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.task.getParams());
-                if (tpy.version == psy.taskParamsVersion) {
-                    params = task.task.params;
-                } else {
-                    params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
+
+                for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
+                    SimpleVariable sv = variableService.getVariableAsSimple(input.id);
+                    if (sv==null) {
+                        final String es = "#211.120 Can't find a variable " + input.id;
+                        log.error(es);
+                        eventPublisher.publishEvent(new TaskFinishWithErrorEvent(task.task.id, es));
+                        return null;
+                    }
+                    input.empty = sv.nullified;
                 }
+                params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
+
             } catch (DowngradeNotSupportedException e) {
                 // TODO 2020-09-26 there is a possible situation when a check in ExecContextFSM.findUnassignedTaskAndAssign() would be ok
                 //  but this one fails. that could occur because of prepareVariables(task);
@@ -370,7 +380,7 @@ public class TaskProviderTopLevelService {
                 return null;
             }
 
-            // because we're already providing with task that means that execContext was started
+            // because we were already being provided with task that means that execContext was started
             return new DispatcherCommParamsYaml.AssignedTask(params, task.task.getId(), task.task.getExecContextId(), EnumsApi.ExecContextState.STARTED, task.tag, task.quota);
 
         } catch (Throwable th) {

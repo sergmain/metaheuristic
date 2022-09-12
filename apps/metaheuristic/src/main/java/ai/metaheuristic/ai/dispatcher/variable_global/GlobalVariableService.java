@@ -124,13 +124,12 @@ public class GlobalVariableService {
         }
     }
 
-    @Nullable
     @Transactional(readOnly = true)
-    public Void storeToFileWithTx(Long variableId, Path trgFile) {
-        return storeToFile(variableId, trgFile);
+    public void storeToFileWithTx(Long variableId, Path trgFile) {
+        storeToFile(variableId, trgFile);
     }
 
-    public Void storeToFile(Long variableId, Path trgFile) {
+    public void storeToFile(Long variableId, Path trgFile) {
         try {
             Blob blob = globalVariableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
@@ -147,7 +146,6 @@ public class GlobalVariableService {
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
-        return null;
     }
 
     @Transactional

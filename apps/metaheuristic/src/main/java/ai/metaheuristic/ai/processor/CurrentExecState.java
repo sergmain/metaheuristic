@@ -73,7 +73,7 @@ public class CurrentExecState {
         }
         Map<EnumsApi.ExecContextState, String> mapResult = new HashMap<>();
         for (Map.Entry<EnumsApi.ExecContextState, List<Long>> e : map.entrySet()) {
-            mapResult.put(e.getKey(), e.getValue().stream().map(Object::toString).collect(Collectors.joining(", ")));
+            mapResult.put(e.getKey(), e.getValue().stream().map(Object::toString).collect(Collectors.joining(",")));
         }
         return mapResult;
     }

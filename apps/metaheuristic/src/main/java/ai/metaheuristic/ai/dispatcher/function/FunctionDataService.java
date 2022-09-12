@@ -56,9 +56,8 @@ public class FunctionDataService {
     private final EntityManager em;
     private final FunctionDataRepository functionDataRepository;
 
-    @Nullable
     @Transactional(readOnly = true)
-    public Void storeToFile(String code, Path trgFile) {
+    public void storeToFile(String code, Path trgFile) {
         try {
             Blob blob = functionDataRepository.getDataAsStreamByCode(code);
             if (blob==null) {
@@ -75,7 +74,6 @@ public class FunctionDataService {
             log.error(es, th);
             throw new FunctionDataErrorException(code, es);
         }
-        return null;
     }
 
     public void deleteById(Long id) {

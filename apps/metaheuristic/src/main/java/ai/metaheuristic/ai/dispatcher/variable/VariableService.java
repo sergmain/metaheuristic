@@ -47,7 +47,6 @@ import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
-import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
@@ -455,13 +454,21 @@ public class VariableService {
         }
     }
 
-    @Nullable
     @Transactional(readOnly = true)
-    public Void storeToFileWithTx(Long variableId, Path trgFile) {
-        return storeToFile(variableId, trgFile);
+    public void storeToFileWithTx(Long variableId, Path trgFile) {
+        SimpleVariable sv = variableRepository.findByIdAsSimple(variableId);
+        if (sv==null) {
+            String es = "#171.535 Variable #"+variableId+" wasn't found";
+            log.warn(es);
+            throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+        }
+        if (sv.nullified) {
+            throw new VariableIsNullException(variableId);
+        }
+        storeToFile(variableId, trgFile);
     }
 
-    public Void storeToFile(Long variableId, Path trgFile) {
+    public void storeToFile(Long variableId, Path trgFile) {
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
@@ -479,7 +486,6 @@ public class VariableService {
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
-        return null;
     }
 
     public List<SimpleVariable> getSimpleVariablesInExecContext(Long execContextId, String ... variables) {

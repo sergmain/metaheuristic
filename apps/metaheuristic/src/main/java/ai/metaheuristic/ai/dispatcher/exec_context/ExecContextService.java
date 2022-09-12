@@ -157,7 +157,7 @@ public class ExecContextService {
 
         List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ecpy);
         return new ExecContextApiData.RawExecContextStateResult(
-                sourceCodeId, info.tasks, processCodes, result.sourceCodeType, result.sourceCodeUid, result.sourceCodeValid,
+                sourceCodeId, info.states, processCodes, result.sourceCodeType, result.sourceCodeUid, result.sourceCodeValid,
                 getExecStateOfTasks(execContextId)
         );
     }
