@@ -82,6 +82,8 @@ public class DispatcherRequestor {
         this.processorCommandProcessor = processorCommandProcessor;
 
         this.restTemplate = new RestTemplate(REQUEST_FACTORY);
+        // in Spring Boot 2.2.4 it should be working without this call
+        // in some cases it isn't working even with 2.2.4 without this call
         this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
         this.dispatcher = dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
         if (dispatcher == null) {
