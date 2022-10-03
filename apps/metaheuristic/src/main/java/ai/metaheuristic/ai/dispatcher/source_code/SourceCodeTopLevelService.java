@@ -303,7 +303,7 @@ public class SourceCodeTopLevelService {
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
             httpHeaders.setContentDisposition(ContentDisposition.parse(
-                    "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8.toString())));
+                    "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8)));
             resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, Files.size(zipFile)), HttpStatus.OK);
             return resource;
         } catch (VariableDataNotFoundException e) {
