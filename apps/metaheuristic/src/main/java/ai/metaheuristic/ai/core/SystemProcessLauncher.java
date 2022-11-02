@@ -20,7 +20,6 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.commons.dispatcher_schedule.ExtendedTimePeriod;
 import ai.metaheuristic.commons.utils.DirUtils;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -48,18 +47,21 @@ public class SystemProcessLauncher {
             ===============================================================
             """;
 
-    // TODO 2019-06-22 need to investigate why it isn't working with @Data
-//    @Data
-    @AllArgsConstructor
     @ToString
     public static class ExecResult {
-        public File functionDir;
         @Nullable
-        public FunctionApiData.SystemExecResult systemExecResult;
-        public boolean ok;
-        public String error;
+        public final File functionDir;
+        @Nullable
+        public final FunctionApiData.SystemExecResult systemExecResult;
+        public final boolean ok;
+        public final String error;
 
         public ExecResult(@Nullable FunctionApiData.SystemExecResult systemExecResult, boolean ok, String error) {
+            this(null, systemExecResult, ok, error);
+        }
+
+        public ExecResult(@Nullable File functionDir, @Nullable FunctionApiData.SystemExecResult systemExecResult, boolean ok, String error) {
+            this.functionDir = functionDir;
             this.systemExecResult = systemExecResult;
             this.ok = ok;
             this.error = error;

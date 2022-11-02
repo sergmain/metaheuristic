@@ -37,7 +37,7 @@ public class CommonSync<T> {
 
     @Data
     public static class TimedLock {
-        public long mills;
+        public volatile long mills;
         public ReentrantReadWriteLock lock;
 
         public TimedLock(ReentrantReadWriteLock lock) {
@@ -46,7 +46,7 @@ public class CommonSync<T> {
         }
     }
 
-    private long lastCheckMills = 0L;
+    private volatile long lastCheckMills = 0L;
     private final Map<T, TimedLock> map = new HashMap<>(100);
 
     public ReentrantReadWriteLock.WriteLock getWriteLock(T id) {
