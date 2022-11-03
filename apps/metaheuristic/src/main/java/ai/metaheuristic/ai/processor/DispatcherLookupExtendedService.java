@@ -23,8 +23,8 @@ import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
 import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.utils.SecUtils;
+import ai.metaheuristic.commons.utils.ThreadUtils;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
@@ -116,15 +116,22 @@ public class DispatcherLookupExtendedService {
     public final Map<ProcessorAndCoreData.AssetManagerUrl, DispatcherLookupParamsYaml.AssetManager> assets = new HashMap<>();
 
     @Data
-    @AllArgsConstructor
     public static class DispatcherLookupExtended {
         public final DispatcherUrl dispatcherUrl;
         public final DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup;
         public final DispatcherSchedule schedule;
-        private final Map<Integer, PublicKey> publicKeyMap = new HashMap<>();
+
+        public final ThreadUtils.CommonThreadLocker<PublicKey> locker;
+
+        public DispatcherLookupExtended(DispatcherUrl dispatcherUrl, DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup, DispatcherSchedule schedule) {
+            this.dispatcherUrl = dispatcherUrl;
+            this.dispatcherLookup = dispatcherLookup;
+            this.schedule = schedule;
+            locker = new ThreadUtils.CommonThreadLocker<>(() -> SecUtils.getPublicKey(this.dispatcherLookup.publicKey));
+        }
 
         public PublicKey getPublicKey() {
-            return publicKeyMap.computeIfAbsent(1, k-> SecUtils.getPublicKey(dispatcherLookup.publicKey));
+            return locker.get();
         }
     }
 
