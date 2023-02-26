@@ -18,6 +18,23 @@ create table mh_ids
     STUB    varchar(1) null
 );
 
+CREATE TABLE mh_function_execution_time
+(
+    ID                  INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION             NUMERIC(5, 0)  NOT NULL,
+    CREATED_ON          bigint not null,
+    FUNCTION_TYPE       VARCHAR(50) NOT NULL,
+    KEY_SHA256_LENGTH   VARCHAR(100) NOT NULL,
+    KEY_VALUE           VARCHAR(512) NOT NULL,
+    PARAMS              LONGTEXT null
+);
+
+CREATE UNIQUE INDEX mh_function_execution_time_key_sha256_length_unq_idx
+    ON mh_function_execution_time (KEY_SHA256_LENGTH);
+
+CREATE INDEX mh_function_execution_time_function_type_idx
+    ON mh_function_execution_time (FUNCTION_TYPE);
+
 CREATE TABLE mh_cache_process
 (
     ID                  INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
