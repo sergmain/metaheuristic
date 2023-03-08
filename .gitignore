@@ -25,6 +25,7 @@ nbdist/
 r.bat
 
 aiai-dispatcher
+aiai-dispatcher*
 aiai-processor/**
 aiai-processor-h2/**
 aiai-launchpad
