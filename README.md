@@ -1,8 +1,7 @@
 # Metaheuristic
 
-[![Join the chat at https://gitter.im/metaheuristic-ai/community](https://badges.gitter.im/metaheuristic-ai/community.svg)](https://gitter.im/metaheuristic-ai/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-Metaheuristic is an application for organazing distributed computations.  
+Metaheuristic is an application for organizing distributed computations.  
 [Explore Metaheuristic docs »](https://docs.metaheuristic.ai)
 
 
