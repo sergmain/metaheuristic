@@ -18,13 +18,23 @@ package ai.metaheuristic.apps.encrypt_password;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootApplication
 public class EncryptPassword implements CommandLineRunner {
 
-    private final PasswordEncoder passwordEncoder;
+    @Configuration
+    public static class Config {
+        @Bean
+        public PasswordEncoder getPasswordEncoder() {
+            return new BCryptPasswordEncoder(10);
+        }
+    }
 
+    private final PasswordEncoder passwordEncoder;
     public EncryptPassword(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
     }
@@ -35,12 +45,10 @@ public class EncryptPassword implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-
         if (args.length==0) {
             System.out.println("EncryptPassword <password>");
             return;
         }
-
         System.out.println("Passwords:");
         System.out.println("\tplain password:   " + args[0]);
         System.out.println("\tpassword encoded: " + passwordEncoder.encode(args[0]));
