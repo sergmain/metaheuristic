@@ -95,7 +95,6 @@ public class AccountService {
         }
 
         Account account = new Account();
-        account.setRoles(roles);
         account.username = acc.username;
         account.password = acc.password;
         account.publicName = acc.publicName;
@@ -124,7 +123,7 @@ public class AccountService {
     }
 
     private static SimpleAccount toSimple(Account acc) {
-        return new SimpleAccount(acc.id, acc.companyId, acc.username, acc.publicName, acc.enabled, acc.createdOn, acc.updatedOn, acc.roles);
+        return new SimpleAccount(acc.id, acc.companyId, acc.username, acc.publicName, acc.enabled, acc.createdOn, acc.updatedOn, acc.accountRoles.asString());
     }
 
     @Transactional
@@ -218,8 +217,7 @@ public class AccountService {
             account.accountRoles.removeRole(SecConsts.ROLE_SERVER_REST_ACCESS);
         }
 
-        String roles = String.join(", ", account.accountRoles.getRolesAsList());
-        account.setRoles(roles);
+        account.roles = account.accountRoles.asString();
         account.updatedOn = System.currentTimeMillis();
         accountCache.save(account);
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Role "+role+" was changed successfully", "");

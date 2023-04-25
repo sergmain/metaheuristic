@@ -50,6 +50,7 @@ public class CustomUserDetails implements UserDetailsService {
         /**
          * won't delete this field for backward compatibility
          */
+        @SuppressWarnings("FieldMayBeStatic")
         @Deprecated
         final String token = "";
 
@@ -106,7 +107,7 @@ public class CustomUserDetails implements UserDetailsService {
             account.setEnabled(true);
             account.setPassword(globals.dispatcher.masterPassword);
 
-            account.setRoles(SecConsts.ROLE_MASTER_ADMIN);
+            account.setRoles(SecConsts.ROLE_MAIN_ADMIN);
             return account;
         }
 

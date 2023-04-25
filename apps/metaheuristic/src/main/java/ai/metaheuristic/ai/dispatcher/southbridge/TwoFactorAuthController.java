@@ -66,14 +66,14 @@ public class TwoFactorAuthController {
     }
 
     @RequestMapping
-    @PreAuthorize("hasAnyRole('MASTER_ADMIN')")
+    @PreAuthorize("hasAnyRole('MAIN_ADMIN')")
     public String createForm(Model uiModel, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         @NonNull Account a = context.getAccount();
         String secret = GoogleAuthenticator.generateSecretKey();
         String url = GoogleAuthenticator.getQRBarcodeURL(ISSUER+"-"+context.getUsername(), "localhost", secret, ISSUER);
 
-        if (a.accountRoles.hasRole(SecConsts.ROLE_MASTER_ADMIN) && (S.b(a.secretKey) || !a.twoFA)) {
+        if (a.accountRoles.hasRole(SecConsts.ROLE_MAIN_ADMIN) && (S.b(a.secretKey) || !a.twoFA)) {
             // TODO 2019-10-30 set up secret key
 /*
             UserServerBean user = entityDAO.setUserSercretCodeForCurrentUser(secret, a.id);

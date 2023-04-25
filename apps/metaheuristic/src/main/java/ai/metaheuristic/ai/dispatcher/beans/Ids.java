@@ -45,8 +45,6 @@ public class Ids implements Serializable {
     @Serial
     private static final long serialVersionUID = 8697932300220763332L;
 
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
-
     @Id
     @GeneratedValue(strategy= GenerationType.TABLE, generator = "mh_ids")
     public Long id;

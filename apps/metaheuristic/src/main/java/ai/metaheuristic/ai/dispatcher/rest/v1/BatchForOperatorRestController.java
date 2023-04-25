@@ -62,21 +62,21 @@ public class BatchForOperatorRestController {
     private final SourceCodeSelectorService sourceCodeSelectorService;
 
     @GetMapping("/company-batches/{companyUniqueId}")
-    @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
+    @PreAuthorize("hasAnyRole('MAIN_OPERATOR', 'MAIN_SUPPORT')")
     public BatchData.BatchesResult batches(@PageableDefault(size = 20) Pageable pageable, @PathVariable Long companyUniqueId) {
         BatchData.BatchesResult batchesResult = batchTopLevelService.getBatches(pageable, companyUniqueId, null, true, false);
         return batchesResult;
     }
 
     @GetMapping("/company-batch-delete/{companyUniqueId}/{batchId}")
-    @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
+    @PreAuthorize("hasAnyRole('MAIN_OPERATOR')")
     public BatchData.Status processBatchDelete(@PathVariable Long companyUniqueId, @PathVariable Long batchId) {
         BatchData.Status status = batchTopLevelService.getBatchProcessingStatus(batchId, companyUniqueId, true);
         return status;
     }
 
     @PostMapping("/company-batch-delete-commit/{companyUniqueId}")
-    @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
+    @PreAuthorize("hasAnyRole('MAIN_OPERATOR')")
     public OperationStatusRest processBatchDeleteCommit(Long batchId, @PathVariable Long companyUniqueId) {
         OperationStatusRest r = batchTopLevelService.processBatchDeleteCommit(batchId, companyUniqueId, false);
         return r;
@@ -89,21 +89,21 @@ public class BatchForOperatorRestController {
      * @return
      */
     @PostMapping("/company-batch-bulk-delete-commit/{companyUniqueId}")
-    @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
+    @PreAuthorize("hasAnyRole('MAIN_OPERATOR')")
     public BatchData.BulkOperations processBatchesBulkDeleteCommit(String batchIds, @PathVariable Long companyUniqueId) {
         BatchData.BulkOperations r = batchTopLevelService.processBatchBulkDeleteCommit(batchIds, companyUniqueId, false);
         return r;
     }
 
     @GetMapping(value = "/company-batch-source-codes/{companyUniqueId}")
-    @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
+    @PreAuthorize("hasAnyRole('MAIN_OPERATOR')")
     public SourceCodeData.SourceCodesForCompany sourceCodesForCompany(@PathVariable Long companyUniqueId) {
         SourceCodeData.SourceCodesForCompany sourceCodes = sourceCodeSelectorService.getAvailableSourceCodesForCompany(companyUniqueId);
         return sourceCodes;
     }
 
     @PostMapping(value = "/company-batch-upload-from-file/{companyUniqueId}")
-    @PreAuthorize("hasAnyRole('MASTER_OPERATOR')")
+    @PreAuthorize("hasAnyRole('MAIN_OPERATOR')")
     public BatchData.UploadingStatus uploadFile(final MultipartFile file, @PathVariable Long companyUniqueId,
                                                 Long sourceCodeId, Authentication authentication) {
         // create context with putting current user to specific company
@@ -113,14 +113,14 @@ public class BatchForOperatorRestController {
     }
 
     @GetMapping(value= "/company-batch-status/{companyUniqueId}/{batchId}" )
-    @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
+    @PreAuthorize("hasAnyRole('MAIN_OPERATOR', 'MAIN_SUPPORT')")
     public BatchData.Status getBatchStatus(@PathVariable Long companyUniqueId, @PathVariable("batchId") Long batchId) {
         BatchData.Status status = batchTopLevelService.getBatchProcessingStatus(batchId, companyUniqueId, true);
         return status;
     }
 
     @GetMapping(value= "/company-batch-download-result/{companyUniqueId}/{batchId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
+    @PreAuthorize("hasAnyRole('MAIN_OPERATOR', 'MAIN_SUPPORT')")
     public HttpEntity<AbstractResource> downloadProcessingResult(
             HttpServletRequest request,
             @PathVariable Long companyUniqueId, @PathVariable("batchId") Long batchId) {
@@ -141,7 +141,7 @@ public class BatchForOperatorRestController {
 
     @SuppressWarnings("TryWithIdenticalCatches")
     @GetMapping(value= "/company-batch-download-origin-file/{companyUniqueId}/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    @PreAuthorize("hasAnyRole('MASTER_OPERATOR', 'MASTER_SUPPORT')")
+    @PreAuthorize("hasAnyRole('MAIN_OPERATOR', 'MAIN_SUPPORT')")
     public HttpEntity<AbstractResource> downloadOriginFile(
             HttpServletRequest request,
             @PathVariable Long companyUniqueId,

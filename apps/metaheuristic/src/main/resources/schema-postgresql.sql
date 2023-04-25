@@ -84,7 +84,7 @@ CREATE UNIQUE INDEX MH_COMPANY_UNIQUE_ID_UNQ_IDX
 insert into MH_COMPANY
 (id, version, UNIQUE_ID, name, params)
 VALUES
-(nextval('mh_company_id_seq'), 0, 1, 'master company', '');
+(nextval('mh_company_id_seq'), 0, 1, 'Main company', '');
 
 -- !!! this insert must be after creating 'master company'
 insert into MH_GEN_IDS

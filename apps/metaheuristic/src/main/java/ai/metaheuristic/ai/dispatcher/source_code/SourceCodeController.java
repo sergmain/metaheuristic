@@ -65,7 +65,7 @@ public class SourceCodeController {
     private final UserContextService userContextService;
 
     @GetMapping("/source-codes")
-    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
+    @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public String sourceCodes(Model model, @PageableDefault Pageable pageable,
                         @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                         @ModelAttribute("errorMessage") final ArrayList<String> errorMessage, Authentication authentication) {
@@ -78,7 +78,7 @@ public class SourceCodeController {
 
     // for AJAX
     @PostMapping("/source-codes-part")
-    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
+    @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public String sourceCodesPart(Model model, @PageableDefault Pageable pageable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodesResult sourceCodesResultRest = sourceCodeService.getSourceCodes(pageable, false, context);
@@ -87,14 +87,14 @@ public class SourceCodeController {
     }
 
     @GetMapping(value = "/source-code-add")
-    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
+    @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public String add(Model model) {
         model.addAttribute("sourceCodeYamlAsStr", "");
         return "dispatcher/source-code/source-code-add";
     }
 
     @GetMapping(value = "/source-code-view/{id}")
-    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
+    @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
@@ -107,7 +107,7 @@ public class SourceCodeController {
     }
 
     @GetMapping(value = "/source-code-devs/{id}")
-    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
+    @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public String development(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeData.Development development = sourceCodeTopLevelService.getSourceCodeDevs(id, context);
@@ -141,7 +141,7 @@ public class SourceCodeController {
     }
 
     @GetMapping(value = "/source-code-validate/{id}")
-    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
+    @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public String validate(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeService.validateSourceCode(id, context);
@@ -157,7 +157,7 @@ public class SourceCodeController {
     }
 
     @PostMapping(value = "/source-code-upload-from-file")
-    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
+    @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public String uploadSourceCode(final MultipartFile file, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeTopLevelService.uploadSourceCode(file, context);
@@ -166,7 +166,7 @@ public class SourceCodeController {
     }
 
     @PostMapping("/source-code-add-commit")
-    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
+    @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public String addFormCommit(String sourceCodeYamlAsStr, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.createSourceCode(sourceCodeYamlAsStr, context.getCompanyId());
@@ -175,13 +175,13 @@ public class SourceCodeController {
     }
 
     @PostMapping("/source-code-edit-commit")
-    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
+    @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public String editFormCommit(Long sourceCodeId, String sourceCodeYamlAsStr) {
         throw new IllegalStateException("Not supported any more");
     }
 
     @GetMapping("/source-code-delete/{id}")
-    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
+    @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
         if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             redirectAttributes.addFlashAttribute("errorMessage", "#561.015 Can't delete sourceCode while 'replicated' mode of asset is active");
@@ -198,7 +198,7 @@ public class SourceCodeController {
     }
 
     @PostMapping("/source-code-delete-commit")
-    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
+    @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public String deleteCommit(Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeService.deleteSourceCodeById(id, context);
@@ -207,7 +207,7 @@ public class SourceCodeController {
     }
 
     @GetMapping("/source-code-archive/{id}")
-    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
+    @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public String archive(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         SourceCodeApiData.SourceCodeResult sourceCodeResultRest = sourceCodeTopLevelService.getSourceCode(id, context);
@@ -220,7 +220,7 @@ public class SourceCodeController {
     }
 
     @PostMapping("/source-code-archive-commit")
-    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
+    @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public String archiveCommit(Long id, final RedirectAttributes redirectAttributes, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = sourceCodeService.archiveSourceCodeById(id, context);

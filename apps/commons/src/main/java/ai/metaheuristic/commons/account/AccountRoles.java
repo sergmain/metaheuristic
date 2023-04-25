@@ -89,6 +89,11 @@ public class AccountRoles {
         return new ArrayList<>(initedRoles.roles);
     }
 
+    public String asString() {
+        initRoles();
+        return String.join(",", initedRoles.roles);
+    }
+
     public void addRole(String role) {
         synchronized (this) {
             initedRoles.addRole(role);
@@ -125,13 +130,22 @@ public class AccountRoles {
                     if (S.b(token)) {
                         continue;
                     }
-                    String role = token.trim();
+                    String role = fixNaming(token.trim());
                     initedRoles.roles.add(role);
                     authorities.add(new SerializableGrantedAuthority(role));
                 }
             }
             initedRoles.inited = true;
         }
+    }
+
+    private static String fixNaming(String role) {
+        return switch (role) {
+            case "ROLE_MASTER_OPERATOR" -> "ROLE_MAIN_OPERATOR";
+            case "ROLE_MASTER_SUPPORT" -> "ROLE_MAIN_SUPPORT";
+            case "ROLE_MASTER_ASSET_MANAGER" -> "ROLE_MAIN_ASSET_MANAGER";
+            default -> role;
+        };
     }
 
 }

@@ -103,7 +103,7 @@ CREATE UNIQUE INDEX mh_company_unique_id_unq_idx
 insert into mh_company
 (id, version, UNIQUE_ID, name, params)
 VALUES
-(1, 0, 1, 'master company', '');
+(1, 0, 1, 'Main company', '');
 
 -- !!! this insert must be executed after creating 'master company' immediately;
 
