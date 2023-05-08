@@ -1,0 +1,680 @@
+2023-05-07 23:29:54.186  INFO 12724 --- [main] a.m.ai.profiles.TestProcessorProfile     : Starting TestProcessorProfile using Java 17.0.2 on SNB with PID 12724 (started by serg in C:\sandbox\git\aiai\apps\metaheuristic)
+2023-05-07 23:29:54.188 DEBUG 12724 --- [main] a.m.ai.profiles.TestProcessorProfile     : Running with Spring Boot v2.7.11, Spring v5.3.27
+2023-05-07 23:29:54.189  INFO 12724 --- [main] a.m.ai.profiles.TestProcessorProfile     : The following 1 profile is active: "processor"
+2023-05-07 23:29:57.762  WARN 12724 --- [main] o.s.w.c.s.GenericWebApplicationContext   : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'config.SpringAsyncConfig' defined in file [C:\sandbox\git\aiai\apps\metaheuristic\target\classes\ai\metaheuristic\ai\Config$SpringAsyncConfig.class]: Unsatisfied dependency expressed through constructor parameter 0; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'mh-ai.metaheuristic.ai.Globals': Invocation of init method failed; nested exception is java.lang.IllegalArgumentException: mh.home isn't specified
+2023-05-07 23:29:57.782  INFO 12724 --- [main] ConditionEvaluationReportLoggingListener : 
+
+Error starting ApplicationContext. To display the conditions report re-run your application with 'debug' enabled.
+2023-05-07 23:29:57.827 ERROR 12724 --- [main] o.s.boot.SpringApplication               : Application run failed
+
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'config.SpringAsyncConfig' defined in file [C:\sandbox\git\aiai\apps\metaheuristic\target\classes\ai\metaheuristic\ai\Config$SpringAsyncConfig.class]: Unsatisfied dependency expressed through constructor parameter 0; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'mh-ai.metaheuristic.ai.Globals': Invocation of init method failed; nested exception is java.lang.IllegalArgumentException: mh.home isn't specified
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:800) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:229) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1372) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1222) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:582) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:542) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:335) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:333) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:208) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:955) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:920) ~[spring-context-5.3.27.jar:5.3.27]
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:583) ~[spring-context-5.3.27.jar:5.3.27]
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:731) ~[spring-boot-2.7.11.jar:2.7.11]
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:408) ~[spring-boot-2.7.11.jar:2.7.11]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:307) ~[spring-boot-2.7.11.jar:2.7.11]
+	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:136) ~[spring-boot-test-2.7.11.jar:2.7.11]
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContextInternal(DefaultCacheAwareContextLoaderDelegate.java:141) ~[spring-test-5.3.27.jar:5.3.27]
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:90) ~[spring-test-5.3.27.jar:5.3.27]
+	at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:124) ~[spring-test-5.3.27.jar:5.3.27]
+	at org.springframework.test.context.web.ServletTestExecutionListener.setUpRequestContextIfNecessary(ServletTestExecutionListener.java:190) ~[spring-test-5.3.27.jar:5.3.27]
+	at org.springframework.test.context.web.ServletTestExecutionListener.prepareTestInstance(ServletTestExecutionListener.java:132) ~[spring-test-5.3.27.jar:5.3.27]
+	at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:248) ~[spring-test-5.3.27.jar:5.3.27]
+	at org.springframework.test.context.junit.jupiter.SpringExtension.postProcessTestInstance(SpringExtension.java:138) ~[spring-test-5.3.27.jar:5.3.27]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$invokeTestInstancePostProcessors$8(ClassBasedTestDescriptor.java:363) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.executeAndMaskThrowable(ClassBasedTestDescriptor.java:368) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$invokeTestInstancePostProcessors$9(ClassBasedTestDescriptor.java:363) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197) ~[na:na]
+	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179) ~[na:na]
+	at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1625) ~[na:na]
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509) ~[na:na]
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499) ~[na:na]
+	at java.base/java.util.stream.StreamSpliterators$WrappingSpliterator.forEachRemaining(StreamSpliterators.java:310) ~[na:na]
+	at java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:735) ~[na:na]
+	at java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:734) ~[na:na]
+	at java.base/java.util.stream.ReferencePipeline$Head.forEach(ReferencePipeline.java:762) ~[na:na]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.invokeTestInstancePostProcessors(ClassBasedTestDescriptor.java:362) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$instantiateAndPostProcessTestInstance$6(ClassBasedTestDescriptor.java:283) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.instantiateAndPostProcessTestInstance(ClassBasedTestDescriptor.java:282) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$testInstancesProvider$4(ClassBasedTestDescriptor.java:272) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at java.base/java.util.Optional.orElseGet(Optional.java:364) ~[na:na]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$testInstancesProvider$5(ClassBasedTestDescriptor.java:271) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.jupiter.engine.execution.TestInstancesProvider.getTestInstances(TestInstancesProvider.java:31) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$prepare$0(TestMethodTestDescriptor.java:102) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.prepare(TestMethodTestDescriptor.java:101) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.prepare(TestMethodTestDescriptor.java:66) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$prepare$2(NodeTestTask.java:123) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.prepare(NodeTestTask.java:123) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:90) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:107) ~[junit-platform-launcher-1.8.2.jar:1.8.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:88) ~[junit-platform-launcher-1.8.2.jar:1.8.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:54) ~[junit-platform-launcher-1.8.2.jar:1.8.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:67) ~[junit-platform-launcher-1.8.2.jar:1.8.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:52) ~[junit-platform-launcher-1.8.2.jar:1.8.2]
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:114) ~[junit-platform-launcher-1.8.2.jar:1.8.2]
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:86) ~[junit-platform-launcher-1.8.2.jar:1.8.2]
+	at org.junit.platform.launcher.core.DefaultLauncherSession$DelegatingLauncher.execute(DefaultLauncherSession.java:86) ~[junit-platform-launcher-1.8.2.jar:1.8.2]
+	at org.junit.platform.launcher.core.SessionPerRequestLauncher.execute(SessionPerRequestLauncher.java:53) ~[junit-platform-launcher-1.8.2.jar:1.8.2]
+	at com.intellij.junit5.JUnit5IdeaTestRunner.startRunnerWithArgs(JUnit5IdeaTestRunner.java:57) ~[junit5-rt.jar:na]
+	at com.intellij.rt.junit.IdeaTestRunner$Repeater$1.execute(IdeaTestRunner.java:38) ~[junit-rt.jar:na]
+	at com.intellij.rt.execution.junit.TestsRepeater.repeat(TestsRepeater.java:11) ~[idea_rt.jar:na]
+	at com.intellij.rt.junit.IdeaTestRunner$Repeater.startRunnerWithArgs(IdeaTestRunner.java:35) ~[junit-rt.jar:na]
+	at com.intellij.rt.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:232) ~[junit-rt.jar:na]
+	at com.intellij.rt.junit.JUnitStarter.main(JUnitStarter.java:55) ~[junit-rt.jar:na]
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'mh-ai.metaheuristic.ai.Globals': Invocation of init method failed; nested exception is java.lang.IllegalArgumentException: mh.home isn't specified
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor.postProcessBeforeInitialization(InitDestroyAnnotationBeanPostProcessor.java:160) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.applyBeanPostProcessorsBeforeInitialization(AbstractAutowireCapableBeanFactory.java:440) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1796) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:620) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:542) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:335) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:333) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:208) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:276) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1391) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1311) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:887) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791) ~[spring-beans-5.3.27.jar:5.3.27]
+	... 89 common frames omitted
+Caused by: java.lang.IllegalArgumentException: mh.home isn't specified
+	at ai.metaheuristic.ai.Globals.getHome(Globals.java:505) ~[classes/:na]
+	at ai.metaheuristic.ai.Globals.postConstruct(Globals.java:522) ~[classes/:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568) ~[na:na]
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor$LifecycleElement.invoke(InitDestroyAnnotationBeanPostProcessor.java:389) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor$LifecycleMetadata.invokeInitMethods(InitDestroyAnnotationBeanPostProcessor.java:333) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor.postProcessBeforeInitialization(InitDestroyAnnotationBeanPostProcessor.java:157) ~[spring-beans-5.3.27.jar:5.3.27]
+	... 102 common frames omitted
+
+2023-05-07 23:29:57.831 ERROR 12724 --- [main] o.s.test.context.TestContextManager      : Caught exception while allowing TestExecutionListener [org.springframework.test.context.web.ServletTestExecutionListener@1c481ff2] to prepare test instance [ai.metaheuristic.ai.profiles.TestProcessorProfile@7499eac7]
+
+java.lang.IllegalStateException: Failed to load ApplicationContext
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:98) ~[spring-test-5.3.27.jar:5.3.27]
+	at org.springframework.test.context.support.DefaultTestContext.getApplicationContext(DefaultTestContext.java:124) ~[spring-test-5.3.27.jar:5.3.27]
+	at org.springframework.test.context.web.ServletTestExecutionListener.setUpRequestContextIfNecessary(ServletTestExecutionListener.java:190) ~[spring-test-5.3.27.jar:5.3.27]
+	at org.springframework.test.context.web.ServletTestExecutionListener.prepareTestInstance(ServletTestExecutionListener.java:132) ~[spring-test-5.3.27.jar:5.3.27]
+	at org.springframework.test.context.TestContextManager.prepareTestInstance(TestContextManager.java:248) ~[spring-test-5.3.27.jar:5.3.27]
+	at org.springframework.test.context.junit.jupiter.SpringExtension.postProcessTestInstance(SpringExtension.java:138) ~[spring-test-5.3.27.jar:5.3.27]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$invokeTestInstancePostProcessors$8(ClassBasedTestDescriptor.java:363) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.executeAndMaskThrowable(ClassBasedTestDescriptor.java:368) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$invokeTestInstancePostProcessors$9(ClassBasedTestDescriptor.java:363) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:197) ~[na:na]
+	at java.base/java.util.stream.ReferencePipeline$2$1.accept(ReferencePipeline.java:179) ~[na:na]
+	at java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1625) ~[na:na]
+	at java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:509) ~[na:na]
+	at java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:499) ~[na:na]
+	at java.base/java.util.stream.StreamSpliterators$WrappingSpliterator.forEachRemaining(StreamSpliterators.java:310) ~[na:na]
+	at java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:735) ~[na:na]
+	at java.base/java.util.stream.Streams$ConcatSpliterator.forEachRemaining(Streams.java:734) ~[na:na]
+	at java.base/java.util.stream.ReferencePipeline$Head.forEach(ReferencePipeline.java:762) ~[na:na]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.invokeTestInstancePostProcessors(ClassBasedTestDescriptor.java:362) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$instantiateAndPostProcessTestInstance$6(ClassBasedTestDescriptor.java:283) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.instantiateAndPostProcessTestInstance(ClassBasedTestDescriptor.java:282) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$testInstancesProvider$4(ClassBasedTestDescriptor.java:272) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at java.base/java.util.Optional.orElseGet(Optional.java:364) ~[na:na]
+	at org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor.lambda$testInstancesProvider$5(ClassBasedTestDescriptor.java:271) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.jupiter.engine.execution.TestInstancesProvider.getTestInstances(TestInstancesProvider.java:31) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$prepare$0(TestMethodTestDescriptor.java:102) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.prepare(TestMethodTestDescriptor.java:101) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.prepare(TestMethodTestDescriptor.java:66) ~[junit-jupiter-engine-5.8.2.jar:5.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$prepare$2(NodeTestTask.java:123) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.prepare(NodeTestTask.java:123) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:90) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54) ~[junit-platform-engine-1.8.2.jar:1.8.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:107) ~[junit-platform-launcher-1.8.2.jar:1.8.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:88) ~[junit-platform-launcher-1.8.2.jar:1.8.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:54) ~[junit-platform-launcher-1.8.2.jar:1.8.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:67) ~[junit-platform-launcher-1.8.2.jar:1.8.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:52) ~[junit-platform-launcher-1.8.2.jar:1.8.2]
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:114) ~[junit-platform-launcher-1.8.2.jar:1.8.2]
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:86) ~[junit-platform-launcher-1.8.2.jar:1.8.2]
+	at org.junit.platform.launcher.core.DefaultLauncherSession$DelegatingLauncher.execute(DefaultLauncherSession.java:86) ~[junit-platform-launcher-1.8.2.jar:1.8.2]
+	at org.junit.platform.launcher.core.SessionPerRequestLauncher.execute(SessionPerRequestLauncher.java:53) ~[junit-platform-launcher-1.8.2.jar:1.8.2]
+	at com.intellij.junit5.JUnit5IdeaTestRunner.startRunnerWithArgs(JUnit5IdeaTestRunner.java:57) ~[junit5-rt.jar:na]
+	at com.intellij.rt.junit.IdeaTestRunner$Repeater$1.execute(IdeaTestRunner.java:38) ~[junit-rt.jar:na]
+	at com.intellij.rt.execution.junit.TestsRepeater.repeat(TestsRepeater.java:11) ~[idea_rt.jar:na]
+	at com.intellij.rt.junit.IdeaTestRunner$Repeater.startRunnerWithArgs(IdeaTestRunner.java:35) ~[junit-rt.jar:na]
+	at com.intellij.rt.junit.JUnitStarter.prepareStreamsAndStart(JUnitStarter.java:232) ~[junit-rt.jar:na]
+	at com.intellij.rt.junit.JUnitStarter.main(JUnitStarter.java:55) ~[junit-rt.jar:na]
+Caused by: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'config.SpringAsyncConfig' defined in file [C:\sandbox\git\aiai\apps\metaheuristic\target\classes\ai\metaheuristic\ai\Config$SpringAsyncConfig.class]: Unsatisfied dependency expressed through constructor parameter 0; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'mh-ai.metaheuristic.ai.Globals': Invocation of init method failed; nested exception is java.lang.IllegalArgumentException: mh.home isn't specified
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:800) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:229) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1372) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1222) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:582) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:542) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:335) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:333) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:208) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:955) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:920) ~[spring-context-5.3.27.jar:5.3.27]
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:583) ~[spring-context-5.3.27.jar:5.3.27]
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:731) ~[spring-boot-2.7.11.jar:2.7.11]
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:408) ~[spring-boot-2.7.11.jar:2.7.11]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:307) ~[spring-boot-2.7.11.jar:2.7.11]
+	at org.springframework.boot.test.context.SpringBootContextLoader.loadContext(SpringBootContextLoader.java:136) ~[spring-boot-test-2.7.11.jar:2.7.11]
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContextInternal(DefaultCacheAwareContextLoaderDelegate.java:141) ~[spring-test-5.3.27.jar:5.3.27]
+	at org.springframework.test.context.cache.DefaultCacheAwareContextLoaderDelegate.loadContext(DefaultCacheAwareContextLoaderDelegate.java:90) ~[spring-test-5.3.27.jar:5.3.27]
+	... 71 common frames omitted
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'mh-ai.metaheuristic.ai.Globals': Invocation of init method failed; nested exception is java.lang.IllegalArgumentException: mh.home isn't specified
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor.postProcessBeforeInitialization(InitDestroyAnnotationBeanPostProcessor.java:160) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.applyBeanPostProcessorsBeforeInitialization(AbstractAutowireCapableBeanFactory.java:440) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1796) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:620) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:542) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:335) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:333) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:208) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:276) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1391) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1311) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:887) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791) ~[spring-beans-5.3.27.jar:5.3.27]
+	... 89 common frames omitted
+Caused by: java.lang.IllegalArgumentException: mh.home isn't specified
+	at ai.metaheuristic.ai.Globals.getHome(Globals.java:505) ~[classes/:na]
+	at ai.metaheuristic.ai.Globals.postConstruct(Globals.java:522) ~[classes/:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568) ~[na:na]
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor$LifecycleElement.invoke(InitDestroyAnnotationBeanPostProcessor.java:389) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor$LifecycleMetadata.invokeInitMethods(InitDestroyAnnotationBeanPostProcessor.java:333) ~[spring-beans-5.3.27.jar:5.3.27]
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor.postProcessBeforeInitialization(InitDestroyAnnotationBeanPostProcessor.java:157) ~[spring-beans-5.3.27.jar:5.3.27]
+	... 102 common frames omitted
+
+2023-05-07 23:30:49.723  INFO 19056 --- [main] a.m.ai.profiles.TestProcessorProfile     : Starting TestProcessorProfile using Java 17.0.2 on SNB with PID 19056 (started by serg in C:\sandbox\git\aiai\apps\metaheuristic)
+2023-05-07 23:30:49.725 DEBUG 19056 --- [main] a.m.ai.profiles.TestProcessorProfile     : Running with Spring Boot v2.7.11, Spring v5.3.27
+2023-05-07 23:30:49.725  INFO 19056 --- [main] a.m.ai.profiles.TestProcessorProfile     : The following 1 profile is active: "processor"
+2023-05-07 23:30:52.662  WARN 19056 --- [main] ai.metaheuristic.ai.Globals              : Dispatcher wasn't enabled, assetMode will be set to DispatcherAssetMode.local
+2023-05-07 23:30:52.670  WARN 19056 --- [main] ai.metaheuristic.ai.Globals              : Memory, free: 908738640, max: 1073741824, total: 1073741824
+2023-05-07 23:30:52.672  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : Current globals:
+2023-05-07 23:30:52.672  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	OS: windows
+2023-05-07 23:30:52.672  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	mh.home: C:\sandbox\git\aiai\aiai-home
+2023-05-07 23:30:52.673  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	corsAllowedOrigins: [*]
+2023-05-07 23:30:52.673  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	branding: Metaheuristic project
+2023-05-07 23:30:52.673  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	testing: true
+2023-05-07 23:30:52.673  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	threadNumber.scheduler: 13
+2023-05-07 23:30:52.673  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	threadNumber.event: 10
+2023-05-07 23:30:52.674  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.enabled: false
+2023-05-07 23:30:52.674  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.dir: C:\sandbox\git\aiai\aiai-home\dispatcher
+2023-05-07 23:30:52.674  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.sslRequired: true
+2023-05-07 23:30:52.674  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.functionSignatureRequired: true
+2023-05-07 23:30:52.674  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.masterUsername: 
+2023-05-07 23:30:52.675  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.publicKey: wasn't provided
+2023-05-07 23:30:52.675  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.chunkSize: 10485760B
+2023-05-07 23:30:52.675  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.keepEventsInDb: P90D
+2023-05-07 23:30:52.675  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.maxTriesAfterError: 3
+2023-05-07 23:30:52.675  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.timeout.gc: PT1H
+2023-05-07 23:30:52.675  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.timeout.artifactCleaner: PT1M
+2023-05-07 23:30:52.676  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.timeout.updateBatchStatuses: PT5S
+2023-05-07 23:30:52.676  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.asset.mode: local
+2023-05-07 23:30:52.676  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.asset.username: null
+2023-05-07 23:30:52.676  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.asset.sourceUrl: null
+2023-05-07 23:30:52.676  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.asset.syncTimeout: PT2M
+2023-05-07 23:30:52.676  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.globalVariableTable: 20
+2023-05-07 23:30:52.677  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.experiment: 10
+2023-05-07 23:30:52.677  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.sourceCode: 25
+2023-05-07 23:30:52.677  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.execContext: 20
+2023-05-07 23:30:52.677  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.processor: 50
+2023-05-07 23:30:52.677  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.account: 20
+2023-05-07 23:30:52.677  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.processor: 50
+2023-05-07 23:30:52.677  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.enabled: true
+2023-05-07 23:30:52.678  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.dir: C:\sandbox\git\aiai\aiai-home\processor
+2023-05-07 23:30:52.678  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.taskConsoleOutputMaxLines: 1717
+2023-05-07 23:30:52.678  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.artifactCleaner: PT28M57S
+2023-05-07 23:30:52.678  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.downloadFunction: PT28M47S
+2023-05-07 23:30:52.678  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.downloadResource: PT28M51S
+2023-05-07 23:30:52.678  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.prepareFunctionForDownloading: PT28M49S
+2023-05-07 23:30:52.678  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.requestDispatcher: PT28M41S
+2023-05-07 23:30:52.678  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.taskAssigner: PT28M43S
+2023-05-07 23:30:52.678  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.taskProcessor: PT28M45S
+2023-05-07 23:30:52.678  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.dispatcherContextInfo: PT28M55S
+2023-05-07 23:30:52.678  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : Current system properties:
+2023-05-07 23:30:52.697  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.specification.version: 17
+2023-05-07 23:30:52.697  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.cpu.isalist: amd64
+2023-05-07 23:30:52.698  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.jnu.encoding: Cp1252
+2023-05-07 23:30:52.698  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.vendor: Eclipse Adoptium
+2023-05-07 23:30:52.698  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.arch.data.model: 64
+2023-05-07 23:30:52.698  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	idea.test.cyclic.buffer.size: 8290304
+2023-05-07 23:30:52.698  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	user.variant: 
+2023-05-07 23:30:52.698  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vendor.url: https://adoptium.net/
+2023-05-07 23:30:52.698  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	user.timezone: America/Los_Angeles
+2023-05-07 23:30:52.698  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.specification.version: 17
+2023-05-07 23:30:52.698  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	os.name: Windows 10
+2023-05-07 23:30:52.699  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.java.launcher: SUN_STANDARD
+2023-05-07 23:30:52.699  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	user.country: US
+2023-05-07 23:30:52.699  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.boot.library.path: C:\jdk-17.0.2\bin
+2023-05-07 23:30:52.699  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.java.command: com.intellij.rt.junit.JUnitStarter -ideVersion5 -junit5 ai.metaheuristic.ai.profiles.TestProcessorProfile,simpleTest
+2023-05-07 23:30:52.699  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	jdk.debug: release
+2023-05-07 23:30:52.699  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.cpu.endian: little
+2023-05-07 23:30:52.699  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	user.home: C:\Users\serg
+2023-05-07 23:30:52.699  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	user.language: en
+2023-05-07 23:30:52.700  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.specification.vendor: Oracle Corporation
+2023-05-07 23:30:52.700  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.version.date: 2022-01-18
+2023-05-07 23:30:52.700  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.home: C:\jdk-17.0.2
+2023-05-07 23:30:52.700  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	file.separator: \
+2023-05-07 23:30:52.700  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.compressedOopsMode: 32-bit
+2023-05-07 23:30:52.700  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.specification.vendor: Oracle Corporation
+2023-05-07 23:30:52.700  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.specification.name: Java Platform API Specification
+2023-05-07 23:30:52.700  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	FILE_LOG_CHARSET: UTF-8
+2023-05-07 23:30:52.700  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.awt.headless: true
+2023-05-07 23:30:52.700  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	user.script: 
+2023-05-07 23:30:52.700  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.management.compiler: HotSpot 64-Bit Tiered Compilers
+2023-05-07 23:30:52.700  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.runtime.version: 17.0.2+8
+2023-05-07 23:30:52.700  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	user.name: serg
+2023-05-07 23:30:52.700  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	path.separator: ;
+2023-05-07 23:30:52.701  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	os.version: 10.0
+2023-05-07 23:30:52.701  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.runtime.name: OpenJDK Runtime Environment
+2023-05-07 23:30:52.701  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	file.encoding: UTF-8
+2023-05-07 23:30:52.701  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	spring.beaninfo.ignore: true
+2023-05-07 23:30:52.701  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.name: OpenJDK 64-Bit Server VM
+2023-05-07 23:30:52.701  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vendor.version: Temurin-17.0.2+8
+2023-05-07 23:30:52.701  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	LOG_FILE: aiai-processor/aiai.log
+2023-05-07 23:30:52.701  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vendor.url.bug: https://github.com/adoptium/adoptium-support/issues
+2023-05-07 23:30:52.701  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.io.tmpdir: D:\Temp\
+2023-05-07 23:30:52.701  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.version: 17.0.2
+2023-05-07 23:30:52.701  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	user.dir: C:\sandbox\git\aiai\apps\metaheuristic
+2023-05-07 23:30:52.701  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	os.arch: amd64
+2023-05-07 23:30:52.701  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.specification.name: Java Virtual Machine Specification
+2023-05-07 23:30:52.702  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	mh.home: C:\sandbox\git\aiai\aiai-home
+2023-05-07 23:30:52.702  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	PID: 19056
+2023-05-07 23:30:52.702  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.os.patch.level: 
+2023-05-07 23:30:52.702  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	CONSOLE_LOG_CHARSET: UTF-8
+2023-05-07 23:30:52.702  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	native.encoding: Cp1252
+2023-05-07 23:30:52.702  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.info: mixed mode, sharing
+2023-05-07 23:30:52.702  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vendor: Eclipse Adoptium
+2023-05-07 23:30:52.702  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.version: 17.0.2+8
+2023-05-07 23:30:52.702  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.io.unicode.encoding: UnicodeLittle
+2023-05-07 23:30:52.702  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.class.version: 61.0
+2023-05-07 23:30:52.702  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : Garbage collectors:
+2023-05-07 23:30:52.708  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	Shenandoah Pauses
+2023-05-07 23:30:52.708  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	Shenandoah Cycles
+2023-05-07 23:30:52.753  WARN 19056 --- [main] ai.metaheuristic.ai.Config               : Spring properties:
+2023-05-07 23:30:52.753  WARN 19056 --- [main] ai.metaheuristic.ai.Config               : '	server host:port: 127.0.0.1:-1
+2023-05-07 23:30:53.059  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : Exec info:
+2023-05-07 23:30:53.059  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	cmd: [C:\Users\serg\.conda\envs\python-3_11\python.exe, --version]
+2023-05-07 23:30:53.059  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir: .
+2023-05-07 23:30:53.059  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir abs: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:30:53.059  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	consoleLogFile abs: D:\Temp\metaheuristic-temp\command-exec-2023-05-07_23-30-52-282639131056100\console-1707397786720381731.log
+2023-05-07 23:30:53.060  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	functionCode: command-exec
+2023-05-07 23:30:53.060  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeoutBeforeTerminate (seconds): 10
+2023-05-07 23:30:53.060  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	schedule: null
+2023-05-07 23:30:53.060  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeout (milliseconds): 10000
+2023-05-07 23:30:53.076  INFO 19056 --- [Thread-1] a.m.ai.core.SystemProcessLauncher        : thread #20, start receiving stream from external process
+2023-05-07 23:30:53.080  INFO 19056 --- [Thread-2] a.m.ai.core.SystemProcessLauncher        : thread #21, time before sleep - Sun May 07 23:30:53 PDT 2023
+2023-05-07 23:30:53.113  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : Any errors of execution? No
+2023-05-07 23:30:53.113 DEBUG 19056 --- [Thread-2] a.m.ai.core.SystemProcessLauncher        : thread #21, current thread was interrupted
+2023-05-07 23:30:53.113 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	exitCode: 0
+2023-05-07 23:30:53.113 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	destroyed with timeout or for other reason: false
+2023-05-07 23:30:53.113 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	cmd: [C:\Users\serg\.conda\envs\python-3_11\python.exe, --version]
+2023-05-07 23:30:53.113 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	execDir: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:30:53.119 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	console output:
+Python 3.11.2
+
+
+2023-05-07 23:30:53.120  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : systemExecResult: FunctionApiData.SystemExecResult(functionCode=command-exec, isOk=true, exitCode=0)
+2023-05-07 23:30:53.129  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : Exec info:
+2023-05-07 23:30:53.129  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	cmd: [C:\jdk-11.0.11\bin\java.exe, -Dfile.encoding=UTF-8, -jar, --version]
+2023-05-07 23:30:53.129  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir: .
+2023-05-07 23:30:53.129  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir abs: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:30:53.129  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	consoleLogFile abs: D:\Temp\metaheuristic-temp\command-exec-2023-05-07_23-30-53-282639264227300\console-2232959791258880428.log
+2023-05-07 23:30:53.130  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	functionCode: command-exec
+2023-05-07 23:30:53.130  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeoutBeforeTerminate (seconds): 10
+2023-05-07 23:30:53.130  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	schedule: null
+2023-05-07 23:30:53.130  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeout (milliseconds): 10000
+2023-05-07 23:30:53.136  INFO 19056 --- [Thread-4] a.m.ai.core.SystemProcessLauncher        : thread #23, start receiving stream from external process
+2023-05-07 23:30:53.136  INFO 19056 --- [Thread-5] a.m.ai.core.SystemProcessLauncher        : thread #24 is waiting for reader thread, time - Sun May 07 23:30:53 PDT 2023
+2023-05-07 23:30:53.312 DEBUG 19056 --- [Thread-5] a.m.ai.core.SystemProcessLauncher        : thread #24, current thread was interrupted
+2023-05-07 23:30:53.312  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : Any errors of execution? No
+2023-05-07 23:30:53.313 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	exitCode: 0
+2023-05-07 23:30:53.313 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	destroyed with timeout or for other reason: false
+2023-05-07 23:30:53.313 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	cmd: [C:\jdk-11.0.11\bin\java.exe, -Dfile.encoding=UTF-8, -jar, --version]
+2023-05-07 23:30:53.313 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	execDir: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:30:53.321 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	console output:
+openjdk 11.0.11 2021-04-20
+OpenJDK Runtime Environment AdoptOpenJDK-11.0.11+9 (build 11.0.11+9)
+OpenJDK 64-Bit Server VM AdoptOpenJDK-11.0.11+9 (build 11.0.11+9, mixed mode)
+
+
+2023-05-07 23:30:53.321  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : systemExecResult: FunctionApiData.SystemExecResult(functionCode=command-exec, isOk=true, exitCode=0)
+2023-05-07 23:30:53.324  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : Exec info:
+2023-05-07 23:30:53.325  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	cmd: [C:\jdk-17.0.2\bin\java.exe, -Dfile.encoding=UTF-8, -jar, --version]
+2023-05-07 23:30:53.325  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir: .
+2023-05-07 23:30:53.325  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir abs: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:30:53.325  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	consoleLogFile abs: D:\Temp\metaheuristic-temp\command-exec-2023-05-07_23-30-53-282639459723500\console-837278733984456677.log
+2023-05-07 23:30:53.326  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	functionCode: command-exec
+2023-05-07 23:30:53.327  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeoutBeforeTerminate (seconds): 10
+2023-05-07 23:30:53.327  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	schedule: null
+2023-05-07 23:30:53.327  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeout (milliseconds): 10000
+2023-05-07 23:30:53.333  INFO 19056 --- [Thread-7] a.m.ai.core.SystemProcessLauncher        : thread #26, start receiving stream from external process
+2023-05-07 23:30:53.334  INFO 19056 --- [Thread-8] a.m.ai.core.SystemProcessLauncher        : thread #27 is waiting for reader thread, time - Sun May 07 23:30:53 PDT 2023
+2023-05-07 23:30:53.471 DEBUG 19056 --- [Thread-8] a.m.ai.core.SystemProcessLauncher        : thread #27, current thread was interrupted
+2023-05-07 23:30:53.471  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : Any errors of execution? No
+2023-05-07 23:30:53.472 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	exitCode: 0
+2023-05-07 23:30:53.472 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	destroyed with timeout or for other reason: false
+2023-05-07 23:30:53.472 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	cmd: [C:\jdk-17.0.2\bin\java.exe, -Dfile.encoding=UTF-8, -jar, --version]
+2023-05-07 23:30:53.472 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	execDir: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:30:53.473 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	console output:
+openjdk 17.0.2 2022-01-18
+OpenJDK Runtime Environment Temurin-17.0.2+8 (build 17.0.2+8)
+OpenJDK 64-Bit Server VM Temurin-17.0.2+8 (build 17.0.2+8, mixed mode, sharing)
+
+
+2023-05-07 23:30:53.473  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : systemExecResult: FunctionApiData.SystemExecResult(functionCode=command-exec, isOk=true, exitCode=0)
+2023-05-07 23:30:53.865  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : Exec info:
+2023-05-07 23:30:53.866  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	cmd: [git, --version]
+2023-05-07 23:30:53.866  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir: .
+2023-05-07 23:30:53.866  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir abs: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:30:53.866  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	consoleLogFile abs: D:\Temp\metaheuristic-temp\command-exec-2023-05-07_23-30-53-282639995066100\console-16233325347018315290.log
+2023-05-07 23:30:53.866  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	functionCode: command-exec
+2023-05-07 23:30:53.866  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeoutBeforeTerminate (seconds): 30
+2023-05-07 23:30:53.866  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	schedule: null
+2023-05-07 23:30:53.866  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeout (milliseconds): 30000
+2023-05-07 23:30:53.873  INFO 19056 --- [Thread-11] a.m.ai.core.SystemProcessLauncher        : thread #30 is waiting for reader thread, time - Sun May 07 23:30:53 PDT 2023
+2023-05-07 23:30:53.873  INFO 19056 --- [Thread-10] a.m.ai.core.SystemProcessLauncher        : thread #29, start receiving stream from external process
+2023-05-07 23:30:53.946  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : Any errors of execution? No
+2023-05-07 23:30:53.946 DEBUG 19056 --- [Thread-11] a.m.ai.core.SystemProcessLauncher        : thread #30, current thread was interrupted
+2023-05-07 23:30:53.947 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	exitCode: 0
+2023-05-07 23:30:53.947 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	destroyed with timeout or for other reason: false
+2023-05-07 23:30:53.947 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	cmd: [git, --version]
+2023-05-07 23:30:53.947 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	execDir: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:30:53.948 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	console output:
+git version 2.40.0.windows.1
+
+
+2023-05-07 23:30:53.949  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : systemExecResult: FunctionApiData.SystemExecResult(functionCode=command-exec, isOk=true, exitCode=0)
+2023-05-07 23:30:54.394  INFO 19056 --- [main] a.m.a.p.d.ActiveDispatchers              : ActiveDispatchers for scheduler, dispatcher http://localhost:8080 was added to selection
+2023-05-07 23:30:54.395  INFO 19056 --- [main] a.m.a.p.d.ActiveDispatchers              : ActiveDispatchers for scheduler, dispatcher https://mh-main.herokuapp.com is disabled
+2023-05-07 23:30:54.452  INFO 19056 --- [main] a.m.a.p.d.ActiveDispatchers              : RoundRobin for KeepAlive, dispatcher http://localhost:8080 was added to selection
+2023-05-07 23:30:54.452  INFO 19056 --- [main] a.m.a.p.d.ActiveDispatchers              : RoundRobin for KeepAlive, dispatcher https://mh-main.herokuapp.com is disabled
+2023-05-07 23:30:55.097  INFO 19056 --- [main] ai.metaheuristic.ai.Config               : Config.threadPoolTaskScheduler() will use 13 as a number of threads for an schedulers
+2023-05-07 23:30:55.204  WARN 19056 --- [main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 654f2f86-b4d4-4823-9505-07bfd3bf6a16
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2023-05-07 23:30:56.264  INFO 19056 --- [main] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page template: index
+2023-05-07 23:30:56.802  INFO 19056 --- [main] a.m.ai.profiles.TestProcessorProfile     : Started TestProcessorProfile in 7.555 seconds (JVM running for 9.492)
+2023-05-07 23:30:56.892  INFO 19056 --- [main] a.m.ai.profiles.TestProcessorProfile     : Starting TestProcessorProfile using Java 17.0.2 on SNB with PID 19056 (started by serg in C:\sandbox\git\aiai\apps\metaheuristic)
+2023-05-07 23:30:56.892 DEBUG 19056 --- [main] a.m.ai.profiles.TestProcessorProfile     : Running with Spring Boot v2.7.11, Spring v5.3.27
+2023-05-07 23:30:56.892  INFO 19056 --- [main] a.m.ai.profiles.TestProcessorProfile     : The following 1 profile is active: "processor"
+2023-05-07 23:30:58.009  WARN 19056 --- [main] ai.metaheuristic.ai.Globals              : Dispatcher wasn't enabled, assetMode will be set to DispatcherAssetMode.local
+2023-05-07 23:30:58.010  WARN 19056 --- [main] ai.metaheuristic.ai.Globals              : Memory, free: 1019487000, max: 1073741824, total: 1073741824
+2023-05-07 23:30:58.010  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : Current globals:
+2023-05-07 23:30:58.010  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	OS: windows
+2023-05-07 23:30:58.010  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	mh.home: C:\sandbox\git\aiai\aiai-home
+2023-05-07 23:30:58.010  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	corsAllowedOrigins: [*]
+2023-05-07 23:30:58.011  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	branding: Metaheuristic project
+2023-05-07 23:30:58.011  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	testing: true
+2023-05-07 23:30:58.011  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	threadNumber.scheduler: 13
+2023-05-07 23:30:58.011  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	threadNumber.event: 10
+2023-05-07 23:30:58.011  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.enabled: false
+2023-05-07 23:30:58.011  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.dir: C:\sandbox\git\aiai\aiai-home\dispatcher
+2023-05-07 23:30:58.011  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.sslRequired: true
+2023-05-07 23:30:58.011  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.functionSignatureRequired: true
+2023-05-07 23:30:58.011  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.masterUsername: 
+2023-05-07 23:30:58.011  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.publicKey: wasn't provided
+2023-05-07 23:30:58.011  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.chunkSize: 10485760B
+2023-05-07 23:30:58.011  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.keepEventsInDb: P90D
+2023-05-07 23:30:58.011  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.maxTriesAfterError: 3
+2023-05-07 23:30:58.011  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.timeout.gc: PT1H
+2023-05-07 23:30:58.011  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.timeout.artifactCleaner: PT1M
+2023-05-07 23:30:58.011  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.timeout.updateBatchStatuses: PT5S
+2023-05-07 23:30:58.012  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.asset.mode: local
+2023-05-07 23:30:58.012  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.asset.username: null
+2023-05-07 23:30:58.012  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.asset.sourceUrl: null
+2023-05-07 23:30:58.012  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.asset.syncTimeout: PT2M
+2023-05-07 23:30:58.012  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.globalVariableTable: 20
+2023-05-07 23:30:58.012  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.experiment: 10
+2023-05-07 23:30:58.012  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.sourceCode: 25
+2023-05-07 23:30:58.012  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.execContext: 20
+2023-05-07 23:30:58.012  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.processor: 50
+2023-05-07 23:30:58.012  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.account: 20
+2023-05-07 23:30:58.012  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.processor: 50
+2023-05-07 23:30:58.012  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.enabled: true
+2023-05-07 23:30:58.012  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.dir: C:\sandbox\git\aiai\aiai-home\processor
+2023-05-07 23:30:58.013  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.taskConsoleOutputMaxLines: 1717
+2023-05-07 23:30:58.013  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.artifactCleaner: PT28M57S
+2023-05-07 23:30:58.013  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.downloadFunction: PT28M47S
+2023-05-07 23:30:58.013  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.downloadResource: PT28M51S
+2023-05-07 23:30:58.013  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.prepareFunctionForDownloading: PT28M49S
+2023-05-07 23:30:58.013  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.requestDispatcher: PT28M41S
+2023-05-07 23:30:58.013  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.taskAssigner: PT28M43S
+2023-05-07 23:30:58.013  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.taskProcessor: PT28M45S
+2023-05-07 23:30:58.013  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.dispatcherContextInfo: PT28M55S
+2023-05-07 23:30:58.013  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : Current system properties:
+2023-05-07 23:30:58.013  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.specification.version: 17
+2023-05-07 23:30:58.013  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.cpu.isalist: amd64
+2023-05-07 23:30:58.013  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.jnu.encoding: Cp1252
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.vendor: Eclipse Adoptium
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.arch.data.model: 64
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	idea.test.cyclic.buffer.size: 8290304
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	user.variant: 
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vendor.url: https://adoptium.net/
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	user.timezone: America/Los_Angeles
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.specification.version: 17
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	os.name: Windows 10
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.java.launcher: SUN_STANDARD
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	user.country: US
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.boot.library.path: C:\jdk-17.0.2\bin
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.java.command: com.intellij.rt.junit.JUnitStarter -ideVersion5 -junit5 ai.metaheuristic.ai.profiles.TestProcessorProfile,simpleTest
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	jdk.debug: release
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.cpu.endian: little
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	user.home: C:\Users\serg
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	user.language: en
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.specification.vendor: Oracle Corporation
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.version.date: 2022-01-18
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.home: C:\jdk-17.0.2
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	file.separator: \
+2023-05-07 23:30:58.014  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.compressedOopsMode: 32-bit
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.specification.vendor: Oracle Corporation
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.specification.name: Java Platform API Specification
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	FILE_LOG_CHARSET: UTF-8
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.awt.headless: true
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	user.script: 
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.management.compiler: HotSpot 64-Bit Tiered Compilers
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.runtime.version: 17.0.2+8
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	user.name: serg
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	path.separator: ;
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	os.version: 10.0
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.runtime.name: OpenJDK Runtime Environment
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	file.encoding: UTF-8
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	spring.beaninfo.ignore: true
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.name: OpenJDK 64-Bit Server VM
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vendor.version: Temurin-17.0.2+8
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	LOG_FILE: aiai-processor/aiai.log
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vendor.url.bug: https://github.com/adoptium/adoptium-support/issues
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.io.tmpdir: D:\Temp\
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.version: 17.0.2
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	user.dir: C:\sandbox\git\aiai\apps\metaheuristic
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	os.arch: amd64
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.specification.name: Java Virtual Machine Specification
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	mh.home: C:\sandbox\git\aiai\aiai-home
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	PID: 19056
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.os.patch.level: 
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	CONSOLE_LOG_CHARSET: UTF-8
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	native.encoding: Cp1252
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.info: mixed mode, sharing
+2023-05-07 23:30:58.015  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vendor: Eclipse Adoptium
+2023-05-07 23:30:58.016  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.version: 17.0.2+8
+2023-05-07 23:30:58.016  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	sun.io.unicode.encoding: UnicodeLittle
+2023-05-07 23:30:58.016  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	java.class.version: 61.0
+2023-05-07 23:30:58.016  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : Garbage collectors:
+2023-05-07 23:30:58.016  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	Shenandoah Pauses
+2023-05-07 23:30:58.016  INFO 19056 --- [main] ai.metaheuristic.ai.Globals              : '	Shenandoah Cycles
+2023-05-07 23:30:58.024  WARN 19056 --- [main] ai.metaheuristic.ai.Config               : Spring properties:
+2023-05-07 23:30:58.024  WARN 19056 --- [main] ai.metaheuristic.ai.Config               : '	server host:port: 127.0.0.1:-1
+2023-05-07 23:30:58.050  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : Exec info:
+2023-05-07 23:30:58.050  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	cmd: [C:\Users\serg\.conda\envs\python-3_11\python.exe, --version]
+2023-05-07 23:30:58.051  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir: .
+2023-05-07 23:30:58.051  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir abs: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:30:58.051  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	consoleLogFile abs: D:\Temp\metaheuristic-temp\command-exec-2023-05-07_23-30-58-282644186039500\console-10807026587805313649.log
+2023-05-07 23:30:58.051  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	functionCode: command-exec
+2023-05-07 23:30:58.051  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeoutBeforeTerminate (seconds): 10
+2023-05-07 23:30:58.051  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	schedule: null
+2023-05-07 23:30:58.051  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeout (milliseconds): 10000
+2023-05-07 23:30:58.057  INFO 19056 --- [Thread-15] a.m.ai.core.SystemProcessLauncher        : thread #35 is waiting for reader thread, time - Sun May 07 23:30:58 PDT 2023
+2023-05-07 23:30:58.057  INFO 19056 --- [Thread-14] a.m.ai.core.SystemProcessLauncher        : thread #34, start receiving stream from external process
+2023-05-07 23:30:58.104  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : Any errors of execution? No
+2023-05-07 23:30:58.104 DEBUG 19056 --- [Thread-15] a.m.ai.core.SystemProcessLauncher        : thread #35, current thread was interrupted
+2023-05-07 23:30:58.104 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	exitCode: 0
+2023-05-07 23:30:58.104 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	destroyed with timeout or for other reason: false
+2023-05-07 23:30:58.104 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	cmd: [C:\Users\serg\.conda\envs\python-3_11\python.exe, --version]
+2023-05-07 23:30:58.104 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	execDir: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:30:58.105 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	console output:
+Python 3.11.2
+
+
+2023-05-07 23:30:58.106  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : systemExecResult: FunctionApiData.SystemExecResult(functionCode=command-exec, isOk=true, exitCode=0)
+2023-05-07 23:30:58.109  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : Exec info:
+2023-05-07 23:30:58.109  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	cmd: [C:\jdk-11.0.11\bin\java.exe, -Dfile.encoding=UTF-8, -jar, --version]
+2023-05-07 23:30:58.109  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir: .
+2023-05-07 23:30:58.109  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir abs: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:30:58.109  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	consoleLogFile abs: D:\Temp\metaheuristic-temp\command-exec-2023-05-07_23-30-58-282644244725800\console-597418030979582695.log
+2023-05-07 23:30:58.109  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	functionCode: command-exec
+2023-05-07 23:30:58.109  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeoutBeforeTerminate (seconds): 10
+2023-05-07 23:30:58.109  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	schedule: null
+2023-05-07 23:30:58.109  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeout (milliseconds): 10000
+2023-05-07 23:30:58.115  INFO 19056 --- [Thread-17] a.m.ai.core.SystemProcessLauncher        : thread #37, start receiving stream from external process
+2023-05-07 23:30:58.115  INFO 19056 --- [Thread-18] a.m.ai.core.SystemProcessLauncher        : thread #38 is waiting for reader thread, time - Sun May 07 23:30:58 PDT 2023
+2023-05-07 23:30:58.330 DEBUG 19056 --- [Thread-18] a.m.ai.core.SystemProcessLauncher        : thread #38, current thread was interrupted
+2023-05-07 23:30:58.330  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : Any errors of execution? No
+2023-05-07 23:30:58.330 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	exitCode: 0
+2023-05-07 23:30:58.330 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	destroyed with timeout or for other reason: false
+2023-05-07 23:30:58.330 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	cmd: [C:\jdk-11.0.11\bin\java.exe, -Dfile.encoding=UTF-8, -jar, --version]
+2023-05-07 23:30:58.330 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	execDir: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:30:58.332 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	console output:
+openjdk 11.0.11 2021-04-20
+OpenJDK Runtime Environment AdoptOpenJDK-11.0.11+9 (build 11.0.11+9)
+OpenJDK 64-Bit Server VM AdoptOpenJDK-11.0.11+9 (build 11.0.11+9, mixed mode)
+
+
+2023-05-07 23:30:58.332  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : systemExecResult: FunctionApiData.SystemExecResult(functionCode=command-exec, isOk=true, exitCode=0)
+2023-05-07 23:30:58.335  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : Exec info:
+2023-05-07 23:30:58.335  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	cmd: [C:\jdk-17.0.2\bin\java.exe, -Dfile.encoding=UTF-8, -jar, --version]
+2023-05-07 23:30:58.336  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir: .
+2023-05-07 23:30:58.336  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir abs: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:30:58.336  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	consoleLogFile abs: D:\Temp\metaheuristic-temp\command-exec-2023-05-07_23-30-58-282644470324800\console-18398143087252452389.log
+2023-05-07 23:30:58.336  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	functionCode: command-exec
+2023-05-07 23:30:58.336  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeoutBeforeTerminate (seconds): 10
+2023-05-07 23:30:58.336  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	schedule: null
+2023-05-07 23:30:58.336  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeout (milliseconds): 10000
+2023-05-07 23:30:58.347  INFO 19056 --- [Thread-20] a.m.ai.core.SystemProcessLauncher        : thread #40, start receiving stream from external process
+2023-05-07 23:30:58.348  INFO 19056 --- [Thread-21] a.m.ai.core.SystemProcessLauncher        : thread #41, time before sleep - Sun May 07 23:30:58 PDT 2023
+2023-05-07 23:30:58.499 DEBUG 19056 --- [Thread-21] a.m.ai.core.SystemProcessLauncher        : thread #41, current thread was interrupted
+2023-05-07 23:30:58.499  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : Any errors of execution? No
+2023-05-07 23:30:58.499 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	exitCode: 0
+2023-05-07 23:30:58.499 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	destroyed with timeout or for other reason: false
+2023-05-07 23:30:58.499 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	cmd: [C:\jdk-17.0.2\bin\java.exe, -Dfile.encoding=UTF-8, -jar, --version]
+2023-05-07 23:30:58.499 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	execDir: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:30:58.500 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	console output:
+openjdk 17.0.2 2022-01-18
+OpenJDK Runtime Environment Temurin-17.0.2+8 (build 17.0.2+8)
+OpenJDK 64-Bit Server VM Temurin-17.0.2+8 (build 17.0.2+8, mixed mode, sharing)
+
+
+2023-05-07 23:30:58.500  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : systemExecResult: FunctionApiData.SystemExecResult(functionCode=command-exec, isOk=true, exitCode=0)
+2023-05-07 23:30:58.672  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : Exec info:
+2023-05-07 23:30:58.673  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	cmd: [git, --version]
+2023-05-07 23:30:58.673  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir: .
+2023-05-07 23:30:58.673  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir abs: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:30:58.673  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	consoleLogFile abs: D:\Temp\metaheuristic-temp\command-exec-2023-05-07_23-30-58-282644807843000\console-1979152062786256587.log
+2023-05-07 23:30:58.673  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	functionCode: command-exec
+2023-05-07 23:30:58.673  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeoutBeforeTerminate (seconds): 30
+2023-05-07 23:30:58.673  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	schedule: null
+2023-05-07 23:30:58.673  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeout (milliseconds): 30000
+2023-05-07 23:30:58.681  INFO 19056 --- [Thread-23] a.m.ai.core.SystemProcessLauncher        : thread #43, start receiving stream from external process
+2023-05-07 23:30:58.681  INFO 19056 --- [Thread-24] a.m.ai.core.SystemProcessLauncher        : thread #44, time before sleep - Sun May 07 23:30:58 PDT 2023
+2023-05-07 23:30:58.763 DEBUG 19056 --- [Thread-24] a.m.ai.core.SystemProcessLauncher        : thread #44, current thread was interrupted
+2023-05-07 23:30:58.763  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : Any errors of execution? No
+2023-05-07 23:30:58.763 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	exitCode: 0
+2023-05-07 23:30:58.763 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	destroyed with timeout or for other reason: false
+2023-05-07 23:30:58.763 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	cmd: [git, --version]
+2023-05-07 23:30:58.763 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	execDir: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:30:58.765 DEBUG 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : '	console output:
+git version 2.40.0.windows.1
+
+
+2023-05-07 23:30:58.765  INFO 19056 --- [main] a.m.ai.core.SystemProcessLauncher        : systemExecResult: FunctionApiData.SystemExecResult(functionCode=command-exec, isOk=true, exitCode=0)
+2023-05-07 23:30:58.795  INFO 19056 --- [main] a.m.a.p.d.ActiveDispatchers              : ActiveDispatchers for scheduler, dispatcher http://localhost:8080 was added to selection
+2023-05-07 23:30:58.795  INFO 19056 --- [main] a.m.a.p.d.ActiveDispatchers              : ActiveDispatchers for scheduler, dispatcher https://mh-main.herokuapp.com is disabled
+2023-05-07 23:30:58.840  INFO 19056 --- [main] a.m.a.p.d.ActiveDispatchers              : RoundRobin for KeepAlive, dispatcher http://localhost:8080 was added to selection
+2023-05-07 23:30:58.840  INFO 19056 --- [main] a.m.a.p.d.ActiveDispatchers              : RoundRobin for KeepAlive, dispatcher https://mh-main.herokuapp.com is disabled
+2023-05-07 23:30:59.009  INFO 19056 --- [main] ai.metaheuristic.ai.Config               : Config.threadPoolTaskScheduler() will use 13 as a number of threads for an schedulers
+2023-05-07 23:30:59.059  WARN 19056 --- [main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 23a30dbe-b60f-445d-9316-ab3a834f007e
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2023-05-07 23:30:59.661  INFO 19056 --- [main] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page template: index
+2023-05-07 23:30:59.965  INFO 19056 --- [main] a.m.ai.profiles.TestProcessorProfile     : Started TestProcessorProfile in 3.123 seconds (JVM running for 12.654)

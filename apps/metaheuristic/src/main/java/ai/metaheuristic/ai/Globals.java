@@ -87,20 +87,6 @@ public class Globals {
 
     public static final String METAHEURISTIC_PROJECT = "Metaheuristic project";
 
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class DispatcherDir {
-        public Path dir = Path.of("target", "mh-dispatcher");
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class ProcessorDir {
-        public File dir = null;
-    }
-
     @Component
     @ConfigurationPropertiesBinding
     public static class PublicKeyConverter implements Converter<String, PublicKey> {
@@ -740,9 +726,9 @@ public class Globals {
         log.info("'\tthreadNumber.scheduler: {}", threadNumber.getScheduler());
         log.info("'\tthreadNumber.event: {}", threadNumber.getEvent());
         log.info("'\tdispatcher.enabled: {}", dispatcher.enabled);
+        log.info("'\tdispatcher.dir: {}", dispatcherPath.toAbsolutePath().normalize());
         log.info("'\tdispatcher.sslRequired: {}", dispatcher.sslRequired);
         log.info("'\tdispatcher.functionSignatureRequired: {}", dispatcher.functionSignatureRequired);
-        log.info("'\tdispatcher.dir: {}", dispatcherPath.toAbsolutePath().normalize());
         log.info("'\tdispatcher.masterUsername: {}", dispatcher.masterUsername);
         log.info("'\tdispatcher.publicKey: {}", dispatcher.publicKey!=null ? "provided" : "wasn't provided");
         log.info("'\tdispatcher.chunkSize: {}", dispatcher.chunkSize);
@@ -767,6 +753,7 @@ public class Globals {
         log.info("'\tdispatcher.rowsLimit.processor: {}", dispatcher.rowsLimit.processor);
 
         log.info("'\tprocessor.enabled: {}", processor.enabled);
+        log.info("'\tprocessor.dir: {}", processorPath.toAbsolutePath().normalize());
         log.info("'\tprocessor.taskConsoleOutputMaxLines: {}", processor.taskConsoleOutputMaxLines);
         log.info("'\tprocessor.timeout.artifactCleaner: {}", processor.timeout.artifactCleaner);
         log.info("'\tprocessor.timeout.downloadFunction: {}", processor.timeout.downloadFunction);
@@ -776,6 +763,5 @@ public class Globals {
         log.info("'\tprocessor.timeout.taskAssigner: {}", processor.timeout.taskAssigner);
         log.info("'\tprocessor.timeout.taskProcessor: {}", processor.timeout.taskProcessor);
         log.info("'\tprocessor.timeout.dispatcherContextInfo: {}", processor.timeout.dispatcherContextInfo);
-        log.info("'\tprocessor.dir: {}", processorPath.toAbsolutePath().normalize());
     }
 }
