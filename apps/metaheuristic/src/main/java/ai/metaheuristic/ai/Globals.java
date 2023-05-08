@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
+import ai.metaheuristic.ai.dispatcher.data.KbData;
 import ai.metaheuristic.ai.exceptions.GlobalConfigurationException;
 import ai.metaheuristic.ai.utils.EnvProperty;
 import ai.metaheuristic.api.EnumsApi;
@@ -57,7 +58,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 @ConfigurationProperties("mh")
 @Getter
@@ -128,25 +128,6 @@ public class Globals {
         }
     }
 
-    @Component
-    @ConfigurationPropertiesBinding
-    public static class DispatcherDirConverter implements Converter<String, DispatcherDir> {
-        @Override
-        public DispatcherDir convert(String from) {
-            final File file = toFile(from);
-            return file!=null ? new DispatcherDir(file.toPath()) : new DispatcherDir();
-        }
-    }
-
-    @Component
-    @ConfigurationPropertiesBinding
-    public static class ProcessorDirConverter implements Converter<String, ProcessorDir> {
-        @Override
-        public ProcessorDir convert(String from) {
-            return new ProcessorDir(toFile(from));
-        }
-    }
-
     @Getter
     @Setter
     public static class Asset {
@@ -164,10 +145,51 @@ public class Globals {
         @DurationUnit(ChronoUnit.SECONDS)
         public Duration syncTimeout = SECONDS_120;
 
-//        @Scheduled(initialDelay = 23_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.dispatcher.asset.syncTimeout.toSeconds(), 60, 3600)*1000 }")
         public Duration getSyncTimeout() {
             return syncTimeout.toSeconds() >= 60 && syncTimeout.toSeconds() <= 3600 ? syncTimeout : SECONDS_120;
         }
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class KbPath {
+        public String evals;
+        public String data;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Git implements KbData.KbGit {
+        public String repo;
+        public String branch;
+        public String commit;
+        public List<KbPath> kbPaths = new ArrayList<>();
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Kb {
+        public String code;
+        public String type;
+        public boolean disabled = false;
+        public Git git;
+        public File file;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Max {
+        public int consoleOutputLines = 1000;
+        public int promptLength = 4096;
+        public int errorsPerPart = 1;
+        // has effect only with a local executor of requests
+        public int errorsPerEvaluation = 5;
+        public int promptsPerPart = 10000;
     }
 
     @Getter
@@ -269,8 +291,6 @@ public class Globals {
 
         @Nullable
         public PublicKey publicKey;
-
-        public DispatcherDir dir = new DispatcherDir();
 
         public String defaultResultFileExtension = ".bin";
 
@@ -384,47 +404,38 @@ public class Globals {
         @DurationUnit(ChronoUnit.SECONDS)
         public Duration artifactCleaner = SECONDS_29;
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.requestDispatcher.toSeconds(), 6, 30)*1000 }")
         public Duration getRequestDispatcher() {
             return requestDispatcher.toSeconds() >= 6 && requestDispatcher.toSeconds() <= 30 ? requestDispatcher : SECONDS_10;
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.taskAssigner.toSeconds(), 3, 20)*1000 }")
         public Duration getTaskAssigner() {
             return taskAssigner.toSeconds() >= 3 && taskAssigner.toSeconds() <= 20 ? taskAssigner : SECONDS_5;
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.taskProcessor.toSeconds(), 3, 20)*1000 }")
         public Duration getTaskProcessor() {
             return taskProcessor.toSeconds() >= 3 && taskProcessor.toSeconds() <= 20 ? taskProcessor : SECONDS_9;
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.downloadFunction.toSeconds(), 3, 20)*1000 }")
         public Duration getDownloadFunction() {
             return downloadFunction.toSeconds() >= 3 && downloadFunction.toSeconds() <= 20 ? downloadFunction : SECONDS_11;
         }
 
-//        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.prepareFunctionForDownloading.toSeconds(), 20, 60)*1000 }")
         public Duration getPrepareFunctionForDownloading() {
             return prepareFunctionForDownloading.toSeconds() >= 20 && prepareFunctionForDownloading.toSeconds() <= 60 ? prepareFunctionForDownloading : SECONDS_31;
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.downloadResource.toSeconds(), 3, 20)*1000 }")
         public Duration getDownloadResource() {
             return downloadResource.toSeconds() >= 3 && downloadResource.toSeconds() <= 20 ? downloadResource : SECONDS_3;
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.uploadResultResource.toSeconds(), 3, 20)*1000 }")
         public Duration getUploadResultResource() {
             return uploadResultResource.toSeconds() >= 3 && uploadResultResource.toSeconds() <= 20 ? uploadResultResource : SECONDS_3;
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.dispatcherContextInfo.toSeconds(), 10, 60)*1000 }")
         public Duration getDispatcherContextInfo() {
             return dispatcherContextInfo.toSeconds() >= 10 && dispatcherContextInfo.toSeconds() <= 60 ? dispatcherContextInfo : SECONDS_19;
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.artifactCleaner.toSeconds(), 10, 60)*1000 }")
         public Duration getArtifactCleaner() {
             return artifactCleaner.toSeconds() >= 10 && artifactCleaner.toSeconds() <= 60 ? artifactCleaner : SECONDS_29;
         }
@@ -449,7 +460,6 @@ public class Globals {
         public ProcessorTimeout timeout = new ProcessorTimeout();
 
         public boolean enabled = false;
-        public ProcessorDir dir = null;
 
         @Nullable
         public File defaultDispatcherYamlFile = null;
@@ -457,7 +467,6 @@ public class Globals {
         @Nullable
         public File defaultEnvYamlFile = null;
 
-//        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.task-console-output-max-lines'), 1000, 100000, 1000) }")
         public int taskConsoleOutputMaxLines = 1000;
 
         public void setTaskConsoleOutputMaxLines(int taskConsoleOutputMaxLines) {
@@ -503,16 +512,32 @@ public class Globals {
     public boolean testing = false;
     public boolean eventEnabled = false;
 
-    // some fields
-    public Path dispatcherTempDir;
-    public File dispatcherResourcesDir;
-    public File processorResourcesDir;
+    public Path home;
+
+    public Path getHome() {
+        if (home==null) {
+            throw new IllegalArgumentException("mh.home isn't specified");
+        }
+        return home;
+    }
+
+    // some fields, will be inited in postConstruct()
+    public Path dispatcherTempPath;
+    public Path dispatcherResourcesPath;
+    public Path dispatcherPath;
+    public Path processorResourcesPath;
+    public Path processorPath;
 
     public EnumsApi.OS os = EnumsApi.OS.unknown;
 
     @SneakyThrows
     @PostConstruct
     public void postConstruct() {
+        dispatcherPath = getHome().resolve("dispatcher");
+        Files.createDirectories(dispatcherPath);
+        processorPath = getHome().resolve("processor");
+        Files.createDirectories(processorPath);
+
         if (dispatcher.enabled && dispatcher.functionSignatureRequired && dispatcher.publicKey==null ) {
             throw new GlobalConfigurationException("mh.dispatcher.public-key wasn't configured for dispatcher (file application.properties) but mh.dispatcher.function-signature-required is true (default value)");
         }
@@ -527,19 +552,14 @@ public class Globals {
             }
         }
 
-        if (processor.dir==null || processor.dir.dir ==null) {
-            log.warn("Processor will be disabled, processorDir is null, processorEnabled: {}", processor.enabled);
-            processor.enabled = false;
-        }
-
         if (!dispatcher.enabled) {
             log.warn("Dispatcher wasn't enabled, assetMode will be set to DispatcherAssetMode.local");
             dispatcher.asset.mode = EnumsApi.DispatcherAssetMode.local;
         }
 
         if (processor.enabled) {
-            processorResourcesDir = new File(processor.dir.dir, Consts.RESOURCES_DIR);
-            processorResourcesDir.mkdirs();
+            processorResourcesPath = processorPath.resolve(Consts.RESOURCES_DIR);
+            Files.createDirectories(processorResourcesPath);
 
             // TODO 2019.04.26 right now the change of ownership is disabled
             //  but maybe will be required in future
@@ -547,11 +567,11 @@ public class Globals {
         }
 
         if (dispatcher.enabled) {
-            dispatcherTempDir = dispatcher.dir.dir.resolve("temp");
-            PathUtils.createParentDirectories(dispatcherTempDir);
+            dispatcherTempPath = dispatcherPath.resolve("temp");
+            PathUtils.createParentDirectories(dispatcherTempPath);
 
-            dispatcherResourcesDir = new File(dispatcher.dir.dir.toFile(), Consts.RESOURCES_DIR);
-            dispatcherResourcesDir.mkdirs();
+            dispatcherResourcesPath = dispatcherPath.resolve(Consts.RESOURCES_DIR);
+            Files.createDirectories(dispatcherResourcesPath);
         }
         initOperationSystem();
 
@@ -721,7 +741,7 @@ public class Globals {
         log.info("'\tdispatcher.enabled: {}", dispatcher.enabled);
         log.info("'\tdispatcher.sslRequired: {}", dispatcher.sslRequired);
         log.info("'\tdispatcher.functionSignatureRequired: {}", dispatcher.functionSignatureRequired);
-        log.info("'\tdispatcher.dir: {}", dispatcher.dir.dir!=null ? dispatcher.dir.dir.normalize() : "<dispatcher dir is null>");
+        log.info("'\tdispatcher.dir: {}", dispatcherPath.toAbsolutePath().normalize());
         log.info("'\tdispatcher.masterUsername: {}", dispatcher.masterUsername);
         log.info("'\tdispatcher.publicKey: {}", dispatcher.publicKey!=null ? "provided" : "wasn't provided");
         log.info("'\tdispatcher.chunkSize: {}", dispatcher.chunkSize);
@@ -755,6 +775,6 @@ public class Globals {
         log.info("'\tprocessor.timeout.taskAssigner: {}", processor.timeout.taskAssigner);
         log.info("'\tprocessor.timeout.taskProcessor: {}", processor.timeout.taskProcessor);
         log.info("'\tprocessor.timeout.dispatcherContextInfo: {}", processor.timeout.dispatcherContextInfo);
-        log.info("'\tprocessor.dir: {}", processor.dir!=null && processor.dir.dir !=null ? processor.dir.dir.getAbsolutePath() : "<processor dir is null>");
+        log.info("'\tprocessor.dir: {}", processorPath.toAbsolutePath().normalize());
     }
 }

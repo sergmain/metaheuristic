@@ -18,11 +18,14 @@ package ai.metaheuristic.ai.utils.asset;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @Slf4j
 public class AssetUtils {
@@ -105,21 +108,22 @@ public class AssetUtils {
         return assetFile;
     }
 
-    public static AssetFile prepareFunctionFile(File baseDir, String functionCode, @Nullable String resourceFilename) {
+    @SneakyThrows
+    public static AssetFile prepareFunctionFile(Path baseDir, String functionCode, @Nullable String resourceFilename) {
 
-        File baseFunctionDir = new File(baseDir, EnumsApi.DataType.function.toString());
+        Path baseFunctionDir = baseDir.resolve(EnumsApi.DataType.function.toString());
 
         final String resId = functionCode.replace(':', '_');
-        final File resDir = new File(baseFunctionDir, resId);
-        resDir.mkdirs();
+        final Path resDir = baseFunctionDir.resolve(resId);
+        Files.createDirectories(resDir);
 
         final AssetFile assetFile = new AssetFile();
-        if (!resDir.exists()) {
+        if (Files.notExists(resDir)) {
             assetFile.isError = true;
-            log.error("#025.080 Can't create a concrete function dir: {}", resDir.getAbsolutePath());
+            log.error("#025.080 Can't create a concrete function dir: {}", resDir.toAbsolutePath());
             return assetFile;
         }
-        assetFile.file = !S.b(resourceFilename) ? new File(resDir, resourceFilename) : new File(resDir, resId);
+        assetFile.file = (!S.b(resourceFilename) ? resDir.resolve(resourceFilename) : resDir.resolve(resId)).toFile();
 
         assetFile.isExist = assetFile.file.exists();
 

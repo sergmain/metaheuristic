@@ -128,7 +128,7 @@ public class CacheService {
             }
             else {
                 try {
-                    tempFile = Files.createTempFile(globals.dispatcherTempDir, "var-" + output.id + "-", ".bin");
+                    tempFile = Files.createTempFile(globals.dispatcherTempPath, "var-" + output.id + "-", ".bin");
                 } catch (IOException e) {
                     String es = "#611.060 Error: " + e.getMessage();
                     log.error(es, e);

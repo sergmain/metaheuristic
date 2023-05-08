@@ -46,9 +46,8 @@ public class TestProcessorProfile {
         assertFalse(globals.dispatcher.enabled);
         assertTrue(globals.processor.enabled);
 
-        assertNotNull(globals.processor.dir);
-        assertNotNull(globals.processor.dir.dir);
-        assertEquals("aiai-processor", globals.processor.dir.dir.getName());
+        assertNotNull(globals.processorPath);
+        assertEquals("aiai-processor", globals.processorPath.getFileName().toString());
         assertEquals(1717, globals.processor.taskConsoleOutputMaxLines);
 
         assertEquals(1721, globals.processor.timeout.requestDispatcher.toSeconds());

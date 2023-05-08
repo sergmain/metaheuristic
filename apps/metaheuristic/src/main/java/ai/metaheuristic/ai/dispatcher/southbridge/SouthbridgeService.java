@@ -126,7 +126,7 @@ public class SouthbridgeService {
         BiConsumer<String, Path> dataSaver;
         switch (binaryType) {
             case function:
-                assetFile = AssetUtils.prepareFunctionFile(globals.dispatcherResourcesDir, dataId, null);
+                assetFile = AssetUtils.prepareFunctionFile(globals.dispatcherResourcesPath, dataId, null);
                 if (assetFile.isError) {
                     String es = "#444.100 Function with id " + dataId + " is broken";
                     log.error(es);
@@ -135,7 +135,7 @@ public class SouthbridgeService {
                 dataSaver = functionDataService::storeToFile;
                 break;
             case variable:
-                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir.toFile(), ""+ EnumsApi.DataType.variable+'-'+dataId, null, binaryType);
+                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempPath.toFile(), "" + EnumsApi.DataType.variable + '-' + dataId, null, binaryType);
                 if (assetFile.isError) {
                     String es = "#444.120 Resource with id " + dataId + " is broken";
                     log.error(es);
@@ -147,7 +147,7 @@ public class SouthbridgeService {
                 }
                 break;
             case global_variable:
-                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir.toFile(), ""+ EnumsApi.DataType.global_variable+'-'+dataId, null, binaryType);
+                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempPath.toFile(), "" + EnumsApi.DataType.global_variable + '-' + dataId, null, binaryType);
                 if (assetFile.isError) {
                     String es = "#444.140 Global variable with id " + dataId + " is broken";
                     log.error(es);

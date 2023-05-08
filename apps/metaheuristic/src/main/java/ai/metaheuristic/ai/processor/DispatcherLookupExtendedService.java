@@ -138,7 +138,7 @@ public class DispatcherLookupExtendedService {
     public DispatcherLookupExtendedService(Globals globals, ApplicationContext appCtx) {
         Map<DispatcherUrl, DispatcherLookupExtended> dispatcherLookupExtendedMap = Map.of();
         try {
-            final Path dispatcherFile = globals.processor.dir.dir.toPath().resolve(Consts.DISPATCHER_YAML_FILE_NAME);
+            final Path dispatcherFile = globals.processorPath.resolve(Consts.DISPATCHER_YAML_FILE_NAME);
             final String cfg;
             if (Files.notExists(dispatcherFile)) {
                 if (globals.processor.defaultDispatcherYamlFile == null) {
@@ -159,7 +159,7 @@ public class DispatcherLookupExtendedService {
             if (Files.notExists(dispatcherFile)) {
                 throw new IllegalStateException(
                         "File dispatcher.yaml wasn't found. " +
-                        "It must be configured in directory "+globals.processor.dir.dir+" or be provided via application parameter mh.processor.default-dispatcher-yaml-file ");
+                        "It must be configured in directory "+globals.processorPath+" or be provided via application parameter mh.processor.default-dispatcher-yaml-file ");
             }
 
             try {
@@ -187,7 +187,7 @@ public class DispatcherLookupExtendedService {
 
             if (dispatcherLookupConfig == null) {
                 log.error("{} wasn't found or empty. path: {}{}{}",
-                        Consts.DISPATCHER_YAML_FILE_NAME, globals.processor.dir.dir,
+                        Consts.DISPATCHER_YAML_FILE_NAME, globals.processorPath,
                         File.separatorChar, Consts.DISPATCHER_YAML_FILE_NAME);
                 throw new IllegalStateException("Processor isn't configured, dispatcher.yaml is empty or doesn't exist");
             }

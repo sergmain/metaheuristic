@@ -30,14 +30,13 @@ import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.boot.SpringApplication;
@@ -47,9 +46,10 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -106,13 +106,13 @@ public class MetadataService {
 
     @PostConstruct
     public void init() {
-        final File metadataFile = new File(globals.processor.dir.dir, Consts.METADATA_YAML_FILE_NAME);
-        if (metadataFile.exists()) {
+        final Path metadataFile = globals.processorPath.resolve(Consts.METADATA_YAML_FILE_NAME);
+        if (Files.exists(metadataFile)) {
             initMetadataFromFile(metadataFile);
         }
         else {
-            final File metadataBackupFile = new File(globals.processor.dir.dir, Consts.METADATA_YAML_BAK_FILE_NAME);
-            if (metadataBackupFile.exists()) {
+            final Path metadataBackupFile = globals.processorPath.resolve(Consts.METADATA_YAML_BAK_FILE_NAME);
+            if (Files.exists(metadataBackupFile)) {
                 initMetadataFromFile(metadataBackupFile);
             }
         }
@@ -138,13 +138,13 @@ public class MetadataService {
         }
     }
 
-    private void initMetadataFromFile(File metadataFile) {
+    private void initMetadataFromFile(Path metadataFile) {
         String yaml = null;
         try {
-            yaml = FileUtils.readFileToString(metadataFile, StandardCharsets.UTF_8);
+            yaml = Files.readString(metadataFile, StandardCharsets.UTF_8);
             metadata = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
         } catch (org.yaml.snakeyaml.reader.ReaderException e) {
-            log.error("#815.020 Bad data in " + metadataFile.getAbsolutePath()+"\nYaml:\n" + yaml);
+            log.error("#815.020 Bad data in " + metadataFile.toAbsolutePath()+"\nYaml:\n" + yaml);
             System.exit(SpringApplication.exit(appCtx, () -> -500));
         } catch (Throwable e) {
             log.error("#815.040 Error", e);
@@ -256,7 +256,7 @@ public class MetadataService {
             return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.ok), null, true);
         }
 
-        File baseFunctionDir = prepareBaseDir(assetManagerUrl);
+        Path baseFunctionDir = prepareBaseDir(assetManagerUrl);
 
         final AssetFile assetFile = AssetUtils.prepareFunctionFile(baseFunctionDir, status.code, functionConfig.file);
         if (assetFile.isError) {
@@ -707,21 +707,20 @@ public class MetadataService {
         }
     }
 
+    @SneakyThrows
     private void updateMetadataFile() {
-        final File metadataFile =  new File(globals.processor.dir.dir, Consts.METADATA_YAML_FILE_NAME);
-        if (metadataFile.exists()) {
+        final Path metadataFile =  globals.processorPath.resolve(Consts.METADATA_YAML_FILE_NAME);
+        if (Files.exists(metadataFile)) {
             log.trace("#815.420 Metadata file exists. Make backup");
-            File yamlFileBak = new File(globals.processor.dir.dir, Consts.METADATA_YAML_BAK_FILE_NAME);
-            //noinspection ResultOfMethodCallIgnored
-            yamlFileBak.delete();
-            //noinspection ResultOfMethodCallIgnored
-            metadataFile.renameTo(yamlFileBak);
+            Path yamlFileBak = globals.processorPath.resolve(Consts.METADATA_YAML_BAK_FILE_NAME);
+            Files.deleteIfExists(yamlFileBak);
+            Files.move(metadataFile, yamlFileBak);
         }
 
         try {
             String data = MetadataParamsYamlUtils.BASE_YAML_UTILS.toString(metadata);
-            FileSystemUtils.writeStringToFileWithSync(metadataFile, data, StandardCharsets.UTF_8);
-            String check = FileUtils.readFileToString(metadataFile, StandardCharsets.UTF_8);
+            Files.writeString(metadataFile, data, StandardCharsets.UTF_8);
+            String check = Files.readString(metadataFile, StandardCharsets.UTF_8);
             if (!check.equals(data)) {
                 log.error("#815.440 Metadata was persisted with an error, content is different, size - expected: {}, actual: {}, Processor will be closed", data.length(), check.length());
                 System.exit(SpringApplication.exit(appCtx, () -> -500));
@@ -736,10 +735,10 @@ public class MetadataService {
     private void restoreFromBackup() {
         log.info("#815.480 Trying to restore previous state of metadata.yaml");
         try {
-            File yamlFileBak = new File(globals.processor.dir.dir, Consts.METADATA_YAML_BAK_FILE_NAME);
-            String content = FileUtils.readFileToString(yamlFileBak, StandardCharsets.UTF_8);
-            File yamlFile = new File(globals.processor.dir.dir, Consts.METADATA_YAML_FILE_NAME);
-            FileSystemUtils.writeStringToFileWithSync(yamlFile, content, StandardCharsets.UTF_8);
+            Path yamlFileBak = globals.processorPath.resolve(Consts.METADATA_YAML_BAK_FILE_NAME);
+            String content = Files.readString(yamlFileBak, StandardCharsets.UTF_8);
+            Path yamlFile = globals.processorPath.resolve(Consts.METADATA_YAML_FILE_NAME);
+            Files.writeString(yamlFile, content, StandardCharsets.UTF_8);
         } catch (IOException e) {
             log.error("#815.500 restoring of metadata.yaml from backup was failed. Processor will be stopped.");
             System.exit(SpringApplication.exit(appCtx, () -> -500));
@@ -765,11 +764,12 @@ public class MetadataService {
         return s;
     }
 
-    public File prepareBaseDir(AssetManagerUrl assetManagerUrl) {
-        final File dir = new File(globals.processorResourcesDir, asCode(assetManagerUrl));
-        if (!dir.exists()) {
+    @SneakyThrows
+    public Path prepareBaseDir(AssetManagerUrl assetManagerUrl) {
+        Path dir = globals.processorResourcesPath.resolve(asCode(assetManagerUrl));
+        if (Files.notExists(dir)) {
             //noinspection unused
-            boolean status = dir.mkdirs();
+            dir = Files.createDirectories(dir);
         }
         return dir;
     }

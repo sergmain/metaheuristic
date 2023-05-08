@@ -60,7 +60,7 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
 
         final Path tempFile;
         try {
-            tempFile = Files.createTempFile(globals.dispatcherTempDir, "var-" +srcVariable.id + "-", ".bin");
+            tempFile = Files.createTempFile(globals.dispatcherTempPath, "var-" + srcVariable.id + "-", ".bin");
         }
         catch (IOException e) {
             throw new BreakFromLambdaException(e.getMessage());

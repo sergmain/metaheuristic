@@ -23,11 +23,13 @@ import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -42,6 +44,7 @@ public class ArtifactCleanerAtProcessor {
     private final Globals globals;
     private final MetadataService metadataService;
 
+    @SneakyThrows
     public void fixedDelay() {
 
         if (!globals.processor.enabled) {
@@ -54,13 +57,13 @@ public class ArtifactCleanerAtProcessor {
                 // don't delete anything until the processor has received the full list of actual ExecContexts
                 continue;
             }
-            File coreDir = new File(globals.processor.dir.dir, core.coreCode);
-            File coreTaskDir = new File(coreDir, Consts.TASK_DIR);
+            Path coreDir = globals.processorPath.resolve(core.coreCode);
+            Path coreTaskDir = coreDir.resolve(Consts.TASK_DIR);
 
             MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(core);
-            final File dispatcherDir = new File(coreTaskDir, processorState.dispatcherCode);
-            if (!dispatcherDir.exists()) {
-                dispatcherDir.mkdir();
+            final Path dispatcherDir = coreTaskDir.resolve(processorState.dispatcherCode);
+            if (Files.notExists(dispatcherDir)) {
+                Files.createDirectories(dispatcherDir);
             }
             List<ProcessorCoreTask> all = processorTaskService.findAllForCore(core);
             for (ProcessorCoreTask task : all) {

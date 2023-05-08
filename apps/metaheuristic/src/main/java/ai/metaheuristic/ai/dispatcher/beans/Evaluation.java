@@ -1,45 +1,72 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ *    Copyright 2023, Sergio Lissner, Innovation platforms, LLC
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ *
  */
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
+import ai.metaheuristic.commons.S;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
 import java.io.Serial;
 import java.io.Serializable;
-import java.sql.Blob;
-import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * @author Serge
- * Date: 5/4/2021
- * Time: 11:40 PM
+ * @author Sergio Lissner
+ * Date: 4/15/2023
+ * Time: 7:32 PM
  */
 @Entity
-@Table(name = "MH_EVALUATION")
+@Table(name = "MHBP_EVALUATION")
 @Data
 @NoArgsConstructor
+@Cacheable
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Evaluation implements Serializable {
+
+    public static class ChapterIdsConverter implements AttributeConverter<List<String>, String> {
+
+        @Override
+        public String convertToDatabaseColumn(@Nullable List<String> extraFields) {
+            if (extraFields==null) {
+                throw new IllegalStateException("(extraFields==null)");
+            }
+            String s = extraFields.stream().map(Object::toString).collect(Collectors.joining(","));
+            return s;
+        }
+
+        @Override
+        public List<String> convertToEntityAttribute(String data) {
+            if (S.b(data)) {
+                return new ArrayList<>();
+            }
+            List<String> list = List.of(StringUtils.split(data, ','));
+            return list;
+        }
+    }
+
     @Serial
-    private static final long serialVersionUID = 964853638400128485L;
+    private static final long serialVersionUID = -5515608565018985069L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,17 +75,20 @@ public class Evaluation implements Serializable {
     @Version
     public Integer version;
 
-    @Column(name = "HEURISTIC_ID")
-    public Long heuristicId;
+    @Column(name = "COMPANY_ID")
+    public long companyId;
 
-    @Column(name="CREATED_ON")
+    @Column(name = "ACCOUNT_ID")
+    public long accountId;
+
+    @Column(name = "API_ID")
+    public long apiId;
+
+    @Column(name = "CHAPTER_IDS")
+    @Convert(converter = ChapterIdsConverter.class)
+    public List<String> chapterIds;
+
     public long createdOn;
 
-    @Column(name = "IS_DELETED")
-    public boolean deleted;
-
-    @Column(name = "PARAMS")
-    public String params;
-
+    public String code;
 }
-

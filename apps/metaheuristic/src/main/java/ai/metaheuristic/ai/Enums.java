@@ -177,4 +177,74 @@ public final class Enums {
     public enum VariablesAs { permute, array; }
 
     public enum StringAsVariableSource { inline, variable; }
+
+    // MHBP part
+
+    public enum RequestCategory {math, social}
+
+    public enum ResultStatus { usual, fail, problem }
+
+    public enum RequestType {text, video, audio }
+    public enum ResponseType {text, bool, digit }
+
+    public enum OperationStatus {OK, ERROR}
+    public enum TokenPlace { param, header }
+    public enum PromptPlace { uri, text }
+    public enum PromptResponseType { json, text }
+    public enum HttpMethodType { get, post }
+
+    public enum QueryResultErrorType { cant_understand, common, server_error, query_too_long }
+
+    public enum KbFileFormat { openai, mhbp, coqa, inline }
+
+    public enum KbSourceInitStatus { not_yet, ready }
+
+    public enum KbStatus { none(0), initiating(1), ready(2);
+        public final int code;
+
+        KbStatus(int code) {
+            this.code = code;
+        }
+
+        public static KbStatus to(int code) {
+            return switch (code) {
+                case 0 -> none;
+                case 1 -> initiating;
+                case 2 -> ready;
+                default -> throw new IllegalStateException("Unexpected value: " + code);
+            };
+        }
+    }
+
+    public enum SessionStatus { created(0), finished(1), finished_with_error(2);
+        public final int code;
+
+        SessionStatus(int code) {
+            this.code = code;
+        }
+        public static SessionStatus to(int code) {
+            return switch (code) {
+                case 0 -> created;
+                case 1 -> finished;
+                case 2 -> finished_with_error;
+                default -> throw new IllegalStateException("Unexpected value: " + code);
+            };
+        }
+    }
+
+    public enum AnswerStatus { normal(0), fail(1), error(2);
+        public final int code;
+        AnswerStatus(int code) {
+            this.code = code;
+        }
+        public static AnswerStatus to(int status) {
+            return switch (status) {
+                case 0 -> normal;
+                case 1 -> fail;
+                case 2 -> error;
+                default -> throw new IllegalStateException("Unexpected value: " + status);
+            };
+        }
+    }
+
 }

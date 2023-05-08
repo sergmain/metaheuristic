@@ -53,9 +53,8 @@ public class TestDispatcherProfile {
         assertEquals("qwe321", globals.dispatcher.masterUsername);
         assertEquals("123ewq", globals.dispatcher.masterPassword);
         assertTrue(globals.dispatcher.functionSignatureRequired);
-        assertNotNull(globals.dispatcher.dir);
-        assertNotNull(globals.dispatcher.dir.dir);
-        assertEquals("aiai-dispatcher-123", globals.dispatcher.dir.dir.getFileName().toString());
+        assertNotNull(globals.dispatcherPath);
+        assertEquals("aiai-dispatcher-123", globals.dispatcherPath.getFileName().toString());
         assertNotNull(globals.dispatcher.publicKey);
         assertEquals(replicated, globals.dispatcher.asset.mode);
         assertEquals("http://localhost:33377", globals.dispatcher.asset.sourceUrl);

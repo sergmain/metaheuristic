@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.repositories;
 
-import ai.metaheuristic.ai.dispatcher.beans.Evaluation;
+import ai.metaheuristic.ai.dispatcher.beans.HeuristicEvaluation;
 import org.springframework.data.repository.CrudRepository;
 
 /**
@@ -24,5 +24,5 @@ import org.springframework.data.repository.CrudRepository;
  * Date: 5/4/2021
  * Time: 11:35 PM
  */
-public interface EvaluationRepository extends CrudRepository<Evaluation, Long> {
+public interface EvaluationRepository extends CrudRepository<HeuristicEvaluation, Long> {
 }
