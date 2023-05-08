@@ -733,6 +733,7 @@ public class Globals {
         log.warn("Memory, free: {}, max: {}, total: {}", rt.freeMemory(), rt.maxMemory(), rt.totalMemory());
         log.info("Current globals:");
         log.info("'\tOS: {}", os);
+        log.info("'\tmh.home: {}", getHome());
         log.info("'\tcorsAllowedOrigins: {}", corsAllowedOrigins);
         log.info("'\tbranding: {}", branding);
         log.info("'\ttesting: {}", testing);

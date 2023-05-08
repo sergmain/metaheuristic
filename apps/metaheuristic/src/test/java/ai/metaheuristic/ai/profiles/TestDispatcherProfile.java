@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.profiles;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,7 +55,7 @@ public class TestDispatcherProfile {
         assertEquals("123ewq", globals.dispatcher.masterPassword);
         assertTrue(globals.dispatcher.functionSignatureRequired);
         assertNotNull(globals.dispatcherPath);
-        assertEquals("aiai-dispatcher-123", globals.dispatcherPath.getFileName().toString());
+        assertEquals(Consts.DISPATCHER_DIR, globals.dispatcherPath.getFileName().toString());
         assertNotNull(globals.dispatcher.publicKey);
         assertEquals(replicated, globals.dispatcher.asset.mode);
         assertEquals("http://localhost:33377", globals.dispatcher.asset.sourceUrl);

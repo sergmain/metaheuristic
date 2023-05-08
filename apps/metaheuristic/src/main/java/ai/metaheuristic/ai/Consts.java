@@ -70,6 +70,8 @@ public class Consts {
     public static final String SYSTEM_DIR = "system";
     public static final String RESOURCES_DIR = "resources";
     public static final String TASK_DIR = "task";
+    public static final String DISPATCHER_DIR = "dispatcher";
+    public static final String PROCESSOR_DIR = "processor";
 
     public static final String METADATA_YAML_FILE_NAME = "metadata.yaml";
     public static final String METADATA_YAML_BAK_FILE_NAME = "metadata.yaml.bak";
