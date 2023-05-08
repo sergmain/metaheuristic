@@ -678,3 +678,431 @@ This generated password is for development use only. Your security configuration
 
 2023-05-07 23:30:59.661  INFO 19056 --- [main] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page template: index
 2023-05-07 23:30:59.965  INFO 19056 --- [main] a.m.ai.profiles.TestProcessorProfile     : Started TestProcessorProfile in 3.123 seconds (JVM running for 12.654)
+2023-05-07 23:37:18.541  INFO 5848 --- [main] a.m.ai.profiles.TestProcessorProfile     : Starting TestProcessorProfile using Java 17.0.2 on SNB with PID 5848 (started by serg in C:\sandbox\git\aiai\apps\metaheuristic)
+2023-05-07 23:37:18.542 DEBUG 5848 --- [main] a.m.ai.profiles.TestProcessorProfile     : Running with Spring Boot v2.7.11, Spring v5.3.27
+2023-05-07 23:37:18.543  INFO 5848 --- [main] a.m.ai.profiles.TestProcessorProfile     : The following 1 profile is active: "processor"
+2023-05-07 23:37:21.504  WARN 5848 --- [main] ai.metaheuristic.ai.Globals              : Dispatcher wasn't enabled, assetMode will be set to DispatcherAssetMode.local
+2023-05-07 23:37:21.511  WARN 5848 --- [main] ai.metaheuristic.ai.Globals              : Memory, free: 908165896, max: 1073741824, total: 1073741824
+2023-05-07 23:37:21.514  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : Current globals:
+2023-05-07 23:37:21.514  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	OS: windows
+2023-05-07 23:37:21.514  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	mh.home: C:\sandbox\git\aiai\aiai-home
+2023-05-07 23:37:21.515  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	corsAllowedOrigins: [*]
+2023-05-07 23:37:21.515  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	branding: Metaheuristic project
+2023-05-07 23:37:21.515  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	testing: true
+2023-05-07 23:37:21.515  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	threadNumber.scheduler: 13
+2023-05-07 23:37:21.515  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	threadNumber.event: 10
+2023-05-07 23:37:21.515  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.enabled: false
+2023-05-07 23:37:21.515  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.dir: C:\sandbox\git\aiai\aiai-home\dispatcher
+2023-05-07 23:37:21.516  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.sslRequired: true
+2023-05-07 23:37:21.516  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.functionSignatureRequired: true
+2023-05-07 23:37:21.516  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.masterUsername: 
+2023-05-07 23:37:21.516  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.publicKey: wasn't provided
+2023-05-07 23:37:21.516  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.chunkSize: 10485760B
+2023-05-07 23:37:21.516  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.keepEventsInDb: P90D
+2023-05-07 23:37:21.516  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.maxTriesAfterError: 3
+2023-05-07 23:37:21.516  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.timeout.gc: PT1H
+2023-05-07 23:37:21.517  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.timeout.artifactCleaner: PT1M
+2023-05-07 23:37:21.517  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.timeout.updateBatchStatuses: PT5S
+2023-05-07 23:37:21.517  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.asset.mode: local
+2023-05-07 23:37:21.517  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.asset.username: null
+2023-05-07 23:37:21.517  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.asset.sourceUrl: null
+2023-05-07 23:37:21.517  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.asset.syncTimeout: PT2M
+2023-05-07 23:37:21.518  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.globalVariableTable: 20
+2023-05-07 23:37:21.518  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.experiment: 10
+2023-05-07 23:37:21.518  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.sourceCode: 25
+2023-05-07 23:37:21.518  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.execContext: 20
+2023-05-07 23:37:21.518  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.processor: 50
+2023-05-07 23:37:21.518  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.account: 20
+2023-05-07 23:37:21.518  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.processor: 50
+2023-05-07 23:37:21.518  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.enabled: true
+2023-05-07 23:37:21.519  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.dir: C:\sandbox\git\aiai\aiai-home\processor
+2023-05-07 23:37:21.519  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.taskConsoleOutputMaxLines: 1717
+2023-05-07 23:37:21.519  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.artifactCleaner: PT28M57S
+2023-05-07 23:37:21.519  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.downloadFunction: PT28M47S
+2023-05-07 23:37:21.520  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.downloadResource: PT28M51S
+2023-05-07 23:37:21.520  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.prepareFunctionForDownloading: PT28M49S
+2023-05-07 23:37:21.520  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.requestDispatcher: PT28M41S
+2023-05-07 23:37:21.520  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.taskAssigner: PT28M43S
+2023-05-07 23:37:21.520  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.taskProcessor: PT28M45S
+2023-05-07 23:37:21.520  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.dispatcherContextInfo: PT28M55S
+2023-05-07 23:37:21.520  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : Current system properties:
+2023-05-07 23:37:21.544  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.specification.version: 17
+2023-05-07 23:37:21.544  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.cpu.isalist: amd64
+2023-05-07 23:37:21.545  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.jnu.encoding: Cp1252
+2023-05-07 23:37:21.545  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.vendor: Eclipse Adoptium
+2023-05-07 23:37:21.545  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.arch.data.model: 64
+2023-05-07 23:37:21.545  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	idea.test.cyclic.buffer.size: 8290304
+2023-05-07 23:37:21.545  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	user.variant: 
+2023-05-07 23:37:21.545  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vendor.url: https://adoptium.net/
+2023-05-07 23:37:21.545  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	user.timezone: America/Los_Angeles
+2023-05-07 23:37:21.545  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.specification.version: 17
+2023-05-07 23:37:21.546  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	os.name: Windows 10
+2023-05-07 23:37:21.546  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.java.launcher: SUN_STANDARD
+2023-05-07 23:37:21.546  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	user.country: US
+2023-05-07 23:37:21.546  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.boot.library.path: C:\jdk-17.0.2\bin
+2023-05-07 23:37:21.546  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.java.command: com.intellij.rt.junit.JUnitStarter -ideVersion5 -junit5 ai.metaheuristic.ai.profiles.TestProcessorProfile,simpleTest
+2023-05-07 23:37:21.546  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	jdk.debug: release
+2023-05-07 23:37:21.547  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.cpu.endian: little
+2023-05-07 23:37:21.547  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	user.home: C:\Users\serg
+2023-05-07 23:37:21.547  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	user.language: en
+2023-05-07 23:37:21.547  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.specification.vendor: Oracle Corporation
+2023-05-07 23:37:21.547  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.version.date: 2022-01-18
+2023-05-07 23:37:21.547  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.home: C:\jdk-17.0.2
+2023-05-07 23:37:21.547  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	file.separator: \
+2023-05-07 23:37:21.548  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.compressedOopsMode: 32-bit
+2023-05-07 23:37:21.548  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.specification.vendor: Oracle Corporation
+2023-05-07 23:37:21.548  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.specification.name: Java Platform API Specification
+2023-05-07 23:37:21.548  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	FILE_LOG_CHARSET: UTF-8
+2023-05-07 23:37:21.548  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.awt.headless: true
+2023-05-07 23:37:21.548  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	user.script: 
+2023-05-07 23:37:21.548  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.management.compiler: HotSpot 64-Bit Tiered Compilers
+2023-05-07 23:37:21.548  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.runtime.version: 17.0.2+8
+2023-05-07 23:37:21.548  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	user.name: serg
+2023-05-07 23:37:21.549  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	path.separator: ;
+2023-05-07 23:37:21.549  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	os.version: 10.0
+2023-05-07 23:37:21.549  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.runtime.name: OpenJDK Runtime Environment
+2023-05-07 23:37:21.549  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	file.encoding: UTF-8
+2023-05-07 23:37:21.549  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	spring.beaninfo.ignore: true
+2023-05-07 23:37:21.549  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.name: OpenJDK 64-Bit Server VM
+2023-05-07 23:37:21.549  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vendor.version: Temurin-17.0.2+8
+2023-05-07 23:37:21.549  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	LOG_FILE: aiai-processor/aiai.log
+2023-05-07 23:37:21.549  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vendor.url.bug: https://github.com/adoptium/adoptium-support/issues
+2023-05-07 23:37:21.549  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.io.tmpdir: D:\Temp\
+2023-05-07 23:37:21.549  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.version: 17.0.2
+2023-05-07 23:37:21.549  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	user.dir: C:\sandbox\git\aiai\apps\metaheuristic
+2023-05-07 23:37:21.549  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	os.arch: amd64
+2023-05-07 23:37:21.549  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.specification.name: Java Virtual Machine Specification
+2023-05-07 23:37:21.549  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	mh.home: C:\sandbox\git\aiai\aiai-home
+2023-05-07 23:37:21.550  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	PID: 5848
+2023-05-07 23:37:21.550  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.os.patch.level: 
+2023-05-07 23:37:21.550  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	CONSOLE_LOG_CHARSET: UTF-8
+2023-05-07 23:37:21.550  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	native.encoding: Cp1252
+2023-05-07 23:37:21.550  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.info: mixed mode, sharing
+2023-05-07 23:37:21.550  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vendor: Eclipse Adoptium
+2023-05-07 23:37:21.550  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.version: 17.0.2+8
+2023-05-07 23:37:21.550  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.io.unicode.encoding: UnicodeLittle
+2023-05-07 23:37:21.550  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.class.version: 61.0
+2023-05-07 23:37:21.550  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : Garbage collectors:
+2023-05-07 23:37:21.557  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	Shenandoah Pauses
+2023-05-07 23:37:21.557  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	Shenandoah Cycles
+2023-05-07 23:37:21.609  WARN 5848 --- [main] ai.metaheuristic.ai.Config               : Spring properties:
+2023-05-07 23:37:21.609  WARN 5848 --- [main] ai.metaheuristic.ai.Config               : '	server host:port: 127.0.0.1:-1
+2023-05-07 23:37:21.914  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : Exec info:
+2023-05-07 23:37:21.914  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	cmd: [C:\Users\serg\.conda\envs\python-3_11\python.exe, --version]
+2023-05-07 23:37:21.914  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir: .
+2023-05-07 23:37:21.915  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir abs: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:37:21.915  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	consoleLogFile abs: D:\Temp\metaheuristic-temp\command-exec-2023-05-07_23-37-21-283027992753400\console-11755086943793786983.log
+2023-05-07 23:37:21.915  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	functionCode: command-exec
+2023-05-07 23:37:21.915  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeoutBeforeTerminate (seconds): 10
+2023-05-07 23:37:21.915  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	schedule: null
+2023-05-07 23:37:21.915  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeout (milliseconds): 10000
+2023-05-07 23:37:21.935  INFO 5848 --- [Thread-1] a.m.ai.core.SystemProcessLauncher        : thread #20, start receiving stream from external process
+2023-05-07 23:37:21.941  INFO 5848 --- [Thread-2] a.m.ai.core.SystemProcessLauncher        : thread #21, time before sleep - Sun May 07 23:37:21 PDT 2023
+2023-05-07 23:37:21.973  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : Any errors of execution? No
+2023-05-07 23:37:21.973 DEBUG 5848 --- [Thread-2] a.m.ai.core.SystemProcessLauncher        : thread #21, current thread was interrupted
+2023-05-07 23:37:21.973 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	exitCode: 0
+2023-05-07 23:37:21.973 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	destroyed with timeout or for other reason: false
+2023-05-07 23:37:21.973 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	cmd: [C:\Users\serg\.conda\envs\python-3_11\python.exe, --version]
+2023-05-07 23:37:21.973 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	execDir: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:37:21.974 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	console output:
+Python 3.11.2
+
+
+2023-05-07 23:37:21.976  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : systemExecResult: FunctionApiData.SystemExecResult(functionCode=command-exec, isOk=true, exitCode=0)
+2023-05-07 23:37:21.983  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : Exec info:
+2023-05-07 23:37:21.984  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	cmd: [C:\jdk-11.0.11\bin\java.exe, -Dfile.encoding=UTF-8, -jar, --version]
+2023-05-07 23:37:21.984  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir: .
+2023-05-07 23:37:21.984  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir abs: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:37:21.984  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	consoleLogFile abs: D:\Temp\metaheuristic-temp\command-exec-2023-05-07_23-37-21-283028119470100\console-6877704213342701127.log
+2023-05-07 23:37:21.984  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	functionCode: command-exec
+2023-05-07 23:37:21.984  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeoutBeforeTerminate (seconds): 10
+2023-05-07 23:37:21.984  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	schedule: null
+2023-05-07 23:37:21.984  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeout (milliseconds): 10000
+2023-05-07 23:37:21.990  INFO 5848 --- [Thread-4] a.m.ai.core.SystemProcessLauncher        : thread #23, start receiving stream from external process
+2023-05-07 23:37:21.991  INFO 5848 --- [Thread-5] a.m.ai.core.SystemProcessLauncher        : thread #24 is waiting for reader thread, time - Sun May 07 23:37:21 PDT 2023
+2023-05-07 23:37:22.182  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : Any errors of execution? No
+2023-05-07 23:37:22.182 DEBUG 5848 --- [Thread-5] a.m.ai.core.SystemProcessLauncher        : thread #24, current thread was interrupted
+2023-05-07 23:37:22.182 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	exitCode: 0
+2023-05-07 23:37:22.182 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	destroyed with timeout or for other reason: false
+2023-05-07 23:37:22.182 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	cmd: [C:\jdk-11.0.11\bin\java.exe, -Dfile.encoding=UTF-8, -jar, --version]
+2023-05-07 23:37:22.182 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	execDir: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:37:22.184 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	console output:
+openjdk 11.0.11 2021-04-20
+OpenJDK Runtime Environment AdoptOpenJDK-11.0.11+9 (build 11.0.11+9)
+OpenJDK 64-Bit Server VM AdoptOpenJDK-11.0.11+9 (build 11.0.11+9, mixed mode)
+
+
+2023-05-07 23:37:22.184  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : systemExecResult: FunctionApiData.SystemExecResult(functionCode=command-exec, isOk=true, exitCode=0)
+2023-05-07 23:37:22.189  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : Exec info:
+2023-05-07 23:37:22.189  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	cmd: [C:\jdk-17.0.2\bin\java.exe, -Dfile.encoding=UTF-8, -jar, --version]
+2023-05-07 23:37:22.189  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir: .
+2023-05-07 23:37:22.189  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir abs: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:37:22.189  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	consoleLogFile abs: D:\Temp\metaheuristic-temp\command-exec-2023-05-07_23-37-22-283028323174500\console-17034641437800589304.log
+2023-05-07 23:37:22.190  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	functionCode: command-exec
+2023-05-07 23:37:22.190  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeoutBeforeTerminate (seconds): 10
+2023-05-07 23:37:22.190  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	schedule: null
+2023-05-07 23:37:22.190  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeout (milliseconds): 10000
+2023-05-07 23:37:22.196  INFO 5848 --- [Thread-7] a.m.ai.core.SystemProcessLauncher        : thread #26, start receiving stream from external process
+2023-05-07 23:37:22.196  INFO 5848 --- [Thread-8] a.m.ai.core.SystemProcessLauncher        : thread #27 is waiting for reader thread, time - Sun May 07 23:37:22 PDT 2023
+2023-05-07 23:37:22.324 DEBUG 5848 --- [Thread-8] a.m.ai.core.SystemProcessLauncher        : thread #27, current thread was interrupted
+2023-05-07 23:37:22.324  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : Any errors of execution? No
+2023-05-07 23:37:22.325 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	exitCode: 0
+2023-05-07 23:37:22.325 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	destroyed with timeout or for other reason: false
+2023-05-07 23:37:22.325 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	cmd: [C:\jdk-17.0.2\bin\java.exe, -Dfile.encoding=UTF-8, -jar, --version]
+2023-05-07 23:37:22.325 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	execDir: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:37:22.326 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	console output:
+openjdk 17.0.2 2022-01-18
+OpenJDK Runtime Environment Temurin-17.0.2+8 (build 17.0.2+8)
+OpenJDK 64-Bit Server VM Temurin-17.0.2+8 (build 17.0.2+8, mixed mode, sharing)
+
+
+2023-05-07 23:37:22.326  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : systemExecResult: FunctionApiData.SystemExecResult(functionCode=command-exec, isOk=true, exitCode=0)
+2023-05-07 23:37:22.703  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : Exec info:
+2023-05-07 23:37:22.704  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	cmd: [git, --version]
+2023-05-07 23:37:22.704  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir: .
+2023-05-07 23:37:22.704  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir abs: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:37:22.704  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	consoleLogFile abs: D:\Temp\metaheuristic-temp\command-exec-2023-05-07_23-37-22-283028818400000\console-3608892471863297643.log
+2023-05-07 23:37:22.704  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	functionCode: command-exec
+2023-05-07 23:37:22.704  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeoutBeforeTerminate (seconds): 30
+2023-05-07 23:37:22.704  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	schedule: null
+2023-05-07 23:37:22.704  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeout (milliseconds): 30000
+2023-05-07 23:37:22.709  INFO 5848 --- [Thread-11] a.m.ai.core.SystemProcessLauncher        : thread #30 is waiting for reader thread, time - Sun May 07 23:37:22 PDT 2023
+2023-05-07 23:37:22.709  INFO 5848 --- [Thread-10] a.m.ai.core.SystemProcessLauncher        : thread #29, start receiving stream from external process
+2023-05-07 23:37:22.790 DEBUG 5848 --- [Thread-11] a.m.ai.core.SystemProcessLauncher        : thread #30, current thread was interrupted
+2023-05-07 23:37:22.790  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : Any errors of execution? No
+2023-05-07 23:37:22.790 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	exitCode: 0
+2023-05-07 23:37:22.790 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	destroyed with timeout or for other reason: false
+2023-05-07 23:37:22.790 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	cmd: [git, --version]
+2023-05-07 23:37:22.790 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	execDir: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:37:22.791 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	console output:
+git version 2.40.0.windows.1
+
+
+2023-05-07 23:37:22.791  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : systemExecResult: FunctionApiData.SystemExecResult(functionCode=command-exec, isOk=true, exitCode=0)
+2023-05-07 23:37:23.257  INFO 5848 --- [main] a.m.a.p.d.ActiveDispatchers              : ActiveDispatchers for scheduler, dispatcher http://localhost:8080 was added to selection
+2023-05-07 23:37:23.257  INFO 5848 --- [main] a.m.a.p.d.ActiveDispatchers              : ActiveDispatchers for scheduler, dispatcher https://mh-main.herokuapp.com is disabled
+2023-05-07 23:37:23.329  INFO 5848 --- [main] a.m.a.p.d.ActiveDispatchers              : RoundRobin for KeepAlive, dispatcher http://localhost:8080 was added to selection
+2023-05-07 23:37:23.330  INFO 5848 --- [main] a.m.a.p.d.ActiveDispatchers              : RoundRobin for KeepAlive, dispatcher https://mh-main.herokuapp.com is disabled
+2023-05-07 23:37:24.715  INFO 5848 --- [main] ai.metaheuristic.ai.Config               : Config.threadPoolTaskScheduler() will use 13 as a number of threads for an schedulers
+2023-05-07 23:37:24.879  WARN 5848 --- [main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 0b47d466-f207-435f-a8c0-d05ea3b64e14
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2023-05-07 23:37:27.691  INFO 5848 --- [main] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page template: index
+2023-05-07 23:37:28.679  INFO 5848 --- [main] a.m.ai.profiles.TestProcessorProfile     : Started TestProcessorProfile in 10.6 seconds (JVM running for 12.784)
+2023-05-07 23:37:28.897  INFO 5848 --- [main] a.m.ai.profiles.TestProcessorProfile     : Starting TestProcessorProfile using Java 17.0.2 on SNB with PID 5848 (started by serg in C:\sandbox\git\aiai\apps\metaheuristic)
+2023-05-07 23:37:28.897 DEBUG 5848 --- [main] a.m.ai.profiles.TestProcessorProfile     : Running with Spring Boot v2.7.11, Spring v5.3.27
+2023-05-07 23:37:28.897  INFO 5848 --- [main] a.m.ai.profiles.TestProcessorProfile     : The following 1 profile is active: "processor"
+2023-05-07 23:37:30.830  WARN 5848 --- [main] ai.metaheuristic.ai.Globals              : Dispatcher wasn't enabled, assetMode will be set to DispatcherAssetMode.local
+2023-05-07 23:37:30.831  WARN 5848 --- [main] ai.metaheuristic.ai.Globals              : Memory, free: 1017734976, max: 1073741824, total: 1073741824
+2023-05-07 23:37:30.832  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : Current globals:
+2023-05-07 23:37:30.832  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	OS: windows
+2023-05-07 23:37:30.832  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	mh.home: C:\sandbox\git\aiai\aiai-home
+2023-05-07 23:37:30.832  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	corsAllowedOrigins: [*]
+2023-05-07 23:37:30.832  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	branding: Metaheuristic project
+2023-05-07 23:37:30.832  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	testing: true
+2023-05-07 23:37:30.832  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	threadNumber.scheduler: 13
+2023-05-07 23:37:30.832  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	threadNumber.event: 10
+2023-05-07 23:37:30.832  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.enabled: false
+2023-05-07 23:37:30.833  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.dir: C:\sandbox\git\aiai\aiai-home\dispatcher
+2023-05-07 23:37:30.833  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.sslRequired: true
+2023-05-07 23:37:30.833  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.functionSignatureRequired: true
+2023-05-07 23:37:30.833  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.masterUsername: 
+2023-05-07 23:37:30.833  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.publicKey: wasn't provided
+2023-05-07 23:37:30.833  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.chunkSize: 10485760B
+2023-05-07 23:37:30.833  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.keepEventsInDb: P90D
+2023-05-07 23:37:30.833  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.maxTriesAfterError: 3
+2023-05-07 23:37:30.833  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.timeout.gc: PT1H
+2023-05-07 23:37:30.834  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.timeout.artifactCleaner: PT1M
+2023-05-07 23:37:30.834  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.timeout.updateBatchStatuses: PT5S
+2023-05-07 23:37:30.834  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.asset.mode: local
+2023-05-07 23:37:30.834  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.asset.username: null
+2023-05-07 23:37:30.834  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.asset.sourceUrl: null
+2023-05-07 23:37:30.834  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.asset.syncTimeout: PT2M
+2023-05-07 23:37:30.834  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.globalVariableTable: 20
+2023-05-07 23:37:30.834  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.experiment: 10
+2023-05-07 23:37:30.834  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.sourceCode: 25
+2023-05-07 23:37:30.834  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.execContext: 20
+2023-05-07 23:37:30.835  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.processor: 50
+2023-05-07 23:37:30.835  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.account: 20
+2023-05-07 23:37:30.835  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	dispatcher.rowsLimit.processor: 50
+2023-05-07 23:37:30.835  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.enabled: true
+2023-05-07 23:37:30.835  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.dir: C:\sandbox\git\aiai\aiai-home\processor
+2023-05-07 23:37:30.835  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.taskConsoleOutputMaxLines: 1717
+2023-05-07 23:37:30.835  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.artifactCleaner: PT28M57S
+2023-05-07 23:37:30.835  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.downloadFunction: PT28M47S
+2023-05-07 23:37:30.835  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.downloadResource: PT28M51S
+2023-05-07 23:37:30.835  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.prepareFunctionForDownloading: PT28M49S
+2023-05-07 23:37:30.835  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.requestDispatcher: PT28M41S
+2023-05-07 23:37:30.835  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.taskAssigner: PT28M43S
+2023-05-07 23:37:30.835  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.taskProcessor: PT28M45S
+2023-05-07 23:37:30.835  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	processor.timeout.dispatcherContextInfo: PT28M55S
+2023-05-07 23:37:30.835  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : Current system properties:
+2023-05-07 23:37:30.836  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.specification.version: 17
+2023-05-07 23:37:30.836  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.cpu.isalist: amd64
+2023-05-07 23:37:30.836  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.jnu.encoding: Cp1252
+2023-05-07 23:37:30.836  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.vendor: Eclipse Adoptium
+2023-05-07 23:37:30.836  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.arch.data.model: 64
+2023-05-07 23:37:30.836  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	idea.test.cyclic.buffer.size: 8290304
+2023-05-07 23:37:30.836  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	user.variant: 
+2023-05-07 23:37:30.836  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vendor.url: https://adoptium.net/
+2023-05-07 23:37:30.836  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	user.timezone: America/Los_Angeles
+2023-05-07 23:37:30.836  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.specification.version: 17
+2023-05-07 23:37:30.836  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	os.name: Windows 10
+2023-05-07 23:37:30.837  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.java.launcher: SUN_STANDARD
+2023-05-07 23:37:30.837  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	user.country: US
+2023-05-07 23:37:30.837  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.boot.library.path: C:\jdk-17.0.2\bin
+2023-05-07 23:37:30.837  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.java.command: com.intellij.rt.junit.JUnitStarter -ideVersion5 -junit5 ai.metaheuristic.ai.profiles.TestProcessorProfile,simpleTest
+2023-05-07 23:37:30.837  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	jdk.debug: release
+2023-05-07 23:37:30.837  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.cpu.endian: little
+2023-05-07 23:37:30.838  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	user.home: C:\Users\serg
+2023-05-07 23:37:30.838  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	user.language: en
+2023-05-07 23:37:30.838  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.specification.vendor: Oracle Corporation
+2023-05-07 23:37:30.838  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.version.date: 2022-01-18
+2023-05-07 23:37:30.838  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.home: C:\jdk-17.0.2
+2023-05-07 23:37:30.838  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	file.separator: \
+2023-05-07 23:37:30.838  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.compressedOopsMode: 32-bit
+2023-05-07 23:37:30.838  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.specification.vendor: Oracle Corporation
+2023-05-07 23:37:30.838  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.specification.name: Java Platform API Specification
+2023-05-07 23:37:30.838  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	FILE_LOG_CHARSET: UTF-8
+2023-05-07 23:37:30.838  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.awt.headless: true
+2023-05-07 23:37:30.839  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	user.script: 
+2023-05-07 23:37:30.839  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.management.compiler: HotSpot 64-Bit Tiered Compilers
+2023-05-07 23:37:30.839  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.runtime.version: 17.0.2+8
+2023-05-07 23:37:30.839  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	user.name: serg
+2023-05-07 23:37:30.839  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	path.separator: ;
+2023-05-07 23:37:30.839  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	os.version: 10.0
+2023-05-07 23:37:30.839  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.runtime.name: OpenJDK Runtime Environment
+2023-05-07 23:37:30.839  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	file.encoding: UTF-8
+2023-05-07 23:37:30.839  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	spring.beaninfo.ignore: true
+2023-05-07 23:37:30.839  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.name: OpenJDK 64-Bit Server VM
+2023-05-07 23:37:30.840  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vendor.version: Temurin-17.0.2+8
+2023-05-07 23:37:30.840  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	LOG_FILE: aiai-processor/aiai.log
+2023-05-07 23:37:30.840  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vendor.url.bug: https://github.com/adoptium/adoptium-support/issues
+2023-05-07 23:37:30.840  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.io.tmpdir: D:\Temp\
+2023-05-07 23:37:30.840  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.version: 17.0.2
+2023-05-07 23:37:30.840  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	user.dir: C:\sandbox\git\aiai\apps\metaheuristic
+2023-05-07 23:37:30.840  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	os.arch: amd64
+2023-05-07 23:37:30.840  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.specification.name: Java Virtual Machine Specification
+2023-05-07 23:37:30.840  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	mh.home: C:\sandbox\git\aiai\aiai-home
+2023-05-07 23:37:30.840  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	PID: 5848
+2023-05-07 23:37:30.840  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.os.patch.level: 
+2023-05-07 23:37:30.840  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	CONSOLE_LOG_CHARSET: UTF-8
+2023-05-07 23:37:30.840  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	native.encoding: Cp1252
+2023-05-07 23:37:30.840  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.info: mixed mode, sharing
+2023-05-07 23:37:30.840  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vendor: Eclipse Adoptium
+2023-05-07 23:37:30.840  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.vm.version: 17.0.2+8
+2023-05-07 23:37:30.840  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	sun.io.unicode.encoding: UnicodeLittle
+2023-05-07 23:37:30.840  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	java.class.version: 61.0
+2023-05-07 23:37:30.841  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : Garbage collectors:
+2023-05-07 23:37:30.841  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	Shenandoah Pauses
+2023-05-07 23:37:30.841  INFO 5848 --- [main] ai.metaheuristic.ai.Globals              : '	Shenandoah Cycles
+2023-05-07 23:37:30.852  WARN 5848 --- [main] ai.metaheuristic.ai.Config               : Spring properties:
+2023-05-07 23:37:30.853  WARN 5848 --- [main] ai.metaheuristic.ai.Config               : '	server host:port: 127.0.0.1:-1
+2023-05-07 23:37:30.890  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : Exec info:
+2023-05-07 23:37:30.891  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	cmd: [C:\Users\serg\.conda\envs\python-3_11\python.exe, --version]
+2023-05-07 23:37:30.891  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir: .
+2023-05-07 23:37:30.891  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir abs: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:37:30.891  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	consoleLogFile abs: D:\Temp\metaheuristic-temp\command-exec-2023-05-07_23-37-30-283037025641600\console-8195398368070945848.log
+2023-05-07 23:37:30.891  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	functionCode: command-exec
+2023-05-07 23:37:30.891  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeoutBeforeTerminate (seconds): 10
+2023-05-07 23:37:30.891  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	schedule: null
+2023-05-07 23:37:30.891  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeout (milliseconds): 10000
+2023-05-07 23:37:30.902  INFO 5848 --- [Thread-14] a.m.ai.core.SystemProcessLauncher        : thread #34, start receiving stream from external process
+2023-05-07 23:37:30.903  INFO 5848 --- [Thread-15] a.m.ai.core.SystemProcessLauncher        : thread #35, time before sleep - Sun May 07 23:37:30 PDT 2023
+2023-05-07 23:37:31.077  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : Any errors of execution? No
+2023-05-07 23:37:31.077 DEBUG 5848 --- [Thread-15] a.m.ai.core.SystemProcessLauncher        : thread #35, current thread was interrupted
+2023-05-07 23:37:31.077 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	exitCode: 0
+2023-05-07 23:37:31.077 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	destroyed with timeout or for other reason: false
+2023-05-07 23:37:31.077 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	cmd: [C:\Users\serg\.conda\envs\python-3_11\python.exe, --version]
+2023-05-07 23:37:31.077 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	execDir: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:37:31.079 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	console output:
+Python 3.11.2
+
+
+2023-05-07 23:37:31.080  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : systemExecResult: FunctionApiData.SystemExecResult(functionCode=command-exec, isOk=true, exitCode=0)
+2023-05-07 23:37:31.087  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : Exec info:
+2023-05-07 23:37:31.087  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	cmd: [C:\jdk-11.0.11\bin\java.exe, -Dfile.encoding=UTF-8, -jar, --version]
+2023-05-07 23:37:31.089  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir: .
+2023-05-07 23:37:31.089  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir abs: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:37:31.089  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	consoleLogFile abs: D:\Temp\metaheuristic-temp\command-exec-2023-05-07_23-37-31-283037218956500\console-6973150804848905450.log
+2023-05-07 23:37:31.089  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	functionCode: command-exec
+2023-05-07 23:37:31.089  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeoutBeforeTerminate (seconds): 10
+2023-05-07 23:37:31.089  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	schedule: null
+2023-05-07 23:37:31.089  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeout (milliseconds): 10000
+2023-05-07 23:37:31.099  INFO 5848 --- [Thread-17] a.m.ai.core.SystemProcessLauncher        : thread #37, start receiving stream from external process
+2023-05-07 23:37:31.100  INFO 5848 --- [Thread-18] a.m.ai.core.SystemProcessLauncher        : thread #38, time before sleep - Sun May 07 23:37:31 PDT 2023
+2023-05-07 23:37:31.339  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : Any errors of execution? No
+2023-05-07 23:37:31.340 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	exitCode: 0
+2023-05-07 23:37:31.340 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	destroyed with timeout or for other reason: false
+2023-05-07 23:37:31.340 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	cmd: [C:\jdk-11.0.11\bin\java.exe, -Dfile.encoding=UTF-8, -jar, --version]
+2023-05-07 23:37:31.340 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	execDir: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:37:31.340 DEBUG 5848 --- [Thread-18] a.m.ai.core.SystemProcessLauncher        : thread #38, current thread was interrupted
+2023-05-07 23:37:31.342 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	console output:
+openjdk 11.0.11 2021-04-20
+OpenJDK Runtime Environment AdoptOpenJDK-11.0.11+9 (build 11.0.11+9)
+OpenJDK 64-Bit Server VM AdoptOpenJDK-11.0.11+9 (build 11.0.11+9, mixed mode)
+
+
+2023-05-07 23:37:31.342  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : systemExecResult: FunctionApiData.SystemExecResult(functionCode=command-exec, isOk=true, exitCode=0)
+2023-05-07 23:37:31.345  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : Exec info:
+2023-05-07 23:37:31.346  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	cmd: [C:\jdk-17.0.2\bin\java.exe, -Dfile.encoding=UTF-8, -jar, --version]
+2023-05-07 23:37:31.346  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir: .
+2023-05-07 23:37:31.346  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir abs: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:37:31.346  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	consoleLogFile abs: D:\Temp\metaheuristic-temp\command-exec-2023-05-07_23-37-31-283037480884600\console-15699510995589669019.log
+2023-05-07 23:37:31.346  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	functionCode: command-exec
+2023-05-07 23:37:31.346  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeoutBeforeTerminate (seconds): 10
+2023-05-07 23:37:31.346  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	schedule: null
+2023-05-07 23:37:31.346  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeout (milliseconds): 10000
+2023-05-07 23:37:31.358  INFO 5848 --- [Thread-21] a.m.ai.core.SystemProcessLauncher        : thread #41 is waiting for reader thread, time - Sun May 07 23:37:31 PDT 2023
+2023-05-07 23:37:31.359  INFO 5848 --- [Thread-20] a.m.ai.core.SystemProcessLauncher        : thread #40, start receiving stream from external process
+2023-05-07 23:37:31.506  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : Any errors of execution? No
+2023-05-07 23:37:31.507 DEBUG 5848 --- [Thread-21] a.m.ai.core.SystemProcessLauncher        : thread #41, current thread was interrupted
+2023-05-07 23:37:31.507 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	exitCode: 0
+2023-05-07 23:37:31.507 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	destroyed with timeout or for other reason: false
+2023-05-07 23:37:31.507 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	cmd: [C:\jdk-17.0.2\bin\java.exe, -Dfile.encoding=UTF-8, -jar, --version]
+2023-05-07 23:37:31.507 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	execDir: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:37:31.509 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	console output:
+openjdk 17.0.2 2022-01-18
+OpenJDK Runtime Environment Temurin-17.0.2+8 (build 17.0.2+8)
+OpenJDK 64-Bit Server VM Temurin-17.0.2+8 (build 17.0.2+8, mixed mode, sharing)
+
+
+2023-05-07 23:37:31.509  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : systemExecResult: FunctionApiData.SystemExecResult(functionCode=command-exec, isOk=true, exitCode=0)
+2023-05-07 23:37:31.753  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : Exec info:
+2023-05-07 23:37:31.753  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	cmd: [git, --version]
+2023-05-07 23:37:31.754  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir: .
+2023-05-07 23:37:31.754  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	taskDir abs: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:37:31.754  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	consoleLogFile abs: D:\Temp\metaheuristic-temp\command-exec-2023-05-07_23-37-31-283037874015700\console-3640160942471983543.log
+2023-05-07 23:37:31.754  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	functionCode: command-exec
+2023-05-07 23:37:31.754  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeoutBeforeTerminate (seconds): 30
+2023-05-07 23:37:31.755  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	schedule: null
+2023-05-07 23:37:31.755  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : 	timeout (milliseconds): 30000
+2023-05-07 23:37:31.779  INFO 5848 --- [Thread-23] a.m.ai.core.SystemProcessLauncher        : thread #43, start receiving stream from external process
+2023-05-07 23:37:31.780  INFO 5848 --- [Thread-24] a.m.ai.core.SystemProcessLauncher        : thread #44, time before sleep - Sun May 07 23:37:31 PDT 2023
+2023-05-07 23:37:31.882  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : Any errors of execution? No
+2023-05-07 23:37:31.882 DEBUG 5848 --- [Thread-24] a.m.ai.core.SystemProcessLauncher        : thread #44, current thread was interrupted
+2023-05-07 23:37:31.882 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	exitCode: 0
+2023-05-07 23:37:31.882 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	destroyed with timeout or for other reason: false
+2023-05-07 23:37:31.882 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	cmd: [git, --version]
+2023-05-07 23:37:31.882 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	execDir: C:\sandbox\git\aiai\apps\metaheuristic\.
+2023-05-07 23:37:31.884 DEBUG 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : '	console output:
+git version 2.40.0.windows.1
+
+
+2023-05-07 23:37:31.884  INFO 5848 --- [main] a.m.ai.core.SystemProcessLauncher        : systemExecResult: FunctionApiData.SystemExecResult(functionCode=command-exec, isOk=true, exitCode=0)
+2023-05-07 23:37:31.921  INFO 5848 --- [main] a.m.a.p.d.ActiveDispatchers              : ActiveDispatchers for scheduler, dispatcher http://localhost:8080 was added to selection
+2023-05-07 23:37:31.921  INFO 5848 --- [main] a.m.a.p.d.ActiveDispatchers              : ActiveDispatchers for scheduler, dispatcher https://mh-main.herokuapp.com is disabled
+2023-05-07 23:37:31.972  INFO 5848 --- [main] a.m.a.p.d.ActiveDispatchers              : RoundRobin for KeepAlive, dispatcher http://localhost:8080 was added to selection
+2023-05-07 23:37:31.972  INFO 5848 --- [main] a.m.a.p.d.ActiveDispatchers              : RoundRobin for KeepAlive, dispatcher https://mh-main.herokuapp.com is disabled
+2023-05-07 23:37:32.182  INFO 5848 --- [main] ai.metaheuristic.ai.Config               : Config.threadPoolTaskScheduler() will use 13 as a number of threads for an schedulers
+2023-05-07 23:37:32.269  WARN 5848 --- [main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: ff2d48d3-de11-4b6e-9c8c-982cba975ed2
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2023-05-07 23:37:33.159  INFO 5848 --- [main] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page template: index
+2023-05-07 23:37:33.624  INFO 5848 --- [main] a.m.ai.profiles.TestProcessorProfile     : Started TestProcessorProfile in 4.849 seconds (JVM running for 17.729)

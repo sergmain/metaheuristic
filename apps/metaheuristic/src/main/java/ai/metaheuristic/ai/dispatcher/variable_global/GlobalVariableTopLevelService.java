@@ -70,7 +70,7 @@ public class GlobalVariableTopLevelService {
                 globalVariableService.save(bis, file.getSize(), variable, originFilename);
             }
         } catch (Throwable e) {
-            String es = "#172.050 An error while saving data to file, " + e.getMessage();
+            String es = "#172.040 An error while saving data to file, " + e.getMessage();
             log.error(es, e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
