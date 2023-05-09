@@ -99,6 +99,7 @@ public class StringAsVariableFunction implements InternalFunction {
         for (StringVariableData.StringAsVar inlineAsVar : mapping.mapping) {
 
             // DO NOT remove inlineAsVar.group
+            //noinspection deprecation
             String keyName = inlineAsVar.key != null ? inlineAsVar.key : inlineAsVar.group;
             if (keyName==null) {
                 throw new InternalFunctionException(source_code_is_broken, "#513.340 mapping must have a field key or group, "+ inlineAsVar);

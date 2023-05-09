@@ -1,0 +1,9 @@
+version: 1
+kb:
+ code: mhbp-sample
+ type: mhbp
+ inline:
+  - p: answer 2+2 with digits only
+    a: 4
+  - p: answer square root of 9 with only digits
+    a: 3

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.repositories.RefToDispatcherRepositories;
+import ai.metaheuristic.ai.mhbp.repositories.RefToMhbpRepositories;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInterceptor;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -216,10 +217,10 @@ public class Config {
 
     @EnableCaching
     @Configuration
-    @ComponentScan("ai.metaheuristic.ai.dispatcher")
+    @ComponentScan(value={"ai.metaheuristic.ai.dispatcher", "ai.metaheuristic.ai.mhbp"})
     @Profile("dispatcher")
     @EnableTransactionManagement
-    @EnableJpaRepositories(basePackageClasses = {RefToDispatcherRepositories.class} )
+    @EnableJpaRepositories(basePackageClasses = {RefToDispatcherRepositories.class, RefToMhbpRepositories.class} )
     public static class DispatcherConfig {
     }
 

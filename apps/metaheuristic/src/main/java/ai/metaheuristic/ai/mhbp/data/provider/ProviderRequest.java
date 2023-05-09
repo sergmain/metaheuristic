@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,24 +14,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.evaluation;
+package ai.metaheuristic.ai.mhbp.data.provider;
 
-import ai.metaheuristic.ai.dispatcher.repositories.EvaluationRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
+import ai.metaheuristic.ai.Enums;
+
+import java.time.LocalDateTime;
 
 /**
- * @author Serge
- * Date: 5/4/2021
- * Time: 11:35 PM
+ * @author Sergio Lissner
+ * Date: 3/5/2023
+ * Time: 1:31 AM
  */
-@Service
-@Slf4j
-@Profile("dispatcher")
-@RequiredArgsConstructor
-public class EvaluationService {
+public class ProviderRequest {
+    public long requestId;
+    public String providerCode;
+    public LocalDateTime dateTime;
+    public Enums.RequestType type;
 
-    public final EvaluationRepository evaluationRepository;
+    public long questionId;
 }

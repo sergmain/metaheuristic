@@ -37,6 +37,8 @@ import ai.metaheuristic.ai.processor.dispatcher_selection.ActiveDispatchers;
 import ai.metaheuristic.ai.processor.event.KeepAliveEvent;
 import ai.metaheuristic.ai.processor.event.ProcessorEventBusService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.ai.mhbp.kb.KbInitializingService;
+import ai.metaheuristic.ai.mhbp.provider.ProcessSessionOfEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -202,6 +204,25 @@ public class Schedulers {
         private final ExecContextTaskAssigningTopLevelService execContextTaskAssigningTopLevelService;
 
         // Dispatcher schedulers with fixed delay
+
+        private final ProcessSessionOfEvaluationService evaluateProviderService;
+        private final KbInitializingService kbInitializingService;
+
+        @Scheduled(initialDelay = 13_000, fixedDelay = 17_000 )
+        public void processEvaluateProviderService() {
+            if (globals.testing) {
+                return;
+            }
+            evaluateProviderService.processSessionEvent();
+        }
+
+        @Scheduled(initialDelay = 17_000, fixedDelay = 17_000 )
+        public void processInitKb() {
+            if (globals.testing) {
+                return;
+            }
+            kbInitializingService.processEvent();
+        }
 
         @Scheduled(initialDelay = 63_000, fixedDelay = 630_000 )
         public void updateExecContextStatuses() {

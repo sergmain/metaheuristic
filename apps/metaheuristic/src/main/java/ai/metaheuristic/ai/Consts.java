@@ -162,4 +162,12 @@ public class Consts {
     public static final Duration DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS = DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS.minus(DURATION_5_SECONDS);
     public static final long DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS = DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS.toMillis();
 
+    public static final String GIT_PATH = "git";
+
+    public static final String REPO = "repo";
+    public static final String BRANCH_MAIN = "main";
+    public static final String COMMIT_ORIGIN = "origin";
+
+    public static final String JSONPATH_CONTENT = "$['input'][*]['content']";
+
 }

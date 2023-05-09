@@ -1,0 +1,26 @@
+version: 2
+code: openai-provider:1.0
+scheme:
+  auth:
+    code: openai
+  request:
+    type: post
+    uri: https://api.openai.com/v1/completions
+    prompt:
+      place: text
+      replace: $prompt$
+      text: |+
+        {
+          "model": "text-davinci-003",
+          "prompt": "$prompt$",
+          "temperature": 0.9,
+          "max_tokens": 150,
+          "top_p": 1,
+          "frequency_penalty": 0,
+          "presence_penalty": 0.6,
+          "stop": [" Human:", " AI:"]
+        }
+  response:
+    type: json
+    path: $['choices'][0]['message']['content']
+

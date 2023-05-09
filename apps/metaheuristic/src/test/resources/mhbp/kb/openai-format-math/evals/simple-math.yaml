@@ -1,0 +1,8 @@
+simple-math:
+  id: simple-math.dev.v0
+  description: Simple math prompts
+  metrics: [accuracy]
+simple-math.dev.v0:
+  class: evals.elsuite.basic.match:Match
+  args:
+    samples_jsonl: math/simple-math.jsonl

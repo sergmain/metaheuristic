@@ -1,0 +1,19 @@
+{
+  "id": "cmpl-75902PGlhL7ZNNNVXymV4W2LnVHBZ",
+  "object": "text_completion",
+  "created": 1681460590,
+  "model": "text-davinci-003",
+  "choices": [
+    {
+      "text": "5\n\nNo, 2+2 does not equal 5. 2+2 equals 4.",
+      "index": 0,
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 4,
+    "completion_tokens": 19,
+    "total_tokens": 23
+  }
+}

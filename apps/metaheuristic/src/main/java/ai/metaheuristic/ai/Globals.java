@@ -158,12 +158,19 @@ public class Globals {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class KbFile {
+        public String url;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class Kb {
         public String code;
         public String type;
         public boolean disabled = false;
         public Git git;
-        public File file;
+        public KbFile file;
     }
 
     @Data
@@ -181,6 +188,7 @@ public class Globals {
     @Getter
     @Setter
     public static class RowsLimit {
+        public int defaultLimit = 20;
         //        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.global-variable-table-rows-limit'), 5, 100, 20) }")
         public int globalVariableTable = 20;
 
@@ -263,8 +271,6 @@ public class Globals {
 
         @PeriodUnit(ChronoUnit.DAYS)
         public Period keepEventsInDb = Period.ofDays(90);
-
-        public boolean sslRequired = true;
 
         public boolean functionSignatureRequired = true;
         public boolean enabled = false;
@@ -462,9 +468,25 @@ public class Globals {
         public int initCoreNumber = 1;
     }
 
+    @Getter
+    @Setter
+    public static class Mhbp {
+        public final Max max = new Max();
+        public Kb[] kb;
+    }
+
     public static class ThreadNumber {
         private int scheduler = 10;
         private int event =  Math.max(10, Runtime.getRuntime().availableProcessors()/2);
+        public int queryApi =  2;
+
+        public int getQueryApi() {
+            return EnvProperty.minMax( queryApi, 2, 100);
+        }
+
+        public void setQueryApi(int queryApi) {
+            this.queryApi = queryApi;
+        }
 
         public int getScheduler() {
             return EnvProperty.minMax( scheduler, 10, 32);
@@ -486,6 +508,7 @@ public class Globals {
     public final Dispatcher dispatcher = new Dispatcher();
     public final Processor processor = new Processor();
     public final ThreadNumber threadNumber = new ThreadNumber();
+    public final Mhbp mhbp = new Mhbp();
 
     @Nullable
     public String systemOwner = null;
@@ -497,6 +520,8 @@ public class Globals {
 
     public boolean testing = false;
     public boolean eventEnabled = false;
+
+    public boolean sslRequired = true;
 
     public Path home;
 
@@ -611,16 +636,16 @@ public class Globals {
     }
 
     @Nullable
-    private static File toFile(@Nullable String dirAsString) {
+    private static KbFile toFile(@Nullable String dirAsString) {
         if (S.b(dirAsString)) {
             return null;
         }
 
         // special case for ./some-dir
         if (dirAsString.charAt(0) == '.' && (dirAsString.charAt(1) == '\\' || dirAsString.charAt(1) == '/')) {
-            return new File(dirAsString.substring(2));
+            return new KbFile(dirAsString.substring(2));
         }
-        return new File(dirAsString);
+        return new KbFile(dirAsString);
     }
 
 
@@ -631,11 +656,11 @@ public class Globals {
             Pair.of("MH_CORS_ALLOWED_ORIGINS", "MH_CORSALLOWEDORIGINS"),
             Pair.of("MH_THREAD_NUMBER_SCHEDULER", "MH_THREADNUMBER_SCHEDULER"),
             Pair.of("MH_PUBLIC_KEY", "MH_DISPATCHER_PUBLICKEY"),
-            Pair.of("MH_IS_SSL_REQUIRED", "MH_DISPATCHER_ISSSLREQUIRED"),
+            Pair.of("MH_DISPATCHER_ISSSLREQUIRED", "MH_IS_SSL_REQUIRED"),
             Pair.of("MH_DEFAULT_RESULT_FILE_EXTENSION", "MH_DEFAULT_RESULTFILEEXTENSION"),
             Pair.of("MH_IS_EVENT_ENABLED", "MH_ISEVENTENABLED"),
             Pair.of("MH_CHUNK_SIZE", "MH_DISPATCHER_CHUNKSIZE"),
-            Pair.of("MH_DISPATCHER_ASSET_SOURCE_URL", "MH_DISPATCHER_ASSET_SOURCE_URL")
+            Pair.of("MH_DISPATCHER_ASSET_SOURCE_URL", "MH_DISPATCHER_ASSET_SOURCEURL")
     );
 
     private void logDeprecated() {
@@ -723,11 +748,11 @@ public class Globals {
         log.info("'\tcorsAllowedOrigins: {}", corsAllowedOrigins);
         log.info("'\tbranding: {}", branding);
         log.info("'\ttesting: {}", testing);
+        log.info("'\tsslRequired: {}", sslRequired);
         log.info("'\tthreadNumber.scheduler: {}", threadNumber.getScheduler());
         log.info("'\tthreadNumber.event: {}", threadNumber.getEvent());
         log.info("'\tdispatcher.enabled: {}", dispatcher.enabled);
         log.info("'\tdispatcher.dir: {}", dispatcherPath.toAbsolutePath().normalize());
-        log.info("'\tdispatcher.sslRequired: {}", dispatcher.sslRequired);
         log.info("'\tdispatcher.functionSignatureRequired: {}", dispatcher.functionSignatureRequired);
         log.info("'\tdispatcher.masterUsername: {}", dispatcher.masterUsername);
         log.info("'\tdispatcher.publicKey: {}", dispatcher.publicKey!=null ? "provided" : "wasn't provided");

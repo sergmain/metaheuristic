@@ -163,7 +163,7 @@ public final class Enums {
     public enum LogType { ASSEMBLING(1), FEATURE(2), FIT(3), PREDICT(4), SEQUENCE(5),
         PRODUCING(6), PROCESSOR_LOG(7);
 
-        public int typeNumber;
+        public final int typeNumber;
 
         LogType(int typeNumber) {
             this.typeNumber = typeNumber;
@@ -172,7 +172,7 @@ public final class Enums {
 
     public enum DispatcherLookupType { direct, registry }
 
-    public enum AuthType { basic, oauth }
+    public enum AuthType { basic, token }
 
     public enum VariablesAs { permute, array; }
 
@@ -187,7 +187,6 @@ public final class Enums {
     public enum RequestType {text, video, audio }
     public enum ResponseType {text, bool, digit }
 
-    public enum OperationStatus {OK, ERROR}
     public enum TokenPlace { param, header }
     public enum PromptPlace { uri, text }
     public enum PromptResponseType { json, text }

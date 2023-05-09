@@ -753,7 +753,11 @@ public class MetadataService {
     }
 
     public static String asCode(CommonUrl commonUrl) {
-        String s = commonUrl.getUrl().toLowerCase();
+        return asCode(commonUrl.getUrl().toLowerCase());
+    }
+
+    public static String asCode(String url) {
+        String s = url;
         if (s.startsWith(Consts.HTTP)) {
             s = s.substring(Consts.HTTP.length());
         }

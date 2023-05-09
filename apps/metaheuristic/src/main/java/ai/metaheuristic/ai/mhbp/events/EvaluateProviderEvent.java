@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,15 +14,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.repositories;
+package ai.metaheuristic.ai.mhbp.events;
 
-import ai.metaheuristic.ai.dispatcher.beans.HeuristicEvaluation;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.lang.Nullable;
 
 /**
- * @author Serge
- * Date: 5/4/2021
- * Time: 11:35 PM
+ * @author Sergio Lissner
+ * Date: 3/19/2023
+ * Time: 10:42 PM
  */
-public interface EvaluationRepository extends CrudRepository<HeuristicEvaluation, Long> {
-}
+public record EvaluateProviderEvent(long evaluationId, int limit, long accountId) {}

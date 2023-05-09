@@ -32,6 +32,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class EvaluationTopLevelService {
 
-    public final EvaluationService evaluationService;
+    public final HeuristicEvaluationService evaluationService;
 
 }

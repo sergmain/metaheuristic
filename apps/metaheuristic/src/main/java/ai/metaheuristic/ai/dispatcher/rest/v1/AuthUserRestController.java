@@ -33,7 +33,7 @@ import java.util.Collection;
 @Profile("dispatcher")
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
-public class AuthRestController {
+public class AuthUserRestController {
 
     // this end-point is used by angular's part only
     @RequestMapping("/user")
