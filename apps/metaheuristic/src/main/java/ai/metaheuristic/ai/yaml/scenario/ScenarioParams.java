@@ -17,10 +17,12 @@
 
 package ai.metaheuristic.ai.yaml.scenario;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,16 +41,40 @@ public class ScenarioParams implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class Api {
+        public long apiId;
+        // stored just for info
+        public String code;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Function {
+        public String code;
+        public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.internal;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class Step {
         public String uuid;
+        @Nullable
+        public String parentUuid;
         public String name;
         // prompt
         public String p;
-        // answer
-        public String a;
-        public long apiId;
-        // stored just for info
-        public String apiCode;
+        // result of executing
+        public String r;
+        @Nullable
+        public String resultCode;
+
+        @Nullable
+        public Api api;
+
+        @Nullable
+        public Function function;
     }
 
     public List<Step> steps = new ArrayList<>();
