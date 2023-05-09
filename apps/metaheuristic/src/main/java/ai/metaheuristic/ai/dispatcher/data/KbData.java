@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.beans.Kb;
 import ai.metaheuristic.api.data.BaseDataClass;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -47,14 +46,14 @@ public class KbData {
         public boolean editable;
         public String status;
 
-        public SimpleKb(ai.metaheuristic.ai.dispatcher.beans.Kb kb) {
+        public SimpleKb(ai.metaheuristic.ai.mhbp.beans.Kb kb) {
             this.id = kb.id;
             this.code = kb.code;
             this.status = Enums.KbStatus.to(kb.status).toString();
             this.params = kb.getParams();
         }
 
-        public static SimpleKb editableSimpleKb(ai.metaheuristic.ai.dispatcher.beans.Kb kb) {
+        public static SimpleKb editableSimpleKb(ai.metaheuristic.ai.mhbp.beans.Kb kb) {
             SimpleKb simpleKb = new SimpleKb(kb);
             simpleKb.editable = true;
             return simpleKb;

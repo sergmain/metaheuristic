@@ -39,7 +39,7 @@ import java.util.List;
 public interface AnswerRepository extends CrudRepository<Answer, Long> {
 
     @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.mhbp.data.SimpleAnswerStats(a.id, a.sessionId, a.chapterId, a.total, a.failed, a.systemError) " +
+    @Query(value="select new ai.metaheuristic.ai.mhbp.data.SimpleAnswerStats(a.id, a.sessionId, a.chapterId, a.total, a.failed, a.systemError) " +
                  " from Answer a where a.sessionId in (:sessionIds)")
     List<SimpleAnswerStats> getStatusesJpql(List<Long> sessionIds);
 

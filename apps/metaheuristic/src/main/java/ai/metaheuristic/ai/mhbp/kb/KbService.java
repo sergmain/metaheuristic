@@ -74,21 +74,23 @@ public class KbService {
 
     @PostConstruct
     public void postConstruct() {
-        List<Kb> kbs = kbTxService.findSystemKbs();
-        for (Globals.Kb globalKb : globals.mhbp.kb) {
-            boolean create = true;
-            for (Kb kb : kbs) {
-                if (kb.code.equals(globalKb.code)) {
-                    create = false;
-                    if (kb.disabled!=globalKb.disabled) {
-                        kbTxService.updateDisabled(kb.id, globalKb.disabled);
+        if (globals.mhbp.kb!=null) {
+            List<Kb> kbs = kbTxService.findSystemKbs();
+            for (Globals.Kb globalKb : globals.mhbp.kb) {
+                boolean create = true;
+                for (Kb kb : kbs) {
+                    if (kb.code.equals(globalKb.code)) {
+                        create = false;
+                        if (kb.disabled!=globalKb.disabled) {
+                            kbTxService.updateDisabled(kb.id, globalKb.disabled);
+                        }
+                        break;
                     }
-                    break;
                 }
-            }
-            if (create) {
-                KbParams kbParams = toKbParams(globalKb);
-                kbTxService.saveSystemKb(kbParams);
+                if (create) {
+                    KbParams kbParams = toKbParams(globalKb);
+                    kbTxService.saveSystemKb(kbParams);
+                }
             }
         }
 

@@ -41,7 +41,7 @@ public interface ChapterRepository extends CrudRepository<Chapter, Long> {
     Chapter findByKbIdAndCode(long kbId, String code);
 
     @Transactional(readOnly = true)
-    @Query(value= "select new ai.metaheuristic.mhbp.data.SimpleChapterUid(a.id, a.code, a.promptCount) " +
+    @Query(value= "select new ai.metaheuristic.ai.mhbp.data.SimpleChapterUid(a.id, a.code, a.promptCount) " +
                   " from Chapter a where a.kbId in(:kbIds)")
     List<SimpleChapterUid> findAllByKbIds(List<Long> kbIds);
 }

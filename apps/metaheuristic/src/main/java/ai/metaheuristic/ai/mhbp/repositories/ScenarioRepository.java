@@ -37,7 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 public interface ScenarioRepository extends CrudRepository<Scenario, Long> {
 
     @Transactional(readOnly = true)
-    @Query(value= "select new ai.metaheuristic.mhbp.data.SimpleScenario(s.id, s.scenarioGroupId, a.id, a.code, s.createdOn, s.name, s.description) " +
+    @Query(value= "select new ai.metaheuristic.ai.mhbp.data.SimpleScenario(s.id, s.scenarioGroupId, a.id, a.code, s.createdOn, s.name, s.description) " +
                   " from Scenario s, Api a where s.apiId=a.id and s.scenarioGroupId=:scenarioGroupId and s.accountId=:accountId")
     Page<SimpleScenario> findAllByScenarioGroupId(Pageable pageable, Long scenarioGroupId, long accountId);
 
