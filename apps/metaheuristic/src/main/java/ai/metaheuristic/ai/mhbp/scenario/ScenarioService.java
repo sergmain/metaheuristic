@@ -97,10 +97,17 @@ public class ScenarioService {
         Map<Long, ScenarioData.ApiUid> apis = new HashMap<>();
         List<ScenarioData.SimpleScenarioStep> steps = scenarioParams.steps.stream()
                 .map(o-> {
-                    ScenarioData.ApiUid apiUid = apis.computeIfAbsent(o.apiId,
-                            (apiId)-> apiRepository.findById(apiId)
-                                    .map(api->new ScenarioData.ApiUid(api.id, api.code))
-                                    .orElse(new ScenarioData.ApiUid(0L, "<broken API Id>")));
+                    ScenarioData.ApiUid apiUid;
+                    if (o.api==null) {
+                        apiUid = new ScenarioData.ApiUid(0L, "<broken API Id>");
+                    }
+                    else {
+                        apiUid = apis.computeIfAbsent(o.api.apiId,
+                                (apiId) -> apiRepository.findById(apiId)
+                                        .map(api -> new ScenarioData.ApiUid(api.id, api.code))
+                                        .orElse(new ScenarioData.ApiUid(0L, "<broken API Id>")));
+                    }
+
                     return new ScenarioData.SimpleScenarioStep(s.id, apiUid, o);
                 })
                 .toList();

@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
 import lombok.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
+import org.springframework.lang.Nullable;
 
 import java.util.List;
 
@@ -84,20 +85,27 @@ public class ScenarioData {
     public static class SimpleScenarioStep {
         public long scenarioId;
         public String uuid;
+        @Nullable
+        public String parentUuid;
         public long apiId;
         public String apiCode;
         public String name;
         public String prompt;
-        public String answer;
+        public String r;
+
+        public String resultCode;
+        public SimpleScenarioStep[] steps;
 
         public SimpleScenarioStep(Long scenarioId, ApiUid apiUid, ScenarioParams.Step step) {
             this.scenarioId = scenarioId;
             this.uuid = step.uuid;
+            this.parentUuid = step.parentUuid;
             this.apiId = apiUid.id;
             this.apiCode = apiUid.uid;
             this.name = step.name;
             this.prompt = step.p;
-            this.answer = step.a;
+            this.r = step.r;
+            this.resultCode = step.resultCode;
         }
     }
 

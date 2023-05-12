@@ -128,9 +128,10 @@ public class ScenarioRestController {
             @RequestParam(name = "name") String name,
             @RequestParam(name = "prompt") String prompt,
             @RequestParam(name = "apiId") String apiId,
+            @RequestParam(name = "resultCode") String resultCode,
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return scenarioTxService.createScenarioStep(scenarioGroupId, scenarioId, name, prompt, apiId, context);
+        return scenarioTxService.createScenarioStep(scenarioGroupId, scenarioId, name, prompt, apiId, resultCode, context);
     }
 
     @PostMapping("/scenario-group-delete-commit")

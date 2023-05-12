@@ -1,17 +1,18 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
+ *    Copyright 2023, Sergio Lissner, Innovation platforms, LLC
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ *
  */
 
 package ai.metaheuristic.ai.mhbp.yaml.scenario;
@@ -51,8 +52,24 @@ public class ScenarioParamsUtilsV1 extends
 
     @Nullable
     private static ScenarioParams.Step toPrompt(ScenarioParamsV1.StepV1 v1) {
-        ScenarioParams.Step f = new ScenarioParams.Step(v1.uuid, v1.name, v1.p, v1.a, v1.apiId, v1.apiCode);
+        ScenarioParams.Step f = new ScenarioParams.Step(v1.uuid, v1.parentUuid, v1.name, v1.p, v1.r, v1.resultCode, toApi(v1.api), toFunction(v1.function));
         return f;
+    }
+
+    @Nullable
+    private static ScenarioParams.Function toFunction(@Nullable ScenarioParamsV1.FunctionV1 v1) {
+        if (v1==null) {
+            return null;
+        }
+        return new ScenarioParams.Function(v1.code, v1.context);
+    }
+
+    @Nullable
+    private static ScenarioParams.Api toApi(@Nullable ScenarioParamsV1.ApiV1 v1) {
+        if (v1==null) {
+            return null;
+        }
+        return new ScenarioParams.Api(v1.apiId, v1.code);
     }
 
     @NonNull

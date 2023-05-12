@@ -1,32 +1,35 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
+ *    Copyright 2023, Sergio Lissner, Innovation platforms, LLC
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ *
  */
 
 package ai.metaheuristic.ai.mhbp.yaml.scenario;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("FieldMayBeStatic")
 @Data
-public class ScenarioParamsV1 implements BaseParams  {
+public class ScenarioParamsV1 implements BaseParams {
 
     public final int version=1;
 
@@ -38,15 +41,39 @@ public class ScenarioParamsV1 implements BaseParams  {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class ApiV1 {
+        public long apiId;
+        // stored just for info
+        public String code;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FunctionV1 {
+        public String code;
+        public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.internal;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class StepV1 {
         public String uuid;
+        @Nullable
+        public String parentUuid;
         public String name;
         // prompt
         public String p;
-        // answer
-        public String a;
-        public long apiId;
-        public String apiCode;
+        // result of executing
+        public String r;
+        public String resultCode;
+
+        @Nullable
+        public ApiV1 api;
+
+        @Nullable
+        public FunctionV1 function;
     }
 
     public List<StepV1> steps = new ArrayList<>();

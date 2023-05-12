@@ -88,7 +88,7 @@ public class ScenarioTxService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest createScenarioStep(String scenarioGroupId, String scenarioId, String name, String prompt, String apiId, DispatcherContext context) {
+    public OperationStatusRest createScenarioStep(String scenarioGroupId, String scenarioId, String name, String prompt, String apiId, String resultCode, DispatcherContext context) {
         if (S.b(scenarioGroupId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.120 scenarioGroupId is null");
         }
@@ -115,7 +115,7 @@ public class ScenarioTxService {
         }
 
         ScenarioParams sp = s.getScenarioParams();
-        sp.steps.add(new ScenarioParams.Step(UUID.randomUUID().toString(), name, prompt, null, api.id, api.code));
+        sp.steps.add(new ScenarioParams.Step(UUID.randomUUID().toString(), null, name, prompt, null, resultCode, new ScenarioParams.Api(api.id, api.code), null));
         s.updateParams(sp);
 
         scenarioRepository.save(s);

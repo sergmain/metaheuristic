@@ -37,7 +37,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.*;
 import java.util.function.BiFunction;
+
+import static com.fasterxml.jackson.databind.type.LogicalType.Collection;
 
 /**
  * @author Serge
