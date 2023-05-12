@@ -16,14 +16,17 @@
 
 package ai.metaheuristic.ai.mhbp.data;
 
+import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.ai.mhbp.beans.ScenarioGroup;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
 import org.springframework.lang.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -82,7 +85,7 @@ public class ScenarioData {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SimpleScenarioStep {
+    public static class SimpleScenarioStep implements CollectionUtils.TreeUtils.TreeItem<String> {
         public long scenarioId;
         public String uuid;
         @Nullable
@@ -94,6 +97,7 @@ public class ScenarioData {
         public String r;
 
         public String resultCode;
+        @Nullable
         public SimpleScenarioStep[] steps;
 
         public SimpleScenarioStep(Long scenarioId, ApiUid apiUid, ScenarioParams.Step step) {
@@ -106,6 +110,50 @@ public class ScenarioData {
             this.prompt = step.p;
             this.r = step.r;
             this.resultCode = step.resultCode;
+        }
+
+        @JsonIgnore
+        @Override
+        public String getTopId() {
+            return parentUuid;
+        }
+
+        @JsonIgnore
+        @Override
+        public String getId() {
+            return uuid;
+        }
+
+        @JsonIgnore
+        @Nullable
+        @Override
+        public List<CollectionUtils.TreeUtils.TreeItem<String>> getSubTree() {
+            return steps==null ? null : Arrays.asList(steps);
+        }
+
+        @JsonIgnore
+        @Override
+        public void setSubTree(@Nullable List<CollectionUtils.TreeUtils.TreeItem<String>> list) {
+            this.steps = list==null ? null : list.toArray(new SimpleScenarioStep[0]);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || this.getClass() != o.getClass()) {
+                return false;
+            }
+
+            SimpleScenarioStep that = (SimpleScenarioStep) o;
+
+            if (!this.uuid.equals(that.uuid)) {
+                return false;
+            }
+            if (this.parentUuid != null ? !this.parentUuid.equals(that.parentUuid) : that.parentUuid != null) {
+                return false;
+            }
+
+            return true;
         }
     }
 

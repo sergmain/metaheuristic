@@ -30,13 +30,15 @@ public class CollectionUtils {
     public static class TreeUtils<T> {
 
         public interface TreeItem<T> {
+            @Nullable
             T getTopId();
 
             T getId();
 
+            @Nullable
             List<TreeItem<T>> getSubTree();
 
-            void setSubTree(List<TreeItem<T>> list);
+            void setSubTree(@Nullable List<TreeItem<T>> list);
 
             @Override
             boolean equals(Object o);

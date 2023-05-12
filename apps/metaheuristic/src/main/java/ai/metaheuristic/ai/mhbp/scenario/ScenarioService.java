@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioGroupRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioRepository;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
+import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static ai.metaheuristic.ai.utils.CollectionUtils.*;
 
 /**
  * @author Sergio Lissner
@@ -112,7 +115,10 @@ public class ScenarioService {
                 })
                 .toList();
 
-        return new ScenarioData.SimpleScenarioSteps(steps);
+        TreeUtils<String> treeUtils = new CollectionUtils.TreeUtils<>();
+        List<ScenarioData.SimpleScenarioStep> stepTree = treeUtils.rebuildTree((List)steps);
+
+        return new ScenarioData.SimpleScenarioSteps(stepTree);
     }
 
     public OperationStatusRest runScenario(String scenarioGroupId, String scenarioId, String name, String prompt, String apiId, DispatcherContext context) {
