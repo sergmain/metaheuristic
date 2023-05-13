@@ -52,6 +52,7 @@ public class ScenarioParams implements BaseParams {
     @AllArgsConstructor
     public static class Function {
         public String code;
+        public String inputCode;
         public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.internal;
     }
 
@@ -74,7 +75,6 @@ public class ScenarioParams implements BaseParams {
 
         @Nullable
         public Function function;
-
     }
 
     public List<Step> steps = new ArrayList<>();

@@ -91,7 +91,7 @@ public class ScenarioTxService {
 
     public OperationStatusRest createScenarioStep(
             String scenarioGroupId, String scenarioId, String parentUuid, String name, String prompt,
-            String apiId, String resultCode, DispatcherContext context) {
+            String apiId, String resultCode, String functionCode, String functionInputCode, DispatcherContext context) {
 
         if (S.b(scenarioGroupId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.120 scenarioGroupId is null");
@@ -99,12 +99,24 @@ public class ScenarioTxService {
         if (S.b(scenarioId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.160 scenarioId is null");
         }
-        if (S.b(apiId)) {
+        if (S.b(apiId) && S.b(functionCode)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.200 apiId is null");
         }
-        Api api = apiRepository.findById(Long.parseLong(apiId)).orElse(null);
-        if (api==null || api.companyId!=context.getCompanyId()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.220 apiId");
+
+        ScenarioParams.Step step = new ScenarioParams.Step(UUID.randomUUID().toString(), parentUuid, name, prompt, null, resultCode, null, null);
+
+        if (S.b(functionCode)) {
+            Api api = apiRepository.findById(Long.parseLong(apiId)).orElse(null);
+            if (api==null || api.companyId!=context.getCompanyId()) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.220 apiId");
+            }
+            step.api = new ScenarioParams.Api(api.id, api.code);
+        }
+        else {
+            if (S.b(functionInputCode)) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.222 functionInputCode");
+            }
+            step.function = new ScenarioParams.Function(functionCode, functionInputCode, EnumsApi.FunctionExecContext.internal);
         }
 
         Scenario s = scenarioRepository.findById(Long.parseLong(scenarioId)).orElse(null);
@@ -119,7 +131,7 @@ public class ScenarioTxService {
         }
 
         ScenarioParams sp = s.getScenarioParams();
-        sp.steps.add(new ScenarioParams.Step(UUID.randomUUID().toString(), parentUuid, name, prompt, null, resultCode, new ScenarioParams.Api(api.id, api.code), null));
+        sp.steps.add(step);
         s.updateParams(sp);
 
         scenarioRepository.save(s);

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.mhbp.scenario;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.beans.ScenarioGroup;
@@ -82,8 +83,11 @@ public class ScenarioService {
     public ScenarioData.ScenarioUidsForAccount getScenarioUidsForAccount(DispatcherContext context) {
         ScenarioData.ScenarioUidsForAccount r = new ScenarioData.ScenarioUidsForAccount();
         r.apis = apiService.getApisAllowedForCompany(context).stream()
-                .map(o->new ScenarioData.ApiUid(o.id, o.code))
+                .map(o ->new ScenarioData.ApiUid(o.id, o.code))
                 .toList();
+        r.functions = InternalFunctionRegisterService.internalFunctionMap.entrySet().stream()
+                .filter(e->e.getValue().isScenarioCompatible())
+                .map(e->new ScenarioData.InternalFunction(e.getKey(), e.getValue().getClass().getSimpleName())).collect(Collectors.toList());
         return r;
     }
 

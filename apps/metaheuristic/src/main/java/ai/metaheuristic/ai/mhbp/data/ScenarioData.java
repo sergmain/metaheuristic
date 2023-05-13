@@ -45,10 +45,19 @@ public class ScenarioData {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class InternalFunction {
+        public String code;
+        public String translate;
+    }
+
+    @Data
     @EqualsAndHashCode(callSuper = false)
     @AllArgsConstructor
     @NoArgsConstructor
     public static class ScenarioUidsForAccount extends BaseDataClass {
+        public List<InternalFunction> functions;
         public List<ApiUid> apis;
     }
 

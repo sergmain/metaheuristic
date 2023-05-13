@@ -22,9 +22,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -39,12 +41,12 @@ public class InternalFunctionRegisterService {
 
     public final List<InternalFunction> internalFunctions;
 
-    private static Map<String, InternalFunction> internalFunctionMap = null;
+    public static Map<String, InternalFunction> internalFunctionMap = null;
 
     @PostConstruct
     public void postConstruct() {
-        internalFunctionMap = new HashMap<>();
-        internalFunctions.forEach(o->internalFunctionMap.put(o.getCode(), o));
+        internalFunctionMap = internalFunctions.stream()
+                .collect(Collectors.toUnmodifiableMap(InternalFunction::getCode, o -> o, (a, b) -> b));
     }
 
     public static boolean isRegistered(String functionCode) {

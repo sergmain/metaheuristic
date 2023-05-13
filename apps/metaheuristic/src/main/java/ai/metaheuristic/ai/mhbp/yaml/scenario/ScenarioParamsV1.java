@@ -52,6 +52,7 @@ public class ScenarioParamsV1 implements BaseParams {
     @AllArgsConstructor
     public static class FunctionV1 {
         public String code;
+        public String inputCode;
         public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.internal;
     }
 
