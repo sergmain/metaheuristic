@@ -61,7 +61,7 @@ public class ScenarioParamsUtilsV1 extends
         if (v1==null) {
             return null;
         }
-        return new ScenarioParams.Function(v1.code, v1.context);
+        return new ScenarioParams.Function(v1.code, v1.inputCode, v1.context);
     }
 
     @Nullable
