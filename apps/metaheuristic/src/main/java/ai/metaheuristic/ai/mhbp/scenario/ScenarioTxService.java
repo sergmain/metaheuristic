@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.mhbp.scenario;
 
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.beans.ScenarioGroup;
@@ -34,6 +34,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -88,7 +89,10 @@ public class ScenarioTxService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest createScenarioStep(String scenarioGroupId, String scenarioId, String name, String prompt, String apiId, String resultCode, DispatcherContext context) {
+    public OperationStatusRest createScenarioStep(
+            String scenarioGroupId, String scenarioId, String parentUuid, String name, String prompt,
+            String apiId, String resultCode, DispatcherContext context) {
+
         if (S.b(scenarioGroupId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.120 scenarioGroupId is null");
         }
@@ -115,7 +119,7 @@ public class ScenarioTxService {
         }
 
         ScenarioParams sp = s.getScenarioParams();
-        sp.steps.add(new ScenarioParams.Step(UUID.randomUUID().toString(), null, name, prompt, null, resultCode, new ScenarioParams.Api(api.id, api.code), null));
+        sp.steps.add(new ScenarioParams.Step(UUID.randomUUID().toString(), parentUuid, name, prompt, null, resultCode, new ScenarioParams.Api(api.id, api.code), null));
         s.updateParams(sp);
 
         scenarioRepository.save(s);
@@ -185,7 +189,7 @@ public class ScenarioTxService {
     }
 
     @Transactional
-    public OperationStatusRest scenarioStepRearrange(Long scenarioId, String previousIndexStr, String currentIndexStr, DispatcherContext context) {
+    public OperationStatusRest scenarioStepRearrange(Long scenarioId, String previousUuid, String currentUuid, DispatcherContext context) {
         if (scenarioId==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "229.480 scenarioGroupId is null");
@@ -199,24 +203,41 @@ public class ScenarioTxService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "239.560 scenarioId: " + scenarioId);
         }
 
-        if (S.b(previousIndexStr) || S.b(currentIndexStr)) {
+        if (S.b(previousUuid) || S.b(currentUuid)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "239.565 indexes");
         }
 
-        int previousIndex = Integer.parseInt(previousIndexStr);
-        int currentIndex = Integer.parseInt(currentIndexStr);
-
         ScenarioParams sp = s.getScenarioParams();
 
-        if (sp.steps.size()<=previousIndex || sp.steps.size()<= currentIndex) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "239.570 indexes >" + sp.steps.size());
+        ScenarioParams.Step prevStep = sp.steps.stream().filter(o->o.uuid.equals(previousUuid)).findFirst().orElse(null);
+        if (prevStep==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "239.570 prev UUID");
         }
+        ScenarioParams.Step currStep = sp.steps.stream().filter(o->o.uuid.equals(currentUuid)).findFirst().orElse(null);
+        if (currStep==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "239.575 curr UUID");
+        }
+        sp.steps.remove(prevStep);
+        prevStep.parentUuid = currStep.parentUuid;
+        final int index = findIndex(sp.steps, currStep);
+        if (index==-1) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "239.590 curr index");
+        }
+        sp.steps.add(index, prevStep);
 
-        ScenarioParams.Step step = sp.steps.remove(previousIndex);
-        sp.steps.add(currentIndex, step);
         s.updateParams(sp);
 
         scenarioRepository.save(s);
         return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    private static int findIndex(List<ScenarioParams.Step> steps, ScenarioParams.Step currStep) {
+        for (int i = 0; i <steps.size(); i++) {
+            if (steps.get(i).uuid.equals(currStep.uuid)) {
+                return i;
+            }
+
+        }
+        return -1;
     }
 }

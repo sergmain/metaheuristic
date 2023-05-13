@@ -86,14 +86,14 @@ public class ScenarioRestController {
     @PostMapping(value = "/scenario-step-rearrange")
     public OperationStatusRest scenarioStepRearrange(
             @RequestParam(name = "scenarioId") Long scenarioId,
-            @RequestParam(name = "prev") String previousIndex,
-            @RequestParam(name = "curr") String currentIndex,
+            @RequestParam(name = "prev") String previousUuid,
+            @RequestParam(name = "curr") String currentUuid,
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        if (Objects.equals(previousIndex, currentIndex)) {
+        if (Objects.equals(previousUuid, currentUuid)) {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
-        OperationStatusRest result = scenarioTxService.scenarioStepRearrange(scenarioId, previousIndex, currentIndex, context);
+        OperationStatusRest result = scenarioTxService.scenarioStepRearrange(scenarioId, previousUuid, currentUuid, context);
         return result;
     }
 
@@ -125,13 +125,14 @@ public class ScenarioRestController {
     public OperationStatusRest addScenarioStepFormCommit(
             @RequestParam(name = "scenarioGroupId") String scenarioGroupId,
             @RequestParam(name = "scenarioId") String scenarioId,
+            @RequestParam(name = "parentUuid", required = false) String parentUuid,
             @RequestParam(name = "name") String name,
             @RequestParam(name = "prompt") String prompt,
             @RequestParam(name = "apiId") String apiId,
             @RequestParam(name = "resultCode") String resultCode,
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return scenarioTxService.createScenarioStep(scenarioGroupId, scenarioId, name, prompt, apiId, resultCode, context);
+        return scenarioTxService.createScenarioStep(scenarioGroupId, scenarioId, parentUuid, name, prompt, apiId, resultCode, context);
     }
 
     @PostMapping("/scenario-group-delete-commit")
