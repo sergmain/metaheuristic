@@ -66,6 +66,10 @@ public class BatchLineSplitterFunction implements InternalFunction {
         return Consts.MH_BATCH_LINE_SPLITTER_FUNCTION;
     }
 
+    public boolean isScenarioCompatible() {
+        return true;
+    }
+
     public void process(
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {

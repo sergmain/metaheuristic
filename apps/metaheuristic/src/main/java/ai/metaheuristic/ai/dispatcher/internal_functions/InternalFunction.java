@@ -34,6 +34,10 @@ public interface InternalFunction {
         return false;
     }
 
+    default boolean isScenarioCompatible() {
+        return false;
+    }
+
     /**
      * @param simpleExecContext
      * @param taskId
