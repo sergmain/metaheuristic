@@ -16,18 +16,24 @@
 
 package ai.metaheuristic.ai.mhbp.scenario;
 
+import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallFunction;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.utils.StrUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.springframework.boot.logging.LoggingSystemProperties;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 /**
  * @author Sergio Lissner
@@ -106,8 +112,11 @@ public class ScenarioUtils {
         SourceCodeParamsYaml sc = new SourceCodeParamsYaml();
         sc.source.processes = new ArrayList<>();
         sc.source.instances = 1;
-        sc.source.uid = "scenario-"+s.scenarioGroupId+'-'+s.id+'-'+s.version;
+        final String suffix = "-"+s.scenarioGroupId+'-'+s.id+'-'+s.version;
+        sc.source.uid = getCode(s.name+suffix, () -> "scenario"+suffix).toLowerCase();
         sc.source.strictNaming = true;
+        sc.source.variables = null;
+        sc.source.metas = null;
 
         processTree(sc.source.processes, sc, sp, tree, processNumber);
 
@@ -126,50 +135,55 @@ public class ScenarioUtils {
 
             SourceCodeParamsYaml.Process p = new SourceCodeParamsYaml.Process();
             p.name = step.name;
-            String code;
-            if (StrUtils.isCodeOk(step.name)) {
-                code = step.name;
+            p.code = getCode(step.name, () -> "process-" + processNumber.getAndIncrement());
+
+            final SourceCodeParamsYaml.FunctionDefForSourceCode f = new SourceCodeParamsYaml.FunctionDefForSourceCode();
+            f.code = isApi ? Consts.MH_API_CALL_FUNCTION : step.function.code;
+            f.context = EnumsApi.FunctionExecContext.internal;
+
+            p.function = f;
+            p.preFunctions = null;
+            p.postFunctions = null;
+
+            // 60 second for exec
+            p.timeoutBeforeTerminate = 60L;
+
+            if (isApi) {
+                extractInputVariables(p.inputs, step);
             }
-            else {
-                String n = StrUtils.normalizeCode(step.name);
-                code = StrUtils.isCodeOk(n) ? n : "process-"+processNumber.getAndIncrement();
+            extractOutputVariables(p.outputs, step);
+
+            p.metas.add(Map.of(ApiCallFunction.PROMPT, step.p));
+            p.cache = new SourceCodeParamsYaml.Cache(true, true);
+            p.triesAfterError = 2;
+
+            if (CollectionUtils.isNotEmpty(itemWithUuid.items)) {
+                p.subProcesses = new SourceCodeParamsYaml.SubProcesses(EnumsApi.SourceCodeSubProcessLogic.sequential, new ArrayList<>());
+                processTree(p.subProcesses.processes, sc, sp, itemWithUuid.items, processNumber);
             }
 
-            p.code = code;
-            p.function = new SourceCodeParamsYaml.FunctionDefForSourceCode();
-
-
-/*
-
-            public String name;
-            public String code;
-            public SourceCodeParamsYaml.FunctionDefForSourceCode function;
-            @Nullable
-            public List<SourceCodeParamsYaml.FunctionDefForSourceCode> preFunctions = new ArrayList<>();
-            @Nullable
-            public List<SourceCodeParamsYaml.FunctionDefForSourceCode> postFunctions = new ArrayList<>();
-
-            @Nullable
-            public Long timeoutBeforeTerminate;
-            public final List<SourceCodeParamsYaml.Variable> inputs = new ArrayList<>();
-            public final List<SourceCodeParamsYaml.Variable> outputs = new ArrayList<>();
-            public List<Map<String, String>> metas = new ArrayList<>();
-            @Nullable
-            public SourceCodeParamsYaml.SubProcesses subProcesses;
-
-            @Nullable
-            public SourceCodeParamsYaml.Cache cache;
-
-            @Nullable
-            public String tag;
-            public int priority;
-            @Nullable
-            public String condition;
-            @Nullable
-            public Integer triesAfterError;
-*/
-
+            processes.add(p);
         }
+    }
+
+    private static String getCode(String name, Supplier<String> codeFunc) {
+        String code;
+        if (StrUtils.isCodeOk(name)) {
+            code = name;
+        }
+        else {
+            String n = StrUtils.normalizeCode(name);
+            code = StrUtils.isCodeOk(n) ? n : codeFunc.get();
+        }
+        return code;
+    }
+
+    private static void extractOutputVariables(List<SourceCodeParamsYaml.Variable> outputs, ScenarioParams.Step step) {
+
+    }
+
+    private static void extractInputVariables(List<SourceCodeParamsYaml.Variable> inputs, ScenarioParams.Step step) {
+
     }
 
     @Nullable

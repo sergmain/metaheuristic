@@ -215,10 +215,12 @@ public class SourceCodeParamsYaml implements BaseParams {
     public static class SourceCode {
         @Nullable
         public Integer instances;
+        @Nullable
         public VariableDefinition variables = new VariableDefinition();
         public List<Process> processes = new ArrayList<>();
         public boolean clean = false;
         public String uid;
+        @Nullable
         public List<Map<String, String>> metas = new ArrayList<>();
         public AccessControl ac;
         @Nullable

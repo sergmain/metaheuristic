@@ -64,7 +64,7 @@ public class ScenarioParams implements BaseParams {
         @Nullable
         public String parentUuid;
         public String name;
-        // prompt or inputCode fro function
+        // prompt or inputCode for function
         public String p;
         // result of executing
         public String r;
