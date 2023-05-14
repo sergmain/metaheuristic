@@ -59,7 +59,7 @@ public class StrUtils {
     }
 
     public static String normalizeCode(String code) {
-        return StringUtils.replaceEach(code, new String[]{":", ".", " "}, new String[]{"-", "_", "_"});
+        return StringUtils.replaceEach(code, new String[]{":", ",", " "}, new String[]{"-", "_", "_"});
     }
 
     @Nullable

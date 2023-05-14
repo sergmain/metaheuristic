@@ -33,6 +33,7 @@ public class ScenarioParams implements BaseParams {
 
     public final int version=1;
 
+    @SuppressWarnings("RedundantMethodOverride")
     @Override
     public boolean checkIntegrity() {
         return true;

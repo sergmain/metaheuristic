@@ -43,6 +43,7 @@ import java.util.Map;
 @Data
 public class SourceCodeParamsYaml implements BaseParams {
 
+    @SuppressWarnings("FieldMayBeStatic")
     public final int version=5;
 
     @Override
@@ -218,7 +219,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         public List<Process> processes = new ArrayList<>();
         public boolean clean = false;
         public String uid;
-        public List<Map<String, String>> metas = new ArrayList<>();;
+        public List<Map<String, String>> metas = new ArrayList<>();
         public AccessControl ac;
         @Nullable
         public Boolean strictNaming;
