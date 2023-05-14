@@ -91,7 +91,7 @@ public class ScenarioTxService {
 
     public OperationStatusRest createScenarioStep(
             String scenarioGroupId, String scenarioId, String parentUuid, String name, String prompt,
-            String apiId, String resultCode, String functionCode, String functionInputCode, DispatcherContext context) {
+            String apiId, String resultCode, String functionCode, DispatcherContext context) {
 
         if (S.b(scenarioGroupId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.120 scenarioGroupId is null");
@@ -113,10 +113,10 @@ public class ScenarioTxService {
             step.api = new ScenarioParams.Api(api.id, api.code);
         }
         else {
-            if (S.b(functionInputCode)) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.222 functionInputCode");
+            if (S.b(prompt)) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.222 prompt");
             }
-            step.function = new ScenarioParams.Function(functionCode, functionInputCode, EnumsApi.FunctionExecContext.internal);
+            step.function = new ScenarioParams.Function(functionCode, EnumsApi.FunctionExecContext.internal);
         }
 
         Scenario s = scenarioRepository.findById(Long.parseLong(scenarioId)).orElse(null);

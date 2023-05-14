@@ -52,7 +52,6 @@ public class ScenarioParams implements BaseParams {
     @AllArgsConstructor
     public static class Function {
         public String code;
-        public String inputCode;
         public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.internal;
     }
 
@@ -64,7 +63,7 @@ public class ScenarioParams implements BaseParams {
         @Nullable
         public String parentUuid;
         public String name;
-        // prompt
+        // prompt or inputCode fro function
         public String p;
         // result of executing
         public String r;

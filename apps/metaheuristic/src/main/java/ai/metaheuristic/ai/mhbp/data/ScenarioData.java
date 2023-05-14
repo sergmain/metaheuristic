@@ -106,10 +106,14 @@ public class ScenarioData {
         public String r;
 
         public String resultCode;
+
+        @Nullable
+        public String functionCode;
+
         @Nullable
         public SimpleScenarioStep[] steps;
 
-        public SimpleScenarioStep(Long scenarioId, ApiUid apiUid, ScenarioParams.Step step) {
+        public SimpleScenarioStep(Long scenarioId, ApiUid apiUid, ScenarioParams.Step step, @Nullable String functionCode) {
             this.scenarioId = scenarioId;
             this.uuid = step.uuid;
             this.parentUuid = step.parentUuid;
@@ -119,6 +123,7 @@ public class ScenarioData {
             this.prompt = step.p;
             this.r = step.r;
             this.resultCode = step.resultCode;
+            this.functionCode = functionCode;
         }
 
         @JsonIgnore

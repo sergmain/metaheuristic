@@ -131,10 +131,9 @@ public class ScenarioRestController {
             @RequestParam(name = "apiId", required = false) String apiId,
             @RequestParam(name = "resultCode") String resultCode,
             @RequestParam(name = "functionCode", required = false) String functionCode,
-            @RequestParam(name = "functionInputCode", required = false) String functionInputCode,
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return scenarioTxService.createScenarioStep(scenarioGroupId, scenarioId, parentUuid, name, prompt, apiId, resultCode, functionCode, functionInputCode, context);
+        return scenarioTxService.createScenarioStep(scenarioGroupId, scenarioId, parentUuid, name, prompt, apiId, resultCode, functionCode, context);
     }
 
     @PostMapping("/scenario-group-delete-commit")
@@ -177,12 +176,9 @@ public class ScenarioRestController {
     public OperationStatusRest runScenario(
             @RequestParam(name = "scenarioGroupId") String scenarioGroupId,
             @RequestParam(name = "scenarioId") String scenarioId,
-            @RequestParam(name = "name") String name,
-            @RequestParam(name = "prompt") String prompt,
-            @RequestParam(name = "apiId") String apiId,
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return scenarioService.runScenario(scenarioGroupId, scenarioId, name, prompt, apiId, context);
+        return scenarioService.runScenario(scenarioGroupId, scenarioId, context);
     }
 
 }

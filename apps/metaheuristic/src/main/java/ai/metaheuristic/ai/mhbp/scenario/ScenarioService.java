@@ -104,18 +104,19 @@ public class ScenarioService {
         Map<Long, ScenarioData.ApiUid> apis = new HashMap<>();
         List<ScenarioData.SimpleScenarioStep> steps = scenarioParams.steps.stream()
                 .map(o-> {
-                    ScenarioData.ApiUid apiUid;
-                    if (o.api==null) {
-                        apiUid = new ScenarioData.ApiUid(0L, "<broken API Id>");
-                    }
-                    else {
-                        apiUid = apis.computeIfAbsent(o.api.apiId,
-                                (apiId) -> apiRepository.findById(apiId)
-                                        .map(api -> new ScenarioData.ApiUid(api.id, api.code))
-                                        .orElse(new ScenarioData.ApiUid(0L, "<broken API Id>")));
-                    }
+                    ScenarioData.ApiUid apiUid = new ScenarioData.ApiUid(0L, "<broken API Id>");
+                    String functionCode = null;
+                        if (o.api!=null) {
+                            apiUid = apis.computeIfAbsent(o.api.apiId,
+                                    (apiId) -> apiRepository.findById(apiId)
+                                            .map(api -> new ScenarioData.ApiUid(api.id, api.code))
+                                            .orElse(new ScenarioData.ApiUid(0L, "<broken API Id>")));
+                        }
+                        else if (o.function!=null) {
+                            functionCode = o.function.code;
+                        }
 
-                    return new ScenarioData.SimpleScenarioStep(s.id, apiUid, o);
+                    return new ScenarioData.SimpleScenarioStep(s.id, apiUid, o, functionCode);
                 })
                 .toList();
 
@@ -125,11 +126,13 @@ public class ScenarioService {
         return new ScenarioData.SimpleScenarioSteps(stepTree);
     }
 
-    public OperationStatusRest runScenario(String scenarioGroupId, String scenarioId, String name, String prompt, String apiId, DispatcherContext context) {
-        return null;
+    public OperationStatusRest runScenario(String scenarioGroupId, String scenarioId, DispatcherContext context) {
+
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     public OperationStatusRest duplicateScenario(String scenarioGroupId, String scenarioId, String name, String prompt, String apiId, DispatcherContext context) {
-        return null;
+
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 }
