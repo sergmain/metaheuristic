@@ -251,7 +251,7 @@ public class Schedulers {
 
         boolean needToInitializeReadyness = true;
 
-        @Scheduled(initialDelay = 5_000, fixedDelay = 17_000)
+        @Scheduled(initialDelay = 5_000, fixedDelay = 3_000)
         public void registerInternalTasks() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
@@ -273,7 +273,7 @@ public class Schedulers {
             }
         }
 
-        @Scheduled(initialDelay = 13_000, fixedDelay = 13_000 )
+        @Scheduled(initialDelay = 13_000, fixedDelay = 33_000 )
         public void deadlockDetector() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
@@ -311,7 +311,7 @@ public class Schedulers {
             }
         }
 
-        @Scheduled(initialDelay = 15_000, fixedDelay = 17_000 )
+        @Scheduled(initialDelay = 15_000, fixedDelay = 5_000 )
         public void processCheckCaching() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;

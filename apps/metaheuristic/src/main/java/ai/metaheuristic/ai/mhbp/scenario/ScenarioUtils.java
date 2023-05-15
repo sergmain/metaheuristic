@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.mhbp.scenario;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallFunction;
+import ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter.BatchLineSplitterFunction;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
 import ai.metaheuristic.ai.utils.CollectionUtils;
@@ -160,13 +161,20 @@ public class ScenarioUtils {
             // 60 second for exec
             p.timeoutBeforeTerminate = 60L;
 
-            extractInputVariables(p.inputs, step);
+            if (step.function==null || !Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code)) {
+                extractInputVariables(p.inputs, step);
+            }
             extractOutputVariables(p.outputs, step);
 
             p.metas.add(Map.of(ApiCallFunction.PROMPT, step.p));
             if (isApi) {
                 p.metas.add(Map.of(ApiCallFunction.API_CODE, step.api.code));
             }
+            if (step.function!=null && Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code)) {
+                p.metas.add(Map.of(BatchLineSplitterFunction.NUMBER_OF_LINES_PER_TASK, "1"));
+                p.metas.add(Map.of(BatchLineSplitterFunction.VARIABLE_FOR_SPLITTING, getNameForVariable(getVariables(step.p, true).get(0))));
+            }
+
             p.cache = new SourceCodeParamsYaml.Cache(true, true);
             p.triesAfterError = 2;
 

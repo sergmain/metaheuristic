@@ -1,0 +1,110 @@
+source:
+  clean: false
+  instances: 1
+  processes:
+    - cache:
+        enabled: true
+        omitInline: true
+      code: List_of_fruits
+      function:
+        code: mh.api-call
+        context: internal
+        refType: code
+      inputs: [
+      ]
+      metas:
+        - prompt: List of fruits which can be grown in US. Output only name of fruit,
+            put each name on new line
+        - apiCode: simple
+      name: List of fruits
+      outputs:
+        - array: false
+          name: list_of_fruits
+          nullable: false
+          sourcing: dispatcher
+      priority: 0
+      timeoutBeforeTerminate: 60
+      triesAfterError: 2
+    - cache:
+        enabled: true
+        omitInline: true
+      code: split_list_of_fruits
+      function:
+        code: mh.batch-line-splitter
+        context: internal
+        refType: code
+      inputs:
+        - array: false
+          name: fruits
+          nullable: false
+          sourcing: dispatcher
+      metas:
+        - prompt: fruits
+        - number-of-lines-per-task: '1'
+        - variable-for-splitting: fruits
+      name: split list of fruits
+      outputs:
+        - array: false
+          name: fruit
+          nullable: false
+          sourcing: dispatcher
+      priority: 0
+      subProcesses:
+        logic: sequential
+        processes:
+          - cache:
+              enabled: true
+              omitInline: true
+            code: Request_description_of_fruit
+            function:
+              code: mh.api-call
+              context: internal
+              refType: code
+            inputs:
+              - array: false
+                name: fruit
+                nullable: false
+                sourcing: dispatcher
+            metas:
+              - prompt: Make short description of {{fruit}}
+              - apiCode: simple
+            name: Request description of fruit
+            outputs:
+              - array: false
+                name: fruit_description
+                nullable: false
+                sourcing: dispatcher
+            priority: 0
+            timeoutBeforeTerminate: 60
+            triesAfterError: 2
+          - cache:
+              enabled: true
+              omitInline: true
+            code: collect_info_about_fruit
+            function:
+              code: mh.api-call
+              context: internal
+              refType: code
+            inputs:
+              - array: false
+                name: fruit
+                nullable: false
+                sourcing: dispatcher
+            metas:
+              - prompt: "Make a list of countries which consume most of {{fruit}}, list\
+          \ first five country only\r\n\r\n\r\n\r\n"
+              - apiCode: simple
+            name: collect info about fruit
+            outputs:
+              - array: false
+                name: best_consumer
+                nullable: false
+                sourcing: dispatcher
+            priority: 0
+            timeoutBeforeTerminate: 60
+            triesAfterError: 2
+      timeoutBeforeTerminate: 60
+      triesAfterError: 2
+  strictNaming: true
+  uid: fruit_production-5-1-1
+version: 5

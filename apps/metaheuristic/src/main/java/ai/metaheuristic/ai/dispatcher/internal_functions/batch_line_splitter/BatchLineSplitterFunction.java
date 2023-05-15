@@ -51,6 +51,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BatchLineSplitterFunction implements InternalFunction {
 
+    public static final String VARIABLE_FOR_SPLITTING = "variable-for-splitting";
+    public static final String NUMBER_OF_LINES_PER_TASK = "number-of-lines-per-task";
     private final VariableService variableService;
     private final GlobalVariableService globalVariableService;
     private final InternalFunctionVariableService internalFunctionVariableService;
@@ -89,12 +91,12 @@ public class BatchLineSplitterFunction implements InternalFunction {
             TaskParamsYaml taskParamsYaml) {
 
         // variable-for-splitting
-        String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "variable-for-splitting");
+        String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, VARIABLE_FOR_SPLITTING);
         if (S.b(inputVariableName)) {
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.meta_not_found, "#994.020 Meta 'variable-for-splitting' wasn't found");
         }
         // number-of-lines-per-task
-        Long numberOfLines = MetaUtils.getLong(taskParamsYaml.task.metas, "number-of-lines-per-task");
+        Long numberOfLines = MetaUtils.getLong(taskParamsYaml.task.metas, NUMBER_OF_LINES_PER_TASK);
         if (numberOfLines==null) {
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.meta_not_found, "#994.025 Meta 'number-of-lines-per-task' wasn't found");
         }

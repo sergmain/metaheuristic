@@ -16,10 +16,10 @@
 
 package ai.metaheuristic.ai.mhbp.scenario;
 
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
+import ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter.BatchLineSplitterFunction;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -60,7 +60,7 @@ public class ScenarioUtilsTest {
         Function<SourceCodeParamsYaml.Process, SourceCodeApiData.SourceCodeValidationResult> checkFunctionsFunc =
                 (p)-> new SourceCodeApiData.SourceCodeValidationResult(OK, null);
 
-        assertNull(SourceCodeValidationService.validateSourceCodeParamsYaml(checkFunctionsFunc, sc));
+        assertNull(SourceCodeValidationUtils.validateSourceCodeParamsYaml(checkFunctionsFunc, sc));
 
         assertEquals(2, sc.source.processes.size());
         final SourceCodeParamsYaml.SubProcesses subProcesses = sc.source.processes.get(1).subProcesses;
@@ -72,34 +72,12 @@ public class ScenarioUtilsTest {
 
         assertEquals(1, sc.source.processes.get(1).outputs.size());
         assertEquals(1, sc.source.processes.get(1).outputs.size());
-        assertEquals(1, sc.source.processes.get(1).inputs.size());
-        assertEquals("list_of_fruits", sc.source.processes.get(1).inputs.get(0).name);
         final Meta apiCode = MetaUtils.getMeta(sc.source.processes.get(0).getMetas(), "apiCode");
         assertNotNull(apiCode);
         assertEquals("simple", apiCode.getValue());
-    }
-
-    @Test
-    public void test_to_variable_error() throws IOException {
-        String yaml = IOUtils.resourceToString("/mhbp/scenario/scenario-fruits-variable-errors.yaml", StandardCharsets.UTF_8);
-        Scenario scenario = new Scenario();
-        scenario.id = 1L;
-        scenario.version=1;
-        scenario.scenarioGroupId = 5L;
-        scenario.name = "Fruit production";
-        scenario.setParams(yaml);
-
-        SourceCodeParamsYaml sc = ScenarioUtils.to(scenario);
-        String result = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(sc);
-        System.out.println(result);
-
-        Function<SourceCodeParamsYaml.Process, SourceCodeApiData.SourceCodeValidationResult> checkFunctionsFunc =
-                (p)-> new SourceCodeApiData.SourceCodeValidationResult(OK, null);
-
-        final SourceCodeApiData.SourceCodeValidationResult actual = SourceCodeValidationService.validateSourceCodeParamsYaml(checkFunctionsFunc, sc);
-
-        assertNotNull(actual);
-        assertEquals(EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR, actual.status);
+        final Meta varForSplitting = MetaUtils.getMeta(sc.source.processes.get(1).getMetas(), BatchLineSplitterFunction.VARIABLE_FOR_SPLITTING);
+        assertNotNull(varForSplitting);
+        assertEquals("list_of_fruits", varForSplitting.getValue());
     }
 
     @Test
