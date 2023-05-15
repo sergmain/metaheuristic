@@ -20,36 +20,35 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.data.StringVariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
-import ai.metaheuristic.ai.dispatcher.internal_functions.nop.NopService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
-import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.ai.mhbp.beans.Api;
+import ai.metaheuristic.ai.mhbp.provider.ProviderData;
+import ai.metaheuristic.ai.mhbp.provider.ProviderQueryService;
+import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
-import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.yaml.snakeyaml.Yaml;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
+import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getNameForVariable;
+import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getVariables;
+import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
 
 /**
  * @author Sergio Lissner
@@ -63,12 +62,14 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 public class ApiCallFunction implements InternalFunction {
 
     public static final String PROMPT = "prompt";
-    private static final String MAPPING = "mapping";
+    public static final String API_CODE = "apiCode";
 
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final ExecContextVariableService execContextVariableService;
     private final VariableService variableService;
     private final GlobalVariableService globalVariableService;
+    private final ProviderQueryService providerQueryService;
+    private final ApiRepository apiRepository;
 
     @Override
     public String getCode() {
@@ -88,57 +89,43 @@ public class ApiCallFunction implements InternalFunction {
 
         TxUtils.checkTxNotExists();
 
-        if (taskParamsYaml.task.inline==null) {
-            throw new InternalFunctionException(inline_not_found, "#513.200 inline is null");
+        if (taskParamsYaml.task.outputs.isEmpty()) {
+            throw new InternalFunctionException(variable_not_found, "#513.380 output variable not found for task #"+taskId);
         }
 
-        String mappingStr = MetaUtils.getValue(taskParamsYaml.task.metas, MAPPING);
-        if (S.b(mappingStr)) {
-            throw new InternalFunctionException(meta_not_found, "#513.300 meta '"+ MAPPING +"' wasn't found or it's blank");
+        String apiCode = MetaUtils.getValue(taskParamsYaml.task.metas, API_CODE);
+        if (S.b(apiCode)) {
+            throw new InternalFunctionException(meta_not_found, "#513.300 meta '"+ API_CODE +"' wasn't found or it's blank");
+        }
+        Api api = apiRepository.findByApiCode(apiCode);
+        if (api==null) {
+            throw new InternalFunctionException(general_error, "#513.300 API wasn't found with code '"+ PROMPT +"' wasn't found or it's blank");
         }
 
-        Yaml yaml = YamlUtils.init(StringVariableData.Mapping.class);
-        StringVariableData.Mapping mapping = yaml.load(mappingStr);
+        String prompt = MetaUtils.getValue(taskParamsYaml.task.metas, PROMPT);
+        if (S.b(prompt)) {
+            throw new InternalFunctionException(meta_not_found, "#513.300 meta '"+ PROMPT +"' wasn't found or it's blank");
+        }
 
-        for (StringVariableData.StringAsVar inlineAsVar : mapping.mapping) {
+        final List<String> variables = getVariables(prompt, false);
 
-            // DO NOT remove inlineAsVar.group
-            //noinspection deprecation
-            String keyName = inlineAsVar.key != null ? inlineAsVar.key : inlineAsVar.group;
-            if (keyName==null) {
-                throw new InternalFunctionException(source_code_is_broken, "#513.340 mapping must have a field key or group, "+ inlineAsVar);
-            }
-            final Map<String, String> map;
-            Enums.StringAsVariableSource source = inlineAsVar.source==null ? Enums.StringAsVariableSource.inline : inlineAsVar.source;
-            switch (source) {
-                case inline:
-                    map = taskParamsYaml.task.inline.get(keyName);
-                    break;
-                case variable:
-                    String json = getValueOfVariable(simpleExecContext.execContextId, taskContextId, keyName);
-                    Map<String, Object> mapObj = JsonUtils.getMapper().readValue(json, Map.class);
-                    map = new HashMap<>();
-                    mapObj.forEach((k,v)->map.put(k, v.toString()));
-                    break;
-                default:
-                    throw new IllegalStateException("unknown source: " + source);
-            }
-
-            if (map==null) {
-                throw new InternalFunctionException(data_not_found, "#513.340 data wasn't found, key: "+keyName+", source: "+source+"");
-            }
-            String value = map.get(inlineAsVar.name);
+        for (String variable : variables) {
+            String varName = getNameForVariable(variable);
+            String value = getValueOfVariable(simpleExecContext.execContextId, taskContextId, varName);
             if (value==null) {
-                throw new InternalFunctionException(data_not_found, "#513.360 data for key '"+keyName+"' with name '"+inlineAsVar.name+"' wasn't found");
+                throw new InternalFunctionException(data_not_found, "#513.340 data wasn't found, variable: "+variable+", normalized: " + varName);
             }
-
-            TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.stream()
-                    .filter(o->o.name.equals(inlineAsVar.output))
-                    .findFirst()
-                    .orElseThrow(()->new InternalFunctionException(variable_not_found, "#513.380 output variable not found '"+inlineAsVar.output+"'"));
-
-            VariableSyncService.getWithSyncVoid(outputVariable.id, ()->execContextVariableService.storeStringInVariable(outputVariable, value));
+            prompt = StringUtils.replaceEach(prompt, new String[]{"[["+variable+"]]", "{{"+variable+"}}"}, new String[]{value, value});
         }
+
+        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, null);
+        ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
+        if (answer.status()!=OK || S.b(answer.a())) {
+            throw new InternalFunctionException(data_not_found, "#513.340 API call error: "+answer.error()+", prompt: " + prompt+", answer: " + answer.a());
+        }
+
+        TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
+        VariableSyncService.getWithSyncVoid(outputVariable.id, ()->execContextVariableService.storeStringInVariable(outputVariable, answer.a()));
 
         //noinspection unused
         int i=0;

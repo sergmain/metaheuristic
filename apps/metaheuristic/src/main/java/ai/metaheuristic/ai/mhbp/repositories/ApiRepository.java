@@ -44,4 +44,8 @@ public interface ApiRepository extends CrudRepository<Api, Long> {
     @Query(value= "select a from Api a where a.companyId=:companyUniqueId")
     List<Api> findAllByCompanyUniqueId(Long companyUniqueId);
 
+    @Transactional(readOnly = true)
+    @Query(value= "select a from Api a where a.code=:apiCode")
+    Api findByApiCode(String apiCode);
+
 }

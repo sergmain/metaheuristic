@@ -52,10 +52,12 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
         SourceCodeData.SourceCodeGraph scg = new SourceCodeData.SourceCodeGraph();
         scg.clean = sourceCodeParams.source.clean;
-        scg.variables.globals = sourceCodeParams.source.variables.globals;
-        sourceCodeParams.source.variables.inputs.stream().map(v->getVariable(sourceCodeParams, v)).collect(Collectors.toCollection(()->scg.variables.inputs));
-        sourceCodeParams.source.variables.outputs.stream().map(v->getVariable(sourceCodeParams, v)).collect(Collectors.toCollection(()->scg.variables.outputs));
-        scg.variables.inline.putAll(sourceCodeParams.source.variables.inline);
+        if (sourceCodeParams.source.variables!=null) {
+            scg.variables.globals = sourceCodeParams.source.variables.globals;
+            sourceCodeParams.source.variables.inputs.stream().map(v -> getVariable(sourceCodeParams, v)).collect(Collectors.toCollection(() -> scg.variables.inputs));
+            sourceCodeParams.source.variables.outputs.stream().map(v -> getVariable(sourceCodeParams, v)).collect(Collectors.toCollection(() -> scg.variables.outputs));
+            scg.variables.inline.putAll(sourceCodeParams.source.variables.inline);
+        }
 
         String currentInternalContextId = contextIdSupplier.get();
         boolean finishPresent = false;
@@ -199,7 +201,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
     }
 
     private static ExecContextParamsYaml.Variable getVariable(SourceCodeParamsYaml sourceCodeParams, SourceCodeParamsYaml.Variable v) {
-        EnumsApi.VariableContext context = sourceCodeParams.source.variables.globals!=null &&
+        EnumsApi.VariableContext context = sourceCodeParams.source.variables!=null && sourceCodeParams.source.variables.globals!=null &&
                 sourceCodeParams.source.variables.globals.stream().anyMatch(g->g.equals(v.name))
                 ? EnumsApi.VariableContext.global
                 : ( v.array ? EnumsApi.VariableContext.array :  EnumsApi.VariableContext.local );

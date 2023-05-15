@@ -40,12 +40,15 @@ import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.cache.Cache;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
@@ -96,9 +99,23 @@ public class SourceCodeValidationService {
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_PARAMS_EMPTY_ERROR, "#177.060 SourceCode is blank");
         }
+        final Function<SourceCodeParamsYaml.Process, SourceCodeApiData.SourceCodeValidationResult> checkFunctionsFunc = (p) -> checkFunctions(sourceCode, p, checkedUids);
+
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
         SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+        SourceCodeApiData.SourceCodeValidationResult anyErrors = validateSourceCodeParamsYaml(checkFunctionsFunc, sourceCodeParamsYaml);
+        if (anyErrors!=null) {
+            return anyErrors;
+        }
+        return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
+    }
+
+    @Nullable
+    public static SourceCodeApiData.SourceCodeValidationResult validateSourceCodeParamsYaml(
+            Function<SourceCodeParamsYaml.Process, SourceCodeApiData.SourceCodeValidationResult> checkFunctionsFunc,
+            SourceCodeParamsYaml sourceCodeParamsYaml) {
         SourceCodeParamsYaml.SourceCode sourceCodeYaml = sourceCodeParamsYaml.source;
+
         if (sourceCodeYaml.getProcesses().isEmpty()) {
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.NO_ANY_PROCESSES_ERROR, "#177.080 At least one process must be defined");
@@ -139,11 +156,13 @@ public class SourceCodeValidationService {
                         EnumsApi.SourceCodeValidateStatus.SUB_PROCESS_LOGIC_NOT_DEFINED,
                         "#177.107 The process '" + code + "' has sub processes but logic isn't defined");
             }
+/*
             if (process.function.context == EnumsApi.FunctionExecContext.internal && process.cache != null && process.cache.enabled) {
                 return new SourceCodeApiData.SourceCodeValidationResult(
                         EnumsApi.SourceCodeValidateStatus.CACHING_ISNT_SUPPORTED_FOR_INTERNAL_FUNCTION_ERROR,
                         "#177.110 Caching isn't supported for internal functions. Process: " + process.code);
             }
+*/
 
             boolean finish = process.function.code.equals(Consts.MH_FINISH_FUNCTION);
             if (!finish) {
@@ -177,6 +196,13 @@ public class SourceCodeValidationService {
                                 EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_VARIABLE_NAME_ERROR,
                                 "#177.187 Input variable in process " + process.code + " has a wrong chars in name");
                     }
+                    boolean outputVariableFound = findOutputVariable(processes, variable.name);
+                    if (!outputVariableFound) {
+                        return new SourceCodeApiData.SourceCodeValidationResult(
+                                EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR,
+                                S.f("#177.183 Input variable %s in process %s doesn't have corresponding Output variable",  variable.name, process.code));
+                    }
+
                 }
             }
             if (process.code.equals(Consts.MH_FINISH_FUNCTION) && !process.function.code.equals(Consts.MH_FINISH_FUNCTION)) {
@@ -184,63 +210,65 @@ public class SourceCodeValidationService {
                 return new SourceCodeApiData.SourceCodeValidationResult(
                         EnumsApi.SourceCodeValidateStatus.WRONG_CODE_OF_PROCESS_ERROR, "#177.200 There is process with code mh.finish but function is " + process.function.code);
             }
-            SourceCodeApiData.SourceCodeValidationResult status = checkFunctions(sourceCode, process, checkedUids);
+            SourceCodeApiData.SourceCodeValidationResult status = checkFunctionsFunc.apply(process);
             if (status.status != OK) {
                 return status;
             }
         }
 
-        for (Map.Entry e : sourceCodeParamsYaml.source.variables.inline.entrySet()) {
-            if (!(e.getKey() instanceof String)) {
-                return new SourceCodeApiData.SourceCodeValidationResult(
-                        EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
-                        "#177.223 Inline variable at group level must be type of String, actual: " + e.getKey().getClass() + ", value: " + e.getKey());
-            }
-
-            Object o = e.getValue();
-            if (!(o instanceof Map)) {
-                return new SourceCodeApiData.SourceCodeValidationResult(
-                        EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
-                        "#177.225 Inline variables group must be type of Map, actual: " + o.getClass());
-
-            }
-
-            Map<Object, Object> m = ((Map) o);
-            for (Map.Entry entry : m.entrySet()) {
-                if (!(entry.getKey() instanceof String)) {
+        if (sourceCodeParamsYaml.source.variables!=null) {
+            for (Map.Entry e : sourceCodeParamsYaml.source.variables.inline.entrySet()) {
+                if (!(e.getKey() instanceof String)) {
                     return new SourceCodeApiData.SourceCodeValidationResult(
                             EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
-                            "#177.227 key in Inline variable must be type of String, actual: " + e.getKey().getClass() + ", value: " + entry.getKey());
+                            "#177.223 Inline variable at group level must be type of String, actual: " + e.getKey().getClass() + ", value: " + e.getKey());
                 }
 
-                Object obj = entry.getValue();
-                if (!(obj instanceof String)) {
+                Object o = e.getValue();
+                if (!(o instanceof Map)) {
                     return new SourceCodeApiData.SourceCodeValidationResult(
                             EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
-                            S.f("#177.229 Value of Inline variables with key '%s' must be type of String, actual: %s", entry.getKey(), o.getClass()));
+                            "#177.225 Inline variables group must be type of Map, actual: " + o.getClass());
+
+                }
+
+                Map<Object, Object> m = ((Map) o);
+                for (Map.Entry entry : m.entrySet()) {
+                    if (!(entry.getKey() instanceof String)) {
+                        return new SourceCodeApiData.SourceCodeValidationResult(
+                                EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
+                                "#177.227 key in Inline variable must be type of String, actual: " + e.getKey().getClass() + ", value: " + entry.getKey());
+                    }
+
+                    Object obj = entry.getValue();
+                    if (!(obj instanceof String)) {
+                        return new SourceCodeApiData.SourceCodeValidationResult(
+                                EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
+                                S.f("#177.229 Value of Inline variables with key '%s' must be type of String, actual: %s", entry.getKey(), o.getClass()));
+                    }
                 }
             }
-
-
         }
-        return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
+        return null;
     }
 
     private static SourceCodeApiData.SourceCodeValidationResult checkVariableNaming(SourceCodeParamsYaml.SourceCode sourceCodeYaml) {
         if (!Boolean.TRUE.equals(sourceCodeYaml.strictNaming)) {
             return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
         }
-        List<String> badNames = sourceCodeYaml.variables.inputs.stream().map(o->o.name).filter(o->!StrUtils.isVarNameOk(o)).collect(Collectors.toList());
-        if (!badNames.isEmpty()) {
-            return new SourceCodeApiData.SourceCodeValidationResult(
-                    EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
-                    S.f("#177.230 SourceCode-level input variables have wrong names: %s", String.join(",", badNames)));
-        }
-        badNames = sourceCodeYaml.variables.outputs.stream().map(o->o.name).filter(o->!StrUtils.isVarNameOk(o)).collect(Collectors.toList());
-        if (!badNames.isEmpty()) {
-            return new SourceCodeApiData.SourceCodeValidationResult(
-                    EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
-                    S.f("#177.231 SourceCode-level output variables have wrong names: %s", String.join(",", badNames)));
+        if (sourceCodeYaml.variables!=null) {
+            List<String> badNames = sourceCodeYaml.variables.inputs.stream().map(o -> o.name).filter(o -> !StrUtils.isVarNameOk(o)).collect(Collectors.toList());
+            if (!badNames.isEmpty()) {
+                return new SourceCodeApiData.SourceCodeValidationResult(
+                        EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
+                        S.f("#177.230 SourceCode-level input variables have wrong names: %s", String.join(",", badNames)));
+            }
+            badNames = sourceCodeYaml.variables.outputs.stream().map(o -> o.name).filter(o -> !StrUtils.isVarNameOk(o)).collect(Collectors.toList());
+            if (!badNames.isEmpty()) {
+                return new SourceCodeApiData.SourceCodeValidationResult(
+                        EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
+                        S.f("#177.231 SourceCode-level output variables have wrong names: %s", String.join(",", badNames)));
+            }
         }
         for (SourceCodeParamsYaml.Process p : sourceCodeYaml.processes) {
             SourceCodeApiData.SourceCodeValidationResult r = checkFunctionVariableNames(p);
@@ -269,7 +297,7 @@ public class SourceCodeValidationService {
         badNames = process.outputs.stream().map(o->o.name).filter(o->!StrUtils.isVarNameOk(o)).collect(Collectors.toList());
         if (!badNames.isEmpty()) {
             return new SourceCodeApiData.SourceCodeValidationResult(
-                    EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
+                    EnumsApi.SourceCodeValidateStatus. WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
                     S.f("#177.233 SourceCode-level output variables have wrong names: %s", String.join(", ", badNames)));
         }
         if (process.subProcesses!=null) {
@@ -300,6 +328,33 @@ public class SourceCodeValidationService {
             }
         }
         return null;
+    }
+
+    private static boolean findOutputVariable(List<SourceCodeParamsYaml.Process> processes, String name) {
+        for (SourceCodeParamsYaml.Process process : processes) {
+            if (findOutputVariable(process, name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean findOutputVariable(SourceCodeParamsYaml.Process process, String name) {
+        for (SourceCodeParamsYaml.Variable output : process.outputs) {
+            if (output.name.equals(name)) {
+                return true;
+            }
+        }
+        if (process.subProcesses==null) {
+            return false;
+        }
+        for (SourceCodeParamsYaml.Process subProcess : process.subProcesses.processes) {
+            boolean b = findOutputVariable(subProcess, name);
+            if (b) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Nullable

@@ -21,12 +21,13 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallFunctio
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
 import ai.metaheuristic.ai.utils.CollectionUtils;
-
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.StrUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.springframework.boot.logging.LoggingSystemProperties;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -34,13 +35,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Sergio Lissner
  * Date: 5/14/2023
  * Time: 1:08 AM
  */
+@Slf4j
 public class ScenarioUtils {
+
+    public static final Pattern VAR_PATTERN = Pattern.compile("[\\[\\{]{2}(\\w+)[\\]\\}]{2}");
 
     @SuppressWarnings({"unchecked", "rawtypes", "RedundantIfStatement"})
     public static class ItemWithUuid implements CollectionUtils.TreeUtils.TreeItem<String> {
@@ -87,9 +93,7 @@ public class ScenarioUtils {
             if (o == null || this.getClass() != o.getClass()) {
                 return false;
             }
-
             ItemWithUuid that = (ItemWithUuid) o;
-
             if (!this.uuid.equals(that.uuid)) {
                 return false;
             }
@@ -98,12 +102,21 @@ public class ScenarioUtils {
             }
             return true;
         }
-
     }
 
     public static SourceCodeParamsYaml to(Scenario s) {
-
+        final String uid = getUid(s);
         ScenarioParams sp = s.getScenarioParams();
+        return to(uid, sp);
+    }
+
+    public static String getUid(Scenario s) {
+        final String suffix = "-" + s.scenarioGroupId + '-' + s.id + '-' + s.version;
+        final String uid = getCode(s.name + suffix, () -> "scenario" + suffix).toLowerCase();
+        return uid;
+    }
+
+    public static SourceCodeParamsYaml to(String uid, ScenarioParams sp) {
         List<ItemWithUuid> list = sp.steps.stream().map(o->new ItemWithUuid(o.uuid, o.parentUuid)).toList();
         CollectionUtils.TreeUtils<String> treeUtils = new CollectionUtils.TreeUtils<>();
         List<ItemWithUuid> tree = treeUtils.rebuildTree((List)list);
@@ -112,26 +125,25 @@ public class ScenarioUtils {
         SourceCodeParamsYaml sc = new SourceCodeParamsYaml();
         sc.source.processes = new ArrayList<>();
         sc.source.instances = 1;
-        final String suffix = "-"+s.scenarioGroupId+'-'+s.id+'-'+s.version;
-        sc.source.uid = getCode(s.name+suffix, () -> "scenario"+suffix).toLowerCase();
+        sc.source.uid = uid;
         sc.source.strictNaming = true;
         sc.source.variables = null;
         sc.source.metas = null;
 
         processTree(sc.source.processes, sc, sp, tree, processNumber);
-
         return sc;
-
     }
 
     private static void processTree(List<SourceCodeParamsYaml.Process> processes, SourceCodeParamsYaml sc, ScenarioParams sp, List<ItemWithUuid> tree, AtomicInteger processNumber) {
         for (ItemWithUuid itemWithUuid : tree) {
             ScenarioParams.Step step = findStepByUuid(sp, itemWithUuid.uuid);
             if (step==null) {
-                throw new IllegalStateException("(step==null), uuid: " + itemWithUuid.uuid);
+                throw new IllegalStateException("(step==null), uuid: 4" + itemWithUuid.uuid);
             }
-
             boolean isApi = step.function==null;
+            if (isApi && step.api==null) {
+                throw new IllegalStateException("(isApi && step.api==null)");
+            }
 
             SourceCodeParamsYaml.Process p = new SourceCodeParamsYaml.Process();
             p.name = step.name;
@@ -148,12 +160,13 @@ public class ScenarioUtils {
             // 60 second for exec
             p.timeoutBeforeTerminate = 60L;
 
-            if (isApi) {
-                extractInputVariables(p.inputs, step);
-            }
+            extractInputVariables(p.inputs, step);
             extractOutputVariables(p.outputs, step);
 
             p.metas.add(Map.of(ApiCallFunction.PROMPT, step.p));
+            if (isApi) {
+                p.metas.add(Map.of(ApiCallFunction.API_CODE, step.api.code));
+            }
             p.cache = new SourceCodeParamsYaml.Cache(true, true);
             p.triesAfterError = 2;
 
@@ -166,7 +179,7 @@ public class ScenarioUtils {
         }
     }
 
-    private static String getCode(String name, Supplier<String> codeFunc) {
+    public static String getCode(String name, Supplier<String> codeFunc) {
         String code;
         if (StrUtils.isCodeOk(name)) {
             code = name;
@@ -179,11 +192,47 @@ public class ScenarioUtils {
     }
 
     private static void extractOutputVariables(List<SourceCodeParamsYaml.Variable> outputs, ScenarioParams.Step step) {
-
+        if (S.b(step.resultCode)) {
+            throw new IllegalStateException("(S.b(step.resultCode))");
+        }
+        String outputName = getVariables(step.resultCode, true).get(0);
+        final SourceCodeParamsYaml.Variable v = new SourceCodeParamsYaml.Variable();
+        v.name = getNameForVariable(outputName);
+        outputs.add(v);
     }
 
     private static void extractInputVariables(List<SourceCodeParamsYaml.Variable> inputs, ScenarioParams.Step step) {
+        if (S.b(step.p)) {
+            throw new IllegalStateException("(S.b(step.p))");
+        }
+        final List<String> variables = getVariables(step.p, step.function!=null);
+        for (String name : variables) {
+            final SourceCodeParamsYaml.Variable v = new SourceCodeParamsYaml.Variable();
+            v.name = getNameForVariable(name);
+            inputs.add(v);
+        }
+    }
 
+    public static String getNameForVariable(String name) {
+        return getCode(name, () -> {
+            log.error("Wrong name for variable: " + name);
+            throw new IllegalStateException("Wrong name of variable: " + name);
+        }).toLowerCase();
+    }
+
+    public static List<String> getVariables(String text, boolean useTextAsDefault) {
+        Matcher matcher = VAR_PATTERN.matcher(text);
+
+        List<String> list = new ArrayList<>();
+        while (matcher.find()) {
+            String variableName = matcher.group(1);
+            list.add(variableName);
+        }
+
+        if (useTextAsDefault && list.isEmpty()) {
+            list.add(text);
+        }
+        return list;
     }
 
     @Nullable

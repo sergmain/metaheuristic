@@ -11,14 +11,14 @@ steps:
       code: mh.batch-line-splitter
       context: internal
     name: split list of fruits
-    p: list of fruits
+    p: fruits
     resultCode: fruit
     uuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
   - api:
       apiId: 2
       code: simple
     name: Request description of fruit
-    p: Make short description of [[fruit]]
+    p: Make short description of {{fruit}}
     parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
     resultCode: fruit description
     uuid: 0ae1019f-717a-4ab9-9afc-44a49718781e
@@ -26,7 +26,7 @@ steps:
       apiId: 2
       code: simple
     name: collect info about fruit
-    p: "Make a list of countries which consume most of [[fruit]], list first five country\
+    p: "Make a list of countries which consume most of {{fruit}}, list first five country\
     \ only\r\n\r\n\r\n\r\n"
     parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
     resultCode: best consumer

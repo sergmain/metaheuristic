@@ -43,7 +43,9 @@ public final class Enums {
         broken_graph_error,
         input_variable_isnt_file,
         not_supported_anymore,
-        data_not_found
+        data_not_found,
+
+        general_error
     }
 
     public enum AssetType { company, account, function, source}

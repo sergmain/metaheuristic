@@ -16,14 +16,24 @@
 
 package ai.metaheuristic.ai.mhbp.scenario;
 
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Function;
+
+import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getVariables;
+import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Sergio Lissner
@@ -40,13 +50,76 @@ public class ScenarioUtilsTest {
         scenario.version=1;
         scenario.scenarioGroupId = 5L;
         scenario.name = "Fruit production";
+        scenario.setParams(yaml);
 
+
+        SourceCodeParamsYaml sc = ScenarioUtils.to(scenario);
+        String result = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(sc);
+        System.out.println(result);
+
+        Function<SourceCodeParamsYaml.Process, SourceCodeApiData.SourceCodeValidationResult> checkFunctionsFunc =
+                (p)-> new SourceCodeApiData.SourceCodeValidationResult(OK, null);
+
+        assertNull(SourceCodeValidationService.validateSourceCodeParamsYaml(checkFunctionsFunc, sc));
+
+        assertEquals(2, sc.source.processes.size());
+        final SourceCodeParamsYaml.SubProcesses subProcesses = sc.source.processes.get(1).subProcesses;
+        assertNotNull(subProcesses);
+        assertFalse(subProcesses.processes.isEmpty());
+        assertEquals(2, subProcesses.processes.size());
+
+        assertEquals(0, sc.source.processes.get(0).inputs.size());
+
+        assertEquals(1, sc.source.processes.get(1).outputs.size());
+        assertEquals(1, sc.source.processes.get(1).outputs.size());
+        assertEquals(1, sc.source.processes.get(1).inputs.size());
+        assertEquals("list_of_fruits", sc.source.processes.get(1).inputs.get(0).name);
+        final Meta apiCode = MetaUtils.getMeta(sc.source.processes.get(0).getMetas(), "apiCode");
+        assertNotNull(apiCode);
+        assertEquals("simple", apiCode.getValue());
+    }
+
+    @Test
+    public void test_to_variable_error() throws IOException {
+        String yaml = IOUtils.resourceToString("/mhbp/scenario/scenario-fruits-variable-errors.yaml", StandardCharsets.UTF_8);
+        Scenario scenario = new Scenario();
+        scenario.id = 1L;
+        scenario.version=1;
+        scenario.scenarioGroupId = 5L;
+        scenario.name = "Fruit production";
         scenario.setParams(yaml);
 
         SourceCodeParamsYaml sc = ScenarioUtils.to(scenario);
-
         String result = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(sc);
-
         System.out.println(result);
+
+        Function<SourceCodeParamsYaml.Process, SourceCodeApiData.SourceCodeValidationResult> checkFunctionsFunc =
+                (p)-> new SourceCodeApiData.SourceCodeValidationResult(OK, null);
+
+        final SourceCodeApiData.SourceCodeValidationResult actual = SourceCodeValidationService.validateSourceCodeParamsYaml(checkFunctionsFunc, sc);
+
+        assertNotNull(actual);
+        assertEquals(EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR, actual.status);
+    }
+
+    @Test
+    public void test_getVariables() {
+        String text = "Hello, my name is [[firstName]] and my last name is {{lastName}}.";
+        var list = getVariables(text, false);
+        assertEquals(2, list.size());
+        assertTrue(list.contains("firstName"));
+        assertTrue(list.contains("lastName"));
+
+        list = getVariables(text, true);
+        assertEquals(2, list.size());
+        assertTrue(list.contains("firstName"));
+        assertTrue(list.contains("lastName"));
+
+        list = getVariables("Hello", false);
+        assertEquals(0, list.size());
+
+        list = getVariables("Hello", true);
+        assertEquals(1, list.size());
+        assertTrue(list.contains("Hello"));
     }
 }

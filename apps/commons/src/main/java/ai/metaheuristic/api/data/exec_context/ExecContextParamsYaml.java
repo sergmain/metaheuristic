@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 @Data
 public class ExecContextParamsYaml implements BaseParams {
 
+    @SuppressWarnings("FieldMayBeStatic")
     public final int version = 5;
 
     @Override
@@ -46,6 +47,7 @@ public class ExecContextParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class VariableDeclaration {
+        @Nullable
         public List<String> globals;
         public final List<Variable> inputs = new ArrayList<>();
         public final List<Variable> outputs = new ArrayList<>();

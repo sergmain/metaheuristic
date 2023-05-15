@@ -51,7 +51,15 @@ public class StubProviderRestController {
             "q2", List.of(new SimpleStubAnswer(100, "q2", "Good")),
             "q3", List.of(new SimpleStubAnswer(100, "q3", "Good")),
             "q4", List.of(new SimpleStubAnswer(100, "q4", "Bad")),
-            "answer square root of 9 with only digits", List.of(new SimpleStubAnswer(100, "q4", "3"))
+            "answer square root of 9 with only digits", List.of(new SimpleStubAnswer(100, "q5", "3")),
+            "List of fruits which can be grown in US. Output only name of fruit, put each name on new line", List.of(new SimpleStubAnswer(100, "q6",
+                    """
+                         apple
+                         orange
+                         banana""")),
+            "Make short description of apple", List.of(new SimpleStubAnswer(100, "q7", "Apple is fruit.")),
+            "Make short description of orange", List.of(new SimpleStubAnswer(100, "q8", "Orange is fruit.")),
+            "Make short description of banana", List.of(new SimpleStubAnswer(100, "q9", "A banana is an elongated, edible fruit – botanically a berry"))
     );
 
     List<SimpleStubAnswer> defAnswer = List.of(new SimpleStubAnswer(100, "", "Unknown context of question #5"));

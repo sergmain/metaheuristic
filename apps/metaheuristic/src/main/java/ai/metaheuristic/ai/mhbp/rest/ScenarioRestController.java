@@ -26,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -55,7 +56,7 @@ public class ScenarioRestController {
     }
 
     @GetMapping("/scenarios/{scenarioGroupId}")
-    public ScenarioData.ScenariosResult scenarios(Pageable pageable, @PathVariable Long scenarioGroupId, Authentication authentication) {
+    public ScenarioData.ScenariosResult scenarios(Pageable pageable, @Nullable @PathVariable Long scenarioGroupId, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         final ScenarioData.ScenariosResult result = scenarioService.getScenarios(pageable, scenarioGroupId, context);
         return result;
@@ -63,7 +64,7 @@ public class ScenarioRestController {
 
     // /dispatcher/scenario/scenarios/3/scenario/1/steps:
     @GetMapping("/scenarios/{scenarioGroupId}/scenario/{scenarioId}/steps")
-    public ScenarioData.SimpleScenarioSteps scenarios(@PathVariable Long scenarioGroupId, @PathVariable Long scenarioId, Authentication authentication) {
+    public ScenarioData.SimpleScenarioSteps scenarios(@PathVariable long scenarioGroupId, @PathVariable long scenarioId, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         final ScenarioData.SimpleScenarioSteps result = scenarioService.getScenarioSteps(scenarioGroupId, scenarioId, context);
         return result;
@@ -174,8 +175,8 @@ public class ScenarioRestController {
     @PostMapping("/scenario-run")
 //    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest runScenario(
-            @RequestParam(name = "scenarioGroupId") String scenarioGroupId,
-            @RequestParam(name = "scenarioId") String scenarioId,
+            @RequestParam(name = "scenarioGroupId") long scenarioGroupId,
+            @RequestParam(name = "scenarioId") long scenarioId,
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         return scenarioService.runScenario(scenarioGroupId, scenarioId, context);

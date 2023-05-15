@@ -17,7 +17,12 @@
 package ai.metaheuristic.ai.mhbp.scenario;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
+import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.beans.ScenarioGroup;
@@ -28,7 +33,12 @@ import ai.metaheuristic.ai.mhbp.repositories.ScenarioGroupRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioRepository;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
 import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +46,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -60,6 +71,9 @@ public class ScenarioService {
     private final ApiRepository apiRepository;
     private final ScenarioGroupRepository scenarioGroupRepository;
     private final ScenarioRepository scenarioRepository;
+    private final SourceCodeRepository sourceCodeRepository;
+    private final SourceCodeService sourceCodeService;
+    private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
 
     public ScenarioData.ScenarioGroupsResult getScenarioGroups(Pageable pageable, DispatcherContext context) {
         pageable = PageUtils.fixPageSize(10, pageable);
@@ -70,7 +84,7 @@ public class ScenarioService {
         return new ScenarioData.ScenarioGroupsResult(new PageImpl<>(sorted, pageable, list.size()));
     }
 
-    public ScenarioData.ScenariosResult getScenarios(Pageable pageable, Long scenarioGroupId, DispatcherContext context) {
+    public ScenarioData.ScenariosResult getScenarios(Pageable pageable, @Nullable Long scenarioGroupId, DispatcherContext context) {
         if (scenarioGroupId==null) {
             return new ScenarioData.ScenariosResult(Page.empty(pageable));
         }
@@ -91,10 +105,10 @@ public class ScenarioService {
         return r;
     }
 
-    public ScenarioData.SimpleScenarioSteps getScenarioSteps(Long scenarioGroupId, Long scenarioId, DispatcherContext context) {
-        if (scenarioGroupId==null || scenarioId==null) {
-            return new ScenarioData.SimpleScenarioSteps(List.of());
-        }
+    public ScenarioData.SimpleScenarioSteps getScenarioSteps(long scenarioGroupId, long scenarioId, DispatcherContext context) {
+//        if (scenarioGroupId==null || scenarioId==null) {
+//            return new ScenarioData.SimpleScenarioSteps(List.of());
+//        }
         Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
         if (s==null || s.scenarioGroupId!=scenarioGroupId || s.accountId!=context.getAccountId()) {
             return new ScenarioData.SimpleScenarioSteps(List.of());
@@ -126,7 +140,30 @@ public class ScenarioService {
         return new ScenarioData.SimpleScenarioSteps(stepTree);
     }
 
-    public OperationStatusRest runScenario(String scenarioGroupId, String scenarioId, DispatcherContext context) {
+    public OperationStatusRest runScenario(long scenarioGroupId, long scenarioId, DispatcherContext context) {
+        Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
+        if (s==null || s.scenarioGroupId!=scenarioGroupId || s.accountId!=context.getAccountId()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#373.120 scenario wasn't found, " + scenarioGroupId+", " + scenarioId);
+        }
+
+        String uid = ScenarioUtils.getUid(s);
+        SourceCodeImpl sc = sourceCodeRepository.findByUid(uid);
+        if (sc==null) {
+            SourceCodeParamsYaml scpy = ScenarioUtils.to(uid, s.getScenarioParams());
+            String yaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(scpy);
+            SourceCodeApiData.SourceCodeResult result = sourceCodeService.createSourceCode(yaml, scpy, context.getCompanyId());
+            if (!result.isValid()) {
+                final String es = S.f("#373.160 validation: %s, %s", result.validationResult.status, result.validationResult.error);
+                log.error(es);
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+            }
+            sc = sourceCodeRepository.findById(result.id).orElse(null);
+            if (sc==null) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, S.f("#373.180 SourceCode not found: %d", result.id));
+            }
+        }
+        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sc.id, context.getCompanyId(), true);
+        SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(execContextResult.sourceCode, execContextResult.execContext);
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

@@ -95,6 +95,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         public GitInfo git;
         @Nullable
         public DiskInfo disk;
+        // this field defines in which context put a new variable. useful when SubProcesses.logic==and
         @Nullable
         public Boolean parentContext;
         public boolean array = false;
