@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -43,7 +44,7 @@ public class StubProviderRestController {
 
     public record SimpleStubAnswer(int topProb, String code, String txt) {}
 
-    public static Map<String, List<SimpleStubAnswer>> answers = Map.of(
+    public static Map<String, List<SimpleStubAnswer>> answers1 = Map.of(
             "q1", List.of(
                     new SimpleStubAnswer(90, "q1", "13"),
                     new SimpleStubAnswer(100, "q1", "42")),
@@ -60,7 +61,40 @@ public class StubProviderRestController {
             "Make short description of apple", List.of(new SimpleStubAnswer(100, "q7", "Apple is fruit.")),
             "Make short description of orange", List.of(new SimpleStubAnswer(100, "q8", "Orange is fruit.")),
             "Make short description of banana", List.of(new SimpleStubAnswer(100, "q9", "A banana is an elongated, edible fruit – botanically a berry"))
+
     );
+
+    public static Map<String, List<SimpleStubAnswer>> answers2 = Map.of(
+            "Make a list of countries which consume most of apple, list first five country only", List.of(
+                    new SimpleStubAnswer(100, "q10",
+                            """
+                            China
+                            United States
+                            Turkey
+                            Poland
+                            India""")),
+            "Make a list of countries which consume most of orange, list first five country only", List.of(
+                    new SimpleStubAnswer(100, "q11",
+                            """
+                            Brazil
+                            United States
+                            Mexico
+                            China
+                            Spain""")),
+            "Make a list of countries which consume most of banana, list first five country only", List.of(
+                    new SimpleStubAnswer(100, "q12",
+                            """
+                            India
+                            Uganda
+                            China
+                            Philippines
+                            Ecuador"""))
+    );
+    public static Map<String, List<SimpleStubAnswer>> answers = new HashMap<>();
+    static {
+        answers.putAll(answers1);
+        answers.putAll(answers2);
+    }
 
     List<SimpleStubAnswer> defAnswer = List.of(new SimpleStubAnswer(100, "", "Unknown context of question #5"));
 
@@ -72,7 +106,8 @@ public class StubProviderRestController {
     //@PreAuthorize("hasAnyRole('MAIN_ADMIN')")
     public String question(@RequestParam(name = "q") String question){
         int rInt = r.nextInt(100);
-        final String s = answers.getOrDefault(question, defAnswer).stream()
+        log.info("q: " + question);
+        final String s = answers.getOrDefault(question.strip(), defAnswer).stream()
                 .filter(o -> o.topProb >= rInt)
                 .findFirst()
                 .map(o -> o.txt)
