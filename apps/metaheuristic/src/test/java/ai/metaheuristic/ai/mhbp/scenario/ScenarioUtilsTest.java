@@ -70,14 +70,20 @@ public class ScenarioUtilsTest {
 
         assertEquals(0, sc.source.processes.get(0).inputs.size());
 
-        assertEquals(1, sc.source.processes.get(1).outputs.size());
-        assertEquals(1, sc.source.processes.get(1).outputs.size());
+        assertEquals(0, sc.source.processes.get(1).inputs.size());
+        assertEquals(0, sc.source.processes.get(1).outputs.size());
+
         final Meta apiCode = MetaUtils.getMeta(sc.source.processes.get(0).getMetas(), "apiCode");
         assertNotNull(apiCode);
         assertEquals("simple", apiCode.getValue());
+
         final Meta varForSplitting = MetaUtils.getMeta(sc.source.processes.get(1).getMetas(), BatchLineSplitterFunction.VARIABLE_FOR_SPLITTING);
         assertNotNull(varForSplitting);
         assertEquals("list_of_fruits", varForSplitting.getValue());
+
+        final Meta outputVariable = MetaUtils.getMeta(sc.source.processes.get(1).getMetas(), BatchLineSplitterFunction.OUTPUT_VARIABLE);
+        assertNotNull(outputVariable);
+        assertEquals("fruit", outputVariable.getValue());
     }
 
     @Test

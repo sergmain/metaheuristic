@@ -104,7 +104,7 @@ public class BatchLineSplitterTxService {
                     "#994.275 there isn't any sub-process for process '"+executionContextData.process.processCode+"'");
         }
 
-        final String variableName = MetaUtils.getValue(executionContextData.process.metas, "output-variable");
+        final String variableName = MetaUtils.getValue(executionContextData.process.metas, BatchLineSplitterFunction.OUTPUT_VARIABLE);
         if (S.b(variableName)) {
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken,
                     "#994.280 Meta with key 'output-variable' wasn't found for process '"+executionContextData.process.processCode+"'");

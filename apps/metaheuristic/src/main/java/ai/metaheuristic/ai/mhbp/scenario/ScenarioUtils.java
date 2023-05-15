@@ -163,8 +163,8 @@ public class ScenarioUtils {
 
             if (step.function==null || !Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code)) {
                 extractInputVariables(p.inputs, step);
+                extractOutputVariables(p.outputs, step);
             }
-            extractOutputVariables(p.outputs, step);
 
             p.metas.add(Map.of(ApiCallFunction.PROMPT, step.p));
             if (isApi) {
@@ -173,6 +173,7 @@ public class ScenarioUtils {
             if (step.function!=null && Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code)) {
                 p.metas.add(Map.of(BatchLineSplitterFunction.NUMBER_OF_LINES_PER_TASK, "1"));
                 p.metas.add(Map.of(BatchLineSplitterFunction.VARIABLE_FOR_SPLITTING, getNameForVariable(getVariables(step.p, true).get(0))));
+                p.metas.add(Map.of(BatchLineSplitterFunction.OUTPUT_VARIABLE, getNameForVariable(getVariables(step.resultCode, true).get(0))));
             }
 
             p.cache = new SourceCodeParamsYaml.Cache(true, true);

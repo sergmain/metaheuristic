@@ -53,6 +53,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
 
     public static final String VARIABLE_FOR_SPLITTING = "variable-for-splitting";
     public static final String NUMBER_OF_LINES_PER_TASK = "number-of-lines-per-task";
+    public static final String OUTPUT_VARIABLE = "output-variable";
     private final VariableService variableService;
     private final GlobalVariableService globalVariableService;
     private final InternalFunctionVariableService internalFunctionVariableService;
