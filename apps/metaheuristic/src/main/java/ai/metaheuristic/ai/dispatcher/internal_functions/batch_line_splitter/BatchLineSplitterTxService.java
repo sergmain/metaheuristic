@@ -110,7 +110,7 @@ public class BatchLineSplitterTxService {
                     "#994.280 Meta with key 'output-variable' wasn't found for process '"+executionContextData.process.processCode+"'");
         }
 
-        boolean isArray = MetaUtils.isTrue(executionContextData.process.metas, true, "is-array");
+        boolean isArray = MetaUtils.isTrue(executionContextData.process.metas, true, BatchLineSplitterFunction.IS_ARRAY);
 
         List<List<String>> allLines = stringToListOfList(content, numberOfLines);
 

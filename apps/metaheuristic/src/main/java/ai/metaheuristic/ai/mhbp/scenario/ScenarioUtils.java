@@ -174,6 +174,7 @@ public class ScenarioUtils {
                 p.metas.add(Map.of(BatchLineSplitterFunction.NUMBER_OF_LINES_PER_TASK, "1"));
                 p.metas.add(Map.of(BatchLineSplitterFunction.VARIABLE_FOR_SPLITTING, getNameForVariable(getVariables(step.p, true).get(0))));
                 p.metas.add(Map.of(BatchLineSplitterFunction.OUTPUT_VARIABLE, getNameForVariable(getVariables(step.resultCode, true).get(0))));
+                p.metas.add(Map.of(BatchLineSplitterFunction.IS_ARRAY, "false"));
             }
 
             p.cache = new SourceCodeParamsYaml.Cache(true, true);
@@ -207,6 +208,7 @@ public class ScenarioUtils {
         String outputName = getVariables(step.resultCode, true).get(0);
         final SourceCodeParamsYaml.Variable v = new SourceCodeParamsYaml.Variable();
         v.name = getNameForVariable(outputName);
+        v.ext = ".txt";
         outputs.add(v);
     }
 
@@ -218,6 +220,7 @@ public class ScenarioUtils {
         for (String name : variables) {
             final SourceCodeParamsYaml.Variable v = new SourceCodeParamsYaml.Variable();
             v.name = getNameForVariable(name);
+            v.ext = ".txt";
             inputs.add(v);
         }
     }

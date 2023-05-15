@@ -110,7 +110,7 @@ public class MetadataService {
         if (Files.exists(metadataFile)) {
             initMetadataFromFile(metadataFile);
         }
-        else {
+        if (metadata==null) {
             final Path metadataBackupFile = globals.processorPath.resolve(Consts.METADATA_YAML_BAK_FILE_NAME);
             if (Files.exists(metadataBackupFile)) {
                 initMetadataFromFile(metadataBackupFile);
@@ -139,16 +139,13 @@ public class MetadataService {
     }
 
     private void initMetadataFromFile(Path metadataFile) {
-        String yaml = null;
         try {
-            yaml = Files.readString(metadataFile, StandardCharsets.UTF_8);
+            String yaml = Files.readString(metadataFile, StandardCharsets.UTF_8);
             metadata = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
         } catch (org.yaml.snakeyaml.reader.ReaderException e) {
-            log.error("#815.020 Bad data in " + metadataFile.toAbsolutePath()+"\nYaml:\n" + yaml);
-            System.exit(SpringApplication.exit(appCtx, () -> -500));
+            log.error("#815.020 Bad data in " + metadataFile.toAbsolutePath());
         } catch (Throwable e) {
             log.error("#815.040 Error", e);
-            System.exit(SpringApplication.exit(appCtx, () -> -500));
         }
     }
 
