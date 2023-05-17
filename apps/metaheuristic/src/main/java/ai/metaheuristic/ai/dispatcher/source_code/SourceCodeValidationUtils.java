@@ -40,26 +40,30 @@ import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
 @Slf4j
 public class SourceCodeValidationUtils {
 
+    public static final Function<SourceCodeParamsYaml.Process, SourceCodeApiData.SourceCodeValidationResult> NULL_CHECK_FUNC =
+            (p)-> new SourceCodeApiData.SourceCodeValidationResult(OK, null);
+
+
     @Nullable
     public static SourceCodeApiData.SourceCodeValidationResult validateSourceCodeParamsYaml(
             Function<SourceCodeParamsYaml.Process, SourceCodeApiData.SourceCodeValidationResult> checkFunctionsFunc,
             SourceCodeParamsYaml sourceCodeParamsYaml) {
-        SourceCodeParamsYaml.SourceCode sourceCodeYaml = sourceCodeParamsYaml.source;
+        SourceCodeParamsYaml.SourceCode sourceCode = sourceCodeParamsYaml.source;
 
-        if (sourceCodeYaml.getProcesses().isEmpty()) {
+        if (sourceCode.getProcesses().isEmpty()) {
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.NO_ANY_PROCESSES_ERROR, "#177.080 At least one process must be defined");
         }
-        SourceCodeApiData.SourceCodeValidationResult result = checkStrictNaming(sourceCodeYaml);
+        SourceCodeApiData.SourceCodeValidationResult result = checkStrictNaming(sourceCode);
         if (result.status!=OK) {
             return result;
         }
-        result = checkVariableNaming(sourceCodeYaml);
+        result = checkVariableNaming(sourceCode);
         if (result.status!=OK) {
             return result;
         }
 
-        List<SourceCodeParamsYaml.Process> processes = sourceCodeYaml.getProcesses();
+        List<SourceCodeParamsYaml.Process> processes = sourceCode.getProcesses();
         List<String> processCodes = new ArrayList<>();
         for (int i = 0; i < processes.size(); i++) {
             SourceCodeParamsYaml.Process process = processes.get(i);
@@ -126,7 +130,7 @@ public class SourceCodeValidationUtils {
                                 EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_VARIABLE_NAME_ERROR,
                                 "#177.187 Input variable in process " + process.code + " has a wrong chars in name");
                     }
-                    boolean outputVariableFound = findOutputVariable(processes, variable.name);
+                    boolean outputVariableFound = findOutputVariable(sourceCode, variable.name);
                     if (!outputVariableFound) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR,
@@ -260,8 +264,11 @@ public class SourceCodeValidationUtils {
         return null;
     }
 
-    private static boolean findOutputVariable(List<SourceCodeParamsYaml.Process> processes, String name) {
-        for (SourceCodeParamsYaml.Process process : processes) {
+    private static boolean findOutputVariable(SourceCodeParamsYaml.SourceCode sourceCode, String name) {
+        if (sourceCode.variables!=null && sourceCode.variables.globals.contains(name)) {
+            return true;
+        }
+        for (SourceCodeParamsYaml.Process process : sourceCode.getProcesses()) {
             if (findOutputVariable(process, name)) {
                 return true;
             }

@@ -57,10 +57,7 @@ public class ScenarioUtilsTest {
         String result = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(sc);
         System.out.println(result);
 
-        Function<SourceCodeParamsYaml.Process, SourceCodeApiData.SourceCodeValidationResult> checkFunctionsFunc =
-                (p)-> new SourceCodeApiData.SourceCodeValidationResult(OK, null);
-
-        assertNull(SourceCodeValidationUtils.validateSourceCodeParamsYaml(checkFunctionsFunc, sc));
+        assertNull(SourceCodeValidationUtils.validateSourceCodeParamsYaml(SourceCodeValidationUtils.NULL_CHECK_FUNC, sc));
 
         assertEquals(2, sc.source.processes.size());
         final SourceCodeParamsYaml.SubProcesses subProcesses = sc.source.processes.get(1).subProcesses;

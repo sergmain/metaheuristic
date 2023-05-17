@@ -16,10 +16,6 @@
 
 package ai.metaheuristic.ai.source_code;
 
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils;
-import ai.metaheuristic.ai.mhbp.beans.Scenario;
-import ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
@@ -29,11 +25,10 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.function.Function;
 
-import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils.NULL_CHECK_FUNC;
+import static ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils.validateSourceCodeParamsYaml;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Sergio Lissner
@@ -48,13 +43,18 @@ public class SourceCodeValidationUtilsTest {
 
         SourceCodeParamsYaml sc = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
 
-        Function<SourceCodeParamsYaml.Process, SourceCodeApiData.SourceCodeValidationResult> checkFunctionsFunc =
-                (p)-> new SourceCodeApiData.SourceCodeValidationResult(OK, null);
-
-        final SourceCodeApiData.SourceCodeValidationResult actual = SourceCodeValidationUtils.validateSourceCodeParamsYaml(checkFunctionsFunc, sc);
+        final SourceCodeApiData.SourceCodeValidationResult actual = validateSourceCodeParamsYaml(NULL_CHECK_FUNC, sc);
 
         assertNotNull(actual);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR, actual.status);
     }
 
+
+    @Test
+    public void test_validateSourceCodeParamsYaml() throws IOException {
+        String yaml = IOUtils.resourceToString("/source_code/yaml/default-source-code-for-testing.yaml", StandardCharsets.UTF_8);
+        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+        SourceCodeApiData.SourceCodeValidationResult result = validateSourceCodeParamsYaml(NULL_CHECK_FUNC, scpy);
+        assertNull(result);
+    }
 }

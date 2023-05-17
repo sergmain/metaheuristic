@@ -18,10 +18,7 @@ package ai.metaheuristic.ai.dispatcher.commons;
 
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -32,6 +29,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class CommonSync<T> {
 
+    private static final int MAX_SYNC_MAP_SIZE = 10000;
     private static final long TEN_MINUTES_TO_MILLS = TimeUnit.MINUTES.toMillis(10);
     private static final long ONE_HOUR_TO_MILLS = TimeUnit.HOURS.toMillis(1);
 
@@ -40,14 +38,22 @@ public class CommonSync<T> {
         public volatile long mills;
         public ReentrantReadWriteLock lock;
 
+        public TimedLock() {
+            this.mills = System.currentTimeMillis();
+            this.lock = new ReentrantReadWriteLock();
+        }
+
         public TimedLock(ReentrantReadWriteLock lock) {
             this.mills = System.currentTimeMillis();
             this.lock = lock;
         }
     }
 
-    private volatile long lastCheckMills = 0L;
-    private final Map<T, TimedLock> map = new HashMap<>(100);
+    private final LinkedHashMap<T, TimedLock> map = new LinkedHashMap<>(100) {
+        protected boolean removeEldestEntry(Map.Entry<T, TimedLock> eldest) {
+            return this.size()>MAX_SYNC_MAP_SIZE || System.currentTimeMillis() - eldest.getValue().mills > ONE_HOUR_TO_MILLS;
+        }
+    };
 
     public ReentrantReadWriteLock.WriteLock getWriteLock(T id) {
         return getLock(id).writeLock();
@@ -57,7 +63,9 @@ public class CommonSync<T> {
         return getLock(id).readLock();
     }
 
+    private volatile long lastCheckMills = 0L;
     public synchronized ReentrantReadWriteLock getLock(T id) {
+/*
         if (System.currentTimeMillis() - lastCheckMills > TEN_MINUTES_TO_MILLS) {
             lastCheckMills = System.currentTimeMillis();
             List<T> ids = new ArrayList<>();
@@ -74,8 +82,8 @@ public class CommonSync<T> {
                 map.remove(idForRemoving);
             }
         }
-
-        final TimedLock timedLock = map.computeIfAbsent(id, o -> new TimedLock(new ReentrantReadWriteLock()));
+*/
+        final TimedLock timedLock = map.computeIfAbsent(id, (o) ->new TimedLock());
         timedLock.mills = System.currentTimeMillis();
         return timedLock.lock;
     }
