@@ -252,7 +252,7 @@ public class Schedulers {
 
         boolean needToInitializeReadyness = true;
 
-        @Scheduled(initialDelay = 5_000, fixedDelay = 3_000)
+        @Scheduled(initialDelay = 5_000, fixedDelay = 15_000)
         public void registerInternalTasks() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;

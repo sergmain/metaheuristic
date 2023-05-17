@@ -39,7 +39,7 @@ public class JsonPathTest {
     // https://goessner.net/articles/JsonPath/
     @Test
     public void test_jsonPath() throws IOException {
-        String json = IOUtils.resourceToString("/openai/openai-response-01.json", StandardCharsets.UTF_8);
+        String json = IOUtils.resourceToString("/mhbp/openai/openai-response-01.json", StandardCharsets.UTF_8);
 
         String jsonpath = "$['choices'][0]['message']['content']";
 
@@ -51,7 +51,7 @@ public class JsonPathTest {
 
     @Test
     public void test_jsonPath_2() throws IOException {
-        String json = IOUtils.resourceToString("/openai/2_plus_2_answer-2.json", StandardCharsets.UTF_8);
+        String json = IOUtils.resourceToString("/mhbp/openai/2_plus_2_answer-2.json", StandardCharsets.UTF_8);
 
         String jsonpath = "$['choices'][0]['text']";
 
