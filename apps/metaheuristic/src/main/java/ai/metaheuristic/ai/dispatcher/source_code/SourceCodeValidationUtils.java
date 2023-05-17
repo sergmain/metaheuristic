@@ -265,7 +265,7 @@ public class SourceCodeValidationUtils {
     }
 
     private static boolean findOutputVariable(SourceCodeParamsYaml.SourceCode sourceCode, String name) {
-        if (sourceCode.variables!=null && sourceCode.variables.globals.contains(name)) {
+        if (sourceCode.variables!=null && sourceCode.variables.globals!=null && sourceCode.variables.globals.contains(name)) {
             return true;
         }
         for (SourceCodeParamsYaml.Process process : sourceCode.getProcesses()) {

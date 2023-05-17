@@ -239,7 +239,7 @@ public class OpenaiJsonReaderTest {
 
     @Test
     public void test_OpenaiJsonReader_read(@TempDir Path temp) throws IOException {
-        String yaml = IOUtils.resourceToString("/kb/openai-format-math/kb-openai-format-math.yaml", StandardCharsets.UTF_8);
+        String yaml = IOUtils.resourceToString("/mhbp/kb/openai-format-math/kb-openai-format-math.yaml", StandardCharsets.UTF_8);
 
         KbParams kbParams = KbParamsUtils.UTILS.to(yaml);
         assertNotNull(kbParams.kb.git);

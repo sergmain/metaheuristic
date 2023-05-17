@@ -17,6 +17,7 @@ package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.batch.BatchService;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
+import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueEvent;
 import ai.metaheuristic.ai.dispatcher.event.StartProcessReadinessEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
@@ -266,7 +267,8 @@ public class Schedulers {
             log.info("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
             ArtifactCleanerAtDispatcher.setBusy();
             try {
-                execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue();
+                eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueEvent());
+                //execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue();
             }
             finally {
                 ArtifactCleanerAtDispatcher.notBusy();

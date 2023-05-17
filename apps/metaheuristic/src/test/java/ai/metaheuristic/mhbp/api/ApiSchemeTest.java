@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
 import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiSchemeUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -31,17 +32,19 @@ import static ai.metaheuristic.ai.Enums.HttpMethodType.post;
 import static ai.metaheuristic.ai.Enums.PromptPlace.uri;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Sergio Lissner
  * Date: 4/12/2023
  * Time: 10:16 PM
  */
+@Execution(CONCURRENT)
 public class ApiSchemeTest {
 
     @Test
     public void test_openai() throws IOException {
-        String yaml  = IOUtils.resourceToString("/api/openai-provider.yaml", StandardCharsets.UTF_8);
+        String yaml  = IOUtils.resourceToString("/mhbp/api/openai-provider.yaml", StandardCharsets.UTF_8);
 
         ApiScheme as = ApiSchemeUtils.UTILS.to(yaml);
 
@@ -72,7 +75,7 @@ public class ApiSchemeTest {
 
     @Test
     public void test_simple() throws IOException {
-        String yaml  = IOUtils.resourceToString("/api/simple-provider.yaml", StandardCharsets.UTF_8);
+        String yaml  = IOUtils.resourceToString("/mhbp/api/simple-provider.yaml", StandardCharsets.UTF_8);
 
         ApiScheme as = ApiSchemeUtils.UTILS.to(yaml);
 

@@ -21,6 +21,8 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
+import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueEvent;
+import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
@@ -33,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -53,6 +56,7 @@ public class ExecContextTaskProducingService {
 
     private final TaskProducingService taskProducingService;
     private final SourceCodeValidationService sourceCodeValidationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public SourceCodeApiData.TaskProducingResultComplex produceAndStartAllTasks(
             SourceCodeImpl sourceCode, ExecContextImpl execContext, ExecContextParamsYaml execContextParamsYaml) {
@@ -92,6 +96,7 @@ public class ExecContextTaskProducingService {
         result.taskProducingStatus = produceTaskResult.status;
 
         log.info("#701.190 SourceCodeService.produceTasks('{}') was processed for {} ms.", sourceCode.uid, System.currentTimeMillis() - mills);
+        eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
 
         return result;
     }

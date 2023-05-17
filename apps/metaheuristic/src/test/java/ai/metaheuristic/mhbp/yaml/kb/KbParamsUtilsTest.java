@@ -63,7 +63,7 @@ public class KbParamsUtilsTest {
     @Test
     public void test_KbParamsUtils_11() throws IOException {
 
-        String s = IOUtils.resourceToString("/kb/kb-inline-simple-chess.yaml", StandardCharsets.UTF_8);
+        String s = IOUtils.resourceToString("/mhbp/kb/kb-inline-simple-chess.yaml", StandardCharsets.UTF_8);
 
         KbParams kbp = KbParamsUtils.UTILS.to(s);
         assertNotNull(kbp.kb.inline);
