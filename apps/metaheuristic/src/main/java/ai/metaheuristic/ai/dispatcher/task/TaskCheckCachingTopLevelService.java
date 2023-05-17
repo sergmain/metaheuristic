@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
+import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
@@ -154,6 +155,9 @@ public class TaskCheckCachingTopLevelService {
                     log.error("Error", th);
                     eventPublisher.publishEvent(new TaskFinishWithErrorEvent(event.taskId, "Error while checking cache for task #" +event.taskId+", error: " + th.getMessage()));
                     return;
+                }
+                finally {
+                    eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
                 }
             }
         });

@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
@@ -40,6 +41,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -70,6 +72,7 @@ public class ApiCallFunction implements InternalFunction {
     private final GlobalVariableService globalVariableService;
     private final ProviderQueryService providerQueryService;
     private final ApiRepository apiRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public String getCode() {
@@ -126,6 +129,8 @@ public class ApiCallFunction implements InternalFunction {
 
         TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
         VariableSyncService.getWithSyncVoid(outputVariable.id, ()->execContextVariableService.storeStringInVariable(outputVariable, answer.a()));
+
+        eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
 
         //noinspection unused
         int i=0;
