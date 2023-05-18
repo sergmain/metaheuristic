@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.internal_functions.api_call;
+package ai.metaheuristic.ai.dispatcher.internal_functions.enhance_text;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
@@ -24,10 +24,6 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
-import ai.metaheuristic.ai.mhbp.beans.Api;
-import ai.metaheuristic.ai.mhbp.provider.ProviderData;
-import ai.metaheuristic.ai.mhbp.provider.ProviderQueryService;
-import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -45,36 +41,36 @@ import java.util.List;
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getNameForVariable;
 import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getVariables;
-import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
 
 /**
  * @author Sergio Lissner
- * Date: 5/14/2023
- * Time: 2:17 AM
+ * Date: 5/17/2023
+ * Time: 4:23 PM
  */
 @Service
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class ApiCallFunction implements InternalFunction {
+public class EnhanceTextFunction implements InternalFunction {
 
-    public static final String PROMPT = "prompt";
-    public static final String API_CODE = "apiCode";
+    public static final String TEXT = "text";
 
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final ExecContextVariableService execContextVariableService;
-    private final ProviderQueryService providerQueryService;
-    private final ApiRepository apiRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public String getCode() {
-        return Consts.MH_API_CALL_FUNCTION;
+        return Consts.MH_ENHANCE_TEXT_FUNCTION;
     }
 
     @Override
     public String getName() {
-        return Consts.MH_API_CALL_FUNCTION;
+        return Consts.MH_ENHANCE_TEXT_FUNCTION;
+    }
+
+    public boolean isScenarioCompatible() {
+        return true;
     }
 
     @SneakyThrows
@@ -86,47 +82,31 @@ public class ApiCallFunction implements InternalFunction {
         TxUtils.checkTxNotExists();
 
         if (taskParamsYaml.task.outputs.isEmpty()) {
-            throw new InternalFunctionException(variable_not_found, "#513.380 output variable not found for task #"+taskId);
+            throw new InternalFunctionException(variable_not_found, "#513.380 output variable not found for task #" + taskId);
         }
 
-        String apiCode = MetaUtils.getValue(taskParamsYaml.task.metas, API_CODE);
-        if (S.b(apiCode)) {
-            throw new InternalFunctionException(meta_not_found, "#513.300 meta '"+ API_CODE +"' wasn't found or it's blank");
-        }
-        Api api = apiRepository.findByApiCode(apiCode);
-        if (api==null) {
-            throw new InternalFunctionException(general_error, "#513.300 API wasn't found with code '"+ PROMPT +"' wasn't found or it's blank");
+        String text = MetaUtils.getValue(taskParamsYaml.task.metas, TEXT);
+        if (S.b(text)) {
+            throw new InternalFunctionException(meta_not_found, "#513.300 meta '"+ TEXT +"' wasn't found or it's blank");
         }
 
-        String prompt = MetaUtils.getValue(taskParamsYaml.task.metas, PROMPT);
-        if (S.b(prompt)) {
-            throw new InternalFunctionException(meta_not_found, "#513.300 meta '"+ PROMPT +"' wasn't found or it's blank");
-        }
-
-        final List<String> variables = getVariables(prompt, false);
-
+        final List<String> variables = getVariables(text, false);
         for (String variable : variables) {
             String varName = getNameForVariable(variable);
             String value = internalFunctionVariableService.getValueOfVariable(simpleExecContext.execContextId, taskContextId, varName);
             if (value==null) {
                 throw new InternalFunctionException(data_not_found, "#513.340 data wasn't found, variable: "+variable+", normalized: " + varName);
             }
-            prompt = StringUtils.replaceEach(prompt, new String[]{"[["+variable+"]]", "{{"+variable+"}}"}, new String[]{value, value});
-        }
-
-        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, null);
-        ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
-        if (answer.status()!=OK || S.b(answer.a())) {
-            throw new InternalFunctionException(data_not_found, "#513.340 API call error: "+answer.error()+", prompt: " + prompt+", answer: " + answer.a());
+            text = StringUtils.replaceEach(text, new String[]{"[[" + variable + "]]", "{{" + variable + "}}"}, new String[]{value, value});
         }
 
         TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
-        VariableSyncService.getWithSyncVoid(outputVariable.id, ()->execContextVariableService.storeStringInVariable(outputVariable, answer.a()));
+        final String finalText = text;
+        VariableSyncService.getWithSyncVoid(outputVariable.id, ()->execContextVariableService.storeStringInVariable(outputVariable, finalText));
 
         eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
 
         //noinspection unused
         int i=0;
     }
-
 }

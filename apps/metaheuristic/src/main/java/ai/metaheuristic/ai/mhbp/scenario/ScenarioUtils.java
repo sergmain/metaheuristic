@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.mhbp.scenario;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter.BatchLineSplitterFunction;
+import ai.metaheuristic.ai.dispatcher.internal_functions.enhance_text.EnhanceTextFunction;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
 import ai.metaheuristic.ai.utils.CollectionUtils;
@@ -47,7 +48,7 @@ import java.util.regex.Pattern;
 @Slf4j
 public class ScenarioUtils {
 
-    public static final Pattern VAR_PATTERN = Pattern.compile("[\\[\\{]{2}(\\w+)[\\]\\}]{2}");
+    public static final Pattern VAR_PATTERN = Pattern.compile("[\\[\\{]{2}([\\w\\s]+)[\\]\\}]{2}");
 
     @SuppressWarnings({"unchecked", "rawtypes", "RedundantIfStatement"})
     public static class ItemWithUuid implements CollectionUtils.TreeUtils.TreeItem<String> {
@@ -161,23 +162,32 @@ public class ScenarioUtils {
             // 60 second for exec
             p.timeoutBeforeTerminate = 60L;
 
+//            if (step.function==null || (!Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code) && !Consts.MH_ENHANCE_TEXT_FUNCTION.equals(step.function.code))) {
             if (step.function==null || !Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code)) {
                 extractInputVariables(p.inputs, step);
                 extractOutputVariables(p.outputs, step);
             }
 
-            p.metas.add(Map.of(ApiCallFunction.PROMPT, step.p));
             if (isApi) {
+                p.metas.add(Map.of(ApiCallFunction.PROMPT, step.p));
                 p.metas.add(Map.of(ApiCallFunction.API_CODE, step.api.code));
             }
-            if (step.function!=null && Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code)) {
-                p.metas.add(Map.of(BatchLineSplitterFunction.NUMBER_OF_LINES_PER_TASK, "1"));
-                p.metas.add(Map.of(BatchLineSplitterFunction.VARIABLE_FOR_SPLITTING, getNameForVariable(getVariables(step.p, true).get(0))));
-                p.metas.add(Map.of(BatchLineSplitterFunction.OUTPUT_VARIABLE, getNameForVariable(getVariables(step.resultCode, true).get(0))));
-                p.metas.add(Map.of(BatchLineSplitterFunction.IS_ARRAY, "false"));
+            if (step.function!=null) {
+                if (Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code)) {
+                    p.metas.add(Map.of(BatchLineSplitterFunction.NUMBER_OF_LINES_PER_TASK, "1"));
+                    p.metas.add(Map.of(BatchLineSplitterFunction.VARIABLE_FOR_SPLITTING, getNameForVariable(getVariables(step.p, true).get(0))));
+                    p.metas.add(Map.of(BatchLineSplitterFunction.OUTPUT_VARIABLE, getNameForVariable(getVariables(step.resultCode, true).get(0))));
+                    p.metas.add(Map.of(BatchLineSplitterFunction.IS_ARRAY, "false"));
+                }
+                else if (Consts.MH_ENHANCE_TEXT_FUNCTION.equals(step.function.code)) {
+                    p.metas.add(Map.of(EnhanceTextFunction.TEXT, step.p));
+                    p.metas.add(Map.of(BatchLineSplitterFunction.OUTPUT_VARIABLE, getNameForVariable(getVariables(step.resultCode, true).get(0))));
+                    p.metas.add(Map.of(BatchLineSplitterFunction.IS_ARRAY, "false"));
+                }
             }
 
-            p.cache = new SourceCodeParamsYaml.Cache(true, true);
+            //p.cache = new SourceCodeParamsYaml.Cache(true, true);
+            p.cache = null;
             p.triesAfterError = 2;
 
             if (CollectionUtils.isNotEmpty(itemWithUuid.items)) {

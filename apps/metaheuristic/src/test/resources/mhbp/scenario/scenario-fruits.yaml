@@ -8,6 +8,13 @@ steps:
     resultCode: list of fruits
     uuid: 11891861-069f-480b-9da4-c37481fadc62
   - function:
+      code: mh.enhance-text
+      context: internal
+    name: Enhance description
+    p: "List of fruits which can be grown in US consist of following:\n[[list of fruits]]"
+    resultCode: into
+    uuid: b032ef44-de12-4fbf-5678-100bd8018f4d
+  - function:
       code: mh.batch-line-splitter
       context: internal
     name: split list of fruits

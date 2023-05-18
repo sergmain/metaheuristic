@@ -90,4 +90,25 @@ public class InternalFunctionVariableService {
         }
         return holders;
     }
+
+    public String getValueOfVariable(Long execContextId, String taskContextId, String inputVariableName) {
+        List<VariableUtils.VariableHolder> holders = discoverVariables(execContextId, taskContextId, inputVariableName);
+        if (holders.size()>1) {
+            throw new InternalFunctionException(
+                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#995.040 Too many variables"));
+        }
+
+        VariableUtils.VariableHolder variableHolder = holders.get(0);
+        String s;
+        if (variableHolder.variable!=null) {
+            s = variableService.getVariableDataAsString(variableHolder.variable.id);
+        }
+        else if (variableHolder.globalVariable!=null) {
+            s = globalVariableService.getVariableDataAsString(variableHolder.globalVariable.id);
+        }
+        else {
+            throw new IllegalStateException("variableHolder.variabl==null && variableHolder.globalVariable==null");
+        }
+        return s;
+    }
 }

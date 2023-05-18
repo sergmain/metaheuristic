@@ -59,26 +59,26 @@ public class ScenarioUtilsTest {
 
         assertNull(SourceCodeValidationUtils.validateSourceCodeParamsYaml(SourceCodeValidationUtils.NULL_CHECK_FUNC, sc));
 
-        assertEquals(2, sc.source.processes.size());
-        final SourceCodeParamsYaml.SubProcesses subProcesses = sc.source.processes.get(1).subProcesses;
+        assertEquals(3, sc.source.processes.size());
+        final SourceCodeParamsYaml.SubProcesses subProcesses = sc.source.processes.get(2).subProcesses;
         assertNotNull(subProcesses);
         assertFalse(subProcesses.processes.isEmpty());
         assertEquals(2, subProcesses.processes.size());
 
         assertEquals(0, sc.source.processes.get(0).inputs.size());
 
-        assertEquals(0, sc.source.processes.get(1).inputs.size());
-        assertEquals(0, sc.source.processes.get(1).outputs.size());
+        assertEquals(0, sc.source.processes.get(2).inputs.size());
+        assertEquals(0, sc.source.processes.get(2).outputs.size());
 
         final Meta apiCode = MetaUtils.getMeta(sc.source.processes.get(0).getMetas(), "apiCode");
         assertNotNull(apiCode);
         assertEquals("simple", apiCode.getValue());
 
-        final Meta varForSplitting = MetaUtils.getMeta(sc.source.processes.get(1).getMetas(), BatchLineSplitterFunction.VARIABLE_FOR_SPLITTING);
+        final Meta varForSplitting = MetaUtils.getMeta(sc.source.processes.get(2).getMetas(), BatchLineSplitterFunction.VARIABLE_FOR_SPLITTING);
         assertNotNull(varForSplitting);
         assertEquals("list_of_fruits", varForSplitting.getValue());
 
-        final Meta outputVariable = MetaUtils.getMeta(sc.source.processes.get(1).getMetas(), BatchLineSplitterFunction.OUTPUT_VARIABLE);
+        final Meta outputVariable = MetaUtils.getMeta(sc.source.processes.get(2).getMetas(), BatchLineSplitterFunction.OUTPUT_VARIABLE);
         assertNotNull(outputVariable);
         assertEquals("fruit", outputVariable.getValue());
     }
@@ -102,5 +102,15 @@ public class ScenarioUtilsTest {
         list = getVariables("Hello", true);
         assertEquals(1, list.size());
         assertTrue(list.contains("Hello"));
+    }
+
+    @Test
+    public void test_getVariables_1() {
+        String text = "List of fruits which can be grown in US consist of following:\n" +
+                      "[[list of fruits]]";
+        var list = getVariables(text, false);
+        assertEquals(1, list.size());
+        assertTrue(list.contains("list of fruits"));
+
     }
 }
