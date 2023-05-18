@@ -28,6 +28,8 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
+import ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils;
+import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFunctionParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFunctionParamsYamlUtils;
@@ -35,6 +37,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.MetaUtils;
+import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -43,11 +46,13 @@ import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -65,6 +70,11 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @RequiredArgsConstructor
 public class AggregateFunction implements InternalFunction {
 
+    public enum ResultType { zip, text, word, html }
+
+    public static final String VARIABLES = "variables";
+    public static final String TYPE = "type";
+    public static final String PRODUCE_METADATA = "produce-metadata";
     private final VariableRepository variableRepository;
     private final VariableService variableService;
     private final ExecContextVariableService execContextVariableService;
@@ -81,6 +91,10 @@ public class AggregateFunction implements InternalFunction {
     @Override
     public String getName() {
         return Consts.MH_AGGREGATE_FUNCTION;
+    }
+
+    public boolean isScenarioCompatible() {
+        return true;
     }
 
     @Override
@@ -106,18 +120,20 @@ public class AggregateFunction implements InternalFunction {
                     number_of_outputs_is_incorrect, "#979.020 There must be only one output variable, current: "+ taskParamsYaml.task.outputs);
         }
 
-        final boolean produceMetadata = MetaUtils.isTrue(taskParamsYaml.task.metas, true, "produce-metadata");
+        final boolean produceMetadata = MetaUtils.isTrue(taskParamsYaml.task.metas, true, PRODUCE_METADATA);
+        String resultTypeStr = MetaUtils.getValue(taskParamsYaml.task.metas, TYPE);
+        ResultType resultType = S.b(resultTypeStr) ? ResultType.zip : ResultType.valueOf(resultTypeStr);
 
-        String[] names = StringUtils.split(MetaUtils.getValue(taskParamsYaml.task.metas, "variables"), ", ");
-        if (names==null || names.length==0) {
+        List<String> names = getNamesOfVariables(taskParamsYaml.task.metas);
+        if (CollectionUtils.isEmpty(names)) {
             throw new InternalFunctionException(
-                    meta_not_found, "#979.080 Meta 'variables' wasn't found or empty, process: "+ taskParamsYaml.task.processCode);
+                    meta_not_found, "#979.080 Meta 'variables' wasn't found or empty, process: " + taskParamsYaml.task.processCode);
         }
+
+        List<SimpleVariable> list = variableRepository.getIdAndStorageUrlInVarsForExecContext(simpleExecContext.execContextId, names.toArray(String[]::new));
 
         String policyMeta = MetaUtils.getValue(taskParamsYaml.task.metas, META_ERROR_CONTROL);
         ErrorControlPolicy policy = S.b(policyMeta) ? ErrorControlPolicy.ignore : ErrorControlPolicy.valueOf(policyMeta);
-
-        List<SimpleVariable> list = variableRepository.getIdAndStorageUrlInVarsForExecContext(simpleExecContext.execContextId, names);
 
         Path tempDir = null;
         try {
@@ -131,6 +147,7 @@ public class AggregateFunction implements InternalFunction {
             Path outputDir = tempDir.resolve(outputVariable.name);
             Files.createDirectory(outputDir);
 
+            List<String> stringCollector = new ArrayList<>();
             list.stream().map(o->o.taskContextId).collect(Collectors.toSet())
                     .forEach(contextId->{
                         Path taskContextDir = outputDir.resolve(contextId);
@@ -147,12 +164,20 @@ public class AggregateFunction implements InternalFunction {
                                         return;
                                     }
                                     try {
-                                        String ext = execContextUtilsService.getExtensionForVariable(simpleExecContext.execContextVariableStateId, v.id, "");
-                                        Path varFile = taskContextDir.resolve(v.variable+ext);
-                                        if (produceMetadata) {
-                                            mafpy.mapping.add(Map.of(varFile.getFileName().toString(), v.variable));
+                                        switch(resultType) {
+                                            case zip, word, html -> {
+                                                String ext = execContextUtilsService.getExtensionForVariable(simpleExecContext.execContextVariableStateId, v.id, "");
+                                                Path varFile = taskContextDir.resolve(v.variable+ext);
+                                                if (produceMetadata) {
+                                                    mafpy.mapping.add(Map.of(varFile.getFileName().toString(), v.variable));
+                                                }
+                                                variableService.storeToFileWithTx(v.id, varFile);
+                                            }
+                                            case text -> {
+                                                String var = variableService.getVariableDataAsString(v.id);
+                                                stringCollector.add(var);
+                                            }
                                         }
-                                        variableService.storeToFileWithTx(v.id, varFile);
                                     } catch (VariableDataNotFoundException e) {
                                         log.error("#979.140 Variable #{}, name {},  wasn't found", v.id, v.variable);
                                         if (policy==ErrorControlPolicy.fail) {
@@ -175,11 +200,20 @@ public class AggregateFunction implements InternalFunction {
 
                     });
 
-            Path zipFile = tempDir.resolve("result-for-"+outputVariable.name+".zip");
-            ZipUtils.createZip(outputDir, zipFile);
+            switch(resultType) {
+                case zip, word, html -> {
+                    Path zipFile = tempDir.resolve("result-for-"+outputVariable.name+".zip");
+                    ZipUtils.createZip(outputDir, zipFile);
 
-            VariableSyncService.getWithSyncVoidForCreation(outputVariable.id,
-                    ()->execContextVariableService.storeDataInVariable(outputVariable, zipFile));
+                    VariableSyncService.getWithSyncVoidForCreation(outputVariable.id,
+                            ()->execContextVariableService.storeDataInVariable(outputVariable, zipFile));
+                }
+                case text -> {
+                    String text = String.join("\n\n", stringCollector);
+                    VariableSyncService.getWithSyncVoidForCreation(outputVariable.id,
+                            ()->execContextVariableService.storeStringInVariable(outputVariable, text));
+                }
+            }
         }
         finally {
             if (tempDir!=null) {
@@ -190,5 +224,28 @@ public class AggregateFunction implements InternalFunction {
                 }
             }
         }
+    }
+
+    @Nullable
+    public static List<String> getNamesOfVariables(List<Map<String, String>> metas) {
+        String[] namesBefore = StringUtils.split(MetaUtils.getValue(metas, VARIABLES), ",");
+        if (namesBefore==null || namesBefore.length==0) {
+            return null;
+        }
+        List<String> names = new ArrayList<>();
+        for (String s : namesBefore) {
+            List<String> vars = ScenarioUtils.getVariables(s.strip(), true);
+            if (vars.isEmpty()) {
+                continue;
+            }
+            final String str = vars.get(0);
+            if (!S.b(str)) {
+                names.add(StrUtils.getCode(str, ()-> {
+                    throw new InternalFunctionException(
+                            name_of_variable_in_meta_is_broken, "#979.480 Meta 'variables' wasn't found or empty, s: " + s);
+                }));
+            }
+        }
+        return names.isEmpty() ? null : names;
     }
 }

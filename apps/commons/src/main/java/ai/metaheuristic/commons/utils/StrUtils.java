@@ -22,6 +22,7 @@ import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.util.Random;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -102,5 +103,17 @@ public class StrUtils {
 
     private static String formatString(String s, int i) {
         return COPY_NUMBER_PREFIX + i +", " + s;
+    }
+
+    public static String getCode(String name, Supplier<String> codeFunc) {
+        String code;
+        if (isCodeOk(name)) {
+            code = name;
+        }
+        else {
+            String n = normalizeCode(name);
+            code = isCodeOk(n) ? n : codeFunc.get();
+        }
+        return code;
     }
 }

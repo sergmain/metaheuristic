@@ -38,4 +38,11 @@ steps:
     parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
     resultCode: best consumer
     uuid: aa39426f-d2d6-4a3e-92bc-f74a4fa13a8b
+  - function:
+      code: mh.aggregate
+      context: internal
+    name: Aggregate results
+    p: intro, fruit, fruit description, best consumer
+    resultCode: result
+    uuid: b032ef44-de12-4fbf-1234-100bd8018f4d
 version: 1

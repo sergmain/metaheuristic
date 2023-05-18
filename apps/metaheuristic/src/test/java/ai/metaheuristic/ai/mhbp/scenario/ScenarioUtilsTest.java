@@ -16,12 +16,12 @@
 
 package ai.metaheuristic.ai.mhbp.scenario;
 
+import ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter.BatchLineSplitterFunction;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import org.apache.commons.io.IOUtils;
@@ -29,10 +29,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.function.Function;
 
 import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getVariables;
-import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -53,13 +51,17 @@ public class ScenarioUtilsTest {
         scenario.setParams(yaml);
 
 
+        // main function for testing
         SourceCodeParamsYaml sc = ScenarioUtils.to(scenario);
+
+
+
         String result = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(sc);
         System.out.println(result);
 
         assertNull(SourceCodeValidationUtils.validateSourceCodeParamsYaml(SourceCodeValidationUtils.NULL_CHECK_FUNC, sc));
 
-        assertEquals(3, sc.source.processes.size());
+        assertEquals(4, sc.source.processes.size());
         final SourceCodeParamsYaml.SubProcesses subProcesses = sc.source.processes.get(2).subProcesses;
         assertNotNull(subProcesses);
         assertFalse(subProcesses.processes.isEmpty());
@@ -81,6 +83,10 @@ public class ScenarioUtilsTest {
         final Meta outputVariable = MetaUtils.getMeta(sc.source.processes.get(2).getMetas(), BatchLineSplitterFunction.OUTPUT_VARIABLE);
         assertNotNull(outputVariable);
         assertEquals("fruit", outputVariable.getValue());
+
+        final Meta outputVariableForAggregate = MetaUtils.getMeta(sc.source.processes.get(3).getMetas(), AggregateFunction.VARIABLES);
+        assertNotNull(outputVariableForAggregate);
+        assertEquals("intro, fruit, fruit description, best consumer", outputVariableForAggregate.getValue());
     }
 
     @Test

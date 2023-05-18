@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.mhbp.scenario;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter.BatchLineSplitterFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.enhance_text.EnhanceTextFunction;
@@ -29,14 +30,12 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.StrUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -114,7 +113,7 @@ public class ScenarioUtils {
 
     public static String getUid(Scenario s) {
         final String suffix = "-" + s.scenarioGroupId + '-' + s.id + '-' + s.version;
-        final String uid = getCode(s.name + suffix, () -> "scenario" + suffix).toLowerCase();
+        final String uid = StrUtils.getCode(s.name + suffix, () -> "scenario" + suffix).toLowerCase();
         return uid;
     }
 
@@ -149,7 +148,7 @@ public class ScenarioUtils {
 
             SourceCodeParamsYaml.Process p = new SourceCodeParamsYaml.Process();
             p.name = step.name;
-            p.code = getCode(step.name, () -> "process-" + processNumber.getAndIncrement());
+            p.code = StrUtils.getCode(step.name, () -> "process-" + processNumber.getAndIncrement());
 
             final SourceCodeParamsYaml.FunctionDefForSourceCode f = new SourceCodeParamsYaml.FunctionDefForSourceCode();
             f.code = isApi ? Consts.MH_API_CALL_FUNCTION : step.function.code;
@@ -162,10 +161,10 @@ public class ScenarioUtils {
             // 60 second for exec
             p.timeoutBeforeTerminate = 60L;
 
-//            if (step.function==null || (!Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code) && !Consts.MH_ENHANCE_TEXT_FUNCTION.equals(step.function.code))) {
-            if (step.function==null || !Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code)) {
+//            if (step.function==null || !Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code)) {
+            if (step.function==null || (!Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code) && !Consts.MH_AGGREGATE_FUNCTION.equals(step.function.code))) {
                 extractInputVariables(p.inputs, step);
-                extractOutputVariables(p.outputs, step);
+                extractOutputVariables(p.outputs, step, ".txt");
             }
 
             if (isApi) {
@@ -181,8 +180,14 @@ public class ScenarioUtils {
                 }
                 else if (Consts.MH_ENHANCE_TEXT_FUNCTION.equals(step.function.code)) {
                     p.metas.add(Map.of(EnhanceTextFunction.TEXT, step.p));
-                    p.metas.add(Map.of(BatchLineSplitterFunction.OUTPUT_VARIABLE, getNameForVariable(getVariables(step.resultCode, true).get(0))));
-                    p.metas.add(Map.of(BatchLineSplitterFunction.IS_ARRAY, "false"));
+//                    p.metas.add(Map.of(BatchLineSplitterFunction.OUTPUT_VARIABLE, getNameForVariable(getVariables(step.resultCode, true).get(0))));
+                }
+                else if (Consts.MH_AGGREGATE_FUNCTION.equals(step.function.code)) {
+                    p.metas.add(Map.of(AggregateFunction.VARIABLES, step.p));
+                    p.metas.add(Map.of(AggregateFunction.TYPE, AggregateFunction.ResultType.text.toString()));
+                    p.metas.add(Map.of(AggregateFunction.PRODUCE_METADATA, "false"));
+//                    p.metas.add(Map.of(BatchLineSplitterFunction.OUTPUT_VARIABLE, getNameForVariable(getVariables(step.resultCode, true).get(0))));
+                    extractOutputVariables(p.outputs, step, ".txt");
                 }
             }
 
@@ -199,26 +204,14 @@ public class ScenarioUtils {
         }
     }
 
-    public static String getCode(String name, Supplier<String> codeFunc) {
-        String code;
-        if (StrUtils.isCodeOk(name)) {
-            code = name;
-        }
-        else {
-            String n = StrUtils.normalizeCode(name);
-            code = StrUtils.isCodeOk(n) ? n : codeFunc.get();
-        }
-        return code;
-    }
-
-    private static void extractOutputVariables(List<SourceCodeParamsYaml.Variable> outputs, ScenarioParams.Step step) {
+    private static void extractOutputVariables(List<SourceCodeParamsYaml.Variable> outputs, ScenarioParams.Step step, String ext) {
         if (S.b(step.resultCode)) {
             throw new IllegalStateException("(S.b(step.resultCode))");
         }
         String outputName = getVariables(step.resultCode, true).get(0);
         final SourceCodeParamsYaml.Variable v = new SourceCodeParamsYaml.Variable();
         v.name = getNameForVariable(outputName);
-        v.ext = ".txt";
+        v.ext = ext;
         outputs.add(v);
     }
 
@@ -236,10 +229,16 @@ public class ScenarioUtils {
     }
 
     public static String getNameForVariable(String name) {
-        return getCode(name, () -> {
+        return StrUtils.getCode(name, () -> {
             log.error("Wrong name for variable: " + name);
             throw new IllegalStateException("Wrong name of variable: " + name);
         }).toLowerCase();
+    }
+
+    @Nullable
+    public static String getVariable(String text) {
+        List<String> l = getVariables(text, false);
+        return l.isEmpty() ? null : l.get(0);
     }
 
     public static List<String> getVariables(String text, boolean useTextAsDefault) {

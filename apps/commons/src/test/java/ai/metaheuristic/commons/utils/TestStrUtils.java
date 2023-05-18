@@ -18,10 +18,20 @@ package ai.metaheuristic.commons.utils;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.function.Supplier;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestStrUtils {
+
+    public static final Supplier<String> CODE_FUNC = () -> { throw new IllegalStateException(); };
+
+    @Test
+    public void test_getCode() {
+        assertEquals("aaa", StrUtils.getCode("aaa", CODE_FUNC));
+        assertEquals("aaa_bbb", StrUtils.getCode("aaa_bbb", CODE_FUNC));
+        assertEquals("aaa_bbb", StrUtils.getCode("aaa bbb", CODE_FUNC));
+    }
 
     @Test
     public void testMatching() {
