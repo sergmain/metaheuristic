@@ -53,6 +53,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -148,7 +149,8 @@ public class AggregateFunction implements InternalFunction {
             Files.createDirectory(outputDir);
 
             List<String> stringCollector = new ArrayList<>();
-            list.stream().map(o->o.taskContextId).collect(Collectors.toSet())
+            LinkedHashSet<String> taskContextIds = new LinkedHashSet<>();
+            list.stream().map(o->o.taskContextId).collect(Collectors.toCollection(()->taskContextIds))
                     .forEach(contextId->{
                         Path taskContextDir = outputDir.resolve(contextId);
                         MetadataAggregateFunctionParamsYaml mafpy = new MetadataAggregateFunctionParamsYaml();
