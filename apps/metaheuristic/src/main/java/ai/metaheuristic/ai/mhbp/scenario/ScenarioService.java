@@ -111,7 +111,7 @@ public class ScenarioService {
     public ScenarioData.SimpleScenarioSteps getScenarioSteps(long scenarioGroupId, long scenarioId, DispatcherContext context) {
         Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
         if (s==null || s.scenarioGroupId!=scenarioGroupId || s.accountId!=context.getAccountId()) {
-            return new ScenarioData.SimpleScenarioSteps(List.of());
+            return new ScenarioData.SimpleScenarioSteps(null, List.of());
         }
         ScenarioParams scenarioParams = s.getScenarioParams();
 
@@ -137,7 +137,7 @@ public class ScenarioService {
         TreeUtils<String> treeUtils = new CollectionUtils.TreeUtils<>();
         List<ScenarioData.SimpleScenarioStep> stepTree = treeUtils.rebuildTree((List)steps);
 
-        return new ScenarioData.SimpleScenarioSteps(stepTree);
+        return new ScenarioData.SimpleScenarioSteps(new ScenarioData.SimpleScenarioInfo(s.name, s.description), stepTree);
     }
 
     public OperationStatusRest runScenario(long scenarioGroupId, long scenarioId, DispatcherContext context) {

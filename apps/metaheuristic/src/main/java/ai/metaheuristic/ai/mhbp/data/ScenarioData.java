@@ -174,8 +174,18 @@ public class ScenarioData {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class SimpleScenarioInfo {
+        public String name;
+        public String description;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
     public static class SimpleScenarioSteps extends BaseDataClass {
+        @Nullable
+        public SimpleScenarioInfo scenarioInfo;
         public List<SimpleScenarioStep> steps;
     }
 
