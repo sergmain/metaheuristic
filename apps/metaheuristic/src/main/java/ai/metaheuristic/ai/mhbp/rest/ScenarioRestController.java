@@ -121,6 +121,18 @@ public class ScenarioRestController {
         return scenarioTxService.createScenario(scenarioGroupId, name, description, apiId, context);
     }
 
+    @PostMapping("/scenario-update-info-commit")
+//    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
+    public OperationStatusRest updateScenarioInfoCommit(
+            @RequestParam(name = "scenarioGroupId") long scenarioGroupId,
+            @RequestParam(name = "scenarioId") long scenarioId,
+            @RequestParam(name = "name") String name,
+            @RequestParam(name = "description") String description,
+            Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        return scenarioService.updateScenarioInfo(scenarioGroupId, scenarioId, name, description, context);
+    }
+
     @PostMapping("/scenario-step-add-change-commit")
 //    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest addScenarioStepFormCommit(

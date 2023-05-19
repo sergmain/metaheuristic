@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.utils.CollectionUtils.*;
+import static ai.metaheuristic.ai.utils.CollectionUtils.TreeUtils;
 
 /**
  * @author Sergio Lissner
@@ -183,6 +183,24 @@ public class ScenarioService {
         s.version = null;
         s.name = StrUtils.incCopyNumber(s.name);
         s.createdOn = System.currentTimeMillis();
+        scenarioRepository.save(s);
+
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    public OperationStatusRest updateScenarioInfo(long scenarioGroupId, long scenarioId, String name, String description, DispatcherContext context) {
+        Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
+        if (s==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.240 Scenario # " + scenarioId+" wasn't found");
+        }
+        if (s.accountId!=context.getAccountId()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.280 accountId");
+        }
+        if (s.scenarioGroupId!=scenarioGroupId) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.320 scenarioGroupId");
+        }
+        s.name = name;
+        s.description = description;
         scenarioRepository.save(s);
 
         return OperationStatusRest.OPERATION_STATUS_OK;
