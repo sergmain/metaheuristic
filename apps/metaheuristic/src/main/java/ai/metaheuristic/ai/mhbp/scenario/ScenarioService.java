@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegiste
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
+import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.beans.ScenarioGroup;
 import ai.metaheuristic.ai.mhbp.data.ScenarioData;
@@ -52,6 +53,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.utils.CollectionUtils.*;
@@ -169,6 +171,68 @@ public class ScenarioService {
     }
 
     public OperationStatusRest duplicateScenario(String scenarioGroupId, String scenarioId, String name, String prompt, String apiId, DispatcherContext context) {
+
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    public OperationStatusRest createOrChangeScenarioStep(
+            String scenarioGroupId, String scenarioId, String uuid, String parentUuid, String name, String prompt,
+            String apiId, String resultCode, String functionCode, DispatcherContext context) {
+
+        if (S.b(scenarioGroupId)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.120 scenarioGroupId is null");
+        }
+        if (S.b(scenarioId)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.160 scenarioId is null");
+        }
+        if (S.b(apiId) && S.b(functionCode)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.200 apiId is null");
+        }
+
+        Scenario s = scenarioRepository.findById(Long.parseLong(scenarioId)).orElse(null);
+        if (s==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.240 Scenario # " + scenarioId+" wasn't found");
+        }
+        if (s.accountId!=context.getAccountId()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.280 accountId");
+        }
+        if (s.scenarioGroupId!=Long.parseLong(scenarioGroupId)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.320 scenarioGroupId");
+        }
+        ScenarioParams sp = s.getScenarioParams();
+
+        ScenarioParams.Step step;
+        if (S.b(uuid)) {
+            step = new ScenarioParams.Step(UUID.randomUUID().toString(), parentUuid, name, prompt, null, resultCode, null, null);
+            sp.steps.add(step);
+        }
+        else {
+            step = sp.steps.stream().filter(o->o.uuid.equals(uuid)).findFirst().orElse(null);
+            if (step==null) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.360 broken uuid");
+            }
+            step.name = name;
+            step.p = prompt;
+            step.resultCode = resultCode;
+        }
+
+        if (S.b(functionCode)) {
+            Api api = apiRepository.findById(Long.parseLong(apiId)).orElse(null);
+            if (api==null || api.companyId!=context.getCompanyId()) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.420 apiId");
+            }
+            step.api = new ScenarioParams.Api(api.id, api.code);
+        }
+        else {
+            if (S.b(prompt)) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.440 prompt");
+            }
+            step.function = new ScenarioParams.Function(functionCode, EnumsApi.FunctionExecContext.internal);
+        }
+
+        s.updateParams(sp);
+
+        scenarioRepository.save(s);
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

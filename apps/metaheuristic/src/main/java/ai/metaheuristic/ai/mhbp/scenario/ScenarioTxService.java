@@ -89,56 +89,6 @@ public class ScenarioTxService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest createScenarioStep(
-            String scenarioGroupId, String scenarioId, String parentUuid, String name, String prompt,
-            String apiId, String resultCode, String functionCode, DispatcherContext context) {
-
-        if (S.b(scenarioGroupId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.120 scenarioGroupId is null");
-        }
-        if (S.b(scenarioId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.160 scenarioId is null");
-        }
-        if (S.b(apiId) && S.b(functionCode)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.200 apiId is null");
-        }
-
-        ScenarioParams.Step step = new ScenarioParams.Step(UUID.randomUUID().toString(), parentUuid, name, prompt, null, resultCode, null, null);
-
-        if (S.b(functionCode)) {
-            Api api = apiRepository.findById(Long.parseLong(apiId)).orElse(null);
-            if (api==null || api.companyId!=context.getCompanyId()) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.220 apiId");
-            }
-            step.api = new ScenarioParams.Api(api.id, api.code);
-        }
-        else {
-            if (S.b(prompt)) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.222 prompt");
-            }
-            step.function = new ScenarioParams.Function(functionCode, EnumsApi.FunctionExecContext.internal);
-        }
-
-        Scenario s = scenarioRepository.findById(Long.parseLong(scenarioId)).orElse(null);
-        if (s==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.240 Scenario # " + scenarioId+" wasn't found");
-        }
-        if (s.accountId!=context.getAccountId()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.280 accountId");
-        }
-        if (s.scenarioGroupId!=Long.parseLong(scenarioGroupId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.320 scenarioGroupId");
-        }
-
-        ScenarioParams sp = s.getScenarioParams();
-        sp.steps.add(step);
-        s.updateParams(sp);
-
-        scenarioRepository.save(s);
-
-        return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
     @Transactional
     public OperationStatusRest deleteScenarioById(Long scenarioId, DispatcherContext context) {
         if (scenarioId==null) {

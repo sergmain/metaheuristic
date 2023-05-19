@@ -121,11 +121,12 @@ public class ScenarioRestController {
         return scenarioTxService.createScenario(scenarioGroupId, name, description, apiId, context);
     }
 
-    @PostMapping("/scenario-step-add-commit")
+    @PostMapping("/scenario-step-add-change-commit")
 //    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest addScenarioStepFormCommit(
             @RequestParam(name = "scenarioGroupId") String scenarioGroupId,
             @RequestParam(name = "scenarioId") String scenarioId,
+            @RequestParam(name = "uuid", required = false) String uuid,
             @RequestParam(name = "parentUuid", required = false) String parentUuid,
             @RequestParam(name = "name") String name,
             @RequestParam(name = "prompt", required = false) String prompt,
@@ -134,7 +135,7 @@ public class ScenarioRestController {
             @RequestParam(name = "functionCode", required = false) String functionCode,
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return scenarioTxService.createScenarioStep(scenarioGroupId, scenarioId, parentUuid, name, prompt, apiId, resultCode, functionCode, context);
+        return scenarioService.createOrChangeScenarioStep(scenarioGroupId, scenarioId, uuid, parentUuid, name, prompt, apiId, resultCode, functionCode, context);
     }
 
     @PostMapping("/scenario-group-delete-commit")
