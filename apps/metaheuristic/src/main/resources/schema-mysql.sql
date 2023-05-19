@@ -499,6 +499,9 @@ CREATE table mhbp_api
 CREATE INDEX mhbp_api_company_id_idx
     ON mhbp_api (COMPANY_ID);
 
+CREATE UNIQUE INDEX mhbp_api_code_idx
+    ON mhbp_api (CODE);
+
 CREATE table mhbp_kb
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,

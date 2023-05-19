@@ -41,6 +41,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.PageUtils;
+import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -108,9 +109,6 @@ public class ScenarioService {
     }
 
     public ScenarioData.SimpleScenarioSteps getScenarioSteps(long scenarioGroupId, long scenarioId, DispatcherContext context) {
-//        if (scenarioGroupId==null || scenarioId==null) {
-//            return new ScenarioData.SimpleScenarioSteps(List.of());
-//        }
         Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
         if (s==null || s.scenarioGroupId!=scenarioGroupId || s.accountId!=context.getAccountId()) {
             return new ScenarioData.SimpleScenarioSteps(List.of());
@@ -170,7 +168,22 @@ public class ScenarioService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest duplicateScenario(String scenarioGroupId, String scenarioId, String name, String prompt, String apiId, DispatcherContext context) {
+    public OperationStatusRest copyScenario(String scenarioGroupId, String scenarioId, DispatcherContext context) {
+        Scenario s = scenarioRepository.findById(Long.parseLong(scenarioId)).orElse(null);
+        if (s==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.240 Scenario # " + scenarioId+" wasn't found");
+        }
+        if (s.accountId!=context.getAccountId()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.280 accountId");
+        }
+        if (s.scenarioGroupId!=Long.parseLong(scenarioGroupId)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.320 scenarioGroupId");
+        }
+        s.id = null;
+        s.version = null;
+        s.name = StrUtils.incCopyNumber(s.name);
+        s.createdOn = System.currentTimeMillis();
+        scenarioRepository.save(s);
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
@@ -227,6 +240,7 @@ public class ScenarioService {
             if (S.b(prompt)) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.440 prompt");
             }
+            step.api = null;
             step.function = new ScenarioParams.Function(functionCode, EnumsApi.FunctionExecContext.internal);
         }
 
