@@ -18,6 +18,7 @@ package ai.metaheuristic.commons.utils;
 
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CustomInterruptedException;
+import com.google.errorprone.annotations.MustBeClosed;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
@@ -26,6 +27,7 @@ import java.time.Duration;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -38,6 +40,22 @@ import java.util.regex.Pattern;
  */
 @Slf4j
 public class ThreadUtils {
+
+    public static final class ResourceLock extends ReentrantLock implements AutoCloseable {
+        @MustBeClosed
+        public ResourceLock obtain() {
+            lock();
+            return this;
+        }
+
+        @Override
+        public void close() {
+            this.unlock();
+        }
+    }
+//    	try (ResourceLock ignored = lock.obtain()) {
+//        // critical section
+//    }
 
     public static class CommonThreadLocker<T> {
         private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();

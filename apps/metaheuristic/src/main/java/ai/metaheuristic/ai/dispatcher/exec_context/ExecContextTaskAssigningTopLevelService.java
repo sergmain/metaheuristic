@@ -138,8 +138,8 @@ public class ExecContextTaskAssigningTopLevelService {
 
     private long mills = 0L;
 
-    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-    private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
     public void findUnassignedTasksAndRegisterInQueue() {
         writeLock.lock();

@@ -41,6 +41,11 @@ public class EventPublisherService {
         eventPublisher.publishEvent(event);
     }
 
+    public void handleFindUnassignedTasksAndRegisterInQueueEvent(FindUnassignedTasksAndRegisterInQueueTxEvent event) {
+        TxUtils.checkTxExists();
+        eventPublisher.publishEvent(event);
+    }
+
     public void publishProcessDeletedExecContextTxEvent(ProcessDeletedExecContextTxEvent event) {
         TxUtils.checkTxExists();
         eventPublisher.publishEvent(event);

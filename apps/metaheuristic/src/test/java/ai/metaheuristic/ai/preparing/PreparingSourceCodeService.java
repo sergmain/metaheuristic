@@ -241,7 +241,7 @@ public class PreparingSourceCodeService {
 
         boolean isQueueEmpty = true;
         for (int i = 0; i < 30; i++) {
-            Thread.sleep(2_000);
+            //Thread.sleep(2_000);
             isQueueEmpty = TaskProviderTopLevelService.allTaskGroupFinished(execContextId);
             if (isQueueEmpty) {
                 break;
@@ -264,7 +264,7 @@ public class PreparingSourceCodeService {
 
         ExecContextCreatorService.ExecContextCreationResult result = createExecContextForTest(preparingSourceCodeData);
         preparingSourceCodeData.setExecContextForTest(result.execContext);
-        ExecContextSyncService.getWithSync(preparingSourceCodeData.getExecContextForTest().id, () -> {
+        ExecContextSyncService.getWithSyncVoid(preparingSourceCodeData.getExecContextForTest().id, () -> {
 
             assertFalse(result.isErrorMessages());
             assertNotNull(preparingSourceCodeData.getExecContextForTest());
@@ -277,13 +277,10 @@ public class PreparingSourceCodeService {
             assertNotNull(preparingSourceCodeData.getExecContextForTest());
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, preparingSourceCodeData.getExecContextForTest().getState());
             ExecContextParamsYaml execContextParamsYaml = result.execContext.getExecContextParamsYaml();
-            ExecContextGraphSyncService.getWithSync(preparingSourceCodeData.getExecContextForTest().execContextGraphId, ()->
-                    ExecContextTaskStateSyncService.getWithSync(preparingSourceCodeData.getExecContextForTest().execContextTaskStateId, ()-> {
+            ExecContextGraphSyncService.getWithSyncVoid(preparingSourceCodeData.getExecContextForTest().execContextGraphId, ()->
+                    ExecContextTaskStateSyncService.getWithSyncVoid(preparingSourceCodeData.getExecContextForTest().execContextTaskStateId, ()-> {
                         txSupportForTestingService.produceAndStartAllTasks(preparingSourceCodeData.getSourceCode(), result.execContext.id, execContextParamsYaml);
-                        return null;
                     }));
-
-            return null;
         });
 
         preparingSourceCodeData.setExecContextForTest(Objects.requireNonNull(execContextService.findById(preparingSourceCodeData.getExecContextForTest().id)));

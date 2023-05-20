@@ -157,7 +157,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
         System.out.println("start taskProviderService.findTask()");
         DispatcherCommParamsYaml.AssignedTask simpleTask0 =
-                taskProviderTopLevelService.findTask(getProcessor().getId(), false);
+                taskProviderTopLevelService.findTask(getCore1().getId(), false);
 
         assertNull(simpleTask0);
 

@@ -77,6 +77,8 @@ public class KeepAliveTopLevelService {
         resp.response.processorCode = req.processor.processorCode;
         try {
             Long processorId = processInfoAboutProcessor(req, remoteAddress, resp);
+            // System.currentTimeMillis() - startMills < 12_000 - this is for to be sure that
+            // request will be processed within http timeout window, which is 20 seconds
             if (System.currentTimeMillis() - startMills < 12_000 || globals.isTesting()) {
                 processInfoAboutCores(processorId, req, startMills, resp);
             }

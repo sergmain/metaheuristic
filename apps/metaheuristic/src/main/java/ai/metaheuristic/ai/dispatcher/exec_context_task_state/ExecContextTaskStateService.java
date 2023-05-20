@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
+import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
+import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
@@ -52,6 +54,7 @@ public class ExecContextTaskStateService {
     private final ExecContextGraphService execContextGraphService;
     private final TaskExecStateService taskExecStateService;
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
+    private final EventPublisherService eventPublisherService;
 
     public static long getCountUnfinishedTasks(ExecContextTaskState execContextTaskState) {
         return execContextTaskState.getExecContextTaskStateParamsYaml().states.entrySet()
@@ -77,6 +80,8 @@ public class ExecContextTaskStateService {
                 execContextGraphId, execContextTaskStateId, taskId, execState, taskContextId);
 
         taskExecStateService.updateTasksStateInDb(status);
+        eventPublisherService.handleFindUnassignedTasksAndRegisterInQueueEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
+
         return status.status;
     }
 

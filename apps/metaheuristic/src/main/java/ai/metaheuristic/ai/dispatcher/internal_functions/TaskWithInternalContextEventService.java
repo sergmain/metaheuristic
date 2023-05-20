@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.el.EvaluateExpressionLanguage;
+import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
@@ -259,19 +260,19 @@ public class TaskWithInternalContextEventService {
         }
     }
 
-    private Void processInternalFunction(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
+    private void processInternalFunction(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
         TxUtils.checkTxNotExists();
         TaskLastProcessingHelper.lastTaskId = null;
         try {
             TaskImpl task = taskRepository.findById(taskId).orElse(null);
             if (task==null) {
                 log.warn("#706.180 Task #{} with internal context doesn't exist", taskId);
-                return null;
+                return;
             }
 
             if (task.execState != EnumsApi.TaskExecState.IN_PROGRESS.value) {
                 log.error("#706.210 Task #"+task.id+" already in progress.");
-                return null;
+                return;
             }
 
             TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
@@ -319,7 +320,6 @@ public class TaskWithInternalContextEventService {
         finally {
             TaskLastProcessingHelper.lastTaskId = taskId;
         }
-        return null;
     }
 
 }
