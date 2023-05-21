@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.mhbp.scenario;
 
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
@@ -70,6 +71,7 @@ import static ai.metaheuristic.ai.utils.CollectionUtils.TreeUtils;
 @Profile("dispatcher")
 public class ScenarioService {
 
+    private final Globals globals;
     private final ApiService apiService;
     private final ApiRepository apiRepository;
     private final ScenarioGroupRepository scenarioGroupRepository;
@@ -91,7 +93,7 @@ public class ScenarioService {
         if (scenarioGroupId==null) {
             return new ScenarioData.ScenariosResult(Page.empty(pageable));
         }
-        pageable = PageUtils.fixPageSize(10, pageable);
+        pageable = PageUtils.fixPageSize(globals.dispatcher.rowsLimit.defaultLimit, pageable);
         Page<SimpleScenario> scenarios = scenarioRepository.findAllByScenarioGroupId(pageable, scenarioGroupId, context.getAccountId());
 
         return new ScenarioData.ScenariosResult(scenarios);

@@ -38,7 +38,8 @@ public interface ScenarioRepository extends CrudRepository<Scenario, Long> {
 
     @Transactional(readOnly = true)
     @Query(value= "select new ai.metaheuristic.ai.mhbp.data.SimpleScenario(s.id, s.scenarioGroupId, s.createdOn, s.name, s.description) " +
-                  " from Scenario s where s.scenarioGroupId=:scenarioGroupId and s.accountId=:accountId")
+                  " from Scenario s where s.scenarioGroupId=:scenarioGroupId and s.accountId=:accountId order by s.id desc")
     Page<SimpleScenario> findAllByScenarioGroupId(Pageable pageable, Long scenarioGroupId, long accountId);
 
 }
+
