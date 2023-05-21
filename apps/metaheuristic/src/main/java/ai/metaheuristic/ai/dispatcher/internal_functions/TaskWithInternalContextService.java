@@ -110,9 +110,9 @@ public class TaskWithInternalContextService {
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
         tpy.task.outputs.forEach(o->o.uploaded = true);
         task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
-        task.setCompleted(true);
+        task.setCompleted(1);
         task.setCompletedOn(System.currentTimeMillis());
-        task.setResultReceived(true);
+        task.setResultReceived(1);
         taskService.save(task);
         return Enums.UploadVariableStatus.OK;
     }

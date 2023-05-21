@@ -318,7 +318,7 @@ public class ExperimentResultService {
 
             ExperimentResultTaskParams ertpy = new ExperimentResultTaskParams();
             ertpy.assignedOn = t.getAssignedOn();
-            ertpy.completed = t.isCompleted();
+            ertpy.completed = t.getCompleted()!=0;
             ertpy.completedOn = t.getCompletedOn();
             ertpy.execState = t.getExecState();
             ertpy.taskId = t.getId();

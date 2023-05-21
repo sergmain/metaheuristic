@@ -230,7 +230,7 @@ public class ExecContextReconciliationTopLevelService {
                     if (task != null) {
                         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
 
-                        if (task.resultReceived && task.isCompleted) {
+                        if (task.resultReceived!=0 && task.completed!=0) {
                             status.taskIsOkIds.add(task.id);
                         }
                         else {

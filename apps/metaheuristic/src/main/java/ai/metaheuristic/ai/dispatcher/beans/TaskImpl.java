@@ -79,7 +79,7 @@ public class TaskImpl implements Serializable, Task {
     public Long completedOn;
 
     @Column(name = "IS_COMPLETED")
-    public boolean isCompleted;
+    public int completed;
 
     @JsonIgnore
     @Nullable
@@ -95,7 +95,7 @@ public class TaskImpl implements Serializable, Task {
 
     // by result it means all outputs which are created by this task
     @Column(name = "IS_RESULT_RECEIVED")
-    public boolean resultReceived;
+    public int resultReceived;
 
     // resource==variable
     @Column(name = "RESULT_RESOURCE_SCHEDULED_ON")

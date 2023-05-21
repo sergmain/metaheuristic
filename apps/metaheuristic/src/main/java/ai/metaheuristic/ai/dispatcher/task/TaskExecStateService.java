@@ -55,7 +55,7 @@ public class TaskExecStateService {
         TaskSyncService.checkWriteLockPresent(task.id);
         TaskImpl t = changeTaskState(task, execState);
         if (markAsCompleted) {
-            t.setCompleted(true);
+            t.setCompleted(1);
             t.setCompletedOn(System.currentTimeMillis());
         }
     }

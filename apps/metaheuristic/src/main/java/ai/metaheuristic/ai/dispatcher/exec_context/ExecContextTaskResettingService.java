@@ -138,7 +138,7 @@ public class ExecContextTaskResettingService {
         task.setFunctionExecResults(null);
         task.setCoreId(null);
         task.setAssignedOn(null);
-        task.setCompleted(false);
+        task.setCompleted(0);
         task.setCompletedOn(null);
         if (targetExecState==null) {
             task.execState = process.cache != null && process.cache.enabled ? EnumsApi.TaskExecState.CHECK_CACHE.value : EnumsApi.TaskExecState.NONE.value;
@@ -146,7 +146,7 @@ public class ExecContextTaskResettingService {
         else {
             task.execState = targetExecState.value;
         }
-        task.setResultReceived(false);
+        task.setResultReceived(1);
         task.setResultResourceScheduledOn(0);
         taskService.save(task);
         for (TaskParamsYaml.OutputVariable output : taskParams.task.outputs) {

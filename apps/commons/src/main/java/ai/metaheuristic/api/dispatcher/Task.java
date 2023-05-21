@@ -35,7 +35,7 @@ public interface Task {
     @Nullable
     Long getCompletedOn();
 
-    boolean isCompleted();
+    int getCompleted();
 
     @Nullable
     String getFunctionExecResults();
@@ -44,7 +44,7 @@ public interface Task {
 
     int getExecState();
 
-    boolean isResultReceived();
+    int getResultReceived();
 
     long getResultResourceScheduledOn();
 
@@ -60,7 +60,7 @@ public interface Task {
 
     void setCompletedOn(@Nullable Long completedOn);
 
-    void setCompleted(boolean isCompleted);
+    void setCompleted(int isCompleted);
 
     void setFunctionExecResults(@Nullable String functionExecResults);
 
@@ -68,7 +68,7 @@ public interface Task {
 
     void setExecState(int execState);
 
-    void setResultReceived(boolean resultReceived);
+    void setResultReceived(int resultReceived);
 
     void setResultResourceScheduledOn(long resultResourceScheduledOn);
 

@@ -134,12 +134,11 @@ public class TestTaskRequest extends FeatureMethods {
         assertNotNull(task);
 
         TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-        TaskSyncService.getWithSyncNullable(task.id, () -> {
+        TaskSyncService.getWithSyncVoid(task.id, () -> {
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
                 Enums.UploadVariableStatus status = taskVariableTopLevelService.updateStatusOfVariable(task.id, output.id).status;
                 assertEquals(Enums.UploadVariableStatus.OK, status);
             }
-            return null;
         });
         taskFinishingTopLevelService.checkTaskCanBeFinished(task.id);
         TaskQueue.TaskGroup taskGroup =
@@ -150,7 +149,7 @@ public class TestTaskRequest extends FeatureMethods {
 
         final TaskImpl task2 = taskRepository.findById(t.taskId).orElse(null);
         assertNotNull(task2);
-        assertTrue(task2.isCompleted);
+        assertTrue(task2.completed!=0);
 
         execContextTopLevelService.updateExecContextStatus(getExecContextForTest().id);
         setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));

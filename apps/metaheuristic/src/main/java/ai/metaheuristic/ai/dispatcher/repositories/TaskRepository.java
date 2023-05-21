@@ -73,7 +73,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select t.id, t.assignedOn, t.execContextId from TaskImpl t " +
-            "where t.coreId=:processorId and t.resultReceived=false and t.isCompleted=false")
+            "where t.coreId=:processorId and t.resultReceived=0 and t.completed=0")
     List<Object[]> findAllByProcessorIdAndResultReceivedIsFalseAndCompletedIsFalse(Long processorId);
 
     // IN_PROGRESS(1)
@@ -98,7 +98,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     List<Long> findForAssigning(Long execContextId, List<Long> ids);
 
     @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-    @Query("SELECT t FROM TaskImpl t where t.coreId=:processorId and t.resultReceived=false and " +
+    @Query("SELECT t FROM TaskImpl t where t.coreId=:processorId and t.resultReceived=0 and " +
             " t.execState =:execState and (:mills - t.resultResourceScheduledOn > 15000) ")
     List<TaskImpl> findForMissingResultVariables(Long processorId, long mills, int execState);
 

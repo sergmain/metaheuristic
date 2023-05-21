@@ -95,7 +95,8 @@ public class TaskFinishingTopLevelService {
         }
 
         if (!S.b(task.functionExecResults)) {
-            if (!task.resultReceived) {
+            //noinspection DoubleNegation
+            if (!(task.resultReceived!=0)) {
                 throw new IllegalStateException("(!task.resultReceived)");
             }
             FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.functionExecResults);
@@ -126,7 +127,7 @@ public class TaskFinishingTopLevelService {
                 .filter(o->o.sourcing==EnumsApi.DataSourcing.dispatcher)
                 .allMatch(o->o.uploaded);
 
-        if (task.resultReceived && allUploaded) {
+        if (task.resultReceived!=0 && allUploaded) {
 
             ExecContextImpl execContext = execContextCache.findById(task.execContextId);
             if (execContext==null) {

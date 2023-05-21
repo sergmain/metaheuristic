@@ -137,14 +137,14 @@ public class TaskFinishingService {
 
     private void finishTaskAsError(TaskImpl task, @Nullable String console, EnumsApi.TaskExecState targetState) {
         final boolean updatePossible = targetState.value == task.execState &&
-                (task.execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value || task.execState == EnumsApi.TaskExecState.ERROR.value) &&
-                task.isCompleted && task.resultReceived && !S.b(task.functionExecResults);
+                                       (task.execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value || task.execState == EnumsApi.TaskExecState.ERROR.value) &&
+                                       task.completed!=0 && task.resultReceived!=0 && !S.b(task.functionExecResults);
         if (updatePossible) {
             log.info("#319.200 task: #{}, updatePossible: {}", task.id, updatePossible);
             return;
         }
         task.setExecState(targetState.value);
-        task.setCompleted(true);
+        task.setCompleted(1);
         task.setCompletedOn(System.currentTimeMillis());
 
         if (S.b(task.functionExecResults)) {
@@ -164,7 +164,7 @@ public class TaskFinishingService {
             }
             task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
         }
-        task.setResultReceived(true);
+        task.setResultReceived(1);
         task = taskService.save(task);
 
         eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));

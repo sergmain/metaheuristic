@@ -163,11 +163,11 @@ public class TaskCheckCachingService {
                     "Process was finished with cached data, cacheProcessId: "+ cacheProcess.id);
 
             task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
-            task.setResultReceived(true);
+            task.setResultReceived(1);
 
             task.execState = EnumsApi.TaskExecState.OK.value;
 
-            task.setCompleted(true);
+            task.setCompleted(1);
             task.setCompletedOn(System.currentTimeMillis());
 
             eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));

@@ -76,10 +76,13 @@ public class ExperimentResultTaskParams implements BaseParams {
     public TaskParams taskParams;
     public int execState;
 
+    @Nullable
     public Long completedOn;
     public boolean completed;
+    @Nullable
     public Long assignedOn;
-    public @Nullable String typeAsString;
-
+    @Nullable
+    public String typeAsString;
+    @Nullable
     public String functionExecResults;
 }

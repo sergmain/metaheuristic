@@ -135,7 +135,7 @@ public class ExecContextFSM {
             log.warn("#303.100 Reporting about non-existed task #{}", result.taskId);
             return;
         }
-        if (task.resultReceived) {
+        if (task.resultReceived!=0) {
             return;
         }
 
@@ -144,7 +144,7 @@ public class ExecContextFSM {
 
     public void storeExecResult(TaskImpl task, ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         task.setFunctionExecResults(result.getResult());
-        task.setResultReceived(true);
+        task.setResultReceived(1);
 
         eventPublisherService.publishCheckTaskCanBeFinishedTxEvent(new CheckTaskCanBeFinishedTxEvent(task.execContextId, task.id));
     }

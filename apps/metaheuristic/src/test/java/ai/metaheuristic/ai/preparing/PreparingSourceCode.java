@@ -186,7 +186,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         // try execute mh.finish if it hasn't yet
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
 
-        ExecContextSyncService.getWithSyncNullable(getExecContextForTest().id, () -> {
+        ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, () -> {
             verifyGraphIntegrity();
             List<Long> taskIds = getUnfinishedTaskVertices(getExecContextForTest());
             assertEquals(0, taskIds.size());
@@ -202,10 +202,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
             List<TaskImpl> tasks = taskRepositoryForTest.findByExecContextIdAsList(getExecContextForTest().id);
             assertEquals(expectedNumberOfTasks, tasks.size());
             for (TaskImpl task : tasks) {
-                assertTrue(task.isCompleted());
+                assertTrue(task.completed!=0);
                 assertEquals(EnumsApi.TaskExecState.OK.value, task.execState);
             }
-            return null;
         });
     }
 
