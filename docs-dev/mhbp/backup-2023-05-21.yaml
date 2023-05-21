@@ -1,0 +1,542 @@
+backup:
+  apis:
+  - code: openai
+    createdOn: 0
+    name: OpenAI
+    scheme: "version: 2\r\ncode: openai-provider:1.0\r\nscheme:\r\n  auth:\r\n   \
+      \ code: openai\r\n  request:\r\n    type: post\r\n    uri: https://api.openai.com/v1/completions\r\
+      \n    prompt:\r\n      place: text\r\n      replace: $prompt$\r\n      text:\
+      \ |+\r\n        {\r\n          \"model\": \"text-davinci-003\",\r\n        \
+      \  \"prompt\": \"$prompt$\",\r\n          \"temperature\": 0.9,\r\n        \
+      \  \"max_tokens\": 150,\r\n          \"top_p\": 1,\r\n          \"frequency_penalty\"\
+      : 0,\r\n          \"presence_penalty\": 0.6,\r\n          \"stop\": [\" Human:\"\
+      , \" AI:\"]\r\n        }\r\n  response:\r\n    type: json\r\n    path: $['choices'][0]['text']\r\
+      \n\r\n"
+  - code: simple
+    createdOn: 0
+    name: simple
+    scheme: "version: 2\r\ncode: simple-provider-localhost:1.0\r\nscheme:\r\n  auth:\r\
+      \n    code: simple\r\n  request:\r\n    type: get\r\n    uri: http://localhost:8080/rest/v1/provider/simple/stub/question\r\
+      \n    prompt:\r\n      place: uri\r\n      param: q\r\n  response:\r\n    type:\
+      \ text\r\n"
+  auths:
+  - code: simple
+    createdOn: 1682738085254
+    params: "version: 1\r\nauth:\r\n  code: simple\r\n  type: basic\r\n  basic:\r\n\
+      \    username: q\r\n    password: '123'\r\n"
+  - code: openai
+    createdOn: 1682738262672
+    params: "version: 1\r\nauth:\r\n  code: openai\r\n  type: token\r\n  token:\r\n\
+      \    place: header\r\n    env: $OPENAI_API_KEY$\r\n"
+  scenarioGroups:
+  - createdOn: 1683283363208
+    description: 'scenario #3'
+    name: 'scenario #3'
+    scenarios:
+    - createdOn: 1683285811139
+      description: 'scen #1'
+      name: 'scen #1'
+      params: |
+        steps: [
+          ]
+        version: 1
+    - createdOn: 1683334267683
+      description: 'scenario #3'
+      name: 'scenario #3'
+      params: |
+        steps: [
+          ]
+        version: 1
+  - createdOn: 1683610446345
+    description: Books
+    name: Books
+    scenarios:
+    - createdOn: 1683864129917
+      description: safdasfdsf
+      name: dsfadfdaf
+      params: |
+        steps:
+        - api:
+            apiId: 3
+            code: simple
+          name: cxvxcvxzvczv
+          p: xcvcvczvc
+          resultCode: xzcvzxvzxc
+          uuid: 4e07fd08-4d14-42df-b698-f2938a3d65ac
+        - api:
+            apiId: 3
+            code: simple
+          name: dsfdsafaf
+          p: sddsafsafda
+          resultCode: sdfadsafsaf
+          uuid: 42a370b8-a867-46b0-9851-9317debfbd4e
+        - api:
+            apiId: 3
+            code: simple
+          name: dsfdsafsa
+          p: fdsafdsaf
+          resultCode: sdafsafdsa
+          uuid: 0c498ac4-54b9-4819-8c68-66cf68444dca
+        - api:
+            apiId: 3
+            code: simple
+          name: dsfadsafs
+          p: sdfdsfadssdfas
+          resultCode: sdafsdafadsf
+          uuid: 8e44ed56-296f-4bbd-8581-a577ef9d90be
+        - api:
+            apiId: 3
+            code: simple
+          name: dsfsafdsafds
+          p: sdafdsfadsaf
+          parentUuid: 8e44ed56-296f-4bbd-8581-a577ef9d90be
+          resultCode: sdfsadfdsafsadf
+          uuid: 2bb3f7df-7461-4a26-9e07-d40ce61e79fe
+        - api:
+            apiId: 3
+            code: simple
+          name: dsfsadfdsf
+          p: asdfdsafd
+          parentUuid: 2bb3f7df-7461-4a26-9e07-d40ce61e79fe
+          resultCode: dsafdsfdsafd
+          uuid: 1b9f1adb-9083-4c73-a10c-4c866a13b4cc
+        - api:
+            apiId: 3
+            code: simple
+          name: adsfdsaf
+          p: dsafadsf
+          parentUuid: 1b9f1adb-9083-4c73-a10c-4c866a13b4cc
+          resultCode: dsfadsfds
+          uuid: e2b4405c-a2b0-4003-9e17-0faeeb414bb4
+        - api:
+            apiId: 3
+            code: simple
+          name: dsafdsaf
+          p: dfsdsfadsafd
+          parentUuid: 42a370b8-a867-46b0-9851-9317debfbd4e
+          resultCode: dsfsadfs
+          uuid: 94609978-d5cc-4936-8725-700b4365d9f1
+        - api:
+            apiId: 2
+            code: openai
+          name: dsfdsafdsfdsaf
+          p: sdafsdfdsafdf
+          parentUuid: 42a370b8-a867-46b0-9851-9317debfbd4e
+          resultCode: sadfsaffdsafdsaf
+          uuid: e9cf3ca0-3eb3-4b0c-9e20-191d19b1fc88
+        - api:
+            apiId: 2
+            code: openai
+          name: rewqrewqre
+          p: wrqewrqer
+          parentUuid: e2b4405c-a2b0-4003-9e17-0faeeb414bb4
+          resultCode: ewqrwrqwerwqr
+          uuid: 78f76ec3-b7c6-4328-8594-2c906f62294e
+        - api:
+            apiId: 3
+            code: simple
+          name: qweewqeqwe
+          p: qwewqewqqweqwe
+          parentUuid: 78f76ec3-b7c6-4328-8594-2c906f62294e
+          resultCode: qeqwewqewq
+          uuid: 4cc22094-6fc0-4bc2-9a35-3c2aae37f882
+        - api:
+            apiId: 3
+            code: simple
+          name: '4654654654'
+          p: '45654654'
+          parentUuid: 1b9f1adb-9083-4c73-a10c-4c866a13b4cc
+          resultCode: '446456546'
+          uuid: f61729d3-cea6-47bc-9093-663a1989b1a4
+        - api:
+            apiId: 3
+            code: simple
+          name: '97879789'
+          p: '879879'
+          parentUuid: e9cf3ca0-3eb3-4b0c-9e20-191d19b1fc88
+          resultCode: '987987987'
+          uuid: d186983f-9d3e-47f1-b7ea-baca7a1a1b6d
+        - api:
+            apiId: 3
+            code: simple
+          name: fdsfsdfsdf
+          p: sdfsdfsdf
+          parentUuid: e9cf3ca0-3eb3-4b0c-9e20-191d19b1fc88
+          resultCode: dsfdsfdsfsdfsd
+          uuid: 62dd10dd-8c09-4afa-99ad-eb4f554bc7e6
+        - api:
+            apiId: 2
+            code: openai
+          name: '464654654'
+          p: '4654654654'
+          parentUuid: 62dd10dd-8c09-4afa-99ad-eb4f554bc7e6
+          resultCode: '465464654'
+          uuid: d1510454-5848-4d51-b05c-c7fe2e9ae51a
+        - api:
+            apiId: 3
+            code: simple
+          name: '433243243'
+          p: '4324324'
+          parentUuid: d1510454-5848-4d51-b05c-c7fe2e9ae51a
+          resultCode: '3242342342'
+          uuid: 6e00a22f-8eea-45d2-bc8c-1be4bf3686c4
+        version: 1
+    - createdOn: 1683970305546
+      description: Fruit production - old, OpenAI
+      name: Fruit production - old, OpenAI
+      params: |
+        steps:
+        - api:
+            apiId: 2
+            code: simple
+          name: List of fruits
+          p: List of fruits which can be grown in US. Output only name of fruit, put each
+            name on new line
+          resultCode: list of fruits
+          uuid: 11891861-069f-480b-9da4-c37481fadc62
+        - function:
+            code: mh.enhance-text
+            context: internal
+          name: List of fruits which can be grown in US
+          p: |-
+            List of fruits which can be grown in US consists of following:
+            [[list of fruits]]
+          resultCode: intro
+          uuid: c127ddf6-3c1d-4bb5-89cd-aeb254c386e0
+        - function:
+            code: mh.batch-line-splitter
+            context: internal
+          name: split list of fruits
+          p: list of fruits
+          resultCode: fruit
+          uuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+        - function:
+            code: mh.aggregate
+            context: internal
+          name: Aggregate results
+          p: intro, fruit intro, fruit description, list of countries
+          resultCode: result
+          uuid: cb1fc039-9aac-4cfd-8392-12f19dae42be
+        - function:
+            code: mh.enhance-text
+            context: internal
+          name: Fruit intro
+          p: "### Information about {{fruit}}\r\n"
+          parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+          resultCode: fruit_intro
+          uuid: 3184558e-1259-4b2b-b2d5-96f36b9ce98b
+        - api:
+            apiId: 2
+            code: simple
+          name: Request description of fruit
+          p: Make short description of {{fruit}}
+          parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+          resultCode: fruit description
+          uuid: 0ae1019f-717a-4ab9-9afc-44a49718781e
+        - api:
+            apiId: 2
+            code: simple
+          name: collect info about fruit
+          p: "Make a list of countries which consume most of {{fruit}}, list first five country\
+            \ only\r\n\r\n\r\n\r\n"
+          parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+          resultCode: best consumer
+          uuid: aa39426f-d2d6-4a3e-92bc-f74a4fa13a8b
+        - function:
+            code: mh.enhance-text
+            context: internal
+          name: List of contries for fruit
+          p: "List of countries which consume most of {{fruit}}:\r\n{{best consumer}}"
+          parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+          resultCode: list of countries
+          uuid: 0c398cbe-2530-421f-9c96-f14f16c36ad1
+        version: 1
+    - createdOn: 1683971163006
+      description: "test #211\r\n\r\nseed: 42"
+      name: 'test #211'
+      params: |
+        steps:
+        - api:
+            apiId: 2
+            code: openai
+          name: sdfsdafd
+          p: sfdsfasdfd
+          resultCode: fdsfadf
+          uuid: d1934fc0-7ce8-4c1a-ba94-19fd6a2c0d15
+        - function:
+            code: mh.enhance-text
+            context: internal
+          name: dsfadfadsfad
+          p: dsfdsafdsafdsf
+          resultCode: result
+          uuid: de13491a-c450-4569-96f3-75d28143ccf6
+        - api:
+            apiId: 3
+            code: simple
+          function:
+            code: mh.aggregate
+            context: internal
+          name: aaa 12311
+          p: aaa 12311
+          parentUuid: d1934fc0-7ce8-4c1a-ba94-19fd6a2c0d15
+          resultCode: aaa 12311
+          uuid: 0da164b4-9e28-40ea-8bc0-25f2843723c5
+        - api:
+            apiId: 2
+            code: openai
+          name: tertertert
+          p: retretret
+          parentUuid: d1934fc0-7ce8-4c1a-ba94-19fd6a2c0d15
+          resultCode: ertretert
+          uuid: 804ba8fb-fa15-4ab8-a7c6-3fe729b8458d
+        version: 1
+    - createdOn: 1684470097931
+      description: Request fruit production info via OpenAI API.
+      name: Fruit production via OpenAI
+      params: |
+        steps:
+        - api:
+            apiId: 2
+            code: openai
+          name: List of fruits
+          p: List of fruits which can be grown in US. Output only name of fruit, put each
+            name on new line, max 5 fruits
+          resultCode: list of fruits
+          uuid: 11891861-069f-480b-9da4-c37481fadc62
+        - function:
+            code: mh.enhance-text
+            context: internal
+          name: List of fruits which can be grown in US
+          p: |-
+            List of fruits which can be grown in US consists of following:
+            [[list of fruits]]
+          resultCode: intro
+          uuid: c127ddf6-3c1d-4bb5-89cd-aeb254c386e0
+        - function:
+            code: mh.batch-line-splitter
+            context: internal
+          name: split list of fruits
+          p: list of fruits
+          resultCode: fruit
+          uuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+        - function:
+            code: mh.aggregate
+            context: internal
+          name: Aggregate results
+          p: intro, fruit intro, fruit description, list of countries
+          resultCode: result
+          uuid: cb1fc039-9aac-4cfd-8392-12f19dae42be
+        - function:
+            code: mh.enhance-text
+            context: internal
+          name: Fruit intro
+          p: "### Information about {{fruit}}\r\n"
+          parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+          resultCode: fruit_intro
+          uuid: 3184558e-1259-4b2b-b2d5-96f36b9ce98b
+        - api:
+            apiId: 2
+            code: openai
+          name: Request description of fruit
+          p: Make short description of fruit {{fruit}}
+          parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+          resultCode: fruit description
+          uuid: 0ae1019f-717a-4ab9-9afc-44a49718781e
+        - api:
+            apiId: 2
+            code: openai
+          name: collect info about fruit
+          p: "Make a list of countries which consume most of {{fruit}}, list first five country\
+            \ only\r\n\r\n\r\n\r\n"
+          parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+          resultCode: best consumer
+          uuid: aa39426f-d2d6-4a3e-92bc-f74a4fa13a8b
+        - function:
+            code: mh.enhance-text
+            context: internal
+          name: List of contries for fruit
+          p: "List of countries which consume most of {{fruit}}:\r\n{{best consumer}}"
+          parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+          resultCode: list of countries
+          uuid: 0c398cbe-2530-421f-9c96-f14f16c36ad1
+        version: 1
+    - createdOn: 1684470110642
+      description: 'test #2'
+      name: 'Copy #2, test #2'
+      params: |
+        steps:
+        - api:
+            apiId: 2
+            code: openai
+          name: sdfsdafd 111
+          p: sfdsfasdfd
+          resultCode: fdsfadf
+          uuid: d1934fc0-7ce8-4c1a-ba94-19fd6a2c0d15
+        - function:
+            code: mh.enhance-text
+            context: internal
+          name: dsfadfadsfad
+          p: dsfdsafdsafdsf
+          resultCode: result
+          uuid: de13491a-c450-4569-96f3-75d28143ccf6
+        - api:
+            apiId: 3
+            code: simple
+          function:
+            code: mh.aggregate
+            context: internal
+          name: aaa 12311
+          p: aaa 12311
+          parentUuid: d1934fc0-7ce8-4c1a-ba94-19fd6a2c0d15
+          resultCode: aaa 12311
+          uuid: 0da164b4-9e28-40ea-8bc0-25f2843723c5
+        - api:
+            apiId: 2
+            code: openai
+          name: tertertert
+          p: retretret
+          parentUuid: d1934fc0-7ce8-4c1a-ba94-19fd6a2c0d15
+          resultCode: ertretert
+          uuid: 804ba8fb-fa15-4ab8-a7c6-3fe729b8458d
+        version: 1
+    - createdOn: 1684483270232
+      description: Request fruit production info via Simple API.
+      name: Fruit production via Simple
+      params: |
+        steps:
+        - api:
+            apiId: 3
+            code: simple
+          name: List of fruits
+          p: List of fruits which can be grown in US. Output only name of fruit, put each
+            name on new line, max 5 fruits
+          resultCode: list of fruits
+          uuid: 11891861-069f-480b-9da4-c37481fadc62
+        - function:
+            code: mh.enhance-text
+            context: internal
+          name: List of fruits which can be grown in US
+          p: |-
+            List of fruits which can be grown in US consists of following:
+            [[list of fruits]]
+          resultCode: intro
+          uuid: c127ddf6-3c1d-4bb5-89cd-aeb254c386e0
+        - function:
+            code: mh.batch-line-splitter
+            context: internal
+          name: split list of fruits
+          p: list of fruits
+          resultCode: fruit
+          uuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+        - function:
+            code: mh.aggregate
+            context: internal
+          name: Aggregate results
+          p: intro, fruit intro, fruit description, list of countries
+          resultCode: result
+          uuid: cb1fc039-9aac-4cfd-8392-12f19dae42be
+        - function:
+            code: mh.enhance-text
+            context: internal
+          name: Fruit intro
+          p: "### Information about {{fruit}}\r\n"
+          parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+          resultCode: fruit_intro
+          uuid: 3184558e-1259-4b2b-b2d5-96f36b9ce98b
+        - api:
+            apiId: 3
+            code: simple
+          name: Request description of fruit
+          p: Make short description of fruit {{fruit}}
+          parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+          resultCode: fruit description
+          uuid: 0ae1019f-717a-4ab9-9afc-44a49718781e
+        - api:
+            apiId: 3
+            code: simple
+          name: collect info about fruit
+          p: "Make a list of countries which consume most of {{fruit}}, list first five country\
+            \ only\r\n\r\n\r\n\r\n"
+          parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+          resultCode: best consumer
+          uuid: aa39426f-d2d6-4a3e-92bc-f74a4fa13a8b
+        - function:
+            code: mh.enhance-text
+            context: internal
+          name: List of contries for fruit
+          p: "List of countries which consume most of {{fruit}}:\r\n{{best consumer}}"
+          parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+          resultCode: list of countries
+          uuid: 0c398cbe-2530-421f-9c96-f14f16c36ad1
+        version: 1
+    - createdOn: 1684544066128
+      description: Fruit production - old, Simple
+      name: Fruit production - old, Simple
+      params: |
+        steps:
+        - api:
+            apiId: 3
+            code: simple
+          name: List of fruits
+          p: List of fruits which can be grown in US. Output only name of fruit, put each
+            name on new line
+          resultCode: list of fruits
+          uuid: 11891861-069f-480b-9da4-c37481fadc62
+        - function:
+            code: mh.enhance-text
+            context: internal
+          name: List of fruits which can be grown in US
+          p: |-
+            List of fruits which can be grown in US consists of following:
+            [[list of fruits]]
+          resultCode: intro
+          uuid: c127ddf6-3c1d-4bb5-89cd-aeb254c386e0
+        - function:
+            code: mh.batch-line-splitter
+            context: internal
+          name: split list of fruits
+          p: list of fruits
+          resultCode: fruit
+          uuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+        - function:
+            code: mh.aggregate
+            context: internal
+          name: Aggregate results
+          p: intro, fruit intro, fruit description, list of countries
+          resultCode: result
+          uuid: cb1fc039-9aac-4cfd-8392-12f19dae42be
+        - function:
+            code: mh.enhance-text
+            context: internal
+          name: Fruit intro
+          p: "### Information about {{fruit}}\r\n"
+          parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+          resultCode: fruit_intro
+          uuid: 3184558e-1259-4b2b-b2d5-96f36b9ce98b
+        - api:
+            apiId: 3
+            code: simple
+          name: Request description of fruit
+          p: Make short description of {{fruit}}
+          parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+          resultCode: fruit description
+          uuid: 0ae1019f-717a-4ab9-9afc-44a49718781e
+        - api:
+            apiId: 3
+            code: simple
+          name: collect info about fruit
+          p: "Make a list of countries which consume most of {{fruit}}, list first five country\
+            \ only\r\n\r\n\r\n\r\n"
+          parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+          resultCode: best consumer
+          uuid: aa39426f-d2d6-4a3e-92bc-f74a4fa13a8b
+        - function:
+            code: mh.enhance-text
+            context: internal
+          name: List of contries for fruit
+          p: "List of countries which consume most of {{fruit}}:\r\n{{best consumer}}"
+          parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+          resultCode: list of countries
+          uuid: 0c398cbe-2530-421f-9c96-f14f16c36ad1
+        version: 1
+version: 1

@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,4 +45,8 @@ public interface AuthRepository extends CrudRepository<Auth, Long> {
     @Query(value= "select a from Auth a where a.companyId=:companyUniqueId")
     List<Auth> findAllByCompanyUniqueId(Long companyUniqueId);
 
+    @Nullable
+    @Transactional(readOnly = true)
+    @Query(value= "select a from Auth a where a.code=:code")
+    Auth findByCode(String code);
 }

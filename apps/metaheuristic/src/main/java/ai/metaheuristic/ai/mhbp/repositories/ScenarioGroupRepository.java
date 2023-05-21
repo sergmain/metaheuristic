@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,4 +46,9 @@ public interface ScenarioGroupRepository extends CrudRepository<ScenarioGroup, L
     @Transactional(readOnly = true)
     @Query(value= "select a from ScenarioGroup a")
     List<ScenarioGroup> findAllAsList();
+
+    @Nullable
+    @Transactional(readOnly = true)
+    @Query(value= "select a from ScenarioGroup a where a.name=:name")
+    ScenarioGroup findByName(String name);
 }

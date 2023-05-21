@@ -115,7 +115,7 @@ public class Config {
     @Component
     @RequiredArgsConstructor
     public static class SpringChecker {
-        private static final List<String> POSSIBLE_PROFILES = List.of("dispatcher", "processor", "quickstart", "mysql", "postgresql");
+        private static final List<String> POSSIBLE_PROFILES = List.of("dispatcher", "processor", "quickstart", "mysql", "postgresql", "h2");
 
         private final ApplicationContext appCtx;
 

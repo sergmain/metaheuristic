@@ -16,15 +16,14 @@
 
 package ai.metaheuristic.ai.mhbp.rest;
 
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.mhbp.settings.MhbpSettingsService;
-import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.AbstractResource;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,8 +34,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.LocalDate;
 
 /**
@@ -52,12 +49,15 @@ import java.time.LocalDate;
 public class MhbpSettingsRestController {
 
     private final MhbpSettingsService mhbpSettingsService;
+    private final UserContextService userContextService;
 
     //  @RequestHeader("Content-Type") String contentType
     @PostMapping(value = "/import")
     //@PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest importBackup(final MultipartFile file, Authentication authentication) {
-        return OperationStatusRest.OPERATION_STATUS_OK;
+        DispatcherContext context = userContextService.getContext(authentication);
+        OperationStatusRest result = mhbpSettingsService.importBackup(file, context);
+        return result;
     }
 
     // text/yaml
@@ -65,7 +65,7 @@ public class MhbpSettingsRestController {
     @GetMapping(value = "/export")
     //@PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public HttpEntity<String> exportBackup() {
-        final String backup = mhbpSettingsService.export();
+        final String backup = mhbpSettingsService.exportBackup();
 
         HttpHeaders httpHeaders = new HttpHeaders();
 //        httpHeaders.setContentType(new MediaType("application/text;charset=UTF-8"));

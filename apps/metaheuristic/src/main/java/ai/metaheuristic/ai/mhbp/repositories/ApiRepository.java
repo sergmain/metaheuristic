@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +45,7 @@ public interface ApiRepository extends CrudRepository<Api, Long> {
     @Query(value= "select a from Api a where a.companyId=:companyUniqueId")
     List<Api> findAllByCompanyUniqueId(Long companyUniqueId);
 
+    @Nullable
     @Transactional(readOnly = true)
     @Query(value= "select a from Api a where a.code=:apiCode")
     Api findByApiCode(String apiCode);
