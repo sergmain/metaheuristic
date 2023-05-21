@@ -22,15 +22,11 @@ import ai.metaheuristic.ai.utils.cleaner.CleanerInterceptor;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nz.net.ultraq.thymeleaf.layoutdialect.LayoutDialect;
-import org.apache.catalina.connector.Connector;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
-import org.springframework.boot.web.server.ConfigurableWebServerFactory;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -74,35 +70,6 @@ public class Config {
     private final Globals globals;
     @SuppressWarnings("unused")
     private final SpringChecker springChecker;
-
-    @Bean
-    public LayoutDialect layoutDialect() {
-        return new LayoutDialect();
-    }
-
-
-    @Value("${ajp.port:#{0}}")
-    private int ajpPort;
-
-    // TODO p9 2021-12-12 disabled because isn't used at this time and not tested
-//    @Value("${ajp.enabled:#{false}}")
-    @SuppressWarnings("FieldCanBeLocal")
-    private boolean ajpEnabled = false;
-
-    // https://careydevelopment.us/2017/06/19/run-spring-boot-apache-web-server-front-end/
-    @Bean
-    public ConfigurableWebServerFactory servletContainer() {
-        TomcatServletWebServerFactory tomcat = new TomcatServletWebServerFactory();
-        if (ajpEnabled && ajpPort!=0) {
-            Connector ajpConnector = new Connector("AJP/1.3");
-            ajpConnector.setPort(ajpPort);
-            ajpConnector.setSecure(false);
-            ajpConnector.setScheme("http");
-            ajpConnector.setAllowTrace(false);
-            tomcat.addAdditionalTomcatConnectors(ajpConnector);
-        }
-        return tomcat;
-    }
 
     @Component
     public static class EOFCustomFilter implements Filter {

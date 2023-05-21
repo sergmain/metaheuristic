@@ -73,6 +73,13 @@ public class TestAccessRestriction {
     }
 
     @Test
+    public void testUnauthorizedAccessToNonRest() throws Exception {
+        mockMvc.perform(get("/user"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(cookie().doesNotExist(Consts.WEB_CONTAINER_SESSIONID_NAME));
+    }
+
+    @Test
     public void testUnauthorizedAccessToTest() throws Exception {
         mockMvc.perform(get("/rest/v1/test"))
                 .andExpect(status().isUnauthorized())

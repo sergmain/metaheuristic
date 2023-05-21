@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.core;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
  * User: Serg
@@ -30,54 +30,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Profile("dispatcher")
 public class DefaultController {
 
-    @RequestMapping("/")
+    @RequestMapping(path={"/index", "/"})
+    @ResponseBody
     public String index1() {
         return "index";
     }
-
-    @GetMapping("/index")
-    public String index2() {
-        return "index";
-    }
-
-    @GetMapping("/admin")
-    public String admin() {
-        return "admin";
-    }
-
-    @GetMapping("/user")
-    public String user() {
-        // info about current user
-        return "user";
-    }
-
-    @GetMapping("/about")
-    public String about() {
-        return "about";
-    }
-
-    @GetMapping("/login")
-    public String login() {
-        return "login";
-    }
-
-    @GetMapping("/403")
-    public String error403() {
-        return "error/403";
-    }
-
-    @GetMapping("/405")
-    public String error405() {
-        return "error/405";
-    }
-
-/*
-    @RequestMapping("/uploadError")
-    public ModelAndView onUploadError(HttpServletRequest request) {
-        ModelAndView modelAndView = new ModelAndView("uploadPage");
-        modelAndView.addObject("error", request.getAttribute(WebUtils.ERROR_MESSAGE_ATTRIBUTE));
-        return modelAndView;
-    }
-*/
 
 }
