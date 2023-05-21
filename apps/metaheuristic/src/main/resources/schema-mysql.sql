@@ -616,7 +616,6 @@ CREATE table mhbp_scenario
     ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,
     ACCOUNT_ID          INT UNSIGNED    NOT NULL,
-    API_ID              INT UNSIGNED    NOT NULL,
     SCENARIO_GROUP_ID   INT UNSIGNED    NOT NULL,
     CREATED_ON          bigint          NOT NULL,
     NAME                VARCHAR(50)     NOT NULL,

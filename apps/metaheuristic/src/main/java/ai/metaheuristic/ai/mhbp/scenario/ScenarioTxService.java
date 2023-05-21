@@ -68,16 +68,12 @@ public class ScenarioTxService {
     }
 
     @Transactional
-    public OperationStatusRest createScenario(String scenarioGroupId, String name, String description, String apiId, DispatcherContext context) {
+    public OperationStatusRest createScenario(String scenarioGroupId, String name, String description, DispatcherContext context) {
         if (S.b(scenarioGroupId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.040 scenarioGroupId is null");
         }
-        if (S.b(apiId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.080 apiId is null");
-        }
         Scenario s = new Scenario();
         s.scenarioGroupId = Long.parseLong(scenarioGroupId);
-        s.apiId = Long.parseLong(apiId);
         s.name = name;
         s.description = description;
         s.accountId = context.getAccountId();

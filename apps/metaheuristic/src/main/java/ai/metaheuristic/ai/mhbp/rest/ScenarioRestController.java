@@ -115,10 +115,9 @@ public class ScenarioRestController {
             @RequestParam(name = "scenarioGroupId") String scenarioGroupId,
             @RequestParam(name = "name") String name,
             @RequestParam(name = "description") String description,
-            @RequestParam(name = "apiId") String apiId,
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return scenarioTxService.createScenario(scenarioGroupId, name, description, apiId, context);
+        return scenarioTxService.createScenario(scenarioGroupId, name, description, context);
     }
 
     @PostMapping("/scenario-update-info-commit")

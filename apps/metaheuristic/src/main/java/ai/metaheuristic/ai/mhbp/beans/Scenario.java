@@ -50,23 +50,8 @@ public class Scenario implements Serializable {
     @Version
     public Integer version;
 
-/*
-CREATE table mhbp_scenario
-(
-    ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION             INT UNSIGNED    NOT NULL,
-    ACCOUNT_ID          INT UNSIGNED    NOT NULL,
-    SCENARIO_GROUP_ID   INT UNSIGNED    NOT NULL,
-    CREATED_ON          bigint          NOT NULL,
-    NAME                VARCHAR(50)     NOT NULL,
-    DESCRIPTION         VARCHAR(250)    NOT NULL
-);
- */
     @Column(name = "ACCOUNT_ID")
     public long accountId;
-
-    @Column(name = "API_ID")
-    public long apiId;
 
     @Column(name = "SCENARIO_GROUP_ID")
     public long scenarioGroupId;
