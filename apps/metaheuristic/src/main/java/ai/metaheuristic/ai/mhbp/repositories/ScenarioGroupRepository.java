@@ -25,6 +25,9 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.List;
+
 /**
  * @author Sergio Lissner
  * Date: 3/5/2023
@@ -39,4 +42,7 @@ public interface ScenarioGroupRepository extends CrudRepository<ScenarioGroup, L
     @Query(value= "select a from ScenarioGroup a where a.accountId=:accountId")
     Page<ScenarioGroup> findAllByAccountId(Pageable pageable, Long accountId);
 
+    @Transactional(readOnly = true)
+    @Query(value= "select a from ScenarioGroup a")
+    List<ScenarioGroup> findAllAsList();
 }

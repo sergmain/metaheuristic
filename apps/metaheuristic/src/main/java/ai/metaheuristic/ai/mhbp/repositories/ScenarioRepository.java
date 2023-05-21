@@ -26,6 +26,8 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * @author Sergio Lissner
  * Date: 3/5/2023
@@ -40,6 +42,10 @@ public interface ScenarioRepository extends CrudRepository<Scenario, Long> {
     @Query(value= "select new ai.metaheuristic.ai.mhbp.data.SimpleScenario(s.id, s.scenarioGroupId, s.createdOn, s.name, s.description) " +
                   " from Scenario s where s.scenarioGroupId=:scenarioGroupId and s.accountId=:accountId order by s.id desc")
     Page<SimpleScenario> findAllByScenarioGroupId(Pageable pageable, Long scenarioGroupId, long accountId);
+
+    @Transactional(readOnly = true)
+    @Query(value= "select s from Scenario s where s.scenarioGroupId=:scenarioGroupId")
+    List<Scenario> findAllByScenarioGroupId(Long scenarioGroupId);
 
 }
 
