@@ -67,8 +67,6 @@ public class MultiHttpSecurityConfig {
         return source;
     }
 
-    private static final String REST_REALM = "REST realm";
-
     @Bean
     public SecurityFilterChain restFilterChain(HttpSecurity http) throws Exception {
         http
@@ -79,7 +77,7 @@ public class MultiHttpSecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/index.html", "/*.js", "/*.css", "/*.ico", "/assets/**","/resources/**", "/rest/login").permitAll()
+                .antMatchers("/","/index.html", "/*.js", "/*.css", "/favicon.ico", "/assets/**","/resources/**", "/rest/login").permitAll()
                 .antMatchers("/rest/**/**").authenticated()
                 .anyRequest().denyAll()
                 .and()

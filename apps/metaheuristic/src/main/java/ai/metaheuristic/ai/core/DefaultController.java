@@ -30,10 +30,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Profile("dispatcher")
 public class DefaultController {
 
-    @RequestMapping(path={"/index", "/"})
+    @RequestMapping(path={"/test-index"})
     @ResponseBody
     public String index1() {
-        return "index";
+        return "test-index";
     }
 
 }
