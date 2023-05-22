@@ -55,7 +55,7 @@ For commercial use you must buy commercial annual subscription if needed:
 One instance of Metaheuristic can handle multiply Processors.   
 \*\*\* instance of DB is an installation of database in OS, not a scheme or database in term of DLL.
 I.e. - if you want to use multi-tenant option and host all your companies and users in one installation of DB, you have to buy subscription.
-Accounts in Main company (ID #1) are excluded from counting.
+Accounts in Main company (ID #1) are excluded from counting.  
 \*\*\*\* Citing isn't required but we will be glad if you cite Metaheuristic in your paper.
 
 Commercial usage
