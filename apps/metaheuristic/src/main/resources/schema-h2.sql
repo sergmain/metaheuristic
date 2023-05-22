@@ -152,7 +152,7 @@ VALUES
 insert into mh_account
 (version, COMPANY_ID, is_acc_not_expired, is_not_locked, is_cred_not_expired, is_enabled, USERNAME, PASSWORD, PUBLIC_NAME, ROLES, CREATED_ON, UPDATED_ON)
 VALUES
-(0, 2, true, true, true, true, 'admin', '$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu', 'admin for company #1', 'ROLE_ADMIN', datediff('ms', '1970-01-01', CURRENT_DATE), datediff('ms', '1970-01-01', CURRENT_DATE));
+(0, 2, true, true, true, true, 'qqq', '$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu', 'admin for company #1', 'ROLE_ADMIN', datediff('ms', '1970-01-01', CURRENT_DATE), datediff('ms', '1970-01-01', CURRENT_DATE));
 
 
 CREATE TABLE mh_processor
