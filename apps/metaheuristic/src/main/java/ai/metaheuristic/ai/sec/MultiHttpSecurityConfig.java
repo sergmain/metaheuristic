@@ -79,7 +79,7 @@ public class MultiHttpSecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/rest/login").permitAll()
+                .antMatchers("/index.html", "/*.js", "/*.css", "/*.ico", "/assets/**","/resources/**", "/rest/login").permitAll()
                 .antMatchers("/rest/**/**").authenticated()
                 .anyRequest().denyAll()
                 .and()
