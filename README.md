@@ -44,7 +44,7 @@ For commercial use you must buy commercial annual subscription if needed:
 | Type of customer (Org or personal)                               | Conditions of using   |
 |------------------------------------------------------------------|-----------------------|
 | Personal use                                                     | Free to use           |  
-| Commercial usage in company owned up to 3 persons\*              | Free to use           |  
+| Commercial usage in company owned up to 2 persons\*              | Free to use           |  
 | Scientific researches                                            | Free to use\*\*\*\*   |  
 | Non-profit organizations                                         | Free to use           |  
 | Commercial usage without MHBP, less than 25 Processors\*\*       | Free to use           | 
