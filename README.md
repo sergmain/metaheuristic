@@ -21,11 +21,21 @@ Prerequisites: Java 17, token OPENAI_API_KEY
 ```commandline
 java -Xms1g -Xmx1g -Dfile.encoding=UTF-8 -Dspring.profiles.active=dispatcher,h2 -DMH_HOME=/mhbp_home -jar distrib/metaheuristic.jar
 ```
- - access http://localhost:8080/ 
-    - login: qqq
-    - password: 123
 
- - The article about details for [Immediate start](https://github.com/sergmain/metaheuristic/wiki/Immediate-start)
+Upload exported before a backup:
+
+- go to directory docs-dev/mhbp and launch a script 'curl-mhbp-backup-import'
+
+access http://localhost:8080/  
+    - login: qqq 
+    - password: 123 
+
+change url to 
+```http request
+http://localhost:4200/#/mhbp/scenario
+```
+
+The article about details for [Immediate start](https://github.com/sergmain/metaheuristic/wiki/Immediate-start)
 
 
 ## Quick start
