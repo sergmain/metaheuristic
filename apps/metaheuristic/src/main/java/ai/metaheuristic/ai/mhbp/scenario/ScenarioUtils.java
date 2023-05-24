@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.mhbp.scenario;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunction;
-import ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter.BatchLineSplitterFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.enhance_text.EnhanceTextFunction;
@@ -162,7 +161,10 @@ public class ScenarioUtils {
             // 60 second for exec
             p.timeoutBeforeTerminate = 60L;
 
-//            if (step.function==null || !Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code)) {
+            if (!S.b(step.expected)) {
+                p.metas.add(Map.of(Consts.EXPECTED, step.expected));
+            }
+
             if (step.function==null || (!Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code) && !Consts.MH_AGGREGATE_FUNCTION.equals(step.function.code))) {
                 extractInputVariables(p.inputs, step);
                 extractOutputVariables(p.outputs, step, ".txt");
@@ -181,13 +183,11 @@ public class ScenarioUtils {
                 }
                 else if (Consts.MH_ENHANCE_TEXT_FUNCTION.equals(step.function.code)) {
                     p.metas.add(Map.of(EnhanceTextFunction.TEXT, step.p));
-//                    p.metas.add(Map.of(BatchLineSplitterFunction.OUTPUT_VARIABLE, getNameForVariable(getVariables(step.resultCode, true).get(0))));
                 }
                 else if (Consts.MH_AGGREGATE_FUNCTION.equals(step.function.code)) {
                     p.metas.add(Map.of(AggregateFunction.VARIABLES, step.p));
                     p.metas.add(Map.of(AggregateFunction.TYPE, AggregateFunction.ResultType.text.toString()));
                     p.metas.add(Map.of(AggregateFunction.PRODUCE_METADATA, "false"));
-//                    p.metas.add(Map.of(BatchLineSplitterFunction.OUTPUT_VARIABLE, getNameForVariable(getVariables(step.resultCode, true).get(0))));
                     extractOutputVariables(p.outputs, step, ".txt");
                 }
             }

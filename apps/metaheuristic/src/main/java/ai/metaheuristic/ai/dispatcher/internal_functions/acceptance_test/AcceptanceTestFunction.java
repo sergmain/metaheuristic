@@ -46,8 +46,6 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.meta_not_foun
 @RequiredArgsConstructor
 public class AcceptanceTestFunction implements InternalFunction {
 
-    public static final String EXPECTED = "expected";
-
     private final ApplicationEventPublisher eventPublisher;
     private final ApiCallService apiCallService;
 
@@ -71,9 +69,9 @@ public class AcceptanceTestFunction implements InternalFunction {
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
 
-        String prompt = MetaUtils.getValue(taskParamsYaml.task.metas, EXPECTED);
+        String prompt = MetaUtils.getValue(taskParamsYaml.task.metas, Consts.EXPECTED);
         if (S.b(prompt)) {
-            throw new InternalFunctionException(meta_not_found, "514.040 meta '" + EXPECTED + "' wasn't found or it's blank");
+            throw new InternalFunctionException(meta_not_found, "514.040 meta '" + Consts.EXPECTED + "' wasn't found or it's blank");
         }
 
         ProviderData.QuestionAndAnswer answer = apiCallService.callApi(simpleExecContext, taskId, taskContextId, taskParamsYaml);

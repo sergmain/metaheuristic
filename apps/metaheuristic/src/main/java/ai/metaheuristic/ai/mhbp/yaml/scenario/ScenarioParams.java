@@ -70,6 +70,10 @@ public class ScenarioParams implements BaseParams {
         public String r;
         public String resultCode;
 
+        // this field is for acceptance-test function only. in future, it'll be changed to meta, maybe.
+        @Nullable
+        public String expected;
+
         @Nullable
         public Api api;
 

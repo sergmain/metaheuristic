@@ -210,7 +210,7 @@ public class ScenarioService {
 
     public OperationStatusRest createOrChangeScenarioStep(
             String scenarioGroupId, String scenarioId, String uuid, String parentUuid, String name, String prompt,
-            String apiId, String resultCode, String functionCode, DispatcherContext context) {
+            String apiId, String resultCode, String expected, String functionCode, DispatcherContext context) {
 
         if (S.b(scenarioGroupId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.120 scenarioGroupId is null");
@@ -236,7 +236,7 @@ public class ScenarioService {
 
         ScenarioParams.Step step;
         if (S.b(uuid)) {
-            step = new ScenarioParams.Step(UUID.randomUUID().toString(), parentUuid, name, prompt, null, resultCode, null, null);
+            step = new ScenarioParams.Step(UUID.randomUUID().toString(), parentUuid, name, prompt, null, resultCode, expected, null, null);
             sp.steps.add(step);
         }
         else {

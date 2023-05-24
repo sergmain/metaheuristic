@@ -173,4 +173,5 @@ public class Consts {
 
     public static final String JSONPATH_CONTENT = "$['input'][*]['content']";
 
+    public static final String EXPECTED = "expected";
 }

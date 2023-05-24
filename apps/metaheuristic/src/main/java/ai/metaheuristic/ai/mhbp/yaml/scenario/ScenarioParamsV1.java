@@ -69,6 +69,10 @@ public class ScenarioParamsV1 implements BaseParams {
         public String r;
         public String resultCode;
 
+        // this field is for acceptance-test function only. in future, it'll be changed to meta, maybe.
+        @Nullable
+        public String expected;
+
         @Nullable
         public ApiV1 api;
 
