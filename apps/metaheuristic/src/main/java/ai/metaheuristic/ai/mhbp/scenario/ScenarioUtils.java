@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.mhbp.scenario;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallFunction;
+import ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter.BatchLineSplitterFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.enhance_text.EnhanceTextFunction;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
@@ -168,8 +169,8 @@ public class ScenarioUtils {
             }
 
             if (isApi) {
-                p.metas.add(Map.of(ApiCallFunction.PROMPT, step.p));
-                p.metas.add(Map.of(ApiCallFunction.API_CODE, step.api.code));
+                p.metas.add(Map.of(ApiCallService.PROMPT, step.p));
+                p.metas.add(Map.of(ApiCallService.API_CODE, step.api.code));
             }
             if (step.function!=null) {
                 if (Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code)) {

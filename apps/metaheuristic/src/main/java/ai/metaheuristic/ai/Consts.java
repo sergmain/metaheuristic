@@ -142,6 +142,7 @@ public class Consts {
     public static final String MH_REDUCE_VARIABLES_FUNCTION = "mh.reduce-variables";
     public static final String MH_API_CALL_FUNCTION = "mh.api-call";
     public static final String MH_ENHANCE_TEXT_FUNCTION = "mh.enhance-text";
+    public static final String MH_ACCEPTANCE_TEST_FUNCTION = "mh.acceptance-test";
 
     public static final ExecContextParamsYaml.FunctionDefinition MH_FINISH_FUNCTION_INSTANCE = new ExecContextParamsYaml.FunctionDefinition(MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
 
