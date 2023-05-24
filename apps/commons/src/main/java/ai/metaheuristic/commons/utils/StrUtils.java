@@ -63,6 +63,10 @@ public class StrUtils {
         return StringUtils.replaceEach(code, new String[]{":", ",", " "}, new String[]{"-", "_", "_"});
     }
 
+    public static String normalizeVariable(String code) {
+        return StringUtils.replaceEach(code, new String[]{":", ",", " ", "-"}, new String[]{"_", "_", "_", "_"});
+    }
+
     @Nullable
     public static String getExtension(String filename) {
         if (S.b(filename)) {
@@ -105,14 +109,27 @@ public class StrUtils {
         return COPY_NUMBER_PREFIX + i +", " + s;
     }
 
-    public static String getCode(String name, Supplier<String> codeFunc) {
+    // this method is for getting code for SourceCodeParamsYaml.uid or for SourceCodeParamsYaml.Process.code
+    public static String getCode(String name, Supplier<String> defaultNameFunc) {
         String code;
         if (isCodeOk(name)) {
             code = name;
         }
         else {
             String n = normalizeCode(name);
-            code = isCodeOk(n) ? n : codeFunc.get();
+            code = isCodeOk(n) ? n : defaultNameFunc.get();
+        }
+        return code;
+    }
+
+    public static String getVariableName(String name, Supplier<String> defaultNameFunc) {
+        String code;
+        if (isVarNameOk(name)) {
+            code = name;
+        }
+        else {
+            String n = normalizeVariable(name);
+            code = isVarNameOk(n) ? n : defaultNameFunc.get();
         }
         return code;
     }

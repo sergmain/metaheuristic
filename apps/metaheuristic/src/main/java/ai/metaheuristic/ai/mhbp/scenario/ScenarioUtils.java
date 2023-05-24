@@ -173,8 +173,9 @@ public class ScenarioUtils {
             if (isApi) {
                 p.metas.add(Map.of(ApiCallService.PROMPT, step.p));
                 p.metas.add(Map.of(ApiCallService.API_CODE, step.api.code));
+                p.triesAfterError = 2;
             }
-            if (step.function!=null) {
+            else {
                 if (Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code)) {
                     p.metas.add(Map.of(BatchLineSplitterFunction.NUMBER_OF_LINES_PER_TASK, "1"));
                     p.metas.add(Map.of(BatchLineSplitterFunction.VARIABLE_FOR_SPLITTING, getNameForVariable(getVariables(step.p, true).get(0))));
@@ -194,7 +195,6 @@ public class ScenarioUtils {
 
             //p.cache = new SourceCodeParamsYaml.Cache(true, true);
             p.cache = null;
-            p.triesAfterError = 2;
 
             if (CollectionUtils.isNotEmpty(itemWithUuid.items)) {
                 p.subProcesses = new SourceCodeParamsYaml.SubProcesses(EnumsApi.SourceCodeSubProcessLogic.sequential, new ArrayList<>());
@@ -230,7 +230,7 @@ public class ScenarioUtils {
     }
 
     public static String getNameForVariable(String name) {
-        return StrUtils.getCode(name, () -> {
+        return StrUtils.getVariableName(name, () -> {
             log.error("Wrong name for variable: " + name);
             throw new IllegalStateException("Wrong name of variable: " + name);
         }).toLowerCase();

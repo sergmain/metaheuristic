@@ -242,7 +242,7 @@ public class AggregateFunction implements InternalFunction {
             }
             final String str = vars.get(0);
             if (!S.b(str)) {
-                names.add(StrUtils.getCode(str, ()-> {
+                names.add(StrUtils.getVariableName(str, ()-> {
                     throw new InternalFunctionException(
                             name_of_variable_in_meta_is_broken, "#979.480 Meta 'variables' wasn't found or empty, s: " + s);
                 }));

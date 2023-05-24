@@ -34,6 +34,14 @@ public class TestStrUtils {
     }
 
     @Test
+    public void test_getVariableName() {
+        assertEquals("aaa", StrUtils.getVariableName("aaa", CODE_FUNC));
+        assertEquals("aaa_bbb", StrUtils.getVariableName("aaa_bbb", CODE_FUNC));
+        assertEquals("aaa_bbb", StrUtils.getVariableName("aaa bbb", CODE_FUNC));
+        assertEquals("aaa_bbb", StrUtils.getVariableName("aaa-bbb", CODE_FUNC));
+    }
+
+    @Test
     public void testMatching() {
         assertTrue(StrUtils.isCodeOk("1234567890-abc_xyz:1.0"));
 

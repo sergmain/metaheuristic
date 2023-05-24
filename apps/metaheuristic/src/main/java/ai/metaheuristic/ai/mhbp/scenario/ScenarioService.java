@@ -247,6 +247,7 @@ public class ScenarioService {
             step.name = name;
             step.p = prompt;
             step.resultCode = resultCode;
+            step.expected = expected;
         }
 
         if (S.b(functionCode)) {

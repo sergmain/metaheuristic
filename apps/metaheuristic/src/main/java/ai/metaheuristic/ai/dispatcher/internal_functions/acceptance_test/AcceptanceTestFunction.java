@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.mhbp.provider.ProviderData;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
@@ -33,6 +34,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.general_error;
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.meta_not_found;
 
 /**
@@ -69,15 +71,28 @@ public class AcceptanceTestFunction implements InternalFunction {
             ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
 
-        String prompt = MetaUtils.getValue(taskParamsYaml.task.metas, Consts.EXPECTED);
-        if (S.b(prompt)) {
+        String expected = MetaUtils.getValue(taskParamsYaml.task.metas, Consts.EXPECTED);
+        if (S.b(expected)) {
             throw new InternalFunctionException(meta_not_found, "514.040 meta '" + Consts.EXPECTED + "' wasn't found or it's blank");
         }
 
         ProviderData.QuestionAndAnswer answer = apiCallService.callApi(simpleExecContext, taskId, taskContextId, taskParamsYaml);
-        String s = answer.a();
-
-        eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
+        try {
+            if (answer.status()==EnumsApi.OperationStatus.ERROR) {
+                throw new InternalFunctionException(meta_not_found, "514.080 error querying API: " + answer.error());
+            }
+            String s = answer.a();
+            if (S.b(s)) {
+                throw new InternalFunctionException(meta_not_found, "514.120 answer is epmty");
+            }
+            final String stripped = s.strip();
+            if (!stripped.equals(expected)) {
+                throw new InternalFunctionException(general_error, "514.160 Expected: "+expected+", but result is: " + stripped);
+            }
+        }
+        finally {
+            eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
+        }
 
         //noinspection unused
         int i=0;
