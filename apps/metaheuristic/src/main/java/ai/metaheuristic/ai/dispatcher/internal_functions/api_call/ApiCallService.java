@@ -96,11 +96,11 @@ public class ApiCallService {
             }
             prompt = StringUtils.replaceEach(prompt, new String[]{"[[" + variable + "]]", "{{" + variable + "}}"}, new String[]{value, value});
         }
-
+        log.info("513.360 prompt: {}", prompt);
         ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, null);
         ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
         if (answer.status()!=OK || S.b(answer.a())) {
-            throw new InternalFunctionException(data_not_found, "#513.340 API call error: "+answer.error()+", prompt: " + prompt+", answer: " + answer.a());
+            throw new InternalFunctionException(data_not_found, "513.400 API call error: "+answer.error()+", prompt: " + prompt+", answer: " + answer.a());
         }
 
         TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);

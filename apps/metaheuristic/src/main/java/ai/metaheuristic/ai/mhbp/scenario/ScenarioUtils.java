@@ -185,6 +185,13 @@ public class ScenarioUtils {
                 else if (Consts.MH_ENHANCE_TEXT_FUNCTION.equals(step.function.code)) {
                     p.metas.add(Map.of(EnhanceTextFunction.TEXT, step.p));
                 }
+                else if (Consts.MH_ACCEPTANCE_TEST_FUNCTION.equals(step.function.code)) {
+                    if (step.api==null || S.b(step.api.code)) {
+                        throw new IllegalStateException("(step.api==null || S.b(step.api.code))");
+                    }
+                    p.metas.add(Map.of(ApiCallService.PROMPT, step.p));
+                    p.metas.add(Map.of(ApiCallService.API_CODE, step.api.code));
+                }
                 else if (Consts.MH_AGGREGATE_FUNCTION.equals(step.function.code)) {
                     p.metas.add(Map.of(AggregateFunction.VARIABLES, step.p));
                     p.metas.add(Map.of(AggregateFunction.TYPE, AggregateFunction.ResultType.text.toString()));

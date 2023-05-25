@@ -129,7 +129,7 @@ public class ScenarioService {
                                             .map(api -> new ScenarioData.ApiUid(api.id, api.code))
                                             .orElse(new ScenarioData.ApiUid(0L, "<broken API Id>")));
                         }
-                        else if (o.function!=null) {
+                        if (o.function!=null) {
                             functionCode = o.function.code;
                         }
 
