@@ -19,34 +19,18 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.api_call;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
-import ai.metaheuristic.ai.exceptions.InternalFunctionException;
-import ai.metaheuristic.ai.mhbp.beans.Api;
+import ai.metaheuristic.ai.dispatcher.internal_functions.NopService;
 import ai.metaheuristic.ai.mhbp.provider.ProviderData;
-import ai.metaheuristic.ai.mhbp.provider.ProviderQueryService;
-import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
-import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-
-import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
-import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getNameForVariable;
-import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getVariables;
-import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
 
 /**
  * @author Sergio Lissner
@@ -61,6 +45,7 @@ public class ApiCallFunction implements InternalFunction {
 
     private final ApplicationEventPublisher eventPublisher;
     private final ApiCallService apiCallService;
+    private final NopService nopService;
 
     @Override
     public String getCode() {
@@ -79,6 +64,10 @@ public class ApiCallFunction implements InternalFunction {
             TaskParamsYaml taskParamsYaml) {
 
         ProviderData.QuestionAndAnswer answer = apiCallService.callApi(simpleExecContext, taskId, taskContextId, taskParamsYaml);
+
+        ExecContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
+                ExecContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
+                        nopService.processSubProcesses(simpleExecContext, taskId, taskParamsYaml)));
 
         eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
 

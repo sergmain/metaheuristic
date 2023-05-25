@@ -84,7 +84,7 @@ public class AcceptanceTestFunction implements InternalFunction {
             }
             String s = answer.a();
             if (S.b(s)) {
-                throw new InternalFunctionException(meta_not_found, "514.120 answer is epmty");
+                throw new InternalFunctionException(meta_not_found, "514.120 answer is empty");
             }
             if (!validateAnswer(expected, s)) {
                 throw new InternalFunctionException(general_error, "514.160 Expected: "+expected+", but result is: " + s);
