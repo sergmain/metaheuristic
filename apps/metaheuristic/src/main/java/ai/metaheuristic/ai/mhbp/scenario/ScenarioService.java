@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.mhbp.scenario;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
@@ -263,6 +264,13 @@ public class ScenarioService {
             }
             step.api = null;
             step.function = new ScenarioParams.Function(functionCode, EnumsApi.FunctionExecContext.internal);
+            if (Consts.MH_ACCEPTANCE_TEST_FUNCTION.equals(functionCode)) {
+                Api api = apiRepository.findById(Long.parseLong(apiId)).orElse(null);
+                if (api==null || api.companyId!=context.getCompanyId()) {
+                    return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.460 apiId is null");
+                }
+                step.api = new ScenarioParams.Api(api.id, api.code);
+            }
         }
 
         s.updateParams(sp);
