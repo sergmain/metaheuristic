@@ -100,7 +100,7 @@ public class AcceptanceTestFunction implements InternalFunction {
 
     public static boolean validateAnswer(String expected, String actual) {
         final String stripped = actual.strip();
-        // Yes || yes || Yes. || yes.
+
         for (String s : StringUtils.split(expected, "||")) {
             if (stripped.equals(s.strip())) {
                 return true;
