@@ -107,6 +107,10 @@ public class ScenarioData {
 
         public String resultCode;
 
+        // this field is for mh.acceptance-test function only. in future, it'll be changed to meta, maybe.
+        @Nullable
+        public String expected;
+
         @Nullable
         public String functionCode;
 
@@ -122,6 +126,7 @@ public class ScenarioData {
             this.name = step.name;
             this.prompt = step.p;
             this.r = step.r;
+            this.expected = step.expected;
             this.resultCode = step.resultCode;
             this.functionCode = functionCode;
         }

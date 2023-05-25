@@ -30,6 +30,7 @@ import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -85,9 +86,8 @@ public class AcceptanceTestFunction implements InternalFunction {
             if (S.b(s)) {
                 throw new InternalFunctionException(meta_not_found, "514.120 answer is epmty");
             }
-            final String stripped = s.strip();
-            if (!stripped.equals(expected)) {
-                throw new InternalFunctionException(general_error, "514.160 Expected: "+expected+", but result is: " + stripped);
+            if (!validateAnswer(expected, s)) {
+                throw new InternalFunctionException(general_error, "514.160 Expected: "+expected+", but result is: " + s);
             }
         }
         finally {
@@ -96,5 +96,16 @@ public class AcceptanceTestFunction implements InternalFunction {
 
         //noinspection unused
         int i=0;
+    }
+
+    public static boolean validateAnswer(String expected, String actual) {
+        final String stripped = actual.strip();
+        // Yes || yes || Yes. || yes.
+        for (String s : StringUtils.split(expected, "||")) {
+            if (stripped.equals(s.strip())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
