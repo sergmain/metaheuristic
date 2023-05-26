@@ -70,6 +70,7 @@ public class ExecContextCreatorService {
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final ExecContextRepository execContextRepository;
     private final ExecContextService execContextService;
+    private final ExecContextCache execContextCache;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextTaskStateCache execContextTaskStateCache;
@@ -121,23 +122,33 @@ public class ExecContextCreatorService {
             return creationResult;
         }
 
-        produceTasksForExecContext(sourceCode, creationResult);
+        produceTasksForExecContextInternal(sourceCode, creationResult);
         return creationResult;
     }
 
     @Transactional
-    public void produceTasksForExecContext(SourceCodeImpl sourceCode, ExecContextCreationResult creationResult) {
+    public void produceTasksForExecContext(SourceCodeImpl sourceCode, Long execContextId) {
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        if (ec==null) {
+            return;
+        }
+        ExecContextCreationResult result = new ExecContextCreationResult();
+        result.execContext = ec;
+        produceTasksForExecContextInternal(sourceCode, result);
+    }
+
+    private void produceTasksForExecContextInternal(SourceCodeImpl sourceCode, ExecContextCreationResult creationResult) {
+        TxUtils.checkTxExists();
         ExecContextSyncService.getWithSyncNullableForCreation(creationResult.execContext.id, () ->
                 ExecContextGraphSyncService.getWithSyncNullableForCreation(creationResult.execContext.execContextGraphId, ()->
-                        ExecContextTaskStateSyncService.getWithSyncNullableForCreation(creationResult.execContext.execContextTaskStateId, ()-> {
-                            final ExecContextParamsYaml execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();
+                        ExecContextTaskStateSyncService.getWithSyncNullableForCreation(creationResult.execContext.execContextTaskStateId, () -> {
                             SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(
-                                    sourceCode, creationResult.execContext, execContextParamsYaml);
+                                    sourceCode, creationResult.execContext);
                             if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK) {
                                 creationResult.addErrorMessage(result.sourceCodeValidationResult.error);
                             }
                             if (result.taskProducingStatus != EnumsApi.TaskProducingStatus.OK) {
-                                creationResult.addErrorMessage("#562.100 Error while producing new tasks " + result.taskProducingStatus);
+                                creationResult.addErrorMessage("562.100 Error while producing new tasks " + result.taskProducingStatus);
                             }
                             return null;
                         })));
@@ -220,8 +231,7 @@ public class ExecContextCreatorService {
         bean = execContextVariableStateCache.save(bean);
         ec.execContextVariableStateId = bean.id;
 
-        ec = execContextService.save(ec);
-
+        ec = execContextCache.save(ec);
         return ec;
     }
 

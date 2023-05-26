@@ -48,7 +48,6 @@ public class ExecContextFSM {
 
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
-    private final ExecContextService execContextService;
     private final ExecContextReconciliationService execContextReconciliationService;
     private final EventPublisherService eventPublisherService;
 
@@ -82,7 +81,7 @@ public class ExecContextFSM {
         }
         if (execContext.state!=state.code) {
             execContext.setState(state.code);
-            execContextService.save(execContext);
+            execContextCache.save(execContext);
         }
     }
 
@@ -100,17 +99,18 @@ public class ExecContextFSM {
         }
         if (execContext.state != execState.code) {
             execContext.setState(execState.code);
-            execContextService.save(execContext);
+            execContextCache.save(execContext);
         }
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public static OperationStatusRest execContextTargetState(ExecContextImpl execContext, EnumsApi.ExecContextState execState, Long companyUniqueId) {
+    public OperationStatusRest execContextTargetState(ExecContextImpl execContext, EnumsApi.ExecContextState execState, Long companyUniqueId) {
         TxUtils.checkTxExists();
         ExecContextSyncService.checkWriteLockPresent(execContext.id);
 
         execContext.setState(execState.code);
+        execContextCache.save(execContext);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -118,7 +118,7 @@ public class ExecContextFSM {
         if (execContext.state != state.code) {
             execContext.setCompletedOn(System.currentTimeMillis());
             execContext.setState(state.code);
-            execContextService.save(execContext);
+            execContextCache.save(execContext);
         } else if (execContext.state!= EnumsApi.ExecContextState.FINISHED.code && execContext.completedOn != null) {
             log.error("#303.080 Integrity failed, current state: {}, new state: {}, but execContext.completedOn!=null",
                     execContext.state, state.code);

@@ -118,8 +118,8 @@ public class TestExecSourceCode extends PreparingSourceCode {
             assertFalse(scr.isValid());
             assertTrue(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());
-            assertNotEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR);
-            assertEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.META_NOT_FOUND_ERROR);
+            assertNotEquals(EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR, scr.validationResult.status);
+            assertEquals(EnumsApi.SourceCodeValidateStatus.META_NOT_FOUND_ERROR, scr.validationResult.status);
         } finally {
             finalize(scr);
         }
@@ -133,8 +133,8 @@ public class TestExecSourceCode extends PreparingSourceCode {
             assertFalse(scr.isValid());
             assertTrue(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());
-            assertNotEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR);
-            assertEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.INPUT_VARIABLES_COUNT_MISMATCH_ERROR);
+            assertNotEquals(EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR, scr.validationResult.status);
+            assertEquals(EnumsApi.SourceCodeValidateStatus.INPUT_VARIABLES_COUNT_MISMATCH_ERROR, scr.validationResult.status);
         } finally {
             finalize(scr);
         }
@@ -148,8 +148,8 @@ public class TestExecSourceCode extends PreparingSourceCode {
             assertFalse(scr.isValid());
             assertTrue(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());
-            assertNotEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR);
-            assertEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLES_COUNT_MISMATCH_ERROR);
+            assertNotEquals(EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR, scr.validationResult.status);
+            assertEquals(EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLES_COUNT_MISMATCH_ERROR, scr.validationResult.status);
         } finally {
             finalize(scr);
         }

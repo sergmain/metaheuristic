@@ -50,7 +50,6 @@ public class TxTestingService {
     private final TaskRepository taskRepository;
     private final TxTesting1Service txTesting1Service;
     private final ExecContextCache execContextCache;
-    private final ExecContextRepository execContextRepository;
     private final EntityManager em;
 
     @Transactional

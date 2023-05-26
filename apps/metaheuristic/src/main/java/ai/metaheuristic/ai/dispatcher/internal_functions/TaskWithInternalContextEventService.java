@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.el.EvaluateExpressionLanguage;
-import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
@@ -35,6 +34,7 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
@@ -92,6 +92,7 @@ public class TaskWithInternalContextEventService {
     private final ApplicationEventPublisher eventPublisher;
     private final VariableTopLevelService variableTopLevelService;
     public final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
+    private final VariableEntityManagerService variableEntityManagerService;
 
     private static final int MAX_ACTIVE_THREAD = 1;
     // number of active executers with different execContextId
@@ -297,6 +298,7 @@ public class TaskWithInternalContextEventService {
                 Object obj = EvaluateExpressionLanguage.evaluate(
                         taskParamsYaml.task.taskContextId, p.condition, simpleExecContext.execContextId,
                         internalFunctionVariableService, globalVariableService, variableService, this.execContextVariableService, variableRepository,
+                        variableEntityManagerService,
                         (v) -> VariableSyncService.getWithSyncVoidForCreation(v.id,
                                 ()->variableService.setVariableAsNull(v.id)));
                 if (obj!=null && !(obj instanceof Boolean)) {

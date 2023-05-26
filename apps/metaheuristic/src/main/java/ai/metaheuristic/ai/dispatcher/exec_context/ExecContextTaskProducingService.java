@@ -54,11 +54,12 @@ import java.util.stream.Collectors;
 public class ExecContextTaskProducingService {
 
     private final TaskProducingService taskProducingService;
+    private final ExecContextCache execContextCache;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final ApplicationEventPublisher eventPublisher;
 
     public SourceCodeApiData.TaskProducingResultComplex produceAndStartAllTasks(
-            SourceCodeImpl sourceCode, ExecContextImpl execContext, ExecContextParamsYaml execContextParamsYaml) {
+            SourceCodeImpl sourceCode, ExecContextImpl execContext) {
         TxUtils.checkTxExists();
         ExecContextSyncService.checkWriteLockPresent(execContext.id);
 
@@ -77,7 +78,7 @@ public class ExecContextTaskProducingService {
         log.info("#701.140 Start producing tasks for SourceCode {}, execContextId: #{}", sourceCode.uid, execContext.id);
 
         // create all not dynamic tasks
-        TaskData.ProduceTaskResult produceTaskResult = produceTasksForExecContext(execContext, execContextParamsYaml);
+        TaskData.ProduceTaskResult produceTaskResult = produceTasksForExecContext(execContext);
         if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
             log.info("#701.160 Tasks were produced with status {}", produceTaskResult.status);
         }
@@ -91,6 +92,8 @@ public class ExecContextTaskProducingService {
         else {
             execContext.state = EnumsApi.ExecContextState.ERROR.code;
         }
+        execContextCache.save(execContext);
+
         result.sourceCodeValidationResult = ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
         result.taskProducingStatus = produceTaskResult.status;
 
@@ -100,7 +103,8 @@ public class ExecContextTaskProducingService {
         return result;
     }
 
-    private TaskData.ProduceTaskResult produceTasksForExecContext(ExecContextImpl execContext, ExecContextParamsYaml execContextParamsYaml) {
+    private TaskData.ProduceTaskResult produceTasksForExecContext(ExecContextImpl execContext) {
+        final ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
         DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
 
         TaskData.ProduceTaskResult okResult = new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.OK, null);
@@ -150,7 +154,7 @@ public class ExecContextTaskProducingService {
         return okResult;
     }
 
-    // the logis is following: because we goes through all processed, we have to filter out any processes whose ancesor is internal task
+    // the logic is following: because we goes through all processed, we have to filter out any processes whose ancesor is internal task
     // there is a trick - we have to stop scanning when we've reached the top-level process, i.e. internalContextId=="1"
     @Nullable
     public static ExecContextParamsYaml.Process checkForInternalFunctionAsParent(ExecContextParamsYaml execContextParamsYaml, DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, ExecContextData.ProcessVertex currProcess) {

@@ -21,25 +21,16 @@ import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.FunctionDataErrorException;
 import ai.metaheuristic.ai.exceptions.FunctionDataNotFoundException;
-import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Hibernate;
-import org.hibernate.engine.spi.SessionImplementor;
 import org.springframework.context.annotation.Profile;
-import org.springframework.dao.PessimisticLockingFailureException;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.sql.Blob;
-import java.sql.Timestamp;
 import java.util.Optional;
 
 /**
@@ -48,12 +39,11 @@ import java.util.Optional;
  * Time: 9:34 PM
  */
 @Service
-@Transactional
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
 public class FunctionDataService {
-    private final EntityManager em;
+
     private final FunctionDataRepository functionDataRepository;
 
     @Transactional(readOnly = true)
@@ -76,53 +66,14 @@ public class FunctionDataService {
         }
     }
 
+    @Transactional
     public void deleteById(Long id) {
         functionDataRepository.deleteById(id);
     }
 
+    @Transactional
     public void deleteByFunctionCode(String functionCode) {
         functionDataRepository.deleteByFunctionCode(functionCode);
-    }
-
-    public FunctionData save(InputStream is, long size, String functionCode) {
-        try {
-            FunctionData data = functionDataRepository.findByCodeForUpdate(functionCode);
-            if (data == null) {
-                data = new FunctionData();
-                data.setFunctionCode(functionCode);
-                data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher, functionCode)));
-            } else {
-                DataStorageParams dataStorageParams = DataStorageParamsUtils.to(data.params);
-                if (dataStorageParams.sourcing!= EnumsApi.DataSourcing.dispatcher) {
-                    // this is an exception for the case when two resources have the same names but different pool codes
-                    throw new FunctionDataErrorException(functionCode, "#088.060 Sourcing must be dispatcher, value in db: " + data.getParams());
-                }
-            }
-            data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-
-            Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
-            data.setData(blob);
-
-            functionDataRepository.save(data);
-
-            return data;
-        }
-        catch(FunctionDataErrorException | PessimisticLockingFailureException e) {
-            throw e;
-        } catch(Throwable th) {
-            String es = "#088.070 error storing data to db - " + th.getMessage();
-            log.error(es, th);
-            throw new FunctionDataErrorException(functionCode, es);
-        }
-    }
-
-    public void update(InputStream is, long size, FunctionData data) {
-        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-
-        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
-        data.setData(blob);
-
-        functionDataRepository.save(data);
     }
 
     @Transactional(readOnly = true)

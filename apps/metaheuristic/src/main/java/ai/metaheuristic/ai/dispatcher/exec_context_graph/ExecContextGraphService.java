@@ -76,23 +76,21 @@ public class ExecContextGraphService {
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextGraphRepository execContextGraphRepository;
     private final ExecContextTaskStateCache execContextTaskStateCache;
-    private final EntityManager em;
+//    private final EntityManager em;
 
     public ExecContextGraph save(ExecContextGraph execContextGraph) {
         TxUtils.checkTxExists();
         if (execContextGraph.id!=null) {
             ExecContextGraphSyncService.checkWriteLockPresent(execContextGraph.id);
         }
-        if (execContextGraph.id==null) {
-            final ExecContextGraph ec = execContextGraphCache.save(execContextGraph);
-            return ec;
-        }
-        else if (!em.contains(execContextGraph) ) {
-//            https://stackoverflow.com/questions/13135309/how-to-find-out-whether-an-entity-is-detached-in-jpa-hibernate
+/*
+        if (execContextGraph.id!=null && !em.contains(execContextGraph)) {
+            //            https://stackoverflow.com/questions/13135309/how-to-find-out-whether-an-entity-is-detached-in-jpa-hibernate
             throw new IllegalStateException(S.f("#705.020 Bean %s isn't managed by EntityManager", execContextGraph));
         }
-        execContextGraphCache.save(execContextGraph);
-        return execContextGraph;
+*/
+        final ExecContextGraph ec = execContextGraphCache.save(execContextGraph);
+        return ec;
     }
 
     @SuppressWarnings("unused")
@@ -101,33 +99,33 @@ public class ExecContextGraphService {
         if (execContextGraph.id!=null) {
             ExecContextGraphSyncService.checkWriteLockPresent(execContextGraph.id);
         }
-        if (execContextGraph.id==null) {
-            final ExecContextGraph ecg = execContextGraphCache.save(execContextGraph);
-        }
-        else if (!em.contains(execContextGraph) ) {
+/*
+        if (execContextGraph.id!=null && !em.contains(execContextGraph)) {
             throw new IllegalStateException(S.f("#705.023 Bean %s isn't managed by EntityManager", execContextGraph));
         }
+*/
+        final ExecContextGraph ecg = execContextGraphCache.save(execContextGraph);
 
         if (execContextTaskState.id!=null) {
             ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskState.id);
         }
-        if (execContextTaskState.id==null) {
-            final ExecContextTaskState ects = execContextTaskStateCache.save(execContextTaskState);
-        }
-        else if (!em.contains(execContextTaskState) ) {
+/*
+        if (execContextTaskState.id!=null && !em.contains(execContextTaskState)) {
             throw new IllegalStateException(S.f("#705.025 Bean %s isn't managed by EntityManager", execContextTaskState));
         }
+*/
+        final ExecContextTaskState ects = execContextTaskStateCache.save(execContextTaskState);
     }
 
     @SuppressWarnings("unused")
     public void saveState(ExecContextTaskState execContextTaskState) {
         TxUtils.checkTxExists();
-        if (execContextTaskState.id==null) {
-            final ExecContextTaskState ects = execContextTaskStateCache.save(execContextTaskState);
-        }
-        else if (!em.contains(execContextTaskState) ) {
+/*
+        if (execContextTaskState.id!=null && !em.contains(execContextTaskState)) {
             throw new IllegalStateException(S.f("#705.025 Bean %s isn't managed by EntityManager", execContextTaskState));
         }
+*/
+        final ExecContextTaskState ects = execContextTaskStateCache.save(execContextTaskState);
     }
 
     private void changeGraph(ExecContextGraph execContextGraph, Consumer<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>> callable) {

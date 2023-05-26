@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariabl
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
@@ -71,6 +72,7 @@ public class EvaluationFunction implements InternalFunction {
     public final ExecContextCache execContextCache;
     public final VariableTopLevelService variableTopLevelService;
     public final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
+    public final VariableEntityManagerService variableEntityManagerService;
 
     @Override
     public String getCode() {
@@ -104,6 +106,7 @@ public class EvaluationFunction implements InternalFunction {
         Object obj = EvaluateExpressionLanguage.evaluate(
                 taskContextId, expression, simpleExecContext.execContextId,
                 this.internalFunctionVariableService, this.globalVariableService, this.variableService, this.execContextVariableService, variableRepository,
+                variableEntityManagerService,
                 (v) -> VariableSyncService.getWithSyncVoidForCreation(v.id,
                         ()->variableService.setVariableAsNull(v.id)));
 

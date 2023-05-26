@@ -55,7 +55,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -80,7 +79,6 @@ public class ExecContextService {
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     private final TaskRepository taskRepository;
     private final VariableRepository variableRepository;
-    private final EntityManager em;
     private final VariableService variableService;
     private final EventPublisherService eventPublisherService;
     private final ExecContextUtilsService execContextUtilsServices;
@@ -101,23 +99,7 @@ public class ExecContextService {
             return;
         }
         execContext.setValid(status);
-        save(execContext);
-    }
-
-    public ExecContextImpl save(ExecContextImpl execContext) {
-        TxUtils.checkTxExists();
-        if (execContext.id!=null) {
-            ExecContextSyncService.checkWriteLockPresent(execContext.id);
-        }
-        if (execContext.id==null) {
-            final ExecContextImpl ec = execContextCache.save(execContext);
-            return ec;
-        }
-        else if (!em.contains(execContext) ) {
-//            https://stackoverflow.com/questions/13135309/how-to-find-out-whether-an-entity-is-detached-in-jpa-hibernate
-            throw new IllegalStateException(S.f("#705.020 Bean %s isn't managed by EntityManager", execContext));
-        }
-        return execContext;
+        execContextCache.save(execContext);
     }
 
     @Transactional(readOnly = true)

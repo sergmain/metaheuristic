@@ -22,11 +22,13 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.batch.BatchHelperService;
 import ai.metaheuristic.ai.dispatcher.batch.BatchUtils;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
-import ai.metaheuristic.ai.dispatcher.beans.*;
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
@@ -35,6 +37,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
+import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
@@ -69,7 +72,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -109,8 +115,8 @@ public class BatchResultProcessorTxService {
     private final ProcessorCoreCache processorCoreCache;
     private final SourceCodeCache sourceCodeCache;
     private final BatchHelperService batchHelperService;
-    private final ExecContextCache execContextCache;
     private final ApplicationEventPublisher eventPublisher;
+    private final VariableEntityManagerService variableEntityManagerService;
 
 
     @Data
@@ -231,7 +237,7 @@ public class BatchResultProcessorTxService {
 
         final long size = Files.size(zipFile);
         VariableSyncService.getWithSyncVoidForCreation(batchResultVar.id,
-                () -> variableService.storeData(fis, size, batchResultVar.id, originBatchFilename));
+                () -> variableEntityManagerService.storeData(fis, size, batchResultVar.id, originBatchFilename));
     }
 
     @SneakyThrows
@@ -263,7 +269,7 @@ public class BatchResultProcessorTxService {
         eventPublisher.publishEvent(new ResourceCloseTxEvent(inputStream));
 
         VariableSyncService.getWithSyncVoidForCreation(batchStatusVar.id,
-                () -> variableService.storeData(inputStream, bytes.length, batchStatusVar.id, null));
+                () -> variableEntityManagerService.storeData(inputStream, bytes.length, batchStatusVar.id, null));
     }
 
     /**

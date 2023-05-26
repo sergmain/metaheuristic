@@ -28,13 +28,13 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
+import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +62,6 @@ public class TxSupportForTestingService {
     private final Globals globals;
     private final VariableRepository variableRepository;
     private final VariableService variableService;
-    private final ExecContextService execContextService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final ExecContextGraphService execContextGraphService;
     private final FunctionCache functionCache;
@@ -71,6 +70,7 @@ public class TxSupportForTestingService {
     private final ExecContextCreatorService execContextCreatorService;
     private final BatchCache batchCache;
     private final ExecContextCache execContextCache;
+    private final VariableEntityManagerService variableEntityManagerService;
 
     @Transactional
     public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
@@ -133,7 +133,7 @@ public class TxSupportForTestingService {
             throw new IllegalStateException("(v==null || v.inited)");
         }
         byte[] bytes = variableData.getBytes();
-        VariableSyncService.getWithSyncVoidForCreation(variable.id, ()-> variableService.update(new ByteArrayInputStream(bytes), bytes.length, variable));
+        VariableSyncService.getWithSyncVoidForCreation(variable.id, ()-> variableEntityManagerService.update(new ByteArrayInputStream(bytes), bytes.length, variable));
 
         v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variableName, taskContextId, execContextId);
         if (v==null) {
@@ -190,7 +190,7 @@ public class TxSupportForTestingService {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        return variableService.createInitialized(is, size, variable, filename, execContextId, taskContextId);
+        return variableEntityManagerService.createInitialized(is, size, variable, filename, execContextId, taskContextId);
     }
 
     @Transactional
@@ -202,7 +202,7 @@ public class TxSupportForTestingService {
     }
 
     @Transactional
-    public void produceAndStartAllTasks(SourceCodeImpl sourceCode, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
+    public void produceAndStartAllTasks(SourceCodeImpl sourceCode, Long execContextId) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
@@ -210,7 +210,8 @@ public class TxSupportForTestingService {
         if (execContext==null) {
             throw new IllegalStateException("Need better solution for this state");
         }
-        execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContext, execContextParamsYaml);
+        execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContext);
+        execContextCache.save(execContext);
     }
 
     /**
@@ -229,7 +230,7 @@ public class TxSupportForTestingService {
             return;
         }
         execContext.setState(EnumsApi.ExecContextState.STARTED.code);
-        execContextService.save(execContext);
+        execContextCache.save(execContext);
     }
 
     @Nullable
@@ -265,7 +266,7 @@ public class TxSupportForTestingService {
             return EnumsApi.TaskProducingStatus.OK;
         }
         execContext.setState(EnumsApi.ExecContextState.PRODUCING.code);
-        execContextService.save(execContext);
+        execContextCache.save(execContext);
         return EnumsApi.TaskProducingStatus.OK;
     }
 

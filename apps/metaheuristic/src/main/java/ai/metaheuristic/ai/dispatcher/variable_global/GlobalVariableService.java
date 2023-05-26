@@ -57,7 +57,6 @@ import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 @RequiredArgsConstructor
 public class GlobalVariableService {
 
-    private final EntityManager em;
     private final GlobalVariableRepository globalVariableRepository;
     private final Globals globals;
 
@@ -153,22 +152,6 @@ public class GlobalVariableService {
         globalVariableRepository.deleteByName(variable);
     }
 
-    @Transactional
-    public GlobalVariable save(InputStream is, long size, String variable, @Nullable String filename) {
-        GlobalVariable data = new GlobalVariable();
-        data.setName(variable);
-        data.setFilename(filename);
-        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
-        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-
-        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
-        data.setData(blob);
-
-        globalVariableRepository.save(data);
-
-        return data;
-    }
-
     @SuppressWarnings("UnusedReturnValue")
     @Transactional
     public GlobalVariable createGlobalVariableWithExternalStorage(String variable, String params) {
@@ -182,16 +165,6 @@ public class GlobalVariableService {
         globalVariableRepository.save(data);
 
         return data;
-    }
-
-    @Transactional
-    public void update(InputStream is, long size, GlobalVariable data) {
-        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-
-        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
-        data.setData(blob);
-
-        globalVariableRepository.save(data);
     }
 
     public Page<GlobalVariable> findAll(Pageable pageable) {

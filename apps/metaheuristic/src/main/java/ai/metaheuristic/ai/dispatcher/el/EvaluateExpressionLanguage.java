@@ -21,10 +21,7 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
+import ai.metaheuristic.ai.dispatcher.variable.*;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.commons.S;
@@ -75,6 +72,7 @@ public class EvaluateExpressionLanguage {
         public final InternalFunctionVariableService internalFunctionVariableService;
         public final GlobalVariableService globalVariableService;
         public final VariableService variableService;
+        public final VariableEntityManagerService variableEntityManagerService;
         public final VariableRepository variableRepository;
         public final ExecContextVariableService execContextVariableService;
         public final Consumer<SimpleVariable> setAsNullFunction;
@@ -82,6 +80,7 @@ public class EvaluateExpressionLanguage {
         public MhEvalContext(String taskContextId, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
                              GlobalVariableService globalVariableService, VariableService variableService,
                              ExecContextVariableService execContextVariableService, VariableRepository variableRepository,
+                             VariableEntityManagerService variableEntityManagerService,
                              Consumer<SimpleVariable> setAsNullFunction
                              ) {
             this.taskContextId = taskContextId;
@@ -92,6 +91,7 @@ public class EvaluateExpressionLanguage {
             this.execContextVariableService = execContextVariableService;
             this.variableRepository = variableRepository;
             this.setAsNullFunction = setAsNullFunction;
+            this.variableEntityManagerService = variableEntityManagerService;
         }
 
         @Override
@@ -205,7 +205,7 @@ public class EvaluateExpressionLanguage {
 
                         try (InputStream is = new ByteArrayInputStream(bytes)) {
                             VariableSyncService.getWithSyncVoid(variableHolderOutput.variable.id,
-                                    ()->variableService.storeData(is, bytes.length, variableHolderOutput.variable.id, null));
+                                    ()->variableEntityManagerService.storeData(is, bytes.length, variableHolderOutput.variable.id, null));
                         }
                         variableHolderOutput.variable.inited = true;
                     }
@@ -432,14 +432,14 @@ public class EvaluateExpressionLanguage {
     public static Object evaluate(
             String taskContextId, String expression, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
             GlobalVariableService globalVariableService, VariableService variableService, ExecContextVariableService execContextVariableService,
-            VariableRepository variableRepository, Consumer<SimpleVariable> setAsNullFunction
+            VariableRepository variableRepository, VariableEntityManagerService variableEntityManagerService, Consumer<SimpleVariable> setAsNullFunction
     ) {
 
         ExpressionParser parser = new SpelExpressionParser();
 
         EvaluateExpressionLanguage.MhEvalContext mhEvalContext = new EvaluateExpressionLanguage.MhEvalContext(
                 taskContextId, execContextId, internalFunctionVariableService, globalVariableService, variableService,
-                execContextVariableService, variableRepository, setAsNullFunction);
+                execContextVariableService, variableRepository, variableEntityManagerService, setAsNullFunction);
 
         Expression exp = parser.parseExpression(expression);
         try {

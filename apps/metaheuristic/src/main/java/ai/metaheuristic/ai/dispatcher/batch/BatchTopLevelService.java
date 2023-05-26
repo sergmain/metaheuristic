@@ -323,7 +323,7 @@ public class BatchTopLevelService {
                     ExecContextGraphSyncService.getWithSync(creationResult.execContext.execContextGraphId, ()->
                             ExecContextTaskStateSyncService.getWithSync(creationResult.execContext.execContextTaskStateId, ()->
                                     batchService.createBatchForFile(
-                                            sc, creationResult.execContext.id, execContextParamsYaml, dispatcherContext))));
+                                            sc, creationResult.execContext.id, dispatcherContext))));
             return uploadingStatus;
         }
         catch (ExecContextTooManyInstancesException e) {

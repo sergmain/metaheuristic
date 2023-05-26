@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
+import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.exceptions.ExecContextCommonException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -58,6 +59,7 @@ public class ExecContextVariableService {
 
     private final ExecContextCache execContextCache;
     private final VariableService variableService;
+    private final VariableEntityManagerService variableEntityManagerService;
     private final VariableRepository variableRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -105,7 +107,7 @@ public class ExecContextVariableService {
         if (execContext==null) {
             log.warn("#697.060 ExecContext #{} wasn't found", execContextId);
         }
-        variableService.createInitialized(is, size, inputVariable, originFilename, execContextId, Consts.TOP_LEVEL_CONTEXT_ID );
+        variableEntityManagerService.createInitialized(is, size, inputVariable, originFilename, execContextId, Consts.TOP_LEVEL_CONTEXT_ID );
     }
 
     @Transactional
@@ -126,7 +128,7 @@ public class ExecContextVariableService {
             if (S.b(inputVariable)) {
                 throw new ExecContextCommonException("#697.120 Wrong format of sourceCode, input variable for source code isn't specified");
             }
-            variableService.createInitialized(var.is, var.size, inputVariable, var.originFilename, execContext.id, Consts.TOP_LEVEL_CONTEXT_ID );
+            variableEntityManagerService.createInitialized(var.is, var.size, inputVariable, var.originFilename, execContext.id, Consts.TOP_LEVEL_CONTEXT_ID );
         }
     }
 
@@ -140,7 +142,7 @@ public class ExecContextVariableService {
         try {
             InputStream is = Files.newInputStream(file);
             resourceCloseTxEvent.add(is);
-            variableService.update(is, Files.size(file), variable);
+            variableEntityManagerService.update(is, Files.size(file), variable);
         } catch (FileNotFoundException e) {
             throw new InternalFunctionException(system_error, "#697.180 Can't open file   "+ file.normalize());
         }
@@ -152,7 +154,7 @@ public class ExecContextVariableService {
 
         byte[] bytes = value.getBytes();
         InputStream is = new ByteArrayInputStream(bytes);
-        variableService.update(is, bytes.length, variable);
+        variableEntityManagerService.update(is, bytes.length, variable);
     }
 
     private Variable getVariable(TaskParamsYaml.OutputVariable outputVariable) {

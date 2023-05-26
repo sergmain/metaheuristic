@@ -96,14 +96,14 @@ public class ExecSourceCodeFunction implements InternalFunction {
         TxUtils.checkTxNotExists();
         ArtifactCleanerAtDispatcher.setBusy();
         try {
-            processInternale(simpleExecContext, taskId, taskContextId, taskParamsYaml);
+            processInternal(simpleExecContext, taskId, taskContextId, taskParamsYaml);
         }
         finally {
             ArtifactCleanerAtDispatcher.notBusy();
         }
     }
 
-    private void processInternale(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId, TaskParamsYaml taskParamsYaml) {
+    private void processInternal(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId, TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
 
         String scUid = MetaUtils.getValue(taskParamsYaml.task.metas, Consts.SOURCE_CODE_UID);
@@ -192,7 +192,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
             DirUtils.deletePathAsync(tempDir);
         }
 
-        execContextCreatorService.produceTasksForExecContext(sourceCode, execContextResultRest);
+        execContextCreatorService.produceTasksForExecContext(sourceCode, execContextResultRest.execContext.id);
         if (execContextResultRest.isErrorMessages()) {
             throw new InternalFunctionException(exec_context_starting_error,
                             S.f("#508.077 tasks for execContext #%d, sourceCode '%s' can't be produced, error: %s",

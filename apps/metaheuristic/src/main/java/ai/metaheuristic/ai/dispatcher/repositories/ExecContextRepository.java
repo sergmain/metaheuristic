@@ -37,10 +37,10 @@ import java.util.Optional;
 @Profile("dispatcher")
 public interface ExecContextRepository extends CrudRepository<ExecContextImpl, Long> {
 
-    @Override
     @NonNull
     @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-    Optional<ExecContextImpl> findById(Long execContextId);
+    @Query(value="select e from ExecContextImpl e where e.id=:execContextId")
+    Optional<ExecContextImpl> findByIdReadOnly(Long execContextId);
 
     @Nullable
     @Query(value="select e.id from ExecContextImpl e where e.id=:execContextId")

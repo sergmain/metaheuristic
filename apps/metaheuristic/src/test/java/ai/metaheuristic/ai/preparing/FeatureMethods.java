@@ -98,7 +98,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
             ExecContextParamsYaml execContextParamsYaml = result.execContext.getExecContextParamsYaml();
             ExecContextGraphSyncService.getWithSync(getExecContextForTest().execContextGraphId, ()->
                     ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId, ()-> {
-                        txSupportForTestingService.produceAndStartAllTasks(getSourceCode(), result.execContext.id, execContextParamsYaml);
+                        txSupportForTestingService.produceAndStartAllTasks(getSourceCode(), result.execContext.id);
                         return null;
                     }));
 

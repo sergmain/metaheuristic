@@ -42,7 +42,6 @@ import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
@@ -71,7 +70,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 /**
  * @author Serge
@@ -107,6 +105,7 @@ public class BatchTxService {
             return;
         }
         b.execState = Enums.BatchExecState.Processing.code;
+        batchCache.save(b);
         dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_STARTED, null, null, null, b.id, null, null );
     }
 
@@ -152,7 +151,6 @@ public class BatchTxService {
     @Transactional
     public BatchData.UploadingStatus createBatchForFile(
             SourceCodeImpl sourceCode, Long execContextId,
-            ExecContextParamsYaml execContextParamsYaml,
             final DispatcherContext dispatcherContext) {
 
         ExecContextImpl execContext = execContextCache.findById(execContextId);
@@ -165,12 +163,12 @@ public class BatchTxService {
         BatchUtils.changeStateToPreparing(b);
 
         // start producing new tasks
-        OperationStatusRest operationStatus = ExecContextFSM.execContextTargetState(execContext, EnumsApi.ExecContextState.PRODUCING, dispatcherContext.getCompanyId());
+        OperationStatusRest operationStatus = execContextFSM.execContextTargetState(execContext, EnumsApi.ExecContextState.PRODUCING, dispatcherContext.getCompanyId());
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
         }
-        SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContext, execContextParamsYaml);
+        SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContext);
 
         if (result.sourceCodeValidationResult.status!= EnumsApi.SourceCodeValidateStatus.OK) {
             throw new BatchResourceProcessingException(result.sourceCodeValidationResult.error);

@@ -87,13 +87,13 @@ public class VariableService {
 
     private static final UploadResult OK_UPLOAD_RESULT = new UploadResult(Enums.UploadVariableStatus.OK, null);
 
-    private final EntityManager em;
     private final VariableRepository variableRepository;
     private final GlobalVariableRepository globalVariableRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final EventPublisherService eventPublisherService;
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextCache execContextCache;
+    private final VariableEntityManagerService variableEntityManagerService;
 
     @Transactional
     public void setVariableAsNull(Long taskId, Long variableId) {
@@ -115,7 +115,7 @@ public class VariableService {
             log.warn(es);
             throw new VariableCommonException(es, variableId);
         }
-        update(variableIS, length, variable);
+        variableEntityManagerService.update(variableIS, length, variable);
     }
 
     public void resetVariable(Long execContextId, Long variableId) {
@@ -196,7 +196,7 @@ public class VariableService {
                 try {
                     FileInputStream fis = new FileInputStream(f.file);
                     eventPublisher.publishEvent(new ResourceCloseTxEvent(fis));
-                    Variable v = createInitialized(fis, f.file.length(), variableName, f.originName, execContextId, currTaskContextId);
+                    Variable v = variableEntityManagerService.createInitialized(fis, f.file.length(), variableName, f.originName, execContextId, currTaskContextId);
 
                     SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
                     variableHolders.add(new VariableUtils.VariableHolder(sv));
@@ -221,7 +221,7 @@ public class VariableService {
             ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
             // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
             eventPublisher.publishEvent(new ResourceCloseTxEvent(bais));
-            Variable v = createInitialized(bais, bytes.length, inputVariableName, null, execContextId, currTaskContextId);
+            Variable v = variableEntityManagerService.createInitialized(bais, bytes.length, inputVariableName, null, execContextId, currTaskContextId);
         }
 
         for (Pair<String, Boolean> booleanVariable : booleanVariables) {
@@ -500,32 +500,9 @@ public class VariableService {
         InputStream is = new ByteArrayInputStream(bytes);
         // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
         eventPublisher.publishEvent(new ResourceCloseTxEvent(is));
-        return createInitialized(is, bytes.length, variable, filename, execContextId, taskContextId);
+        return variableEntityManagerService.createInitialized(is, bytes.length, variable, filename, execContextId, taskContextId);
     }
 
-    public Variable createInitialized(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
-        if (size==0) {
-            throw new IllegalStateException("#171.600 Variable can't be of zero length");
-        }
-        TxUtils.checkTxExists();
-
-        Variable data = new Variable();
-        data.inited = true;
-        data.nullified = false;
-        data.setName(variable);
-        data.setFilename(filename);
-        data.setExecContextId(execContextId);
-        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
-        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-        data.setTaskContextId(taskContextId);
-
-        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
-        data.setData(blob);
-
-        variableRepository.save(data);
-
-        return data;
-    }
 
     public TaskImpl initOutputVariables(Long execContextId, TaskImpl task, ExecContextParamsYaml.Process p, TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxExists();
@@ -589,50 +566,11 @@ public class VariableService {
             log.error(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }
-        update(is, size, v);
+        variableEntityManagerService.update(is, size, v);
         return null;
     }
 
-    public void update(InputStream is, long size, Variable data) {
-        VariableSyncService.checkWriteLockPresent(data.id);
 
-        if (size==0) {
-            throw new IllegalStateException("#171.690 Variable can't be with zero length");
-        }
-        TxUtils.checkTxExists();
-        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-
-        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
-        data.setData(blob);
-        data.inited = true;
-        data.nullified = false;
-        variableRepository.save(data);
-    }
-
-    @Transactional
-    public void storeData(InputStream is, long size, Long variableId, @Nullable String filename) {
-        VariableSyncService.checkWriteLockPresent(variableId);
-
-        if (size==0) {
-            throw new IllegalStateException("#171.720 Variable can't be with zero length");
-        }
-        TxUtils.checkTxExists();
-
-        Variable data = variableRepository.findById(variableId).orElse(null);
-        if (data==null) {
-            log.error("#171.750 can't find variable #" + variableId);
-            return;
-        }
-        data.filename = filename;
-        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-
-        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
-        data.setData(blob);
-        data.inited = true;
-        data.nullified = false;
-
-        variableRepository.save(data);
-    }
 
     public void deleteById(Long id) {
         variableRepository.deleteById(id);

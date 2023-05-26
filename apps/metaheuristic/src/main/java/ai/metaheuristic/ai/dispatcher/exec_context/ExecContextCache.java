@@ -28,8 +28,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
-
 /**
  * @author Serge
  * Date: 5/29/2019
@@ -43,14 +41,12 @@ import javax.persistence.EntityManager;
 public class ExecContextCache {
 
     private final ExecContextRepository execContextRepository;
-    private final EntityManager em;
+//    private final EntityManager em;
 
-//    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, allEntries = true)
     public void clearCache() {
         TxUtils.checkTxExists();
     }
 
-//    @CachePut(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#result.id")
     public ExecContextImpl save(ExecContextImpl execContext) {
         TxUtils.checkTxExists();
         // execContext.id is null for a newly created bean
@@ -58,18 +54,14 @@ public class ExecContextCache {
             ExecContextSyncService.checkWriteLockPresent(execContext.id);
         }
 /*
-        if (log.isDebugEnabled()) {
-            log.debug("#461.010 save execContext, Thread {}, id: #{}, ver: {}, execContext: {}",
-                    Thread.currentThread().getId(), execContext.id, execContext.version, execContext);
-            try {
-                throw new RuntimeException("stacktrace");
-            }
-            catch(RuntimeException e) {
-                log.debug("stacktrace", e);
-            }
+        if (execContext.id!=null && !em.contains(execContext)) {
+            // https://stackoverflow.com/questions/13135309/how-to-find-out-whether-an-entity-is-detached-in-jpa-hibernate
+            throw new IllegalStateException(S.f("461.020 Bean %s isn't managed by EntityManager", execContext));
         }
 */
-        return execContextRepository.save(execContext);
+        final ExecContextImpl ec = execContextRepository.save(execContext);
+        return ec;
+
     }
 
 //    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContext.id")
@@ -78,7 +70,7 @@ public class ExecContextCache {
         try {
             execContextRepository.deleteById(execContext.id);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#461.030 Error deleting of execContext by object, {}", e.toString());
+            log.error("461.030 Error deleting of execContext by object, {}", e.toString());
         }
     }
 
@@ -117,10 +109,12 @@ public class ExecContextCache {
 
     @Nullable
     public ExecContextImpl findByIdDetached(Long id) {
-        final ExecContextImpl execContext = execContextRepository.findById(id).orElse(null);
+        final ExecContextImpl execContext = execContextRepository.findByIdReadOnly(id).orElse(null);
+/*
         if (execContext!=null) {
             em.detach(execContext);
         }
+*/
         return execContext;
     }
 
