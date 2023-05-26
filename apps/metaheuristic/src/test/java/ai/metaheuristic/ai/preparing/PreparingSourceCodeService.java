@@ -212,6 +212,7 @@ public class PreparingSourceCodeService {
         String yamlRequest = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.toString(karpy);
         String yamlResponse = serverService.keepAlive(yamlRequest, "127.0.0.1");
         KeepAliveResponseParamYaml response = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.to(yamlResponse);
+        assertTrue(response.success);
         int i =0;
     }
 
@@ -241,7 +242,7 @@ public class PreparingSourceCodeService {
 
         boolean isQueueEmpty = true;
         for (int i = 0; i < 30; i++) {
-            //Thread.sleep(2_000);
+            Thread.sleep(2_000);
             isQueueEmpty = TaskProviderTopLevelService.allTaskGroupFinished(execContextId);
             if (isQueueEmpty) {
                 break;

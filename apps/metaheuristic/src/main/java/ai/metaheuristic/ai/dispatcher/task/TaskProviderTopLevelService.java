@@ -34,7 +34,6 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
 import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -44,7 +43,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -357,28 +355,9 @@ public class TaskProviderTopLevelService {
             return null;
         }
         try {
-            String params;
-            try {
-                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.task.getParams());
-
-                for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
-                    SimpleVariable sv = variableService.getVariableAsSimple(input.id);
-                    if (sv==null) {
-                        final String es = "#211.120 Can't find a variable " + input.id;
-                        log.error(es);
-                        eventPublisher.publishEvent(new TaskFinishWithErrorEvent(task.task.id, es));
-                        return null;
-                    }
-                    input.empty = sv.nullified;
-                }
-                params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
-
-            } catch (DowngradeNotSupportedException e) {
-                // TODO 2020-09-26 there is a possible situation when a check in ExecContextFSM.findUnassignedTaskAndAssign() would be ok
-                //  but this one fails. that could occur because of prepareVariables(task);
-                //  need a better solution for checking
-                log.warn("#393.600 Task #{} can't be assigned to core #{} because it's too old, downgrade to required taskParams level {} isn't supported",
-                        task.task.getId(), coreId, psy.taskParamsVersion);
+            String params = TaskProviderUtils.initEmptiness(coreId, psy.taskParamsVersion, task.task.getParams(), task.task.id,
+                    variableService::getVariableAsSimple, eventPublisher::publishEvent);
+            if (params==null) {
                 return null;
             }
 

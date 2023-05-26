@@ -94,7 +94,7 @@ public class TestTaskRequest extends FeatureMethods {
     }
 
     private void step_2(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
-        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+        //preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
 
         // get a task for processing

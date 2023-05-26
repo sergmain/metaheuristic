@@ -117,7 +117,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
     protected void storeConsoleResultAsError(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
         // lets report about tasks that all finished with an error (errorCode!=0)
         List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
-        List<TaskImpl> tasks = taskRepositoryForTest.findByCoreIdAndResultReceivedIsFalse(processorIdAndCoreIds.coreId1);
+        List<TaskImpl> tasks = taskRepositoryForTest.findByCoreIdAndResultReceivedIs0(processorIdAndCoreIds.coreId1);
         assertEquals(1, tasks.size());
 
         TaskImpl task = tasks.get(0);
@@ -134,7 +134,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
     protected void storeConsoleResultAsOk(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
         List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
-        List<TaskImpl> tasks = taskRepositoryForTest.findByCoreIdAndResultReceivedIsFalse(processorIdAndCoreIds.coreId1);
+        List<TaskImpl> tasks = taskRepositoryForTest.findByCoreIdAndResultReceivedIs0(processorIdAndCoreIds.coreId1);
         assertEquals(1, tasks.size());
 
         TaskImpl task = tasks.get(0);
