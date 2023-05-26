@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueu
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import ai.metaheuristic.ai.dispatcher.internal_functions.NopService;
+import ai.metaheuristic.ai.dispatcher.internal_functions.SubProcessesTxService;
 import ai.metaheuristic.ai.mhbp.provider.ProviderData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +45,7 @@ public class ApiCallFunction implements InternalFunction {
 
     private final ApplicationEventPublisher eventPublisher;
     private final ApiCallService apiCallService;
-    private final NopService nopService;
+    private final SubProcessesTxService subProcessesTxService;
 
     @Override
     public String getCode() {
@@ -67,7 +67,7 @@ public class ApiCallFunction implements InternalFunction {
 
         ExecContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
                 ExecContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
-                        nopService.processSubProcesses(simpleExecContext, taskId, taskParamsYaml)));
+                        subProcessesTxService.processSubProcesses(simpleExecContext, taskId, taskParamsYaml)));
 
         eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
 

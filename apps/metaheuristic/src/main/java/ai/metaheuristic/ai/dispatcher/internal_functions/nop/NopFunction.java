@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import ai.metaheuristic.ai.dispatcher.internal_functions.NopService;
+import ai.metaheuristic.ai.dispatcher.internal_functions.SubProcessesTxService;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +38,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class NopFunction implements InternalFunction {
 
-    private final NopService nopService;
+    private final SubProcessesTxService subProcessesTxService;
 
     @Override
     public String getCode() {
@@ -57,7 +57,7 @@ public class NopFunction implements InternalFunction {
 
         ExecContextGraphSyncService.getWithSync(simpleExecContext.execContextGraphId, ()->
                 ExecContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
-                    nopService.processSubProcesses(simpleExecContext, taskId, taskParamsYaml)));
+                    subProcessesTxService.processSubProcesses(simpleExecContext, taskId, taskParamsYaml)));
 
         log.debug("#055.020 Nop function was invoked");
     }
