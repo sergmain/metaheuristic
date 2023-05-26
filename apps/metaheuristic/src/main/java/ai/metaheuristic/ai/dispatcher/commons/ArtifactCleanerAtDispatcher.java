@@ -281,12 +281,12 @@ public class ArtifactCleanerAtDispatcher {
     private void deleteOrphanExecContexts(List<Long> execContextIds) {
         Set<Long> forDeletion = new HashSet<>();
         for (Long execContextId : execContextIds) {
-            ExecContextImpl ec = execContextCache.findById(execContextId);
+            ExecContextImpl ec = execContextCache.findById(execContextId, true);
             if (ec==null) {
                 continue;
             }
             if (sourceCodeCache.findById(ec.sourceCodeId)==null ||
-                    (ec.rootExecContextId!=null && execContextCache.findById(ec.rootExecContextId)==null)) {
+                    (ec.rootExecContextId!=null && execContextCache.findById(ec.rootExecContextId, true)==null)) {
                 forDeletion.add(execContextId);
             }
         }
@@ -301,7 +301,7 @@ public class ArtifactCleanerAtDispatcher {
     private void deleteOrphanExecContextGraph(List<Long> execContextIds) {
         Set<Long> execContextGraphIds = new HashSet<>();
         for (Long execContextId : execContextIds) {
-            ExecContextImpl ec = execContextCache.findById(execContextId);
+            ExecContextImpl ec = execContextCache.findById(execContextId, true);
             if (ec==null) {
                 continue;
             }
@@ -329,7 +329,7 @@ public class ArtifactCleanerAtDispatcher {
     private void deleteOrphanExecContextTaskState(List<Long> execContextIds) {
         Set<Long> execContextTaskStateIds = new HashSet<>();
         for (Long execContextId : execContextIds) {
-            ExecContextImpl ec = execContextCache.findById(execContextId);
+            ExecContextImpl ec = execContextCache.findById(execContextId, true);
             if (ec==null) {
                 continue;
             }
@@ -357,7 +357,7 @@ public class ArtifactCleanerAtDispatcher {
     private void deleteOrphanExecContextVariableState(List<Long> execContextIds) {
         Set<Long> execContextVariableStateIds = new HashSet<>();
         for (Long execContextId : execContextIds) {
-            ExecContextImpl ec = execContextCache.findById(execContextId);
+            ExecContextImpl ec = execContextCache.findById(execContextId, true);
             if (ec==null) {
                 continue;
             }
@@ -396,7 +396,7 @@ public class ArtifactCleanerAtDispatcher {
             if (isBusy()) {
                 return;
             }
-            if (execContextCache.findById(execContextId)!=null) {
+            if (execContextCache.findById(execContextId, true)!=null) {
                 log.warn("execContextId #{} still here", execContextId);
                 Long id = execContextRepository.findIdById(execContextId);
                 if (id != null) {
@@ -439,7 +439,7 @@ public class ArtifactCleanerAtDispatcher {
                 .filter(o->!execContextIds.contains(o)).collect(Collectors.toList());
 
         for (Long execContextId : orphanExecContextIds) {
-            if (execContextCache.findById(execContextId)!=null) {
+            if (execContextCache.findById(execContextId, true)!=null) {
                 log.warn("execContextId #{} wasn't deleted, actually", execContextId);
                 continue;
             }

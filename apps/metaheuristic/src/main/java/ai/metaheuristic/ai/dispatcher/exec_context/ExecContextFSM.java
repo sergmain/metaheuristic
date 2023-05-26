@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -54,13 +53,12 @@ public class ExecContextFSM {
     private final EventPublisherService eventPublisherService;
 
     @Transactional
-    public Void toFinished(Long execContextId) {
+    public void toFinished(Long execContextId) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
-            return null;
+            return;
         }
         toFinished(execContext);
-        return null;
     }
 
     public void toFinished(ExecContextImpl execContext) {
@@ -82,7 +80,7 @@ public class ExecContextFSM {
         if (execContext==null) {
             return;
         }
-        if (execContext.state !=state.code) {
+        if (execContext.state!=state.code) {
             execContext.setState(state.code);
             execContextService.save(execContext);
         }

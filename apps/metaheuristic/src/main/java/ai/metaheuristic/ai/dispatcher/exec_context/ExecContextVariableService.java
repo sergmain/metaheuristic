@@ -56,7 +56,7 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @RequiredArgsConstructor
 public class ExecContextVariableService {
 
-    private final ExecContextService execContextService;
+    private final ExecContextCache execContextCache;
     private final VariableService variableService;
     private final VariableRepository variableRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -77,7 +77,7 @@ public class ExecContextVariableService {
         if (S.b(inputVariable)) {
             throw new ExecContextCommonException("##697.040 Wrong format of sourceCode, input variable for source code isn't specified");
         }
-        ExecContextImpl execContext = execContextService.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             log.warn("#697.060 ExecContext #{} wasn't found", execContextId);
         }
@@ -101,7 +101,7 @@ public class ExecContextVariableService {
         if (S.b(inputVariable)) {
             throw new ExecContextCommonException("##697.040 Wrong format of sourceCode, input variable for source code isn't specified");
         }
-        ExecContextImpl execContext = execContextService.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             log.warn("#697.060 ExecContext #{} wasn't found", execContextId);
         }
@@ -115,7 +115,7 @@ public class ExecContextVariableService {
                     S.f("#697.080 the number of input streams and variables for initing are different. is count: %d, vars count: %d",
                             list.vars.size(), list.execContextParamsYaml.variables.inputs.size()));
         }
-        ExecContextImpl execContext = execContextService.findById(list.execContextId);
+        ExecContextImpl execContext = execContextCache.findById(list.execContextId);
         if (execContext==null) {
             throw new ExecContextCommonException(
                     S.f("#697.100 ExecContext #{} wasn't found", list.execContextId));

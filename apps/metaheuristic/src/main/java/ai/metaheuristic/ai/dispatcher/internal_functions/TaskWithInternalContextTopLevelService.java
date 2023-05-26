@@ -78,7 +78,7 @@ public class TaskWithInternalContextTopLevelService {
     }
 
     private void copyVariables(Long subExecContextId, TaskImpl task, TaskParamsYaml taskParamsYaml) {
-        ExecContextImpl subExecContext = execContextCache.findById(subExecContextId);
+        ExecContextImpl subExecContext = execContextCache.findById(subExecContextId, true);
         if (subExecContext == null) {
             throw new InternalFunctionException(exec_context_not_found, "#992.040 ExecContext Not found #" +subExecContextId);
         }
@@ -86,7 +86,7 @@ public class TaskWithInternalContextTopLevelService {
         if (ecpy.variables.outputs.size() != taskParamsYaml.task.outputs.size()) {
             throw new InternalFunctionException(number_of_outputs_is_incorrect, "#992.060 number_of_outputs_is_incorrect");
         }
-        ExecContextImpl ec = execContextCache.findById(task.execContextId);
+        ExecContextImpl ec = execContextCache.findById(task.execContextId, true);
         if (ec == null) {
             throw new InternalFunctionException(exec_context_not_found, "#992.045 ExecContext Not found, #"+task.execContextId);
         }

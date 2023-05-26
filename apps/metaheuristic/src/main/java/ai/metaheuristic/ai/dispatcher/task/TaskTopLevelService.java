@@ -129,7 +129,7 @@ public class TaskTopLevelService {
             if (!event.taskIds.contains(actualTaskId)) {
                 TaskImpl task = taskRepository.findById(actualTaskId).orElse(null);
                 if (task!=null) {
-                    ExecContextImpl ec = execContextCache.findById(task.execContextId);
+                    ExecContextImpl ec = execContextCache.findById(task.execContextId, true);
                     if (ec==null || EnumsApi.ExecContextState.isFinishedState(ec.state)) {
                         continue;
                     }
@@ -176,7 +176,7 @@ public class TaskTopLevelService {
         List<TaskImpl> tasks = taskRepository.findForMissingResultVariables(processorId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
         DispatcherCommParamsYaml.ResendTaskOutputs result = new DispatcherCommParamsYaml.ResendTaskOutputs();
         for (TaskImpl task : tasks) {
-            ExecContextImpl ec = execContextCache.findById(task.execContextId);
+            ExecContextImpl ec = execContextCache.findById(task.execContextId, true);
             if (ec==null || EnumsApi.ExecContextState.isFinishedState(ec.state)) {
                 continue;
             }

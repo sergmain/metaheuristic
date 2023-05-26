@@ -213,7 +213,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
                                         getExecContextForTest().id, getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId)));
 
         ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
-            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
 
             TaskImpl tempTask = taskRepository.findById(permuteTask.task.id).orElse(null);
             assertNotNull(tempTask);
@@ -272,7 +272,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
                                         getExecContextForTest().id, getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId)));
 
         ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, () -> {
-            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
             verifyGraphIntegrity();
             taskIds.clear();
             taskIds.addAll(getUnfinishedTaskVertices(getExecContextForTest()));

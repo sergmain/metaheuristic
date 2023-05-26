@@ -52,6 +52,7 @@ import ai.metaheuristic.api.dispatcher.SourceCode;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -83,7 +84,7 @@ public class PreparingSourceCodeService {
     private final SouthbridgeService serverService;
     private final ExecContextStatusService execContextStatusService;
     private final SourceCodeValidationService sourceCodeValidationService;
-    private final ExecContextService execContextService;
+    private final ExecContextCache execContextCache;
     private final ExecContextTaskStateCache execContextTaskStateCache;
     private final ExecContextTaskAssigningTopLevelService execContextTaskAssigningTopLevelService;
 
@@ -273,7 +274,7 @@ public class PreparingSourceCodeService {
 
             EnumsApi.TaskProducingStatus producingStatus = txSupportForTestingService.toProducing(preparingSourceCodeData.getExecContextForTest().id);
             assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
-            preparingSourceCodeData.setExecContextForTest(Objects.requireNonNull(execContextService.findById(preparingSourceCodeData.getExecContextForTest().id)));
+            preparingSourceCodeData.setExecContextForTest(Objects.requireNonNull(execContextCache.findById(preparingSourceCodeData.getExecContextForTest().id)));
             assertNotNull(preparingSourceCodeData.getExecContextForTest());
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, preparingSourceCodeData.getExecContextForTest().getState());
             ExecContextParamsYaml execContextParamsYaml = result.execContext.getExecContextParamsYaml();
@@ -283,7 +284,7 @@ public class PreparingSourceCodeService {
                     }));
         });
 
-        preparingSourceCodeData.setExecContextForTest(Objects.requireNonNull(execContextService.findById(preparingSourceCodeData.getExecContextForTest().id)));
+        preparingSourceCodeData.setExecContextForTest(Objects.requireNonNull(execContextCache.findById(preparingSourceCodeData.getExecContextForTest().id)));
         assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(preparingSourceCodeData.getExecContextForTest().getState()));
         execContextStatusService.resetStatus();
         assertEquals(EnumsApi.ExecContextState.STARTED, execContextStatusService.getExecContextState(preparingSourceCodeData.getExecContextForTest().id));

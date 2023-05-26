@@ -262,7 +262,7 @@ public class VariableService {
             return null;
         }
 
-        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextImpl ec = execContextCache.findById(execContextId, true);
         if (ec==null) {
             log.error("#171.260 can't find execContext #" + execContextId);
             return null;

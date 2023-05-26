@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.service;
 
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
@@ -54,7 +55,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
-    @Autowired private ExecContextService execContextService;
+    @Autowired private ExecContextCache execContextCache;
 
     @Test
     public void testFeatureCompletionWithPartialError() {
@@ -67,7 +68,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
         ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
             txSupportForTestingService.toStarted(getExecContextForTest().id);
-            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().getId())));
+            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().getId())));
 
             assertEquals(EnumsApi.ExecContextState.STARTED.code, getExecContextForTest().getState());
 

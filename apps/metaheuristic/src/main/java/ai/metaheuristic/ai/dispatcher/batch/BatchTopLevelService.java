@@ -93,7 +93,7 @@ public class BatchTopLevelService {
     private final SourceCodeCache sourceCodeCache;
     private final ExecContextCache execContextCache;
     private final BatchRepository batchRepository;
-    private final BatchService batchService;
+    private final BatchTxService batchService;
     private final BatchCache batchCache;
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
@@ -220,7 +220,7 @@ public class BatchTopLevelService {
 
             String filename;
             boolean execContextDeleted = false;
-            ExecContextImpl execContext = execContextCache.findById(batch.execContextId);
+            ExecContextImpl execContext = execContextCache.findById(batch.execContextId, true);
             if (execContext==null) {
                 filename = "<ExecContext was deleted>";
                 execContextDeleted = true;
@@ -371,10 +371,10 @@ public class BatchTopLevelService {
             if (batch.deleted) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batchId + " was deleted successfully.", null);
             }
-            return ExecContextSyncService.getWithSync(execContextId, () ->  batchService.deleteBatchVirtually(execContextId, companyUniqueId, batchId));
+            return ExecContextSyncService.getWithSync(execContextId, ()->batchService.deleteBatchVirtually(execContextId, companyUniqueId, batchId));
         }
         else {
-            return ExecContextSyncService.getWithSync(execContextId, () -> batchService.deleteBatch(execContextId, companyUniqueId, batchId));
+            return ExecContextSyncService.getWithSync(execContextId, ()->batchService.deleteBatch(execContextId, companyUniqueId, batchId));
         }
     }
 

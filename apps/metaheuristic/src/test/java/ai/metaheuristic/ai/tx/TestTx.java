@@ -18,10 +18,8 @@ package ai.metaheuristic.ai.tx;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxTestingService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxTestingTopLevelService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
@@ -53,8 +51,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class TestTx extends PreparingSourceCode {
 
-    @Autowired private TaskService taskService;
-    @Autowired private ExecContextService execContextService;
     @Autowired private TxTestingService txTestingService;
     @Autowired private TxTestingTopLevelService txTestingTopLevelService;
     @Autowired private TaskRepository taskRepository;

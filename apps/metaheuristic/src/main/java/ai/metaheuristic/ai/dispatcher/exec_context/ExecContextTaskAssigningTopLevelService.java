@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -135,11 +136,8 @@ public class ExecContextTaskAssigningTopLevelService {
         });
     }
 
-
-    private long mills = 0L;
-
-    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
     public void findUnassignedTasksAndRegisterInQueue() {
         writeLock.lock();
@@ -173,12 +171,14 @@ public class ExecContextTaskAssigningTopLevelService {
         }
     }
 
+    private long mills = 0L;
+
     private UnassignedTasksStat findUnassignedTasksAndRegisterInQueueInternal(Long execContextId) {
 
         UnassignedTasksStat stat = new UnassignedTasksStat();
 
         log.info("#703.100 start searching a new tasks for registering, execContextId: #{}", execContextId);
-        final ExecContextImpl execContext = execContextCache.findById(execContextId);
+        final ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext == null) {
             return stat;
         }
@@ -219,6 +219,8 @@ public class ExecContextTaskAssigningTopLevelService {
             stat.notAllocatedReasons.add("all tasks were already registered, ids: " +
                     vertices.stream().limit(5).map(o->o.taskId!=null ? o.taskId.toString() : "null").collect(Collectors.joining(", "))+suffix);
         }
+
+        final ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
 
         int page = 0;
         List<Long> taskIds;
@@ -280,7 +282,7 @@ public class ExecContextTaskAssigningTopLevelService {
                     }
                     switch(taskParamYaml.task.context) {
                         case external:
-                            if (TaskProviderTopLevelService.registerTask(execContext, task, taskParamYaml)) {
+                            if (TaskProviderTopLevelService.registerTask(execContextParamsYaml, task, taskParamYaml)) {
                                 stat.allocated++;
                             }
                             else {

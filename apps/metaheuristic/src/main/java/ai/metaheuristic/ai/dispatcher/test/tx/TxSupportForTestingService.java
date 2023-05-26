@@ -206,7 +206,7 @@ public class TxSupportForTestingService {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        ExecContextImpl execContext = execContextService.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             throw new IllegalStateException("Need better solution for this state");
         }
@@ -257,7 +257,7 @@ public class TxSupportForTestingService {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        ExecContextImpl execContext = execContextService.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             return EnumsApi.TaskProducingStatus.EXEC_CONTEXT_NOT_FOUND_ERROR;
         }
@@ -274,7 +274,7 @@ public class TxSupportForTestingService {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        return addTasksToGraph(execContextService.findById(execContextId), parentTaskIds, taskIds);
+        return addTasksToGraph(execContextCache.findById(execContextId, true), parentTaskIds, taskIds);
     }
 
     private OperationStatusRest addTasksToGraph(@Nullable ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {

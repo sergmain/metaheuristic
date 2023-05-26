@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -58,7 +58,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TaskCheckCachingService {
 
-    private final ExecContextService execContextService;
+    private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
     private final TaskStateService taskStateService;
     private final CacheProcessRepository cacheProcessRepository;
@@ -69,7 +69,7 @@ public class TaskCheckCachingService {
 
     @Transactional
     public void invalidateCacheItemAndSetTaskToNone(Long execContextId, Long taskId, Long cacheProcessId) {
-        ExecContextImpl execContext = execContextService.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             log.info("#609.020 ExecContext #{} doesn't exists", execContextId);
             return;

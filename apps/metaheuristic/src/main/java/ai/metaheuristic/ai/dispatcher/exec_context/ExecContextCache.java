@@ -25,6 +25,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.EntityManager;
 
 /**
  * @author Serge
@@ -39,6 +43,7 @@ import org.springframework.stereotype.Service;
 public class ExecContextCache {
 
     private final ExecContextRepository execContextRepository;
+    private final EntityManager em;
 
 //    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, allEntries = true)
     public void clearCache() {
@@ -98,8 +103,30 @@ public class ExecContextCache {
     }
 
     @Nullable
-//    @Cacheable(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, unless="#result==null")
     public ExecContextImpl findById(Long id) {
+        return findById(id, false);
+    }
+
+    @Nullable
+    public ExecContextImpl findById(Long id, boolean detached) {
+        if (detached) {
+            return findByIdDetached(id);
+        }
+        return execContextRepository.findById(id).orElse(null);
+    }
+
+    @Nullable
+    public ExecContextImpl findByIdDetached(Long id) {
+        final ExecContextImpl execContext = execContextRepository.findById(id).orElse(null);
+        if (execContext!=null) {
+            em.detach(execContext);
+        }
+        return execContext;
+    }
+
+    @Nullable
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
+    public ExecContextImpl findByIdWithNewTx(Long id) {
         return execContextRepository.findById(id).orElse(null);
     }
 }

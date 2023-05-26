@@ -42,45 +42,43 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ExecContextReconciliationService {
 
-    private final ExecContextService execContextService;
+    private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
     private final TaskStateService taskStateService;
     private final ExecContextTaskResettingService execContextTaskResettingService;
 
     @Transactional
-    public Void finishReconciliation(ExecContextData.ReconciliationStatus status) {
+    public void finishReconciliation(ExecContextData.ReconciliationStatus status) {
         ExecContextSyncService.checkWriteLockPresent(status.execContextId);
 
         if (!status.isNullState.get() && status.taskIsOkIds.isEmpty() && status.taskForResettingIds.isEmpty()) {
-            return null;
+            return;
         }
-        ExecContextImpl execContext = execContextService.findById(status.execContextId);
+        ExecContextImpl execContext = execContextCache.findById(status.execContextId);
         if (execContext==null) {
-            return null;
+            return;
         }
         if (status.isNullState.get()) {
             log.info("#307.180 Found non-created task, graph consistency is failed");
             execContext.completedOn = System.currentTimeMillis();
             execContext.state = EnumsApi.ExecContextState.ERROR.code;
-            return null;
+            return;
         }
 
         for (Long taskForResettingId : status.taskForResettingIds) {
             TaskSyncService.getWithSyncVoid(taskForResettingId, ()-> execContextTaskResettingService.resetTask(execContext, taskForResettingId));
         }
         for (Long taskIsOkId : status.taskIsOkIds) {
-            TaskSyncService.getWithSyncNullable(taskIsOkId, ()-> {
+            TaskSyncService.getWithSyncVoid(taskIsOkId, ()-> {
                 TaskImpl task = taskRepository.findById(taskIsOkId).orElse(null);
                 if (task==null) {
                     log.error("#307.200 task is null");
-                    return null;
+                    return;
                 }
                 TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
                 taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK);
-                return null;
             });
         }
-        return null;
     }
 
 }

@@ -122,7 +122,7 @@ public class ExecContextTaskResettingTopLevelService {
             return;
         }
 
-        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextImpl ec = execContextCache.findById(execContextId, true);
         if (ec==null) {
             return;
         }

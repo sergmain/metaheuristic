@@ -47,7 +47,7 @@ public class LongRunningTopLevelService {
     public void updateStateForLongRunning() {
 
         for (DispatcherParamsYaml.LongRunningExecContext longRunningExecContext : dispatcherParamsTopLevelService.getLongRunningExecContexts()) {
-            ExecContextImpl execContext = execContextCache.findById(longRunningExecContext.execContextId);
+            ExecContextImpl execContext = execContextCache.findById(longRunningExecContext.execContextId, true);
             if (execContext==null) {
                 dispatcherParamsTopLevelService.deRegisterLongRunningExecContext(longRunningExecContext.taskId);
                 continue;

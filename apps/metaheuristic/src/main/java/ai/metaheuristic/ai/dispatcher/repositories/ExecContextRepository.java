@@ -24,16 +24,23 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @Profile("dispatcher")
 public interface ExecContextRepository extends CrudRepository<ExecContextImpl, Long> {
+
+    @Override
+    @NonNull
+    @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+    Optional<ExecContextImpl> findById(Long execContextId);
 
     @Nullable
     @Query(value="select e.id from ExecContextImpl e where e.id=:execContextId")
@@ -48,8 +55,9 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
     @Transactional(readOnly = true)
     List<Object[]> findAllExecStates();
 
-    @Query(value="select w.id, w.sourceCodeId from ExecContextImpl w ")
-    List<Object[]> findAllExecContextIdWithSourceCodeId();
+    @Query(value="select w.state from ExecContextImpl w where w.id=:execContextId")
+    @Transactional(readOnly = true)
+    int findState(Long execContextId);
 
     @Query(value="select w.id from ExecContextImpl w")
     @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)

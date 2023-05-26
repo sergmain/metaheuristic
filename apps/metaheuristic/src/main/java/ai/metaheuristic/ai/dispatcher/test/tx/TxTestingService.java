@@ -16,21 +16,22 @@
 
 package ai.metaheuristic.ai.dispatcher.test.tx;
 
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.nio.file.Path;
-import java.util.List;
+import javax.persistence.EntityManager;
 
 /**
  * @author Serge
@@ -47,6 +48,10 @@ public class TxTestingService {
     private static final String AAA = "AAA";
     private static final String AAA2 = AAA+AAA;
     private final TaskRepository taskRepository;
+    private final TxTesting1Service txTesting1Service;
+    private final ExecContextCache execContextCache;
+    private final ExecContextRepository execContextRepository;
+    private final EntityManager em;
 
     @Transactional
     public TaskImpl create(Long execContextId, String params) {
@@ -132,5 +137,92 @@ public class TxTestingService {
             throw new IllegalStateException("(!AAA2.equals(t1.params)) ");
         }
         return AAA2;
+    }
+
+
+    @Transactional
+    public TaskImpl createTask(Long execContextId, String params) {
+        TaskImpl t = new TaskImpl();
+        t.execContextId = execContextId;
+        t.execState = EnumsApi.TaskExecState.NONE.value;
+        t.params = params;
+
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionStatus status = TransactionAspectSupport.currentTransactionStatus();
+        }
+
+        return taskRepository.save(t);
+    }
+
+
+    @Transactional
+    public void twoLevelTwoTx(Long id, String newParam, boolean throwException) {
+        TaskImpl t1 = taskRepository.findById(id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        t1.params = newParam;
+        try {
+            txTesting1Service.forException(throwException);
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Transactional
+    public void twoLevelOneTx(Long id, String newParam, boolean throwException) {
+        TaskImpl t1 = taskRepository.findById(id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        t1.params = newParam;
+        forException(throwException);
+    }
+
+    @SuppressWarnings("MethodMayBeStatic")
+    public void forException(boolean throwException) {
+        if (throwException) {
+            throw new RuntimeException();
+        }
+    }
+
+    @Transactional
+    public void oneLevelTx(Long id, String newParam, boolean throwException) {
+        TaskImpl t1 = taskRepository.findById(id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        t1.params = newParam;
+        if (throwException) {
+            throw new RuntimeException();
+        }
+    }
+
+    @Transactional
+    public void oneLevelTxChecked(Long id, String newParam) throws Exception {
+        TaskImpl t1 = taskRepository.findById(id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        t1.params = newParam;
+        throw new Exception();
+    }
+
+    @Transactional
+    public void oneLevelTxEmpty(Long id){
+        TaskImpl t1 = taskRepository.findById(id).orElseThrow(() -> new IllegalStateException("Task not found"));
+    }
+
+    @Transactional
+    public void testDetachedInTx(Long execContextId) {
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        if (em.contains(ec)) {
+            throw new RuntimeException();
+        }
+    }
+
+    @Transactional
+    public void testDetachedInTxQueryNewTx(Long execContextId) {
+        ExecContextImpl ec = execContextCache.findByIdWithNewTx(execContextId);
+        if (em.contains(ec)) {
+            throw new RuntimeException();
+        }
+    }
+
+    @Transactional
+    public void testDetachedInDetachManually(Long execContextId) {
+        ExecContextImpl ec = execContextCache.findById(execContextId, true);
+        if (em.contains(ec)) {
+            throw new RuntimeException();
+        }
     }
 }

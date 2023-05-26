@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.dispatcher.batch.BatchService;
+import ai.metaheuristic.ai.dispatcher.batch.BatchTxService;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueEvent;
 import ai.metaheuristic.ai.dispatcher.event.StartProcessReadinessEvent;
@@ -93,7 +93,7 @@ public class Schedulers {
     @Profile("dispatcher")
     public static class UpdateBatchStatusesSchedulingConfig implements SchedulingConfigurer {
         private final Globals globals;
-        private final BatchService batchService;
+        private final BatchTxService batchService;
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {

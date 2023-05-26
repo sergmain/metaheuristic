@@ -32,7 +32,6 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 public abstract class FeatureMethods extends PreparingExperiment {
 
-    @Autowired private ExecContextService execContextService;
+    @Autowired private ExecContextCache execContextCache;
     @Autowired private ExecContextStatusService execContextStatusService;
     @Autowired private TaskProviderTopLevelService taskProviderService;
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
@@ -85,7 +84,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
         assertEquals(EnumsApi.ExecContextState.NONE.code, getExecContextForTest().getState());
         ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
             EnumsApi.TaskProducingStatus producingStatus = txSupportForTestingService.toProducing(getExecContextForTest().id);
-            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
             assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, getExecContextForTest().getState());
 
@@ -111,7 +110,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
         execContextStatusService.resetStatus();
         assertEquals(EnumsApi.ExecContextState.STARTED, execContextStatusService.getExecContextStatuses().statuses.get(getExecContextForTest().id));
 
-        setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
         assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(getExecContextForTest().getState()));
     }
 

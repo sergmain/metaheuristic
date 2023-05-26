@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.source_code;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
@@ -66,7 +67,7 @@ public class TestTaskRequest extends FeatureMethods {
     @Autowired private SouthbridgeService serverService;
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
     @Autowired private TaskRepository taskRepository;
-    @Autowired private ExecContextService execContextService;
+    @Autowired private ExecContextCache execContextCache;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -152,7 +153,7 @@ public class TestTaskRequest extends FeatureMethods {
         assertTrue(task2.completed!=0);
 
         execContextTopLevelService.updateExecContextStatus(getExecContextForTest().id);
-        setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
     }
 
     private void step_3(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {

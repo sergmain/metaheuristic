@@ -40,7 +40,6 @@ import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -50,14 +49,12 @@ import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
-import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
@@ -86,7 +83,7 @@ import java.util.function.Function;
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class BatchService {
+public class BatchTxService {
 
     private final Globals globals;
     private final SourceCodeCache sourceCodeCache;
@@ -100,30 +97,6 @@ public class BatchService {
     private final BatchHelperService batchHelperService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final ApplicationEventPublisher eventPublisher;
-
-    public static String getActualExtension(SourceCodeStoredParamsYaml scspy, String defaultResultFileExtension) {
-        return getActualExtension(SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source), defaultResultFileExtension);
-    }
-
-    private static String getActualExtension(SourceCodeParamsYaml scpy, String defaultResultFileExtension) {
-        final String ext = MetaUtils.getValue(scpy.source.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION);
-
-        return S.b(ext)
-                ? (StringUtils.isNotBlank(defaultResultFileExtension) ? defaultResultFileExtension : ".bin")
-                : ext;
-    }
-
-    private static void changeStateToPreparing(Batch b) {
-            if (b.execState != Enums.BatchExecState.Unknown.code && b.execState != Enums.BatchExecState.Stored.code &&
-                    b.execState != Enums.BatchExecState.Preparing.code) {
-                throw new IllegalStateException("#990.020 Can't change state to Preparing, " +
-                        "current state: " + Enums.BatchExecState.toState(b.execState));
-            }
-            if (b.execState == Enums.BatchExecState.Preparing.code) {
-                return;
-            }
-            b.execState = Enums.BatchExecState.Preparing.code;
-    }
 
     private void changeStateToProcessing(Batch b) {
         if (b.execState != Enums.BatchExecState.Preparing.code && b.execState != Enums.BatchExecState.Processing.code) {
@@ -146,7 +119,7 @@ public class BatchService {
                 log.warn("#990.050 batch wasn't found {}", batchId);
                 continue;
             }
-            ExecContextImpl ec = execContextCache.findById(b.execContextId);
+            ExecContextImpl ec = execContextCache.findById(b.execContextId, true);
             if (ec==null) {
                 continue;
             }
@@ -182,14 +155,14 @@ public class BatchService {
             ExecContextParamsYaml execContextParamsYaml,
             final DispatcherContext dispatcherContext) {
 
-        ExecContextImpl execContext = execContextService.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             return new BatchData.UploadingStatus("#981.205 ExecContext was lost");
         }
 
         Batch b = createBatch(sourceCode, execContextId, dispatcherContext);
 
-        changeStateToPreparing(b);
+        BatchUtils.changeStateToPreparing(b);
 
         // start producing new tasks
         OperationStatusRest operationStatus = ExecContextFSM.execContextTargetState(execContext, EnumsApi.ExecContextState.PRODUCING, dispatcherContext.getCompanyId());
@@ -319,30 +292,35 @@ public class BatchService {
             log.warn(es);
             return new CleanerInfo();
         }
-        ExecContextImpl execContext = execContextService.findById(batch.execContextId);
+        ExecContextImpl execContext = execContextCache.findById(batch.execContextId, true);
         if (execContext==null) {
             return new CleanerInfo();
         }
 
-        return getVariable(batch, null, true, (scpy)-> {
-            if (scpy.source.variables.inputs.size()!=1) {
-                final String es = "#981.410 expected only one input variable in execContext but actual count: " + scpy.source.variables.inputs.size();
-                log.warn(es);
-                return null;
-            }
-            String variableName = scpy.source.variables.inputs.get(0).name;
-            if (S.b(variableName)) {
-                final String es = "#981.420 input variable in execContext #"+batch.execContextId+" is empty";
-                log.warn(es);
-                return null;
-            }
-            return variableName;
-        }, (execContextId, scpy) -> batchHelperService.findUploadedFilenameForBatchId(execContext.id, execContext.getExecContextParamsYaml(), "origin-file.zip"));
+        return getVariable(batch, null, true,
+                BatchTxService::selectVariable,
+                (execContextId, scpy) -> batchHelperService.findUploadedFilenameForBatchId(execContextId, execContext.getExecContextParamsYaml(), "origin-file.zip"));
+    }
+
+    @Nullable
+    private static String selectVariable(Long execContextId, SourceCodeParamsYaml scpy) {
+        if (scpy.source.variables.inputs.size()!=1) {
+            final String es = "#981.410 expected only one input variable in execContext but actual count: " + scpy.source.variables.inputs.size();
+            log.warn(es);
+            return null;
+        }
+        String variableName = scpy.source.variables.inputs.get(0).name;
+        if (S.b(variableName)) {
+            final String es = "#981.420 input variable in execContext #" + execContextId + " is empty";
+            log.warn(es);
+            return null;
+        }
+        return variableName;
     }
 
     public CleanerInfo getVariable(
             Batch batch, @Nullable Long companyUniqueId, boolean includeDeleted,
-            Function<SourceCodeParamsYaml, String> variableSelector, BiFunction<Long, SourceCodeParamsYaml, String> outputFilenameFunction) {
+            BiFunction<Long, SourceCodeParamsYaml, String> variableSelector, BiFunction<Long, SourceCodeParamsYaml, String> outputFilenameFunction) {
 
         CleanerInfo resource = new CleanerInfo();
         try {
@@ -363,7 +341,7 @@ public class BatchService {
             }
             SourceCodeStoredParamsYaml scspy = sc.getSourceCodeStoredParamsYaml();
             SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
-            String resultBatchVariable = variableSelector.apply(scpy);
+            String resultBatchVariable = variableSelector.apply(batch.execContextId, scpy);
 
             SimpleVariable variable = variableService.getVariableAsSimple(batch.execContextId, resultBatchVariable);
             if (variable==null) {
@@ -389,7 +367,7 @@ public class BatchService {
             httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
             // https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
             httpHeaders.setContentDisposition(ContentDisposition.parse(
-                    "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8.toString())));
+                    "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8)));
             resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, Files.size(zipFile)), HttpStatus.OK);
             return resource;
         } catch (VariableDataNotFoundException e) {
@@ -414,7 +392,7 @@ public class BatchService {
     }
 
     private CleanerInfo getBatchProcessingResultInternal(Batch batch, Long companyUniqueId, boolean includeDeleted, String variableType) {
-        return getVariable(batch, companyUniqueId, includeDeleted, (scpy)-> {
+        return getVariable(batch, companyUniqueId, includeDeleted, (execContextId, scpy)-> {
             List<SourceCodeParamsYaml.Variable> vars = SourceCodeService.findVariableByType(scpy, variableType);
             if (vars.isEmpty()) {
                 final String es = "#981.540 variable with type '"+variableType+"' wasn't found";
@@ -447,7 +425,7 @@ public class BatchService {
                 return null;
 
             }
-            String filename = StrUtils.getName(inputVariable.filename) + BatchService.getActualExtension(scpy, globals.dispatcher.defaultResultFileExtension);
+            String filename = StrUtils.getName(inputVariable.filename) + BatchUtils.getActualExtension(scpy, globals.dispatcher.defaultResultFileExtension);
             return filename;
         });
     }

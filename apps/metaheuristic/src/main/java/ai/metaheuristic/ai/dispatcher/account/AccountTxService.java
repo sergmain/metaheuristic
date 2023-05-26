@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 @Service
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class AccountService {
+public class AccountTxService {
 
     private final Globals globals;
     private final AccountRepository accountRepository;

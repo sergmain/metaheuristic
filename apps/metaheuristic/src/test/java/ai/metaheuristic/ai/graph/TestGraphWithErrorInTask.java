@@ -60,7 +60,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestGraphWithErrorInTask extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
-    @Autowired private ExecContextService execContextService;
+    @Autowired private ExecContextCache execContextCache;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
     @Autowired private TestGraphService testGraphService;
     @Autowired private ExecContextGraphTopLevelService execContextGraphTopLevelService;
@@ -85,7 +85,7 @@ public class TestGraphWithErrorInTask extends PreparingSourceCode {
                             final TaskApiData.TaskWithContext t1 = new TaskApiData.TaskWithContext(1L, Consts.TOP_LEVEL_CONTEXT_ID);
                             OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                                     List.of(), List.of(t1));
-                            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+                            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
 
                             assertEquals(EnumsApi.OperationStatus.OK, osr.status);
 
@@ -126,7 +126,7 @@ public class TestGraphWithErrorInTask extends PreparingSourceCode {
                                     List.of(1L, 1213L, 1223L, 1233L), List.of(t999));
 
                             assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-                            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+                            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
 
                             count = preparingSourceCodeService.getCountUnfinishedTasks(getExecContextForTest());
                             assertEquals(11, count);
@@ -157,7 +157,7 @@ public class TestGraphWithErrorInTask extends PreparingSourceCode {
                             Set<EnumsApi.TaskExecState> states;
                             txSupportForTestingService.updateGraphWithResettingAllChildrenTasksWithTx(
                                     getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId, t1.taskId);
-                            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+                            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
 
                             // there is only 'NONE' exec state
                             states = execContextGraphTopLevelService.findAll(getExecContextForTest().execContextGraphId).stream()
@@ -178,7 +178,7 @@ public class TestGraphWithErrorInTask extends PreparingSourceCode {
                                     getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId,t1.taskId, EnumsApi.TaskExecState.OK, t1.taskContextId);
 
                             assertEquals(EnumsApi.OperationStatus.OK, status.status.status);
-                            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+                            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
 
                             vertices = execContextGraphTopLevelService.findAllForAssigning(
                                     getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId);
@@ -194,7 +194,7 @@ public class TestGraphWithErrorInTask extends PreparingSourceCode {
                             status = txSupportForTestingService.updateTaskExecState(
                                     getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId, t1211.taskId, EnumsApi.TaskExecState.IN_PROGRESS, t1211.taskContextId);
 
-                            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+                            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
 
                             vertices = txSupportForTestingService.findAllForAssigningWithTx(getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId);
 
@@ -207,7 +207,7 @@ public class TestGraphWithErrorInTask extends PreparingSourceCode {
                             status = txSupportForTestingService.updateTaskExecState(
                                     getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId, t1211.taskId, EnumsApi.TaskExecState.ERROR, t1211.taskContextId);
 
-                            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+                            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
 
                             assertTrue(status.childrenTasks.stream().noneMatch(o->o.taskId.equals(t1211.taskId)));
                             assertTrue(status.childrenTasks.stream().anyMatch(o->o.taskId.equals(t1212.taskId)));

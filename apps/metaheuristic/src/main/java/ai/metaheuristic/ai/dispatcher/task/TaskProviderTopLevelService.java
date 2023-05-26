@@ -23,12 +23,12 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.QuotasData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessStateService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
@@ -80,12 +80,11 @@ public class TaskProviderTopLevelService {
     private final ApplicationEventPublisher applicationEventPublisher;
     private final ExecContextCache execContextCache;
     private final ExecContextReadinessStateService execContextReadinessStateService;
-    private final ExecContextService execContextService;
     private final ApplicationEventPublisher eventPublisher;
     private final TaskProviderUnassignedTaskTopLevelService taskProviderUnassignedTaskTopLevelService;
     private final VariableService variableService;
 
-    public void registerTask(ExecContextImpl execContext, Long taskId) {
+    public void registerTask(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
         TaskQueueSyncStaticService.getWithSyncVoid(()-> {
             if (TaskQueueService.alreadyRegistered(taskId)) {
                 return;
@@ -105,34 +104,37 @@ public class TaskProviderTopLevelService {
                 return;
             }
             if (taskParamYaml.task.context== EnumsApi.FunctionExecContext.internal) {
-                registerInternalTaskWithoutSync(execContext.id, taskId, taskParamYaml);
-                eventPublisher.publishEvent(new TaskWithInternalContextEvent(execContext.sourceCodeId, execContext.id, taskId));
+                registerInternalTaskWithoutSync(simpleExecContext.execContextId, taskId, taskParamYaml);
+                eventPublisher.publishEvent(new TaskWithInternalContextEvent(simpleExecContext.sourceCodeId, simpleExecContext.execContextId, taskId));
             }
             else {
-                registerTaskLambda(execContext, task, taskParamYaml);
+                ExecContextParamsYaml.Process p = simpleExecContext.getParamsYaml().findProcess(taskParamYaml.task.processCode);
+                if (p==null) {
+                    log.warn("#393.120 Can't register task #{}, process {} doesn't exist in execContext #{}", task.id, taskParamYaml.task.processCode, simpleExecContext.execContextId);
+                    return;
+                }
+                registerTaskLambda(p, task, taskParamYaml);
             }
         });
     }
 
-    public static boolean registerTask(final ExecContextImpl execContext, TaskImpl task, final TaskParamsYaml taskParamYaml) {
+    public static boolean registerTask(final ExecContextParamsYaml execContextParamsYaml, TaskImpl task, final TaskParamsYaml taskParamYaml) {
+        final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
+        if (p==null) {
+            log.warn("#393.120 Can't register task #{}, process {} doesn't exist in execContext #{}", task.id, taskParamYaml.task.processCode, task.execContextId);
+            return false;
+        }
+
         return TaskQueueSyncStaticService.getWithSync(()-> {
             if (TaskQueueService.alreadyRegistered(task.id)) {
                 return false;
             }
-            registerTaskLambda(execContext, task, taskParamYaml);
+            registerTaskLambda(p, task, taskParamYaml);
             return true;
         });
     }
 
-    private static void registerTaskLambda(final ExecContextImpl ec, TaskImpl task, final TaskParamsYaml taskParamYaml) {
-        final ExecContextParamsYaml execContextParamsYaml = ec.getExecContextParamsYaml();
-
-        ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
-        if (p==null) {
-            log.warn("#393.120 Can't register task #{}, process {} doesn't exist in execContext #{}", task.id, taskParamYaml.task.processCode, ec.id);
-            return;
-        }
-
+    private static void registerTaskLambda(ExecContextParamsYaml.Process p, TaskImpl task, final TaskParamsYaml taskParamYaml) {
         final TaskQueue.QueuedTask queuedTask = new TaskQueue.QueuedTask(EnumsApi.FunctionExecContext.external, task.execContextId, task.id, task, taskParamYaml, p.tag, p.priority);
         TaskQueueService.addNewTask(queuedTask);
     }
@@ -236,7 +238,7 @@ public class TaskProviderTopLevelService {
 
     public void setTaskExecStateInQueue(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
         log.debug("#393.360 set task #{} as {}", taskId, state);
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext==null) {
             return;
         }
@@ -417,7 +419,7 @@ public class TaskProviderTopLevelService {
                             log.error("#393.720 Core #{} has empty env.yaml", coreId);
                             return null;
                         }
-                        ExecContextImpl ec =  execContextService.findById(execContextId);
+                        ExecContextImpl ec = execContextCache.findById(execContextId, true);
                         if (ec==null) {
                             log.warn("#393.750 Can't re-assign task #{}, execContext #{} doesn't exist", taskId, execContextId);
                             continue;

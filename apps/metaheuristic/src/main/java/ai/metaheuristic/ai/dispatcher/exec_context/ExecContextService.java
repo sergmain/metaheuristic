@@ -94,20 +94,14 @@ public class ExecContextService {
         return result;
     }
 
-    @Nullable
-    public ExecContextImpl findById(Long id) {
-        return execContextCache.findById(id);
-    }
-
     @Transactional
-    public Void changeValidStatus(Long execContextId, boolean status) {
+    public void changeValidStatus(Long execContextId, boolean status) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
-            return null;
+            return;
         }
         execContext.setValid(status);
         save(execContext);
-        return null;
     }
 
     public ExecContextImpl save(ExecContextImpl execContext) {
@@ -128,7 +122,7 @@ public class ExecContextService {
 
     @Transactional(readOnly = true)
     public SourceCodeApiData.ExecContextResult getExecContextExtended(Long execContextId) {
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext == null) {
             return new SourceCodeApiData.ExecContextResult("#705.180 execContext wasn't found, execContextId: " + execContextId);
         }
@@ -147,7 +141,7 @@ public class ExecContextService {
         ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.dispatcher.asset.mode);
         initInfoAboutSourceCode(sourceCodeId, result);
 
-        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextImpl ec = execContextCache.findById(execContextId, true);
         if (ec == null) {
             ExecContextApiData.RawExecContextStateResult resultWithError = new ExecContextApiData.RawExecContextStateResult("#705.220 Can't find execContext for Id " + execContextId);
             return resultWithError;
@@ -200,7 +194,7 @@ public class ExecContextService {
         ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.dispatcher.asset.mode);
         result.instances = execContextRepository.findBySourceCodeIdOrderByCreatedOnDesc(pageable, sourceCodeId);
         for (ExecContextsListItem instance : result.instances) {
-            ExecContextImpl ec = execContextCache.findById(instance.id);
+            ExecContextImpl ec = execContextCache.findById(instance.id, true);
             if (ec==null) {
                 continue;
             }
@@ -221,7 +215,7 @@ public class ExecContextService {
 
     @Transactional
     public void deleteExecContext(Long execContextId) {
-        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextImpl ec = execContextCache.findById(execContextId, true);
         if (ec==null) {
             return;
         }
@@ -238,7 +232,7 @@ public class ExecContextService {
 
     @Transactional(readOnly = true)
     public SourceCodeApiData.ExecContextForDeletion getExecContextExtendedForDeletion(Long execContextId, DispatcherContext context) {
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext == null) {
             return new SourceCodeApiData.ExecContextForDeletion("#705.260 execContext wasn't found, execContextId: " + execContextId);
         }
@@ -260,7 +254,7 @@ public class ExecContextService {
 
     @Nullable
     private OperationStatusRest checkExecContext(Long execContextId, DispatcherContext context) {
-        ExecContext wb = execContextCache.findById(execContextId);
+        ExecContext wb = execContextCache.findById(execContextId, true);
         if (wb==null) {
             return new OperationStatusRest(OperationStatus.ERROR, "#705.280 ExecContext wasn't found, execContextId: " + execContextId );
         }
@@ -271,7 +265,7 @@ public class ExecContextService {
     public CleanerInfo downloadVariable(Long execContextId, Long variableId, Long companyId) {
         CleanerInfo resource = new CleanerInfo();
         try {
-            ExecContextImpl execContext = execContextCache.findById(execContextId);
+            ExecContextImpl execContext = execContextCache.findById(execContextId, true);
             if (execContext==null) {
                 return resource;
             }

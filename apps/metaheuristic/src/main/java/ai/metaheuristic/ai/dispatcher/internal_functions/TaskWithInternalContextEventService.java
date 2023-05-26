@@ -223,7 +223,7 @@ public class TaskWithInternalContextEventService {
     private void process(final TaskWithInternalContextEvent event) {
         TxUtils.checkTxNotExists();
 
-        ExecContextImpl execContext = execContextCache.findById(event.execContextId);
+        ExecContextImpl execContext = execContextCache.findById(event.execContextId, true);
         if (execContext==null) {
             return;
         }
