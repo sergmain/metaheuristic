@@ -28,6 +28,7 @@ import org.springframework.lang.Nullable;
  */
 @Data
 public class DispatcherEventYaml implements BaseParams {
+    @SuppressWarnings("FieldMayBeStatic")
     public final int version = 2;
 
     // representation of LocalDateTime

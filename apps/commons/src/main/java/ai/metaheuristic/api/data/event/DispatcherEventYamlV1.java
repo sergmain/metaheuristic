@@ -27,6 +27,7 @@ import lombok.Data;
  */
 @Data
 public class DispatcherEventYamlV1 implements BaseParams {
+    @SuppressWarnings("FieldMayBeStatic")
     public final int version = 1;
 
     // representation of LocalDateTime

@@ -90,14 +90,6 @@ public class SourceCodeValidationUtils {
                         EnumsApi.SourceCodeValidateStatus.SUB_PROCESS_LOGIC_NOT_DEFINED,
                         "#177.107 The process '" + code + "' has sub processes but logic isn't defined");
             }
-/*
-            if (process.function.context == EnumsApi.FunctionExecContext.internal && process.cache != null && process.cache.enabled) {
-                return new SourceCodeApiData.SourceCodeValidationResult(
-                        EnumsApi.SourceCodeValidateStatus.CACHING_ISNT_SUPPORTED_FOR_INTERNAL_FUNCTION_ERROR,
-                        "#177.110 Caching isn't supported for internal functions. Process: " + process.code);
-            }
-*/
-
             boolean finish = process.function.code.equals(Consts.MH_FINISH_FUNCTION);
             if (!finish) {
                 for (SourceCodeParamsYaml.Variable variable : process.outputs) {
@@ -130,11 +122,11 @@ public class SourceCodeValidationUtils {
                                 EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_VARIABLE_NAME_ERROR,
                                 "#177.187 Input variable in process " + process.code + " has a wrong chars in name");
                     }
-                    boolean outputVariableFound = findOutputVariable(sourceCode, variable.name);
-                    if (!outputVariableFound) {
+                    boolean doesVariableHaveSource = doesVariableHaveSource(sourceCode, variable.name);
+                    if (!doesVariableHaveSource) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
-                                EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR,
-                                S.f("#177.183 Input variable %s in process %s doesn't have corresponding Output variable",  variable.name, process.code));
+                                EnumsApi.SourceCodeValidateStatus.SOURCE_OF_VARIABLE_NOT_FOUND_ERROR,
+                                S.f("177.200 Input variable %s in process %s isn't found in any source of Variables - Output, ExecContext Inputs, Globals Variables",  variable.name, process.code));
                     }
 
                 }
@@ -264,9 +256,14 @@ public class SourceCodeValidationUtils {
         return null;
     }
 
-    private static boolean findOutputVariable(SourceCodeParamsYaml.SourceCode sourceCode, String name) {
-        if (sourceCode.variables!=null && sourceCode.variables.globals!=null && sourceCode.variables.globals.contains(name)) {
-            return true;
+    public static boolean doesVariableHaveSource(SourceCodeParamsYaml.SourceCode sourceCode, String name) {
+        if (sourceCode.variables!=null) {
+            if (sourceCode.variables.globals!=null && sourceCode.variables.globals.contains(name)) {
+                return true;
+            }
+            if (sourceCode.variables.inputs.stream().anyMatch(v->v.name.equals(name))) {
+                return true;
+            }
         }
         for (SourceCodeParamsYaml.Process process : sourceCode.getProcesses()) {
             if (findOutputVariable(process, name)) {

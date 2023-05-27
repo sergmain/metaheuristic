@@ -16,7 +16,9 @@
 
 package ai.metaheuristic.ai.source_code;
 
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import org.apache.commons.io.IOUtils;
@@ -39,6 +41,15 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
  */
 @Execution(CONCURRENT)
 public class SourceCodeValidationUtilsTest {
+
+    @Test
+    public void test_doesVariableHaveSource() throws IOException {
+        String params = IOUtils.resourceToString("/source_code/yaml/for-testing-exec-source-code-2.yaml", StandardCharsets.UTF_8);
+        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(params);
+        sourceCodeParamsYaml.checkIntegrity();
+
+        assertTrue(SourceCodeValidationUtils.doesVariableHaveSource(sourceCodeParamsYaml.source, "var-input-1"));
+    }
 
     @Test
     public void test_to_variable_error() throws IOException {

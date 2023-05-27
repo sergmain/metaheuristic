@@ -119,7 +119,7 @@ public class TestExecSourceCode extends PreparingSourceCode {
             assertTrue(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());
             assertNotEquals(EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR, scr.validationResult.status);
-            assertEquals(EnumsApi.SourceCodeValidateStatus.META_NOT_FOUND_ERROR, scr.validationResult.status);
+            assertEquals(EnumsApi.SourceCodeValidateStatus.META_NOT_FOUND_ERROR, scr.validationResult.status, scr.validationResult.error);
         } finally {
             finalize(scr);
         }
@@ -134,7 +134,7 @@ public class TestExecSourceCode extends PreparingSourceCode {
             assertTrue(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());
             assertNotEquals(EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR, scr.validationResult.status);
-            assertEquals(EnumsApi.SourceCodeValidateStatus.INPUT_VARIABLES_COUNT_MISMATCH_ERROR, scr.validationResult.status);
+            assertEquals(EnumsApi.SourceCodeValidateStatus.SOURCE_OF_VARIABLE_NOT_FOUND_ERROR, scr.validationResult.status, scr.validationResult.error);
         } finally {
             finalize(scr);
         }
