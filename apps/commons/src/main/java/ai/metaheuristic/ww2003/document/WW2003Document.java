@@ -146,4 +146,11 @@ public class WW2003Document extends Composite implements XmlTag, Finalizable {
         return sectProp;
     }
 
-}
+    public Optional<Body> findBody() {
+        for (CDNode cdNode : getNodes()) {
+            if (cdNode instanceof Body body) {
+                return Optional.of(body);
+            }
+        }
+        return Optional.empty();
+    }}

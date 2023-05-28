@@ -32,12 +32,12 @@ import static ai.metaheuristic.ww2003.document.Enums.ConsPStyle.CONS_NORMAL;
  * Date: 9/9/2022
  * Time: 3:43 AM
  */
-public class ConDocumentStylesUtils {
+public class WW2003DocumentStylesUtils {
 
     private static final String W_STYLE_CLOSE = "</w:style>";
 
     public static List<UnIdentifiedRawTextNode> createRawStyles(String text) {
-        return text.lines().map(ConDocumentStylesUtils::createRawStyle).toList();
+        return text.lines().map(WW2003DocumentStylesUtils::createRawStyle).toList();
     }
 
     private static UnIdentifiedRawTextNode createRawStyle(String line) {
@@ -56,7 +56,7 @@ public class ConDocumentStylesUtils {
             throw new IllegalStateException("(idx==-1)");
         }
         String trim2 = trim1.substring(0, idx);
-        return ConDocumentStylesUtils.createRawStyle(type, id, trim2);
+        return WW2003DocumentStylesUtils.createRawStyle(type, id, trim2);
     }
 
     public static String extractValue(String s, String attr) {
