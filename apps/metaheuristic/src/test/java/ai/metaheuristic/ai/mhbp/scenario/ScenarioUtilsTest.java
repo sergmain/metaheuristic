@@ -108,6 +108,10 @@ public class ScenarioUtilsTest {
         list = getVariables("Hello", true);
         assertEquals(1, list.size());
         assertTrue(list.contains("Hello"));
+
+        list = getVariables("text variable [[mh.stub-variable]]", true);
+        assertEquals(1, list.size());
+        assertTrue(list.contains("mh.stub-variable"));
     }
 
     @Test

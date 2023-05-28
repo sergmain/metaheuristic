@@ -125,18 +125,16 @@ public class ScenarioService {
         List<ScenarioData.SimpleScenarioStep> steps = scenarioParams.steps.stream()
                 .map(o-> {
                     ScenarioData.ApiUid apiUid = new ScenarioData.ApiUid(0L, "<broken API Id>");
-                    String functionCode = null;
-                        if (o.api!=null) {
-                            apiUid = apis.computeIfAbsent(o.api.apiId,
-                                    (apiId) -> apiRepository.findById(apiId)
-                                            .map(api -> new ScenarioData.ApiUid(api.id, api.code))
-                                            .orElse(new ScenarioData.ApiUid(0L, "<broken API Id>")));
-                        }
-                        if (o.function!=null) {
-                            functionCode = o.function.code;
-                        }
+                    if (o.api!=null) {
+                        apiUid = apis.computeIfAbsent(o.api.apiId,
+                                (apiId) -> apiRepository.findById(apiId)
+                                        .map(api -> new ScenarioData.ApiUid(api.id, api.code))
+                                        .orElse(new ScenarioData.ApiUid(0L, "<broken API Id>")));
+                    }
+                    String functionCode = o.function!=null ? o.function.code : null;
+                    String aggregateType = o.aggregateType==null ? null : o.aggregateType.toString();
 
-                    return new ScenarioData.SimpleScenarioStep(s.id, apiUid, o, functionCode);
+                    return new ScenarioData.SimpleScenarioStep(s.id, apiUid, o, functionCode, aggregateType);
                 })
                 .toList();
 

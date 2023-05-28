@@ -63,7 +63,8 @@ public class AggregateToWW2003Service {
             sect.add(p);
 
             String text = variableTxService.getVariableDataAsString(v.id);
-            sect.add(new Para(Run.t(text)));
+            text.lines().forEach(line->sect.add(new Para(Run.t(line))));
+
             sect.add(new Para());
         }
 

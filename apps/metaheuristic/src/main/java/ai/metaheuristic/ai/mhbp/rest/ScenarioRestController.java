@@ -145,7 +145,7 @@ public class ScenarioRestController {
             @RequestParam(name = "resultCode") String resultCode,
             @RequestParam(name = "functionCode", required = false) String functionCode,
             @RequestParam(name = "expected", required = false) String expected,
-            @RequestParam(name = "aggregate", required = false) String aggregateType,
+            @RequestParam(name = "aggregateType", required = false) String aggregateType,
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         return scenarioService.createOrChangeScenarioStep(scenarioGroupId, scenarioId, uuid, parentUuid, name, prompt, apiId, resultCode, expected, functionCode, aggregateType, context);

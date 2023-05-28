@@ -30,6 +30,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.StrUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -47,7 +48,8 @@ import java.util.regex.Pattern;
 @Slf4j
 public class ScenarioUtils {
 
-    public static final Pattern VAR_PATTERN = Pattern.compile("[\\[\\{]{2}([\\w\\s]+)[\\]\\}]{2}");
+    public static final Pattern VAR_PATTERN = Pattern.compile("[\\[\\{]{2}([\\w\\s-_.]+)[\\]\\}]{2}");
+    public static final String MH_STUB_VARIABLE = "mh.stub-variable";
 
     @SuppressWarnings({"unchecked", "rawtypes", "RedundantIfStatement"})
     public static class ItemWithUuid implements CollectionUtils.TreeUtils.TreeItem<String> {
@@ -167,7 +169,7 @@ public class ScenarioUtils {
 
             if (step.function==null || (!Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code) && !Consts.MH_AGGREGATE_FUNCTION.equals(step.function.code))) {
                 extractInputVariables(p.inputs, step);
-                extractOutputVariables(p.outputs, step, ".txt");
+                extractOutputVariables(p.outputs, step, AggregateFunction.AggregateType.text);
             }
 
             if (isApi) {
@@ -193,10 +195,13 @@ public class ScenarioUtils {
                     p.metas.add(Map.of(ApiCallService.API_CODE, step.api.code));
                 }
                 else if (Consts.MH_AGGREGATE_FUNCTION.equals(step.function.code)) {
+                    if (step.aggregateType==null) {
+                        throw new IllegalStateException("(step.aggregateType==null)");
+                    }
                     p.metas.add(Map.of(AggregateFunction.VARIABLES, step.p));
-                    p.metas.add(Map.of(AggregateFunction.TYPE, AggregateFunction.AggregateType.text.toString()));
+                    p.metas.add(Map.of(AggregateFunction.TYPE, step.aggregateType.toString()));
                     p.metas.add(Map.of(AggregateFunction.PRODUCE_METADATA, "false"));
-                    extractOutputVariables(p.outputs, step, ".txt");
+                    extractOutputVariables(p.outputs, step, step.aggregateType);
                 }
             }
 
@@ -212,14 +217,14 @@ public class ScenarioUtils {
         }
     }
 
-    private static void extractOutputVariables(List<SourceCodeParamsYaml.Variable> outputs, ScenarioParams.Step step, String ext) {
+    private static void extractOutputVariables(List<SourceCodeParamsYaml.Variable> outputs, ScenarioParams.Step step, AggregateFunction.AggregateType aggregateType) {
         if (S.b(step.resultCode)) {
             throw new IllegalStateException("(S.b(step.resultCode))");
         }
         String outputName = getVariables(step.resultCode, true).get(0);
         final SourceCodeParamsYaml.Variable v = new SourceCodeParamsYaml.Variable();
         v.name = getNameForVariable(outputName);
-        v.ext = ext;
+        v.ext = aggregateType.ext;
         outputs.add(v);
     }
 
@@ -227,8 +232,13 @@ public class ScenarioUtils {
         if (S.b(step.p)) {
             throw new IllegalStateException("(S.b(step.p))");
         }
-        final List<String> variables = getVariables(step.p, step.function!=null);
+        String text = step.p.replace("[[]]", "[[mh.stub-variable]]");
+        text = text.replace("{{}}", "[[mh.stub-variable]]");
+        final List<String> variables = getVariables(text, step.function!=null);
         for (String name : variables) {
+            if (MH_STUB_VARIABLE.equals(name)) {
+                continue;
+            }
             final SourceCodeParamsYaml.Variable v = new SourceCodeParamsYaml.Variable();
             v.name = getNameForVariable(name);
             v.ext = ".txt";

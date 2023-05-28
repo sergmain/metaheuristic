@@ -71,12 +71,14 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @RequiredArgsConstructor
 public class AggregateFunction implements InternalFunction {
 
-    public enum AggregateType { zip(true), text(true), ww2003(true), html(false), pdf(false);
+    public enum AggregateType { zip(true, ".zip"), text(true, ".txt"), ww2003(true, ".xml"), html(false, ".html"), pdf(false, ".pdf");
 
         public final boolean supported;
+        public final String ext;
 
-        AggregateType(boolean supported) {
+        AggregateType(boolean supported, String ext) {
             this.supported = supported;
+            this.ext = ext;
         }
     }
 

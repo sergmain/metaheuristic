@@ -116,9 +116,12 @@ public class ScenarioData {
         public String functionCode;
 
         @Nullable
+        public String aggregateType;
+
+        @Nullable
         public SimpleScenarioStep[] steps;
 
-        public SimpleScenarioStep(Long scenarioId, ApiUid apiUid, ScenarioParams.Step step, @Nullable String functionCode) {
+        public SimpleScenarioStep(Long scenarioId, ApiUid apiUid, ScenarioParams.Step step, @Nullable String functionCode, @Nullable String aggregateType ) {
             this.scenarioId = scenarioId;
             this.uuid = step.uuid;
             this.parentUuid = step.parentUuid;
@@ -130,6 +133,7 @@ public class ScenarioData {
             this.expected = step.expected;
             this.resultCode = step.resultCode;
             this.functionCode = functionCode;
+            this.aggregateType = aggregateType;
         }
 
         @JsonIgnore
