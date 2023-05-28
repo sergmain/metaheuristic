@@ -18,16 +18,19 @@ package ai.metaheuristic.ww2003;
 
 import ai.metaheuristic.ww2003.document.WW2003Document;
 import ai.metaheuristic.ww2003.document.WW2003DocumentUtils;
+import ai.metaheuristic.ww2003.document.WW2003Parser;
 import ai.metaheuristic.ww2003.document.exceptions.DocumentProcessingException;
 import ai.metaheuristic.ww2003.document.persistence.ww2003.property.WW2003PropertyUtils;
 import ai.metaheuristic.ww2003.document.tags.xml.Para;
 import ai.metaheuristic.ww2003.document.tags.xml.Run;
 import ai.metaheuristic.ww2003.document.tags.xml.Sect;
+import ai.metaheuristic.ww2003.test_utils.W2003Utils;
 import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -58,5 +61,8 @@ public class CreateWW2003DocumentTest {
         System.out.println("path: " + path.toAbsolutePath());
         WW2003DocumentUtils.writeWW2003Document(path, document);
 
+        try (InputStream is = Files.newInputStream(path)) {
+            WW2003Document doc1 = WW2003Parser.parse(is);
+        }
     }
 }

@@ -35,7 +35,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
@@ -81,7 +81,7 @@ public class TaskWithInternalContextEventService {
 
     private final TaskService taskService;
     private final ExecContextVariableService execContextVariableService;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     public final InternalFunctionVariableService internalFunctionVariableService;
     public final SourceCodeCache sourceCodeCache;
     public final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;

@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
@@ -39,7 +39,6 @@ import org.apache.commons.lang3.SystemUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -61,7 +60,7 @@ public class TaskWithInternalContextTopLevelService {
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final TaskWithInternalContextService taskWithInternalContextService;
     private final VariableTopLevelService variableTopLevelService;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final ExecContextVariableService execContextVariableService;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;

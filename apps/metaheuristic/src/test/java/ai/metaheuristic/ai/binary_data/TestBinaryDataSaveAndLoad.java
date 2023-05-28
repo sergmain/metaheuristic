@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.batch_result_processor.
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -64,7 +64,7 @@ public class TestBinaryDataSaveAndLoad {
     public static final String SYSTEM_PARAMS_V_2_YAML = "system/params-v2.yaml";
 
     @Autowired
-    private VariableService variableService;
+    private VariableTxService variableService;
 
     @Autowired
     private TxSupportForTestingService txSupportForTestingService;

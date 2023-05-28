@@ -17,6 +17,7 @@
 
 package ai.metaheuristic.ai.mhbp.yaml.scenario;
 
+import ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunction;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
@@ -33,6 +34,7 @@ public class ScenarioParamsV1 implements BaseParams {
 
     public final int version=1;
 
+    @SuppressWarnings("RedundantMethodOverride")
     @Override
     public boolean checkIntegrity() {
         return true;
@@ -78,6 +80,9 @@ public class ScenarioParamsV1 implements BaseParams {
 
         @Nullable
         public FunctionV1 function;
+
+        @Nullable
+        public AggregateFunction.AggregateType aggregateType;
     }
 
     public List<StepV1> steps = new ArrayList<>();

@@ -34,7 +34,7 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
 import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
@@ -80,7 +80,7 @@ public class TaskProviderTopLevelService {
     private final ExecContextReadinessStateService execContextReadinessStateService;
     private final ApplicationEventPublisher eventPublisher;
     private final TaskProviderUnassignedTaskTopLevelService taskProviderUnassignedTaskTopLevelService;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
 
     public void registerTask(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
         TaskQueueSyncStaticService.getWithSyncVoid(()-> {

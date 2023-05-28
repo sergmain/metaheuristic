@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueu
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -64,7 +64,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 public class BatchLineSplitterTxService {
 
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final InternalFunctionService internalFunctionService;
     private final TaskProducingService taskProducingService;
     private final ExecContextGraphService execContextGraphService;

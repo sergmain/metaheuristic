@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.dispatcher.data.ReduceVariablesData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -56,7 +56,7 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.number_of_out
 @RequiredArgsConstructor
 public class ReduceVariablesFunction implements InternalFunction {
 
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final GlobalVariableService globalVariableService;
     private final ExecContextVariableService execContextVariableService;
 

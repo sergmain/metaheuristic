@@ -29,7 +29,7 @@ import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdTxEvent
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -79,7 +79,7 @@ public class ExecContextService {
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     private final TaskRepository taskRepository;
     private final VariableRepository variableRepository;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final EventPublisherService eventPublisherService;
     private final ExecContextUtilsService execContextUtilsServices;
     private final ExecContextGraphRepository execContextGraphRepository;

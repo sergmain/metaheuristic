@@ -194,7 +194,7 @@ public class ScenarioUtils {
                 }
                 else if (Consts.MH_AGGREGATE_FUNCTION.equals(step.function.code)) {
                     p.metas.add(Map.of(AggregateFunction.VARIABLES, step.p));
-                    p.metas.add(Map.of(AggregateFunction.TYPE, AggregateFunction.ResultType.text.toString()));
+                    p.metas.add(Map.of(AggregateFunction.TYPE, AggregateFunction.AggregateType.text.toString()));
                     p.metas.add(Map.of(AggregateFunction.PRODUCE_METADATA, "false"));
                     extractOutputVariables(p.outputs, step, ".txt");
                 }

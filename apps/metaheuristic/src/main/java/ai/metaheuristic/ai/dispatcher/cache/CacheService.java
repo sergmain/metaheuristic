@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
@@ -69,7 +69,7 @@ public class CacheService {
     private final Globals globals;
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheVariableService cacheVariableService;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final VariableRepository variableRepository;
     private final GlobalVariableRepository globalVariableRepository;
     private final CacheVariableRepository cacheVariableRepository;

@@ -31,7 +31,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
@@ -66,7 +66,7 @@ public class EvaluationFunction implements InternalFunction {
     public final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     public final SourceCodeRepository sourceCodeRepository;
     public final GlobalVariableService globalVariableService;
-    public final VariableService variableService;
+    public final VariableTxService variableService;
     public final ExecContextVariableService execContextVariableService;
     public final VariableRepository variableRepository;
     public final ExecContextCache execContextCache;

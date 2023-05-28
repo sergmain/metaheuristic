@@ -29,7 +29,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -61,7 +61,7 @@ public class TxSupportForTestingService {
 
     private final Globals globals;
     private final VariableRepository variableRepository;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final ExecContextGraphService execContextGraphService;
     private final FunctionCache functionCache;

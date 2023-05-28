@@ -32,7 +32,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
@@ -85,7 +85,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @Autowired private ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     @Autowired private TaskVariableTopLevelService taskVariableTopLevelService;
     @Autowired private ExecContextSchedulerService execContextSchedulerService;
-    @Autowired private VariableService variableService;
+    @Autowired private VariableTxService variableService;
     @Autowired private VariableRepository variableRepository;
     @Autowired private ExecContextFSM execContextFSM;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;

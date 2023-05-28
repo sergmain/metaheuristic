@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.ExecContextCommonException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -58,7 +58,7 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 public class ExecContextVariableService {
 
     private final ExecContextCache execContextCache;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final VariableEntityManagerService variableEntityManagerService;
     private final VariableRepository variableRepository;
     private final ApplicationEventPublisher eventPublisher;

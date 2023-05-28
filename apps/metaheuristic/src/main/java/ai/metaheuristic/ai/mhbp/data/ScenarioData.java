@@ -59,6 +59,7 @@ public class ScenarioData {
     public static class ScenarioUidsForAccount extends BaseDataClass {
         public List<InternalFunction> functions;
         public List<ApiUid> apis;
+        public List<String> aggregateTypes;
     }
 
     @RequiredArgsConstructor

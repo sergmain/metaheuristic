@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncSer
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -55,7 +55,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
     public static final String NUMBER_OF_LINES_PER_TASK = "number-of-lines-per-task";
     public static final String OUTPUT_VARIABLE = "output-variable";
     public static final String IS_ARRAY = "is-array";
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final GlobalVariableService globalVariableService;
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final BatchLineSplitterTxService batchLineSplitterTxService;

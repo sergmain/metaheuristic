@@ -32,7 +32,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.RestUtils;
@@ -87,7 +87,7 @@ public class BatchTxService {
     private final SourceCodeCache sourceCodeCache;
     private final BatchCache batchCache;
     private final BatchRepository batchRepository;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextService execContextService;
     private final ExecContextFSM execContextFSM;

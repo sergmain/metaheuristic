@@ -38,7 +38,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -107,7 +107,7 @@ public class BatchResultProcessorTxService {
 
 
     private final Globals globals;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final VariableRepository variableRepository;
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;

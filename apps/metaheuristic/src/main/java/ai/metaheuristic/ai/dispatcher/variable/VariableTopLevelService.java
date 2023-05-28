@@ -51,7 +51,7 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @RequiredArgsConstructor
 public class VariableTopLevelService {
 
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final ExecContextCache execContextCache;
     private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     private final InternalFunctionVariableService internalFunctionVariableService;

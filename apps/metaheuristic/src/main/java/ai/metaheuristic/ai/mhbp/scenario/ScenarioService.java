@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
+import ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
@@ -58,6 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static ai.metaheuristic.ai.utils.CollectionUtils.TreeUtils;
 
@@ -108,6 +110,7 @@ public class ScenarioService {
         r.functions = InternalFunctionRegisterService.internalFunctionMap.entrySet().stream()
                 .filter(e->e.getValue().isScenarioCompatible())
                 .map(e->new ScenarioData.InternalFunction(e.getKey(), e.getValue().getClass().getSimpleName())).collect(Collectors.toList());
+        r.aggregateTypes = Stream.of(AggregateFunction.AggregateType.values()).filter(o->o.supported).map(Enum::toString).toList();
         return r;
     }
 
@@ -182,7 +185,9 @@ public class ScenarioService {
         if (s.scenarioGroupId!=Long.parseLong(scenarioGroupId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.320 scenarioGroupId");
         }
+        //noinspection DataFlowIssue
         s.id = null;
+        //noinspection DataFlowIssue
         s.version = null;
         s.name = StrUtils.incCopyNumber(s.name);
         s.createdOn = System.currentTimeMillis();
@@ -211,7 +216,8 @@ public class ScenarioService {
 
     public OperationStatusRest createOrChangeScenarioStep(
             String scenarioGroupId, String scenarioId, String uuid, String parentUuid, String name, String prompt,
-            String apiId, String resultCode, String expected, String functionCode, DispatcherContext context) {
+            String apiId, String resultCode, String expected, String functionCode, String aggregateType,
+            DispatcherContext context) {
 
         if (S.b(scenarioGroupId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.120 scenarioGroupId is null");
@@ -237,7 +243,7 @@ public class ScenarioService {
 
         ScenarioParams.Step step;
         if (S.b(uuid)) {
-            step = new ScenarioParams.Step(UUID.randomUUID().toString(), parentUuid, name, prompt, null, resultCode, expected, null, null);
+            step = new ScenarioParams.Step(UUID.randomUUID().toString(), parentUuid, name, prompt, null, resultCode, expected, null, null, null);
             sp.steps.add(step);
         }
         else {
@@ -267,9 +273,15 @@ public class ScenarioService {
             if (Consts.MH_ACCEPTANCE_TEST_FUNCTION.equals(functionCode)) {
                 Api api = apiRepository.findById(Long.parseLong(apiId)).orElse(null);
                 if (api==null || api.companyId!=context.getCompanyId()) {
-                    return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.460 apiId is null");
+                    return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.480 apiId is null");
                 }
                 step.api = new ScenarioParams.Api(api.id, api.code);
+            }
+            else if (Consts.MH_AGGREGATE_FUNCTION.equals(functionCode)) {
+                if (S.b(aggregateType)) {
+                    return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.520 aggregateType");
+                }
+                step.aggregateType = AggregateFunction.AggregateType.valueOf(aggregateType);
             }
         }
 

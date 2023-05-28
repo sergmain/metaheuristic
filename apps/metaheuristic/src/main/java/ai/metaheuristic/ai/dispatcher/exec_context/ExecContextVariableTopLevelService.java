@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
@@ -60,7 +60,7 @@ public class ExecContextVariableTopLevelService {
 
     private final TaskRepository taskRepository;
     private final TaskVariableTopLevelService taskVariableTopLevelService;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final VariableRepository variableRepository;
     private final ApplicationEventPublisher eventPublisher;
 

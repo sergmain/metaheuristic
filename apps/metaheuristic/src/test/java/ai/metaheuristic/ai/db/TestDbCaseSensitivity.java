@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.preparing.PreparingConsts;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
@@ -56,7 +56,7 @@ public class TestDbCaseSensitivity extends PreparingSourceCode {
     private static final String TEST_VARIABLE = "test-variable";
 
     @Autowired private GlobalVariableRepository globalVariableRepository;
-    @Autowired private VariableService variableService;
+    @Autowired private VariableTxService variableService;
     @Autowired private VariableRepository variableRepository;
     @Autowired private SourceCodeRepository sourceCodeRepository;
     @Autowired private FunctionRepository functionRepository;

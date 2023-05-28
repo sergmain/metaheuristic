@@ -31,7 +31,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
@@ -76,7 +76,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
     @Autowired private TaskFinishingService taskFinishingService;
     @Autowired private ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     @Autowired private TaskVariableTopLevelService taskVariableTopLevelService;
-    @Autowired private VariableService variableService;
+    @Autowired private VariableTxService variableService;
     @Autowired private VariableRepository variableRepository;
     @Autowired private ExecContextFSM execContextFSM;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;

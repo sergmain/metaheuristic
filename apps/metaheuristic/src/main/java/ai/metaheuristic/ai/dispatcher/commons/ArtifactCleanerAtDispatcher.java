@@ -30,7 +30,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
@@ -66,7 +66,7 @@ public class ArtifactCleanerAtDispatcher {
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
     private final TaskTransactionalService taskTransactionalService;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final VariableRepository variableRepository;
     private final FunctionRepository functionRepository;
     private final CacheProcessRepository cacheProcessRepository;

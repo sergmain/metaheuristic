@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueu
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -69,7 +69,7 @@ public class BatchSplitterTxService {
     private final ExecContextGraphService execContextGraphService;
     private final InternalFunctionService internalFunctionService;
     private final TaskProducingService taskProducingService;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)

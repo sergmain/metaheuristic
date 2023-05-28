@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableDatabaseSpecificService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
@@ -63,7 +63,7 @@ public class TaskCheckCachingService {
     private final TaskStateService taskStateService;
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheVariableRepository cacheVariableRepository;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final VariableDatabaseSpecificService variableDatabaseSpecificService;
     private final EventPublisherService eventPublisherService;
 

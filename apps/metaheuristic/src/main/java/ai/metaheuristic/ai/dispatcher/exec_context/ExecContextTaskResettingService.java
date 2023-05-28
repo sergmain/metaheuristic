@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -58,7 +58,7 @@ import java.util.List;
 public class ExecContextTaskResettingService {
 
     private final ExecContextCache execContextCache;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final TaskRepository taskRepository;
     private final TaskService taskService;
     private final EventPublisherService eventPublisherService;

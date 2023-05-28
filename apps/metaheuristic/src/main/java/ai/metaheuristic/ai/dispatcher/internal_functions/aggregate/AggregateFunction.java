@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
@@ -71,15 +71,24 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @RequiredArgsConstructor
 public class AggregateFunction implements InternalFunction {
 
-    public enum ResultType { zip, text, word, html }
+    public enum AggregateType { zip(true), text(true), ww2003(true), html(false), pdf(false);
+
+        public final boolean supported;
+
+        AggregateType(boolean supported) {
+            this.supported = supported;
+        }
+    }
 
     public static final String VARIABLES = "variables";
     public static final String TYPE = "type";
     public static final String PRODUCE_METADATA = "produce-metadata";
+
     private final VariableRepository variableRepository;
-    private final VariableService variableService;
+    private final VariableTxService variableTxService;
     private final ExecContextVariableService execContextVariableService;
     private final ExecContextUtilsService execContextUtilsService;
+    private final AggregateToWW2003Service aggregateToWW2003Service;
 
     private static final String META_ERROR_CONTROL = "error-control-policy";
     public enum ErrorControlPolicy { fail, ignore }
@@ -123,7 +132,7 @@ public class AggregateFunction implements InternalFunction {
 
         final boolean produceMetadata = MetaUtils.isTrue(taskParamsYaml.task.metas, true, PRODUCE_METADATA);
         String resultTypeStr = MetaUtils.getValue(taskParamsYaml.task.metas, TYPE);
-        ResultType resultType = S.b(resultTypeStr) ? ResultType.zip : ResultType.valueOf(resultTypeStr);
+        AggregateType resultType = S.b(resultTypeStr) ? AggregateType.zip : AggregateType.valueOf(resultTypeStr);
 
         List<String> names = getNamesOfVariables(taskParamsYaml.task.metas);
         if (CollectionUtils.isEmpty(names)) {
@@ -149,7 +158,9 @@ public class AggregateFunction implements InternalFunction {
             Files.createDirectory(outputDir);
 
             List<String> stringCollector = new ArrayList<>();
+            List<SimpleVariable> simpleVariables = new ArrayList<>();
             LinkedHashSet<String> taskContextIds = new LinkedHashSet<>();
+
             list.stream().map(o->o.taskContextId).collect(Collectors.toCollection(()->taskContextIds))
                     .forEach(contextId->{
                         Path taskContextDir = outputDir.resolve(contextId);
@@ -167,18 +178,19 @@ public class AggregateFunction implements InternalFunction {
                                     }
                                     try {
                                         switch(resultType) {
-                                            case zip, word, html -> {
+                                            case zip -> {
                                                 String ext = execContextUtilsService.getExtensionForVariable(simpleExecContext.execContextVariableStateId, v.id, "");
                                                 Path varFile = taskContextDir.resolve(v.variable+ext);
                                                 if (produceMetadata) {
                                                     mafpy.mapping.add(Map.of(varFile.getFileName().toString(), v.variable));
                                                 }
-                                                variableService.storeToFileWithTx(v.id, varFile);
+                                                variableTxService.storeToFileWithTx(v.id, varFile);
                                             }
-                                            case text -> {
-                                                String var = variableService.getVariableDataAsString(v.id);
-                                                stringCollector.add(var);
+                                            case text, ww2003 -> {
+                                                simpleVariables.add(v);
                                             }
+                                            default -> throw new InternalFunctionException(
+                                                    system_error, "#979.100 Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR);
                                         }
                                     } catch (VariableDataNotFoundException e) {
                                         log.error("#979.140 Variable #{}, name {},  wasn't found", v.id, v.variable);
@@ -203,17 +215,24 @@ public class AggregateFunction implements InternalFunction {
                     });
 
             switch(resultType) {
-                case zip, word, html -> {
-                    Path zipFile = tempDir.resolve("result-for-"+outputVariable.name+".zip");
+                case zip -> {
+                    Path zipFile = tempDir.resolve("result-for-"+outputVariable.id+'-'+outputVariable.name+".zip");
                     ZipUtils.createZip(outputDir, zipFile);
 
                     VariableSyncService.getWithSyncVoidForCreation(outputVariable.id,
                             ()->execContextVariableService.storeDataInVariable(outputVariable, zipFile));
                 }
                 case text -> {
-                    String text = String.join("\n\n", stringCollector);
+                    String text = simpleVariables.stream().map(v-> variableTxService.getVariableDataAsString(v.id)).collect(Collectors.joining("\n\n"));
                     VariableSyncService.getWithSyncVoidForCreation(outputVariable.id,
                             ()->execContextVariableService.storeStringInVariable(outputVariable, text));
+                }
+                case ww2003 -> {
+                    Path ww2003File = tempDir.resolve("result-for-"+outputVariable.id+'-'+outputVariable.name+".xml");
+                    aggregateToWW2003Service.aggregate(ww2003File, simpleVariables);
+
+                    VariableSyncService.getWithSyncVoidForCreation(outputVariable.id,
+                            ()->execContextVariableService.storeDataInVariable(outputVariable, ww2003File));
                 }
             }
         }

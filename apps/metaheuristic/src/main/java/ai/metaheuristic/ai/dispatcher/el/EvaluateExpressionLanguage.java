@@ -71,14 +71,14 @@ public class EvaluateExpressionLanguage {
         public final Long execContextId;
         public final InternalFunctionVariableService internalFunctionVariableService;
         public final GlobalVariableService globalVariableService;
-        public final VariableService variableService;
+        public final VariableTxService variableTxService;
         public final VariableEntityManagerService variableEntityManagerService;
         public final VariableRepository variableRepository;
         public final ExecContextVariableService execContextVariableService;
         public final Consumer<SimpleVariable> setAsNullFunction;
 
         public MhEvalContext(String taskContextId, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
-                             GlobalVariableService globalVariableService, VariableService variableService,
+                             GlobalVariableService globalVariableService, VariableTxService variableTxService,
                              ExecContextVariableService execContextVariableService, VariableRepository variableRepository,
                              VariableEntityManagerService variableEntityManagerService,
                              Consumer<SimpleVariable> setAsNullFunction
@@ -87,7 +87,7 @@ public class EvaluateExpressionLanguage {
             this.execContextId = execContextId;
             this.internalFunctionVariableService = internalFunctionVariableService;
             this.globalVariableService = globalVariableService;
-            this.variableService = variableService;
+            this.variableTxService = variableTxService;
             this.execContextVariableService = execContextVariableService;
             this.variableRepository = variableRepository;
             this.setAsNullFunction = setAsNullFunction;
@@ -177,14 +177,14 @@ public class EvaluateExpressionLanguage {
                                 if (variableHolderInput.globalVariable != null) {
                                     globalVariableService.storeToFileWithTx(variableHolderInput.globalVariable.id, tempFile);
                                 } else if (variableHolderInput.variable != null) {
-                                    variableService.storeToFileWithTx(variableHolderInput.variable.id, tempFile);
+                                    variableTxService.storeToFileWithTx(variableHolderInput.variable.id, tempFile);
                                 } else {
                                     throw new InternalFunctionException(system_error, "#509.052 both local and global variables are null");
                                 }
                                 try (InputStream is = Files.newInputStream(tempFile)) {
                                     final long size = Files.size(tempFile);
                                     VariableSyncService.getWithSyncVoid(variableHolderOutput.variable.id,
-                                            ()-> variableService.updateWithTx(is, size, variableHolderOutput.variable.id));
+                                            ()-> variableTxService.updateWithTx(is, size, variableHolderOutput.variable.id));
                                 }
                             } finally {
                                 DirUtils.deletePathAsync(tempDir);
@@ -387,7 +387,7 @@ public class EvaluateExpressionLanguage {
             }
             String strValue;
             if (variableHolder.variable!=null) {
-                strValue = variableService.getVariableDataAsString(variableHolder.variable.id);
+                strValue = variableTxService.getVariableDataAsString(variableHolder.variable.id);
             }
             else if (variableHolder.globalVariable!=null) {
                 strValue = globalVariableService.getVariableDataAsString(variableHolder.globalVariable.id);
@@ -431,7 +431,7 @@ public class EvaluateExpressionLanguage {
     @Nullable
     public static Object evaluate(
             String taskContextId, String expression, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
-            GlobalVariableService globalVariableService, VariableService variableService, ExecContextVariableService execContextVariableService,
+            GlobalVariableService globalVariableService, VariableTxService variableService, ExecContextVariableService execContextVariableService,
             VariableRepository variableRepository, VariableEntityManagerService variableEntityManagerService, Consumer<SimpleVariable> setAsNullFunction
     ) {
 

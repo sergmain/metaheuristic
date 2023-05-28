@@ -32,7 +32,7 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueSyncStaticService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.utils.JsonUtils;
@@ -82,7 +82,7 @@ import java.util.function.Supplier;
 public class SouthbridgeService {
 
     private final Globals globals;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final GlobalVariableService globalVariableService;
     private final FunctionDataService functionDataService;
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
