@@ -83,5 +83,6 @@
 
 	"evaluation-add.Create a new evaluation for specific API": "Create a new evaluation for specific API",
 	"evaluation-add.List of APIs": "List of APIs",
+	"evaluation-add.Type of aggregation": "Aggregation type",
 	"evaluation-add.Create": "Create"
 }

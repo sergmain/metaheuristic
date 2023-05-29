@@ -38,6 +38,10 @@ public interface InternalFunction {
         return false;
     }
 
+    default boolean isCachable() {
+        return false;
+    }
+
     /**
      * @param simpleExecContext
      * @param taskId

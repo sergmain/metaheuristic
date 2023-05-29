@@ -57,6 +57,10 @@ public class ApiCallFunction implements InternalFunction {
         return Consts.MH_API_CALL_FUNCTION;
     }
 
+    public boolean isCachable() {
+        return true;
+    }
+
     @SneakyThrows
     @Override
     public void process(
