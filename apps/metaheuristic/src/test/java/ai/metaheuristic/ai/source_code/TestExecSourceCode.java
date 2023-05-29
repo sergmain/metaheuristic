@@ -141,7 +141,7 @@ public class TestExecSourceCode extends PreparingSourceCode {
     }
 
     @Test
-    public void testOutputssCountMismatchError() throws IOException {
+    public void testOutputsCountMismatchError() throws IOException {
         SourceCodeApiData.SourceCodeResult scr = null;
         try {
             scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-4.yaml"), getCompany().uniqueId);

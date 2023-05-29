@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
+import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
@@ -160,10 +161,10 @@ public class SourceCodeValidationService {
             functionId = functionRepository.findIdByCode(snDef.code);
         }
         else {
-            throw new IllegalStateException("unknow refType: " + snDef.refType);
+            throw new IllegalStateException("unknown refType: " + snDef.refType);
         }
         if (functionId == null) {
-            String es = S.f("#177.320 Function wasn't found for code: %s, refType: %s,  process: %s", snDef.code, snDef.refType, process.code);
+            String es = S.f("177.320 Function wasn't found for code: %s, refType: %s,  process: %s", snDef.code, snDef.refType, process.code);
             log.error(es);
             return new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR, es);
         }
@@ -176,18 +177,27 @@ public class SourceCodeValidationService {
         if (process.function !=null) {
             SourceCodeParamsYaml.FunctionDefForSourceCode snDef = process.function;
             if (snDef.context== EnumsApi.FunctionExecContext.internal) {
-                if (!InternalFunctionRegisterService.isRegistered(snDef.code)) {
+                final InternalFunction internalFunction = InternalFunctionRegisterService.getInternalFunction(snDef.code);
+                if (internalFunction==null) {
                     return new SourceCodeApiData.SourceCodeValidationResult(
                             EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR,
-                            "#177.380 Unknown internal function '"+snDef.code+"'"
+                            "177.380 Unknown internal function '"+snDef.code+"'"
                     );
                 }
+
+                if (!internalFunction.isCachable() && process.function.context == EnumsApi.FunctionExecContext.internal &&
+                    process.cache!=null && process.cache.enabled ) {
+                    return new SourceCodeApiData.SourceCodeValidationResult(
+                            EnumsApi.SourceCodeValidateStatus.CACHING_ISNT_SUPPORTED_FOR_INTERNAL_FUNCTION_ERROR,
+                            S.f("177.110 Caching isn't supported for internal functions %s. Process: ", internalFunction.getCode(), process.code));
+                }
+
                 if (Consts.MH_EXEC_SOURCE_CODE_FUNCTION.equals(snDef.code)) {
                     String scUid = MetaUtils.getValue(process.metas, Consts.SOURCE_CODE_UID);
                     if (S.b(scUid)) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.META_NOT_FOUND_ERROR,
-                                "#177.383 meta '"+Consts.SOURCE_CODE_UID+"' must be defined for internal function " + Consts.MH_EXEC_SOURCE_CODE_FUNCTION
+                                "177.383 meta '"+Consts.SOURCE_CODE_UID+"' must be defined for internal function " + Consts.MH_EXEC_SOURCE_CODE_FUNCTION
                         );
                     }
                     SourceCodeImpl sc = sourceCodeRepository.findByUid(scUid);
@@ -200,18 +210,20 @@ public class SourceCodeValidationService {
                     SourceCodeStoredParamsYaml scspy = sc.getSourceCodeStoredParamsYaml();
                     SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
 
-                    if (process.inputs.size()!=ppy.source.variables.inputs.size()) {
+                    int inputNumber = ppy.source.variables==null ? 0 : ppy.source.variables.inputs.size();
+                    if (process.inputs.size()!=inputNumber) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.INPUT_VARIABLES_COUNT_MISMATCH_ERROR,
                                 S.f("#177.386 SourceCode '%s' has different number of input variables (count: %d) from sourceCode '%s' (count: %d)",
-                                        sourceCode.uid, process.inputs.size(), sc.uid, ppy.source.variables.inputs.size())
+                                        sourceCode.uid, process.inputs.size(), sc.uid, inputNumber)
                         );
                     }
-                    if (process.outputs.size()!=ppy.source.variables.outputs.size()) {
+                    int outputNumber = ppy.source.variables==null ? 0 : ppy.source.variables.outputs.size();
+                    if (process.outputs.size()!=outputNumber) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLES_COUNT_MISMATCH_ERROR,
                                 S.f("#177.388 SourceCode '%s' has different number of output variables (count: %d) from sourceCode '%s' (count: %d)",
-                                        sourceCode.uid, process.outputs.size(), sc.uid, ppy.source.variables.outputs.size())
+                                        sourceCode.uid, process.outputs.size(), sc.uid, outputNumber)
                         );
                     }
                 }
