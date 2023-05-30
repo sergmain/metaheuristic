@@ -147,7 +147,7 @@ public class ScenarioService {
     public OperationStatusRest runScenario(long scenarioGroupId, long scenarioId, DispatcherContext context) {
         Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
         if (s==null || s.scenarioGroupId!=scenarioGroupId || s.accountId!=context.getAccountId()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#373.120 scenario wasn't found, " + scenarioGroupId+", " + scenarioId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "373.120 scenario wasn't found, " + scenarioGroupId+", " + scenarioId);
         }
 
         String uid = ScenarioUtils.getUid(s);
@@ -157,13 +157,13 @@ public class ScenarioService {
             String yaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(scpy);
             SourceCodeApiData.SourceCodeResult result = sourceCodeService.createSourceCode(yaml, scpy, context.getCompanyId());
             if (!result.isValid()) {
-                final String es = S.f("#373.160 validation: %s, %s", result.validationResult.status, result.validationResult.error);
+                final String es = S.f("373.160 validation: %s, %s", result.validationResult.status, result.validationResult.error);
                 log.error(es);
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
             }
             sc = sourceCodeRepository.findById(result.id).orElse(null);
             if (sc==null) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, S.f("#373.180 SourceCode not found: %d", result.id));
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, S.f("373.180 SourceCode not found: %d", result.id));
             }
         }
         ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sc.id, context.getCompanyId(), true);

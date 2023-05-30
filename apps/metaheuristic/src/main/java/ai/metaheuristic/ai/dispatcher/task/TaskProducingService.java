@@ -198,7 +198,7 @@ public class TaskProducingService {
         taskParams.task.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
         taskParams.task.triesAfterError = process.triesAfterError==null ? null : Math.min(globals.dispatcher.getMaxTriesAfterError(), Math.max(0, process.triesAfterError));
         if (process.cache!=null) {
-            taskParams.task.cache = new TaskParamsYaml.Cache(process.cache.enabled, process.cache.omitInline);
+            taskParams.task.cache = new TaskParamsYaml.Cache(process.cache.enabled, process.cache.omitInline, process.cache.cacheMeta);
         }
 
         TaskImpl task = new TaskImpl();

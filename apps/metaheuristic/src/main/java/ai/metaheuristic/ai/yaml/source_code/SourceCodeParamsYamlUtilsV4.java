@@ -91,7 +91,7 @@ public class SourceCodeParamsYamlUtilsV4
         pr.postFunctions = o.postFunctions.stream().map(d->new SourceCodeParamsYamlV5.FunctionDefForSourceCodeV5(d.code, d.params, d.context, EnumsApi.FunctionRefType.code)).collect(Collectors.toList());
         pr.metas = o.metas;
         if (o.cache!=null) {
-            pr.cache = new SourceCodeParamsYamlV5.CacheV5(o.cache.enabled, o.cache.omitInline);
+            pr.cache = new SourceCodeParamsYamlV5.CacheV5(o.cache.enabled, o.cache.omitInline, false);
         }
         pr.tag = o.tag;
         pr.priority = o.priority;

@@ -300,7 +300,7 @@ CREATE TABLE mh_source_code
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION         INT UNSIGNED    NOT NULL,
     COMPANY_ID      INT UNSIGNED    not null,
-    UID             varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+    UID             varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
     CREATED_ON      bigint NOT NULL,
     PARAMS          TEXT not null,
     IS_LOCKED       BOOLEAN not null default false,

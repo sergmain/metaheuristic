@@ -41,6 +41,22 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ScenarioUtilsTest {
 
     @Test
+    public void test_getUid() {
+        Scenario s = new Scenario();
+        s.id = 1L;
+        s.version = 2;
+        s.scenarioGroupId = 3L;
+        s.name = "a".repeat(250);
+        String uid = ScenarioUtils.getUid(s);
+
+        String suffix = ScenarioUtils.getString(s);
+        assertEquals("-3-1-2", suffix);
+
+        assertTrue(uid.endsWith(suffix));
+        assertEquals(250, uid.length());
+    }
+
+    @Test
     public void test_to_1() throws IOException {
         String yaml = IOUtils.resourceToString("/mhbp/scenario/scenario-fruits.yaml", StandardCharsets.UTF_8);
         Scenario scenario = new Scenario();

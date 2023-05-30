@@ -279,7 +279,7 @@ CREATE TABLE MH_SOURCE_CODE
   ID            SERIAL PRIMARY KEY,
   VERSION       NUMERIC(5, 0)  NOT NULL,
   COMPANY_ID    NUMERIC(10, 0) NOT NULL,
-  UID           varchar(50)  NOT NULL,
+  UID           varchar(250)  NOT NULL,
   CREATED_ON    bigint NOT NULL,
   PARAMS        TEXT not null,
   IS_LOCKED     BOOLEAN not null default false,

@@ -50,6 +50,7 @@ public class ScenarioUtils {
 
     public static final Pattern VAR_PATTERN = Pattern.compile("[\\[\\{]{2}([\\w\\s-_.]+)[\\]\\}]{2}");
     public static final String MH_STUB_VARIABLE = "mh.stub-variable";
+    public static final int MAX_LENGTH_OF_UID = 250;
 
     @SuppressWarnings({"unchecked", "rawtypes", "RedundantIfStatement"})
     public static class ItemWithUuid implements CollectionUtils.TreeUtils.TreeItem<String> {
@@ -114,9 +115,14 @@ public class ScenarioUtils {
     }
 
     public static String getUid(Scenario s) {
-        final String suffix = "-" + s.scenarioGroupId + '-' + s.id + '-' + s.version;
-        final String uid = StrUtils.getCode(s.name + suffix, () -> "scenario" + suffix).toLowerCase();
+        final String suffix = getString(s);
+        final String uid = StrUtils.getCode(StringUtils.substring(s.name, 0, MAX_LENGTH_OF_UID - suffix.length()) + suffix, () -> "scenario" + suffix).toLowerCase();
         return uid;
+    }
+
+    public static String getString(Scenario s) {
+        final String suffix = "-" + s.scenarioGroupId + '-' + s.id + '-' + s.version;
+        return suffix;
     }
 
     public static SourceCodeParamsYaml to(String uid, ScenarioParams sp) {
@@ -172,10 +178,12 @@ public class ScenarioUtils {
                 extractOutputVariables(p.outputs, step, AggregateFunction.AggregateType.text);
             }
 
+            p.cache = null;
             if (isApi) {
                 p.metas.add(Map.of(ApiCallService.PROMPT, step.p));
                 p.metas.add(Map.of(ApiCallService.API_CODE, step.api.code));
                 p.triesAfterError = 2;
+                p.cache = new SourceCodeParamsYaml.Cache(true, true, true);
             }
             else {
                 if (Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code)) {
@@ -193,6 +201,7 @@ public class ScenarioUtils {
                     }
                     p.metas.add(Map.of(ApiCallService.PROMPT, step.p));
                     p.metas.add(Map.of(ApiCallService.API_CODE, step.api.code));
+                    p.cache = new SourceCodeParamsYaml.Cache(true, true, true);
                 }
                 else if (Consts.MH_AGGREGATE_FUNCTION.equals(step.function.code)) {
                     if (step.aggregateType==null) {
@@ -205,8 +214,6 @@ public class ScenarioUtils {
                 }
             }
 
-            //p.cache = new SourceCodeParamsYaml.Cache(true, true);
-            p.cache = null;
 
             if (CollectionUtils.isNotEmpty(itemWithUuid.items)) {
                 p.subProcesses = new SourceCodeParamsYaml.SubProcesses(EnumsApi.SourceCodeSubProcessLogic.sequential, new ArrayList<>());
