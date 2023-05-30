@@ -149,6 +149,7 @@ public class SourceCodeParamsYaml implements BaseParams {
     public static class Cache {
         public boolean enabled;
         public boolean omitInline;
+        public boolean cacheMeta;
     }
 
     @Data
@@ -226,12 +227,6 @@ public class SourceCodeParamsYaml implements BaseParams {
         public AccessControl ac;
         @Nullable
         public Boolean strictNaming;
-
-        @JsonIgnore
-        @Nullable
-        public Meta getMeta(String key) {
-            return MetaUtils.getMeta(metas, key);
-        }
     }
 
     public SourceCode source = new SourceCode();

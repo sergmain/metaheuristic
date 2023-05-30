@@ -82,7 +82,7 @@ public class ExecContextParamsYamlUtilsV4
         p2.outputs.stream().map(ExecContextParamsYamlUtilsV4::toVariable).collect(Collectors.toCollection(()->p.outputs));
         p.metas.addAll(p2.metas);
         if (p2.cache!=null) {
-            p.cache = new ExecContextParamsYamlV5.CacheV5(p2.cache.enabled, p2.cache.omitInline);
+            p.cache = new ExecContextParamsYamlV5.CacheV5(p2.cache.enabled, p2.cache.omitInline, false);
         }
         p.processName = p2.processName;
         p.processCode = p2.processCode;

@@ -54,16 +54,17 @@ public class TaskParamsYamlUtilsV1
         v1.checkIntegrity();
         TaskParamsYaml t = new TaskParamsYaml();
         t.task = new TaskParamsYaml.TaskYaml();
-        BeanUtils.copyProperties(v1.task, t.task, "function", "preFunctions", "postFunctions");
+        BeanUtils.copyProperties(v1.task, t.task, "function", "preFunctions", "postFunctions", "inline", "inputs", "outputs", "metas", "cache");
         t.task.function = toUp(v1.task.function);
         v1.task.preFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toCollection(()->t.task.preFunctions));
         v1.task.postFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toCollection(()->t.task.postFunctions));
+
         t.task.inline = v1.task.inline;
         v1.task.inputs.stream().map(TaskParamsYamlUtilsV1::upInputVariable).collect(Collectors.toCollection(()->t.task.inputs));
         v1.task.outputs.stream().map(TaskParamsYamlUtilsV1::upOutputVariable).collect(Collectors.toCollection(()->t.task.outputs));
         t.task.metas.addAll(v1.task.metas);
         if (v1.task.cache!=null) {
-            t.task.cache = new TaskParamsYaml.Cache(v1.task.cache.enabled, v1.task.cache.omitInline);
+            t.task.cache = new TaskParamsYaml.Cache(v1.task.cache.enabled, v1.task.cache.omitInline, v1.task.cache.cacheMeta);
         }
 
         t.checkIntegrity();

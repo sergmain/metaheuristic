@@ -46,6 +46,7 @@ import java.util.Map;
 @EqualsAndHashCode
 public class TaskParamsYamlV1 implements BaseParams {
 
+    @SuppressWarnings("FieldMayBeStatic")
     public final int version = 1;
 
     @Override
@@ -206,6 +207,7 @@ public class TaskParamsYamlV1 implements BaseParams {
     public static class CacheV1 {
         public boolean enabled;
         public boolean omitInline;
+        public boolean cacheMeta;
     }
 
     @Data

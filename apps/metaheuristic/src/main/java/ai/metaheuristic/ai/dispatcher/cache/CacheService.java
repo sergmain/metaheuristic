@@ -26,21 +26,13 @@ import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
-import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
-import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.Checksum;
-import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
-import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.utils.CountingInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
@@ -50,9 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Blob;
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * @author Serge
@@ -89,20 +79,13 @@ public class CacheService {
     public void storeVariables(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
         TxUtils.checkTxExists();
 
-        CacheData.Key fullKey = getKey(tpy, function);
-
-        String keyAsStr = fullKey.asString();
-        byte[] bytes = keyAsStr.getBytes();
-
-        CacheProcess cacheProcess=null;
-        String key = null;
-        try (InputStream is = new ByteArrayInputStream(bytes)) {
-            String sha256 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, is);
-            key = new CacheData.Sha256PlusLength(sha256, keyAsStr.length()).asString();
-            cacheProcess = cacheProcessRepository.findByKeySha256Length(key);
-        } catch (IOException e) {
-            log.error("#611.020 Error while preparing a cache key, task will be processed without cached data", e);
+        CacheData.FullKey fullKey = getKey(tpy, function);
+        CacheData.SimpleKey key = CacheUtils.fullKeyToSimpleKey(fullKey);
+        if (key==null) {
+            return;
         }
+
+        CacheProcess cacheProcess = cacheProcessRepository.findByKeySha256Length(key.key());
 
         if (cacheProcess != null) {
             log.info("#611.200 process {} was already cached", tpy.task.processCode);
@@ -112,8 +95,8 @@ public class CacheService {
         cacheProcess = new CacheProcess();
         cacheProcess.createdOn = System.currentTimeMillis();
         cacheProcess.functionCode = function.code;
-        cacheProcess.keySha256Length = key;
-        cacheProcess.keyValue = StringUtils.substring(keyAsStr, 0, 510);
+        cacheProcess.keySha256Length = key.key();
+        cacheProcess.keyValue = StringUtils.substring(key.keyAsStr(), 0, 510);
         cacheProcess = cacheProcessRepository.save(cacheProcess);
 
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
@@ -153,72 +136,8 @@ public class CacheService {
     }
 
     @Transactional(readOnly = true)
-    public CacheData.Key getKey(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
-        return getKey(tpy, function, variableService::getVariableDataAsString, variableRepository::getDataAsStreamById, globalVariableRepository::getDataAsStreamById);
+    public CacheData.FullKey getKey(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
+        return CacheUtils.getKey(tpy, function, variableService::getVariableDataAsString, variableRepository::getDataAsStreamById, globalVariableRepository::getDataAsStreamById);
     }
 
-    public static CacheData.Key getKey(
-            TaskParamsYaml tpy,
-            ExecContextParamsYaml.FunctionDefinition function,
-            Function<Long, String> variableAsString, Function<Long, Blob> variableAsStream, Function<Long, Blob> globalVariableAsStream) {
-
-        String params = S.b(tpy.task.function.params) ? "" : tpy.task.function.params;
-        if (!S.b(function.params)) {
-            params = params + " " + function.params;
-        }
-        CacheData.Key fullKey = new CacheData.Key(tpy.task.function.code, params);
-        if (tpy.task.inline!=null) {
-            if (tpy.task.cache == null || !tpy.task.cache.omitInline) {
-                fullKey.inline.putAll(tpy.task.inline);
-            }
-        }
-        for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
-            if (input.context== EnumsApi.VariableContext.array) {
-                String data = variableAsString.apply(input.id);
-                VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(data);
-                for (VariableArrayParamsYaml.Variable variable : vapy.array) {
-                    if (variable.dataType== EnumsApi.DataType.variable) {
-                        long variableId = Long.parseLong(variable.id);
-                        fullKey.inputs.add(getSha256Length(variableId, variableAsStream));
-                    }
-                    else {
-                        fullKey.inputs.add(getSha256Length(input.id, globalVariableAsStream));
-                    }
-                }
-            }
-            else {
-                if (input.context== EnumsApi.VariableContext.local) {
-                    fullKey.inputs.add(getSha256Length(input.id, variableAsStream));
-                }
-                else {
-                    fullKey.inputs.add(getSha256Length(input.id, globalVariableAsStream));
-                }
-            }
-        }
-        fullKey.inputs.sort(CacheData.SHA_256_PLUS_LENGTH_COMPARATOR);
-        return fullKey;
-    }
-
-    private static CacheData.Sha256PlusLength getSha256Length(Long variableId, Function<Long, Blob> function) {
-        try {
-            Blob blob = function.apply(variableId);
-            if (blob==null) {
-                String es = S.f("#611.320 Data for variableId #%d wasn't found", variableId);
-                log.warn(es);
-                throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
-            }
-            try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000);
-                 CountingInputStream cis = new CountingInputStream(bis)) {
-                String sha256 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, cis);
-                long length = cis.getBytesRead();
-                return new CacheData.Sha256PlusLength(sha256, length);
-            }
-        } catch (CommonErrorWithDataException e) {
-            throw e;
-        } catch (Throwable e) {
-            String es = "#611.340 Error while storing data to file";
-            log.error(es, e);
-            throw new VariableCommonException(es, variableId);
-        }
-    }
 }

@@ -32,6 +32,8 @@ public class CacheData {
 
     public static final Comparator<Sha256PlusLength> SHA_256_PLUS_LENGTH_COMPARATOR = (o1, o2) -> o1.sha256.equals(o2.sha256) ? Long.compare(o1.length, o2.length) : o1.sha256.compareTo(o2.sha256);
 
+    public record SimpleKey(String key, String keyAsStr) {}
+
     @Data
     @AllArgsConstructor
     public static class Sha256PlusLength  {
@@ -44,13 +46,14 @@ public class CacheData {
     }
 
     @Data
-    public static class Key {
+    public static class FullKey {
         public String functionCode;
         public String funcParams;
         public final Map<String, Map<String, String>> inline = new HashMap<>();
         public final List<Sha256PlusLength> inputs = new ArrayList<>();
+        public final List<Sha256PlusLength> metas = new ArrayList<>();
 
-        public Key(String functionCode, String funcParams) {
+        public FullKey(String functionCode, String funcParams) {
             this.functionCode = functionCode;
             this.funcParams = funcParams;
         }

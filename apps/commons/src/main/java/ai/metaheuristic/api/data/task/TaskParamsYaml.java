@@ -204,6 +204,7 @@ public class TaskParamsYaml implements BaseParams {
     public static class Cache {
         public boolean enabled;
         public boolean omitInline;
+        public boolean cacheMeta;
     }
 
     @Data

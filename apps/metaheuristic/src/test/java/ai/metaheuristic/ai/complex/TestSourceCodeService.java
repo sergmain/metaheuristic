@@ -76,7 +76,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
-    @Autowired private ExecContextService execContextService;
     @Autowired private ExecContextCache execContextCache;
     @Autowired private TaskRepository taskRepository;
     @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
@@ -212,7 +211,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
                                 execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
                                         getExecContextForTest().id, getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId)));
 
-        ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
+        ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, () -> {
             setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
 
             TaskImpl tempTask = taskRepository.findById(permuteTask.task.id).orElse(null);
@@ -244,7 +243,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
             // 1 'mh.aggregate-internal-context' task
             // and 1 'mh.finish' task
             assertEquals(3 + 1 + 1, descendants.size());
-            return null;
         });
 
         // process and complete fit/predict tasks

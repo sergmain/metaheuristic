@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
+import ai.metaheuristic.ai.dispatcher.cache.CacheUtils;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
@@ -35,8 +36,6 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.utils.Checksum;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,9 +44,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
@@ -220,30 +216,24 @@ public class TaskCheckCachingTopLevelService {
             log.warn("609.023 Process {} wasn't found", tpy.task.processCode);
             return PREPARE_DATA_NONE;
         }
-        CacheData.Key fullKey;
+        CacheData.FullKey fullKey;
         try {
             log.debug("start cacheService.getKey(), execContextId: {}, task: {}", simpleExecContext.execContextId, taskId);
             fullKey = cacheService.getKey(tpy, p.function);
         } catch (VariableCommonException e) {
-            log.warn("#609.025 ExecContext: #{}, VariableCommonException: {}", simpleExecContext.execContextId, e.getAdditionalInfo());
+            log.warn("609.025 ExecContext: #{}, VariableCommonException: {}", simpleExecContext.execContextId, e.getAdditionalInfo());
             return PREPARE_DATA_NONE;
         }
         log.debug("done cacheService.getKey(), execContextId: {}, task: {}", simpleExecContext.execContextId, taskId);
 
-
-        String keyAsStr = fullKey.asString();
-        byte[] bytes = keyAsStr.getBytes();
-
-        CacheProcess cacheProcess=null;
-        try (InputStream is = new ByteArrayInputStream(bytes)) {
-            String sha256 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, is);
-            String key = new CacheData.Sha256PlusLength(sha256, keyAsStr.length()).asString();
-
-            log.debug("execContextId: {}, task: {}, let's try to find cacheProcess for key {}", simpleExecContext.execContextId, taskId, key);
-            cacheProcess = cacheProcessRepository.findByKeySha256LengthReadOnly(key);
-        } catch (IOException e) {
-            log.error("#609.040 Error while preparing a cache key, task will be processed without cached data", e);
+        CacheData.SimpleKey key = CacheUtils.fullKeyToSimpleKey(fullKey);
+        if (key==null) {
+            return PREPARE_DATA_NONE;
         }
+
+        log.debug("execContextId: {}, task: {}, let's try to find cacheProcess for key {}", simpleExecContext.execContextId, taskId, key);
+        CacheProcess cacheProcess = cacheProcessRepository.findByKeySha256LengthReadOnly(key.key());
+
         log.debug("execContextId: {}, task: {}, CacheProcess: {}", simpleExecContext.execContextId, taskId, cacheProcess);
         return new PrepareData(cacheProcess, PrepareDataState.ok);
     }
