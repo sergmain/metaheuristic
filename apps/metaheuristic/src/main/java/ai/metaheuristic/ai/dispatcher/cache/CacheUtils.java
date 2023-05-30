@@ -98,6 +98,7 @@ public class CacheUtils {
 
         }
         fullKey.inputs.sort(CacheData.SHA_256_PLUS_LENGTH_COMPARATOR);
+        fullKey.metas.sort(CacheData.SHA_256_PLUS_LENGTH_COMPARATOR);
         return fullKey;
     }
 

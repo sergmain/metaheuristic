@@ -71,12 +71,19 @@ public class QueryOpenaiTest {
             }
             """;
 
+        String json3 = """
+            {
+              "model": "text-davinci-003",
+              "prompt": "List of fruits which can be grown in US. Output only name of fruit, put each name on new line,max 2 fruits"
+            }
+            """;
+
         final URI uri = new URIBuilder("https://api.openai.com/v1/completions")
                 .setCharset(StandardCharsets.UTF_8)
                 .build();
         final Request request = Request.Post(uri).connectTimeout(5000).socketTimeout(20000);
 
-        request.body(new StringEntity(json2, StandardCharsets.UTF_8));
+        request.body(new StringEntity(json3, StandardCharsets.UTF_8));
 
         RestUtils.addHeaders(request);
         request.addHeader("Content-Type", "application/json");

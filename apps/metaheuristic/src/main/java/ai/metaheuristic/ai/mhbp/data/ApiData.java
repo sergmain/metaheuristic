@@ -127,11 +127,13 @@ public class ApiData {
         public EnumsApi.OperationStatus status;
         public String raw;
         public String errorText;
+        public int httpCode;
 
-        public SchemeAndParamResult(SchemeAndParams schemeAndParams, String errorText) {
+        public SchemeAndParamResult(SchemeAndParams schemeAndParams, String errorText, int httpCode) {
             this.schemeAndParams = schemeAndParams;
             this.status = EnumsApi.OperationStatus.ERROR;
             this.errorText = errorText;
+            this.httpCode = httpCode;
         }
     }
 

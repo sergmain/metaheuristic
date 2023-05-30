@@ -31,7 +31,6 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
@@ -39,7 +38,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -75,7 +76,6 @@ public class CacheService {
         cacheProcessRepository.deleteAllByIdIn(page);
     }
 
-    @SneakyThrows
     public void storeVariables(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
         TxUtils.checkTxExists();
 
@@ -130,7 +130,14 @@ public class CacheService {
                     throw new VariableCommonException(es, output.id);
                 }
                 eventPublisher.publishEvent(new ResourceCloseTxEvent(List.of(bis, is), tempFile));
-                cacheVariableService.createInitialized(cacheProcess.id, is, Files.size(tempFile), output.name);
+                final long size;
+                try {
+                    size = Files.size(tempFile);
+                }
+                catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                cacheVariableService.createInitialized(cacheProcess.id, is, size, output.name);
             }
         }
     }

@@ -238,6 +238,9 @@ public class ProviderQueryService {
                 if (response==null) {
                     throw new IllegalStateException();
                 }
+                if (r.status!=OK) {
+                    return ApiData.QueryResult.asError(r.errorText, Enums.QueryResultErrorType.server_error);
+                }
                 String processedAnswer = ProviderQueryUtils.processAnswerFromApi(r.result, response);
                 queryResult = new ApiData.QueryResult(processedAnswer, true, r.raw);
             }

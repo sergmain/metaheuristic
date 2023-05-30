@@ -44,6 +44,7 @@ import org.apache.http.client.utils.URIUtils;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicNameValuePair;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -108,10 +109,10 @@ public class ProviderApiSchemeService {
         CommunicationData.Query query = buildApiQueryUri(schemeAndParams, info);
 
         if (query.url==null) {
-            return new ApiData.SchemeAndParamResult(schemeAndParams, "url is null");
+            return new ApiData.SchemeAndParamResult(schemeAndParams, "url is null", 0);
         }
         if (query.url.indexOf('?')!=-1) {
-            return new ApiData.SchemeAndParamResult(schemeAndParams, "params of query must be set via nvps");
+            return new ApiData.SchemeAndParamResult(schemeAndParams, "params of query must be set via nvps", 0);
         }
 
         final URIBuilder uriBuilder1 = new URIBuilder(query.url).setCharset(StandardCharsets.UTF_8);
@@ -135,7 +136,7 @@ public class ProviderApiSchemeService {
             request = Request.Get(uri).connectTimeout(5000).socketTimeout(20000);
         }
         else {
-            return new ApiData.SchemeAndParamResult(schemeAndParams, "unknown type of request: " + schemeAndParams.scheme.scheme.request.type);
+            return new ApiData.SchemeAndParamResult(schemeAndParams, "unknown type of request: " + schemeAndParams.scheme.scheme.request.type, 0);
         }
 
         ApiData.SchemeAndParamResult result = getData( schemeAndParams, request);
@@ -149,13 +150,13 @@ public class ProviderApiSchemeService {
         final Executor executor;
         if (schemeAndParams.auth.auth.type==Enums.AuthType.basic) {
             if (schemeAndParams.auth.auth.basic==null) {
-                return new ApiData.SchemeAndParamResult(schemeAndParams, "(schemeAndParams.params.api.basicAuth==null)");
+                return new ApiData.SchemeAndParamResult(schemeAndParams, "(schemeAndParams.params.api.basicAuth==null)", 0);
             }
             executor = getExecutor(schemeAndParams.scheme.scheme.request.uri, schemeAndParams.auth.auth.basic.username, schemeAndParams.auth.auth.basic.password);
         }
         else {
             if (schemeAndParams.auth.auth.token==null) {
-                return new ApiData.SchemeAndParamResult(schemeAndParams, "(schemeAndParams.auth.auth.token==null)");
+                return new ApiData.SchemeAndParamResult(schemeAndParams, "(schemeAndParams.auth.auth.token==null)", 0);
             }
             if (schemeAndParams.auth.auth.token.place==Enums.TokenPlace.header) {
                 String token = getActualToken(schemeAndParams.auth.auth.token);
@@ -175,12 +176,12 @@ public class ProviderApiSchemeService {
             entity.writeTo(baos);
         }
         final String data = baos.toString();
-        if (statusCode !=200) {
-            final String msg = "Server response:\n'" + data +"'";
+        if (statusCode!=HttpStatus.OK.value()) {
+            final String msg = "HttpCode: "+statusCode+", Server response:\n'" + data +"'";
             log.error(msg);
-            return new ApiData.SchemeAndParamResult(schemeAndParams, msg);
+            return new ApiData.SchemeAndParamResult(schemeAndParams, msg, statusCode);
         }
-        return new ApiData.SchemeAndParamResult(schemeAndParams, data, OK, data, null);
+        return new ApiData.SchemeAndParamResult(schemeAndParams, data, OK, data, null, HttpStatus.OK.value());
     }
 
     public static String getActualToken(ApiAuth.TokenAuth tokenAuth) {

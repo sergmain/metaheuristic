@@ -69,21 +69,21 @@ public class ApiCallService {
         TxUtils.checkTxNotExists();
 
         if (taskParamsYaml.task.outputs.isEmpty()) {
-            throw new InternalFunctionException(variable_not_found, "#513.380 output variable not found for task #" + taskId);
+            throw new InternalFunctionException(variable_not_found, "513.040 output variable not found for task #" + taskId);
         }
 
         String apiCode = MetaUtils.getValue(taskParamsYaml.task.metas, API_CODE);
         if (S.b(apiCode)) {
-            throw new InternalFunctionException(meta_not_found, "#513.300 meta '"+ API_CODE +"' wasn't found or it's blank");
+            throw new InternalFunctionException(meta_not_found, "513.080 meta '"+ API_CODE +"' wasn't found or it's blank");
         }
         Api api = apiRepository.findByApiCode(apiCode);
         if (api==null) {
-            throw new InternalFunctionException(general_error, "#513.300 API wasn't found with code '"+ PROMPT +"' wasn't found or it's blank");
+            throw new InternalFunctionException(general_error, "513.120 API wasn't found with code '"+ PROMPT +"' wasn't found or it's blank");
         }
 
         String prompt = MetaUtils.getValue(taskParamsYaml.task.metas, PROMPT);
         if (S.b(prompt)) {
-            throw new InternalFunctionException(meta_not_found, "#513.300 meta '"+ PROMPT +"' wasn't found or it's blank");
+            throw new InternalFunctionException(meta_not_found, "513.160 meta '"+ PROMPT +"' wasn't found or it's blank");
         }
 
         final List<String> variables = getVariables(prompt, false);
@@ -92,15 +92,15 @@ public class ApiCallService {
             String varName = getNameForVariable(variable);
             String value = internalFunctionVariableService.getValueOfVariable(simpleExecContext.execContextId, taskContextId, varName);
             if (value==null) {
-                throw new InternalFunctionException(data_not_found, "#513.340 data wasn't found, variable: "+variable+", normalized: " + varName);
+                throw new InternalFunctionException(data_not_found, "513.200 data wasn't found, variable: "+variable+", normalized: " + varName);
             }
             prompt = StringUtils.replaceEach(prompt, new String[]{"[[" + variable + "]]", "{{" + variable + "}}"}, new String[]{value, value});
         }
-        log.info("513.360 prompt: {}", prompt);
+        log.info("513.240 prompt: {}", prompt);
         ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, null);
         ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
         if (answer.status()!=OK || S.b(answer.a())) {
-            throw new InternalFunctionException(data_not_found, "513.400 API call error: "+answer.error()+", prompt: " + prompt+", answer: " + answer.a());
+            throw new InternalFunctionException(data_not_found, "513.280 API call error: "+answer.error()+", prompt: " + prompt+", answer: " + answer.a());
         }
 
         TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
