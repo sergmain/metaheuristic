@@ -49,7 +49,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 @ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@AutoConfigureCache
 public class TestSingleInternalFunction extends FeatureMethods {
 
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;

@@ -39,13 +39,11 @@ public class FunctionCache {
 
     private final FunctionRepository functionRepository;
 
-//    @CachePut(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#result.id")
     public Function save(Function function) {
         TxUtils.checkTxExists();
         return functionRepository.save(function);
     }
 
-//    @CacheEvict(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#function.id")
     public void delete(Function function) {
         TxUtils.checkTxExists();
         try {
@@ -55,7 +53,6 @@ public class FunctionCache {
         }
     }
 
-//    @CacheEvict(cacheNames = {Consts.FUNCTIONS_CACHE}, key = "#functionId")
     public void delete(Long functionId) {
         TxUtils.checkTxExists();
         try {
@@ -66,7 +63,6 @@ public class FunctionCache {
     }
 
     @Nullable
-//    @Cacheable(cacheNames = {Consts.FUNCTIONS_CACHE}, unless="#result==null")
     public Function findById(Long id) {
         return functionRepository.findById(id).orElse(null);
     }

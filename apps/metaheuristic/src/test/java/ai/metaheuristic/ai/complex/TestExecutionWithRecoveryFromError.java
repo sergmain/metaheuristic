@@ -66,7 +66,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@AutoConfigureCache
 public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;

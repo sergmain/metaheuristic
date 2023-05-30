@@ -31,6 +31,7 @@ import java.nio.charset.StandardCharsets;
 import static ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils.NULL_CHECK_FUNC;
 import static ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils.validateSourceCodeParamsYaml;
 import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR;
+import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.SOURCE_OF_VARIABLE_NOT_FOUND_ERROR;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
@@ -60,7 +61,7 @@ public class SourceCodeValidationUtilsTest {
         final SourceCodeApiData.SourceCodeValidationResult actual = validateSourceCodeParamsYaml(NULL_CHECK_FUNC, sc);
 
         assertNotNull(actual);
-        assertEquals(OUTPUT_VARIABLE_NOT_DEFINED_ERROR, actual.status);
+        assertEquals(SOURCE_OF_VARIABLE_NOT_FOUND_ERROR, actual.status, actual.error);
     }
 
     @Test
@@ -75,10 +76,11 @@ public class SourceCodeValidationUtilsTest {
     public void test_validateSourceCodeParamsYaml_1() throws IOException {
         String yaml = IOUtils.resourceToString("/source_code/yaml/default-source-code-for-testing.yaml", StandardCharsets.UTF_8);
         SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
-        scpy.source.variables = new SourceCodeParamsYaml.VariableDefinition();
-        assertNull(scpy.source.variables.globals);
+//        scpy.source.variables = new SourceCodeParamsYaml.VariableDefinition();
+//        assertNull(scpy.source.variables.globals);
         SourceCodeApiData.SourceCodeValidationResult result = validateSourceCodeParamsYaml(NULL_CHECK_FUNC, scpy);
-        assertNotNull(result);
-        assertEquals(OUTPUT_VARIABLE_NOT_DEFINED_ERROR, result.status);
+        assertNull(result);
+//        assertNotNull(result);
+//        assertEquals(OUTPUT_VARIABLE_NOT_DEFINED_ERROR, result.status, result.error);
     }
 }

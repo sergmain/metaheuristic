@@ -34,7 +34,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @Slf4j
 @ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@AutoConfigureCache
 public class TestFeatures extends PreparingExperiment {
 
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;

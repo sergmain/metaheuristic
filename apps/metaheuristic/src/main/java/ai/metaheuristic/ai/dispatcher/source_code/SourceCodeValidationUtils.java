@@ -120,7 +120,7 @@ public class SourceCodeValidationUtils {
                     if (status != OK) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_VARIABLE_NAME_ERROR,
-                                "#177.187 Input variable in process " + process.code + " has a wrong chars in name");
+                                "177.187 Input variable in process " + process.code + " has a wrong chars in name");
                     }
                     boolean doesVariableHaveSource = doesVariableHaveSource(sourceCode, variable.name);
                     if (!doesVariableHaveSource) {
@@ -134,7 +134,7 @@ public class SourceCodeValidationUtils {
             if (process.code.equals(Consts.MH_FINISH_FUNCTION) && !process.function.code.equals(Consts.MH_FINISH_FUNCTION)) {
                 // test that there isn't any mh.finish process which isn't actually for function mn.finish
                 return new SourceCodeApiData.SourceCodeValidationResult(
-                        EnumsApi.SourceCodeValidateStatus.WRONG_CODE_OF_PROCESS_ERROR, "#177.200 There is process with code mh.finish but function is " + process.function.code);
+                        EnumsApi.SourceCodeValidateStatus.WRONG_CODE_OF_PROCESS_ERROR, "177.215 There is process with code mh.finish but function is " + process.function.code);
             }
             SourceCodeApiData.SourceCodeValidationResult status = checkFunctionsFunc.apply(process);
             if (status.status != OK) {
@@ -147,7 +147,7 @@ public class SourceCodeValidationUtils {
                 if (!(e.getKey() instanceof String)) {
                     return new SourceCodeApiData.SourceCodeValidationResult(
                             EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
-                            "#177.223 Inline variable at group level must be type of String, actual: " + e.getKey().getClass() + ", value: " + e.getKey());
+                            "177.223 Inline variable at group level must be type of String, actual: " + e.getKey().getClass() + ", value: " + e.getKey());
                 }
 
                 Object o = e.getValue();

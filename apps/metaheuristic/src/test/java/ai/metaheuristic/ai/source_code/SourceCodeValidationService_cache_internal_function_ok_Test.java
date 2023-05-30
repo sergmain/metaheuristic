@@ -46,7 +46,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Slf4j
 @ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@AutoConfigureCache
 public class SourceCodeValidationService_cache_internal_function_ok_Test extends PreparingSourceCode {
 
     @Autowired

@@ -58,7 +58,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 @ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@AutoConfigureCache
 public class TestReAssignProcessorIdTimeoutDifferentSessionId {
 
     private static final long EXPIRED_SESSION_CREATED_ON = 1L;

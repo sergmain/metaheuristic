@@ -41,7 +41,6 @@ public class ExperimentCache {
 
     private final ExperimentRepository experimentRepository;
 
-//    @CachePut(value = {Consts.EXPERIMENTS_CACHE}, key = "#result.id")
     public Experiment save(Experiment experiment) {
         TxUtils.checkTxExists();
         // noinspection UnusedAssignment
@@ -51,12 +50,10 @@ public class ExperimentCache {
     }
 
     @Nullable
-//    @Cacheable(cacheNames = {Consts.EXPERIMENTS_CACHE}, unless="#result==null")
     public Experiment findById(Long id) {
         return experimentRepository.findById(id).orElse(null);
     }
 
-//    @CacheEvict(cacheNames = {Consts.EXPERIMENTS_CACHE}, key = "#experiment.id")
     public void delete(@NonNull Experiment experiment) {
         TxUtils.checkTxExists();
         try {
@@ -66,13 +63,11 @@ public class ExperimentCache {
         }
     }
 
-//    @CacheEvict(cacheNames = {Consts.EXPERIMENTS_CACHE}, key = "#id")
     public void invalidate(Long id) {
         TxUtils.checkTxExists();
         //
     }
 
-//    @CacheEvict(cacheNames = {Consts.EXPERIMENTS_CACHE}, key = "#id")
     public void deleteById(@NonNull Long id) {
         TxUtils.checkTxExists();
         try {

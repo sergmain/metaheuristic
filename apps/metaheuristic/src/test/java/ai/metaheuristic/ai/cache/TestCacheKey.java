@@ -42,7 +42,7 @@ public class TestCacheKey {
 
         System.out.println(KEY.asString());
 
-        final String KEY_AS_STRING = "{\"functionCode\":\"function-01\",\"funcParams\":\"\",\"inline\":{\"top-inline\":{\"key-1\":\"value-1\"}},\"inputs\":[{\"sha256\":\"sha256-1\",\"length\":42},{\"sha256\":\"sha256-2\",\"length\":11}]}";
+        final String KEY_AS_STRING = "{\"functionCode\":\"function-01\",\"funcParams\":\"\",\"inline\":{\"top-inline\":{\"key-1\":\"value-1\"}},\"inputs\":[{\"sha256\":\"sha256-1\",\"length\":42},{\"sha256\":\"sha256-2\",\"length\":11}],\"metas\":[]}";
 
 
         assertEquals(KEY_AS_STRING, KEY.asString());

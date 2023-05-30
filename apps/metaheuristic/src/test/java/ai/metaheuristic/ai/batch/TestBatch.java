@@ -45,7 +45,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Slf4j
 @ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@AutoConfigureCache
 public class TestBatch extends PreparingSourceCode {
 
     @Autowired

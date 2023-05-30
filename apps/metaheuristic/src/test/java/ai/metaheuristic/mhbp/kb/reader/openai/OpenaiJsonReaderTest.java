@@ -102,7 +102,7 @@ public class OpenaiJsonReaderTest {
         Path repo = p.resolve(Consts.REPO);
         assertFalse(Files.notExists(repo));
 
-        QuestionData.Chapters qas = OpenaiJsonReader.read(10L, mhbpHome, kbParams.kb.git);
+        QuestionData.Chapters qas = OpenaiJsonReader.read(10L, repo, kbParams.kb.git);
 
         String jsonl = qas.chapters.stream().flatMap(o->o.list().stream()).map(OpenaiJsonReaderTest::jsonAsString).collect(Collectors.joining("\n"));
 

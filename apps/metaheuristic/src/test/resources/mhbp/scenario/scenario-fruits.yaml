@@ -45,4 +45,5 @@ steps:
     p: intro, fruit, fruit description, best consumer
     resultCode: result
     uuid: b032ef44-de12-4fbf-1234-100bd8018f4d
+    aggregateType: text
 version: 1

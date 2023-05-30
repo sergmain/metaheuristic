@@ -188,7 +188,6 @@ public class Config {
         }
     }
 
-    @EnableCaching
     @Configuration
     @ComponentScan(value={"ai.metaheuristic.ai.dispatcher", "ai.metaheuristic.ai.mhbp"})
     @Profile("dispatcher")

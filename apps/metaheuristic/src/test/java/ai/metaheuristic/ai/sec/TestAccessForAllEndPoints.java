@@ -50,7 +50,6 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @Import({SpringSecurityWebAuxTestConfig.class})
 @ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@AutoConfigureCache
 public class TestAccessForAllEndPoints {
 
     private MockMvc mockMvc;

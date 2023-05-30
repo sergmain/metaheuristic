@@ -48,7 +48,6 @@ import java.nio.charset.StandardCharsets;
 @ActiveProfiles("dispatcher")
 @Slf4j
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@AutoConfigureCache
 public class ScenarioServiceTest {
 
     @Autowired

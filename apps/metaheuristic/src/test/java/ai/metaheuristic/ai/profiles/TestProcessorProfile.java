@@ -35,7 +35,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("processor")
 @TestPropertySource(locations="classpath:test-processor-profile.properties")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@AutoConfigureCache
 public class TestProcessorProfile {
 
     @Autowired

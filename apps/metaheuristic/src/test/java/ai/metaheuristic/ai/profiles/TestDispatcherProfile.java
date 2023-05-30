@@ -38,7 +38,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("dispatcher")
 @TestPropertySource(locations="classpath:test-dispatcher-profile.properties")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@AutoConfigureCache
 public class TestDispatcherProfile {
 
     @Autowired

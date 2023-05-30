@@ -41,19 +41,12 @@ public class ProcessorCache {
 
     private final ProcessorRepository processorRepository;
 
-//    @CacheEvict(cacheNames = {Consts.PROCESSORS_CACHE}, allEntries = true)
-    public void clearCache() {
-        TxUtils.checkTxExists();
-    }
-
-//    @CachePut(cacheNames = {Consts.PROCESSORS_CACHE}, key = "#result.id")
     public Processor save(@NonNull Processor processor) {
         TxUtils.checkTxExists();
         log.debug("#457.010 save processor, id: #{}, processor: {}", processor.id, processor);
         return processorRepository.save(processor);
     }
 
-//    @CacheEvict(cacheNames = {Consts.PROCESSORS_CACHE}, key = "#processor.id")
     public void delete(@NonNull Processor processor) {
         TxUtils.checkTxExists();
         try {
@@ -63,13 +56,6 @@ public class ProcessorCache {
         }
     }
 
-//    @CacheEvict(cacheNames = {Consts.PROCESSORS_CACHE}, key = "#id")
-    public void evictById(Long id) {
-        TxUtils.checkTxExists();
-        //
-    }
-
-//    @CacheEvict(cacheNames = {Consts.PROCESSORS_CACHE}, key = "#processorId")
     public void delete(Long processorId) {
         TxUtils.checkTxExists();
         try {
@@ -79,7 +65,6 @@ public class ProcessorCache {
         }
     }
 
-//    @CacheEvict(cacheNames = {Consts.PROCESSORS_CACHE}, key = "#processorId")
     public void deleteById(Long processorId) {
         TxUtils.checkTxExists();
         try {
@@ -90,7 +75,6 @@ public class ProcessorCache {
     }
 
     @Nullable
-//    @Cacheable(cacheNames = {Consts.PROCESSORS_CACHE}, unless="#result==null")
     public Processor findById(Long id) {
         return processorRepository.findById(id).orElse(null);
     }

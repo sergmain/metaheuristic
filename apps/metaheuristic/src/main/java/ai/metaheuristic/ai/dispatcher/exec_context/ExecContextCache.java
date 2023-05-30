@@ -41,11 +41,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class ExecContextCache {
 
     private final ExecContextRepository execContextRepository;
-//    private final EntityManager em;
-
-    public void clearCache() {
-        TxUtils.checkTxExists();
-    }
 
     public ExecContextImpl save(ExecContextImpl execContext) {
         TxUtils.checkTxExists();
@@ -53,18 +48,11 @@ public class ExecContextCache {
         if (execContext.id!=null) {
             ExecContextSyncService.checkWriteLockPresent(execContext.id);
         }
-/*
-        if (execContext.id!=null && !em.contains(execContext)) {
-            // https://stackoverflow.com/questions/13135309/how-to-find-out-whether-an-entity-is-detached-in-jpa-hibernate
-            throw new IllegalStateException(S.f("461.020 Bean %s isn't managed by EntityManager", execContext));
-        }
-*/
         final ExecContextImpl ec = execContextRepository.save(execContext);
         return ec;
 
     }
 
-//    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContext.id")
     public void delete(ExecContextImpl execContext) {
         TxUtils.checkTxExists();
         try {
@@ -74,7 +62,6 @@ public class ExecContextCache {
         }
     }
 
-//    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContextId")
     public void delete(Long execContextId) {
         TxUtils.checkTxExists();
         try {
@@ -84,7 +71,6 @@ public class ExecContextCache {
         }
     }
 
-//    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContextId")
     public void deleteById(Long execContextId) {
         TxUtils.checkTxExists();
         try {
@@ -110,11 +96,6 @@ public class ExecContextCache {
     @Nullable
     public ExecContextImpl findByIdDetached(Long id) {
         final ExecContextImpl execContext = execContextRepository.findByIdReadOnly(id).orElse(null);
-/*
-        if (execContext!=null) {
-            em.detach(execContext);
-        }
-*/
         return execContext;
     }
 
