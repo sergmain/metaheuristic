@@ -148,7 +148,7 @@ public class TaskFinishingService {
         task.setCompletedOn(System.currentTimeMillis());
 
         if (S.b(task.functionExecResults)) {
-            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+            TaskParamsYaml tpy = task.getTaskParamsYaml();
             FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
             if (targetState== EnumsApi.TaskExecState.ERROR) {
                 if (functionExec.exec==null) {

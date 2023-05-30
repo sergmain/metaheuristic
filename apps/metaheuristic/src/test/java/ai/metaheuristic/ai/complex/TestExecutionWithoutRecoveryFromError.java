@@ -269,7 +269,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
         TaskImpl task = taskRepository.findById(simpleTask.taskId).orElse(null);
         assertNotNull(task);
 
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        TaskParamsYaml tpy = task.getTaskParamsYaml();
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
             Enums.UploadVariableStatus status = TaskSyncService.getWithSyncNullable(task.id,
                     () -> taskVariableTopLevelService.updateStatusOfVariable(task.id, output.id).status);

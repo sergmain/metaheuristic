@@ -168,7 +168,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         for (Long taskId : taskIds) {
             TaskImpl tempTask = taskRepository.findById(taskId).orElse(null);
             assertNotNull(tempTask);
-            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(tempTask.params);
+            TaskParamsYaml tpy = tempTask.getTaskParamsYaml();
             assertTrue(List.of(Consts.MH_FINISH_FUNCTION, Consts.MH_PERMUTE_VARIABLES_FUNCTION, Consts.MH_AGGREGATE_FUNCTION,
                     "test.fit.function:1.0", "test.predict.function:1.0")
                     .contains(tpy.task.function.code));
@@ -194,7 +194,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(aggregateTask.task);
         assertNotNull(finishTask.task);
 
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(permuteTask.task.params);
+        TaskParamsYaml tpy = permuteTask.task.getTaskParamsYaml();
         assertFalse(tpy.task.metas.isEmpty());
 
         DispatcherCommParamsYaml.AssignedTask task40 = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
@@ -527,7 +527,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         TaskImpl task = taskRepository.findById(simpleTask.taskId).orElse(null);
         assertNotNull(task);
 
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        TaskParamsYaml tpy = task.getTaskParamsYaml();
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
             Enums.UploadVariableStatus status = TaskSyncService.getWithSyncNullable(task.id,
                     () -> taskVariableTopLevelService.updateStatusOfVariable(task.id, output.id).status);

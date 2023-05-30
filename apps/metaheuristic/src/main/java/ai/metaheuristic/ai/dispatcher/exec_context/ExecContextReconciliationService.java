@@ -23,8 +23,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -75,7 +73,7 @@ public class ExecContextReconciliationService {
                     log.error("#307.200 task is null");
                     return;
                 }
-                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+                // TaskParamsYaml tpy = task.getTaskParamsYaml();
                 taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK);
             });
         }

@@ -38,8 +38,8 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -56,7 +56,6 @@ import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYamlUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -499,7 +498,7 @@ public class BatchResultProcessorTxService {
 
         EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.getExecState());
 
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        TaskParamsYaml tpy = task.getTaskParamsYaml();
 
         final String processorIpAndHost;
         String coreId;

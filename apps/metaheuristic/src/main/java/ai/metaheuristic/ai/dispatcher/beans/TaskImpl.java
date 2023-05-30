@@ -15,7 +15,11 @@
  */
 package ai.metaheuristic.ai.dispatcher.beans;
 
+import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
+import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -55,12 +59,6 @@ public class TaskImpl implements Serializable, Task {
 
     @Version
     public Integer version;
-
-    /**
-     * TaskParamsYaml represented as a String
-     */
-    @Column(name = "PARAMS")
-    public String params;
 
     @Nullable
     @Column(name = "CORE_ID")
@@ -103,5 +101,46 @@ public class TaskImpl implements Serializable, Task {
 
     @Column(name = "ACCESS_BY_PROCESSOR_ON")
     public Long accessByProcessorOn;
+
+    /**
+     * TaskParamsYaml represented as a String
+     */
+    @Column(name = "PARAMS")
+    private String params;
+
+    public void setParams(String params) {
+        synchronized (this) {
+            this.params = params;
+            this.tpy =null;
+        }
+    }
+
+    public String getParams() {
+        return params;
+    }
+
+    @Transient
+    @JsonIgnore
+    @Nullable
+    private TaskParamsYaml tpy = null;
+
+    @JsonIgnore
+    public TaskParamsYaml getTaskParamsYaml() {
+        if (tpy==null) {
+            synchronized (this) {
+                if (tpy==null) {
+                    //noinspection UnnecessaryLocalVariable
+                    TaskParamsYaml temp = TaskParamsYamlUtils.BASE_YAML_UTILS.to(params);
+                    tpy = temp;
+                }
+            }
+        }
+        return tpy;
+    }
+
+    @JsonIgnore
+    public void updateParams(TaskParamsYaml tpy) {
+        setParams(TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy));
+    }
 
 }

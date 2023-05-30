@@ -63,26 +63,7 @@ public class CommonSync<T> {
         return getLock(id).readLock();
     }
 
-    private volatile long lastCheckMills = 0L;
     public synchronized ReentrantReadWriteLock getLock(T id) {
-/*
-        if (System.currentTimeMillis() - lastCheckMills > TEN_MINUTES_TO_MILLS) {
-            lastCheckMills = System.currentTimeMillis();
-            List<T> ids = new ArrayList<>();
-            for (Map.Entry<T, TimedLock> entry : map.entrySet()) {
-                if (id.equals(entry.getKey())) {
-                    entry.getValue().mills = System.currentTimeMillis();
-                    continue;
-                }
-                if (System.currentTimeMillis() - entry.getValue().mills > ONE_HOUR_TO_MILLS) {
-                    ids.add(entry.getKey());
-                }
-            }
-            for (T idForRemoving : ids) {
-                map.remove(idForRemoving);
-            }
-        }
-*/
         final TimedLock timedLock = map.computeIfAbsent(id, (o) ->new TimedLock());
         timedLock.mills = System.currentTimeMillis();
         return timedLock.lock;

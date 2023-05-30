@@ -89,13 +89,13 @@ public class TaskVariableService {
             log.warn("#441.180 Task {} was reset, can't set new value to field resultReceived", task.id);
             return Enums.UploadVariableStatus.TASK_WAS_RESET;
         }
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        TaskParamsYaml tpy = task.getTaskParamsYaml();
         TaskParamsYaml.OutputVariable output = tpy.task.outputs.stream().filter(o->o.id.equals(variableId)).findFirst().orElse(null);
         if (output==null) {
             return Enums.UploadVariableStatus.UNRECOVERABLE_ERROR;
         }
         output.uploaded = true;
-        task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
+        task.updateParams(tpy);
         TaskImpl t = taskService.save(task);
 
         return Enums.UploadVariableStatus.OK;

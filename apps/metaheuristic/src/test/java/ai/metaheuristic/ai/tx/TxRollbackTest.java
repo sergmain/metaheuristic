@@ -68,11 +68,11 @@ public class TxRollbackTest extends PreparingSourceCode {
 
         assertNotNull(task.id);
         assertNotNull(task.version);
-        assertEquals("BBB", task.params);
+        assertEquals("BBB", task.getParams());
 
         // =====================
 
-        String newParam = StrUtils.incCopyNumber(task.params);
+        String newParam = StrUtils.incCopyNumber(task.getParams());
         try {
             System.out.println("### oneLevelTx(), exception: false");
             txTestingService.oneLevelTx(task.id, newParam, false);
@@ -82,11 +82,11 @@ public class TxRollbackTest extends PreparingSourceCode {
         }
         // result - data was committed
         TaskImpl t1 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
-        assertEquals(newParam, t1.params);
+        assertEquals(newParam, t1.getParams());
 
         // =====================
 
-        String newParam2 = StrUtils.incCopyNumber(t1.params);
+        String newParam2 = StrUtils.incCopyNumber(t1.getParams());
         assertNotEquals(newParam, newParam2);
         int version2 = t1.version;
         try {
@@ -99,11 +99,11 @@ public class TxRollbackTest extends PreparingSourceCode {
         // result - data wasn't committed
         TaskImpl t2 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
         assertEquals(version2, t2.version);
-        assertNotEquals(newParam2, t2.params);
+        assertNotEquals(newParam2, t2.getParams());
 
         // =====================
 
-        String newParam3 = StrUtils.incCopyNumber(t2.params);
+        String newParam3 = StrUtils.incCopyNumber(t2.getParams());
         int version3 = t2.version;
         try {
             System.out.println("### oneLevelTxChecked()");
@@ -115,7 +115,7 @@ public class TxRollbackTest extends PreparingSourceCode {
         // result - data was committed
         TaskImpl t3 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
         assertNotEquals(version3, t3.version);
-        assertEquals(newParam3, t3.params);
+        assertEquals(newParam3, t3.getParams());
 
         // =====================
 
@@ -148,11 +148,11 @@ public class TxRollbackTest extends PreparingSourceCode {
 
         assertNotNull(task.id);
         assertNotNull(task.version);
-        assertEquals("BBB", task.params);
+        assertEquals("BBB", task.getParams());
 
         // =====================
 
-        String newParam = StrUtils.incCopyNumber(task.params);
+        String newParam = StrUtils.incCopyNumber(task.getParams());
         try {
             System.out.println("### oneLevelTx(), exception: false");
             txTestingService.twoLevelOneTx(task.id, newParam, false);
@@ -162,11 +162,11 @@ public class TxRollbackTest extends PreparingSourceCode {
         }
         // result - data was committed
         TaskImpl t1 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
-        assertEquals(newParam, t1.params);
+        assertEquals(newParam, t1.getParams());
 
         // =====================
 
-        String newParam2 = StrUtils.incCopyNumber(t1.params);
+        String newParam2 = StrUtils.incCopyNumber(t1.getParams());
         assertNotEquals(newParam, newParam2);
         int version2 = t1.version;
         try {
@@ -179,7 +179,7 @@ public class TxRollbackTest extends PreparingSourceCode {
         // result - data wasn't committed
         TaskImpl t2 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
         assertEquals(version2, t2.version);
-        assertNotEquals(newParam2, t2.params);
+        assertNotEquals(newParam2, t2.getParams());
 
         // =====================
 
@@ -197,11 +197,11 @@ public class TxRollbackTest extends PreparingSourceCode {
 
         assertNotNull(task.id);
         assertNotNull(task.version);
-        assertEquals("BBB", task.params);
+        assertEquals("BBB", task.getParams());
 
         // =====================
 
-        String newParam = StrUtils.incCopyNumber(task.params);
+        String newParam = StrUtils.incCopyNumber(task.getParams());
         try {
             System.out.println("### oneLevelTx(), exception: false");
             txTestingService.twoLevelTwoTx(task.id, newParam, false);
@@ -211,11 +211,11 @@ public class TxRollbackTest extends PreparingSourceCode {
         }
         // result - data was committed
         TaskImpl t1 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
-        assertEquals(newParam, t1.params);
+        assertEquals(newParam, t1.getParams());
 
         // =====================
 
-        String newParam2 = StrUtils.incCopyNumber(t1.params);
+        String newParam2 = StrUtils.incCopyNumber(t1.getParams());
         assertNotEquals(newParam, newParam2);
         int version2 = t1.version;
         try {
@@ -228,7 +228,7 @@ public class TxRollbackTest extends PreparingSourceCode {
         // result - data wasn't committed
         TaskImpl t2 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
         assertEquals(version2, t2.version);
-        assertNotEquals(newParam2, t2.params);
+        assertNotEquals(newParam2, t2.getParams());
 
         // =====================
 

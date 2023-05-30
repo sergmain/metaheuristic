@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.test.tx;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
@@ -57,7 +56,7 @@ public class TxTestingService {
         TaskImpl t = new TaskImpl();
         t.execContextId = execContextId;
         t.execState = EnumsApi.TaskExecState.NONE.value;
-        t.params = params;
+        t.setParams(params);
 
         return taskRepository.save(t);
     }
@@ -65,7 +64,7 @@ public class TxTestingService {
     @Transactional
     public TaskImpl update(Long taskId, String params) {
         TaskImpl t = taskRepository.findById(taskId).orElseThrow(() -> new IllegalStateException("Task not found"));
-        t.params = params;
+        t.setParams(params);
         return taskRepository.save(t);
     }
 
@@ -73,10 +72,10 @@ public class TxTestingService {
     public String updateWithSyncSingle(Long execContextId, Long taskId) {
             TaskImpl t = taskRepository.findById(taskId).orElseThrow(() -> new IllegalStateException("Task not found"));
 
-            t.params = AAA;
+            t.setParams(AAA);
             taskRepository.save(t);
             TaskImpl t1 = taskRepository.findById(taskId).orElseThrow(() -> new IllegalStateException("Task not found"));
-            if (!AAA.equals(t1.params)) {
+            if (!AAA.equals(t1.getParams())) {
                 throw new IllegalStateException("(!'aaa'.equals(t1.params)) ");
             }
 
@@ -87,10 +86,10 @@ public class TxTestingService {
     public String updateSingle(Long execContextId, Long taskId) {
         TaskImpl t = taskRepository.findById(taskId).orElseThrow(() -> new IllegalStateException("Task not found"));
 
-        t.params = AAA;
+        t.setParams(AAA);
         taskRepository.save(t);
         TaskImpl t1 = taskRepository.findById(taskId).orElseThrow(() -> new IllegalStateException("Task not found"));
-        if (!AAA.equals(t1.params)) {
+        if (!AAA.equals(t1.getParams())) {
             throw new IllegalStateException("(!'aaa'.equals(t1.params)) ");
         }
         return AAA;
@@ -101,18 +100,18 @@ public class TxTestingService {
             TaskImpl t = taskRepository.findById(taskId)
                     .orElseThrow(() -> new IllegalStateException("Task not found"));
 
-            t.params = AAA;
+            t.setParams(AAA);
             taskRepository.save(t);
             TaskImpl t1 = taskRepository.findById(taskId).orElseThrow(() -> new IllegalStateException("Task not found"));
-            if (!AAA.equals(t1.params)) {
+            if (!AAA.equals(t1.getParams())) {
                 throw new IllegalStateException("(!AAA.equals(t1.params)) ");
             }
 
-            t1.params = AAA2;
+            t1.setParams(AAA2);
             taskRepository.save(t1);
 
             TaskImpl t2 = taskRepository.findById(taskId).orElseThrow(() -> new IllegalStateException("Task not found"));
-            if (!(AAA2.equals(t2.params))) {
+            if (!(AAA2.equals(t2.getParams()))) {
                 throw new IllegalStateException("(!AAA2.equals(t1.params)) ");
             }
             return AAA2;
@@ -122,17 +121,17 @@ public class TxTestingService {
     public String updateDouble(Long execContextId, Long taskId) {
         TaskImpl t = taskRepository.findById(taskId).orElseThrow(() -> new IllegalStateException("Task not found"));
 
-        t.params = AAA;
+        t.setParams(AAA);
         taskRepository.save(t);
         TaskImpl t1 = taskRepository.findById(taskId).orElseThrow(() -> new IllegalStateException("Task not found"));
-        if (!AAA.equals(t1.params)) {
+        if (!AAA.equals(t1.getParams())) {
             throw new IllegalStateException("(!'aaa'.equals(t1.params)) ");
         }
-        t1.params = AAA2;
+        t1.setParams(AAA2);
         taskRepository.save(t1);
 
         TaskImpl t2 = taskRepository.findById(taskId).orElseThrow(() -> new IllegalStateException("Task not found"));
-        if (!(AAA2.equals(t2.params))) {
+        if (!(AAA2.equals(t2.getParams()))) {
             throw new IllegalStateException("(!AAA2.equals(t1.params)) ");
         }
         return AAA2;
@@ -144,7 +143,7 @@ public class TxTestingService {
         TaskImpl t = new TaskImpl();
         t.execContextId = execContextId;
         t.execState = EnumsApi.TaskExecState.NONE.value;
-        t.params = params;
+        t.setParams(params);
 
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
             TransactionStatus status = TransactionAspectSupport.currentTransactionStatus();
@@ -157,7 +156,7 @@ public class TxTestingService {
     @Transactional
     public void twoLevelTwoTx(Long id, String newParam, boolean throwException) {
         TaskImpl t1 = taskRepository.findById(id).orElseThrow(() -> new IllegalStateException("Task not found"));
-        t1.params = newParam;
+        t1.setParams(newParam);
         try {
             txTesting1Service.forException(throwException);
         }
@@ -169,7 +168,7 @@ public class TxTestingService {
     @Transactional
     public void twoLevelOneTx(Long id, String newParam, boolean throwException) {
         TaskImpl t1 = taskRepository.findById(id).orElseThrow(() -> new IllegalStateException("Task not found"));
-        t1.params = newParam;
+        t1.setParams(newParam);
         forException(throwException);
     }
 
@@ -183,7 +182,7 @@ public class TxTestingService {
     @Transactional
     public void oneLevelTx(Long id, String newParam, boolean throwException) {
         TaskImpl t1 = taskRepository.findById(id).orElseThrow(() -> new IllegalStateException("Task not found"));
-        t1.params = newParam;
+        t1.setParams(newParam);
         if (throwException) {
             throw new RuntimeException();
         }
@@ -192,7 +191,7 @@ public class TxTestingService {
     @Transactional
     public void oneLevelTxChecked(Long id, String newParam) throws Exception {
         TaskImpl t1 = taskRepository.findById(id).orElseThrow(() -> new IllegalStateException("Task not found"));
-        t1.params = newParam;
+        t1.setParams(newParam);
         throw new Exception();
     }
 

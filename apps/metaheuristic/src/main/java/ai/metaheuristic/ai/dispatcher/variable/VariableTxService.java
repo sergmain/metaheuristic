@@ -526,7 +526,7 @@ public class VariableTxService {
             }
         }
         task.updatedOn = System.currentTimeMillis();
-        task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamsYaml);
+        task.updateParams(taskParamsYaml);
 
         TaskCreatedTxEvent event = new TaskCreatedTxEvent(
                 new ExecContextApiData.VariableState(task.id, task.coreId, execContextId,

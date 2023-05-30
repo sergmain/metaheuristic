@@ -78,7 +78,7 @@ public class TestSingleInternalFunction extends FeatureMethods {
     private String getFunctionCode(Object object) {
         TaskImpl task = taskRepository.findById((Long) object).orElse(null);
         assertNotNull(task);
-        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        TaskParamsYaml taskParamsYaml = task.getTaskParamsYaml();
         return taskParamsYaml.task.function.code;
     }
 }

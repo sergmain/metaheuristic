@@ -133,7 +133,7 @@ public class TestTaskRequest extends FeatureMethods {
         final TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
         assertNotNull(task);
 
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        TaskParamsYaml tpy = task.getTaskParamsYaml();
         TaskSyncService.getWithSyncVoid(task.id, () -> {
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
                 Enums.UploadVariableStatus status = taskVariableTopLevelService.updateStatusOfVariable(task.id, output.id).status;

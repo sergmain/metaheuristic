@@ -228,7 +228,7 @@ public class ExecContextReconciliationTopLevelService {
                     Long taskId = e.getKey();
                     TaskImpl task = taskRepository.findById(taskId).orElse(null);
                     if (task != null) {
-                        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+                        TaskParamsYaml tpy = task.getTaskParamsYaml();
 
                         if (task.resultReceived!=0 && task.completed!=0) {
                             status.taskIsOkIds.add(task.id);

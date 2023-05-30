@@ -27,15 +27,14 @@ import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableDatabaseSpecificService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -56,7 +55,7 @@ import java.util.List;
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class TaskCheckCachingService {
+public class TaskCheckCachingTxService {
 
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
@@ -97,7 +96,7 @@ public class TaskCheckCachingService {
             return;
         }
 
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        TaskParamsYaml tpy = task.getTaskParamsYaml();
 
         if (cacheProcess!=null) {
             log.info("#609.060 cached data was found for task #{}, variables will be copied and will task be set as OK", taskId);
@@ -156,7 +155,7 @@ public class TaskCheckCachingService {
                     throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
                 }
             }
-            task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
+            task.updateParams(tpy);
 
             FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
             functionExec.exec = new FunctionApiData.SystemExecResult(tpy.task.function.code, true, 0,

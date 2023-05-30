@@ -84,7 +84,7 @@ public class TaskCheckCachingTopLevelService {
     private static final PrepareData PREPARE_DATA_NONE = new PrepareData(PrepareDataState.none);
 
 
-    private final TaskCheckCachingService taskCheckCachingService;
+    private final TaskCheckCachingTxService taskCheckCachingTxService;
     private final ExecContextReadinessStateService execContextReadinessStateService;
     private final CacheService cacheService;
     private final CacheProcessRepository cacheProcessRepository;
@@ -118,6 +118,7 @@ public class TaskCheckCachingTopLevelService {
             queue.add(event);
             queueIds.add(event.taskId);
         }
+        checkCaching();
     }
 
     @Nullable
@@ -186,13 +187,13 @@ public class TaskCheckCachingTopLevelService {
         try {
             log.debug("Start taskCheckCachingService.checkCaching(), execContextId: {}, task: {}", event.execContextId, event.taskId);
             TaskSyncService.getWithSyncVoid(event.taskId,
-                    () -> taskCheckCachingService.checkCaching(event.execContextId, event.taskId, prepareData.cacheProcess));
+                    () -> taskCheckCachingTxService.checkCaching(event.execContextId, event.taskId, prepareData.cacheProcess));
 
         } catch (InvalidateCacheProcessException e) {
             log.error("#610.200 caught InvalidateCacheProcessException, {}", e.getMessage());
             try {
                 TaskSyncService.getWithSyncVoid(e.taskId,
-                        () -> taskCheckCachingService.invalidateCacheItemAndSetTaskToNone(e.execContextId, e.taskId, e.cacheProcessId));
+                        () -> taskCheckCachingTxService.invalidateCacheItemAndSetTaskToNone(e.execContextId, e.taskId, e.cacheProcessId));
             } catch (Throwable th) {
                 log.error("#610.300 error while invalidating task #"+e.taskId, th);
             }
@@ -212,7 +213,7 @@ public class TaskCheckCachingTopLevelService {
             return PREPARE_DATA_NONE;
         }
 
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        TaskParamsYaml tpy = task.getTaskParamsYaml();
         ExecContextParamsYaml ecpy = simpleExecContext.getParamsYaml();
         ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
         if (p==null) {

@@ -33,7 +33,6 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -202,12 +201,11 @@ public class TaskProducingService {
             taskParams.task.cache = new TaskParamsYaml.Cache(process.cache.enabled, process.cache.omitInline);
         }
 
-        String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParams);
-
         TaskImpl task = new TaskImpl();
         task.execState = process.cache!=null && process.cache.enabled ? EnumsApi.TaskExecState.CHECK_CACHE.value : EnumsApi.TaskExecState.NONE.value;
         task.execContextId = execContextId;
-        task.params = params;
+        task.updateParams(taskParams);
+
         task = taskService.save(task);
 
         task = variableService.prepareVariables(execContextParamsYaml, task, parentTaskIds);
