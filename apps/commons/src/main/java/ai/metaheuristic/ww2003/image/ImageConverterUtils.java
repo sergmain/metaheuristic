@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ww2003.image;
 
+import ai.metaheuristic.ww2003.document.tags.xml.*;
 import lombok.Data;
 import org.springframework.lang.Nullable;
 import org.w3c.dom.Document;
@@ -41,7 +42,7 @@ import java.util.stream.Collectors;
  * Time: 10:50 AM
  */
 @SuppressWarnings("DuplicatedCode")
-public class ImageConverterService {
+public class ImageConverterUtils {
 
     private static boolean replacePictureSize(int dpi, ImageData.ImageProcessingData d) {
         Map<String, String> newAttr = new HashMap<>(d.imageStyle.rawStyleAttrs);
@@ -80,26 +81,6 @@ public class ImageConverterService {
         transformer.transform(source, new StreamResult(outputSteam));
     }
 
-/*
-<w:pict>
-    <v:shape id="_x0_0_0_0" style=";visibility:visible;mso-wrap-style:square">
-        <v:imagedata src="wordml://Image1" o:title="Image1"/>
-    </v:shape>
-    <w:binData w:name="wordml://Image1">
-                .. base64 is here ..
-    </w:binData>
-</w:pict>
-
-    <w:pict>
-        <v:shape id="Рисунок 1" o:spid="_x0000_i1030" type="#_x0000_t75" style="width:152.25pt;height:47.25pt;visibility:visible;mso-wrap-style:square">
-            <v:imagedata src="wordml://08000002.wmz" o:title=""/>
-        </v:shape>
-        <w:binData w:name="wordml://08000002.wmz" xml:space="preserve">
-            .. base64 is here ..
-        </w:binData>
-    </w:pict>
-*/
-
     @Nullable
     public static Node getAttrNode(Node n, String attrName) {
         NamedNodeMap attributes = n.getAttributes();
@@ -136,4 +117,39 @@ public class ImageConverterService {
         public final File resultImageFile;
     }
 
+    public static Para getParaForImage(String base64) {
+    /*
+    <w:pict>
+        <v:shape id="_x0_0_0_0" style=";visibility:visible;mso-wrap-style:square">
+            <v:imagedata src="wordml://Image1" o:title="Image1"/>
+        </v:shape>
+        <w:binData w:name="wordml://Image1">
+                    .. base64 is here ..
+        </w:binData>
+    </w:pict>
+
+        <w:pict>
+            <v:shape id="Image 1" o:spid="_x0000_i1030" type="#_x0000_t75" style="width:152.25pt;height:47.25pt;visibility:visible;mso-wrap-style:square">
+                <v:imagedata src="wordml://08000002.wmz" o:title=""/>
+            </v:shape>
+            <w:binData w:name="wordml://08000002.wmz" xml:space="preserve">
+                .. base64 is here ..
+            </w:binData>
+        </w:pict>
+    */
+        BinData binData = new BinData();
+        binData.addAttribute(Attr.get("w", "name", "wordml://Image1"));
+        binData.text.append(base64);
+
+        ai.metaheuristic.ww2003.document.tags.xml.ImageData imageData = new ai.metaheuristic.ww2003.document.tags.xml.ImageData();
+        imageData.addAttribute(Attr.get(null, "src", "wordml://Image1"));
+        Shape shape = new Shape(imageData);
+
+        Pict pict = new Pict(shape, binData);
+        pict.addAttribute(Attr.get(null, "id", "Image 1"));
+        pict.addAttribute(Attr.get(null, "style", "visibility:visible;mso-wrap-style:square"));
+
+        final Para para = new Para(new Run(pict));
+        return para;
+    }
 }

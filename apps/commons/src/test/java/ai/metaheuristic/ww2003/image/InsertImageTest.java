@@ -24,7 +24,6 @@ import ai.metaheuristic.ww2003.document.exceptions.DocumentProcessingException;
 import ai.metaheuristic.ww2003.document.persistence.ww2003.property.WW2003PropertyUtils;
 import ai.metaheuristic.ww2003.document.tags.xml.*;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.Test;
@@ -61,38 +60,10 @@ public class InsertImageTest {
 
         byte[] bytes = IOUtils.resourceToByteArray("/image/orange.png");
         String base64 = Base64.encodeBase64String(bytes);
-//        return new ImageConverterService.ConvertImageResult(base64, outputFile);
+//        return new ImageConverterUtils.ConvertImageResult(base64, outputFile);
 
-/*
-<w:pict>
-    <v:shape id="_x0_0_0_0" style=";visibility:visible;mso-wrap-style:square">
-        <v:imagedata src="wordml://Image1" o:title="Image1"/>
-    </v:shape>
-    <w:binData w:name="wordml://Image1">
-                .. base64 is here ..
-    </w:binData>
-</w:pict>
-
-    <w:pict>
-        <v:shape id="Рисунок 1" o:spid="_x0000_i1030" type="#_x0000_t75" style="width:152.25pt;height:47.25pt;visibility:visible;mso-wrap-style:square">
-            <v:imagedata src="wordml://08000002.wmz" o:title=""/>
-        </v:shape>
-        <w:binData w:name="wordml://08000002.wmz" xml:space="preserve">
-            .. base64 is here ..
-        </w:binData>
-    </w:pict>
-*/
-        Shape shape = new Shape();
-
-        BinData binData = new BinData();
-        binData.addAttribute(Attr.get("w", "name", "wordml://Image1"));
-        binData.text.append(base64);
-
-        Pict pict = new Pict(shape, binData);
-        pict.addAttribute(Attr.get("w", "name", "wordml://Image1"));
-
-
-        sect.add(new Para(new Run(pict)));
+        final Para para = ImageConverterUtils.getParaForImage(base64);
+        sect.add(para);
 
         Path path = Files.createTempFile(SystemUtils.getJavaIoTmpDir().toPath(), "ww2003-", ".xml");
         System.out.println("path: " + path.toAbsolutePath());

@@ -16,11 +16,24 @@
 
 package ai.metaheuristic.ai.mhbp.rest;
 
+import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
+import ai.metaheuristic.ai.utils.RestUtils;
+import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.springframework.context.annotation.Profile;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.core.io.AbstractResource;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -115,4 +128,31 @@ public class StubProviderRestController {
         return s;
     }
 
+    public record PathToImage(String path, String filename) {}
+
+    public static Map<String, PathToImage> fruits = Map.of("orange", new PathToImage("/image/orange.png", "orange.png"));
+    public static final PathToImage DEFAULT_PATH_TO_IMAGE = new PathToImage("/image/no-image-available.png", "no-image-available.png");
+
+    @RequestMapping(method={GET, POST}, value="/image", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<AbstractResource> send(@RequestParam(name = "p", required = false) String prompt) {
+
+        if (S.b(prompt)) {
+            log.error("108.200 parameter p is required");
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.BAD_REQUEST);
+        }
+
+        try {
+            final PathToImage pathToImage = fruits.getOrDefault(prompt.strip(), DEFAULT_PATH_TO_IMAGE);
+            byte[] bytes = IOUtils.resourceToByteArray(pathToImage.path);
+
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            httpHeaders.setContentDisposition(ContentDisposition.parse(
+                    "filename*=UTF-8''" + URLEncoder.encode(pathToImage.filename, StandardCharsets.UTF_8)));
+
+            return new ResponseEntity<>(new ByteArrayResource(bytes), RestUtils.getHeader(httpHeaders, bytes.length), HttpStatus.OK);
+        } catch (CommonErrorWithDataException | IOException e) {
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
+        }
+    }
 }
