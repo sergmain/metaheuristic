@@ -192,7 +192,7 @@ public final class Enums {
 
     public enum TokenPlace { param, header }
     public enum PromptPlace { uri, text }
-    public enum PromptResponseType { json, text }
+    public enum PromptResponseType { json, text, image }
     public enum HttpMethodType { get, post }
 
     public enum QueryResultErrorType { cant_understand, common, server_error, query_too_long }
