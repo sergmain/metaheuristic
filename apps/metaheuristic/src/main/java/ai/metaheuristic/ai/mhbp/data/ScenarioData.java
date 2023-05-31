@@ -28,6 +28,7 @@ import org.springframework.lang.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Sergio Lissner
@@ -93,8 +94,6 @@ public class ScenarioData {
     }
 
     @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class SimpleScenarioStep implements CollectionUtils.TreeUtils.TreeItem<String> {
         public long scenarioId;
         public String uuid;
@@ -136,6 +135,10 @@ public class ScenarioData {
             this.aggregateType = aggregateType;
         }
 
+        public SimpleScenarioStep(String uuid) {
+            this.uuid = uuid;
+        }
+
         @JsonIgnore
         @Override
         public String getTopId() {
@@ -162,7 +165,32 @@ public class ScenarioData {
         }
 
         @Override
-        public boolean equals(Object o) {
+        public boolean equals(@Nullable Object o) {
+            if (this==o) {
+                return true;
+            }
+            if (o==null || getClass()!=o.getClass()) {
+                return false;
+            }
+
+            SimpleScenarioStep that = (SimpleScenarioStep) o;
+
+            if (!uuid.equals(that.uuid)) {
+                return false;
+            }
+            return Objects.equals(parentUuid, that.parentUuid);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = uuid.hashCode();
+            result = 31 * result + (parentUuid!=null ? parentUuid.hashCode() : 0);
+            return result;
+        }
+
+        /*
+        @Override
+        public boolean equals(@Nullable Object o) {
             if (this == o) return true;
             if (o == null || this.getClass() != o.getClass()) {
                 return false;
@@ -179,6 +207,7 @@ public class ScenarioData {
 
             return true;
         }
+*/
     }
 
     @Data

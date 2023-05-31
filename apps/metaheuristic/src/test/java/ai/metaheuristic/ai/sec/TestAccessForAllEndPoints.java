@@ -22,7 +22,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -37,7 +36,8 @@ import org.springframework.web.context.WebApplicationContext;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
 /**
@@ -72,16 +72,6 @@ public class TestAccessForAllEndPoints {
         public final AccessMethod accessMethod;
     }
 
-    private static final AccessUrl[] ACCOUNT_URLS = new AccessUrl[]{
-            new AccessUrl("/dispatcher/account/accounts", AccessMethod.GET),
-            new AccessUrl("/dispatcher/account/account-password-edit-commit", AccessMethod.POST),
-            new AccessUrl("/dispatcher/account/account-password-edit/1", AccessMethod.GET),
-            new AccessUrl("/dispatcher/account/account-edit-commit", AccessMethod.POST),
-            new AccessUrl("/dispatcher/account/account-edit/1", AccessMethod.GET),
-            new AccessUrl("/dispatcher/account/account-add-commit", AccessMethod.POST),
-            new AccessUrl("/dispatcher/account/account-add", AccessMethod.GET)
-    };
-
     private static final AccessUrl[] ACCOUNT_REST_URLS = new AccessUrl[]{
             new AccessUrl("/rest/v1/dispatcher/account/accounts", AccessMethod.GET),
             new AccessUrl("/rest/v1/dispatcher/account/account/1", AccessMethod.GET),
@@ -89,17 +79,6 @@ public class TestAccessForAllEndPoints {
             new AccessUrl("/rest/v1/dispatcher/account/account-edit-commit", AccessMethod.POST),
             new AccessUrl("/rest/v1/dispatcher/account/account-password-edit-commit", AccessMethod.POST),
             new AccessUrl("/rest/v1/dispatcher/account/account-account-role-commit", AccessMethod.POST)
-    };
-
-    private static final AccessUrl[] EXPERIMENT_RESULT_URLS = new AccessUrl[]{
-            new AccessUrl("/dispatcher/ai/experiment-result/experiment-results", AccessMethod.GET),
-            new AccessUrl("/dispatcher/ai/experiment-result/experiment-result-info/1", AccessMethod.GET),
-            new AccessUrl("/dispatcher/ai/experiment-result/experiment-result-delete/1", AccessMethod.GET),
-            new AccessUrl("/dispatcher/ai/experiment-result/experiment-result-delete-commit", AccessMethod.POST),
-            new AccessUrl("/dispatcher/ai/experiment-result/experiment-result-upload-from-file", AccessMethod.POST),
-            new AccessUrl("/dispatcher/ai/experiment-result/experiment-result-export/experiment-result-1.yaml", AccessMethod.GET),
-            new AccessUrl("/dispatcher/ai/experiment-result/experiment-result-export-import/1", AccessMethod.GET),
-            new AccessUrl("/dispatcher/ai/experiment-result/experiment-result-feature-progress/1/1/1", AccessMethod.GET),
     };
 
     private static final AccessUrl[] EXPERIMENT_RESULT_REST_URLS = new AccessUrl[]{
@@ -125,9 +104,7 @@ public class TestAccessForAllEndPoints {
     @Test
     public void testAnonymousAccessRestriction() throws Exception {
         checkRestAccessRestriction(SERVER_REST_URLS);
-        checkAccessRestriction(EXPERIMENT_RESULT_URLS);
         checkRestAccessRestriction(EXPERIMENT_RESULT_REST_URLS);
-        checkAccessRestriction(ACCOUNT_URLS);
         checkRestAccessRestriction(ACCOUNT_REST_URLS);
     }
 
@@ -145,26 +122,6 @@ public class TestAccessForAllEndPoints {
                 throw new IllegalStateException("Unknown http method: " + accessUrl.accessMethod);
             }
             resultActions.andExpect(status().isUnauthorized()).andExpect(cookie().doesNotExist(Consts.WEB_CONTAINER_SESSIONID_NAME));
-        }
-    }
-
-    public void checkAccessRestriction(AccessUrl[] accountUrls) throws Exception {
-        for (AccessUrl accessUrl : accountUrls) {
-            System.out.println("accessUrl: " + accessUrl);
-            if (accessUrl.accessMethod== AccessMethod.GET) {
-                mockMvc.perform(get(accessUrl.url))
-                        .andExpect(status().isFound())
-                        .andExpect(redirectedUrlPattern("http://*/login"))
-                        .andExpect(cookie().doesNotExist(Consts.WEB_CONTAINER_SESSIONID_NAME));
-            }
-            else if (accessUrl.accessMethod== AccessMethod.POST) {
-                mockMvc.perform(post(accessUrl.url))
-                        .andExpect(status().isForbidden())
-                        .andExpect(cookie().doesNotExist(Consts.WEB_CONTAINER_SESSIONID_NAME));
-            }
-            else {
-                throw new IllegalStateException("Unknown http method: " + accessUrl.accessMethod);
-            }
         }
     }
 

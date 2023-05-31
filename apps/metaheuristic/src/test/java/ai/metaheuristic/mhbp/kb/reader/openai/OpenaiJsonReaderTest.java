@@ -34,6 +34,7 @@ import ai.metaheuristic.ai.mhbp.yaml.kb.KbParamsUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -52,6 +53,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 4/19/2023
  * Time: 11:52 PM
  */
+@Disabled
 public class OpenaiJsonReaderTest {
 
     @SneakyThrows

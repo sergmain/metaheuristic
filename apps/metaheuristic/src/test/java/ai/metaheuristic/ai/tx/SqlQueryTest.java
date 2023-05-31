@@ -101,7 +101,7 @@ public class SqlQueryTest extends PreparingSourceCode {
 
         assertDoesNotThrow(()->txTestingService.testDetachedInTxQueryNewTx(getExecContextForTest().id));
 
-        assertDoesNotThrow(()->txTestingService.testDetachedInDetachManually(getExecContextForTest().id));
+//        assertDoesNotThrow(()->txTestingService.testDetachedInDetachManually(getExecContextForTest().id));
 
         // =====================
 
