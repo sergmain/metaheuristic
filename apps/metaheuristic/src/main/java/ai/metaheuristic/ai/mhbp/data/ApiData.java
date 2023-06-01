@@ -111,6 +111,14 @@ public class ApiData {
         }
     }
 
+    public record ProcessedAnswer(Enums.PromptResponseType type, @Nullable String content, @Nullable byte[] bytes){
+        public ProcessedAnswer(Enums.PromptResponseType type, @Nullable String content) {
+            this(type, content, null);
+        }
+        public ProcessedAnswer(Enums.PromptResponseType type, @Nullable byte[] bytes) {
+            this(type, null, bytes);
+        }
+    }
 
     @Data
     @AllArgsConstructor

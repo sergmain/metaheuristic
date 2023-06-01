@@ -161,7 +161,7 @@ public class SourceCodeTopLevelService {
 
         AtomicLong contextId = new AtomicLong();
         SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(
-                EnumsApi.SourceCodeLang.yaml, scspy.source, () -> "" + contextId.incrementAndGet());
+                EnumsApi.SourceCodeLang.yaml, scspy.source, () -> Long.toString(contextId.incrementAndGet()));
 
         for (ExecContextParamsYaml.Process process : sourceCodeGraph.processes) {
             if (process.function.context== EnumsApi.FunctionExecContext.internal) {
@@ -320,7 +320,7 @@ public class SourceCodeTopLevelService {
     private static TaskParamsYaml asTaskParamsYaml(SourceCodeParamsYaml scpy, ExecContextParamsYaml.Process process, Map<String, Long> globalIds, Map<String, Long> localIds) {
         TaskParamsYaml tpy = new TaskParamsYaml();
         tpy.task.execContextId = 42L;
-        tpy.task.inline = scpy.source.variables.inline;
+        tpy.task.inline = scpy.source.variables==null ? null : scpy.source.variables.inline;
         // tpy.task.workingPath will be inited later
         for (ExecContextParamsYaml.Variable o : process.inputs) {
             Long id;

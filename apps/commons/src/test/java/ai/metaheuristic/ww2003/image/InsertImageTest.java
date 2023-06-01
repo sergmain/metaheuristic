@@ -40,6 +40,7 @@ import java.nio.file.Path;
  */
 public class InsertImageTest {
 
+    @SuppressWarnings("unused")
     @Test
     public void test_insertImage() throws IOException {
 
@@ -56,11 +57,8 @@ public class InsertImageTest {
         sect.add(p);
         sect.add(new Para(Run.t("This is an orange")));
 
-
-
         byte[] bytes = IOUtils.resourceToByteArray("/image/orange.png");
         String base64 = Base64.encodeBase64String(bytes);
-//        return new ImageConverterUtils.ConvertImageResult(base64, outputFile);
 
         final Para para = ImageConverterUtils.getParaForImage(base64);
         sect.add(para);

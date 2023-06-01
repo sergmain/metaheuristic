@@ -1,0 +1,13 @@
+version: 2
+code: simple-provider-localhost:1.0
+scheme:
+  auth:
+    code: simple
+  request:
+    type: get
+    uri: http://localhost:8080/rest/v1/provider/simple/stub/image
+    prompt:
+      place: uri
+      param: q
+  response:
+    type: image

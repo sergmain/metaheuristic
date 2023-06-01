@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.mhbp.provider;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
@@ -37,6 +38,21 @@ public class ProviderQueryUtils {
             String content = jsonContext.read(response.path);
             return content;
         }
+/*
+        if (response.type==Enums.PromptResponseType.text) {
+            return new ApiData.ProcessedAnswer(response.type, json);
+        }
+        if (response.type==Enums.PromptResponseType.json) {
+            DocumentContext jsonContext = JsonPath.parse(json);
+            String content = jsonContext.read(response.path);
+            return new ApiData.ProcessedAnswer(response.type, content);
+        }
+        if (response.type==Enums.PromptResponseType.json) {
+            DocumentContext jsonContext = JsonPath.parse(json);
+            String content = jsonContext.read(response.path);
+            return new ApiData.ProcessedAnswer(response.type, content);
+        }
+*/
         throw new IllegalStateException();
     }
 
