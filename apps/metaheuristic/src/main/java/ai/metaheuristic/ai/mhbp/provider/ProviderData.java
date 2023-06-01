@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.mhbp.provider;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.api.EnumsApi;
 import org.springframework.lang.Nullable;
 
@@ -44,7 +44,7 @@ public class ProviderData {
 
     public record QueriedData(String queryText, @Nullable DispatcherContext context){}
 
-    public record QuestionAndAnswer(@Nullable String q, @Nullable String a, EnumsApi.OperationStatus status, @Nullable String error,  @Nullable String raw) {
+    public record QuestionAndAnswer(@Nullable String q, @Nullable ApiData.RawAnswerFromAPI a, EnumsApi.OperationStatus status, @Nullable String error, @Nullable String raw) {
         public QuestionAndAnswer(EnumsApi.OperationStatus status) {
             this(null, null, status, null, null);
         }
@@ -53,7 +53,7 @@ public class ProviderData {
             this(null, null, status, error, null);
         }
 
-        public QuestionAndAnswer(@Nullable String q, @Nullable String a, EnumsApi.OperationStatus status, @Nullable String error, @Nullable String raw) {
+        public QuestionAndAnswer(@Nullable String q, @Nullable ApiData.RawAnswerFromAPI a, EnumsApi.OperationStatus status, @Nullable String error, @Nullable String raw) {
             if (status==EnumsApi.OperationStatus.OK) {
                 if (raw==null || q==null || a==null) {
                     throw new IllegalStateException("(raw==null || q==null || a==null)");

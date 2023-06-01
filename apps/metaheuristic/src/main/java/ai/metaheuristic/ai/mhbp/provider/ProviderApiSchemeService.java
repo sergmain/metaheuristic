@@ -175,12 +175,18 @@ public class ProviderApiSchemeService {
         if (entity != null) {
             entity.writeTo(baos);
         }
-        final String data = baos.toString();
+        byte[] bytes = baos.toByteArray();
         if (statusCode!=HttpStatus.OK.value()) {
-            final String msg = "HttpCode: "+statusCode+", Server response:\n'" + data +"'";
+            //noinspection StringOperationCanBeSimplified
+            String d = schemeAndParams.scheme.scheme.response.type.binary ? "<response for API is binary>" : new String(bytes, StandardCharsets.UTF_8);
+            final String msg = "HttpCode: "+statusCode+", Server response:\n'" + d +"'";
             log.error(msg);
             return new ApiData.SchemeAndParamResult(schemeAndParams, msg, statusCode);
         }
+        ApiData.RawAnswerFromAPI rawAnswerFromAPI =
+                schemeAndParams.scheme.scheme.response.type.binary
+                        ? new ApiData.RawAnswerFromAPI(schemeAndParams.scheme.scheme.response.type, bytes)
+                        : new ApiData.RawAnswerFromAPI(schemeAndParams.scheme.scheme.response.type, new String(bytes, StandardCharsets.UTF_8));
         return new ApiData.SchemeAndParamResult(schemeAndParams, data, OK, data, null, HttpStatus.OK.value());
     }
 

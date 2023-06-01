@@ -78,6 +78,8 @@ public class ApiData {
         @Nullable
         @JsonInclude(value= JsonInclude.Include.NON_NULL)
         public Error error;
+
+        // raw is different from answer in case when API returns json and actual answer is part of json
         public String raw;
 
         public QueryResult(String answer, boolean success, String raw) {
@@ -111,11 +113,17 @@ public class ApiData {
         }
     }
 
-    public record ProcessedAnswer(Enums.PromptResponseType type, @Nullable String content, @Nullable byte[] bytes){
-        public ProcessedAnswer(Enums.PromptResponseType type, @Nullable String content) {
-            this(type, content, null);
+
+    public static final class TextAnswer {
+        private String answer;
+        private String raw;
+    }
+
+    public record RawAnswerFromAPI(Enums.PromptResponseType type, @Nullable String raw, @Nullable byte[] bytes){
+        public RawAnswerFromAPI(Enums.PromptResponseType type, String raw) {
+            this(type, raw, null);
         }
-        public ProcessedAnswer(Enums.PromptResponseType type, @Nullable byte[] bytes) {
+        public RawAnswerFromAPI(Enums.PromptResponseType type, byte[] bytes) {
             this(type, null, bytes);
         }
     }
@@ -131,8 +139,10 @@ public class ApiData {
     @AllArgsConstructor
     public static class SchemeAndParamResult {
         public SchemeAndParams schemeAndParams;
-        public String result;
+//        @Nullable
+//        public String result;
         public EnumsApi.OperationStatus status;
+        public RawAnswerFromAPI rawAnswerFromAPI;
         public String raw;
         public String errorText;
         public int httpCode;

@@ -95,11 +95,11 @@ public class AcceptanceTestFunction implements InternalFunction {
         ProviderData.QuestionAndAnswer answer = apiCallService.callApi(simpleExecContext, taskId, taskContextId, taskParamsYaml);
         try {
             if (answer.status()==EnumsApi.OperationStatus.ERROR) {
-                throw new InternalFunctionException(meta_not_found, "514.080 error querying API: " + answer.error());
+                throw new InternalFunctionException(general_error, "514.080 error querying API: " + answer.error());
             }
             String s = answer.a();
             if (S.b(s)) {
-                throw new InternalFunctionException(meta_not_found, "514.120 answer is empty");
+                throw new InternalFunctionException(general_error, "514.120 answer is empty");
             }
             if (!validateAnswer(expected, s)) {
                 throw new InternalFunctionException(general_error, "514.160 Expected: "+expected+", but result is: " + s);

@@ -29,30 +29,20 @@ import com.jayway.jsonpath.JsonPath;
  */
 public class ProviderQueryUtils {
 
-    public static String processAnswerFromApi(String json, ApiScheme.Response response) {
+    public static ApiData.RawAnswerFromAPI processAnswerFromApi(String json, ApiScheme.Response response) {
         if (response.type==Enums.PromptResponseType.text) {
-            return json;
+            return new ApiData.RawAnswerFromAPI(response.type, json);
         }
         if (response.type==Enums.PromptResponseType.json) {
             DocumentContext jsonContext = JsonPath.parse(json);
             String content = jsonContext.read(response.path);
-            return content;
+            return new ApiData.RawAnswerFromAPI(response.type, content);
         }
-/*
-        if (response.type==Enums.PromptResponseType.text) {
-            return new ApiData.ProcessedAnswer(response.type, json);
-        }
-        if (response.type==Enums.PromptResponseType.json) {
+        if (response.type==Enums.PromptResponseType.image) {
             DocumentContext jsonContext = JsonPath.parse(json);
             String content = jsonContext.read(response.path);
-            return new ApiData.ProcessedAnswer(response.type, content);
+            return new ApiData.RawAnswerFromAPI(response.type, content);
         }
-        if (response.type==Enums.PromptResponseType.json) {
-            DocumentContext jsonContext = JsonPath.parse(json);
-            String content = jsonContext.read(response.path);
-            return new ApiData.ProcessedAnswer(response.type, content);
-        }
-*/
         throw new IllegalStateException();
     }
 
