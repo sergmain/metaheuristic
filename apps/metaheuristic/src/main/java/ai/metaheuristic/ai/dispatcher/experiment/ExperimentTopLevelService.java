@@ -168,7 +168,7 @@ public class ExperimentTopLevelService {
         if (experiment==null) {
             return EnumsApi.ExecContextState.ERROR;
         }
-        ExecContext ec = execContextCache.findById(experiment.execContextId);
+        ExecContext ec = execContextCache.findById(experiment.execContextId, true);
         if (ec==null) {
             return EnumsApi.ExecContextState.DOESNT_EXIST;
         }
@@ -213,7 +213,7 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.260 An experiment wasn't found, experimentId: " + id);
         }
-        ExecContextImpl ec = execContextCache.findById(e.execContextId);
+        ExecContextImpl ec = execContextCache.findById(e.execContextId, true);
         if (ec==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.280 An associated execContext for experimentId #" + id +" wasn't found");

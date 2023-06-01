@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -46,11 +46,11 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class InternalFunctionVariableService {
 
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final GlobalVariableRepository globalVariableRepository;
     private final GlobalVariableService globalVariableService;
 
-    public void storeToFile(VariableUtils.VariableHolder holder, File file) {
+    public void storeToFile(VariableUtils.VariableHolder holder, Path file) {
         if (holder.variable!=null) {
             variableService.storeToFileWithTx(Objects.requireNonNull(holder.variable).id, file);
         }
@@ -89,5 +89,26 @@ public class InternalFunctionVariableService {
             }
         }
         return holders;
+    }
+
+    public String getValueOfVariable(Long execContextId, String taskContextId, String inputVariableName) {
+        List<VariableUtils.VariableHolder> holders = discoverVariables(execContextId, taskContextId, inputVariableName);
+        if (holders.size()>1) {
+            throw new InternalFunctionException(
+                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#995.040 Too many variables"));
+        }
+
+        VariableUtils.VariableHolder variableHolder = holders.get(0);
+        String s;
+        if (variableHolder.variable!=null) {
+            s = variableService.getVariableDataAsString(variableHolder.variable.id);
+        }
+        else if (variableHolder.globalVariable!=null) {
+            s = globalVariableService.getVariableDataAsString(variableHolder.globalVariable.id);
+        }
+        else {
+            throw new IllegalStateException("variableHolder.variabl==null && variableHolder.globalVariable==null");
+        }
+        return s;
     }
 }

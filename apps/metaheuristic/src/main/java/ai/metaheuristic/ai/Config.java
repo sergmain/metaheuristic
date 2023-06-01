@@ -17,43 +17,32 @@
 package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.repositories.RefToDispatcherRepositories;
+import ai.metaheuristic.ai.mhbp.repositories.RefToMhbpRepositories;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInterceptor;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nz.net.ultraq.thymeleaf.layoutdialect.LayoutDialect;
-import org.apache.catalina.connector.Connector;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
-import org.springframework.boot.web.server.ConfigurableWebServerFactory;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ConcurrentTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.*;
@@ -66,7 +55,6 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.stream.Collectors;
 
 /**
  * User: Serg
@@ -82,35 +70,6 @@ public class Config {
     private final Globals globals;
     @SuppressWarnings("unused")
     private final SpringChecker springChecker;
-
-    @Bean
-    public LayoutDialect layoutDialect() {
-        return new LayoutDialect();
-    }
-
-
-    @Value("${ajp.port:#{0}}")
-    private int ajpPort;
-
-    // TODO p9 2021-12-12 disabled because isn't used at this time and not tested
-//    @Value("${ajp.enabled:#{false}}")
-    @SuppressWarnings("FieldCanBeLocal")
-    private boolean ajpEnabled = false;
-
-    // https://careydevelopment.us/2017/06/19/run-spring-boot-apache-web-server-front-end/
-    @Bean
-    public ConfigurableWebServerFactory servletContainer() {
-        TomcatServletWebServerFactory tomcat = new TomcatServletWebServerFactory();
-        if (ajpEnabled && ajpPort!=0) {
-            Connector ajpConnector = new Connector("AJP/1.3");
-            ajpConnector.setPort(ajpPort);
-            ajpConnector.setSecure(false);
-            ajpConnector.setScheme("http");
-            ajpConnector.setAllowTrace(false);
-            tomcat.addAdditionalTomcatConnectors(ajpConnector);
-        }
-        return tomcat;
-    }
 
     @Component
     public static class EOFCustomFilter implements Filter {
@@ -156,7 +115,13 @@ public class Config {
     @Component
     @RequiredArgsConstructor
     public static class SpringChecker {
-        private static final List<String> POSSIBLE_PROFILES = List.of("dispatcher", "processor", "quickstart", "mysql", "postgresql");
+
+        private static final List<String> POSSIBLE_PROFILES = List.of(
+                // Spring's profiles
+                "dispatcher", "processor", "quickstart",
+
+                // db's profiles
+                "mysql", "postgresql", "h2", "generic", "custom");
 
         private final ApplicationContext appCtx;
 
@@ -182,9 +147,9 @@ public class Config {
 
         private void checkProfiles() {
             List<String> profiles = Arrays.stream(StringUtils.split(activeProfiles, ", "))
-                    .filter(o-> !POSSIBLE_PROFILES.contains(o))
-                    .peek(o-> log.error(S.f("\n!!! Unknown profile: %s\n", o)))
-                    .collect(Collectors.toList());
+                    .filter(o -> !POSSIBLE_PROFILES.contains(o))
+                    .peek(o -> log.error(S.f("\n!!! Unknown profile: %s\n", o)))
+                    .toList();
 
             if (!profiles.isEmpty()) {
                 log.error("\nUnknown profile(s) was encountered in property spring.profiles.active.\nNeed to be fixed.\n" +
@@ -223,12 +188,11 @@ public class Config {
         }
     }
 
-    @EnableCaching
     @Configuration
-    @ComponentScan("ai.metaheuristic.ai.dispatcher")
+    @ComponentScan(value={"ai.metaheuristic.ai.dispatcher", "ai.metaheuristic.ai.mhbp"})
     @Profile("dispatcher")
     @EnableTransactionManagement
-    @EnableJpaRepositories(basePackageClasses = {RefToDispatcherRepositories.class} )
+    @EnableJpaRepositories(basePackageClasses = {RefToDispatcherRepositories.class, RefToMhbpRepositories.class} )
     public static class DispatcherConfig {
     }
 

@@ -95,6 +95,31 @@ public class VariableSyncService {
         }
     }
 
+    public static void getWithSyncVoidForCreation(Long variableId, Runnable runnable) {
+        checkWriteLockNotPresent(variableId);
+
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(variableId);
+        try {
+            lock.lock();
+            runnable.run();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public static void getWithSyncVoid(Long variableId, Runnable runnable) {
+        TxUtils.checkTxNotExists();
+        checkWriteLockNotPresent(variableId);
+
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(variableId);
+        try {
+            lock.lock();
+            runnable.run();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     @Nullable
     public static <T> T getWithSyncNullable(Long variableId, Supplier<T> supplier) {
         checkWriteLockNotPresent(variableId);

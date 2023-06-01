@@ -23,23 +23,24 @@ import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.DirUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
@@ -58,7 +59,7 @@ public class TaskWithInternalContextTopLevelService {
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final TaskWithInternalContextService taskWithInternalContextService;
     private final VariableTopLevelService variableTopLevelService;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final ExecContextVariableService execContextVariableService;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
@@ -68,14 +69,14 @@ public class TaskWithInternalContextTopLevelService {
         TaskImpl task = taskRepository.findById(taskId).orElseThrow(
                 () -> new InternalFunctionException(task_not_found, "#992.020 Task not found #" + taskId));
 
-        final TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        TaskParamsYaml taskParamsYaml = task.getTaskParamsYaml();
 
         copyVariables(subExecContextId, task, taskParamsYaml);
         taskWithInternalContextService.storeResult(taskId, taskParamsYaml);
     }
 
     private void copyVariables(Long subExecContextId, TaskImpl task, TaskParamsYaml taskParamsYaml) {
-        ExecContextImpl subExecContext = execContextCache.findById(subExecContextId);
+        ExecContextImpl subExecContext = execContextCache.findById(subExecContextId, true);
         if (subExecContext == null) {
             throw new InternalFunctionException(exec_context_not_found, "#992.040 ExecContext Not found #" +subExecContextId);
         }
@@ -83,13 +84,13 @@ public class TaskWithInternalContextTopLevelService {
         if (ecpy.variables.outputs.size() != taskParamsYaml.task.outputs.size()) {
             throw new InternalFunctionException(number_of_outputs_is_incorrect, "#992.060 number_of_outputs_is_incorrect");
         }
-        ExecContextImpl ec = execContextCache.findById(task.execContextId);
+        ExecContextImpl ec = execContextCache.findById(task.execContextId, true);
         if (ec == null) {
             throw new InternalFunctionException(exec_context_not_found, "#992.045 ExecContext Not found, #"+task.execContextId);
         }
-        File tempDir = null;
+        Path tempDir = null;
         try {
-            tempDir = DirUtils.createMhTempDir("mh-exec-source-code-result-");
+            tempDir = DirUtils.createMhTempPath("mh-exec-source-code-result-");
             if (tempDir == null) {
                 throw new InternalFunctionException(system_error,
                                 "#992.100 Can't create temporary directory in dir " + SystemUtils.JAVA_IO_TMPDIR);
@@ -117,12 +118,14 @@ public class TaskWithInternalContextTopLevelService {
                 }
                 if (variableHolder.variable.nullified) {
                     VariableUploadedEvent event = new VariableUploadedEvent(ec.id, task.id, output.id, true);
-                    variableTopLevelService.setAsNullFunction(output.id, event, ec.execContextVariableStateId);
+                    VariableSyncService.getWithSyncVoidForCreation(output.id,
+                            ()->variableTopLevelService.setAsNullFunction(output.id, event, ec.execContextVariableStateId));
                 }
                 else {
-                    File tempFile = File.createTempFile("output-", ".bin", tempDir);
+                    Path tempFile = Files.createTempFile(tempDir, "output-", ".bin");
                     variableService.storeToFileWithTx(variableHolder.variable.id, tempFile);
-                    execContextVariableService.storeDataInVariable(output, tempFile);
+                    VariableSyncService.getWithSyncVoidForCreation(output.id,
+                            ()->execContextVariableService.storeDataInVariable(output, tempFile));
                 }
             }
         }
@@ -131,7 +134,7 @@ public class TaskWithInternalContextTopLevelService {
             throw new InternalFunctionException(system_error, "#992.240 error: " + e.getMessage());
         }
         finally {
-            DirUtils.deleteAsync(tempDir);
+            DirUtils.deletePathAsync(tempDir);
         }
     }
 }

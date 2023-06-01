@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.service;
 
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
@@ -47,14 +48,13 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("dispatcher")
 @Slf4j
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@AutoConfigureCache
 public class TestFeatureWithSomeOk extends FeatureMethods {
 
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
-    @Autowired private ExecContextService execContextService;
+    @Autowired private ExecContextCache execContextCache;
 
     @Test
     public void testFeatureCompletionWithPartialError() {
@@ -67,7 +67,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
         ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
             txSupportForTestingService.toStarted(getExecContextForTest().id);
-            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().getId())));
+            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().getId())));
 
             assertEquals(EnumsApi.ExecContextState.STARTED.code, getExecContextForTest().getState());
 
@@ -77,7 +77,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());
         preparingSourceCodeService.step_1_1_register_function_statuses(processorIdAndCoreIds, preparingSourceCodeData, preparingCodeData);
 
-        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+        //preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
         TaskQueue.TaskGroup taskGroup =
                 ExecContextGraphSyncService.getWithSync(getExecContextForTest().execContextGraphId, ()->

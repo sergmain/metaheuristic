@@ -51,7 +51,6 @@ import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
@@ -67,6 +66,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -160,7 +161,7 @@ public class SourceCodeTopLevelService {
 
         AtomicLong contextId = new AtomicLong();
         SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(
-                EnumsApi.SourceCodeLang.yaml, scspy.source, () -> "" + contextId.incrementAndGet());
+                EnumsApi.SourceCodeLang.yaml, scspy.source, () -> Long.toString(contextId.incrementAndGet()));
 
         for (ExecContextParamsYaml.Process process : sourceCodeGraph.processes) {
             if (process.function.context== EnumsApi.FunctionExecContext.internal) {
@@ -241,7 +242,7 @@ public class SourceCodeTopLevelService {
         catch (Throwable e) {
             log.error("#560.370 Error", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.380 can't load source codes, Error: " + e.toString());
+                    "#560.380 can't load source codes, Error: " + e.getMessage());
         }
     }
 
@@ -267,16 +268,16 @@ public class SourceCodeTopLevelService {
                 return resource;
             }
 
-            File tempDir = DirUtils.createMhTempDir("generate-dirs-for-dev-");
+            Path tempDir = DirUtils.createMhTempPath("generate-dirs-for-dev-");
+            if (tempDir==null) {
+                throw new RuntimeException("(tempDir==null)");
+            }
             resource.toClean.add(tempDir);
 
             final String processCodeDirName = process.processCode.replace(':', '_');
 
-            File outputDir = new File(tempDir, processCodeDirName);
-            if (!outputDir.mkdirs()) {
-                log.error("#560.440 process wasn't found, processCode: {}", processCode);
-                return resource;
-            }
+            Path outputDir = tempDir.resolve(processCodeDirName);
+            Files.createDirectory(outputDir);
 
             Map<String, Long> globalIds = new HashMap<>();
             AtomicLong globalId = new AtomicLong(1000);
@@ -295,15 +296,15 @@ public class SourceCodeTopLevelService {
             }
 
             String filename = "process-"+processCodeDirName+".zip";
-            File zipFile = new File(tempDir, filename);
+            Path zipFile = tempDir.resolve(filename);
 
-            ZipUtils.createZip(outputDir.toPath(), zipFile.toPath());
+            ZipUtils.createZip(outputDir, zipFile);
 
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
             httpHeaders.setContentDisposition(ContentDisposition.parse(
-                    "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8.toString())));
-            resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile.toPath()), RestUtils.getHeader(httpHeaders, zipFile.length()), HttpStatus.OK);
+                    "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8)));
+            resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, Files.size(zipFile)), HttpStatus.OK);
             return resource;
         } catch (VariableDataNotFoundException e) {
             log.error("#560.460 Variable #{}, context: {}, {}", e.variableId, e.context, e.getMessage());
@@ -319,7 +320,7 @@ public class SourceCodeTopLevelService {
     private static TaskParamsYaml asTaskParamsYaml(SourceCodeParamsYaml scpy, ExecContextParamsYaml.Process process, Map<String, Long> globalIds, Map<String, Long> localIds) {
         TaskParamsYaml tpy = new TaskParamsYaml();
         tpy.task.execContextId = 42L;
-        tpy.task.inline = scpy.source.variables.inline;
+        tpy.task.inline = scpy.source.variables==null ? null : scpy.source.variables.inline;
         // tpy.task.workingPath will be inited later
         for (ExecContextParamsYaml.Variable o : process.inputs) {
             Long id;
@@ -367,14 +368,14 @@ public class SourceCodeTopLevelService {
     /**
      * @return boolean - true if error
      */
-    private static boolean createArtifactsDir(File outputDir, TaskParamsYaml tpy) {
-        File artifactsDir = new File(outputDir, ConstsApi.ARTIFACTS_DIR);
-        artifactsDir.mkdirs();
-        if (createEnvParamsFile(artifactsDir)) {
+    private static boolean createArtifactsDir(Path outputDir, TaskParamsYaml tpy) throws IOException {
+        Path artifactsDir = outputDir.resolve(ConstsApi.ARTIFACTS_DIR);
+        Files.createDirectory(artifactsDir);
+        if (createEnvParamsFile(artifactsDir.toFile())) {
             return true;
         }
 
-        return !ArtifactUtils.prepareParamsFileForTask(artifactsDir, outputDir.getName(), tpy,
+        return !ArtifactUtils.prepareParamsFileForTask(artifactsDir.toFile(), outputDir.getFileName().toString(), tpy,
                 Set.of(TaskFileParamsYamlUtils.DEFAULT_UTILS.getVersion()));
     }
 
@@ -394,34 +395,34 @@ public class SourceCodeTopLevelService {
         return false;
     }
 
-    private static void createSystemDir(File outputDir) throws IOException {
-        File systemDir = new File(outputDir, Consts.SYSTEM_DIR);
-        systemDir.mkdirs();
-        FileUtils.writeStringToFile(new File(systemDir, Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME), "<a stub value for log file "+Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME+">", StandardCharsets.UTF_8);
+    private static void createSystemDir(Path outputDir) throws IOException {
+        Path systemDir = outputDir.resolve(Consts.SYSTEM_DIR);
+        Files.createDirectory(systemDir);
+        Files.writeString(systemDir.resolve(Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME), "<a stub value for log file "+Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME+">");
     }
 
-    private static void createLocalVariables(ExecContextParamsYaml.Process process, File outputDir, Map<String, Long> localIds, AtomicLong localId) throws IOException {
+    private static void createLocalVariables(ExecContextParamsYaml.Process process, Path outputDir, Map<String, Long> localIds, AtomicLong localId) throws IOException {
         boolean isLocalVars = process.inputs.stream().anyMatch(o->o.context!=EnumsApi.VariableContext.global);
         if (isLocalVars) {
-            File localVarDir = new File(outputDir, EnumsApi.DataType.variable.toString());
-            localVarDir.mkdirs();
+            Path localVarDir = outputDir.resolve(EnumsApi.DataType.variable.toString());
+            Files.createDirectory(localVarDir);
             for (ExecContextParamsYaml.Variable o : process.inputs) {
                 if (o.context == EnumsApi.VariableContext.local) {
                     Long id = localIds.computeIfAbsent(o.name, k -> localId.getAndIncrement());
-                    FileUtils.writeStringToFile(new File(localVarDir, id.toString()), "<a stub value for variable "+o.name+">", StandardCharsets.UTF_8);
+                    Files.writeString(localVarDir.resolve(id.toString()), "<a stub value for variable "+o.name+">");
                 }
                 else if (o.context == EnumsApi.VariableContext.array) {
                     final String nameForVariableInArray = VariableUtils.getNameForVariableInArray();
 
                     Long id = localIds.computeIfAbsent(nameForVariableInArray, k -> localId.getAndIncrement());
-                    FileUtils.writeStringToFile(new File(localVarDir, id.toString()), "<a stub value for variable "+o.name+">", StandardCharsets.UTF_8);
+                    Files.writeString(localVarDir.resolve(id.toString()), "<a stub value for variable "+o.name+">");
 
                     VariableArrayParamsYaml vapy = new VariableArrayParamsYaml();
                     vapy.array.add(new VariableArrayParamsYaml.Variable(id.toString(), nameForVariableInArray, EnumsApi.DataSourcing.dispatcher, EnumsApi.DataType.variable));
                     String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
 
                     id = localIds.computeIfAbsent(o.name, k -> localId.getAndIncrement());
-                    FileUtils.writeStringToFile(new File(localVarDir, id.toString()), yaml, StandardCharsets.UTF_8);
+                    Files.writeString(localVarDir.resolve(id.toString()), yaml);
                 }
                 else {
                     throw new IllegalStateException("Wrong variable context" + o.context);
@@ -430,15 +431,15 @@ public class SourceCodeTopLevelService {
         }
     }
 
-    private static void createGlobalVariables(ExecContextParamsYaml.Process process, File outputDir, Map<String, Long> globalIds, AtomicLong globalsId) throws IOException {
+    private static void createGlobalVariables(ExecContextParamsYaml.Process process, Path outputDir, Map<String, Long> globalIds, AtomicLong globalsId) throws IOException {
         boolean isGlobalVars = process.inputs.stream().anyMatch(o->o.context== EnumsApi.VariableContext.global);
         if (isGlobalVars) {
-            File globalVarDir = new File(outputDir, EnumsApi.DataType.global_variable.toString());
-            globalVarDir.mkdirs();
+            Path globalVarDir = outputDir.resolve(EnumsApi.DataType.global_variable.toString());
+            Files.createDirectory(globalVarDir);
             for (ExecContextParamsYaml.Variable o : process.inputs) {
                 if (o.context == EnumsApi.VariableContext.global) {
                     Long id = globalIds.computeIfAbsent(o.name, k -> globalsId.getAndIncrement());
-                    FileUtils.writeStringToFile(new File(globalVarDir, id.toString()), "<a stub value for global variable "+o.name+">", StandardCharsets.UTF_8);
+                    Files.writeString(globalVarDir.resolve(id.toString()), "<a stub value for global variable "+o.name+">");
                 }
             }
         }

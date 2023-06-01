@@ -36,7 +36,6 @@ import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.client.*;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
-import java.io.File;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -119,7 +118,7 @@ public class ProcessorKeepAliveRequestor {
 
             Set<ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef> cores = metadataService.getAllCoresForDispatcherUrl(dispatcherUrl);
             for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : cores) {
-                String coreDir = new File(globals.processor.dir.dir, core.coreCode).getPath();
+                String coreDir = globals.processorPath.resolve(core.coreCode).toString();
                 Long coreId = core.coreId;
                 String coreCode = core.coreCode;
                 String tags = envService.getTags(core.coreCode);

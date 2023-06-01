@@ -137,6 +137,8 @@ public class TestYamlSchemeValidator {
         );
 
         String cfg="root1:\n  - element11: 1\n    element2: 2";
-        assertNotNull(validator.validateStructureOfDispatcherYaml(cfg));
+        final String errors = validator.validateStructureOfDispatcherYaml(cfg);
+        System.out.println(errors);
+        assertNotNull(errors);
     }
 }

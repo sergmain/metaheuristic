@@ -18,8 +18,10 @@ package ai.metaheuristic.commons.yaml.batch;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,6 +41,9 @@ public class BatchItemMappingYaml implements BaseParams {
     }
 
     public String targetDir;
+
+    @JsonIgnore
+    public Path targetPath;
 
     // value of key depends on value of field 'key'
     public Map<String, String> filenames = new HashMap<>();

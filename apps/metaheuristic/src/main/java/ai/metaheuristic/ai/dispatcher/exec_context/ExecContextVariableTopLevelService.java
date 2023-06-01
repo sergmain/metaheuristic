@@ -23,10 +23,9 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
-import ai.metaheuristic.ai.dispatcher.task.TaskVariableService;
 import ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
@@ -34,7 +33,6 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
@@ -44,6 +42,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService.OK_UPLOAD_RESULT;
 
@@ -59,9 +59,8 @@ import static ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService.OK
 public class ExecContextVariableTopLevelService {
 
     private final TaskRepository taskRepository;
-    private final TaskVariableService taskVariableService;
     private final TaskVariableTopLevelService taskVariableTopLevelService;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final VariableRepository variableRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -83,7 +82,8 @@ public class ExecContextVariableTopLevelService {
 
         eventPublisher.publishEvent(new TaskCommunicationEvent(taskId));
         try {
-            taskVariableService.setVariableAsNull(taskId, variableId);
+            VariableSyncService.getWithSyncVoid(variableId,
+                    () -> variableService.setVariableAsNull(taskId, variableId));
             return OK_UPLOAD_RESULT;
         }
         catch (ObjectOptimisticLockingFailureException th) {
@@ -101,12 +101,12 @@ public class ExecContextVariableTopLevelService {
             return new UploadResult(Enums.UploadVariableStatus.PROBLEM_WITH_LOCKING, es);
         }
         catch (VariableCommonException th) {
-            final String es = "#440.140 can't store the result, unrecoverable error with data. Error: " + th.toString();
+            final String es = "#440.140 can't store the result, unrecoverable error with data. Error: " + th.getMessage();
             log.error(es, th);
             return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, es);
         }
         catch (Throwable th) {
-            final String error = "#440.160 can't store the result, Error: " + th.toString();
+            final String error = "#440.160 can't store the result, Error: " + th.getMessage();
             log.error(error, th);
             return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, error);
         }
@@ -140,10 +140,10 @@ public class ExecContextVariableTopLevelService {
 
         eventPublisher.publishEvent(new TaskCommunicationEvent(taskId));
 
-        File tempDir=null;
+        Path tempDir=null;
         try {
-            tempDir = DirUtils.createMhTempDir("upload-variable-");
-            if (tempDir==null || tempDir.isFile()) {
+            tempDir = DirUtils.createMhTempPath("upload-variable-");
+            if (tempDir==null || !Files.isDirectory(tempDir)) {
                 final String location = System.getProperty("java.io.tmpdir");
                 return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, "#440.280 can't create temporary directory in " + location);
             }
@@ -212,7 +212,7 @@ public class ExecContextVariableTopLevelService {
             return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, error);
         }
         finally {
-            DirUtils.deleteAsync(tempDir);
+            DirUtils.deletePathAsync(tempDir);
         }
 
     }
@@ -223,8 +223,8 @@ public class ExecContextVariableTopLevelService {
      *      "false" - variable isn't inited yet
      *      "null" - variable doesn't exist;
      *
-     * @param variableId
-     * @return
+     * @param variableId Long
+     * @return String
      */
     public String getVariableStatus(Long variableId) {
         return VariableSyncService.getWithSync(variableId,

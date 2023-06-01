@@ -130,6 +130,7 @@ public class ExecContextParamsYamlV5 implements BaseParams {
     public static class CacheV5 {
         public boolean enabled;
         public boolean omitInline;
+        public boolean cacheMeta;
     }
 
     @Data

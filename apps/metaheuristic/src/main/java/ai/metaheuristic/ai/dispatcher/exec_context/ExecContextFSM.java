@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.CheckTaskCanBeFinishedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -49,18 +48,16 @@ public class ExecContextFSM {
 
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
-    private final ExecContextService execContextService;
     private final ExecContextReconciliationService execContextReconciliationService;
     private final EventPublisherService eventPublisherService;
 
     @Transactional
-    public Void toFinished(Long execContextId) {
+    public void toFinished(Long execContextId) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
-            return null;
+            return;
         }
         toFinished(execContext);
-        return null;
     }
 
     public void toFinished(ExecContextImpl execContext) {
@@ -82,9 +79,9 @@ public class ExecContextFSM {
         if (execContext==null) {
             return;
         }
-        if (execContext.state !=state.code) {
+        if (execContext.state!=state.code) {
             execContext.setState(state.code);
-            execContextService.save(execContext);
+            execContextCache.save(execContext);
         }
     }
 
@@ -102,17 +99,18 @@ public class ExecContextFSM {
         }
         if (execContext.state != execState.code) {
             execContext.setState(execState.code);
-            execContextService.save(execContext);
+            execContextCache.save(execContext);
         }
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public static OperationStatusRest execContextTargetState(ExecContextImpl execContext, EnumsApi.ExecContextState execState, Long companyUniqueId) {
+    public OperationStatusRest execContextTargetState(ExecContextImpl execContext, EnumsApi.ExecContextState execState, Long companyUniqueId) {
         TxUtils.checkTxExists();
         ExecContextSyncService.checkWriteLockPresent(execContext.id);
 
         execContext.setState(execState.code);
+        execContextCache.save(execContext);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -120,7 +118,7 @@ public class ExecContextFSM {
         if (execContext.state != state.code) {
             execContext.setCompletedOn(System.currentTimeMillis());
             execContext.setState(state.code);
-            execContextService.save(execContext);
+            execContextCache.save(execContext);
         } else if (execContext.state!= EnumsApi.ExecContextState.FINISHED.code && execContext.completedOn != null) {
             log.error("#303.080 Integrity failed, current state: {}, new state: {}, but execContext.completedOn!=null",
                     execContext.state, state.code);
@@ -135,7 +133,7 @@ public class ExecContextFSM {
             log.warn("#303.100 Reporting about non-existed task #{}", result.taskId);
             return;
         }
-        if (task.resultReceived) {
+        if (task.resultReceived!=0) {
             return;
         }
 
@@ -144,7 +142,7 @@ public class ExecContextFSM {
 
     public void storeExecResult(TaskImpl task, ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         task.setFunctionExecResults(result.getResult());
-        task.setResultReceived(true);
+        task.setResultReceived(1);
 
         eventPublisherService.publishCheckTaskCanBeFinishedTxEvent(new CheckTaskCanBeFinishedTxEvent(task.execContextId, task.id));
     }

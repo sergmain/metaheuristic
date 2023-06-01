@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.event;
 
 import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,14 +29,14 @@ import java.util.List;
  */
 public class ResourceCloseEvent {
     public final List<InputStream> inputStreams = new ArrayList<>();
-    public final List<File> files = new ArrayList<>();
-    public final List<File> dirs = new ArrayList<>();
+    public final List<Path> files = new ArrayList<>();
+    public final List<Path> dirs = new ArrayList<>();
 
-    public ResourceCloseEvent(List<InputStream> inputStreams, List<File> files) {
+    public ResourceCloseEvent(List<InputStream> inputStreams, List<Path> files) {
         this(inputStreams, files, List.of());
     }
 
-    public ResourceCloseEvent(List<InputStream> inputStreams, List<File> files, List<File> dirs ) {
+    public ResourceCloseEvent(List<InputStream> inputStreams, List<Path> files, List<Path> dirs ) {
         if (!inputStreams.isEmpty()) {
             this.inputStreams.addAll(inputStreams);
         }

@@ -1,5 +1,4 @@
 target/
-!.mvn/wrapper/maven-wrapper.jar
 
 ### STS ###
 .apt_generated
@@ -25,9 +24,13 @@ nbdist/
 r.bat
 
 aiai-dispatcher
+aiai-dispatcher*
 aiai-processor/**
 aiai-processor-h2/**
+aiai-replication
 aiai-launchpad
+aiai-home
+
 *_V2.class
 *_V3.class
 config

@@ -58,13 +58,13 @@ public class ExecContextVariableStateService {
             Set<CheckTaskCanBeFinishedTxEvent> eventsForChecking = new HashSet<>();
             for (VariableUploadedEvent event : events) {
                 eventsForChecking.add(new CheckTaskCanBeFinishedTxEvent(execContextId, event.taskId));
-                for (ExecContextApiData.VariableState task : ecpy.tasks) {
-                    if (task.taskId.equals(event.taskId)) {
-                        if (task.outputs==null || task.outputs.isEmpty()) {
-                            log.warn(" (task.outputs==null || task.outputs.isEmpty()) can't process event {}", event);
+                for (ExecContextApiData.VariableState state : ecpy.states) {
+                    if (state.taskId.equals(event.taskId)) {
+                        if (state.outputs==null || state.outputs.isEmpty()) {
+                            log.warn(" (state.outputs==null || state.outputs.isEmpty()) can't process event {}", event);
                         }
                         else {
-                            for (ExecContextApiData.VariableInfo output : task.outputs) {
+                            for (ExecContextApiData.VariableInfo output : state.outputs) {
                                 if (output.id.equals(event.variableId)) {
                                     output.inited = true;
                                     output.nullified = event.nullified;
@@ -86,22 +86,22 @@ public class ExecContextVariableStateService {
         register(execContextVariableStateId, (ecpy)-> {
             for (ExecContextApiData.VariableState event : events) {
                 boolean isNew = true;
-                for (ExecContextApiData.VariableState task : ecpy.tasks) {
-                    if (task.taskId.equals(event.taskId)) {
+                for (ExecContextApiData.VariableState state : ecpy.states) {
+                    if (state.taskId.equals(event.taskId)) {
                         isNew = false;
-                        if (task.inputs != null && !task.inputs.isEmpty()) {
-                            task.inputs.clear();
+                        if (state.inputs != null && !state.inputs.isEmpty()) {
+                            state.inputs.clear();
                         }
-                        if (task.outputs != null && !task.outputs.isEmpty()) {
-                            task.outputs.clear();
+                        if (state.outputs != null && !state.outputs.isEmpty()) {
+                            state.outputs.clear();
                         }
-                        task.inputs = event.inputs;
-                        task.outputs = event.outputs;
+                        state.inputs = event.inputs;
+                        state.outputs = event.outputs;
                         break;
                     }
                 }
                 if (isNew) {
-                    ecpy.tasks.add(event);
+                    ecpy.states.add(event);
                 }
             }
         });

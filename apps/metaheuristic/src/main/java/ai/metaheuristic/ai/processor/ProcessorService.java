@@ -87,7 +87,7 @@ public class ProcessorService {
                 "[unknown]", "[unknown]",
                 logFile!=null && logFile.exists(),
                 TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(),
-                globals.os, globals.processor.dir.dir.getAbsolutePath(), null);
+                globals.os, globals.processorPath.toAbsolutePath().toString(), null);
 
         try {
             InetAddress inetAddress = InetAddress.getLocalHost();

@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$ref": "#/definitions/Root",
+  "definitions": {
+    "Root": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1
+        },
+        "auth": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Auth"
+          }
+        }
+      },
+      "required": [],
+      "title": "Root"
+    },
+    "Auth": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "type": {
+          "enum" : ["token", "basic"]
+        },
+        "token": {
+          "$ref": "#/definitions/Token"
+        },
+        "basic": {
+          "$ref": "#/definitions/Basic"
+        }
+      },
+      "required": [
+        "code",
+        "type"
+      ],
+      "title": "Authentication"
+    },
+    "Token": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "place": {
+          "enum" : ["header", "param"]
+        },
+        "param": {
+          "type": "string"
+        },
+        "env": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "token",
+        "place"
+      ],
+      "title": "Token"
+    },
+    "Basic": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "username",
+        "password"
+      ],
+      "title": "Basic"
+    }
+  }
+}

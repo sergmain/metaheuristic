@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.profiles;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,8 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 @TestPropertySource(locations="classpath:test-dispatcher-profile.properties")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@AutoConfigureCache
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class TestDispatcherProfile {
 
     @Autowired
@@ -49,13 +49,12 @@ public class TestDispatcherProfile {
         assertEquals(List.of("http://localhost", "https://127.0.0.1", "http://192.168.0.1"), globals.corsAllowedOrigins);
 
         assertTrue(globals.dispatcher.enabled);
-        assertFalse(globals.dispatcher.sslRequired);
+        assertFalse(globals.sslRequired);
         assertEquals("qwe321", globals.dispatcher.masterUsername);
         assertEquals("123ewq", globals.dispatcher.masterPassword);
         assertTrue(globals.dispatcher.functionSignatureRequired);
-        assertNotNull(globals.dispatcher.dir);
-        assertNotNull(globals.dispatcher.dir.dir);
-        assertEquals("aiai-dispatcher-123", globals.dispatcher.dir.dir.getName());
+        assertNotNull(globals.dispatcherPath);
+        assertEquals(Consts.DISPATCHER_DIR, globals.dispatcherPath.getFileName().toString());
         assertNotNull(globals.dispatcher.publicKey);
         assertEquals(replicated, globals.dispatcher.asset.mode);
         assertEquals("http://localhost:33377", globals.dispatcher.asset.sourceUrl);

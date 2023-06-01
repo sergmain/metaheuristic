@@ -39,7 +39,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("dispatcher")
 @Slf4j
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@AutoConfigureCache
 public class TestCountOfTasks extends PreparingExperiment {
 
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;

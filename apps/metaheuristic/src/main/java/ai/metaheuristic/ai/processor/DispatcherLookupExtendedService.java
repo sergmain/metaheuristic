@@ -23,11 +23,10 @@ import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
 import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.utils.SecUtils;
+import ai.metaheuristic.commons.utils.ThreadUtils;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
@@ -36,7 +35,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.PublicKey;
 import java.util.Collections;
 import java.util.HashMap;
@@ -116,26 +116,33 @@ public class DispatcherLookupExtendedService {
     public final Map<ProcessorAndCoreData.AssetManagerUrl, DispatcherLookupParamsYaml.AssetManager> assets = new HashMap<>();
 
     @Data
-    @AllArgsConstructor
     public static class DispatcherLookupExtended {
         public final DispatcherUrl dispatcherUrl;
         public final DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup;
         public final DispatcherSchedule schedule;
-        private final Map<Integer, PublicKey> publicKeyMap = new HashMap<>();
+
+        public final ThreadUtils.CommonThreadLocker<PublicKey> locker;
+
+        public DispatcherLookupExtended(DispatcherUrl dispatcherUrl, DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup, DispatcherSchedule schedule) {
+            this.dispatcherUrl = dispatcherUrl;
+            this.dispatcherLookup = dispatcherLookup;
+            this.schedule = schedule;
+            locker = new ThreadUtils.CommonThreadLocker<>(() -> SecUtils.getPublicKey(this.dispatcherLookup.publicKey));
+        }
 
         public PublicKey getPublicKey() {
-            return publicKeyMap.computeIfAbsent(1, k-> SecUtils.getPublicKey(dispatcherLookup.publicKey));
+            return locker.get();
         }
     }
 
     public DispatcherLookupExtendedService(Globals globals, ApplicationContext appCtx) {
         Map<DispatcherUrl, DispatcherLookupExtended> dispatcherLookupExtendedMap = Map.of();
         try {
-            final File dispatcherFile = new File(globals.processor.dir.dir, Consts.DISPATCHER_YAML_FILE_NAME);
+            final Path dispatcherFile = globals.processorPath.resolve(Consts.DISPATCHER_YAML_FILE_NAME);
             final String cfg;
-            if (!dispatcherFile.exists()) {
+            if (Files.notExists(dispatcherFile)) {
                 if (globals.processor.defaultDispatcherYamlFile == null) {
-                    log.error("Processor's dispatcher config file {} doesn't exist and default file wasn't specified", dispatcherFile.getPath());
+                    log.error("Processor's dispatcher config file {} doesn't exist and default file wasn't specified", dispatcherFile);
                     return;
                 }
                 if (!globals.processor.defaultDispatcherYamlFile.exists()) {
@@ -143,23 +150,23 @@ public class DispatcherLookupExtendedService {
                     return;
                 }
                 try {
-                    FileSystemUtils.copyFileWithSync(globals.processor.defaultDispatcherYamlFile, dispatcherFile);
+                    FileSystemUtils.copyFileWithSync(globals.processor.defaultDispatcherYamlFile, dispatcherFile.toFile());
                 } catch (IOException e) {
                     log.error("Error", e);
-                    throw new IllegalStateException("Error while copying "+ globals.processor.defaultDispatcherYamlFile.getAbsolutePath()+" to " + dispatcherFile.getAbsolutePath(), e);
+                    throw new IllegalStateException("Error while copying "+ globals.processor.defaultDispatcherYamlFile.getAbsolutePath()+" to " + dispatcherFile.normalize(), e);
                 }
             }
-            if (!dispatcherFile.exists()) {
+            if (Files.notExists(dispatcherFile)) {
                 throw new IllegalStateException(
                         "File dispatcher.yaml wasn't found. " +
-                        "It must be configured in directory "+globals.processor.dir.dir+" or be provided via application parameter mh.processor.default-dispatcher-yaml-file ");
+                        "It must be configured in directory "+globals.processorPath+" or be provided via application parameter mh.processor.default-dispatcher-yaml-file ");
             }
 
             try {
-                cfg = FileUtils.readFileToString(dispatcherFile, StandardCharsets.UTF_8);
+                cfg = Files.readString(dispatcherFile);
             } catch (IOException e) {
                 log.error("Error", e);
-                throw new IllegalStateException("Error while reading file: " + dispatcherFile.getAbsolutePath(), e);
+                throw new IllegalStateException("Error while reading file: " + dispatcherFile.normalize(), e);
             }
 
             final YamlSchemeValidator<Boolean> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
@@ -180,7 +187,7 @@ public class DispatcherLookupExtendedService {
 
             if (dispatcherLookupConfig == null) {
                 log.error("{} wasn't found or empty. path: {}{}{}",
-                        Consts.DISPATCHER_YAML_FILE_NAME, globals.processor.dir.dir,
+                        Consts.DISPATCHER_YAML_FILE_NAME, globals.processorPath,
                         File.separatorChar, Consts.DISPATCHER_YAML_FILE_NAME);
                 throw new IllegalStateException("Processor isn't configured, dispatcher.yaml is empty or doesn't exist");
             }

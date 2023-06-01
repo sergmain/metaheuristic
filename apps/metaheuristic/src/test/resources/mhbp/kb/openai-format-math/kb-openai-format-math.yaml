@@ -1,0 +1,12 @@
+disabled: false
+kb:
+  code: simple-math-git
+  git:
+    branch: main
+    commit: origin
+    kbPaths:
+      - data: src/test/resources/kb/openai-format-math/data
+        evals: src/test/resources/kb/openai-format-math/evals
+    repo: https://github.com/sergmain/mhbp.git
+  type: openai
+version: 1

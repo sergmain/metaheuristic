@@ -34,7 +34,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AccountTopLevelService {
 
-    private final AccountService accountService;
+    private final AccountTxService accountService;
     private final Globals globals;
 
     public AccountData.AccountsResult getAccounts(Pageable pageable, DispatcherContext context) {

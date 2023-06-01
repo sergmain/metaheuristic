@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncSer
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -51,7 +51,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BatchLineSplitterFunction implements InternalFunction {
 
-    private final VariableService variableService;
+    public static final String VARIABLE_FOR_SPLITTING = "variable-for-splitting";
+    public static final String NUMBER_OF_LINES_PER_TASK = "number-of-lines-per-task";
+    public static final String OUTPUT_VARIABLE = "output-variable";
+    public static final String IS_ARRAY = "is-array";
+    private final VariableTxService variableService;
     private final GlobalVariableService globalVariableService;
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final BatchLineSplitterTxService batchLineSplitterTxService;
@@ -64,6 +68,10 @@ public class BatchLineSplitterFunction implements InternalFunction {
     @Override
     public String getName() {
         return Consts.MH_BATCH_LINE_SPLITTER_FUNCTION;
+    }
+
+    public boolean isScenarioCompatible() {
+        return true;
     }
 
     public void process(
@@ -85,12 +93,12 @@ public class BatchLineSplitterFunction implements InternalFunction {
             TaskParamsYaml taskParamsYaml) {
 
         // variable-for-splitting
-        String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "variable-for-splitting");
+        String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, VARIABLE_FOR_SPLITTING);
         if (S.b(inputVariableName)) {
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.meta_not_found, "#994.020 Meta 'variable-for-splitting' wasn't found");
         }
         // number-of-lines-per-task
-        Long numberOfLines = MetaUtils.getLong(taskParamsYaml.task.metas, "number-of-lines-per-task");
+        Long numberOfLines = MetaUtils.getLong(taskParamsYaml.task.metas, NUMBER_OF_LINES_PER_TASK);
         if (numberOfLines==null) {
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.meta_not_found, "#994.025 Meta 'number-of-lines-per-task' wasn't found");
         }

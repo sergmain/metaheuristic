@@ -45,7 +45,6 @@ import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Profile;
@@ -58,11 +57,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -122,38 +121,38 @@ public class ExperimentResultTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#422.030 only '.zip' file is supported, filename: " + originFilename);
         }
-        File resultDir = DirUtils.createMhTempDir("import-result-to-experiment-result-");
+        Path resultDir = DirUtils.createMhTempPath("import-result-to-experiment-result-");
         if (resultDir==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#422.033 Error, can't create temporary dir");
         }
 
         try {
-            File importFile = new File(resultDir, "import.zip");
+            Path importFile = resultDir.resolve("import.zip");
             try (InputStream is = file.getInputStream()) {
-                FileUtils.copyInputStreamToFile(is, importFile);
+                DirUtils.copy(is, importFile);
             }
-            ZipUtils.unzipFolder(importFile.toPath(), resultDir.toPath());
+            ZipUtils.unzipFolder(importFile, resultDir);
 
-            File zipDir = new File(resultDir, ZIP_DIR);
-            if (!zipDir.exists()){
+            Path zipDir = resultDir.resolve(ZIP_DIR);
+            if (Files.notExists(zipDir)){
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#422.035 Error, zip directory doesn't exist at path " + resultDir.getAbsolutePath());
+                        "#422.035 Error, zip directory doesn't exist at path " + resultDir.normalize());
             }
 
-            File tasksDir = new File(zipDir, TASKS_DIR);
-            if (!tasksDir.exists()){
+            Path tasksDir = zipDir.resolve(TASKS_DIR);
+            if (Files.notExists(tasksDir)){
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#422.038 Error, tasks directory doesn't exist at path " + zipDir.getAbsolutePath());
+                        "#422.038 Error, tasks directory doesn't exist at path " + zipDir.normalize());
             }
 
-            File experimentFile = new File(zipDir, EXPERIMENT_YAML_FILE);
-            if (!experimentFile.exists()){
+            Path experimentFile = zipDir.resolve(EXPERIMENT_YAML_FILE);
+            if (Files.notExists(experimentFile)){
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#422.040 Error, experiment.yaml file doesn't exist at path "+ zipDir.getAbsolutePath());
+                        "#422.040 Error, experiment.yaml file doesn't exist at path "+ zipDir.normalize());
             }
 
-            String params = FileUtils.readFileToString(experimentFile, StandardCharsets.UTF_8);
+            String params = Files.readString(experimentFile);
             ExperimentResultParams apy = ExperimentResultParamsJsonUtils.BASE_UTILS.to(params);
 
             ExperimentResult experimentResult = new ExperimentResult();
@@ -174,22 +173,22 @@ public class ExperimentResultTopLevelService {
                 if (++count%100==0) {
                     log.info("#422.045 Current number of imported task: {} of total {}", count, apy.taskFeatures.size());
                 }
-                File taskFile = new File(tasksDir, S.f(TASK_YAML_FILE, taskFeature.taskId));
+                Path taskFile = tasksDir.resolve(S.f(TASK_YAML_FILE, taskFeature.taskId));
 
                 ExperimentTask at = new ExperimentTask();
                 at.experimentResultId = experimentResult.id;
                 at.taskId = taskFeature.taskId;
-                at.params = FileUtils.readFileToString(taskFile, StandardCharsets.UTF_8);
+                at.params = Files.readString(taskFile);
                 experimentTaskRepository.save(at);
             }
         }
         catch (Exception e) {
             log.error("#422.040 Error", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#422.050 can't load experiment results, Error: " + e.toString());
+                    "#422.050 can't load experiment results, Error: " + e.getMessage());
         }
         finally {
-            DirUtils.deleteAsync(resultDir);
+            DirUtils.deletePathAsync(resultDir);
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
@@ -197,26 +196,29 @@ public class ExperimentResultTopLevelService {
     public CleanerInfo exportExperimentResultToFile(Long experimentResultId) {
         CleanerInfo resource = new CleanerInfo();
         try {
-            File resultDir = DirUtils.createMhTempDir("prepare-file-export-result-");
+            Path resultDir = DirUtils.createMhTempPath("prepare-file-export-result-");
+            if (resultDir==null) {
+                throw new RuntimeException("(resultDir==null)");
+            }
             resource.toClean.add(resultDir);
 
-            File zipDir = new File(resultDir, ZIP_DIR);
-            zipDir.mkdir();
-            if (!zipDir.exists()) {
-                log.error("#422.060 Error, zip dir wasn't created, path: {}", zipDir.getAbsolutePath());
+            Path zipDir = resultDir.resolve(ZIP_DIR);
+            Files.createDirectory(zipDir);
+            if (Files.notExists(zipDir)) {
+                log.error("#422.060 Error, zip dir wasn't created, path: {}", zipDir.normalize());
                 resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
                 return resource;
             }
-            File taskDir = new File(zipDir, TASKS_DIR);
-            taskDir.mkdir();
-            if (!taskDir.exists()) {
-                log.error("#422.070 Error, task dir wasn't created, path: {}", taskDir.getAbsolutePath());
+            Path taskDir = zipDir.resolve(TASKS_DIR);
+            Files.createDirectory(taskDir);
+            if (Files.notExists(taskDir)) {
+                log.error("#422.070 Error, task dir wasn't created, path: {}", taskDir.normalize());
                 resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
                 return resource;
             }
-            File zipFile = new File(resultDir, S.f("export-%s.zip", experimentResultId));
-            if (zipFile.isDirectory()) {
-                log.error("#422.080 Error, path for zip file is actually directory, path: {}", zipFile.getAbsolutePath());
+            Path zipFile = resultDir.resolve(S.f("export-%s.zip", experimentResultId));
+            if (Files.isDirectory(zipFile)) {
+                log.error("#422.080 Error, path for zip file is actually directory, path: {}", zipFile.normalize());
                 resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
                 return resource;
             }
@@ -225,8 +227,8 @@ public class ExperimentResultTopLevelService {
                 resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.NOT_FOUND);
                 return resource;
             }
-            File exportFile = new File(zipDir, EXPERIMENT_YAML_FILE);
-            FileUtils.write(exportFile, experimentResult.params, StandardCharsets.UTF_8);
+            Path exportFile = zipDir.resolve(EXPERIMENT_YAML_FILE);
+            Files.writeString(exportFile, experimentResult.params);
             Set<Long> experimentTaskIds = experimentTaskRepository.findIdsByExperimentResultId(experimentResultId);
 
             ExperimentResultParams apy = ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.params);
@@ -245,23 +247,23 @@ public class ExperimentResultTopLevelService {
                     log.error("#422.100 ExperimentResultTask wasn't found for is #{}", experimentTaskId);
                     continue;
                 }
-                File taskFile = new File(taskDir, S.f(TASK_YAML_FILE, at.taskId));
+                Path taskFile = taskDir.resolve(S.f(TASK_YAML_FILE, at.taskId));
                 try {
-                    FileUtils.writeStringToFile(taskFile, at.params, StandardCharsets.UTF_8);
+                    Files.writeString(taskFile, at.params);
                 } catch (IOException e) {
-                    log.error("#422.110 Error writing task's params to file {}", taskFile.getAbsolutePath());
+                    log.error("#422.110 Error writing task's params to file {}", taskFile.normalize());
                     resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
                     return resource;
                 }
             }
 
-            ZipUtils.createZip(zipDir.toPath(), zipFile.toPath());
+            ZipUtils.createZip(zipDir, zipFile);
 
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
             httpHeaders.setContentDisposition(ContentDisposition.parse(
                     "filename*=UTF-8''experiment-result-"+experimentResultId+".zip"));
-            resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, zipFile.length()), HttpStatus.OK);
+            resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, Files.size(zipFile)), HttpStatus.OK);
             return resource;
         }
         catch(Throwable th) {
@@ -307,7 +309,7 @@ public class ExperimentResultTopLevelService {
             ypywc = new ExperimentResultParamsYamlWithCache(erpy);
         }
         catch (Throwable th) {
-            String es = "#422.180 Can't parse an experimentResult, error: " + th.toString();
+            String es = "#422.180 Can't parse an experimentResult, error: " + th.getMessage();
             log.error(es, th);
             return new ExperimentInfoExtended(es);
         }
@@ -406,7 +408,7 @@ public class ExperimentResultTopLevelService {
         try {
             ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.params));
         } catch (YAMLException e) {
-            String es = "#422.240 Can't parse an experimentResult, error: " + e.toString();
+            String es = "#422.240 Can't parse an experimentResult, error: " + e.getMessage();
             log.error(es, e);
             return new PlotData(es);
         }
@@ -632,7 +634,7 @@ public class ExperimentResultTopLevelService {
         try {
             ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.params));
         } catch (YAMLException e) {
-            final String es = "#422.270 Can't extract experiment from experimentResult, error: " + e.toString();
+            final String es = "#422.270 Can't extract experiment from experimentResult, error: " + e.getMessage();
             log.error(es, e);
             return new ExperimentFeatureExtendedResult(es);
         }
@@ -760,7 +762,7 @@ public class ExperimentResultTopLevelService {
         try {
             ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.params));
         } catch (YAMLException e) {
-            final String es = "#422.330 Can't extract experiment from experimentResult, error: " + e.toString();
+            final String es = "#422.330 Can't extract experiment from experimentResult, error: " + e.getMessage();
             log.error(es, e);
             return new ExperimentFeatureExtendedResult(es);
         }

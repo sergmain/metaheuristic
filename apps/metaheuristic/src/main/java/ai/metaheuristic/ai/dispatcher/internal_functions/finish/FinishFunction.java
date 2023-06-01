@@ -65,7 +65,7 @@ public class FinishFunction implements InternalFunction {
             variableTopLevelService.checkFinalOutputVariables(taskParamsYaml, simpleExecContext.execContextId);
 
             log.info(S.f("#054.010 change state of task #%s with internal function %s to 'OK'", taskId, Consts.MH_FINISH_FUNCTION));
-            ExecContextSyncService.getWithSync(simpleExecContext.execContextId,
+            ExecContextSyncService.getWithSyncVoid(simpleExecContext.execContextId,
                     () -> execContextFSM.toFinished(simpleExecContext.execContextId));
         } catch (Throwable e) {
             log.error("#054.040 error", e);

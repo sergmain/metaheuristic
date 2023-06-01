@@ -45,6 +45,7 @@ public class GlobalVariableTopLevelService {
 
     private final Globals globals;
     private final GlobalVariableService globalVariableService;
+    private final GlobalVariableEntityManagerTxService globalVariableEntityManagerTxService;
 
     public GlobalVariableData.GlobalVariablesResult getGlobalVariables(Pageable pageable) {
         pageable = PageUtils.fixPageSize(globals.dispatcher.rowsLimit.globalVariableTable, pageable);
@@ -67,10 +68,10 @@ public class GlobalVariableTopLevelService {
         }
         try {
             try (InputStream is = file.getInputStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-                globalVariableService.save(bis, file.getSize(), variable, originFilename);
+                globalVariableEntityManagerTxService.save(bis, file.getSize(), variable, originFilename);
             }
         } catch (Throwable e) {
-            String es = "#172.050 An error while saving data to file, " + e.getMessage();
+            String es = "#172.040 An error while saving data to file, " + e.getMessage();
             log.error(es, e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
@@ -90,7 +91,7 @@ public class GlobalVariableTopLevelService {
         try {
             byte[] bytes = value.getBytes();
             try (InputStream is = new ByteArrayInputStream(bytes)) {
-                globalVariableService.save(is, bytes.length, variable, null);
+                globalVariableEntityManagerTxService.save(is, bytes.length, variable, null);
             }
         } catch (Throwable e) {
             String es = "#172.055 An error while saving data to file, " + e.getMessage();

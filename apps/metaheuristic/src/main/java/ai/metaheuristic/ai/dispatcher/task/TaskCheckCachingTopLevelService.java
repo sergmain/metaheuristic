@@ -20,7 +20,10 @@ import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.cache.CacheService;
+import ai.metaheuristic.ai.dispatcher.cache.CacheUtils;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
@@ -33,8 +36,6 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.utils.Checksum;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,9 +44,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
@@ -82,7 +80,7 @@ public class TaskCheckCachingTopLevelService {
     private static final PrepareData PREPARE_DATA_NONE = new PrepareData(PrepareDataState.none);
 
 
-    private final TaskCheckCachingService taskCheckCachingService;
+    private final TaskCheckCachingTxService taskCheckCachingTxService;
     private final ExecContextReadinessStateService execContextReadinessStateService;
     private final CacheService cacheService;
     private final CacheProcessRepository cacheProcessRepository;
@@ -116,6 +114,7 @@ public class TaskCheckCachingTopLevelService {
             queue.add(event);
             queueIds.add(event.taskId);
         }
+        checkCaching();
     }
 
     @Nullable
@@ -155,6 +154,9 @@ public class TaskCheckCachingTopLevelService {
                     eventPublisher.publishEvent(new TaskFinishWithErrorEvent(event.taskId, "Error while checking cache for task #" +event.taskId+", error: " + th.getMessage()));
                     return;
                 }
+                finally {
+                    eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
+                }
             }
         });
     }
@@ -166,13 +168,13 @@ public class TaskCheckCachingTopLevelService {
             return;
         }
 
-        ExecContextImpl execContext = execContextCache.findById(event.execContextId);
+        ExecContextImpl execContext = execContextCache.findById(event.execContextId, true);
         if (execContext == null) {
             log.debug("Exec context not found, execContextId: {}", event.execContextId);
             return;
         }
 
-        PrepareData prepareData = getCacheProcess(execContext, event.taskId);
+        PrepareData prepareData = getCacheProcess(execContext.asSimple(), event.taskId);
         if (prepareData.state==PrepareDataState.none) {
             log.debug("execContextId: {}, task: {}, prepareData.state: PrepareDataState.none", event.execContextId, event.taskId);
             return;
@@ -181,25 +183,25 @@ public class TaskCheckCachingTopLevelService {
         try {
             log.debug("Start taskCheckCachingService.checkCaching(), execContextId: {}, task: {}", event.execContextId, event.taskId);
             TaskSyncService.getWithSyncVoid(event.taskId,
-                    () -> taskCheckCachingService.checkCaching(event.execContextId, event.taskId, prepareData.cacheProcess));
+                    () -> taskCheckCachingTxService.checkCaching(event.execContextId, event.taskId, prepareData.cacheProcess));
 
         } catch (InvalidateCacheProcessException e) {
             log.error("#610.200 caught InvalidateCacheProcessException, {}", e.getMessage());
             try {
                 TaskSyncService.getWithSyncVoid(e.taskId,
-                        () -> taskCheckCachingService.invalidateCacheItemAndSetTaskToNone(e.execContextId, e.taskId, e.cacheProcessId));
+                        () -> taskCheckCachingTxService.invalidateCacheItemAndSetTaskToNone(e.execContextId, e.taskId, e.cacheProcessId));
             } catch (Throwable th) {
                 log.error("#610.300 error while invalidating task #"+e.taskId, th);
             }
         }
     }
 
-    private PrepareData getCacheProcess(ExecContextImpl execContext, Long taskId) {
+    private PrepareData getCacheProcess(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
         TxUtils.checkTxNotExists();
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            log.debug("Task wasn't found, execContextId: {}, task: {}", execContext.id, taskId);
+            log.debug("Task wasn't found, execContextId: {}, task: {}", simpleExecContext.execContextId, taskId);
             return PREPARE_DATA_NONE;
         }
         if (task.execState!=EnumsApi.TaskExecState.CHECK_CACHE.value) {
@@ -207,38 +209,32 @@ public class TaskCheckCachingTopLevelService {
             return PREPARE_DATA_NONE;
         }
 
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
+        TaskParamsYaml tpy = task.getTaskParamsYaml();
+        ExecContextParamsYaml ecpy = simpleExecContext.getParamsYaml();
         ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
         if (p==null) {
             log.warn("609.023 Process {} wasn't found", tpy.task.processCode);
             return PREPARE_DATA_NONE;
         }
-        CacheData.Key fullKey;
+        CacheData.FullKey fullKey;
         try {
-            log.debug("start cacheService.getKey(), execContextId: {}, task: {}", execContext.id, taskId);
+            log.debug("start cacheService.getKey(), execContextId: {}, task: {}", simpleExecContext.execContextId, taskId);
             fullKey = cacheService.getKey(tpy, p.function);
         } catch (VariableCommonException e) {
-            log.warn("#609.025 ExecContext: #{}, VariableCommonException: {}", execContext.id, e.getAdditionalInfo());
+            log.warn("609.025 ExecContext: #{}, VariableCommonException: {}", simpleExecContext.execContextId, e.getAdditionalInfo());
             return PREPARE_DATA_NONE;
         }
-        log.debug("done cacheService.getKey(), execContextId: {}, task: {}", execContext.id, taskId);
+        log.debug("done cacheService.getKey(), execContextId: {}, task: {}", simpleExecContext.execContextId, taskId);
 
-
-        String keyAsStr = fullKey.asString();
-        byte[] bytes = keyAsStr.getBytes();
-
-        CacheProcess cacheProcess=null;
-        try (InputStream is = new ByteArrayInputStream(bytes)) {
-            String sha256 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, is);
-            String key = new CacheData.Sha256PlusLength(sha256, keyAsStr.length()).asString();
-
-            log.debug("execContextId: {}, task: {}, let's try to find cacheProcess for key {}", execContext.id, taskId, key);
-            cacheProcess = cacheProcessRepository.findByKeySha256LengthReadOnly(key);
-        } catch (IOException e) {
-            log.error("#609.040 Error while preparing a cache key, task will be processed without cached data", e);
+        CacheData.SimpleKey key = CacheUtils.fullKeyToSimpleKey(fullKey);
+        if (key==null) {
+            return PREPARE_DATA_NONE;
         }
-        log.debug("execContextId: {}, task: {}, CacheProcess: {}", execContext.id, taskId, cacheProcess);
+
+        log.debug("execContextId: {}, task: {}, let's try to find cacheProcess for key {}", simpleExecContext.execContextId, taskId, key);
+        CacheProcess cacheProcess = cacheProcessRepository.findByKeySha256LengthReadOnly(key.key());
+
+        log.debug("execContextId: {}, task: {}, CacheProcess: {}", simpleExecContext.execContextId, taskId, cacheProcess);
         return new PrepareData(cacheProcess, PrepareDataState.ok);
     }
 

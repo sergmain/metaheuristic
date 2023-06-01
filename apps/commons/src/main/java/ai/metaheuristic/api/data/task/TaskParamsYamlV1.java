@@ -34,6 +34,7 @@ import java.util.Map;
  * class TaskParamsYaml is for storing parameters of task in db table MH_TASK
  * AND for storing parameters internally at Processor side
  *
+ *
  * class TaskFileParamsYaml is being used for storing a parameters of task for function in a file, ie params-v1.yaml
  *
  * @author Serge
@@ -45,6 +46,7 @@ import java.util.Map;
 @EqualsAndHashCode
 public class TaskParamsYamlV1 implements BaseParams {
 
+    @SuppressWarnings("FieldMayBeStatic")
     public final int version = 1;
 
     @Override
@@ -205,6 +207,7 @@ public class TaskParamsYamlV1 implements BaseParams {
     public static class CacheV1 {
         public boolean enabled;
         public boolean omitInline;
+        public boolean cacheMeta;
     }
 
     @Data

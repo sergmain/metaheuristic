@@ -16,18 +16,22 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -40,35 +44,40 @@ public class ArtifactCleanerAtProcessor {
     private final Globals globals;
     private final MetadataService metadataService;
 
+    @SneakyThrows
     public void fixedDelay() {
-        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : metadataService.getAllEnabledRefsForCores()) {
 
-            for (ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref : metadataService.getAllEnabledRefs()) {
-                if (!globals.processor.enabled || !currentExecState.isInited(ref.dispatcherUrl)) {
-                    // don't delete anything until the processor has received the list of actual ExecContexts
+        if (!globals.processor.enabled) {
+            // don't delete anything until the processor has received the full list of actual ExecContexts
+            return;
+        }
+
+        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : metadataService.getAllEnabledRefsForCores()) {
+            if (currentExecState.getCurrentInitState(core.dispatcherUrl) != Enums.ExecContextInitState.FULL) {
+                // don't delete anything until the processor has received the full list of actual ExecContexts
+                continue;
+            }
+            Path coreDir = globals.processorPath.resolve(core.coreCode);
+            Path coreTaskDir = coreDir.resolve(Consts.TASK_DIR);
+
+            MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(core);
+            final Path dispatcherDir = coreTaskDir.resolve(processorState.dispatcherCode);
+            if (Files.notExists(dispatcherDir)) {
+                Files.createDirectories(dispatcherDir);
+            }
+            List<ProcessorCoreTask> all = processorTaskService.findAllForCore(core);
+            for (ProcessorCoreTask task : all) {
+                if (currentExecState.isState(core.dispatcherUrl, task.execContextId, EnumsApi.ExecContextState.DOESNT_EXIST)) {
+                    log.warn("Delete obsolete task, id {}, url {}", task.getTaskId(), core.dispatcherUrl.url);
+                    for (Map.Entry<EnumsApi.ExecContextState, String> entry : currentExecState.getExecContextsNormalized(core.dispatcherUrl).entrySet()) {
+                        log.warn("'   {}: {}", entry.getKey(), entry.getValue());
+                    }
+                    processorTaskService.delete(core, task.getTaskId());
                     continue;
                 }
-
-                File coreDir = new File(globals.processor.dir.dir, core.coreCode);
-                File coreTaskDir = new File(coreDir, Consts.TASK_DIR);
-
-                MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(ref);
-                final File dispatcherDir = new File(coreTaskDir, processorState.dispatcherCode);
-                if (!dispatcherDir.exists()) {
-                    dispatcherDir.mkdir();
-                }
-
-                List<ProcessorCoreTask> all = processorTaskService.findAllForCore(core);
-                for (ProcessorCoreTask task : all) {
-                    if (currentExecState.isState(ref.dispatcherUrl, task.execContextId, EnumsApi.ExecContextState.DOESNT_EXIST)) {
-                        log.warn("Delete obsolete task, id {}, url {}", task.getTaskId(), ref.dispatcherUrl.url);
-                        processorTaskService.delete(core, task.getTaskId());
-                        continue;
-                    }
-                    if (task.clean && task.delivered && task.completed) {
-                        log.info("Delete task with (task.clean && task.delivered && task.completed), id {}, url {}", task.getTaskId(), ref.dispatcherUrl.url);
-                        processorTaskService.delete(core, task.getTaskId());
-                    }
+                if (task.clean && task.delivered && task.completed) {
+                    log.info("Delete task with (task.clean && task.delivered && task.completed), id {}, url {}", task.getTaskId(), core.dispatcherUrl.url);
+                    processorTaskService.delete(core, task.getTaskId());
                 }
             }
         }

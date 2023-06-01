@@ -41,19 +41,16 @@ public class SourceCodeCache {
 
     private final SourceCodeRepository sourceCodeRepository;
 
-//    @CachePut(value = {Consts.SOURCE_CODES_CACHE}, key = "#result.id")
     public SourceCodeImpl save(SourceCodeImpl sourceCode) {
         TxUtils.checkTxExists();
         return sourceCodeRepository.save(sourceCode);
     }
 
     @Nullable
-//    @Cacheable(cacheNames = {Consts.SOURCE_CODES_CACHE}, unless="#result==null")
     public SourceCodeImpl findById(Long id) {
         return sourceCodeRepository.findById(id).orElse(null);
     }
 
-//    @CacheEvict(cacheNames = {Consts.SOURCE_CODES_CACHE}, key = "#sourceCode.id")
     public void delete(SourceCode sourceCode) {
         TxUtils.checkTxExists();
         if (sourceCode.getId()==null) {
@@ -66,7 +63,6 @@ public class SourceCodeCache {
         }
     }
 
-//    @CacheEvict(cacheNames = {Consts.SOURCE_CODES_CACHE}, key = "#id")
     public void deleteById(Long id) {
         TxUtils.checkTxExists();
         sourceCodeRepository.deleteById(id);

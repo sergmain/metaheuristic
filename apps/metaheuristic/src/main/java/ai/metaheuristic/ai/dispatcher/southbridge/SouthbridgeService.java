@@ -32,12 +32,9 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueSyncStaticService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
-import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
-import ai.metaheuristic.ai.exceptions.CommonIOErrorWithDataException;
-import ai.metaheuristic.ai.exceptions.FunctionDataNotFoundException;
-import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
+import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -69,12 +66,12 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.BiFunction;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 @Service
@@ -85,7 +82,7 @@ import java.util.function.Supplier;
 public class SouthbridgeService {
 
     private final Globals globals;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final GlobalVariableService globalVariableService;
     private final FunctionDataService functionDataService;
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
@@ -96,13 +93,13 @@ public class SouthbridgeService {
 
     private static final CommonSync<String> commonSync = new CommonSync<>();
 
-    private static <T> T getWithSync(final EnumsApi.DataType binaryType, final String code, Supplier<T> supplier) {
+    private static void getWithSyncVoid(final EnumsApi.DataType binaryType, final String code, Runnable runnable) {
         TxUtils.checkTxNotExists();
         final String key = "--" + binaryType + "--" + code;
         final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(key);
         try {
             lock.lock();
-            return supplier.get();
+            runnable.run();
         } finally {
             lock.unlock();
         }
@@ -126,10 +123,10 @@ public class SouthbridgeService {
     public CleanerInfo deliverData(@Nullable Long taskId, final EnumsApi.DataType binaryType, final String dataId, @Nullable final String chunkSize, final int chunkNum) {
 
         AssetFile assetFile;
-        BiFunction<String, File, Void> dataSaver;
+        BiConsumer<String, Path> dataSaver;
         switch (binaryType) {
             case function:
-                assetFile = AssetUtils.prepareFunctionFile(globals.dispatcherResourcesDir, dataId, null);
+                assetFile = AssetUtils.prepareFunctionFile(globals.dispatcherResourcesPath, dataId, null);
                 if (assetFile.isError) {
                     String es = "#444.100 Function with id " + dataId + " is broken";
                     log.error(es);
@@ -138,7 +135,7 @@ public class SouthbridgeService {
                 dataSaver = functionDataService::storeToFile;
                 break;
             case variable:
-                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, ""+ EnumsApi.DataType.variable+'-'+dataId, null, binaryType);
+                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempPath.toFile(), "" + EnumsApi.DataType.variable + '-' + dataId, null, binaryType);
                 if (assetFile.isError) {
                     String es = "#444.120 Resource with id " + dataId + " is broken";
                     log.error(es);
@@ -150,7 +147,7 @@ public class SouthbridgeService {
                 }
                 break;
             case global_variable:
-                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempDir, ""+ EnumsApi.DataType.global_variable+'-'+dataId, null, binaryType);
+                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempPath.toFile(), "" + EnumsApi.DataType.global_variable + '-' + dataId, null, binaryType);
                 if (assetFile.isError) {
                     String es = "#444.140 Global variable with id " + dataId + " is broken";
                     log.error(es);
@@ -162,18 +159,25 @@ public class SouthbridgeService {
                 throw new IllegalStateException("#444.160 Unknown type of data: " + binaryType);
         }
 
+        CleanerInfo resource = new CleanerInfo();
+
         if (!assetFile.isContent) {
             try {
-                getWithSync(binaryType, dataId, () -> dataSaver.apply(dataId, assetFile.file));
-            } catch (CommonErrorWithDataException e) {
+                getWithSyncVoid(binaryType, dataId, () -> dataSaver.accept(dataId, assetFile.file.toPath()));
+            }
+            catch(VariableIsNullException e) {
+                resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, new HttpHeaders(), HttpStatus.NO_CONTENT);
+                return resource;
+            }
+            catch (CommonErrorWithDataException e) {
                 log.error("#444.180 Error store data to temp file, data doesn't exist in db, id " + dataId + ", file: " + assetFile.file.getPath());
                 throw e;
             }
         }
+
         FileInputStream fis;
         try {
             fis = new FileInputStream(assetFile.file);
-            CleanerInfo resource = new CleanerInfo();
             resource.inputStreams.add(fis);
 
             InputStream realInputStream = fis;

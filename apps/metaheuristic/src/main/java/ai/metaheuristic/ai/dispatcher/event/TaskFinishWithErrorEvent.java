@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.event;
 
 import lombok.AllArgsConstructor;
+import lombok.ToString;
 
 /**
  * @author Serge
@@ -24,6 +25,7 @@ import lombok.AllArgsConstructor;
  * Time: 12:54 PM
  */
 @AllArgsConstructor
+@ToString
 public class TaskFinishWithErrorEvent {
     public Long taskId;
     public String error;

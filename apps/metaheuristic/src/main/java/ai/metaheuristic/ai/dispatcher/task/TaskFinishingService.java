@@ -115,9 +115,10 @@ public class TaskFinishingService {
                 log.warn("#319.145 task #{} was already finished", taskId);
                 return;
             }
+            TaskParamsYaml taskParamYaml=null;
             try {
                 //noinspection unused
-                final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             } catch (YAMLException e) {
                 String es = S.f("#319.160 Task #%s has broken params yaml, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
                 log.error(es, e.getMessage());
@@ -125,7 +126,8 @@ public class TaskFinishingService {
 
             finishTaskAsError(task, console, targetState);
 
-            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR, task.coreId, task.id, task.execContextId);
+            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR, task.coreId, task.id, task.execContextId,
+                    taskParamYaml==null ? null : taskParamYaml.task.context, taskParamYaml==null ? null : taskParamYaml.task.function.code );
         } catch (Throwable th) {
             log.warn("#319.165 Error while processing the task #{} with internal function. Error: {}", taskId, th.getMessage());
             log.warn("#319.170 Error", th);
@@ -135,18 +137,18 @@ public class TaskFinishingService {
 
     private void finishTaskAsError(TaskImpl task, @Nullable String console, EnumsApi.TaskExecState targetState) {
         final boolean updatePossible = targetState.value == task.execState &&
-                (task.execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value || task.execState == EnumsApi.TaskExecState.ERROR.value) &&
-                task.isCompleted && task.resultReceived && !S.b(task.functionExecResults);
+                                       (task.execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value || task.execState == EnumsApi.TaskExecState.ERROR.value) &&
+                                       task.completed!=0 && task.resultReceived!=0 && !S.b(task.functionExecResults);
         if (updatePossible) {
             log.info("#319.200 task: #{}, updatePossible: {}", task.id, updatePossible);
             return;
         }
         task.setExecState(targetState.value);
-        task.setCompleted(true);
+        task.setCompleted(1);
         task.setCompletedOn(System.currentTimeMillis());
 
         if (S.b(task.functionExecResults)) {
-            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+            TaskParamsYaml tpy = task.getTaskParamsYaml();
             FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
             if (targetState== EnumsApi.TaskExecState.ERROR) {
                 if (functionExec.exec==null) {
@@ -162,7 +164,7 @@ public class TaskFinishingService {
             }
             task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
         }
-        task.setResultReceived(true);
+        task.setResultReceived(1);
         task = taskService.save(task);
 
         eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));

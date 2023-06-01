@@ -34,6 +34,7 @@ import java.util.Map;
 @Data
 public class ExecContextParamsYamlV1 implements BaseParams {
 
+    @SuppressWarnings("FieldMayBeStatic")
     public final int version = 1;
 
     @Override

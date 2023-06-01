@@ -29,12 +29,12 @@ import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessStateService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
 import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
@@ -43,7 +43,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -79,11 +78,11 @@ public class TaskProviderTopLevelService {
     private final ApplicationEventPublisher applicationEventPublisher;
     private final ExecContextCache execContextCache;
     private final ExecContextReadinessStateService execContextReadinessStateService;
-    private final ExecContextService execContextService;
     private final ApplicationEventPublisher eventPublisher;
     private final TaskProviderUnassignedTaskTopLevelService taskProviderUnassignedTaskTopLevelService;
+    private final VariableTxService variableService;
 
-    public void registerTask(ExecContextImpl execContext, Long taskId) {
+    public void registerTask(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
         TaskQueueSyncStaticService.getWithSyncVoid(()-> {
             if (TaskQueueService.alreadyRegistered(taskId)) {
                 return;
@@ -103,34 +102,37 @@ public class TaskProviderTopLevelService {
                 return;
             }
             if (taskParamYaml.task.context== EnumsApi.FunctionExecContext.internal) {
-                registerInternalTaskWithoutSync(execContext.id, taskId, taskParamYaml);
-                eventPublisher.publishEvent(new TaskWithInternalContextEvent(execContext.sourceCodeId, execContext.id, taskId));
+                registerInternalTaskWithoutSync(simpleExecContext.execContextId, taskId, taskParamYaml);
+                eventPublisher.publishEvent(new TaskWithInternalContextEvent(simpleExecContext.sourceCodeId, simpleExecContext.execContextId, taskId));
             }
             else {
-                registerTaskLambda(execContext, task, taskParamYaml);
+                ExecContextParamsYaml.Process p = simpleExecContext.getParamsYaml().findProcess(taskParamYaml.task.processCode);
+                if (p==null) {
+                    log.warn("#393.120 Can't register task #{}, process {} doesn't exist in execContext #{}", task.id, taskParamYaml.task.processCode, simpleExecContext.execContextId);
+                    return;
+                }
+                registerTaskLambda(p, task, taskParamYaml);
             }
         });
     }
 
-    public static boolean registerTask(final ExecContextImpl execContext, TaskImpl task, final TaskParamsYaml taskParamYaml) {
+    public static boolean registerTask(final ExecContextParamsYaml execContextParamsYaml, TaskImpl task, final TaskParamsYaml taskParamYaml) {
+        final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
+        if (p==null) {
+            log.warn("#393.120 Can't register task #{}, process {} doesn't exist in execContext #{}", task.id, taskParamYaml.task.processCode, task.execContextId);
+            return false;
+        }
+
         return TaskQueueSyncStaticService.getWithSync(()-> {
             if (TaskQueueService.alreadyRegistered(task.id)) {
                 return false;
             }
-            registerTaskLambda(execContext, task, taskParamYaml);
+            registerTaskLambda(p, task, taskParamYaml);
             return true;
         });
     }
 
-    private static void registerTaskLambda(final ExecContextImpl ec, TaskImpl task, final TaskParamsYaml taskParamYaml) {
-        final ExecContextParamsYaml execContextParamsYaml = ec.getExecContextParamsYaml();
-
-        ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParamYaml.task.processCode);
-        if (p==null) {
-            log.warn("#393.120 Can't register task #{}, process {} doesn't exist in execContext #{}", task.id, taskParamYaml.task.processCode, ec.id);
-            return;
-        }
-
+    private static void registerTaskLambda(ExecContextParamsYaml.Process p, TaskImpl task, final TaskParamsYaml taskParamYaml) {
         final TaskQueue.QueuedTask queuedTask = new TaskQueue.QueuedTask(EnumsApi.FunctionExecContext.external, task.execContextId, task.id, task, taskParamYaml, p.tag, p.priority);
         TaskQueueService.addNewTask(queuedTask);
     }
@@ -234,7 +236,7 @@ public class TaskProviderTopLevelService {
 
     public void setTaskExecStateInQueue(Long execContextId, Long taskId, EnumsApi.TaskExecState state) {
         log.debug("#393.360 set task #{} as {}", taskId, state);
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext==null) {
             return;
         }
@@ -353,24 +355,13 @@ public class TaskProviderTopLevelService {
             return null;
         }
         try {
-            String params;
-            try {
-                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.task.getParams());
-                if (tpy.version == psy.taskParamsVersion) {
-                    params = task.task.params;
-                } else {
-                    params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
-                }
-            } catch (DowngradeNotSupportedException e) {
-                // TODO 2020-09-26 there is a possible situation when a check in ExecContextFSM.findUnassignedTaskAndAssign() would be ok
-                //  but this one fails. that could occur because of prepareVariables(task);
-                //  need a better solution for checking
-                log.warn("#393.600 Task #{} can't be assigned to core #{} because it's too old, downgrade to required taskParams level {} isn't supported",
-                        task.task.getId(), coreId, psy.taskParamsVersion);
+            String params = TaskProviderUtils.initEmptiness(coreId, psy.taskParamsVersion, task.task.getParams(), task.task.id,
+                    variableService::getVariableAsSimple, eventPublisher::publishEvent);
+            if (params==null) {
                 return null;
             }
 
-            // because we're already providing with task that means that execContext was started
+            // because we were already being provided with task that means that execContext was started
             return new DispatcherCommParamsYaml.AssignedTask(params, task.task.getId(), task.task.getExecContextId(), EnumsApi.ExecContextState.STARTED, task.tag, task.quota);
 
         } catch (Throwable th) {
@@ -407,7 +398,7 @@ public class TaskProviderTopLevelService {
                             log.error("#393.720 Core #{} has empty env.yaml", coreId);
                             return null;
                         }
-                        ExecContextImpl ec =  execContextService.findById(execContextId);
+                        ExecContextImpl ec = execContextCache.findById(execContextId, true);
                         if (ec==null) {
                             log.warn("#393.750 Can't re-assign task #{}, execContext #{} doesn't exist", taskId, execContextId);
                             continue;

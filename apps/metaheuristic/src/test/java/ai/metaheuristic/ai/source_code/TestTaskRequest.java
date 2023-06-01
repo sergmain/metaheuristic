@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.source_code;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
@@ -35,12 +35,10 @@ import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYam
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -54,8 +52,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("dispatcher")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@AutoConfigureCache
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class TestTaskRequest extends FeatureMethods {
 
     @Autowired private TaskFinishingTopLevelService taskFinishingTopLevelService;
@@ -66,7 +63,7 @@ public class TestTaskRequest extends FeatureMethods {
     @Autowired private SouthbridgeService serverService;
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
     @Autowired private TaskRepository taskRepository;
-    @Autowired private ExecContextService execContextService;
+    @Autowired private ExecContextCache execContextCache;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -93,7 +90,7 @@ public class TestTaskRequest extends FeatureMethods {
     }
 
     private void step_2(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
-        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+        //preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
 
         // get a task for processing
@@ -133,27 +130,26 @@ public class TestTaskRequest extends FeatureMethods {
         final TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
         assertNotNull(task);
 
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-        TaskSyncService.getWithSyncNullable(task.id, () -> {
+        TaskParamsYaml tpy = task.getTaskParamsYaml();
+        TaskSyncService.getWithSyncVoid(task.id, () -> {
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
                 Enums.UploadVariableStatus status = taskVariableTopLevelService.updateStatusOfVariable(task.id, output.id).status;
                 assertEquals(Enums.UploadVariableStatus.OK, status);
             }
-            return null;
         });
         taskFinishingTopLevelService.checkTaskCanBeFinished(task.id);
         TaskQueue.TaskGroup taskGroup =
-                ExecContextGraphSyncService.getWithSync(getExecContextForTest().execContextGraphId, ()->
-                        ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId, ()->
+                ExecContextGraphSyncService.getWithSyncNullable(getExecContextForTest().execContextGraphId, ()->
+                        ExecContextTaskStateSyncService.getWithSyncNullable(getExecContextForTest().execContextTaskStateId, ()->
                                 execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
                                         getExecContextForTest().id, getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId)));
 
         final TaskImpl task2 = taskRepository.findById(t.taskId).orElse(null);
         assertNotNull(task2);
-        assertTrue(task2.isCompleted);
+        assertTrue(task2.completed!=0);
 
         execContextTopLevelService.updateExecContextStatus(getExecContextForTest().id);
-        setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
     }
 
     private void step_3(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {

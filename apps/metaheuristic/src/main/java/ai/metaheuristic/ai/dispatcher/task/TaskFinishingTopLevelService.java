@@ -37,7 +37,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.*;
 import java.util.function.BiFunction;
+
+import static com.fasterxml.jackson.databind.type.LogicalType.Collection;
 
 /**
  * @author Serge
@@ -92,7 +95,8 @@ public class TaskFinishingTopLevelService {
         }
 
         if (!S.b(task.functionExecResults)) {
-            if (!task.resultReceived) {
+            //noinspection DoubleNegation
+            if (!(task.resultReceived!=0)) {
                 throw new IllegalStateException("(!task.resultReceived)");
             }
             FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.functionExecResults);
@@ -114,8 +118,6 @@ public class TaskFinishingTopLevelService {
                 TaskSyncService.getWithSyncVoid(task.id,
                         () -> finishWithErrorWithInternal(
                                 taskId, StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>"));
-
-                dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ERROR, null, task.id, task.execContextId);
                 return;
             }
         }
@@ -125,7 +127,7 @@ public class TaskFinishingTopLevelService {
                 .filter(o->o.sourcing==EnumsApi.DataSourcing.dispatcher)
                 .allMatch(o->o.uploaded);
 
-        if (task.resultReceived && allUploaded) {
+        if (task.resultReceived!=0 && allUploaded) {
 
             ExecContextImpl execContext = execContextCache.findById(task.execContextId);
             if (execContext==null) {

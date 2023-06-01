@@ -83,7 +83,7 @@ public class ExecContextTopLevelService {
         ExecContextApiData.ExecContextStateResult r = ExecContextUtils.getExecContextStateResult(execContextId, raw, managerRole);
 
         // we'll calculate an info only for rootExecContext
-        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextImpl ec = execContextCache.findById(execContextId, true);
         if (ec!=null && ec.rootExecContextId==null) {
             r.taskStateInfos = getTaskStateInfos(execContextId);
         }
@@ -140,7 +140,7 @@ public class ExecContextTopLevelService {
         }
 
         if (!result.sourceCode.getId().equals(result.execContext.getSourceCodeId())) {
-            ExecContextSyncService.getWithSyncNullable(execContextId,
+            ExecContextSyncService.getWithSyncVoid(execContextId,
                     () -> execContextService.changeValidStatus(execContextId, false));
             return new SourceCodeApiData.ExecContextResult("#210.030 sourceCodeId doesn't match to execContext.sourceCodeId, " +
                     "sourceCodeId: " + result.execContext.getSourceCodeId() + ", execContext.sourceCodeId: " + result.execContext.getSourceCodeId());
@@ -156,14 +156,14 @@ public class ExecContextTopLevelService {
         if (execState!= EnumsApi.ExecContextState.STARTED && execState!= EnumsApi.ExecContextState.STOPPED) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#210.090 execCpntext state can be only STARTED or STOPPED, requested state: " + state);
         }
-        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextImpl ec = execContextCache.findById(execContextId, true);
         if (ec==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#210.120 ExecContext #" + execContextId +" wasn't found");
         }
         List<Long> execContextIds = execContextRepository.findAllRelatedExecContextIds(execContextId);
         execContextIds.add(execContextId);
         for (Long contextId : execContextIds) {
-            ExecContextImpl ecLoop = execContextCache.findById(contextId);
+            ExecContextImpl ecLoop = execContextCache.findById(contextId, true);
             if (ecLoop==null) {
                 continue;
             }
@@ -186,12 +186,12 @@ public class ExecContextTopLevelService {
     }
 
     public void updateExecContextStatus(Long execContextId) {
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext==null) {
             return;
         }
         final ExecContextData.ReconciliationStatus status =
-                execContextReconciliationTopLevelService.reconcileStates(execContext);
+                execContextReconciliationTopLevelService.reconcileStates(execContext.id, execContext.execContextGraphId, execContext.execContextTaskStateId);
 
         ExecContextSyncService.getWithSyncVoid(execContextId, () -> execContextFSM.updateExecContextStatus(execContextId, status));
     }
@@ -204,7 +204,7 @@ public class ExecContextTopLevelService {
             return null;
         }
 
-        ExecContextImpl execContext = execContextCache.findById(task.execContextId);
+        ExecContextImpl execContext = execContextCache.findById(task.execContextId, true);
         if (execContext == null) {
             log.warn("#210.180 Reporting about non-existed execContext #{}", task.execContextId);
             return null;
@@ -266,7 +266,7 @@ public class ExecContextTopLevelService {
 
     public ExecContextApiData.TaskExecInfo getTaskExecInfo(Long sourceCodeId, Long execContextId, Long taskId) {
 
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext == null) {
             log.warn("#210.330 Reporting about non-existed execContext #{}", execContextId);
             return new ExecContextApiData.TaskExecInfo(sourceCodeId, execContextId, taskId, EnumsApi.TaskExecState.ERROR, S.f("ExecContext #%s wasn't found", execContextId));

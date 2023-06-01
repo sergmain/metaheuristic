@@ -120,10 +120,11 @@ public class ExecContextReadinessService {
     }
 
     private void prepare(Long execContextId) {
-        final ExecContextImpl execContext = execContextCache.findById(execContextId);
+        final ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext == null) {
             return;
         }
+        ExecContextData.SimpleExecContext simpleExecContext = execContext.asSimple();
 
         Map<Long, TaskApiData.TaskState> states = execContextService.getExecStateOfTasks(execContextId);
 
@@ -140,18 +141,18 @@ public class ExecContextReadinessService {
             if (!EnumsApi.TaskExecState.isFinishedState(entry.getValue().execState)) {
                 if (dispatcherParamsService.isLongRunning(taskId)) {
                     if (entry.getValue().execState != EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                        taskProviderTopLevelService.registerTask(execContext, taskId);
+                        taskProviderTopLevelService.registerTask(simpleExecContext, taskId);
                     }
                 }
                 else {
-                    taskProviderTopLevelService.registerTask(execContext, taskId);
+                    taskProviderTopLevelService.registerTask(simpleExecContext, taskId);
                     if (entry.getValue().execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
                         taskProviderTopLevelService.processStartTaskProcessing(new StartTaskProcessingEvent(execContextId, taskId));
                     }
                 }
             }
         }
-        execContextReconciliationTopLevelService.reconcileStates(execContext);
+        execContextReconciliationTopLevelService.reconcileStates(execContext.id, execContext.execContextGraphId, execContext.execContextTaskStateId);
     }
 
 }

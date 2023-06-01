@@ -30,7 +30,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
@@ -66,7 +66,7 @@ public class ArtifactCleanerAtDispatcher {
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
     private final TaskTransactionalService taskTransactionalService;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final VariableRepository variableRepository;
     private final FunctionRepository functionRepository;
     private final CacheProcessRepository cacheProcessRepository;
@@ -244,6 +244,9 @@ public class ArtifactCleanerAtDispatcher {
         // all running tasks at processor will be terminated only if a related ExecContext doesn't exist
         deleteOrphanExecContexts(execContextIds);
 
+        // this operation isn't complex so don't need to use isBusy()
+        markTasksAsFinishedForFinishedExecContext();
+
         if (isBusy()) {
             return;
         }
@@ -258,15 +261,32 @@ public class ArtifactCleanerAtDispatcher {
         deleteOrphanExecContextVariableState(execContextIds);
     }
 
+    private void markTasksAsFinishedForFinishedExecContext() {
+        List<Long> forUpdating = taskRepository.getUnfinishedTaskForFinishedExecContext();
+        List<List<Long>> pages = CollectionUtils.parseAsPages(forUpdating, 5);
+        for (List<Long> page : pages) {
+            if (page.isEmpty()) {
+                continue;
+            }
+            log.info("Found tasks with lost state, tasks #{}", page);
+            try {
+                taskRepository.updateTaskAsFinished(page);
+            }
+            catch (Throwable th) {
+                log.error("taskRepository.updateTaskAsFinished("+page+")", th);
+            }
+        }
+    }
+
     private void deleteOrphanExecContexts(List<Long> execContextIds) {
         Set<Long> forDeletion = new HashSet<>();
         for (Long execContextId : execContextIds) {
-            ExecContextImpl ec = execContextCache.findById(execContextId);
+            ExecContextImpl ec = execContextCache.findById(execContextId, true);
             if (ec==null) {
                 continue;
             }
             if (sourceCodeCache.findById(ec.sourceCodeId)==null ||
-                    (ec.rootExecContextId!=null && execContextCache.findById(ec.rootExecContextId)==null)) {
+                    (ec.rootExecContextId!=null && execContextCache.findById(ec.rootExecContextId, true)==null)) {
                 forDeletion.add(execContextId);
             }
         }
@@ -281,7 +301,7 @@ public class ArtifactCleanerAtDispatcher {
     private void deleteOrphanExecContextGraph(List<Long> execContextIds) {
         Set<Long> execContextGraphIds = new HashSet<>();
         for (Long execContextId : execContextIds) {
-            ExecContextImpl ec = execContextCache.findById(execContextId);
+            ExecContextImpl ec = execContextCache.findById(execContextId, true);
             if (ec==null) {
                 continue;
             }
@@ -309,7 +329,7 @@ public class ArtifactCleanerAtDispatcher {
     private void deleteOrphanExecContextTaskState(List<Long> execContextIds) {
         Set<Long> execContextTaskStateIds = new HashSet<>();
         for (Long execContextId : execContextIds) {
-            ExecContextImpl ec = execContextCache.findById(execContextId);
+            ExecContextImpl ec = execContextCache.findById(execContextId, true);
             if (ec==null) {
                 continue;
             }
@@ -337,7 +357,7 @@ public class ArtifactCleanerAtDispatcher {
     private void deleteOrphanExecContextVariableState(List<Long> execContextIds) {
         Set<Long> execContextVariableStateIds = new HashSet<>();
         for (Long execContextId : execContextIds) {
-            ExecContextImpl ec = execContextCache.findById(execContextId);
+            ExecContextImpl ec = execContextCache.findById(execContextId, true);
             if (ec==null) {
                 continue;
             }
@@ -376,7 +396,7 @@ public class ArtifactCleanerAtDispatcher {
             if (isBusy()) {
                 return;
             }
-            if (execContextCache.findById(execContextId)!=null) {
+            if (execContextCache.findById(execContextId, true)!=null) {
                 log.warn("execContextId #{} still here", execContextId);
                 Long id = execContextRepository.findIdById(execContextId);
                 if (id != null) {
@@ -419,7 +439,7 @@ public class ArtifactCleanerAtDispatcher {
                 .filter(o->!execContextIds.contains(o)).collect(Collectors.toList());
 
         for (Long execContextId : orphanExecContextIds) {
-            if (execContextCache.findById(execContextId)!=null) {
+            if (execContextCache.findById(execContextId, true)!=null) {
                 log.warn("execContextId #{} wasn't deleted, actually", execContextId);
                 continue;
             }

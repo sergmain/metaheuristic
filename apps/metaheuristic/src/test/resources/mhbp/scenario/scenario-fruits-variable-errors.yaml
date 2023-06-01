@@ -1,0 +1,34 @@
+steps:
+  - api:
+      apiId: 2
+      code: simple
+    name: List of fruits
+    p: List of fruits which can be grown in US. Output only name of fruit, put each
+      name on new line
+    resultCode: list of fruits
+    uuid: 11891861-069f-480b-9da4-c37481fadc62
+  - function:
+      code: mh.batch-line-splitter
+      context: internal
+    name: split list of fruits
+    p: fruits
+    resultCode: fruit
+    uuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+  - api:
+      apiId: 2
+      code: simple
+    name: Request description of fruit
+    p: Make short description of {{fruit}}
+    parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+    resultCode: fruit description
+    uuid: 0ae1019f-717a-4ab9-9afc-44a49718781e
+  - api:
+      apiId: 2
+      code: simple
+    name: collect info about fruit
+    p: "Make a list of countries which consume most of {{fruit}}, list first five country\
+    \ only\r\n\r\n\r\n\r\n"
+    parentUuid: b032ef44-de12-4fbf-96c5-100bd8018f4d
+    resultCode: best consumer
+    uuid: aa39426f-d2d6-4a3e-92bc-f74a4fa13a8b
+version: 1

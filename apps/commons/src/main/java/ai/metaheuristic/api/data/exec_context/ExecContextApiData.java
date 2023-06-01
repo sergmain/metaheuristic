@@ -64,6 +64,7 @@ public class ExecContextApiData {
         @JsonProperty("i")
         public boolean inited;
 
+        // defines: does this variable equal to null?
         @JsonProperty("n")
         public boolean nullified;
 
@@ -118,7 +119,7 @@ public class ExecContextApiData {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ExecContextVariableStates {
-        public List<VariableState> tasks = new ArrayList<>();
+        public List<VariableState> states = new ArrayList<>();
     }
 
     @Data

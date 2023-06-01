@@ -27,6 +27,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 
+import java.io.Serial;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -90,6 +91,7 @@ public class AccountData {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class SerializableGrantedAuthority implements GrantedAuthority {
+        @Serial
         private static final long serialVersionUID = 8923383713825441981L;
 
         public String authority;

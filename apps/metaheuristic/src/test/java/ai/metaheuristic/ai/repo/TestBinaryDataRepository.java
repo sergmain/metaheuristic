@@ -21,7 +21,8 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,11 +42,10 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@AutoConfigureCache
 public class TestBinaryDataRepository {
 
     @Autowired
-    private VariableService variableService;
+    private VariableTxService variableService;
 
     @Autowired
     private TxSupportForTestingService txSupportForTestingService;
@@ -82,8 +82,9 @@ public class TestBinaryDataRepository {
 
         final byte[] bytes2 = "another one very short data".getBytes();
         final ByteArrayInputStream inputStream2 = new ByteArrayInputStream(bytes2);
-        ExecContextSyncService.getWithSyncNullable(10L,
-                ()-> variableService.updateWithTx(inputStream2, bytes2.length, d2.id));
+        ExecContextSyncService.getWithSyncVoid(10L,
+                ()-> VariableSyncService.getWithSyncVoidForCreation(d2.id,
+                        ()->variableService.updateWithTx(inputStream2, bytes2.length, d2.id)));
 
         final Variable d3 = txSupportForTestingService.getVariableWithData(d2.getId());
 

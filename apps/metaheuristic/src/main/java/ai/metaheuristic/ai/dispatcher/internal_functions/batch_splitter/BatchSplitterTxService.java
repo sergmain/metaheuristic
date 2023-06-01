@@ -21,10 +21,11 @@ import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
+import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -35,6 +36,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -67,10 +69,11 @@ public class BatchSplitterTxService {
     private final ExecContextGraphService execContextGraphService;
     private final InternalFunctionService internalFunctionService;
     private final TaskProducingService taskProducingService;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
-    public void loadFilesFromDirAfterZip(ExecContextData.SimpleExecContext simpleExecContext, File srcDir,
+    public void loadFilesFromDirAfterZip(ExecContextData.SimpleExecContext simpleExecContext, Path srcDir,
                                          final Map<String, String> mapping, TaskParamsYaml taskParamsYaml, Long taskId) {
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, taskId);
@@ -98,7 +101,7 @@ public class BatchSplitterTxService {
 
         try {
             // do not remove try(Stream<Path>){}
-            try (final Stream<Path> list = Files.list(srcDir.toPath())) {
+            try (final Stream<Path> list = Files.list(srcDir)) {
                 list
                         .forEach(dataFilePath -> {
                             File file = dataFilePath.toFile();
@@ -132,6 +135,7 @@ public class BatchSplitterTxService {
             throw new BatchResourceProcessingException(es);
         }
         execContextGraphService.createEdges(simpleExecContext.execContextGraphId, lastIds, executionContextData.descendants);
+        eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
     }
 
     @Nullable

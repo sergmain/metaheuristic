@@ -1,0 +1,11 @@
+version: 1
+kb:
+  code: openai
+  type: openai
+  git:
+    repo: https://github.com/openai/evals.git
+    branch: main
+    commit: origin
+    kbPaths:
+      - evals: evals/registry/evals
+        data: evals/registry/data

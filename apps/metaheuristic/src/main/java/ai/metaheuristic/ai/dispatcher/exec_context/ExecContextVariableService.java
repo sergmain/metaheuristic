@@ -23,7 +23,8 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.ExecContextCommonException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -32,6 +33,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
@@ -39,6 +41,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 
@@ -53,8 +57,9 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @RequiredArgsConstructor
 public class ExecContextVariableService {
 
-    private final ExecContextService execContextService;
-    private final VariableService variableService;
+    private final ExecContextCache execContextCache;
+    private final VariableTxService variableService;
+    private final VariableEntityManagerService variableEntityManagerService;
     private final VariableRepository variableRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -74,7 +79,7 @@ public class ExecContextVariableService {
         if (S.b(inputVariable)) {
             throw new ExecContextCommonException("##697.040 Wrong format of sourceCode, input variable for source code isn't specified");
         }
-        ExecContextImpl execContext = execContextService.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             log.warn("#697.060 ExecContext #{} wasn't found", execContextId);
         }
@@ -98,11 +103,11 @@ public class ExecContextVariableService {
         if (S.b(inputVariable)) {
             throw new ExecContextCommonException("##697.040 Wrong format of sourceCode, input variable for source code isn't specified");
         }
-        ExecContextImpl execContext = execContextService.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             log.warn("#697.060 ExecContext #{} wasn't found", execContextId);
         }
-        variableService.createInitialized(is, size, inputVariable, originFilename, execContextId, Consts.TOP_LEVEL_CONTEXT_ID );
+        variableEntityManagerService.createInitialized(is, size, inputVariable, originFilename, execContextId, Consts.TOP_LEVEL_CONTEXT_ID );
     }
 
     @Transactional
@@ -112,7 +117,7 @@ public class ExecContextVariableService {
                     S.f("#697.080 the number of input streams and variables for initing are different. is count: %d, vars count: %d",
                             list.vars.size(), list.execContextParamsYaml.variables.inputs.size()));
         }
-        ExecContextImpl execContext = execContextService.findById(list.execContextId);
+        ExecContextImpl execContext = execContextCache.findById(list.execContextId);
         if (execContext==null) {
             throw new ExecContextCommonException(
                     S.f("#697.100 ExecContext #{} wasn't found", list.execContextId));
@@ -123,22 +128,23 @@ public class ExecContextVariableService {
             if (S.b(inputVariable)) {
                 throw new ExecContextCommonException("#697.120 Wrong format of sourceCode, input variable for source code isn't specified");
             }
-            variableService.createInitialized(var.is, var.size, inputVariable, var.originFilename, execContext.id, Consts.TOP_LEVEL_CONTEXT_ID );
+            variableEntityManagerService.createInitialized(var.is, var.size, inputVariable, var.originFilename, execContext.id, Consts.TOP_LEVEL_CONTEXT_ID );
         }
     }
 
+    @SneakyThrows
     @Transactional
-    public void storeDataInVariable(TaskParamsYaml.OutputVariable outputVariable, File file) {
+    public void storeDataInVariable(TaskParamsYaml.OutputVariable outputVariable, Path file) {
         Variable variable = getVariable(outputVariable);
 
         final ResourceCloseTxEvent resourceCloseTxEvent = new ResourceCloseTxEvent();
         eventPublisher.publishEvent(resourceCloseTxEvent);
         try {
-            InputStream is = new FileInputStream(file);
+            InputStream is = Files.newInputStream(file);
             resourceCloseTxEvent.add(is);
-            variableService.update(is, file.length(), variable);
+            variableEntityManagerService.update(is, Files.size(file), variable);
         } catch (FileNotFoundException e) {
-            throw new InternalFunctionException(system_error, "#697.180 Can't open file   "+ file.getAbsolutePath());
+            throw new InternalFunctionException(system_error, "#697.180 Can't open file   "+ file.normalize());
         }
     }
 
@@ -148,7 +154,7 @@ public class ExecContextVariableService {
 
         byte[] bytes = value.getBytes();
         InputStream is = new ByteArrayInputStream(bytes);
-        variableService.update(is, bytes.length, variable);
+        variableEntityManagerService.update(is, bytes.length, variable);
     }
 
     private Variable getVariable(TaskParamsYaml.OutputVariable outputVariable) {

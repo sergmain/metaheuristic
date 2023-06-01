@@ -90,7 +90,7 @@ public class SourceCodeParamsYamlUtilsV5
         pr.postFunctions = o.postFunctions.stream().map(d->new SourceCodeParamsYaml.FunctionDefForSourceCode(d.code, d.params, d.context, o.function.refType)).collect(Collectors.toList());
         pr.metas = o.metas;
         if (o.cache!=null) {
-            pr.cache = new SourceCodeParamsYaml.Cache(o.cache.enabled, o.cache.omitInline);
+            pr.cache = new SourceCodeParamsYaml.Cache(o.cache.enabled, o.cache.omitInline, o.cache.cacheMeta);
         }
         pr.tag = o.tag;
         pr.priority = o.priority;

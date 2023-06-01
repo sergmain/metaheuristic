@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.company;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.account.AccountService;
+import ai.metaheuristic.ai.dispatcher.account.AccountTxService;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.sec.SecConsts;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -35,7 +35,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CompanyAccountTopLevelService {
 
-    private final AccountService accountService;
+    private final AccountTxService accountService;
 
     public AccountData.AccountsResult getAccounts(Pageable pageable, Long companyUniqueId)  {
         pageable = PageUtils.fixPageSize(50, pageable);

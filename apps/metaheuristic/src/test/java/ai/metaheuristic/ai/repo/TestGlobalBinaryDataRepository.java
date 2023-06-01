@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.repo;
 
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableEntityManagerTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -37,11 +38,12 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@AutoConfigureCache
 public class TestGlobalBinaryDataRepository {
 
     @Autowired
     private GlobalVariableService globalVariableService;
+    @Autowired
+    private GlobalVariableEntityManagerTxService globalVariableEntityManagerTxService;
 
     private GlobalVariable d1 = null;
     @AfterEach
@@ -57,7 +59,7 @@ public class TestGlobalBinaryDataRepository {
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
-        d1 = globalVariableService.save(inputStream, bytes.length, "test-01","test-file.bin");
+        d1 = globalVariableEntityManagerTxService.save(inputStream, bytes.length, "test-01","test-file.bin");
 
         Timestamp ts = d1.getUploadTs();
 
@@ -71,7 +73,7 @@ public class TestGlobalBinaryDataRepository {
 
         bytes = "another one very short data".getBytes();
         inputStream = new ByteArrayInputStream(bytes);
-        globalVariableService.update(inputStream, bytes.length, d2);
+        globalVariableEntityManagerTxService.update(inputStream, bytes.length, d2);
 
         d2 = globalVariableService.getBinaryData(d2.getId());
         assertNotNull(d2);

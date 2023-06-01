@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -34,7 +34,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -54,7 +53,7 @@ public class TaskWithInternalContextService {
 
     private final TaskService taskService;
     private final TaskStateService taskStateService;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final TaskRepository taskRepository;
     private final ExecContextFSM execContextFSM;
 
@@ -107,12 +106,13 @@ public class TaskWithInternalContextService {
             log.warn("#707.220 Task {} was reset, can't set new value to field resultReceived", task.id);
             return Enums.UploadVariableStatus.TASK_WAS_RESET;
         }
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        TaskParamsYaml tpy = task.getTaskParamsYaml();
         tpy.task.outputs.forEach(o->o.uploaded = true);
-        task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
-        task.setCompleted(true);
+        task.updateParams(tpy);
+
+        task.setCompleted(1);
         task.setCompletedOn(System.currentTimeMillis());
-        task.setResultReceived(true);
+        task.setResultReceived(1);
         taskService.save(task);
         return Enums.UploadVariableStatus.OK;
     }
@@ -137,7 +137,7 @@ public class TaskWithInternalContextService {
 
         taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.IN_PROGRESS);
 
-        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        TaskParamsYaml taskParamsYaml = task.getTaskParamsYaml();
         ExecContextParamsYaml.Process p = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
         if (p == null) {
             if (Consts.MH_FINISH_FUNCTION.equals(taskParamsYaml.task.processCode)) {

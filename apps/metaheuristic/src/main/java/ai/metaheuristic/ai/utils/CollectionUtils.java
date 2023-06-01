@@ -27,6 +27,138 @@ import java.util.stream.Stream;
 @Slf4j
 public class CollectionUtils {
 
+    public static class TreeUtils<T> {
+
+        public interface TreeItem<T> {
+            @Nullable
+            T getTopId();
+
+            T getId();
+
+            @Nullable
+            List<TreeItem<T>> getSubTree();
+
+            void setSubTree(@Nullable List<TreeItem<T>> list);
+
+            @Override
+            boolean equals(Object o);
+
+            @Override
+            int hashCode();
+        }
+
+        /**
+         * transform tree in list
+         * @param nodes tree
+         * @return List list
+         */
+        public Map<T, List<TreeItem<T>>> fillParentMap(@Nullable List<TreeItem<T>> nodes) {
+
+            Map<T, List<TreeItem<T>>> map = new HashMap<>();
+            if (nodes==null) {
+                return map;
+            }
+
+            Set<TreeItem<T>> items = toPlainList(nodes);
+            for (TreeItem<T> item : items) {
+
+                // для верхних едементов, у которых нет предков (в данном случае topId==null)
+                // возвращается пустой список
+                if (item.getTopId()==null) {
+                    List<TreeItem<T>> list = map.get(item.getId());
+                    if (list==null ) {
+                        list=new ArrayList<>();
+                        map.put(item.getId(), list);
+                    }
+                }
+
+                if (item.getSubTree()==null) {
+                    continue;
+                }
+                for (TreeItem<T> treeItem : item.getSubTree()) {
+                    List<TreeItem<T>> list = map.get(treeItem.getId());
+                    if (list==null ) {
+                        list=new ArrayList<>();
+                        map.put(treeItem.getId(), list);
+                    }
+                    list.add(item);
+                }
+            }
+            return map;
+        }
+
+        /**
+         * transform tree in list
+         * @param nodes tree
+         * @return List list
+         */
+        public Set<TreeItem<T>> toPlainList(@Nullable List<TreeItem<T>> nodes) {
+            Set<TreeItem<T>> set = new HashSet<>();
+            if (nodes==null) {
+                return set;
+            }
+
+            for (TreeItem<T> treeItem : nodes) {
+                set.add(treeItem);
+                fillList(set, treeItem.getSubTree());
+            }
+            return set;
+        }
+
+        private void fillList(Set<TreeItem<T>> set, @Nullable List<TreeItem<T>> subTree) {
+            if (subTree==null) {
+                return;
+            }
+            for (TreeItem<T> treeItem : subTree) {
+                if (set.contains(treeItem)) {
+                    continue;
+                }
+                set.add(treeItem);
+                fillList(set, treeItem.getSubTree());
+            }
+        }
+
+        public List<TreeItem<T>> rebuildTree(final List<TreeItem<T>> source) {
+
+            Map<T, List<TreeItem<T>>> itemMapByTopId = new HashMap<>(source.size());
+
+            for (TreeItem<T> item : source) {
+                if (item.getTopId()!=null) {
+                    putAsList((Map) itemMapByTopId, item.getTopId(), item);
+                }
+            }
+
+            List<TreeItem<T>> r = new ArrayList<>();
+            for (TreeItem<T> item : source) {
+                if (item.getTopId()==null) {
+                    r.add(item);
+                }
+                final List<TreeItem<T>> items = itemMapByTopId.get(item.getId());
+                if (items!=null) {
+                    item.setSubTree(items);
+                }
+            }
+            return r;
+        }
+
+        public void putAsList( final Map<T, Object>  map, final T key, final Object value ) {
+            Object obj = map.get( key );
+            if (obj==null) {
+                List<Object> list = new ArrayList<>();
+                list.add(value);
+                map.put( key, list);
+            }
+            else if (obj instanceof List ) {
+                List<Object> objects = (List<Object>)obj;
+                objects.add( value );
+            }
+            else {
+                throw new IllegalStateException("Error");
+            }
+        }
+
+    }
+
     public static <T> List<T> asList(T t) {
         List<T> list = new ArrayList<T>();
         list.add(t);

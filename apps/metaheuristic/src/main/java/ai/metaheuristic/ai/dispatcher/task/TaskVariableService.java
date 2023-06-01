@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.event.VariableUploadedTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -61,18 +62,6 @@ public class TaskVariableService {
     }
 
     @Transactional
-    public void setVariableAsNull(Long taskId, Long variableId) {
-        Variable variable = variableRepository.findById(variableId).orElseThrow(()->new VariableCommonException("#441.120 Variable #"+variableId+" wasn't found", variableId));
-        variable.inited = true;
-        variable.nullified = true;
-        variable.setData(null);
-
-        eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, variableId, true));
-
-        variableRepository.save(variable);
-    }
-
-    @Transactional
     public void updateStatusOfVariable(Long taskId, Long variableId, boolean nullified) {
         TaskSyncService.checkWriteLockPresent(taskId);
 
@@ -100,13 +89,13 @@ public class TaskVariableService {
             log.warn("#441.180 Task {} was reset, can't set new value to field resultReceived", task.id);
             return Enums.UploadVariableStatus.TASK_WAS_RESET;
         }
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        TaskParamsYaml tpy = task.getTaskParamsYaml();
         TaskParamsYaml.OutputVariable output = tpy.task.outputs.stream().filter(o->o.id.equals(variableId)).findFirst().orElse(null);
         if (output==null) {
             return Enums.UploadVariableStatus.UNRECOVERABLE_ERROR;
         }
         output.uploaded = true;
-        task.params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
+        task.updateParams(tpy);
         TaskImpl t = taskService.save(task);
 
         return Enums.UploadVariableStatus.OK;

@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Repository
 @Profile("dispatcher")
@@ -35,7 +36,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
     @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
     @Query("SELECT t.id FROM TaskImpl t where t.execContextId=:execContextId and t.execState=7")
-    List<Long> findTaksForErrorWithRecoveryState(Long execContextId);
+    List<Long> findTaskForErrorWithRecoveryState(Long execContextId);
 
     @Query(value="select t.execState, count(*) as count_records from TaskImpl t, ExecContextImpl e " +
             "where (e.rootExecContextId=:execContextId or e.id=:execContextId) and e.id = t.execContextId " +
@@ -49,6 +50,14 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Modifying
     @Query(value="delete from TaskImpl t where t.id=:id")
     void deleteById(Long id);
+
+//    ERROR(-2),          // some error in configuration
+//    FINISHED(5),        // finished
+    @Query(value= """
+            select t.id
+            from TaskImpl t, ExecContextImpl e
+            where t.execContextId=e.id and t.execState=1 and (e.state=5 or e.state=-2)""")
+    List<Long> getUnfinishedTaskForFinishedExecContext();
 
     @Query(value="select distinct t.execContextId from TaskImpl t")
     List<Long> getAllExecContextIds();
@@ -64,13 +73,18 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
 //    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     @Query(value="select t.id, t.assignedOn, t.execContextId from TaskImpl t " +
-            "where t.coreId=:processorId and t.resultReceived=false and t.isCompleted=false")
+            "where t.coreId=:processorId and t.resultReceived=0 and t.completed=0")
     List<Object[]> findAllByProcessorIdAndResultReceivedIsFalseAndCompletedIsFalse(Long processorId);
 
     // IN_PROGRESS(1)
     @Query(value="select t.id, t.execState, t.execContextId from TaskImpl t where t.coreId=:coreId and t.execState=1")
     @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     List<Object[]> findExecStateByCoreId(Long coreId);
+
+    // IN_PROGRESS(1)
+    @Query(value="select t.coreId from TaskImpl t where t.execState=1")
+    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+    Set<Long> findCoreIdsWithInProgress();
 
     @Query(value="select t.id from TaskImpl t where t.coreId=:coreId")
     @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
@@ -84,7 +98,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     List<Long> findForAssigning(Long execContextId, List<Long> ids);
 
     @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-    @Query("SELECT t FROM TaskImpl t where t.coreId=:processorId and t.resultReceived=false and " +
+    @Query("SELECT t FROM TaskImpl t where t.coreId=:processorId and t.resultReceived=0 and " +
             " t.execState =:execState and (:mills - t.resultResourceScheduledOn > 15000) ")
     List<TaskImpl> findForMissingResultVariables(Long processorId, long mills, int execState);
 
@@ -98,5 +112,10 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Modifying
     @Query("update TaskImpl t set t.accessByProcessorOn = :mills where t.id = :taskId")
     void updateAccessByProcessorOn(Long taskId, long mills);
+
+    @Modifying
+    @Transactional
+    @Query("update TaskImpl t set t.execState=5 where t.id in (:ids)")
+    void updateTaskAsFinished(List<Long> ids);
 }
 

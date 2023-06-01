@@ -43,7 +43,7 @@ public class ExecContextUtilsService {
 
     public String getExtensionForVariable(Long execContextVariableStateId, Long variableId, String defaultExt) {
         ExecContextApiData.ExecContextVariableStates info = getExecContextVariableStates(execContextVariableStateId);
-        String ext = info.tasks.stream()
+        String ext = info.states.stream()
                 .filter(o->o.outputs!=null)
                 .flatMap(o->o.outputs.stream())
                 .filter(o->o.id.equals(variableId) && !S.b(o.ext))

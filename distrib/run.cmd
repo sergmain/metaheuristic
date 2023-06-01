@@ -1,0 +1,1 @@
+java -Xms1g -Xmx1g -Dfile.encoding=UTF-8 -Dspring.profiles.active=dispatcher,h2 -DMH_HOME=C:\mhbp_home-1\ -jar metaheuristic.jar

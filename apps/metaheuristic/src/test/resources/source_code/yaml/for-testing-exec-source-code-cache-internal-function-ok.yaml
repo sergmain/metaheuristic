@@ -1,0 +1,20 @@
+version: 3
+source:
+  uid: for-testing-exec-source-code-1.0
+  variables:
+    inputs:
+      - name: var-input-1
+    outputs:
+      - name: var-output-1
+  processes:
+    - code: mh.api-call
+      name: mh.api-call
+      function:
+        code: mh.api-call
+        context: internal
+      cache:
+        enabled: true
+      inputs:
+        - name: var-input-1
+      outputs:
+        - name: var-output-1

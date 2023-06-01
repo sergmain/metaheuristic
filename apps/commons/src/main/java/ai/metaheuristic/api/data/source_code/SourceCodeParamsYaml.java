@@ -43,6 +43,7 @@ import java.util.Map;
 @Data
 public class SourceCodeParamsYaml implements BaseParams {
 
+    @SuppressWarnings("FieldMayBeStatic")
     public final int version=5;
 
     @Override
@@ -94,6 +95,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         public GitInfo git;
         @Nullable
         public DiskInfo disk;
+        // this field defines in which context put a new variable. useful when SubProcesses.logic==and
         @Nullable
         public Boolean parentContext;
         public boolean array = false;
@@ -147,6 +149,7 @@ public class SourceCodeParamsYaml implements BaseParams {
     public static class Cache {
         public boolean enabled;
         public boolean omitInline;
+        public boolean cacheMeta;
     }
 
     @Data
@@ -214,20 +217,16 @@ public class SourceCodeParamsYaml implements BaseParams {
     public static class SourceCode {
         @Nullable
         public Integer instances;
+        @Nullable
         public VariableDefinition variables = new VariableDefinition();
         public List<Process> processes = new ArrayList<>();
         public boolean clean = false;
         public String uid;
-        public List<Map<String, String>> metas = new ArrayList<>();;
+        @Nullable
+        public List<Map<String, String>> metas = new ArrayList<>();
         public AccessControl ac;
         @Nullable
         public Boolean strictNaming;
-
-        @JsonIgnore
-        @Nullable
-        public Meta getMeta(String key) {
-            return MetaUtils.getMeta(metas, key);
-        }
     }
 
     public SourceCode source = new SourceCode();

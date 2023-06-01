@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
@@ -81,6 +82,8 @@ public class DispatcherRequestor {
         this.processorCommandProcessor = processorCommandProcessor;
 
         this.restTemplate = new RestTemplate(REQUEST_FACTORY);
+        // in Spring Boot 2.2.4 it should be working without this call
+        // in some cases it isn't working even with 2.2.4 without this call
         this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
         this.dispatcher = dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
         if (dispatcher == null) {
@@ -157,8 +160,8 @@ public class DispatcherRequestor {
                     ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core =
                             new ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef(dispatcherUrl, ps.dispatcherCode, processorId, coreCode, coreId);
 
-                    // we have to pull new tasks from server constantly
-                    if (currentExecState.isInited(dispatcherUrl)) {
+                    // we have to pull new tasks from server constantly only if a list of execContextIds was initialized fully
+                    if (currentExecState.getCurrentInitState(dispatcherUrl)== Enums.ExecContextInitState.FULL) {
                         final boolean b = processorTaskService.isNeedNewTask(core);
                         if (b && dispatcher.schedule.isCurrentTimeActive()) {
                             // always report about current active tasks, if we have actual processorId

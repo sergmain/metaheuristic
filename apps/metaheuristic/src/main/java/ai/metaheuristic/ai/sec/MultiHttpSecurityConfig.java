@@ -20,16 +20,13 @@ import ai.metaheuristic.ai.Globals;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfTokenRepository;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -48,11 +45,6 @@ import java.util.List;
 public class MultiHttpSecurityConfig {
 
     public final Globals globals;
-
-    @Bean
-    public CsrfTokenRepository csrfTokenRepository() {
-        return CookieCsrfTokenRepository.withHttpOnlyFalse();
-    }
 
     @Bean
     public PasswordEncoder getPasswordEncoder() {
@@ -75,79 +67,26 @@ public class MultiHttpSecurityConfig {
         return source;
     }
 
-    @Configuration
-    @Order(1)
-    @RequiredArgsConstructor
-    public static class RestAuthSecurityConfig extends WebSecurityConfigurerAdapter {
+    @Bean
+    public SecurityFilterChain restFilterChain(HttpSecurity http) throws Exception {
+        http
+                .httpBasic()
+                .and()
+                .cors()
+                .and()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .authorizeRequests()
+                .antMatchers("/","/index.html", "/*.js", "/*.css", "/favicon.ico", "/assets/**","/resources/**", "/rest/login").permitAll()
+                .antMatchers("/rest/**/**").authenticated()
+                .anyRequest().denyAll()
+                .and()
+                .csrf().disable().headers().cacheControl();
 
-        private static final String REST_REALM = "REST realm";
-
-        private final Globals globals;
-
-        @Override
-        protected void configure(HttpSecurity http) throws Exception {
-
-            http
-                    .antMatcher("/rest/**/**").cors()
-                    .and()
-                    .antMatcher("/rest/**/**").sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                    .and()
-                    .authorizeRequests()
-                    .antMatchers("/rest/login").permitAll()
-                    .antMatchers("/rest/**/**").authenticated()
-                    .and()
-                    .antMatcher("/rest/**/**").httpBasic().realmName(REST_REALM)
-                    .and()
-                    .antMatcher("/rest/**/**").csrf().disable().headers().cacheControl();
-
-            if (globals.dispatcher.sslRequired) {
-                http.requiresChannel().antMatchers("/**").requiresSecure();
-            }
+        if (globals.sslRequired) {
+            http.requiresChannel().antMatchers("/**").requiresSecure();
         }
+        return http.build();
     }
 
-    @Configuration
-    @Order
-    @RequiredArgsConstructor
-    public static class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
-
-        private final CsrfTokenRepository csrfTokenRepository;
-        private final Globals globals;
-
-        @Override
-        protected void configure(HttpSecurity http) throws Exception {
-
-            http
-                    .csrf().csrfTokenRepository(csrfTokenRepository)
-                    .and()
-                    .headers().frameOptions().sameOrigin()
-                    .and()
-                    .authorizeRequests()
-                    .antMatchers("/manager/html").denyAll()
-                    .antMatchers("/static/**/**", "/css/**", "/js/**", "/webjars/**").permitAll()
-                    .antMatchers("/favicon.ico", "/", "/index", "/about", "/test/**/**", "/login", "/jssc", "/error/**").permitAll()
-                    .antMatchers("/login").anonymous()
-                    .antMatchers("/logout", "/dispatcher/**/**").authenticated()
-                    .antMatchers("/admin/**").hasAnyRole("ADMIN")
-                    .antMatchers("/user/**").hasAnyRole("USER")
-                    .antMatchers("/**/**").denyAll()
-                    .and()
-                    .formLogin()
-                    .loginPage("/login")
-                    .usernameParameter("j_username")
-                    .passwordParameter("j_password")
-                    .loginProcessingUrl("/jssc")
-                    .defaultSuccessUrl("/index")
-                    .and()
-                    .logout()
-                    .logoutUrl("/logout")
-                    .logoutSuccessUrl("/index");
-//                    .and()
-//                    .antMatcher("/test/**/**").csrf().disable();
-
-            if (globals.dispatcher.sslRequired) {
-                http.requiresChannel().antMatchers("/**").requiresSecure();
-            }
-        }
-    }
 }

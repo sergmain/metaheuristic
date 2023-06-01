@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -33,6 +34,7 @@ public class AccountApiData {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class SerializableGrantedAuthority implements Serializable {
+        @Serial
         private static final long serialVersionUID = 4854416219001153110L;
 
         public String authority;

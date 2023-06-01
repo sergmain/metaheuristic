@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -50,7 +49,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 @ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@AutoConfigureCache
 public class TestSingleInternalFunction extends FeatureMethods {
 
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
@@ -78,7 +76,7 @@ public class TestSingleInternalFunction extends FeatureMethods {
     private String getFunctionCode(Object object) {
         TaskImpl task = taskRepository.findById((Long) object).orElse(null);
         assertNotNull(task);
-        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        TaskParamsYaml taskParamsYaml = task.getTaskParamsYaml();
         return taskParamsYaml.task.function.code;
     }
 }

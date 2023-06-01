@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
+import ai.metaheuristic.ai.dispatcher.data.KbData;
 import ai.metaheuristic.ai.exceptions.GlobalConfigurationException;
 import ai.metaheuristic.ai.utils.EnvProperty;
 import ai.metaheuristic.api.EnumsApi;
@@ -23,6 +24,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.SecUtils;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -56,7 +58,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 @ConfigurationProperties("mh")
 @Getter
@@ -86,20 +87,6 @@ public class Globals {
 
     public static final String METAHEURISTIC_PROJECT = "Metaheuristic project";
 
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class DispatcherDir {
-        public File dir = new File("target"+ File.separatorChar + "mh-dispatcher");
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class ProcessorDir {
-        public File dir = null;
-    }
-
     @Component
     @ConfigurationPropertiesBinding
     public static class PublicKeyConverter implements Converter<String, PublicKey> {
@@ -127,27 +114,6 @@ public class Globals {
         }
     }
 
-    @Component
-    @ConfigurationPropertiesBinding
-    public static class DispatcherDirConverter implements Converter<String, DispatcherDir> {
-        @Override
-        public DispatcherDir convert(String from) {
-            if (S.b(from)) {
-                return new DispatcherDir();
-            }
-            return new DispatcherDir(toFile(from));
-        }
-    }
-
-    @Component
-    @ConfigurationPropertiesBinding
-    public static class ProcessorDirConverter implements Converter<String, ProcessorDir> {
-        @Override
-        public ProcessorDir convert(String from) {
-            return new ProcessorDir(toFile(from));
-        }
-    }
-
     @Getter
     @Setter
     public static class Asset {
@@ -165,15 +131,64 @@ public class Globals {
         @DurationUnit(ChronoUnit.SECONDS)
         public Duration syncTimeout = SECONDS_120;
 
-//        @Scheduled(initialDelay = 23_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.dispatcher.asset.syncTimeout.toSeconds(), 60, 3600)*1000 }")
         public Duration getSyncTimeout() {
             return syncTimeout.toSeconds() >= 60 && syncTimeout.toSeconds() <= 3600 ? syncTimeout : SECONDS_120;
         }
     }
 
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class KbPath {
+        public String evals;
+        public String data;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Git implements KbData.KbGit {
+        public String repo;
+        public String branch;
+        public String commit;
+        public List<KbPath> kbPaths = new ArrayList<>();
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class KbFile {
+        public String url;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Kb {
+        public String code;
+        public String type;
+        public boolean disabled = false;
+        public Git git;
+        public KbFile file;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Max {
+        public int consoleOutputLines = 1000;
+        public int promptLength = 4096;
+        public int errorsPerPart = 1;
+        // has effect only with a local executor of requests
+        public int errorsPerEvaluation = 5;
+        public int promptsPerPart = 10000;
+    }
+
     @Getter
     @Setter
     public static class RowsLimit {
+        public int defaultLimit = 20;
         //        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.dispatcher.global-variable-table-rows-limit'), 5, 100, 20) }")
         public int globalVariableTable = 20;
 
@@ -218,17 +233,14 @@ public class Globals {
             return batchDeletion.toSeconds() >= 7 && batchDeletion.toSeconds() <= 180 ? batchDeletion : DAYS_14;
         }
 
-        //        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.dispatcher.timeout.artifactCleaner.toSeconds(), 30, 300)*1000 }")
         public Duration getArtifactCleaner() {
             return artifactCleaner.toSeconds() >= 60 && artifactCleaner.toSeconds() <=600 ? artifactCleaner : SECONDS_60;
         }
 
-//        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.dispatcher.timeout.gc.toSeconds(), 600, 3600*24*7)*1000 }")
         public Duration getGc() {
             return gc.toSeconds() >= 600 && gc.toSeconds() <= 3600*24*7 ? gc : SECONDS_3600;
         }
 
-//        @Scheduled(initialDelay = 10_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( @Globals.dispatcher.timeout.updateBatchStatuses.toSeconds(), 5, 60)*1000 }")
         public Duration getUpdateBatchStatuses() {
             return updateBatchStatuses.toSeconds() >= 5 && updateBatchStatuses.toSeconds() <=60 ? updateBatchStatuses : SECONDS_23;
         }
@@ -260,8 +272,6 @@ public class Globals {
         @PeriodUnit(ChronoUnit.DAYS)
         public Period keepEventsInDb = Period.ofDays(90);
 
-        public boolean sslRequired = true;
-
         public boolean functionSignatureRequired = true;
         public boolean enabled = false;
 
@@ -273,8 +283,6 @@ public class Globals {
 
         @Nullable
         public PublicKey publicKey;
-
-        public DispatcherDir dir = new DispatcherDir();
 
         public String defaultResultFileExtension = ".bin";
 
@@ -388,47 +396,38 @@ public class Globals {
         @DurationUnit(ChronoUnit.SECONDS)
         public Duration artifactCleaner = SECONDS_29;
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.requestDispatcher.toSeconds(), 6, 30)*1000 }")
         public Duration getRequestDispatcher() {
             return requestDispatcher.toSeconds() >= 6 && requestDispatcher.toSeconds() <= 30 ? requestDispatcher : SECONDS_10;
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.taskAssigner.toSeconds(), 3, 20)*1000 }")
         public Duration getTaskAssigner() {
             return taskAssigner.toSeconds() >= 3 && taskAssigner.toSeconds() <= 20 ? taskAssigner : SECONDS_5;
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.taskProcessor.toSeconds(), 3, 20)*1000 }")
         public Duration getTaskProcessor() {
             return taskProcessor.toSeconds() >= 3 && taskProcessor.toSeconds() <= 20 ? taskProcessor : SECONDS_9;
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.downloadFunction.toSeconds(), 3, 20)*1000 }")
         public Duration getDownloadFunction() {
             return downloadFunction.toSeconds() >= 3 && downloadFunction.toSeconds() <= 20 ? downloadFunction : SECONDS_11;
         }
 
-//        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.prepareFunctionForDownloading.toSeconds(), 20, 60)*1000 }")
         public Duration getPrepareFunctionForDownloading() {
             return prepareFunctionForDownloading.toSeconds() >= 20 && prepareFunctionForDownloading.toSeconds() <= 60 ? prepareFunctionForDownloading : SECONDS_31;
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.downloadResource.toSeconds(), 3, 20)*1000 }")
         public Duration getDownloadResource() {
             return downloadResource.toSeconds() >= 3 && downloadResource.toSeconds() <= 20 ? downloadResource : SECONDS_3;
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.uploadResultResource.toSeconds(), 3, 20)*1000 }")
         public Duration getUploadResultResource() {
             return uploadResultResource.toSeconds() >= 3 && uploadResultResource.toSeconds() <= 20 ? uploadResultResource : SECONDS_3;
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.dispatcherContextInfo.toSeconds(), 10, 60)*1000 }")
         public Duration getDispatcherContextInfo() {
             return dispatcherContextInfo.toSeconds() >= 10 && dispatcherContextInfo.toSeconds() <= 60 ? dispatcherContextInfo : SECONDS_19;
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.artifactCleaner.toSeconds(), 10, 60)*1000 }")
         public Duration getArtifactCleaner() {
             return artifactCleaner.toSeconds() >= 10 && artifactCleaner.toSeconds() <= 60 ? artifactCleaner : SECONDS_29;
         }
@@ -453,7 +452,6 @@ public class Globals {
         public ProcessorTimeout timeout = new ProcessorTimeout();
 
         public boolean enabled = false;
-        public ProcessorDir dir = null;
 
         @Nullable
         public File defaultDispatcherYamlFile = null;
@@ -461,7 +459,6 @@ public class Globals {
         @Nullable
         public File defaultEnvYamlFile = null;
 
-//        @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.task-console-output-max-lines'), 1000, 100000, 1000) }")
         public int taskConsoleOutputMaxLines = 1000;
 
         public void setTaskConsoleOutputMaxLines(int taskConsoleOutputMaxLines) {
@@ -471,9 +468,25 @@ public class Globals {
         public int initCoreNumber = 1;
     }
 
+    @Getter
+    @Setter
+    public static class Mhbp {
+        public final Max max = new Max();
+        public Kb[] kb;
+    }
+
     public static class ThreadNumber {
         private int scheduler = 10;
         private int event =  Math.max(10, Runtime.getRuntime().availableProcessors()/2);
+        public int queryApi =  2;
+
+        public int getQueryApi() {
+            return EnvProperty.minMax( queryApi, 2, 100);
+        }
+
+        public void setQueryApi(int queryApi) {
+            this.queryApi = queryApi;
+        }
 
         public int getScheduler() {
             return EnvProperty.minMax( scheduler, 10, 32);
@@ -495,6 +508,7 @@ public class Globals {
     public final Dispatcher dispatcher = new Dispatcher();
     public final Processor processor = new Processor();
     public final ThreadNumber threadNumber = new ThreadNumber();
+    public final Mhbp mhbp = new Mhbp();
 
     @Nullable
     public String systemOwner = null;
@@ -507,15 +521,34 @@ public class Globals {
     public boolean testing = false;
     public boolean eventEnabled = false;
 
-    // some fields
-    public File dispatcherTempDir;
-    public File dispatcherResourcesDir;
-    public File processorResourcesDir;
+    public boolean sslRequired = true;
+
+    public Path home;
+
+    public Path getHome() {
+        if (home==null) {
+            throw new IllegalArgumentException("mh.home isn't specified");
+        }
+        return home;
+    }
+
+    // some fields, will be inited in postConstruct()
+    public Path dispatcherTempPath;
+    public Path dispatcherResourcesPath;
+    public Path dispatcherPath;
+    public Path processorResourcesPath;
+    public Path processorPath;
 
     public EnumsApi.OS os = EnumsApi.OS.unknown;
 
+    @SneakyThrows
     @PostConstruct
     public void postConstruct() {
+        dispatcherPath = getHome().resolve("dispatcher");
+        Files.createDirectories(dispatcherPath);
+        processorPath = getHome().resolve("processor");
+        Files.createDirectories(processorPath);
+
         if (dispatcher.enabled && dispatcher.functionSignatureRequired && dispatcher.publicKey==null ) {
             throw new GlobalConfigurationException("mh.dispatcher.public-key wasn't configured for dispatcher (file application.properties) but mh.dispatcher.function-signature-required is true (default value)");
         }
@@ -530,19 +563,14 @@ public class Globals {
             }
         }
 
-        if (processor.dir.dir ==null) {
-            log.warn("Processor will be disabled, processorDir is null, processorEnabled: {}", processor.enabled);
-            processor.enabled = false;
-        }
-
         if (!dispatcher.enabled) {
             log.warn("Dispatcher wasn't enabled, assetMode will be set to DispatcherAssetMode.local");
             dispatcher.asset.mode = EnumsApi.DispatcherAssetMode.local;
         }
 
         if (processor.enabled) {
-            processorResourcesDir = new File(processor.dir.dir, Consts.RESOURCES_DIR);
-            processorResourcesDir.mkdirs();
+            processorResourcesPath = processorPath.resolve(Consts.RESOURCES_DIR);
+            Files.createDirectories(processorResourcesPath);
 
             // TODO 2019.04.26 right now the change of ownership is disabled
             //  but maybe will be required in future
@@ -550,11 +578,11 @@ public class Globals {
         }
 
         if (dispatcher.enabled) {
-            dispatcherTempDir = new File(dispatcher.dir.dir, "temp");
-            dispatcherTempDir.mkdirs();
+            dispatcherTempPath = dispatcherPath.resolve("temp");
+            PathUtils.createParentDirectories(dispatcherTempPath);
 
-            dispatcherResourcesDir = new File(dispatcher.dir.dir, Consts.RESOURCES_DIR);
-            dispatcherResourcesDir.mkdirs();
+            dispatcherResourcesPath = dispatcherPath.resolve(Consts.RESOURCES_DIR);
+            Files.createDirectories(dispatcherResourcesPath);
         }
         initOperationSystem();
 
@@ -608,16 +636,16 @@ public class Globals {
     }
 
     @Nullable
-    private static File toFile(@Nullable String dirAsString) {
-        if (StringUtils.isBlank(dirAsString)) {
+    private static KbFile toFile(@Nullable String dirAsString) {
+        if (S.b(dirAsString)) {
             return null;
         }
 
         // special case for ./some-dir
         if (dirAsString.charAt(0) == '.' && (dirAsString.charAt(1) == '\\' || dirAsString.charAt(1) == '/')) {
-            return new File(dirAsString.substring(2));
+            return new KbFile(dirAsString.substring(2));
         }
-        return new File(dirAsString);
+        return new KbFile(dirAsString);
     }
 
 
@@ -628,11 +656,11 @@ public class Globals {
             Pair.of("MH_CORS_ALLOWED_ORIGINS", "MH_CORSALLOWEDORIGINS"),
             Pair.of("MH_THREAD_NUMBER_SCHEDULER", "MH_THREADNUMBER_SCHEDULER"),
             Pair.of("MH_PUBLIC_KEY", "MH_DISPATCHER_PUBLICKEY"),
-            Pair.of("MH_IS_SSL_REQUIRED", "MH_DISPATCHER_ISSSLREQUIRED"),
+            Pair.of("MH_DISPATCHER_ISSSLREQUIRED", "MH_IS_SSL_REQUIRED"),
             Pair.of("MH_DEFAULT_RESULT_FILE_EXTENSION", "MH_DEFAULT_RESULTFILEEXTENSION"),
             Pair.of("MH_IS_EVENT_ENABLED", "MH_ISEVENTENABLED"),
             Pair.of("MH_CHUNK_SIZE", "MH_DISPATCHER_CHUNKSIZE"),
-            Pair.of("MH_DISPATCHER_ASSET_SOURCE_URL", "MH_DISPATCHER_ASSET_SOURCE_URL")
+            Pair.of("MH_DISPATCHER_ASSET_SOURCE_URL", "MH_DISPATCHER_ASSET_SOURCEURL")
     );
 
     private void logDeprecated() {
@@ -716,15 +744,16 @@ public class Globals {
         log.warn("Memory, free: {}, max: {}, total: {}", rt.freeMemory(), rt.maxMemory(), rt.totalMemory());
         log.info("Current globals:");
         log.info("'\tOS: {}", os);
+        log.info("'\tmh.home: {}", getHome());
         log.info("'\tcorsAllowedOrigins: {}", corsAllowedOrigins);
         log.info("'\tbranding: {}", branding);
         log.info("'\ttesting: {}", testing);
+        log.info("'\tsslRequired: {}", sslRequired);
         log.info("'\tthreadNumber.scheduler: {}", threadNumber.getScheduler());
         log.info("'\tthreadNumber.event: {}", threadNumber.getEvent());
         log.info("'\tdispatcher.enabled: {}", dispatcher.enabled);
-        log.info("'\tdispatcher.sslRequired: {}", dispatcher.sslRequired);
+        log.info("'\tdispatcher.dir: {}", dispatcherPath.toAbsolutePath().normalize());
         log.info("'\tdispatcher.functionSignatureRequired: {}", dispatcher.functionSignatureRequired);
-        log.info("'\tdispatcher.dir: {}", dispatcher.dir.dir!=null ? dispatcher.dir.dir.getAbsolutePath() : "<dispatcher dir is null>");
         log.info("'\tdispatcher.masterUsername: {}", dispatcher.masterUsername);
         log.info("'\tdispatcher.publicKey: {}", dispatcher.publicKey!=null ? "provided" : "wasn't provided");
         log.info("'\tdispatcher.chunkSize: {}", dispatcher.chunkSize);
@@ -749,6 +778,7 @@ public class Globals {
         log.info("'\tdispatcher.rowsLimit.processor: {}", dispatcher.rowsLimit.processor);
 
         log.info("'\tprocessor.enabled: {}", processor.enabled);
+        log.info("'\tprocessor.dir: {}", processorPath.toAbsolutePath().normalize());
         log.info("'\tprocessor.taskConsoleOutputMaxLines: {}", processor.taskConsoleOutputMaxLines);
         log.info("'\tprocessor.timeout.artifactCleaner: {}", processor.timeout.artifactCleaner);
         log.info("'\tprocessor.timeout.downloadFunction: {}", processor.timeout.downloadFunction);
@@ -758,18 +788,5 @@ public class Globals {
         log.info("'\tprocessor.timeout.taskAssigner: {}", processor.timeout.taskAssigner);
         log.info("'\tprocessor.timeout.taskProcessor: {}", processor.timeout.taskProcessor);
         log.info("'\tprocessor.timeout.dispatcherContextInfo: {}", processor.timeout.dispatcherContextInfo);
-        log.info("'\tprocessor.dir: {}", processor.dir.dir !=null ? processor.dir.dir.getAbsolutePath() : "<processor dir is null>");
-    }
-
-    // TODO 2019-07-20 should method createTempFileForDispatcher() be moved to other class/package?
-    private static final Random r = new Random();
-    public File createTempFileForDispatcher(String prefix) {
-        if (StringUtils.isBlank(prefix)) {
-            throw new IllegalStateException("Prefix is blank");
-        }
-        File tempFile = new File(dispatcherTempDir,
-                prefix + r.nextInt(99999999) + '-' + System.nanoTime()
-        );
-        return tempFile;
     }
 }

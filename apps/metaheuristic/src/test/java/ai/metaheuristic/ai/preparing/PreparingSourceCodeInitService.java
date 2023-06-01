@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableEntityManagerTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
@@ -65,6 +66,7 @@ public class PreparingSourceCodeInitService {
     private final PreparingSourceCodeService preparingSourceCodeService;
     private final CompanyTopLevelService companyTopLevelService;
     private final GlobalVariableService globalVariableService;
+    private final GlobalVariableEntityManagerTxService globalVariableEntityManagerTxService;
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final SourceCodeCache sourceCodeCache;
     private final FunctionRepository functionRepository;
@@ -117,7 +119,7 @@ public class PreparingSourceCodeInitService {
             log.error("error preparing variables", th);
         }
 
-        data.testGlobalVariable = globalVariableService.save(new ByteArrayInputStream(bytes), bytes.length, GLOBAL_TEST_VARIABLE,"file-01.txt");
+        data.testGlobalVariable = globalVariableEntityManagerTxService.save(new ByteArrayInputStream(bytes), bytes.length, GLOBAL_TEST_VARIABLE,"file-01.txt");
 
         data.execContextYaml = new ExecContextParamsYaml();
         data.execContextYaml.variables.globals = new ArrayList<>();

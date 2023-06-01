@@ -20,10 +20,11 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
+import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -37,6 +38,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -62,10 +64,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 public class BatchLineSplitterTxService {
 
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final InternalFunctionService internalFunctionService;
     private final TaskProducingService taskProducingService;
     private final ExecContextGraphService execContextGraphService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
     public Void createTasksTx(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml, Long numberOfLines, String content) {
@@ -90,6 +93,7 @@ public class BatchLineSplitterTxService {
             log.error(es, th);
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
         }
+        eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
         return null;
     }
 
@@ -104,13 +108,13 @@ public class BatchLineSplitterTxService {
                     "#994.275 there isn't any sub-process for process '"+executionContextData.process.processCode+"'");
         }
 
-        final String variableName = MetaUtils.getValue(executionContextData.process.metas, "output-variable");
+        final String variableName = MetaUtils.getValue(executionContextData.process.metas, BatchLineSplitterFunction.OUTPUT_VARIABLE);
         if (S.b(variableName)) {
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken,
                     "#994.280 Meta with key 'output-variable' wasn't found for process '"+executionContextData.process.processCode+"'");
         }
 
-        boolean isArray = MetaUtils.isTrue(executionContextData.process.metas, true, "is-array");
+        boolean isArray = MetaUtils.isTrue(executionContextData.process.metas, true, BatchLineSplitterFunction.IS_ARRAY);
 
         List<List<String>> allLines = stringToListOfList(content, numberOfLines);
 

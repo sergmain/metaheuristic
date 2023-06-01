@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.test.tx;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
 import ai.metaheuristic.ai.dispatcher.beans.*;
@@ -28,14 +27,14 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
-import ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,18 +61,16 @@ public class TxSupportForTestingService {
 
     private final Globals globals;
     private final VariableRepository variableRepository;
-    private final VariableService variableService;
-    private final ExecContextService execContextService;
+    private final VariableTxService variableService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
-    private final ExecContextFSM execContextFSM;
     private final ExecContextGraphService execContextGraphService;
-    private final TaskVariableTopLevelService taskVariableTopLevelService;
     private final FunctionCache functionCache;
     private final FunctionDataService functionDataService;
     private final ProcessorCache processorCache;
     private final ExecContextCreatorService execContextCreatorService;
     private final BatchCache batchCache;
     private final ExecContextCache execContextCache;
+    private final VariableEntityManagerService variableEntityManagerService;
 
     @Transactional
     public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
@@ -136,7 +133,7 @@ public class TxSupportForTestingService {
             throw new IllegalStateException("(v==null || v.inited)");
         }
         byte[] bytes = variableData.getBytes();
-        variableService.update(new ByteArrayInputStream(bytes), bytes.length, variable);
+        VariableSyncService.getWithSyncVoidForCreation(variable.id, ()-> variableEntityManagerService.update(new ByteArrayInputStream(bytes), bytes.length, variable));
 
         v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variableName, taskContextId, execContextId);
         if (v==null) {
@@ -193,7 +190,7 @@ public class TxSupportForTestingService {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        return variableService.createInitialized(is, size, variable, filename, execContextId, taskContextId);
+        return variableEntityManagerService.createInitialized(is, size, variable, filename, execContextId, taskContextId);
     }
 
     @Transactional
@@ -205,15 +202,16 @@ public class TxSupportForTestingService {
     }
 
     @Transactional
-    public void produceAndStartAllTasks(SourceCodeImpl sourceCode, Long execContextId, ExecContextParamsYaml execContextParamsYaml) {
+    public void produceAndStartAllTasks(SourceCodeImpl sourceCode, Long execContextId) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        ExecContextImpl execContext = execContextService.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             throw new IllegalStateException("Need better solution for this state");
         }
-        execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContext, execContextParamsYaml);
+        execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContext);
+        execContextCache.save(execContext);
     }
 
     /**
@@ -232,7 +230,7 @@ public class TxSupportForTestingService {
             return;
         }
         execContext.setState(EnumsApi.ExecContextState.STARTED.code);
-        execContextService.save(execContext);
+        execContextCache.save(execContext);
     }
 
     @Nullable
@@ -260,7 +258,7 @@ public class TxSupportForTestingService {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        ExecContextImpl execContext = execContextService.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
             return EnumsApi.TaskProducingStatus.EXEC_CONTEXT_NOT_FOUND_ERROR;
         }
@@ -268,7 +266,7 @@ public class TxSupportForTestingService {
             return EnumsApi.TaskProducingStatus.OK;
         }
         execContext.setState(EnumsApi.ExecContextState.PRODUCING.code);
-        execContextService.save(execContext);
+        execContextCache.save(execContext);
         return EnumsApi.TaskProducingStatus.OK;
     }
 
@@ -277,7 +275,7 @@ public class TxSupportForTestingService {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        return addTasksToGraph(execContextService.findById(execContextId), parentTaskIds, taskIds);
+        return addTasksToGraph(execContextCache.findById(execContextId, true), parentTaskIds, taskIds);
     }
 
     private OperationStatusRest addTasksToGraph(@Nullable ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {

@@ -22,9 +22,9 @@ import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.springframework.context.annotation.Profile;
@@ -33,7 +33,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
 import java.sql.Blob;
 import java.sql.SQLException;
 
@@ -52,15 +54,15 @@ public class CacheVariableService {
     private final CacheVariableRepository cacheVariableRepository;
 
     @Transactional(readOnly = true)
-    public void storeToFile(Long variableId, File trgFile) throws IOException, SQLException {
+    public void storeToFile(Long variableId, Path trgFile) throws IOException, SQLException {
         Blob blob = cacheVariableRepository.getDataAsStreamById(variableId);
         if (blob==null) {
             String es = S.f("#173.020 Data for variableId #%d wasn't found", variableId);
             log.warn(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }
-        try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-            FileUtils.copyInputStreamToFile(bis, trgFile);
+        try (InputStream is = blob.getBinaryStream()) {
+            DirUtils.copy(is, trgFile);
         }
     }
 

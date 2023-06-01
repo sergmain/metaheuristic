@@ -1,0 +1,8 @@
+version: 1
+kb:
+  code: coqa
+  type: coqa
+  file:
+    url: https://nlp.stanford.edu/data/coqa/coqa-train-v1.0.json
+  disabled: true
+

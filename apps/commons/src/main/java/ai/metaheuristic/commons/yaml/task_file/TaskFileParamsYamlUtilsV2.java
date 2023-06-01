@@ -62,7 +62,7 @@ public class TaskFileParamsYamlUtilsV2
         return t;
     }
 
-    private static TaskFileParamsYaml.InputVariable upInputVariable(TaskFileParamsYamlV2.InputVariableV2 v2) {
+    public static TaskFileParamsYaml.InputVariable upInputVariable(TaskFileParamsYamlV2.InputVariableV2 v2) {
         TaskFileParamsYaml.InputVariable v = new TaskFileParamsYaml.InputVariable();
         v.id = v2.id;
         v.name = v2.name;
@@ -74,6 +74,7 @@ public class TaskFileParamsYamlUtilsV2
         v.type = v2.type;
         v.empty = v2.empty;
         v.setNullable(v2.getNullable());
+        v.array = v2.array;
         return v;
     }
 

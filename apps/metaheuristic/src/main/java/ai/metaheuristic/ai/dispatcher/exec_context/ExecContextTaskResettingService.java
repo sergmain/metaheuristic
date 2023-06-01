@@ -27,7 +27,8 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
@@ -57,7 +58,7 @@ import java.util.List;
 public class ExecContextTaskResettingService {
 
     private final ExecContextCache execContextCache;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final TaskRepository taskRepository;
     private final TaskService taskService;
     private final EventPublisherService eventPublisherService;
@@ -137,7 +138,7 @@ public class ExecContextTaskResettingService {
         task.setFunctionExecResults(null);
         task.setCoreId(null);
         task.setAssignedOn(null);
-        task.setCompleted(false);
+        task.setCompleted(0);
         task.setCompletedOn(null);
         if (targetExecState==null) {
             task.execState = process.cache != null && process.cache.enabled ? EnumsApi.TaskExecState.CHECK_CACHE.value : EnumsApi.TaskExecState.NONE.value;
@@ -145,17 +146,19 @@ public class ExecContextTaskResettingService {
         else {
             task.execState = targetExecState.value;
         }
-        task.setResultReceived(false);
+        task.setResultReceived(1);
         task.setResultResourceScheduledOn(0);
         taskService.save(task);
         for (TaskParamsYaml.OutputVariable output : taskParams.task.outputs) {
             if (output.context== EnumsApi.VariableContext.global) {
                 throw new IllegalStateException("(output.context== EnumsApi.VariableContext.global)");
             }
-            variableService.resetVariable(execContext.id, output.id);
+            VariableSyncService.getWithSyncVoidForCreation(output.id, ()->variableService.resetVariable(execContext.id, output.id));
         }
 
-        eventPublisherService.publishSetTaskExecStateTxEvent(new SetTaskExecStateTxEvent(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState)));
+        eventPublisherService.publishSetTaskExecStateTxEvent(
+                new SetTaskExecStateTxEvent(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState), null, null, null));
+
         // we don't have to un-register task because it could un-register already de-registered task.
         // actual deregistering will be done via reconsiliationService
 //        eventPublisherService.publishUnAssignTaskTxEventAfterCommit(new UnAssignTaskTxAfterCommitEvent(task.execContextId, task.id));

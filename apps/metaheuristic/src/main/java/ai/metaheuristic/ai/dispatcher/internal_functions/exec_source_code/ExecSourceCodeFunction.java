@@ -30,7 +30,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -48,9 +48,9 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 
@@ -67,7 +67,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
 
     private final SourceCodeCache sourceCodeCache;
     private final SourceCodeRepository sourceCodeRepository;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final GlobalVariableService globalVariableService;
     private final ExecContextVariableService execContextVariableService;
     private final ExecContextTopLevelService execContextTopLevelService;
@@ -96,14 +96,14 @@ public class ExecSourceCodeFunction implements InternalFunction {
         TxUtils.checkTxNotExists();
         ArtifactCleanerAtDispatcher.setBusy();
         try {
-            processInternale(simpleExecContext, taskId, taskContextId, taskParamsYaml);
+            processInternal(simpleExecContext, taskId, taskContextId, taskParamsYaml);
         }
         finally {
             ArtifactCleanerAtDispatcher.notBusy();
         }
     }
 
-    private void processInternale(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId, TaskParamsYaml taskParamsYaml) {
+    private void processInternal(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId, TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
 
         String scUid = MetaUtils.getValue(taskParamsYaml.task.metas, Consts.SOURCE_CODE_UID);
@@ -143,9 +143,9 @@ public class ExecSourceCodeFunction implements InternalFunction {
         final ExecContextParamsYaml execContextParamsYaml = execContextResultRest.execContext.getExecContextParamsYaml();
 
 
-        File tempDir=null;
+        Path tempDir=null;
         try {
-            tempDir = DirUtils.createMhTempDir("mh-exec-source-code-");
+            tempDir = DirUtils.createMhTempPath("mh-exec-source-code-");
             if (tempDir == null) {
                 throw new InternalFunctionException(system_error, "#508.070 can't create a temporary file");
             }
@@ -159,7 +159,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
                     execContextVariableService.initInputVariableWithNull(execContextResultRest.execContext.id, execContextParamsYaml, i);
                 }
                 else {
-                    File tempFile = File.createTempFile("input-", ".bin", tempDir);
+                    Path tempFile = Files.createTempFile(tempDir, "input-", ".bin");
                     switch (input.context) {
                         case global:
                             globalVariableService.storeToFileWithTx(input.id, tempFile);
@@ -170,17 +170,10 @@ public class ExecSourceCodeFunction implements InternalFunction {
                         case array:
                             throw new NotImplementedException("Not yet");
                     }
-                    try (InputStream is = new FileInputStream(tempFile)) {
+                    try (InputStream is = Files.newInputStream(tempFile)) {
                         execContextVariableService.initInputVariable(
-                                is, tempFile.length(), "variable-" + input.name, execContextResultRest.execContext.id, execContextParamsYaml, i);
+                                is, Files.size(tempFile), "variable-" + input.name, execContextResultRest.execContext.id, execContextParamsYaml, i);
                     }
-/*
-                    VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
-                            List.of(new BatchTopLevelService.FileWithMapping(tempFile, "variable-" + input.name)));
-
-                    variableService.createInputVariablesForSubProcess(
-                            variableDataSource, execContextResultRest.execContext.id, "variable-" + input.name, Consts.TOP_LEVEL_CONTEXT_ID, isArray);
-*/
                 }
             }
             for (ExecContextParamsYaml.Variable output : execContextParamsYaml.variables.outputs) {
@@ -196,10 +189,10 @@ public class ExecSourceCodeFunction implements InternalFunction {
             throw new InternalFunctionException(system_error, es);
         }
         finally {
-            DirUtils.deleteAsync(tempDir);
+            DirUtils.deletePathAsync(tempDir);
         }
 
-        execContextCreatorService.produceTasksForExecContext(sourceCode, execContextResultRest);
+        execContextCreatorService.produceTasksForExecContext(sourceCode, execContextResultRest.execContext.id);
         if (execContextResultRest.isErrorMessages()) {
             throw new InternalFunctionException(exec_context_starting_error,
                             S.f("#508.077 tasks for execContext #%d, sourceCode '%s' can't be produced, error: %s",

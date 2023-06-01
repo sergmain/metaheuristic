@@ -34,8 +34,10 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -43,7 +45,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -79,7 +80,7 @@ public class TaskWithInternalContextEventService {
 
     private final TaskService taskService;
     private final ExecContextVariableService execContextVariableService;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     public final InternalFunctionVariableService internalFunctionVariableService;
     public final SourceCodeCache sourceCodeCache;
     public final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
@@ -90,6 +91,7 @@ public class TaskWithInternalContextEventService {
     private final ApplicationEventPublisher eventPublisher;
     private final VariableTopLevelService variableTopLevelService;
     public final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
+    private final VariableEntityManagerService variableEntityManagerService;
 
     private static final int MAX_ACTIVE_THREAD = 1;
     // number of active executers with different execContextId
@@ -159,7 +161,7 @@ public class TaskWithInternalContextEventService {
 
     /**
      *
-     * @param execContextId
+     * @param execContextId Long
      * @return boolean is POOL_OF_EXECUTORS already full and execContextId wasn't allocated
      */
     public static boolean pokeExecutor(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
@@ -221,7 +223,7 @@ public class TaskWithInternalContextEventService {
     private void process(final TaskWithInternalContextEvent event) {
         TxUtils.checkTxNotExists();
 
-        ExecContextImpl execContext = execContextCache.findById(event.execContextId);
+        ExecContextImpl execContext = execContextCache.findById(event.execContextId, true);
         if (execContext==null) {
             return;
         }
@@ -258,22 +260,22 @@ public class TaskWithInternalContextEventService {
         }
     }
 
-    private Void processInternalFunction(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
+    private void processInternalFunction(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
         TxUtils.checkTxNotExists();
         TaskLastProcessingHelper.lastTaskId = null;
         try {
             TaskImpl task = taskRepository.findById(taskId).orElse(null);
             if (task==null) {
                 log.warn("#706.180 Task #{} with internal context doesn't exist", taskId);
-                return null;
+                return;
             }
 
             if (task.execState != EnumsApi.TaskExecState.IN_PROGRESS.value) {
                 log.error("#706.210 Task #"+task.id+" already in progress.");
-                return null;
+                return;
             }
 
-            TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+            TaskParamsYaml taskParamsYaml = task.getTaskParamsYaml();
             ExecContextParamsYaml.Process p = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
             if (p == null) {
                 if (Consts.MH_FINISH_FUNCTION.equals(taskParamsYaml.task.processCode)) {
@@ -295,8 +297,10 @@ public class TaskWithInternalContextEventService {
                 Object obj = EvaluateExpressionLanguage.evaluate(
                         taskParamsYaml.task.taskContextId, p.condition, simpleExecContext.execContextId,
                         internalFunctionVariableService, globalVariableService, variableService, this.execContextVariableService, variableRepository,
-                        (v) -> variableService.setVariableAsNull(v.id));
-                if (obj!=null && !obj.getClass().equals(Boolean.class)) {
+                        variableEntityManagerService,
+                        (v) -> VariableSyncService.getWithSyncVoidForCreation(v.id,
+                                ()->variableService.setVariableAsNull(v.id)));
+                if (obj!=null && !(obj instanceof Boolean)) {
                     final String es = "#706.300 condition '" + p.condition + " has returned not boolean value but " + obj.getClass().getSimpleName();
                     log.error(es);
                     throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken, es);
@@ -317,7 +321,6 @@ public class TaskWithInternalContextEventService {
         finally {
             TaskLastProcessingHelper.lastTaskId = taskId;
         }
-        return null;
     }
 
 }

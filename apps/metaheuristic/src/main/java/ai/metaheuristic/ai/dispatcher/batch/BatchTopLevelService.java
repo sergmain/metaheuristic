@@ -49,7 +49,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
@@ -60,8 +59,11 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -91,7 +93,7 @@ public class BatchTopLevelService {
     private final SourceCodeCache sourceCodeCache;
     private final ExecContextCache execContextCache;
     private final BatchRepository batchRepository;
-    private final BatchService batchService;
+    private final BatchTxService batchService;
     private final BatchCache batchCache;
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
@@ -218,7 +220,7 @@ public class BatchTopLevelService {
 
             String filename;
             boolean execContextDeleted = false;
-            ExecContextImpl execContext = execContextCache.findById(batch.execContextId);
+            ExecContextImpl execContext = execContextCache.findById(batch.execContextId, true);
             if (execContext==null) {
                 filename = "<ExecContext was deleted>";
                 execContextDeleted = true;
@@ -273,29 +275,28 @@ public class BatchTopLevelService {
         if (!sourceCode.getId().equals(sourceCodeId)) {
             return new BatchData.UploadingStatus("#981.120 Fatal error in configuration of sourceCode, report to developers immediately");
         }
-        File tempDir = DirUtils.createMhTempDir("batch-processing-");
+        Path tempDir = DirUtils.createMhTempPath("batch-processing-");
         if (tempDir==null) {
-            return new BatchData.UploadingStatus("#981.122 Can't create temporaty directory. Batch file can't be processed");
+            return new BatchData.UploadingStatus("#981.122 Can't create temporary directory. Batch file can't be processed");
         }
         try {
             // we need to create a temporary file because org.apache.commons.compress.archivers.zip.ZipFile
             // doesn't work with abstract InputStream
-            File tempFile;
+            Path tempFile;
             try {
-                tempFile = File.createTempFile("mh-temp-file-for-processing-", ".bin", tempDir);
-                try (InputStream is = file.getInputStream(); OutputStream os = Files.newOutputStream(tempFile.toPath())) {
-                    IOUtils.copy(is, os, 128_000);
+                tempFile = Files.createTempFile(tempDir, "mh-temp-file-for-processing-", ".bin");
+                try (InputStream is = file.getInputStream()) {
+                    DirUtils.copy(is, tempFile);
                 }
-//                file.transferTo(tempFile);
-                if (file.getSize()!=tempFile.length()) {
+                if (file.getSize()!=Files.size(tempFile)) {
                     return new BatchData.UploadingStatus("#981.125 System error while preparing data. The sizes of files are different");
                 }
             } catch (IOException e) {
-                return new BatchData.UploadingStatus("#981.140 Can't create a new temp file");
+                return new BatchData.UploadingStatus("#981.140 Can't create a new temp file, " + e.getMessage());
             }
 
             if (ext.equals(ZIP_EXT)) {
-                List<String> errors = ZipUtils.validate(tempFile.toPath(), VALIDATE_ZIP_ENTRY_SIZE_FUNCTION);
+                List<String> errors = ZipUtils.validate(tempFile, VALIDATE_ZIP_ENTRY_SIZE_FUNCTION);
                 if (!errors.isEmpty()) {
                     final BatchData.UploadingStatus status = new BatchData.UploadingStatus("#981.144 Batch can't be created because of following errors:");
                     status.addErrorMessages(errors);
@@ -314,7 +315,7 @@ public class BatchTopLevelService {
                 throw new BatchResourceProcessingException("#981.180 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
             }
             final ExecContextParamsYaml execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();
-            try(InputStream is = new FileInputStream(tempFile)) {
+            try(InputStream is = Files.newInputStream(tempFile)) {
                 execContextVariableService.initInputVariable(is, file.getSize(), originFilename, creationResult.execContext.id, execContextParamsYaml, 0);
             }
             final BatchData.UploadingStatus uploadingStatus;
@@ -322,7 +323,7 @@ public class BatchTopLevelService {
                     ExecContextGraphSyncService.getWithSync(creationResult.execContext.execContextGraphId, ()->
                             ExecContextTaskStateSyncService.getWithSync(creationResult.execContext.execContextTaskStateId, ()->
                                     batchService.createBatchForFile(
-                                            sc, creationResult.execContext.id, execContextParamsYaml, dispatcherContext))));
+                                            sc, creationResult.execContext.id, dispatcherContext))));
             return uploadingStatus;
         }
         catch (ExecContextTooManyInstancesException e) {
@@ -338,7 +339,7 @@ public class BatchTopLevelService {
             return new BatchData.UploadingStatus(es);
         }
         finally {
-            DirUtils.deleteAsync(tempDir);
+            DirUtils.deletePathAsync(tempDir);
         }
     }
 
@@ -370,10 +371,10 @@ public class BatchTopLevelService {
             if (batch.deleted) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batchId + " was deleted successfully.", null);
             }
-            return ExecContextSyncService.getWithSync(execContextId, () ->  batchService.deleteBatchVirtually(execContextId, companyUniqueId, batchId));
+            return ExecContextSyncService.getWithSync(execContextId, ()->batchService.deleteBatchVirtually(execContextId, companyUniqueId, batchId));
         }
         else {
-            return ExecContextSyncService.getWithSync(execContextId, () -> batchService.deleteBatch(execContextId, companyUniqueId, batchId));
+            return ExecContextSyncService.getWithSync(execContextId, ()->batchService.deleteBatch(execContextId, companyUniqueId, batchId));
         }
     }
 

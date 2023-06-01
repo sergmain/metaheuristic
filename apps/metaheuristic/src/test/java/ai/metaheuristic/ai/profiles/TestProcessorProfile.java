@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.profiles;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,7 +35,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("processor")
 @TestPropertySource(locations="classpath:test-processor-profile.properties")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@AutoConfigureCache
 public class TestProcessorProfile {
 
     @Autowired
@@ -46,9 +46,8 @@ public class TestProcessorProfile {
         assertFalse(globals.dispatcher.enabled);
         assertTrue(globals.processor.enabled);
 
-        assertNotNull(globals.processor.dir);
-        assertNotNull(globals.processor.dir.dir);
-        assertEquals("aiai-processor", globals.processor.dir.dir.getName());
+        assertNotNull(globals.processorPath);
+        assertEquals(Consts.PROCESSOR_DIR, globals.processorPath.getFileName().toString());
         assertEquals(1717, globals.processor.taskConsoleOutputMaxLines);
 
         assertEquals(1721, globals.processor.timeout.requestDispatcher.toSeconds());

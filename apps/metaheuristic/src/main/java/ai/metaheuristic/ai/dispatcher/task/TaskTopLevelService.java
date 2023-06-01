@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.dispatcher.event.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -59,7 +59,7 @@ public class TaskTopLevelService {
     private final ExecContextCache execContextCache;
     private final TaskService taskService;
     private final TaskRepository taskRepository;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final TaskVariableTopLevelService taskVariableTopLevelService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -129,7 +129,7 @@ public class TaskTopLevelService {
             if (!event.taskIds.contains(actualTaskId)) {
                 TaskImpl task = taskRepository.findById(actualTaskId).orElse(null);
                 if (task!=null) {
-                    ExecContextImpl ec = execContextCache.findById(task.execContextId);
+                    ExecContextImpl ec = execContextCache.findById(task.execContextId, true);
                     if (ec==null || EnumsApi.ExecContextState.isFinishedState(ec.state)) {
                         continue;
                     }
@@ -176,7 +176,7 @@ public class TaskTopLevelService {
         List<TaskImpl> tasks = taskRepository.findForMissingResultVariables(processorId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
         DispatcherCommParamsYaml.ResendTaskOutputs result = new DispatcherCommParamsYaml.ResendTaskOutputs();
         for (TaskImpl task : tasks) {
-            ExecContextImpl ec = execContextCache.findById(task.execContextId);
+            ExecContextImpl ec = execContextCache.findById(task.execContextId, true);
             if (ec==null || EnumsApi.ExecContextState.isFinishedState(ec.state)) {
                 continue;
             }

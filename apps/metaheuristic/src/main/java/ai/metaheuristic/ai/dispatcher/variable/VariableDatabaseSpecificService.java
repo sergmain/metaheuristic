@@ -27,5 +27,5 @@ import java.io.IOException;
  * Time: 10:46 PM
  */
 public interface VariableDatabaseSpecificService {
-    void copyData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) throws IOException;
+    void copyData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable);
 }

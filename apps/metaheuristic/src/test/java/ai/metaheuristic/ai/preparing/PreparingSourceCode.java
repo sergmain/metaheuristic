@@ -19,10 +19,7 @@ package ai.metaheuristic.ai.preparing;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
@@ -35,7 +32,6 @@ import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.dispatcher.Task;
 import lombok.SneakyThrows;
@@ -61,7 +57,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
     @Autowired private ExecContextTaskStateCache execContextTaskStateCache;
     @Autowired private ExecContextGraphTopLevelService execContextGraphTopLevelService;
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
-    @Autowired private ExecContextService execContextService;
+    @Autowired private ExecContextCache execContextCache;
     @Autowired private ExecContextRepository execContextRepository;
     @Autowired private GlobalVariableRepository globalVariableRepository;
     @Autowired private ExecContextStatusService execContextStatusService;
@@ -157,7 +153,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
         System.out.println("start taskProviderService.findTask()");
         DispatcherCommParamsYaml.AssignedTask simpleTask0 =
-                taskProviderTopLevelService.findTask(getProcessor().getId(), false);
+                taskProviderTopLevelService.findTask(getCore1().getId(), false);
 
         assertNull(simpleTask0);
 
@@ -165,7 +161,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
             System.out.println("start txSupportForTestingService.toStarted()");
             txSupportForTestingService.toStarted(getExecContextForTest().id);
-            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().getId())));
+            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().getId())));
 
             SimpleGlobalVariable gv = globalVariableRepository.findIdByName("global-test-variable");
             assertNotNull(gv);
@@ -178,7 +174,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
         assertEquals(EnumsApi.ExecContextState.STARTED, execContextStatusService.getExecContextStatuses().statuses.get(getExecContextForTest().id));
 
-        setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
         assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(getExecContextForTest().getState()));
     }
 
@@ -186,12 +182,12 @@ public abstract class PreparingSourceCode extends PreparingCore {
         // try execute mh.finish if it hasn't yet
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
 
-        ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
+        ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, () -> {
             verifyGraphIntegrity();
             List<Long> taskIds = getUnfinishedTaskVertices(getExecContextForTest());
             assertEquals(0, taskIds.size());
 
-            ExecContext execContext = execContextService.findById(getExecContextForTest().id);
+            ExecContext execContext = execContextCache.findById(getExecContextForTest().id);
             assertNotNull(execContext);
             assertEquals(EnumsApi.ExecContextState.FINISHED, EnumsApi.ExecContextState.toState(execContext.getState()));
 
@@ -202,17 +198,16 @@ public abstract class PreparingSourceCode extends PreparingCore {
             List<TaskImpl> tasks = taskRepositoryForTest.findByExecContextIdAsList(getExecContextForTest().id);
             assertEquals(expectedNumberOfTasks, tasks.size());
             for (TaskImpl task : tasks) {
-                assertTrue(task.isCompleted());
+                assertTrue(task.completed!=0);
                 assertEquals(EnumsApi.TaskExecState.OK.value, task.execState);
             }
-            return null;
         });
     }
 
     public void verifyGraphIntegrity() {
         List<TaskImpl> tasks = taskRepositoryForTest.findByExecContextIdAsList(getExecContextForTest().id);
 
-        setExecContextForTest(Objects.requireNonNull(execContextService.findById(this.getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(this.getExecContextForTest().id)));
         List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(getExecContextForTest().execContextGraphId);
         assertEquals(tasks.size(), taskVertices.size());
 

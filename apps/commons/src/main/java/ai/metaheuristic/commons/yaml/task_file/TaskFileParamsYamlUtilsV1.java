@@ -18,7 +18,6 @@ package ai.metaheuristic.commons.yaml.task_file;
 
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
-import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -51,8 +50,6 @@ public class TaskFileParamsYamlUtilsV1
     @NonNull
     @Override
     public TaskFileParamsYamlV2 upgradeTo(@NonNull TaskFileParamsYamlV1 v1) {
-        throw new UpgradeNotSupportedException();
-/*
         v1.checkIntegrity();
         TaskFileParamsYamlV2 t = new TaskFileParamsYamlV2();
         t.task = new TaskFileParamsYamlV2.TaskV2();
@@ -63,7 +60,6 @@ public class TaskFileParamsYamlUtilsV1
 
         t.checkIntegrity();
         return t;
-*/
     }
 
     private static TaskFileParamsYamlV2.InputVariableV2 upInputVariable(TaskFileParamsYamlV1.InputVariableV1 v1) {
@@ -77,6 +73,7 @@ public class TaskFileParamsYamlUtilsV1
         v.filename = v1.filename;
         v.type = v1.type;
         v.empty = v1.empty;
+        v.array = false;
         v.setNullable(v1.getNullable());
         return v;
     }

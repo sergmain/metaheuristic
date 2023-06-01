@@ -1,0 +1,107 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$ref": "#/definitions/Root",
+  "definitions": {
+    "Root": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 2
+        },
+        "code": {
+          "type": "string"
+        },
+        "scheme": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Scheme"
+          }
+        }
+      },
+      "required": ["version","code", "scheme"],
+      "title": "Root"
+    },
+    "Scheme": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "auth": {
+          "$ref": "#/definitions/Auth"
+        },
+        "request": {
+          "$ref": "#/definitions/Request"
+        },
+        "response": {
+          "$ref": "#/definitions/Response"
+        }
+      },
+      "required": [ "auth", "request", "response" ],
+      "title": "Scheme"
+    },
+    "Auth": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string"
+        }
+      },
+      "required": ["code"],
+      "title": "Auth"
+    },
+    "Request": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum" : ["get", "post"]
+        },
+        "uri": {
+          "type": "string"
+        },
+        "prompt": {
+          "$ref": "#/definitions/Prompt"
+        }
+      },
+      "required": ["type", "uri", "prompt"],
+      "title": "Request"
+    },
+    "Prompt": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "place": {
+          "enum" : ["uri", "text"]
+        },
+        "param": {
+          "type": "string"
+        },
+        "replace": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": ["place"],
+      "title": "Prompt"
+    },
+    "Response": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum" : ["json", "text"]
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": ["type"],
+      "title": "Response"
+    }
+  }
+}

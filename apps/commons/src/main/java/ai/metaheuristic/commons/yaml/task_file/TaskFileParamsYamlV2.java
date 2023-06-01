@@ -43,7 +43,7 @@ import java.util.Map;
 @EqualsAndHashCode
 public class TaskFileParamsYamlV2 implements BaseParams {
 
-    public final int version = 1;
+    public final int version = 2;
 
     @Override
     public boolean checkIntegrity() {
@@ -69,7 +69,7 @@ public class TaskFileParamsYamlV2 implements BaseParams {
         private Boolean nullable;
 
         public Boolean getNullable() {
-            return nullable==null ? false : nullable;
+            return nullable != null && nullable;
         }
 
         public void setNullable(Boolean nullable) {

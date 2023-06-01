@@ -102,7 +102,7 @@ public class TaskAssetPreparer {
                 if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(dispatcherUrl, task.execContextId)) {
                     processorTaskService.delete(core, task.taskId);
                     log.info("#951.010 orphan task was deleted, taskId: #{}, url: {}, execContextId: {}", task.taskId, task.dispatcherUrl, task.execContextId);
-                    log.info("#951.015  registered execContext: {}", currentExecState.getExecContexts(dispatcherUrl));
+                    log.info("#951.015  registered execContexts: {}", currentExecState.getExecContextsNormalized(dispatcherUrl));
                 }
             });
 

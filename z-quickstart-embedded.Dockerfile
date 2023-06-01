@@ -40,7 +40,7 @@ RUN mkdir -p /metaheuristic/mh-dispatcher
 
 COPY /apps/metaheuristic/target/metaheuristic.jar /metaheuristic
 COPY /docker/quickstart/processor/* /metaheuristic/mh-processor/
-COPY /apps/metaheuristic/src/main/resources/application-quickstart.prop /metaheuristic/config/application.properties
+#COPY /apps/metaheuristic/src/main/resources/application-quickstart.prop /metaheuristic/config/application.properties
 
 WORKDIR /metaheuristic
 EXPOSE 8083

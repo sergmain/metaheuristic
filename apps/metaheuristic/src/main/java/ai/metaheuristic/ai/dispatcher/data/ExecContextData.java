@@ -84,15 +84,14 @@ public class ExecContextData {
 
     @Data
     @AllArgsConstructor
-    @NoArgsConstructor
     public static class SimpleExecContext {
-        public Long sourceCodeId;
-        public Long execContextId;
-        public Long execContextGraphId;
-        public Long execContextTaskStateId;
-        public Long execContextVariableStateId;
-        public Long companyId;
-        public ExecContextParamsYaml paramsYaml;
+        public final Long sourceCodeId;
+        public final Long execContextId;
+        public final Long execContextGraphId;
+        public final Long execContextTaskStateId;
+        public final Long execContextVariableStateId;
+        public final Long companyId;
+        public final ExecContextParamsYaml paramsYaml;
     }
 
     @Data

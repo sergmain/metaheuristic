@@ -22,6 +22,7 @@ import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.util.Random;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -59,7 +60,11 @@ public class StrUtils {
     }
 
     public static String normalizeCode(String code) {
-        return StringUtils.replaceEach(code, new String[]{":", ".", " "}, new String[]{"-", "_", "_"});
+        return StringUtils.replaceEach(code, new String[]{":", ",", " "}, new String[]{"-", "_", "_"});
+    }
+
+    public static String normalizeVariable(String code) {
+        return StringUtils.replaceEach(code, new String[]{":", ",", " ", "-"}, new String[]{"_", "_", "_", "_"});
     }
 
     @Nullable
@@ -102,5 +107,30 @@ public class StrUtils {
 
     private static String formatString(String s, int i) {
         return COPY_NUMBER_PREFIX + i +", " + s;
+    }
+
+    // this method is for getting code for SourceCodeParamsYaml.uid or for SourceCodeParamsYaml.Process.code
+    public static String getCode(String name, Supplier<String> defaultNameFunc) {
+        String code;
+        if (isCodeOk(name)) {
+            code = name;
+        }
+        else {
+            String n = normalizeCode(name);
+            code = isCodeOk(n) ? n : defaultNameFunc.get();
+        }
+        return code;
+    }
+
+    public static String getVariableName(String name, Supplier<String> defaultNameFunc) {
+        String code;
+        if (isVarNameOk(name)) {
+            code = name;
+        }
+        else {
+            String n = normalizeVariable(name);
+            code = isVarNameOk(n) ? n : defaultNameFunc.get();
+        }
+        return code;
     }
 }

@@ -19,14 +19,12 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
-import ai.metaheuristic.ai.dispatcher.event.ResetTasksWithErrorEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
-import ai.metaheuristic.ai.dispatcher.event.TransferStateFromTaskQueueToExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.*;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -34,12 +32,19 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
+import org.springframework.lang.Nullable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 /**
@@ -74,30 +79,106 @@ public class ExecContextTaskAssigningTopLevelService {
         }
     }
 
-    private long mills = 0L;
+    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+    private final LinkedList<FindUnassignedTasksAndRegisterInQueueEvent> queue = new LinkedList<>();
+
+    private final ReentrantReadWriteLock queueReadWriteLock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.WriteLock queueWriteLock = queueReadWriteLock.writeLock();
+
+    @Async
+    @EventListener
+    public void handleEvaluateProviderEvent(FindUnassignedTasksAndRegisterInQueueEvent event) {
+        putToQueue(event);
+    }
+
+    private void putToQueue(final FindUnassignedTasksAndRegisterInQueueEvent event) {
+        final int activeCount = executor.getActiveCount();
+        if (log.isDebugEnabled()) {
+            final long completedTaskCount = executor.getCompletedTaskCount();
+            final long taskCount = executor.getTaskCount();
+            log.debug("findUnassignedTasksAndRegisterInQueue, active task in executor: {}, awaiting tasks: {}", activeCount, taskCount - completedTaskCount);
+        }
+
+        if (activeCount>0 || queue.size()>0) {
+            return;
+        }
+
+        queueWriteLock.lock();
+        try {
+            queue.add(event);
+        }
+        finally {
+            queueWriteLock.unlock();
+        }
+        procesEvent();
+    }
+
+    @Nullable
+    private FindUnassignedTasksAndRegisterInQueueEvent pullFromQueue() {
+        queueWriteLock.lock();
+        try {
+            return queue.pollFirst();
+        }
+        finally {
+            queueWriteLock.unlock();
+        }
+    }
+
+    public void procesEvent() {
+        if (executor.getActiveCount()>0) {
+            return;
+        }
+        executor.submit(() -> {
+            FindUnassignedTasksAndRegisterInQueueEvent event;
+            while ((event = pullFromQueue())!=null) {
+                findUnassignedTasksAndRegisterInQueue();
+            }
+        });
+    }
+
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
     public void findUnassignedTasksAndRegisterInQueue() {
-        List<Long> execContextIds = execContextRepository.findAllStartedIds();
-        execContextIds.sort((Comparator.naturalOrder()));
-        UnassignedTasksStat statTotal = new UnassignedTasksStat();
-        for (Long execContextId : execContextIds) {
-            UnassignedTasksStat stat = findUnassignedTasksAndRegisterInQueue(execContextId);
-            statTotal.add(stat);
-        }
-        if (log.isInfoEnabled()) {
-            log.info("#703.030 total found {}, allocated {}", statTotal.found, statTotal.allocated);
-            for (String notAllocatedReason : statTotal.notAllocatedReasons) {
-                log.info("  " + notAllocatedReason);
+        writeLock.lock();
+        try {
+            List<Long> execContextIds = execContextRepository.findAllStartedIds();
+            execContextIds.sort(Comparator.naturalOrder());
+            UnassignedTasksStat statTotal = new UnassignedTasksStat();
+            for (Long execContextId : execContextIds) {
+                UnassignedTasksStat stat = findUnassignedTasksAndRegisterInQueue(execContextId);
+                statTotal.add(stat);
             }
+            if (log.isInfoEnabled()) {
+                log.info("#703.030 total found {}, allocated {}", statTotal.found, statTotal.allocated);
+                for (String notAllocatedReason : statTotal.notAllocatedReasons) {
+                    log.info("  " + notAllocatedReason);
+                }
+            }
+        }
+        finally {
+            writeLock.unlock();;
         }
     }
 
     public UnassignedTasksStat findUnassignedTasksAndRegisterInQueue(Long execContextId) {
+        writeLock.lock();
+        try {
+            return findUnassignedTasksAndRegisterInQueueInternal(execContextId);
+        }
+        finally {
+            writeLock.unlock();;
+        }
+    }
+
+    private long mills = 0L;
+
+    private UnassignedTasksStat findUnassignedTasksAndRegisterInQueueInternal(Long execContextId) {
 
         UnassignedTasksStat stat = new UnassignedTasksStat();
 
         log.info("#703.100 start searching a new tasks for registering, execContextId: #{}", execContextId);
-        final ExecContextImpl execContext = execContextCache.findById(execContextId);
+        final ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext == null) {
             return stat;
         }
@@ -138,6 +219,8 @@ public class ExecContextTaskAssigningTopLevelService {
             stat.notAllocatedReasons.add("all tasks were already registered, ids: " +
                     vertices.stream().limit(5).map(o->o.taskId!=null ? o.taskId.toString() : "null").collect(Collectors.joining(", "))+suffix);
         }
+
+        final ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
 
         int page = 0;
         List<Long> taskIds;
@@ -199,7 +282,7 @@ public class ExecContextTaskAssigningTopLevelService {
                     }
                     switch(taskParamYaml.task.context) {
                         case external:
-                            if (TaskProviderTopLevelService.registerTask(execContext, task, taskParamYaml)) {
+                            if (TaskProviderTopLevelService.registerTask(execContextParamsYaml, task, taskParamYaml)) {
                                 stat.allocated++;
                             }
                             else {

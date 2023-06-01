@@ -147,7 +147,7 @@ public class ExperimentService {
     @Nullable
     public ExperimentApiData.ExperimentData asExperimentDataShort(Experiment e) {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
-        ExecContextImpl ec = execContextCache.findById(e.execContextId);
+        ExecContextImpl ec = execContextCache.findById(e.execContextId, true);
         if (ec==null) {
             log.warn("#284.120 ExecContext wasn't found for id #"+e.execContextId);
             return null;
@@ -177,7 +177,7 @@ public class ExperimentService {
                 return  new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         "#284.140 experiment wasn't found, experimentId: " + id);
             }
-            ExecContext ex = execContextCache.findById(experiment.execContextId);
+            ExecContext ex = execContextCache.findById(experiment.execContextId, true);
             if (ex != null) {
                 OperationStatusRest operationStatusRest = execContextService.deleteExecContextById(experiment.execContextId, context);
                 if (operationStatusRest.isErrorMessages()) {

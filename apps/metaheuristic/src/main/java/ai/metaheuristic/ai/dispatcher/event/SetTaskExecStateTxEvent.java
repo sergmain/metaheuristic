@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.event;
 
 import ai.metaheuristic.api.EnumsApi;
 import lombok.AllArgsConstructor;
+import org.springframework.lang.Nullable;
 
 /**
  * @author Serge
@@ -29,8 +30,14 @@ public class SetTaskExecStateTxEvent {
     public final Long execContextId;
     public final Long taskId;
     public final EnumsApi.TaskExecState state;
+    @Nullable
+    public final Long coreId;
+    @Nullable
+    public EnumsApi.FunctionExecContext context;
+    @Nullable
+    public String funcCode;
 
     public SetTaskExecStateEvent to() {
-        return new SetTaskExecStateEvent(execContextId, taskId, state);
+        return new SetTaskExecStateEvent(execContextId, taskId, state, coreId, context, funcCode);
     }
 }

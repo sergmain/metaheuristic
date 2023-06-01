@@ -64,7 +64,7 @@ public class ProcessorData {
         public Slice<ProcessorStatus> items;
     }
 
-    public record ProcessorCore(Long id, String code) {}
+    public record ProcessorCore(Long id, String code, boolean busy) {}
 
     @Data
     @NoArgsConstructor

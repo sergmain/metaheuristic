@@ -64,6 +64,7 @@ public class EnvProperty {
         }
         return max;
     }
+
     public static long minMax(long curr, int min, int max) {
         if (curr >=min && curr <=max) {
             return curr;

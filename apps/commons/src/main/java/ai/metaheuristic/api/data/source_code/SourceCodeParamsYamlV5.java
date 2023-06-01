@@ -37,6 +37,7 @@ import java.util.Map;
 @Data
 public class SourceCodeParamsYamlV5 implements BaseParams {
 
+    @SuppressWarnings("FieldMayBeStatic")
     public final int version=5;
 
     @Override
@@ -132,6 +133,7 @@ public class SourceCodeParamsYamlV5 implements BaseParams {
     public static class CacheV5 {
         public boolean enabled;
         public boolean omitInline;
+        public boolean cacheMeta;
     }
 
     @Data

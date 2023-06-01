@@ -1,0 +1,2 @@
+{"input": [{"role": "user", "content": "answer 2+2 with digits only"}], "ideal": "4"}
+{"input": [{"role": "user", "content": "answer square root of 9 with only digits"}], "ideal": "3"}

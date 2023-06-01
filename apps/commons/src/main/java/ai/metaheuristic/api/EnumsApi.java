@@ -48,7 +48,14 @@ public class EnumsApi {
     }
 
     public enum FunctionExecContext { external, internal, long_running }
-    public enum FunctionRefType { code, type }
+
+    // defines meaning in field value in SourceCodeParamsYaml.FunctionDefForSourceCode.code
+    public enum FunctionRefType {
+        //  reference to function is by code
+        code,
+        // reference to function is by type
+        type
+    }
 
     /**
      * local - all assets are managed locally
@@ -160,6 +167,7 @@ public class EnumsApi {
         INPUT_VARIABLE_NOT_DEFINED_ERROR,
         INPUT_VARIABLES_COUNT_MISMATCH_ERROR,
         OUTPUT_VARIABLES_COUNT_MISMATCH_ERROR,
+        SOURCE_OF_VARIABLE_NOT_FOUND_ERROR,
         NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR,
         FUNCTION_NOT_DEFINED_ERROR,
         PROCESS_CODE_NOT_UNIQUE_ERROR,
@@ -361,6 +369,7 @@ public class EnumsApi {
 
     }
 
+    // don't create TASK_CREATE type because a support of such type would dramatically decrease performance of transactions
     public enum DispatcherEventType {
         BATCH_FILE_UPLOADED,
         BATCH_CREATED,
@@ -391,7 +400,7 @@ public class EnumsApi {
         not_supported_os,
         asset_error,
         download_error(true, 10*60*1000, true), // recheck every 10 minutes
-        function_config_error,
+        function_config_error(true, 10*60*1000, true),
         io_error,
         dispatcher_config_error,
         signature_wrong,

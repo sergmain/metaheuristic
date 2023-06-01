@@ -35,12 +35,12 @@ public class FunctionService {
 
     private final FunctionCache functionCache;
     private final FunctionDataService functionDataService;
+    private final FunctionDataWithEntityManagerService functionDataWithEntityManagerService;
 
     @Transactional
-    public Void deleteFunction(Long functionId, String functionCode) {
+    public void deleteFunction(Long functionId, String functionCode) {
         functionCache.delete(functionId);
         functionDataService.deleteByFunctionCode(functionCode);
-        return null;
     }
 
     @Transactional
@@ -53,7 +53,7 @@ public class FunctionService {
         String functionCode = function.getCode();
         function = functionCache.save(function);
         if (inputStream!=null) {
-            functionDataService.save(inputStream, size, functionCode);
+            functionDataWithEntityManagerService.save(inputStream, size, functionCode);
         }
         return function;
     }

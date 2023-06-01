@@ -36,7 +36,8 @@ import java.util.List;
 @Profile("dispatcher")
 public interface TaskRepositoryForTest extends CrudRepository<TaskImpl, Long> {
 
-    List<TaskImpl> findByCoreIdAndResultReceivedIsFalse(Long coreId);
+    @Query(value="select t from TaskImpl t where t.coreId=:coreId and t.resultReceived=0")
+    List<TaskImpl> findByCoreIdAndResultReceivedIs0(Long coreId);
 
     @Query(value="select t.id, t.execState, t.updatedOn, t.params from TaskImpl t where t.execContextId=:execContextId")
     List<Object[]> findAllExecStateAndParamsByExecContextId(Long execContextId);

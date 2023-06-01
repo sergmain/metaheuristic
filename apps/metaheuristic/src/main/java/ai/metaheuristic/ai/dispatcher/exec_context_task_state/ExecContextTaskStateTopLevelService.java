@@ -106,7 +106,7 @@ public class ExecContextTaskStateTopLevelService {
                 log.error("#417.020 (!execContextId.equals(task.execContextId))");
                 return;
             }
-            ExecContextImpl ec = execContextCache.findById(task.execContextId);
+            ExecContextImpl ec = execContextCache.findById(task.execContextId, true);
             if (ec==null) {
                 return;
             }

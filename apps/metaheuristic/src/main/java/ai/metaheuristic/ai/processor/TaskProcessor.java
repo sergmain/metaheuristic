@@ -55,6 +55,7 @@ import org.springframework.lang.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.security.PublicKey;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -508,7 +509,7 @@ public class TaskProcessor {
 
             // Exec function
             systemExecResult = SystemProcessLauncher.execCommand(
-                    cmd, taskDir, consoleLogFile, taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
+                    cmd, taskDir, consoleLogFile.toPath(), taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
                     globals.processor.taskConsoleOutputMaxLines, List.of(execContextDeletionCheck));
 
         }
@@ -590,7 +591,7 @@ public class TaskProcessor {
 
         try {
             if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-                final File baseResourceDir = metadataService.prepareBaseDir(assetManagerUrl);
+                final Path baseResourceDir = metadataService.prepareBaseDir(assetManagerUrl);
                 functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
                 // is this function prepared?
                 if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
@@ -609,7 +610,7 @@ public class TaskProcessor {
                     functionPrepareResult.isError = true;
                     return functionPrepareResult;
                 }
-                final File resourceDir = metadataService.prepareBaseDir(assetManagerUrl);
+                final Path resourceDir = metadataService.prepareBaseDir(assetManagerUrl);
                 log.info("Root dir for function: " + resourceDir);
                 SystemProcessLauncher.ExecResult result = gitSourcingService.prepareFunction(resourceDir, functionPrepareResult.function);
                 if (!result.ok) {

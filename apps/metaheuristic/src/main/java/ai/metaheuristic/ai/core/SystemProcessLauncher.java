@@ -16,18 +16,18 @@
 package ai.metaheuristic.ai.core;
 
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.commons.dispatcher_schedule.ExtendedTimePeriod;
 import ai.metaheuristic.commons.utils.DirUtils;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
@@ -41,23 +41,27 @@ import java.util.function.Supplier;
 @RequiredArgsConstructor
 public class SystemProcessLauncher {
 
-    private static final String TIMEOUT_MESSAGE =
-            "===============================================================\n" +
-            "After %d seconds of timeout this process has been destroyed.\n" +
-            "===============================================================\n";
+    private static final String TIMEOUT_MESSAGE = """
+            ===============================================================
+            After %d seconds of timeout this process has been destroyed.
+            ===============================================================
+            """;
 
-    // TODO 2019-06-22 need to investigate why it isn't working with @Data
-//    @Data
-    @AllArgsConstructor
     @ToString
     public static class ExecResult {
-        public File functionDir;
         @Nullable
-        public FunctionApiData.SystemExecResult systemExecResult;
-        public boolean ok;
-        public String error;
+        public final File functionDir;
+        @Nullable
+        public final FunctionApiData.SystemExecResult systemExecResult;
+        public final boolean ok;
+        public final String error;
 
         public ExecResult(@Nullable FunctionApiData.SystemExecResult systemExecResult, boolean ok, String error) {
+            this(null, systemExecResult, ok, error);
+        }
+
+        public ExecResult(@Nullable File functionDir, @Nullable FunctionApiData.SystemExecResult systemExecResult, boolean ok, String error) {
+            this.functionDir = functionDir;
             this.systemExecResult = systemExecResult;
             this.ok = ok;
             this.error = error;
@@ -65,13 +69,13 @@ public class SystemProcessLauncher {
     }
 
     public static ExecResult execCmd(List<String> commands, long timeout, int taskConsoleOutputMaxLines) {
-        File gitTemp = DirUtils.createMhTempDir("command-exec-");
+        Path gitTemp = DirUtils.createMhTempPath("command-exec-");
         if (gitTemp==null) {
             return new ExecResult(null, false, "#027.017 Error: can't create temporary directory");
         }
-        File consoleLogFile = null;
+        Path consoleLogFile;
         try {
-            consoleLogFile = File.createTempFile("console-", ".log", gitTemp);
+            consoleLogFile = Files.createTempFile(gitTemp, "console-", ".log");
             FunctionApiData.SystemExecResult systemExecResult = execCommand(
                     commands, new File("."), consoleLogFile, timeout, "command-exec", null,
                     taskConsoleOutputMaxLines);
@@ -82,7 +86,7 @@ public class SystemProcessLauncher {
             return new ExecResult(null, false, "#027.020 Error: " + e.getMessage());
         }
         finally {
-            DirUtils.deleteAsync(gitTemp);
+            DirUtils.deletePathAsync(gitTemp);
         }
     }
 
@@ -91,20 +95,20 @@ public class SystemProcessLauncher {
     }
 
     public static FunctionApiData.SystemExecResult execCommand(
-            List<String> cmd, File execDir, File consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
+            List<String> cmd, File execDir, Path consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
             @Nullable final DispatcherSchedule schedule, int taskConsoleOutputMaxLines) throws IOException, InterruptedException {
         return execCommand(cmd, execDir, consoleLogFile, timeoutBeforeTerminate, functionCode, schedule, taskConsoleOutputMaxLines, List.of());
     }
 
-    @SuppressWarnings("WeakerAccess")
+    @SuppressWarnings({"WeakerAccess", "BusyWait"})
     public static FunctionApiData.SystemExecResult execCommand(
-            List<String> cmd, File execDir, File consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
+            List<String> cmd, File execDir, Path consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
             @Nullable final DispatcherSchedule schedule, int taskConsoleOutputMaxLines, List<Supplier<Boolean>> outerInterrupters) throws IOException, InterruptedException {
         log.info("Exec info:");
         log.info("\tcmd: {}", cmd);
         log.info("\ttaskDir: {}", execDir.getPath());
         log.info("\ttaskDir abs: {}", execDir.getAbsolutePath());
-        log.info("\tconsoleLogFile abs: {}", consoleLogFile.getAbsolutePath());
+        log.info("\tconsoleLogFile abs: {}", consoleLogFile.normalize());
         log.info("\tfunctionCode: {}", functionCode);
         log.info("\ttimeoutBeforeTerminate (seconds): {}", timeoutBeforeTerminate);
         log.info("\tschedule: {}", schedule);
@@ -129,8 +133,7 @@ public class SystemProcessLauncher {
         final StringBuilder timeoutMessage = new StringBuilder();
         final AtomicBoolean isTerminated = new AtomicBoolean(false);
         final AtomicBoolean isInactivePeriod = new AtomicBoolean(false);
-        try (final FileOutputStream fos = new FileOutputStream(consoleLogFile);
-                BufferedOutputStream bos = new BufferedOutputStream(fos)) {
+        try (final OutputStream fos = Files.newOutputStream(consoleLogFile); BufferedOutputStream bos = new BufferedOutputStream(fos)) {
             final AtomicBoolean isRun = new AtomicBoolean(false);
             final AtomicBoolean isDone = new AtomicBoolean(false);
             final Thread reader = new Thread(() -> {
@@ -269,10 +272,10 @@ public class SystemProcessLauncher {
         }
     }
 
-    private static String readLastLines(int maxSize, File consoleLogFile) throws IOException {
+    private static String readLastLines(int maxSize, Path consoleLogFile) throws IOException {
         LinkedList<String> lines = new LinkedList<>();
         String inputLine;
-        try(FileReader fileReader = new FileReader(consoleLogFile); BufferedReader in = new BufferedReader(fileReader) ) {
+        try (BufferedReader in = Files.newBufferedReader(consoleLogFile)) {
             while ((inputLine = in.readLine()) != null) {
                 inputLine = inputLine.trim();
                 if (lines.size()==maxSize) {

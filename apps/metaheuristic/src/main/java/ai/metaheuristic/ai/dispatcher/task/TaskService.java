@@ -42,7 +42,7 @@ import java.util.List;
 public class TaskService {
 
     private final TaskRepository taskRepository;
-    private final EntityManager em;
+//    private final EntityManager em;
 
     public TaskImpl save(TaskImpl task) {
         TxUtils.checkTxExists();
@@ -55,10 +55,12 @@ public class TaskService {
         }
         TaskSyncService.checkWriteLockPresent(task.id);
 
+/*
         if (!em.contains(task) ) {
 //            https://stackoverflow.com/questions/13135309/how-to-find-out-whether-an-entity-is-detached-in-jpa-hibernate
             throw new IllegalStateException(S.f("Bean %s isn't managed by EntityManager", task));
         }
+*/
         return task;
     }
 

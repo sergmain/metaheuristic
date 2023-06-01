@@ -1,0 +1,8 @@
+version: 1
+kb:
+  code: squad
+  type: coqa
+  file:
+    url: https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v2.0.json
+  disabled: true
+

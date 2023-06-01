@@ -31,7 +31,7 @@ public class KeepAliveRequestParamYamlUtils {
     private static final KeepAliveRequestParamYamlUtilsV1 YAML_UTILS_V_1 = new KeepAliveRequestParamYamlUtilsV1();
     private static final KeepAliveRequestParamYamlUtilsV2 YAML_UTILS_V_2 = new KeepAliveRequestParamYamlUtilsV2();
     private static final KeepAliveRequestParamYamlUtilsV3 YAML_UTILS_V_3 = new KeepAliveRequestParamYamlUtilsV3();
-    private static final KeepAliveRequestParamYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+    private static final KeepAliveRequestParamYamlUtilsV3 DEFAULT_UTILS = YAML_UTILS_V_3;
 
     public static final BaseYamlUtils<KeepAliveRequestParamYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(

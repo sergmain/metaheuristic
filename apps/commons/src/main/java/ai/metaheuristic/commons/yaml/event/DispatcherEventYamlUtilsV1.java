@@ -16,9 +16,9 @@
 
 package ai.metaheuristic.commons.yaml.event;
 
-import ai.metaheuristic.commons.S;
-import ai.metaheuristic.api.data.event.DispatcherEventYaml;
 import ai.metaheuristic.api.data.event.DispatcherEventYamlV1;
+import ai.metaheuristic.api.data.event.DispatcherEventYamlV2;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
@@ -31,7 +31,7 @@ import org.yaml.snakeyaml.Yaml;
  * Time: 12:10 AM
  */
 public class DispatcherEventYamlUtilsV1
-        extends AbstractParamsYamlUtils<DispatcherEventYamlV1, DispatcherEventYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<DispatcherEventYamlV1, DispatcherEventYamlV2, DispatcherEventYamlUtilsV2, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -46,14 +46,14 @@ public class DispatcherEventYamlUtilsV1
 
     @NonNull
     @Override
-    public DispatcherEventYaml upgradeTo(@NonNull DispatcherEventYamlV1 src) {
+    public DispatcherEventYamlV2 upgradeTo(@NonNull DispatcherEventYamlV1 src) {
         src.checkIntegrity();
-        DispatcherEventYaml trg = new DispatcherEventYaml();
+        DispatcherEventYamlV2 trg = new DispatcherEventYamlV2();
         trg.createdOn = src.createdOn;
         trg.event = src.event;
         trg.contextId = src.contextId;
         if (src.batchData!=null) {
-            trg.batchData = new DispatcherEventYaml.BatchEventData();
+            trg.batchData = new DispatcherEventYamlV2.BatchEventDataV2();
             trg.batchData.batchId = src.batchData.batchId;
             trg.batchData.execContextId = src.batchData.execContextId;
             trg.batchData.username = src.batchData.username;
@@ -62,8 +62,8 @@ public class DispatcherEventYamlUtilsV1
             trg.batchData.companyId = src.batchData.companyId;
         }
         if (src.taskData!=null) {
-            trg.taskData = new DispatcherEventYaml.TaskEventData();
-            trg.taskData.processorId = src.taskData.processorId;
+            trg.taskData = new DispatcherEventYamlV2.TaskEventDataV2();
+            trg.taskData.coreId = src.taskData.processorId;
             trg.taskData.taskId = src.taskData.taskId;
             trg.taskData.execContextId = src.taskData.execContextId;
         }
@@ -78,8 +78,8 @@ public class DispatcherEventYamlUtilsV1
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public DispatcherEventYamlUtilsV2 nextUtil() {
+        return (DispatcherEventYamlUtilsV2) DispatcherEventYamlUtils.BASE_YAML_UTILS.getForVersion(2);
     }
 
     @Override

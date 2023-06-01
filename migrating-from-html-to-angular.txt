@@ -1,0 +1,30 @@
+============
+создание архива с заготовками для задачи. т.е. кнопка Dev
+методы перенесены в
+ - ai.metaheuristic.ai.dispatcher.rest.v1.SourceCodeRestController.development
+ - ai.metaheuristic.ai.dispatcher.rest.v1.SourceCodeRestController.downloadVariable
+
+в ангуларе это src/app/modules/source-codes/source-code-generate-stub
+
+============
+на странице вывода инфы про контекст добавить статистику по текущему выполнению задач - сколько всего, сколько завершено
+ExecState of tasks
+Count of tasks
+OK 	4
+Total tasks: 4
+
+The last task was finished on: 25-Apr-23 16:52
+Non-long-running tasks in progress: 0
+
+инфа уже сейчас передается, так что надо просто сделать вывод на html странице
+
+http://localhost:8080/dispatcher/source-code/exec-context-state/4818/3837
+http://localhost:4200/#/dispatcher/source-codes/4667/exec-contexts
+
+============
+на странице создания глобальной переменной - Create global variable with value
+http://localhost:4200/#/dispatcher/global-variables/add
+
+т.е. надо прикрутить вызов метода
+ ai.metaheuristic.ai.dispatcher.rest.v1.GlobalVariableRestController.createGlobalVariableWithValue
+

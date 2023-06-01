@@ -15,8 +15,9 @@
  */
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.dispatcher.batch.BatchService;
+import ai.metaheuristic.ai.dispatcher.batch.BatchTxService;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
+import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueEvent;
 import ai.metaheuristic.ai.dispatcher.event.StartProcessReadinessEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
@@ -37,6 +38,8 @@ import ai.metaheuristic.ai.processor.dispatcher_selection.ActiveDispatchers;
 import ai.metaheuristic.ai.processor.event.KeepAliveEvent;
 import ai.metaheuristic.ai.processor.event.ProcessorEventBusService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.ai.mhbp.kb.KbInitializingService;
+import ai.metaheuristic.ai.mhbp.provider.ProcessSessionOfEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -90,7 +93,7 @@ public class Schedulers {
     @Profile("dispatcher")
     public static class UpdateBatchStatusesSchedulingConfig implements SchedulingConfigurer {
         private final Globals globals;
-        private final BatchService batchService;
+        private final BatchTxService batchService;
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
@@ -203,6 +206,25 @@ public class Schedulers {
 
         // Dispatcher schedulers with fixed delay
 
+        private final ProcessSessionOfEvaluationService evaluateProviderService;
+        private final KbInitializingService kbInitializingService;
+
+        @Scheduled(initialDelay = 13_000, fixedDelay = 17_000 )
+        public void processEvaluateProviderService() {
+            if (globals.testing) {
+                return;
+            }
+            evaluateProviderService.processSessionEvent();
+        }
+
+        @Scheduled(initialDelay = 17_000, fixedDelay = 17_000 )
+        public void processInitKb() {
+            if (globals.testing) {
+                return;
+            }
+            kbInitializingService.processEvent();
+        }
+
         @Scheduled(initialDelay = 63_000, fixedDelay = 630_000 )
         public void updateExecContextStatuses() {
             if (globals.testing || !globals.dispatcher.enabled) {
@@ -230,7 +252,7 @@ public class Schedulers {
 
         boolean needToInitializeReadyness = true;
 
-        @Scheduled(initialDelay = 5_000, fixedDelay = 17_000)
+        @Scheduled(initialDelay = 5_000, fixedDelay = 15_000)
         public void registerInternalTasks() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
@@ -245,14 +267,15 @@ public class Schedulers {
             log.info("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
             ArtifactCleanerAtDispatcher.setBusy();
             try {
-                execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue();
+                eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueEvent());
+                //execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue();
             }
             finally {
                 ArtifactCleanerAtDispatcher.notBusy();
             }
         }
 
-        @Scheduled(initialDelay = 13_000, fixedDelay = 13_000 )
+        @Scheduled(initialDelay = 13_000, fixedDelay = 33_000 )
         public void deadlockDetector() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
@@ -290,7 +313,7 @@ public class Schedulers {
             }
         }
 
-        @Scheduled(initialDelay = 15_000, fixedDelay = 17_000 )
+        @Scheduled(initialDelay = 15_000, fixedDelay = 5_000 )
         public void processCheckCaching() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;

@@ -51,7 +51,7 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @RequiredArgsConstructor
 public class VariableTopLevelService {
 
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final ExecContextCache execContextCache;
     private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     private final InternalFunctionVariableService internalFunctionVariableService;
@@ -67,7 +67,7 @@ public class VariableTopLevelService {
 
 
     public void checkFinalOutputVariables(TaskParamsYaml taskParamsYaml, Long subExecContextId) {
-        ExecContextImpl execContext = execContextCache.findById(subExecContextId);
+        ExecContextImpl execContext = execContextCache.findById(subExecContextId, true);
         if (execContext == null) {
             throw new InternalFunctionException(exec_context_not_found, "#992.300 ExecContext Not found");
         }

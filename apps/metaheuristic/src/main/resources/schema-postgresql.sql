@@ -84,7 +84,7 @@ CREATE UNIQUE INDEX MH_COMPANY_UNIQUE_ID_UNQ_IDX
 insert into MH_COMPANY
 (id, version, UNIQUE_ID, name, params)
 VALUES
-(nextval('mh_company_id_seq'), 0, 1, 'master company', '');
+(nextval('mh_company_id_seq'), 0, 1, 'Main company', '');
 
 -- !!! this insert must be after creating 'master company'
 insert into MH_GEN_IDS
@@ -279,7 +279,7 @@ CREATE TABLE MH_SOURCE_CODE
   ID            SERIAL PRIMARY KEY,
   VERSION       NUMERIC(5, 0)  NOT NULL,
   COMPANY_ID    NUMERIC(10, 0) NOT NULL,
-  UID           varchar(50)  NOT NULL,
+  UID           varchar(250)  NOT NULL,
   CREATED_ON    bigint NOT NULL,
   PARAMS        TEXT not null,
   IS_LOCKED     BOOLEAN not null default false,

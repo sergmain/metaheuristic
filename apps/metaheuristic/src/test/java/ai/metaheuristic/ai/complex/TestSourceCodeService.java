@@ -32,7 +32,8 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
@@ -70,12 +71,10 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@AutoConfigureCache
 public class TestSourceCodeService extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
-    @Autowired private ExecContextService execContextService;
     @Autowired private ExecContextCache execContextCache;
     @Autowired private TaskRepository taskRepository;
     @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
@@ -84,7 +83,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @Autowired private ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     @Autowired private TaskVariableTopLevelService taskVariableTopLevelService;
     @Autowired private ExecContextSchedulerService execContextSchedulerService;
-    @Autowired private VariableService variableService;
+    @Autowired private VariableTxService variableService;
     @Autowired private VariableRepository variableRepository;
     @Autowired private ExecContextFSM execContextFSM;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
@@ -167,7 +166,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         for (Long taskId : taskIds) {
             TaskImpl tempTask = taskRepository.findById(taskId).orElse(null);
             assertNotNull(tempTask);
-            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(tempTask.params);
+            TaskParamsYaml tpy = tempTask.getTaskParamsYaml();
             assertTrue(List.of(Consts.MH_FINISH_FUNCTION, Consts.MH_PERMUTE_VARIABLES_FUNCTION, Consts.MH_AGGREGATE_FUNCTION,
                     "test.fit.function:1.0", "test.predict.function:1.0")
                     .contains(tpy.task.function.code));
@@ -193,7 +192,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(aggregateTask.task);
         assertNotNull(finishTask.task);
 
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(permuteTask.task.params);
+        TaskParamsYaml tpy = permuteTask.task.getTaskParamsYaml();
         assertFalse(tpy.task.metas.isEmpty());
 
         DispatcherCommParamsYaml.AssignedTask task40 = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
@@ -211,8 +210,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
                                 execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
                                         getExecContextForTest().id, getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId)));
 
-        ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
-            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+        ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, () -> {
+            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
 
             TaskImpl tempTask = taskRepository.findById(permuteTask.task.id).orElse(null);
             assertNotNull(tempTask);
@@ -243,7 +242,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
             // 1 'mh.aggregate-internal-context' task
             // and 1 'mh.finish' task
             assertEquals(3 + 1 + 1, descendants.size());
-            return null;
         });
 
         // process and complete fit/predict tasks
@@ -271,7 +269,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
                                         getExecContextForTest().id, getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId)));
 
         ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, () -> {
-            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
             verifyGraphIntegrity();
             taskIds.clear();
             taskIds.addAll(getUnfinishedTaskVertices(getExecContextForTest()));
@@ -408,7 +406,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(variable);
 
         byte[] bytes = variableData.getBytes();
-        variableService.updateWithTx(new ByteArrayInputStream(bytes), bytes.length, variable.id);
+        VariableSyncService.getWithSyncVoidForCreation(variable.id, ()->variableService.updateWithTx(new ByteArrayInputStream(bytes), bytes.length, variable.id));
 
 
 
@@ -526,7 +524,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         TaskImpl task = taskRepository.findById(simpleTask.taskId).orElse(null);
         assertNotNull(task);
 
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        TaskParamsYaml tpy = task.getTaskParamsYaml();
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
             Enums.UploadVariableStatus status = TaskSyncService.getWithSyncNullable(task.id,
                     () -> taskVariableTopLevelService.updateStatusOfVariable(task.id, output.id).status);

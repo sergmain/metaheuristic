@@ -27,8 +27,8 @@ import lombok.NoArgsConstructor;
  * Time: 4:51 PM
  */
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class CompanyParamsYaml implements BaseParams {
 
     public final int version=2;

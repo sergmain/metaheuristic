@@ -32,7 +32,6 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 public abstract class FeatureMethods extends PreparingExperiment {
 
-    @Autowired private ExecContextService execContextService;
+    @Autowired private ExecContextCache execContextCache;
     @Autowired private ExecContextStatusService execContextStatusService;
     @Autowired private TaskProviderTopLevelService taskProviderService;
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
@@ -85,7 +84,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
         assertEquals(EnumsApi.ExecContextState.NONE.code, getExecContextForTest().getState());
         ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
             EnumsApi.TaskProducingStatus producingStatus = txSupportForTestingService.toProducing(getExecContextForTest().id);
-            setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
             assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
             assertEquals(EnumsApi.ExecContextState.PRODUCING.code, getExecContextForTest().getState());
 
@@ -99,7 +98,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
             ExecContextParamsYaml execContextParamsYaml = result.execContext.getExecContextParamsYaml();
             ExecContextGraphSyncService.getWithSync(getExecContextForTest().execContextGraphId, ()->
                     ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId, ()-> {
-                        txSupportForTestingService.produceAndStartAllTasks(getSourceCode(), result.execContext.id, execContextParamsYaml);
+                        txSupportForTestingService.produceAndStartAllTasks(getSourceCode(), result.execContext.id);
                         return null;
                     }));
 
@@ -111,14 +110,14 @@ public abstract class FeatureMethods extends PreparingExperiment {
         execContextStatusService.resetStatus();
         assertEquals(EnumsApi.ExecContextState.STARTED, execContextStatusService.getExecContextStatuses().statuses.get(getExecContextForTest().id));
 
-        setExecContextForTest(Objects.requireNonNull(execContextService.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
         assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(getExecContextForTest().getState()));
     }
 
     protected void storeConsoleResultAsError(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
         // lets report about tasks that all finished with an error (errorCode!=0)
         List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
-        List<TaskImpl> tasks = taskRepositoryForTest.findByCoreIdAndResultReceivedIsFalse(processorIdAndCoreIds.coreId1);
+        List<TaskImpl> tasks = taskRepositoryForTest.findByCoreIdAndResultReceivedIs0(processorIdAndCoreIds.coreId1);
         assertEquals(1, tasks.size());
 
         TaskImpl task = tasks.get(0);
@@ -135,7 +134,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
     protected void storeConsoleResultAsOk(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
         List<ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult> results = new ArrayList<>();
-        List<TaskImpl> tasks = taskRepositoryForTest.findByCoreIdAndResultReceivedIsFalse(processorIdAndCoreIds.coreId1);
+        List<TaskImpl> tasks = taskRepositoryForTest.findByCoreIdAndResultReceivedIs0(processorIdAndCoreIds.coreId1);
         assertEquals(1, tasks.size());
 
         TaskImpl task = tasks.get(0);

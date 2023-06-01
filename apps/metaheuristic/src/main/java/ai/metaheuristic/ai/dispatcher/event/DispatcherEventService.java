@@ -32,7 +32,6 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.event.DispatcherEventYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -45,9 +44,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -79,7 +78,7 @@ public class DispatcherEventService {
             return;
         }
         DispatcherEventYaml.TaskEventData taskEventData = new DispatcherEventYaml.TaskEventData();
-        taskEventData.processorId = coreId;
+        taskEventData.coreId = coreId;
         taskEventData.taskId = taskId;
         taskEventData.execContextId = execContextId;
         applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, taskEventData));
@@ -108,14 +107,18 @@ public class DispatcherEventService {
         applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, companyUniqueId, contextId, batchEventData));
     }
 
-    public void publishTaskEvent(EnumsApi.DispatcherEventType event, @Nullable Long coreId, Long taskId, Long execContextId) {
+    public void publishTaskEvent(
+            EnumsApi.DispatcherEventType event, @Nullable Long coreId, Long taskId, Long execContextId,
+            @Nullable EnumsApi.FunctionExecContext context, @Nullable String funcCode) {
         if (!globals.eventEnabled) {
             return;
         }
         DispatcherEventYaml.TaskEventData taskEventData = new DispatcherEventYaml.TaskEventData();
-        taskEventData.processorId = coreId;
+        taskEventData.coreId = coreId;
         taskEventData.taskId = taskId;
         taskEventData.execContextId = execContextId;
+        taskEventData.context = context;
+        taskEventData.funcCode = funcCode;
         applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, taskEventData));
     }
 
@@ -156,16 +159,19 @@ public class DispatcherEventService {
     public CleanerInfo getEventsForPeriod(List<Integer> periods) throws IOException {
         CleanerInfo resource = new CleanerInfo();
 
-        File tempDir = DirUtils.createMhTempDir("events-");
+        Path tempDir = DirUtils.createMhTempPath("events-");
+        if (tempDir==null) {
+            throw new RuntimeException("(tempDir==null)");
+        }
         resource.toClean.add(tempDir);
-        File filesDir = new File(tempDir, "files");
+        Path filesDir = tempDir.resolve("files");
+        Files.createDirectory(filesDir);
 
         List<Long> ids = dispatcherEventRepository.findIdByPeriod(periods);
         if (!ids.isEmpty()) {
             Yaml yaml = YamlUtils.init(ListOfEvents.class);
 
             for (int i = 0; i < ids.size() / PAGE_SIZE + 1; i++) {
-                File f = new File(filesDir, "event-file-" + i + ".yaml");
                 int fromIndex = i * PAGE_SIZE;
                 List<Long> subList = ids.subList(fromIndex, Math.min(ids.size(), fromIndex + PAGE_SIZE));
                 List<DispatcherEvent> events = dispatcherEventRepository.findByIds(subList);
@@ -174,27 +180,28 @@ public class DispatcherEventService {
                 for (DispatcherEvent event : events) {
                     listOfEvents.events.add(event.params);
                 }
-                FileUtils.write(f, yaml.dumpAsMap(listOfEvents), StandardCharsets.UTF_8);
+                Path f = filesDir.resolve("event-file-" + i + ".yaml");
+                Files.writeString(f, yaml.dumpAsMap(listOfEvents));
             }
         }
         CompanyApiData.CompanyList companyList = new CompanyApiData.CompanyList();
         companyRepository.findAll()
                 .forEach(c-> companyList.companies.add(new CompanyApiData.CompanyShortData(c.uniqueId, c.name)));
 
-        File companyYamlFile = new File(filesDir, "companies.yaml");
+        Path companyYamlFile = filesDir.resolve("companies.yaml");
         Yaml companyYaml = YamlUtils.init(ListOfEvents.class);
-        FileUtils.write(companyYamlFile, companyYaml.dumpAsMap(companyList), StandardCharsets.UTF_8);
+        Files.writeString(companyYamlFile, companyYaml.dumpAsMap(companyList));
 
 
-        File zipFile = new File(tempDir, "events.zip");
-        ZipUtils.createZip(filesDir.toPath(), zipFile.toPath());
+        Path zipFile = tempDir.resolve("events.zip");
+        ZipUtils.createZip(filesDir, zipFile);
 
-        final HttpHeaders headers = RestUtils.getHeader(null, zipFile.length());
+        final HttpHeaders headers = RestUtils.getHeader(null, Files.size(zipFile));
 //        headers.add(Consts.HEADER_MH_CHUNK_SIZE, Long.toString(f.length()));
 //        headers.add(Consts.HEADER_MH_IS_LAST_CHUNK, Boolean.toString(isLastChunk));
 
-        log.warn("#456.020 size of zip archive with billing events is " + zipFile.length());
-        resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile.toPath()), headers, HttpStatus.OK);
+        log.warn("#456.020 size of zip archive with billing events is " + Files.size(zipFile));
+        resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), headers, HttpStatus.OK);
         return resource;
     }
 }

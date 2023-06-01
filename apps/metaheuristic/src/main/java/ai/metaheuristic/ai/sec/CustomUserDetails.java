@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.sec;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.account.AccountService;
+import ai.metaheuristic.ai.dispatcher.account.AccountTxService;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +41,7 @@ import org.springframework.stereotype.Service;
 public class CustomUserDetails implements UserDetailsService {
 
     private final Globals globals;
-    private final AccountService accountService;
+    private final AccountTxService accountService;
 
     @Data
     public static class ComplexUsername {
@@ -50,6 +50,7 @@ public class CustomUserDetails implements UserDetailsService {
         /**
          * won't delete this field for backward compatibility
          */
+        @SuppressWarnings("FieldMayBeStatic")
         @Deprecated
         final String token = "";
 
@@ -106,7 +107,7 @@ public class CustomUserDetails implements UserDetailsService {
             account.setEnabled(true);
             account.setPassword(globals.dispatcher.masterPassword);
 
-            account.setRoles(SecConsts.ROLE_MASTER_ADMIN);
+            account.setRoles(SecConsts.ROLE_MAIN_ADMIN);
             return account;
         }
 

@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$ref": "#/definitions/Root",
+  "definitions": {
+    "Root": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "kb": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Kb"
+          }
+        }
+      },
+      "required": ["version","code", "scheme"],
+      "title": "Root"
+    },
+    "Kb": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "type": {
+          "enum" : ["openai", "mhbp", "coqa"]
+        },
+        "git": {
+          "$ref": "#/definitions/Git"
+        },
+        "File": {
+          "$ref": "#/definitions/File"
+        },
+        "inline": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Inline"
+          }
+        }
+      },
+      "required": [ "auth", "request", "response" ],
+      "title": "Kb"
+    },
+    "Git": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repo": {
+          "type": "string"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "commit": {
+          "type": "string"
+        },
+        "kbPaths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KbPath"
+          }
+        }
+      },
+      "required": ["repo"],
+      "title": "Git"
+    },
+    "KbPath": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "evals": {
+          "type": "string"
+        },
+        "data": {
+          "type": "string"
+        }
+      },
+      "required": ["evals", "data"],
+      "title": "KbPath"
+    },
+    "File": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "type": "string"
+        }
+      },
+      "required": ["url"],
+      "title": "File"
+    },
+    "Inline": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "p": {
+          "type": "string"
+        },
+        "a": {
+          "type": "string"
+        }
+      },
+      "required": ["p", "a"],
+      "title": "Inline"
+    }
+  }
+}

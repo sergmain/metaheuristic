@@ -32,6 +32,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 @Service
@@ -117,10 +120,10 @@ public class GitSourcingService {
         return assetFile;
     }
 
-    public SystemProcessLauncher.ExecResult prepareFunction(final File resourceDir, TaskParamsYaml.FunctionConfig functionConfig) {
+    public SystemProcessLauncher.ExecResult prepareFunction(final Path resourceDir, TaskParamsYaml.FunctionConfig functionConfig) {
 
         log.info("#027.050 Start preparing function dir");
-        AssetFile assetFile = prepareFunctionDir(resourceDir, functionConfig.code);
+        AssetFile assetFile = prepareFunctionDir(resourceDir.toFile(), functionConfig.code);
         log.info("#027.060 assetFile.isError: {}" , assetFile.isError);
         if (assetFile.isError) {
             return new SystemProcessLauncher.ExecResult(null,false, "#027.060 Can't create dir for function " + functionConfig.code);

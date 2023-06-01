@@ -22,11 +22,14 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
-import ai.metaheuristic.ai.dispatcher.event.*;
+import ai.metaheuristic.ai.dispatcher.event.DeleteExecContextInListTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
+import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -52,10 +55,10 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
-import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,8 +79,7 @@ public class ExecContextService {
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     private final TaskRepository taskRepository;
     private final VariableRepository variableRepository;
-    private final EntityManager em;
-    private final VariableService variableService;
+    private final VariableTxService variableService;
     private final EventPublisherService eventPublisherService;
     private final ExecContextUtilsService execContextUtilsServices;
     private final ExecContextGraphRepository execContextGraphRepository;
@@ -90,41 +92,19 @@ public class ExecContextService {
         return result;
     }
 
-    @Nullable
-    public ExecContextImpl findById(Long id) {
-        return execContextCache.findById(id);
-    }
-
     @Transactional
-    public Void changeValidStatus(Long execContextId, boolean status) {
+    public void changeValidStatus(Long execContextId, boolean status) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
-            return null;
+            return;
         }
         execContext.setValid(status);
-        save(execContext);
-        return null;
-    }
-
-    public ExecContextImpl save(ExecContextImpl execContext) {
-        TxUtils.checkTxExists();
-        if (execContext.id!=null) {
-            ExecContextSyncService.checkWriteLockPresent(execContext.id);
-        }
-        if (execContext.id==null) {
-            final ExecContextImpl ec = execContextCache.save(execContext);
-            return ec;
-        }
-        else if (!em.contains(execContext) ) {
-//            https://stackoverflow.com/questions/13135309/how-to-find-out-whether-an-entity-is-detached-in-jpa-hibernate
-            throw new IllegalStateException(S.f("#705.020 Bean %s isn't managed by EntityManager", execContext));
-        }
-        return execContext;
+        execContextCache.save(execContext);
     }
 
     @Transactional(readOnly = true)
     public SourceCodeApiData.ExecContextResult getExecContextExtended(Long execContextId) {
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext == null) {
             return new SourceCodeApiData.ExecContextResult("#705.180 execContext wasn't found, execContextId: " + execContextId);
         }
@@ -143,7 +123,7 @@ public class ExecContextService {
         ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.dispatcher.asset.mode);
         initInfoAboutSourceCode(sourceCodeId, result);
 
-        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextImpl ec = execContextCache.findById(execContextId, true);
         if (ec == null) {
             ExecContextApiData.RawExecContextStateResult resultWithError = new ExecContextApiData.RawExecContextStateResult("#705.220 Can't find execContext for Id " + execContextId);
             return resultWithError;
@@ -153,7 +133,7 @@ public class ExecContextService {
 
         List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ecpy);
         return new ExecContextApiData.RawExecContextStateResult(
-                sourceCodeId, info.tasks, processCodes, result.sourceCodeType, result.sourceCodeUid, result.sourceCodeValid,
+                sourceCodeId, info.states, processCodes, result.sourceCodeType, result.sourceCodeUid, result.sourceCodeValid,
                 getExecStateOfTasks(execContextId)
         );
     }
@@ -196,7 +176,7 @@ public class ExecContextService {
         ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.dispatcher.asset.mode);
         result.instances = execContextRepository.findBySourceCodeIdOrderByCreatedOnDesc(pageable, sourceCodeId);
         for (ExecContextsListItem instance : result.instances) {
-            ExecContextImpl ec = execContextCache.findById(instance.id);
+            ExecContextImpl ec = execContextCache.findById(instance.id, true);
             if (ec==null) {
                 continue;
             }
@@ -217,7 +197,7 @@ public class ExecContextService {
 
     @Transactional
     public void deleteExecContext(Long execContextId) {
-        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextImpl ec = execContextCache.findById(execContextId, true);
         if (ec==null) {
             return;
         }
@@ -234,7 +214,7 @@ public class ExecContextService {
 
     @Transactional(readOnly = true)
     public SourceCodeApiData.ExecContextForDeletion getExecContextExtendedForDeletion(Long execContextId, DispatcherContext context) {
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext == null) {
             return new SourceCodeApiData.ExecContextForDeletion("#705.260 execContext wasn't found, execContextId: " + execContextId);
         }
@@ -256,7 +236,7 @@ public class ExecContextService {
 
     @Nullable
     private OperationStatusRest checkExecContext(Long execContextId, DispatcherContext context) {
-        ExecContext wb = execContextCache.findById(execContextId);
+        ExecContext wb = execContextCache.findById(execContextId, true);
         if (wb==null) {
             return new OperationStatusRest(OperationStatus.ERROR, "#705.280 ExecContext wasn't found, execContextId: " + execContextId );
         }
@@ -267,17 +247,19 @@ public class ExecContextService {
     public CleanerInfo downloadVariable(Long execContextId, Long variableId, Long companyId) {
         CleanerInfo resource = new CleanerInfo();
         try {
-            ExecContextImpl execContext = execContextCache.findById(execContextId);
+            ExecContextImpl execContext = execContextCache.findById(execContextId, true);
             if (execContext==null) {
                 return resource;
             }
 
-            File resultDir = DirUtils.createMhTempDir("prepare-file-processing-result-");
+            Path resultDir = DirUtils.createMhTempPath("prepare-file-processing-result-");
+            if (resultDir==null) {
+                throw new RuntimeException("#705.290 can't create temp directory");
+            }
             resource.toClean.add(resultDir);
 
-            File zipDir = new File(resultDir, "zip");
-            //noinspection ResultOfMethodCallIgnored
-            zipDir.mkdir();
+            Path zipDir = resultDir.resolve("zip");
+            Files.createDirectory(zipDir);
 
             SourceCodeImpl sc = sourceCodeCache.findById(execContext.sourceCodeId);
             if (sc==null) {
@@ -297,15 +279,16 @@ public class ExecContextService {
 
             String filename = S.f("variable-%s-%s%s", variableId, variable.variable, ext);
 
-            File varFile = new File(resultDir, "variable-"+variableId+".bin");
+            Path varFile = resultDir.resolve("variable-"+variableId+".bin");
             variableService.storeToFileWithTx(variable.id, varFile);
 
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
             // https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
+            // after adding 'attachment;' mh-angular must be fixed as well
             httpHeaders.setContentDisposition(ContentDisposition.parse(
-                    "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8.toString())));
-            resource.entity = new ResponseEntity<>(new FileSystemResource(varFile), RestUtils.getHeader(httpHeaders, varFile.length()), HttpStatus.OK);
+                    "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8)));
+            resource.entity = new ResponseEntity<>(new FileSystemResource(varFile), RestUtils.getHeader(httpHeaders, Files.size(varFile)), HttpStatus.OK);
             return resource;
         } catch (VariableDataNotFoundException e) {
             log.error("#705.350 Variable #{}, context: {}, {}", e.variableId, e.context, e.getMessage());

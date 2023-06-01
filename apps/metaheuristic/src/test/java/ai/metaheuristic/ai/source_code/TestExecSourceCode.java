@@ -54,7 +54,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 @ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@AutoConfigureCache
 public class TestExecSourceCode extends PreparingSourceCode {
 
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
@@ -118,8 +117,8 @@ public class TestExecSourceCode extends PreparingSourceCode {
             assertFalse(scr.isValid());
             assertTrue(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());
-            assertNotEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR);
-            assertEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.META_NOT_FOUND_ERROR);
+            assertNotEquals(EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR, scr.validationResult.status);
+            assertEquals(EnumsApi.SourceCodeValidateStatus.META_NOT_FOUND_ERROR, scr.validationResult.status, scr.validationResult.error);
         } finally {
             finalize(scr);
         }
@@ -133,23 +132,23 @@ public class TestExecSourceCode extends PreparingSourceCode {
             assertFalse(scr.isValid());
             assertTrue(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());
-            assertNotEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR);
-            assertEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.INPUT_VARIABLES_COUNT_MISMATCH_ERROR);
+            assertNotEquals(EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR, scr.validationResult.status);
+            assertEquals(EnumsApi.SourceCodeValidateStatus.SOURCE_OF_VARIABLE_NOT_FOUND_ERROR, scr.validationResult.status, scr.validationResult.error);
         } finally {
             finalize(scr);
         }
     }
 
     @Test
-    public void testOutputssCountMismatchError() throws IOException {
+    public void testOutputsCountMismatchError() throws IOException {
         SourceCodeApiData.SourceCodeResult scr = null;
         try {
             scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-4.yaml"), getCompany().uniqueId);
             assertFalse(scr.isValid());
             assertTrue(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());
-            assertNotEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR);
-            assertEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLES_COUNT_MISMATCH_ERROR);
+            assertNotEquals(EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR, scr.validationResult.status);
+            assertEquals(EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLES_COUNT_MISMATCH_ERROR, scr.validationResult.status);
         } finally {
             finalize(scr);
         }

@@ -58,7 +58,7 @@ public class ReplicationAccountService {
         accountLoopEntry.account.phone = accountAsset.account.phone;
         accountLoopEntry.account.createdOn = accountAsset.account.createdOn;
         accountLoopEntry.account.updatedOn = accountAsset.account.updatedOn;
-        accountLoopEntry.account.roles = accountAsset.account.roles;
+        accountLoopEntry.account.roles = accountAsset.account.accountRoles.asString();
         accountLoopEntry.account.secretKey = accountAsset.account.secretKey;
         accountLoopEntry.account.twoFA = accountAsset.account.twoFA;
 

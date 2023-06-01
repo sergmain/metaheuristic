@@ -18,10 +18,8 @@ package ai.metaheuristic.ai.tx;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxTestingService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxTestingTopLevelService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
@@ -49,12 +47,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("dispatcher")
 @Slf4j
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@AutoConfigureCache
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class TestTx extends PreparingSourceCode {
 
-    @Autowired private TaskService taskService;
-    @Autowired private ExecContextService execContextService;
     @Autowired private TxTestingService txTestingService;
     @Autowired private TxTestingTopLevelService txTestingTopLevelService;
     @Autowired private TaskRepository taskRepository;
@@ -75,7 +70,7 @@ public class TestTx extends PreparingSourceCode {
 
         assertNotNull(task.id);
         assertNotNull(task.version);
-        assertEquals("BBB", task.params);
+        assertEquals("BBB", task.getParams());
 
         // == txTestingTopLevelService
 
@@ -86,7 +81,7 @@ public class TestTx extends PreparingSourceCode {
 
         assertNotNull(task1.id);
         assertNotNull(task1.version);
-        assertEquals("BBB", task1.params);
+        assertEquals("BBB", task1.getParams());
         assertTrue((int)task1.version>task.version);
         TaskImpl t1 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
         assertEquals(t1, task1);
@@ -100,7 +95,7 @@ public class TestTx extends PreparingSourceCode {
 
         assertNotNull(task2.id);
         assertNotNull(task2.version);
-        assertEquals("BBB", task2.params);
+        assertEquals("BBB", task2.getParams());
         assertTrue((int)task2.version>task1.version);
         TaskImpl t2 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
         assertEquals(t2, task2);
@@ -115,7 +110,7 @@ public class TestTx extends PreparingSourceCode {
 
         assertNotNull(task3.id);
         assertNotNull(task3.version);
-        assertEquals("BBB", task3.params);
+        assertEquals("BBB", task3.getParams());
         assertTrue((int)task3.version>task2.version);
         TaskImpl t3 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
         assertEquals(t3, task3);
@@ -130,7 +125,7 @@ public class TestTx extends PreparingSourceCode {
 
         assertNotNull(task4.id);
         assertNotNull(task4.version);
-        assertEquals("BBB", task4.params);
+        assertEquals("BBB", task4.getParams());
         assertTrue((int)task4.version>task3.version);
         TaskImpl t4 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
         assertEquals(t4, task4);
@@ -149,7 +144,7 @@ public class TestTx extends PreparingSourceCode {
 
         assertNotNull(task.id);
         assertNotNull(task.version);
-        assertEquals("BBB", task.params);
+        assertEquals("BBB", task.getParams());
 
         AtomicBoolean t1 = new AtomicBoolean();
         AtomicBoolean t2 = new AtomicBoolean();
@@ -234,7 +229,7 @@ public class TestTx extends PreparingSourceCode {
 
         assertNotNull(task.id);
         assertNotNull(task.version);
-        assertEquals("BBB", task.params);
+        assertEquals("BBB", task.getParams());
 
         AtomicBoolean t1 = new AtomicBoolean();
         AtomicBoolean t2 = new AtomicBoolean();

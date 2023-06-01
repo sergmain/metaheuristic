@@ -22,7 +22,6 @@ source:
       metas:
         - number-of-lines-per-task: 500
         - variable-for-splitting: var-list-of-files
-        - output-is-dynamic: true
         - output-variable: var-batch-item
       subProcesses:
         logic: sequential

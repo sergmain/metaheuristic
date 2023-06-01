@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.preparing;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +37,10 @@ public abstract class PreparingCore {
 
     public Processor getProcessor() {
         return preparingCodeData.processor;
+    }
+
+    public ProcessorCore getCore1() {
+        return preparingCodeData.core1;
     }
 
     @Nullable

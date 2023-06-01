@@ -17,8 +17,8 @@
 package ai.metaheuristic.ai.system;
 
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
-import com.mysql.cj.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;

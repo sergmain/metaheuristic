@@ -17,8 +17,8 @@
 package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
@@ -79,53 +79,11 @@ public class ArtifactUtils {
         t.task.workingPath = v1.task.workingPath;
 
         t.task.inline = v1.task.inline;
-        v1.task.inputs.stream().map(ArtifactUtils::upInputVariable).collect(Collectors.toCollection(()->t.task.inputs));
-        v1.task.outputs.stream().map(ArtifactUtils::upOutputVariable).collect(Collectors.toCollection(()->t.task.outputs));
+        v1.task.inputs.stream().map(ArtifactCommonUtils::upInputVariable).collect(Collectors.toCollection(()->t.task.inputs));
+        v1.task.outputs.stream().map(ArtifactCommonUtils::upOutputVariable).collect(Collectors.toCollection(()->t.task.outputs));
 
         t.checkIntegrity();
         return t;
     }
 
-    private static EnumsApi.DataType toType(EnumsApi.VariableContext context) {
-        switch (context) {
-            case global:
-                return EnumsApi.DataType.global_variable;
-            case local:
-            case array:
-                return EnumsApi.DataType.variable;
-            default:
-                throw new IllegalStateException("#103.040 wrong context: " + context);
-        }
-    }
-
-    private static TaskFileParamsYaml.InputVariable upInputVariable(TaskParamsYaml.InputVariable v1) {
-        TaskFileParamsYaml.InputVariable  v = new TaskFileParamsYaml.InputVariable();
-        v.id = v1.id.toString();
-        v.dataType = toType(v1.context);
-        v.array = v1.context== EnumsApi.VariableContext.array;
-        v.name = v1.name;
-        v.disk = v1.disk;
-        v.git = v1.git;
-        v.sourcing = v1.sourcing;
-        v.filename = v1.filename;
-        v.type = v1.type;
-        v.empty = v1.empty;
-        v.setNullable(v1.getNullable());
-        return v;
-    }
-
-    private static TaskFileParamsYaml.OutputVariable upOutputVariable(TaskParamsYaml.OutputVariable v1) {
-        TaskFileParamsYaml.OutputVariable v = new TaskFileParamsYaml.OutputVariable();
-        v.id = v1.id.toString();
-        v.name = v1.name;
-        v.dataType = toType(v1.context);
-        v.disk = v1.disk;
-        v.git = v1.git;
-        v.sourcing = v1.sourcing;
-        v.filename = v1.filename;
-        v.type = v1.type;
-        v.empty = v1.empty;
-        v.setNullable(v1.getNullable());
-        return v;
-    }
 }

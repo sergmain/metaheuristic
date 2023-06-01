@@ -25,6 +25,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Serge
@@ -40,44 +42,26 @@ public class ExecContextCache {
 
     private final ExecContextRepository execContextRepository;
 
-//    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, allEntries = true)
-    public void clearCache() {
-        TxUtils.checkTxExists();
-    }
-
-//    @CachePut(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#result.id")
     public ExecContextImpl save(ExecContextImpl execContext) {
         TxUtils.checkTxExists();
         // execContext.id is null for a newly created bean
         if (execContext.id!=null) {
             ExecContextSyncService.checkWriteLockPresent(execContext.id);
         }
-/*
-        if (log.isDebugEnabled()) {
-            log.debug("#461.010 save execContext, Thread {}, id: #{}, ver: {}, execContext: {}",
-                    Thread.currentThread().getId(), execContext.id, execContext.version, execContext);
-            try {
-                throw new RuntimeException("stacktrace");
-            }
-            catch(RuntimeException e) {
-                log.debug("stacktrace", e);
-            }
-        }
-*/
-        return execContextRepository.save(execContext);
+        final ExecContextImpl ec = execContextRepository.save(execContext);
+        return ec;
+
     }
 
-//    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContext.id")
     public void delete(ExecContextImpl execContext) {
         TxUtils.checkTxExists();
         try {
             execContextRepository.deleteById(execContext.id);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#461.030 Error deleting of execContext by object, {}", e.toString());
+            log.error("461.030 Error deleting of execContext by object, {}", e.toString());
         }
     }
 
-//    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContextId")
     public void delete(Long execContextId) {
         TxUtils.checkTxExists();
         try {
@@ -87,7 +71,6 @@ public class ExecContextCache {
         }
     }
 
-//    @CacheEvict(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, key = "#execContextId")
     public void deleteById(Long execContextId) {
         TxUtils.checkTxExists();
         try {
@@ -98,8 +81,27 @@ public class ExecContextCache {
     }
 
     @Nullable
-//    @Cacheable(cacheNames = {Consts.EXEC_CONTEXT_CACHE}, unless="#result==null")
     public ExecContextImpl findById(Long id) {
+        return findById(id, false);
+    }
+
+    @Nullable
+    public ExecContextImpl findById(Long id, boolean detached) {
+        if (detached) {
+            return findByIdDetached(id);
+        }
+        return execContextRepository.findById(id).orElse(null);
+    }
+
+    @Nullable
+    public ExecContextImpl findByIdDetached(Long id) {
+        final ExecContextImpl execContext = execContextRepository.findByIdReadOnly(id).orElse(null);
+        return execContext;
+    }
+
+    @Nullable
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
+    public ExecContextImpl findByIdWithNewTx(Long id) {
         return execContextRepository.findById(id).orElse(null);
     }
 }

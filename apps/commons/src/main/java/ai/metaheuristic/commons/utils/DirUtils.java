@@ -17,14 +17,17 @@ package ai.metaheuristic.commons.utils;
 
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.lang.Nullable;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -32,6 +35,90 @@ import java.util.List;
 @Slf4j
 public class DirUtils {
 
+    @SneakyThrows
+    public static void copy(InputStream is, Path to) {
+        final Path parent = to.getParent();
+        if (Files.notExists(parent)) {
+            Files.createDirectories(parent);
+        }
+        try (BufferedInputStream bis = new BufferedInputStream(is, 0x4000);
+             OutputStream os = Files.newOutputStream(to); BufferedOutputStream bos = new BufferedOutputStream(os, 0x4000)) {
+            IOUtils.copy(bis, bos);
+        }
+    }
+
+    public static void deletePathAsync(@Nullable final Path fileOrDir) {
+        if (fileOrDir != null) {
+            Thread t = new Thread(() -> {
+                try {
+                    if (Files.isDirectory(fileOrDir)) {
+                        PathUtils.deleteDirectory(fileOrDir);
+                    }
+                    else {
+                        Files.deleteIfExists(fileOrDir);
+                    }
+                } catch(IOException e){
+                    // it's cleaning so don't report any error
+                }
+            });
+            t.start();
+        }
+    }
+
+    @SneakyThrows
+    @Nullable
+    public static Path createMhTempPath(String prefix) {
+        return createMhTempPath(SystemUtils.getJavaIoTmpDir().toPath(), prefix);
+    }
+
+    @SneakyThrows
+    @Nullable
+    public static Path createMhTempPath(Path base, String prefix) {
+        Path trgDir = base.resolve(CommonConsts.METAHEURISTIC_TEMP);
+        if (Files.notExists(trgDir)) {
+            Files.createDirectories(trgDir);
+        }
+        return createTempPath(trgDir, prefix);
+    }
+
+    public static void deletePaths(@Nullable List<Path> toClean) {
+        if (toClean!=null) {
+            for (Path file : toClean) {
+                try {
+                    if (Files.notExists(file)) {
+                        continue;
+                    }
+                    deletePathAsync(file);
+                } catch (Throwable th) {
+                    log.error("Error while cleaning resources", th);
+                }
+            }
+        }
+    }
+
+    @Nullable
+    public static Path createTempPath(Path trgDir, String prefix) {
+        Date date = new Date();
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+        String prefixDate = format.format(date);
+        for (int i = 0; i < 5; i++) {
+            Path newTempDir = trgDir.resolve( prefix + prefixDate + "-" + System.nanoTime());
+            if (Files.exists(newTempDir)) {
+                continue;
+            }
+            try {
+                Files.createDirectories(newTempDir);
+                if (Files.exists(newTempDir)) {
+                    return newTempDir;
+                }
+            } catch (IOException e) {
+                log.error(S.f("#017.040 Can't create temporary dir %s, attempt #%d, error: %s", newTempDir.normalize(), i, e.getMessage()));
+            }
+        }
+        return null;
+    }
+
+    @Deprecated(forRemoval = true)
     public static void deleteAsync(@Nullable final File fileOrDir) {
         if (fileOrDir != null) {
             Thread t = new Thread(() -> {
@@ -50,7 +137,9 @@ public class DirUtils {
         }
     }
 
-    public static @Nullable File createDir(File baseDir, String subDir) {
+    @Deprecated(forRemoval = true)
+    @Nullable
+    public static File createDir(File baseDir, String subDir) {
         File currDir = new File(baseDir, subDir);
         if (!currDir.exists()) {
             boolean isOk = currDir.mkdirs();
@@ -62,23 +151,23 @@ public class DirUtils {
         return currDir;
     }
 
-    public static @Nullable File createMhTempDir(String prefix) {
-        File trgDir = new File(SystemUtils.getJavaIoTmpDir(), CommonConsts.METAHEURISTIC_TEMP);
-        if (!trgDir.exists()) {
-            boolean isOk = trgDir.mkdirs();
-            if (!isOk) {
-                return null;
-            }
-        }
-        return createTempDir(trgDir, prefix);
+    @Deprecated(forRemoval = true)
+    @Nullable
+    public static File createMhTempDir(String prefix) {
+        final Path mhTempPath = createMhTempPath(prefix);
+        return mhTempPath==null ? null : mhTempPath.toFile();
     }
 
-    public static @Nullable File createTempDir(String prefix) {
-        return createTempDir(SystemUtils.getJavaIoTmpDir(), prefix);
+    @Deprecated(forRemoval = true)
+    @Nullable
+    public static File createTempDir(String prefix) {
+        final Path tempPath = createTempPath(SystemUtils.getJavaIoTmpDir().toPath(), prefix);
+        return tempPath==null ? null : tempPath.toFile();
     }
 
-    public static @Nullable File createTempDir(File trgDir, String prefix) {
-
+    @Deprecated(forRemoval = true)
+    @Nullable
+    public static File createTempDir(File trgDir, String prefix) {
         Date date = new Date();
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
         String prefixDate = format.format(date);
@@ -99,6 +188,7 @@ public class DirUtils {
         return null;
     }
 
+    @Deprecated(forRemoval = true)
     public static void deleteFiles(@Nullable List<File> toClean) {
         if (toClean!=null) {
             for (File file : toClean) {

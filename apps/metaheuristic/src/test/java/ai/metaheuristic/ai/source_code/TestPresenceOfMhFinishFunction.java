@@ -51,7 +51,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Slf4j
 @ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@AutoConfigureCache
 public class TestPresenceOfMhFinishFunction extends FeatureMethods {
 
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
@@ -70,7 +69,7 @@ public class TestPresenceOfMhFinishFunction extends FeatureMethods {
         assertEquals(1, list.size());
         TaskImpl task = taskRepository.findById((Long)list.get(0)[0]).orElse(null);
         assertNotNull(task);
-        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        TaskParamsYaml taskParamsYaml = task.getTaskParamsYaml();
         assertEquals(Consts.MH_FINISH_FUNCTION, taskParamsYaml.task.function.code);
     }
 }

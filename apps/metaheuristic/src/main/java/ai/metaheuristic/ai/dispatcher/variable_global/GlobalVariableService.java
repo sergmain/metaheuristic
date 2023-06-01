@@ -26,9 +26,9 @@ import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.engine.spi.SessionImplementor;
@@ -41,10 +41,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
-import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -58,7 +57,6 @@ import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 @RequiredArgsConstructor
 public class GlobalVariableService {
 
-    private final EntityManager em;
     private final GlobalVariableRepository globalVariableRepository;
     private final Globals globals;
 
@@ -125,21 +123,20 @@ public class GlobalVariableService {
         }
     }
 
-    @Nullable
     @Transactional(readOnly = true)
-    public Void storeToFileWithTx(Long variableId, File trgFile) {
-        return storeToFile(variableId, trgFile);
+    public void storeToFileWithTx(Long variableId, Path trgFile) {
+        storeToFile(variableId, trgFile);
     }
 
-    public Void storeToFile(Long variableId, File trgFile) {
+    public void storeToFile(Long variableId, Path trgFile) {
         try {
             Blob blob = globalVariableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
                 log.warn("#089.030 Binary data for variableId {} wasn't found", variableId);
                 throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.global, "#089.040 Binary data wasn't found, variableId: " + variableId);
             }
-            try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-                FileUtils.copyInputStreamToFile(bis, trgFile);
+            try (InputStream is = blob.getBinaryStream()) {
+                DirUtils.copy(is, trgFile);
             }
         } catch (CommonErrorWithDataException e) {
             throw e;
@@ -148,28 +145,11 @@ public class GlobalVariableService {
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
-        return null;
     }
 
     @Transactional
     public void deleteByVariable(String variable) {
         globalVariableRepository.deleteByName(variable);
-    }
-
-    @Transactional
-    public GlobalVariable save(InputStream is, long size, String variable, @Nullable String filename) {
-        GlobalVariable data = new GlobalVariable();
-        data.setName(variable);
-        data.setFilename(filename);
-        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
-        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-
-        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
-        data.setData(blob);
-
-        globalVariableRepository.save(data);
-
-        return data;
     }
 
     @SuppressWarnings("UnusedReturnValue")
@@ -185,16 +165,6 @@ public class GlobalVariableService {
         globalVariableRepository.save(data);
 
         return data;
-    }
-
-    @Transactional
-    public void update(InputStream is, long size, GlobalVariable data) {
-        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-
-        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
-        data.setData(blob);
-
-        globalVariableRepository.save(data);
     }
 
     public Page<GlobalVariable> findAll(Pageable pageable) {

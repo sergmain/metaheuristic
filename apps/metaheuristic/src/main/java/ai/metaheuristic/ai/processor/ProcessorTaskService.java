@@ -82,7 +82,7 @@ public class ProcessorTaskService {
         }
         for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : metadataService.getAllEnabledRefsForCores()) {
 
-            File processorDir = new File(globals.processor.dir.dir, core.coreCode);
+            File processorDir = new File(globals.processorPath.toFile(), core.coreCode);
             File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
             String dispatcherCode = MetadataService.asCode(core.dispatcherUrl);
             File dispatcherDir = new File(processorTaskDir, dispatcherCode);
@@ -450,7 +450,7 @@ public class ProcessorTaskService {
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             metadataService.registerTaskQuota(core.dispatcherUrl.url, assignedTask.taskId, assignedTask.tag, assignedTask.quota);
 
-            log.info("#713.150 Prepare new task #{}", assignedTask.taskId);
+            log.info("#713.150 Prepare new task #{} on core #{}", assignedTask.taskId, core.coreId);
             Map<Long, ProcessorCoreTask> mapForDispatcherUrl = getTasksForProcessorCore(core);
             ProcessorCoreTask task = mapForDispatcherUrl.computeIfAbsent(assignedTask.taskId, k -> new ProcessorCoreTask());
 
@@ -474,7 +474,7 @@ public class ProcessorTaskService {
                     .map(o->new ProcessorCoreTask.OutputStatus(o.id, false) )
                     .collect(Collectors.toCollection(()->task.output.outputStatuses));
 
-            File processorDir = new File(globals.processor.dir.dir, core.coreCode);
+            File processorDir = new File(globals.processorPath.toFile(), core.coreCode);
             if (!processorDir.exists()) {
                 processorDir.mkdirs();
             }
@@ -597,7 +597,7 @@ public class ProcessorTaskService {
 
         synchronized (ProcessorSyncHolder.processorGlobalSync) {
             metadataService.removeQuota(core.dispatcherUrl.url, taskId);
-            final File processorDir = new File(globals.processor.dir.dir, core.coreCode);
+            final File processorDir = new File(globals.processorPath.toFile(), core.coreCode);
             final File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
             final File dispatcherDir = new File(processorTaskDir, processorState.dispatcherCode);
 
@@ -627,7 +627,7 @@ public class ProcessorTaskService {
     }
 
     public File prepareTaskDir(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
-        final File processorDir = new File(globals.processor.dir.dir, core.coreCode);
+        final File processorDir = new File(globals.processorPath.toFile(), core.coreCode);
         final File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
         final File dispatcherDir = new File(processorTaskDir, MetadataService.asCode(core.dispatcherUrl));
         File taskDir = new File(dispatcherDir, getTaskPath(taskId));

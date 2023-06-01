@@ -57,7 +57,6 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @Import({SpringSecurityWebAuxTestConfig.class})
 @ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@AutoConfigureCache
 public class TestAccessRestriction {
 
     private MockMvc mockMvc;
@@ -70,6 +69,13 @@ public class TestAccessRestriction {
         this.mockMvc = webAppContextSetup(webApplicationContext)
                 .apply(springSecurity())
                 .build();
+    }
+
+    @Test
+    public void testUnauthorizedAccessToNonRest() throws Exception {
+        mockMvc.perform(get("/user"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(cookie().doesNotExist(Consts.WEB_CONTAINER_SESSIONID_NAME));
     }
 
     @Test

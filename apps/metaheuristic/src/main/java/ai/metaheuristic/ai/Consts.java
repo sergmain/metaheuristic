@@ -70,6 +70,8 @@ public class Consts {
     public static final String SYSTEM_DIR = "system";
     public static final String RESOURCES_DIR = "resources";
     public static final String TASK_DIR = "task";
+    public static final String DISPATCHER_DIR = "dispatcher";
+    public static final String PROCESSOR_DIR = "processor";
 
     public static final String METADATA_YAML_FILE_NAME = "metadata.yaml";
     public static final String METADATA_YAML_BAK_FILE_NAME = "metadata.yaml.bak";
@@ -138,6 +140,9 @@ public class Consts {
     public static final String MH_INLINE_AS_VARIABLE_FUNCTION = "mh.inline-as-variable";
     public static final String MH_STRING_AS_VARIABLE_FUNCTION = "mh.string-as-variable";
     public static final String MH_REDUCE_VARIABLES_FUNCTION = "mh.reduce-variables";
+    public static final String MH_API_CALL_FUNCTION = "mh.api-call";
+    public static final String MH_ENHANCE_TEXT_FUNCTION = "mh.enhance-text";
+    public static final String MH_ACCEPTANCE_TEST_FUNCTION = "mh.acceptance-test";
 
     public static final ExecContextParamsYaml.FunctionDefinition MH_FINISH_FUNCTION_INSTANCE = new ExecContextParamsYaml.FunctionDefinition(MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
 
@@ -160,4 +165,13 @@ public class Consts {
     public static final Duration DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS = DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS.minus(DURATION_5_SECONDS);
     public static final long DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS = DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS.toMillis();
 
+    public static final String GIT_PATH = "git";
+
+    public static final String REPO = "repo";
+    public static final String BRANCH_MAIN = "main";
+    public static final String COMMIT_ORIGIN = "origin";
+
+    public static final String JSONPATH_CONTENT = "$['input'][*]['content']";
+
+    public static final String EXPECTED = "expected";
 }

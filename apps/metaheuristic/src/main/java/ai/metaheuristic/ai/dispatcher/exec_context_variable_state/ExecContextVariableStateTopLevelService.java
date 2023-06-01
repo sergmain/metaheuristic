@@ -130,7 +130,7 @@ public class ExecContextVariableStateTopLevelService {
 
     @Nullable
     private Long getExecContextVariableStateId(Long execContextId) {
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext==null) {
             return null;
         }

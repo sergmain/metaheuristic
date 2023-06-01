@@ -24,9 +24,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
+import org.springframework.lang.Nullable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @RestController
 @RequestMapping("/rest/v1/dispatcher/global-variable")
@@ -66,6 +68,20 @@ public class GlobalVariableRestController {
     @PostMapping("/global-variable-delete-commit")
     public OperationStatusRest deleteResource(Long id) {
         return globalVariableTopLevelService.deleteGlobalVariable(id);
+    }
+
+
+    @PostMapping(value = "/global-variable-with-value")
+    public String createGlobalVariableWithValue(
+            @Nullable @RequestParam(name = "variable") String variable,
+            @Nullable @RequestParam(name = "value") String value,
+            final RedirectAttributes redirectAttributes) {
+
+        OperationStatusRest operationStatusRest = globalVariableTopLevelService.createGlobalVariableWithValue(variable, value);
+        if (operationStatusRest.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
+        }
+        return "redirect:/dispatcher/global-variable/global-variables";
     }
 
     // ============= Service methods =============
