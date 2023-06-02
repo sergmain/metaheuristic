@@ -74,6 +74,7 @@ import static ai.metaheuristic.ai.utils.CollectionUtils.TreeUtils;
 @Profile("dispatcher")
 public class ScenarioService {
 
+    public static final ScenarioData.ApiUid BROKEN_API = new ScenarioData.ApiUid(0L, "<broken API Id>");
     private final Globals globals;
     private final ApiService apiService;
     private final ApiRepository apiRepository;
@@ -121,15 +122,18 @@ public class ScenarioService {
         }
         ScenarioParams scenarioParams = s.getScenarioParams();
 
-        Map<Long, ScenarioData.ApiUid> apis = new HashMap<>();
+        Map<String, ScenarioData.ApiUid> apis = new HashMap<>();
         List<ScenarioData.SimpleScenarioStep> steps = scenarioParams.steps.stream()
                 .map(o-> {
-                    ScenarioData.ApiUid apiUid = new ScenarioData.ApiUid(0L, "<broken API Id>");
+                    ScenarioData.ApiUid apiUid;
                     if (o.api!=null) {
-                        apiUid = apis.computeIfAbsent(o.api.apiId,
-                                (apiId) -> apiRepository.findById(apiId)
+                        apiUid = apis.computeIfAbsent(o.api.code,
+                                (apiCode) -> apiRepository.findByApiCodeOptional(apiCode)
                                         .map(api -> new ScenarioData.ApiUid(api.id, api.code))
-                                        .orElse(new ScenarioData.ApiUid(0L, "<broken API Id>")));
+                                        .orElse(BROKEN_API));
+                    }
+                    else {
+                        apiUid = BROKEN_API;
                     }
                     String functionCode = o.function!=null ? o.function.code : null;
                     String aggregateType = o.aggregateType==null ? null : o.aggregateType.toString();

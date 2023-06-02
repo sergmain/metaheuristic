@@ -157,6 +157,13 @@ public class ExecContextVariableService {
         variableEntityManagerService.update(is, bytes.length, variable);
     }
 
+    @Transactional
+    public void storeBytesInVariable(TaskParamsYaml.OutputVariable outputVariable, byte[] bytes) {
+        Variable variable = getVariable(outputVariable);
+        InputStream is = new ByteArrayInputStream(bytes);
+        variableEntityManagerService.update(is, bytes.length, variable);
+    }
+
     private Variable getVariable(TaskParamsYaml.OutputVariable outputVariable) {
         Variable variable;
         if (outputVariable.context == EnumsApi.VariableContext.local) {

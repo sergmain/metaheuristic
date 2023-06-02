@@ -17,9 +17,8 @@
 package ai.metaheuristic.ai.mhbp.provider;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Chapter;
 import ai.metaheuristic.ai.mhbp.beans.Evaluation;
@@ -27,18 +26,17 @@ import ai.metaheuristic.ai.mhbp.beans.Session;
 import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.ai.mhbp.data.NluData;
 import ai.metaheuristic.ai.mhbp.events.EvaluateProviderEvent;
+import ai.metaheuristic.ai.mhbp.questions.QuestionAndAnswerService;
+import ai.metaheuristic.ai.mhbp.questions.QuestionData;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ChapterRepository;
 import ai.metaheuristic.ai.mhbp.repositories.EvaluationRepository;
 import ai.metaheuristic.ai.mhbp.repositories.KbRepository;
-import ai.metaheuristic.ai.mhbp.yaml.answer.AnswerParams;
-import ai.metaheuristic.ai.utils.JsonUtils;
-import ai.metaheuristic.commons.S;
-import ai.metaheuristic.ai.mhbp.questions.QuestionAndAnswerService;
-import ai.metaheuristic.ai.mhbp.questions.QuestionData;
 import ai.metaheuristic.ai.mhbp.session.SessionTxService;
+import ai.metaheuristic.ai.mhbp.yaml.answer.AnswerParams;
+import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.ThreadUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -143,7 +141,9 @@ public class ProviderQueryService {
 
                 Enums.AnswerStatus status;
                 if (answer.status()==OK) {
-                    status = answer.a()!=null && question.prompt().a().equals(answer.a().strip()) ? Enums.AnswerStatus.normal : Enums.AnswerStatus.fail;
+                    status = answer.a()!=null && answer.a().processedAnswer.answer()!=null && question.prompt().a().equals(answer.a().processedAnswer.answer().strip())
+                            ? Enums.AnswerStatus.normal
+                            : Enums.AnswerStatus.fail;
                 }
                 else {
                     status = Enums.AnswerStatus.error;
@@ -164,16 +164,16 @@ public class ProviderQueryService {
             ap.total = withResults.answers.size();
             ap.processingMills = endMills - mills;
             for (PromptWithAnswer qaa : withResults.answers) {
-                if (qaa.status==Enums.AnswerStatus.normal) {
+                if (qaa.status==Enums.AnswerStatus.normal || qaa.answer.a()==null || qaa.answer.a().processedAnswer.rawAnswerFromAPI().type().binary) {
                     continue;
                 }
                 AnswerParams.Result r = new AnswerParams.Result();
                 r.p = qaa.answer.q();
-                r.a = qaa.answer.a();
+                r.a = qaa.answer.a().processedAnswer.answer();
                 r.e = qaa.prompt.a();
                 r.s = qaa.status;
 
-                r.r = qaa.answer.raw();
+                r.r = qaa.answer.a().processedAnswer.rawAnswerFromAPI().raw();
                 if (r.s==Enums.AnswerStatus.error) {
                     r.r = qaa.answer.error();
                 }
@@ -189,34 +189,23 @@ public class ProviderQueryService {
         return new ApiData.QueriedInfoWithError(queriedInfo, null);
     }
 
+    // TODO 2023-06-01 why we need function getQueriedInfoWithErrorFunc() ?
     public ProviderData.QuestionAndAnswer processQuery(Api api, ProviderData.QueriedData queriedData,
-                                               Function<ProviderData.QueriedData, ApiData.QueriedInfoWithError> getQueriedInfoWithErrorFunc) {
+                                                       Function<ProviderData.QueriedData, ApiData.QueriedInfoWithError> getQueriedInfoWithErrorFunc) {
         try {
             if (S.b(queriedData.queryText())) {
                 return new ProviderData.QuestionAndAnswer(ERROR, "Required parameter wasn't specified");
             }
-            final ApiData.FullQueryResult result = process(api, queriedData, getQueriedInfoWithErrorFunc);
-            if (result.queryResult.error!=null ) {
-                return new ProviderData.QuestionAndAnswer(ERROR, result.queryResult.error.error);
+            final ApiData.QueryResult result = processInternal(api, queriedData, getQueriedInfoWithErrorFunc);
+            if (result.error!=null ) {
+                return new ProviderData.QuestionAndAnswer(ERROR, result.error.error);
             }
-            if (S.b(result.queryResult.answer)) {
-                return new ProviderData.QuestionAndAnswer(ERROR, "Answer is empty");
-            }
-            return new ProviderData.QuestionAndAnswer(queriedData.queryText(), result.queryResult.answer, OK, null, result.queryResult.raw);
+            return new ProviderData.QuestionAndAnswer(queriedData.queryText(), result);
         }
         catch (Throwable e) {
             log.error("Error", e);
             return new ProviderData.QuestionAndAnswer(ERROR, e.getMessage());
         }
-    }
-
-    public ApiData.FullQueryResult process(Api api, ProviderData.QueriedData queriedData,
-                                           Function<ProviderData.QueriedData, ApiData.QueriedInfoWithError> getQueriedInfoWithErrorFunc) throws JsonProcessingException {
-        ApiData.QueryResult queryResult = processInternal(api, queriedData, getQueriedInfoWithErrorFunc);
-
-        String json = JsonUtils.getMapper().writeValueAsString(queryResult);
-        final ApiData.FullQueryResult fullQueryResult = new ApiData.FullQueryResult(queryResult, json);
-        return fullQueryResult;
     }
 
     private ApiData.QueryResult processInternal(Api api, ProviderData.QueriedData queriedData,
@@ -229,7 +218,7 @@ public class ProviderQueryService {
         try {
             ApiData.QueriedInfoWithError queriedInfoWithError = getQueriedInfoWithErrorFunc.apply(queriedData);
             if (queriedInfoWithError.error!=null) {
-                queryResult = new ApiData.QueryResult(null, false, queriedInfoWithError.error, null);
+                queryResult = new ApiData.QueryResult(null, false, queriedInfoWithError.error);
             }
             else if (queriedInfoWithError.queriedInfo!=null) {
                 ApiData.SchemeAndParamResult r = providerService.queryProviders(api, queriedInfoWithError.queriedInfo);
@@ -241,8 +230,8 @@ public class ProviderQueryService {
                 if (r.status!=OK) {
                     return ApiData.QueryResult.asError(r.errorText, Enums.QueryResultErrorType.server_error);
                 }
-                String processedAnswer = ProviderQueryUtils.processAnswerFromApi(r.result, response);
-                queryResult = new ApiData.QueryResult(processedAnswer, true, r.raw);
+                ApiData.ProcessedAnswerFromAPI processedAnswer = ProviderQueryUtils.processAnswerFromApi(r.rawAnswerFromAPI, response);
+                queryResult = new ApiData.QueryResult(processedAnswer, true);
             }
             else {
                 throw new IllegalStateException();

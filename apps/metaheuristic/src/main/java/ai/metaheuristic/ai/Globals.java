@@ -178,6 +178,8 @@ public class Globals {
     @AllArgsConstructor
     public static class Max {
         public int consoleOutputLines = 1000;
+
+        // in unicode units. i.e. String.length()
         public int promptLength = 4096;
         public int errorsPerPart = 1;
         // has effect only with a local executor of requests

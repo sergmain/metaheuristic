@@ -97,7 +97,7 @@ public class AcceptanceTestFunction implements InternalFunction {
             if (answer.status()==EnumsApi.OperationStatus.ERROR) {
                 throw new InternalFunctionException(general_error, "514.080 error querying API: " + answer.error());
             }
-            String s = answer.a();
+            String s = answer.a()!=null && !answer.a().processedAnswer.rawAnswerFromAPI().type().binary ? answer.a().processedAnswer.answer() : null;
             if (S.b(s)) {
                 throw new InternalFunctionException(general_error, "514.120 answer is empty");
             }

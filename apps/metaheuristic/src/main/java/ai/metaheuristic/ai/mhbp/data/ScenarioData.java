@@ -42,6 +42,7 @@ public class ScenarioData {
     @NoArgsConstructor
     public static class ApiUid {
         public Long id;
+        // actually, it's a 'code'
         public String uid;
     }
 

@@ -182,7 +182,8 @@ public class ScenarioUtils {
             if (isApi) {
                 p.metas.add(Map.of(ApiCallService.PROMPT, step.p));
                 p.metas.add(Map.of(ApiCallService.API_CODE, step.api.code));
-                p.triesAfterError = 2;
+                p.triesAfterError = 0;
+//                p.triesAfterError = 2;
                 p.cache = new SourceCodeParamsYaml.Cache(true, true, true);
             }
             else {

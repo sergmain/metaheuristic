@@ -22,6 +22,8 @@ import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 
+import java.util.Objects;
+
 /**
  * @author Sergio Lissner
  * Date: 3/19/2023
@@ -29,19 +31,20 @@ import com.jayway.jsonpath.JsonPath;
  */
 public class ProviderQueryUtils {
 
-    public static ApiData.RawAnswerFromAPI processAnswerFromApi(String json, ApiScheme.Response response) {
+    public static ApiData.ProcessedAnswerFromAPI processAnswerFromApi(ApiData.RawAnswerFromAPI rawAnswerFromAPI, ApiScheme.Response response) {
         if (response.type==Enums.PromptResponseType.text) {
-            return new ApiData.RawAnswerFromAPI(response.type, json);
+            Objects.requireNonNull(rawAnswerFromAPI.raw());
+            return new ApiData.ProcessedAnswerFromAPI(rawAnswerFromAPI, rawAnswerFromAPI.raw());
         }
         if (response.type==Enums.PromptResponseType.json) {
-            DocumentContext jsonContext = JsonPath.parse(json);
+            Objects.requireNonNull(rawAnswerFromAPI.raw());
+            DocumentContext jsonContext = JsonPath.parse(rawAnswerFromAPI);
             String content = jsonContext.read(response.path);
-            return new ApiData.RawAnswerFromAPI(response.type, content);
+            return new ApiData.ProcessedAnswerFromAPI(rawAnswerFromAPI, content);
         }
         if (response.type==Enums.PromptResponseType.image) {
-            DocumentContext jsonContext = JsonPath.parse(json);
-            String content = jsonContext.read(response.path);
-            return new ApiData.RawAnswerFromAPI(response.type, content);
+            Objects.requireNonNull(rawAnswerFromAPI.bytes());
+            return new ApiData.ProcessedAnswerFromAPI(rawAnswerFromAPI, null);
         }
         throw new IllegalStateException();
     }

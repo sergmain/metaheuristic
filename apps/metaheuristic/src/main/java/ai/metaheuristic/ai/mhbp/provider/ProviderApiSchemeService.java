@@ -145,7 +145,6 @@ public class ProviderApiSchemeService {
 
     @SneakyThrows
     public static ApiData.SchemeAndParamResult getData(ApiData.SchemeAndParams schemeAndParams, final Request request) {
-
         RestUtils.addHeaders(request);
         final Executor executor;
         if (schemeAndParams.auth.auth.type==Enums.AuthType.basic) {
@@ -177,7 +176,7 @@ public class ProviderApiSchemeService {
         }
         byte[] bytes = baos.toByteArray();
         if (statusCode!=HttpStatus.OK.value()) {
-            //noinspection StringOperationCanBeSimplified
+            //noinspection
             String d = schemeAndParams.scheme.scheme.response.type.binary ? "<response for API is binary>" : new String(bytes, StandardCharsets.UTF_8);
             final String msg = "HttpCode: "+statusCode+", Server response:\n'" + d +"'";
             log.error(msg);
@@ -187,7 +186,7 @@ public class ProviderApiSchemeService {
                 schemeAndParams.scheme.scheme.response.type.binary
                         ? new ApiData.RawAnswerFromAPI(schemeAndParams.scheme.scheme.response.type, bytes)
                         : new ApiData.RawAnswerFromAPI(schemeAndParams.scheme.scheme.response.type, new String(bytes, StandardCharsets.UTF_8));
-        return new ApiData.SchemeAndParamResult(schemeAndParams, data, OK, data, null, HttpStatus.OK.value());
+        return new ApiData.SchemeAndParamResult(schemeAndParams, OK, rawAnswerFromAPI, null, HttpStatus.OK.value());
     }
 
     public static String getActualToken(ApiAuth.TokenAuth tokenAuth) {

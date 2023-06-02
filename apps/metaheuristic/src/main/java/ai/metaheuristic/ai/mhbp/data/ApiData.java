@@ -72,24 +72,20 @@ public class ApiData {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class QueryResult {
-        public String answer;
+        public ApiData.ProcessedAnswerFromAPI processedAnswer;
         public boolean success;
 
         @Nullable
         @JsonInclude(value= JsonInclude.Include.NON_NULL)
         public Error error;
 
-        // raw is different from answer in case when API returns json and actual answer is part of json
-        public String raw;
-
-        public QueryResult(String answer, boolean success, String raw) {
-            this.answer = answer;
+        public QueryResult(ApiData.ProcessedAnswerFromAPI processedAnswer, boolean success) {
+            this.processedAnswer = processedAnswer;
             this.success = success;
-            this.raw = raw;
         }
 
         public static QueryResult asError(String error, Enums.QueryResultErrorType errorType) {
-            return new QueryResult(null, false, new Error(error, errorType), null);
+            return new QueryResult(null, false, new Error(error, errorType));
         }
     }
 
@@ -113,11 +109,7 @@ public class ApiData {
         }
     }
 
-
-    public static final class TextAnswer {
-        private String answer;
-        private String raw;
-    }
+    public record ProcessedAnswerFromAPI(RawAnswerFromAPI rawAnswerFromAPI, @Nullable String answer) {}
 
     public record RawAnswerFromAPI(Enums.PromptResponseType type, @Nullable String raw, @Nullable byte[] bytes){
         public RawAnswerFromAPI(Enums.PromptResponseType type, String raw) {
@@ -139,11 +131,8 @@ public class ApiData {
     @AllArgsConstructor
     public static class SchemeAndParamResult {
         public SchemeAndParams schemeAndParams;
-//        @Nullable
-//        public String result;
         public EnumsApi.OperationStatus status;
         public RawAnswerFromAPI rawAnswerFromAPI;
-        public String raw;
         public String errorText;
         public int httpCode;
 

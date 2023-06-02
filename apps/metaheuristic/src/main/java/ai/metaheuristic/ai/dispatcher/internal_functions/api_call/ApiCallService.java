@@ -32,7 +32,6 @@ import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -40,7 +39,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
-import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.data_not_found;
 import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getNameForVariable;
 import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getVariables;
 import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
@@ -99,12 +97,27 @@ public class ApiCallService {
         log.info("513.240 prompt: {}", prompt);
         ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, null);
         ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
-        if (answer.status()!=OK || S.b(answer.a())) {
-            throw new InternalFunctionException(data_not_found, "513.280 API call error: "+answer.error()+", prompt: " + prompt+", answer: " + answer.a());
+        if (answer.status()!=OK) {
+            throw new InternalFunctionException(data_not_found, "513.280 API call error: "+answer.error()+", prompt: " + prompt);
+        }
+        if (answer.a()==null) {
+            throw new InternalFunctionException(data_not_found, "513.320 answer.a() is null, error: "+answer.error()+", prompt: " + prompt);
         }
 
-        TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
-        VariableSyncService.getWithSyncVoid(outputVariable.id, ()->execContextVariableService.storeStringInVariable(outputVariable, answer.a()));
+        if (answer.a().processedAnswer.rawAnswerFromAPI().type().binary) {
+            if (answer.a().processedAnswer.rawAnswerFromAPI().bytes()==null) {
+                throw new InternalFunctionException(data_not_found, "513.400 processedAnswer.rawAnswerFromAPI().bytes() is null, error: "+answer.error()+", prompt: " + prompt);
+            }
+            TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
+            VariableSyncService.getWithSyncVoid(outputVariable.id, () -> execContextVariableService.storeBytesInVariable(outputVariable, answer.a().processedAnswer.rawAnswerFromAPI().bytes()));
+        }
+        else {
+            if (answer.a().processedAnswer.answer()==null) {
+                throw new InternalFunctionException(data_not_found, "513.360 processedAnswer.answer() is null, error: "+answer.error()+", prompt: " + prompt);
+            }
+            TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
+            VariableSyncService.getWithSyncVoid(outputVariable.id, () -> execContextVariableService.storeStringInVariable(outputVariable, answer.a().processedAnswer.answer()));
+        }
         return answer;
     }
 
