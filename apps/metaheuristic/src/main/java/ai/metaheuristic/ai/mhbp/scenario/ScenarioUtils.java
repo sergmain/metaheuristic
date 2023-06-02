@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunc
 import ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter.BatchLineSplitterFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.enhance_text.EnhanceTextFunction;
+import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
 import ai.metaheuristic.ai.utils.CollectionUtils;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -109,9 +111,7 @@ public class ScenarioUtils {
     }
 
     public static SourceCodeParamsYaml to(Scenario s) {
-        final String uid = getUid(s);
-        ScenarioParams sp = s.getScenarioParams();
-        return to(uid, sp);
+        return to(getUid(s), s.getScenarioParams(), null);
     }
 
     public static String getUid(Scenario s) {
@@ -125,7 +125,7 @@ public class ScenarioUtils {
         return suffix;
     }
 
-    public static SourceCodeParamsYaml to(String uid, ScenarioParams sp) {
+    public static SourceCodeParamsYaml to(String uid, ScenarioParams sp, Function<String, Api> apiResolverFunc) {
         List<ItemWithUuid> list = sp.steps.stream().map(o->new ItemWithUuid(o.uuid, o.parentUuid)).toList();
         CollectionUtils.TreeUtils<String> treeUtils = new CollectionUtils.TreeUtils<>();
         List<ItemWithUuid> tree = treeUtils.rebuildTree((List)list);
@@ -139,11 +139,11 @@ public class ScenarioUtils {
         sc.source.variables = null;
         sc.source.metas = null;
 
-        processTree(sc.source.processes, sc, sp, tree, processNumber);
+        processTree(sc.source.processes, sp, tree, processNumber, apiResolverFunc);
         return sc;
     }
 
-    private static void processTree(List<SourceCodeParamsYaml.Process> processes, SourceCodeParamsYaml sc, ScenarioParams sp, List<ItemWithUuid> tree, AtomicInteger processNumber) {
+    private static void processTree(List<SourceCodeParamsYaml.Process> processes, ScenarioParams sp, List<ItemWithUuid> tree, AtomicInteger processNumber, Function<String, Api> apiResolverFunc) {
         for (ItemWithUuid itemWithUuid : tree) {
             ScenarioParams.Step step = findStepByUuid(sp, itemWithUuid.uuid);
             if (step==null) {
@@ -175,7 +175,18 @@ public class ScenarioUtils {
 
             if (step.function==null || (!Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code) && !Consts.MH_AGGREGATE_FUNCTION.equals(step.function.code))) {
                 extractInputVariables(p.inputs, step);
-                extractOutputVariables(p.outputs, step, AggregateFunction.AggregateType.text);
+                EnumsApi.VariableType type = null;
+                if (step.api!=null) {
+                    type = switch(apiResolverFunc.apply(step.api.code).getApiScheme().scheme.response.type) {
+                        case json, text -> EnumsApi.VariableType.text;
+                        case image -> EnumsApi.VariableType.image;
+                    };
+                }
+
+                if (type==null) {
+                    type = EnumsApi.VariableType.text;
+                }
+                extractOutputVariables(p.outputs, step, type);
             }
 
             p.cache = null;
@@ -211,28 +222,28 @@ public class ScenarioUtils {
                     p.metas.add(Map.of(AggregateFunction.VARIABLES, step.p));
                     p.metas.add(Map.of(AggregateFunction.TYPE, step.aggregateType.toString()));
                     p.metas.add(Map.of(AggregateFunction.PRODUCE_METADATA, "false"));
-                    extractOutputVariables(p.outputs, step, step.aggregateType);
+                    extractOutputVariables(p.outputs, step, step.aggregateType.type);
                 }
             }
 
 
             if (CollectionUtils.isNotEmpty(itemWithUuid.items)) {
                 p.subProcesses = new SourceCodeParamsYaml.SubProcesses(EnumsApi.SourceCodeSubProcessLogic.sequential, new ArrayList<>());
-                processTree(p.subProcesses.processes, sc, sp, itemWithUuid.items, processNumber);
+                processTree(p.subProcesses.processes, sp, itemWithUuid.items, processNumber, apiResolverFunc);
             }
 
             processes.add(p);
         }
     }
 
-    private static void extractOutputVariables(List<SourceCodeParamsYaml.Variable> outputs, ScenarioParams.Step step, AggregateFunction.AggregateType aggregateType) {
+    private static void extractOutputVariables(List<SourceCodeParamsYaml.Variable> outputs, ScenarioParams.Step step, EnumsApi.VariableType type) {
         if (S.b(step.resultCode)) {
             throw new IllegalStateException("(S.b(step.resultCode))");
         }
         String outputName = getVariables(step.resultCode, true).get(0);
         final SourceCodeParamsYaml.Variable v = new SourceCodeParamsYaml.Variable();
         v.name = getNameForVariable(outputName);
-        v.ext = aggregateType.ext;
+        v.ext = type.ext;
         outputs.add(v);
     }
 

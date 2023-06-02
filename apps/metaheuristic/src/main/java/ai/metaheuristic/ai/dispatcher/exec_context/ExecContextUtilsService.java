@@ -17,7 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
-import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateCache;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTxService;
+import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -39,9 +42,19 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ExecContextUtilsService {
 
-    private final ExecContextVariableStateCache execContextVariableStateCache;
+    private final ExecContextVariableStateTxService execContextVariableStateCache;
+    private final VariableTxService variableTxService;
 
+    @SuppressWarnings("DataFlowIssue")
     public String getExtensionForVariable(Long execContextVariableStateId, Long variableId, String defaultExt) {
+        SimpleVariable simpleVariable = variableTxService.getVariableAsSimple(variableId);
+        if (simpleVariable==null) {
+            return defaultExt;
+        }
+        final EnumsApi.VariableType variableType = simpleVariable.getDataStorageParams().type;
+        if (variableType!=null && variableType!=EnumsApi.VariableType.unknown) {
+            return variableType.ext;
+        }
         ExecContextApiData.ExecContextVariableStates info = getExecContextVariableStates(execContextVariableStateId);
         String ext = info.states.stream()
                 .filter(o->o.outputs!=null)

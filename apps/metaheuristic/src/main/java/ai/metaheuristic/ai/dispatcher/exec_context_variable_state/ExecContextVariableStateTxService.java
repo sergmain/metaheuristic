@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Serge
@@ -34,7 +35,7 @@ import org.springframework.stereotype.Service;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
-public class ExecContextVariableStateCache {
+public class ExecContextVariableStateTxService {
 
     private final ExecContextVariableStateRepository execContextVariableStateRepository;
 
@@ -44,6 +45,7 @@ public class ExecContextVariableStateCache {
     }
 
     @Nullable
+    @Transactional(readOnly = true)
     public ExecContextVariableState findById(Long id) {
         return execContextVariableStateRepository.findById(id).orElse(null);
     }

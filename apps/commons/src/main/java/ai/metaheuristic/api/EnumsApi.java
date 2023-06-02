@@ -424,10 +424,10 @@ public class EnumsApi {
     public enum VariableType {
         unknown(false, null), text(false, ".txt"), json(false, ".json"),
         yaml(false, ".yaml"), image(true, ".png"), binary(true, ".json"),
-        zip(true, ".zip");
+        html(false, ".html"), xml(false, ".xml"), zip(true, ".zip"),
+        pdf(true, ".pdf");
 
         public final boolean isBinary;
-        @Nullable
         public final String ext;
 
         VariableType(boolean isBinary, @Nullable String ext) {

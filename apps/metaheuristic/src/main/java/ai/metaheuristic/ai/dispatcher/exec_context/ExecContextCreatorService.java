@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateCache;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
@@ -75,7 +75,7 @@ public class ExecContextCreatorService {
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextTaskStateCache execContextTaskStateCache;
     private final ExecContextGraphCache execContextGraphCache;
-    private final ExecContextVariableStateCache execContextVariableStateCache;
+    private final ExecContextVariableStateTxService execContextVariableStateCache;
 
     @Data
     @EqualsAndHashCode(callSuper = false)

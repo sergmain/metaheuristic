@@ -44,7 +44,7 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class ExecContextVariableStateService {
 
-    private final ExecContextVariableStateCache execContextVariableStateCache;
+    private final ExecContextVariableStateTxService execContextVariableStateCache;
     private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final EventPublisherService eventPublisherService;
 

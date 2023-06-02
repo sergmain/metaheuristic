@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getUid;
 import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getVariables;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -47,7 +48,7 @@ public class ScenarioUtilsTest {
         s.version = 2;
         s.scenarioGroupId = 3L;
         s.name = "a".repeat(250);
-        String uid = ScenarioUtils.getUid(s);
+        String uid = getUid(s);
 
         String suffix = ScenarioUtils.getString(s);
         assertEquals("-3-1-2", suffix);
@@ -66,10 +67,9 @@ public class ScenarioUtilsTest {
         scenario.name = "Fruit production";
         scenario.setParams(yaml);
 
-
         // main function for testing
-        SourceCodeParamsYaml sc = ScenarioUtils.to(scenario);
-
+        //noinspection ReturnOfNull
+        SourceCodeParamsYaml sc = ScenarioUtils.to(getUid(scenario), scenario.getScenarioParams(), (code)-> null);
 
 
         String result = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(sc);

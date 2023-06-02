@@ -33,6 +33,7 @@ import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFunctionParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFunctionParamsYamlUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -71,17 +72,19 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @RequiredArgsConstructor
 public class AggregateFunction implements InternalFunction {
 
+    // this type only for aggregating result.
+    // if internal function doesn't support or won't support such aggregation, don't create a new type
     public enum AggregateType {
-        zip(true, ".zip"), text(true, ".txt"),
-        ww2003(true, ".xml"), html(false, ".html"),
-        pdf(false, ".pdf");
+        zip(true, EnumsApi.VariableType.zip), text(true, EnumsApi.VariableType.text),
+        ww2003(true, EnumsApi.VariableType.xml), html(false, EnumsApi.VariableType.html),
+        pdf(false, EnumsApi.VariableType.pdf);
 
         public final boolean supported;
-        public final String ext;
+        public final EnumsApi.VariableType type;
 
-        AggregateType(boolean supported, String ext) {
+        AggregateType(boolean supported, EnumsApi.VariableType type) {
             this.supported = supported;
-            this.ext = ext;
+            this.type = type;
         }
     }
 
