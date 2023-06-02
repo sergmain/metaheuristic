@@ -28,7 +28,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -46,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestBinaryDataRepository {
 
     @Autowired
-    private VariableTxService variableService;
+    private VariableTxService variableTxService;
 
     @Autowired
     private TxSupportForTestingService txSupportForTestingService;
@@ -69,7 +68,7 @@ public class TestBinaryDataRepository {
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
         d1 = ExecContextSyncService.getWithSync(10L,
-                ()-> txSupportForTestingService.createInitializedWithTx(
+                ()-> variableTxService.createInitializedWithTx(
                         inputStream, bytes.length, "test-01","test-file.bin", 10L, Consts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.binary));
 
         Timestamp ts = d1.getUploadTs();
@@ -86,7 +85,7 @@ public class TestBinaryDataRepository {
         final ByteArrayInputStream inputStream2 = new ByteArrayInputStream(bytes2);
         ExecContextSyncService.getWithSyncVoid(10L,
                 ()-> VariableSyncService.getWithSyncVoidForCreation(d2.id,
-                        ()->variableService.updateWithTx(inputStream2, bytes2.length, d2.id)));
+                        ()-> variableTxService.updateWithTx(inputStream2, bytes2.length, d2.id)));
 
         final Variable d3 = txSupportForTestingService.getVariableWithData(d2.getId());
 

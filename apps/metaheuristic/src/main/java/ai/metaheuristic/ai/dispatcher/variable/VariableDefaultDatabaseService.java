@@ -50,7 +50,7 @@ import java.nio.file.Path;
 public class VariableDefaultDatabaseService implements VariableDatabaseSpecificService {
 
     private final Globals globals;
-    private final VariableEntityManagerService variableEntityManagerService;
+    private final VariableTxService variableTxService;
     private final CacheVariableService cacheVariableService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -80,7 +80,7 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
             throw new IllegalStateException(es, e);
         }
         eventPublisher.publishEvent(new ResourceCloseTxEvent(is, tempFile));
-        variableEntityManagerService.storeData(is, Files.size(tempFile), targetVariable.id, targetVariable.filename);
+        variableTxService.storeData(is, Files.size(tempFile), targetVariable.id, targetVariable.filename);
     }
 
 }

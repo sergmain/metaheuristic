@@ -34,7 +34,6 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
@@ -90,7 +89,6 @@ public class TaskWithInternalContextEventService {
     private final ApplicationEventPublisher eventPublisher;
     private final VariableTopLevelService variableTopLevelService;
     public final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
-    private final VariableEntityManagerService variableEntityManagerService;
 
     private static final int MAX_ACTIVE_THREAD = 1;
     // number of active executers with different execContextId
@@ -296,7 +294,6 @@ public class TaskWithInternalContextEventService {
                 Object obj = EvaluateExpressionLanguage.evaluate(
                         taskParamsYaml.task.taskContextId, p.condition, simpleExecContext.execContextId,
                         internalFunctionVariableService, globalVariableService, variableTxService, variableRepository,
-                        variableEntityManagerService,
                         (v) -> VariableSyncService.getWithSyncVoidForCreation(v.id,
                                 ()-> variableTxService.setVariableAsNull(v.id)));
                 if (obj!=null && !(obj instanceof Boolean)) {

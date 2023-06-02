@@ -604,8 +604,8 @@ CREATE table mhbp_scenario_group
     COMPANY_ID      INT UNSIGNED    NOT NULL,
     ACCOUNT_ID      INT UNSIGNED    NOT NULL,
     CREATED_ON      bigint          NOT NULL,
-    NAME            VARCHAR(50)     NOT NULL,
-    DESCRIPTION     VARCHAR(250)    NOT NULL
+    NAME            VARCHAR(250)     NOT NULL,
+    DESCRIPTION     VARCHAR(1000)    NOT NULL
 );
 
 CREATE INDEX mhbp_scenario_group_account_id_idx

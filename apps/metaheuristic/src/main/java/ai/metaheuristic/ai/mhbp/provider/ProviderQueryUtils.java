@@ -38,7 +38,7 @@ public class ProviderQueryUtils {
         }
         if (response.type==Enums.PromptResponseType.json) {
             Objects.requireNonNull(rawAnswerFromAPI.raw());
-            DocumentContext jsonContext = JsonPath.parse(rawAnswerFromAPI);
+            DocumentContext jsonContext = JsonPath.parse(rawAnswerFromAPI.raw());
             String content = jsonContext.read(response.path);
             return new ApiData.ProcessedAnswerFromAPI(rawAnswerFromAPI, content);
         }

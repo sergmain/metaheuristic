@@ -37,7 +37,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
@@ -106,7 +105,7 @@ public class BatchResultProcessorTxService {
 
 
     private final Globals globals;
-    private final VariableTxService variableService;
+    private final VariableTxService variableTxService;
     private final VariableRepository variableRepository;
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
@@ -115,7 +114,6 @@ public class BatchResultProcessorTxService {
     private final SourceCodeCache sourceCodeCache;
     private final BatchHelperService batchHelperService;
     private final ApplicationEventPublisher eventPublisher;
-    private final VariableEntityManagerService variableEntityManagerService;
 
 
     @Data
@@ -236,7 +234,7 @@ public class BatchResultProcessorTxService {
 
         final long size = Files.size(zipFile);
         VariableSyncService.getWithSyncVoidForCreation(batchResultVar.id,
-                () -> variableEntityManagerService.storeData(fis, size, batchResultVar.id, originBatchFilename));
+                () -> variableTxService.storeData(fis, size, batchResultVar.id, originBatchFilename));
     }
 
     @SneakyThrows
@@ -268,7 +266,7 @@ public class BatchResultProcessorTxService {
         eventPublisher.publishEvent(new ResourceCloseTxEvent(inputStream));
 
         VariableSyncService.getWithSyncVoidForCreation(batchStatusVar.id,
-                () -> variableEntityManagerService.storeData(inputStream, bytes.length, batchStatusVar.id, null));
+                () -> variableTxService.storeData(inputStream, bytes.length, batchStatusVar.id, null));
     }
 
     /**
@@ -363,7 +361,7 @@ public class BatchResultProcessorTxService {
 
             String mapping = null;
             try {
-                mapping = variableService.getVariableDataAsString(sv.id);
+                mapping = variableTxService.getVariableDataAsString(sv.id);
                 if (!S.b(mapping)) {
                     BatchItemMappingYaml bimy = BatchItemMappingYamlUtils.BASE_YAML_UTILS.to(mapping);
                     if (bimy.key!= EnumsApi.BatchMappingKey.id) {
@@ -394,8 +392,8 @@ public class BatchResultProcessorTxService {
         final Path defaultPath = zipDir.resolve(getResultDirNameFromTaskContextId(item.taskContextId));
         Function<SimpleVariable, Path> mappingFunc = (sv) -> resolvePathFromMapping(bimys, defaultPath, sv);
 
-        variableService.storeVariableToFile(mappingFunc, item.items);
-        variableService.storeVariableToFile(mappingFunc, item.statuses);
+        variableTxService.storeVariableToFile(mappingFunc, item.items);
+        variableTxService.storeVariableToFile(mappingFunc, item.statuses);
     }
 
     public static Path resolvePathFromMapping(List<BatchItemMappingYaml> bimys, Path defaultPath, SimpleVariable sv) {

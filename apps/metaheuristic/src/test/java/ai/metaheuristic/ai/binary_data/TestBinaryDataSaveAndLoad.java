@@ -73,6 +73,9 @@ public class TestBinaryDataSaveAndLoad {
     @Autowired
     private VariableRepository variableRepository;
 
+    @Autowired
+    private VariableTxService variableTxService;
+
     private static final int ARRAY_SIZE = 1_000_000;
     private static final Random r = new Random();
 
@@ -107,7 +110,7 @@ public class TestBinaryDataSaveAndLoad {
         try (InputStream is = Files.newInputStream(dataFile)) {
             final long size = Files.size(dataFile);
             variable = ExecContextSyncService.getWithSync(1L,
-                    ()-> txSupportForTestingService.createInitializedWithTx(is, size, TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3", EnumsApi.VariableType.binary));
+                    ()-> variableTxService.createInitializedWithTx(is, size, TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3", EnumsApi.VariableType.binary));
         }
         assertNotNull(variable);
         assertNotNull(variable.id);
@@ -129,7 +132,7 @@ public class TestBinaryDataSaveAndLoad {
         try (InputStream is = Files.newInputStream(dataFile)) {
             final long size = Files.size(dataFile);
             variable = ExecContextSyncService.getWithSync(1L,
-                    ()-> txSupportForTestingService.createInitializedWithTx(is, size, TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3", EnumsApi.VariableType.binary));
+                    ()-> variableTxService.createInitializedWithTx(is, size, TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3", EnumsApi.VariableType.binary));
         }
         assertNotNull(variable);
         assertNotNull(variable.id);

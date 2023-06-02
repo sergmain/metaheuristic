@@ -28,9 +28,8 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -44,7 +43,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.sql.Blob;
 import java.util.List;
 
@@ -61,7 +59,7 @@ public class TxSupportForTestingService {
 
     private final Globals globals;
     private final VariableRepository variableRepository;
-    private final VariableTxService variableService;
+    private final VariableTxService variableTxService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final ExecContextGraphService execContextGraphService;
     private final FunctionCache functionCache;
@@ -70,7 +68,6 @@ public class TxSupportForTestingService {
     private final ExecContextCreatorService execContextCreatorService;
     private final BatchCache batchCache;
     private final ExecContextCache execContextCache;
-    private final VariableEntityManagerService variableEntityManagerService;
 
     @Transactional
     public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
@@ -120,7 +117,7 @@ public class TxSupportForTestingService {
     }
 
     @Transactional
-    public void storeOutputVariableWithTaskContextId(Long execContextId, String variableName, String variableData, String taskContextId) {
+    public void storeOutputVariableWithTaskContextId(Long execContextId, String variableName, String variableData, String taskContextId, Long taskId) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
@@ -128,12 +125,9 @@ public class TxSupportForTestingService {
         if (v==null || v.inited) {
             throw new IllegalStateException("(v==null || v.inited)");
         }
-        Variable variable = variableRepository.findById(v.id).orElse(null);
-        if (variable==null) {
-            throw new IllegalStateException("(v==null || v.inited)");
-        }
         byte[] bytes = variableData.getBytes();
-        VariableSyncService.getWithSyncVoidForCreation(variable.id, ()-> variableEntityManagerService.update(new ByteArrayInputStream(bytes), bytes.length, variable));
+        SimpleVariable finalV = v;
+        VariableSyncService.getWithSyncVoidForCreation(v.id, ()-> variableTxService.storeVariable(new ByteArrayInputStream(bytes), bytes.length, execContextId, taskId, finalV.id));
 
         v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variableName, taskContextId, execContextId);
         if (v==null) {
@@ -185,13 +179,6 @@ public class TxSupportForTestingService {
         return null;
     }
 
-    @Transactional
-    public Variable createInitializedWithTx(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId, EnumsApi.VariableType type) {
-        if (!globals.testing) {
-            throw new IllegalStateException("Only for testing");
-        }
-        return variableEntityManagerService.createInitialized(is, size, variable, filename, execContextId, taskContextId, type);
-    }
 
     @Transactional
     public List<ExecContextData.TaskVertex> findAllForAssigningWithTx(Long execContextGraphId, Long execContextTaskStateId) {

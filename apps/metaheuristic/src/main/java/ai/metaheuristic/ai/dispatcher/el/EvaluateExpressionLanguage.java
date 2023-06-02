@@ -71,14 +71,12 @@ public class EvaluateExpressionLanguage {
         public final InternalFunctionVariableService internalFunctionVariableService;
         public final GlobalVariableService globalVariableService;
         public final VariableTxService variableTxService;
-        public final VariableEntityManagerService variableEntityManagerService;
         public final VariableRepository variableRepository;
         public final Consumer<SimpleVariable> setAsNullFunction;
 
         public MhEvalContext(String taskContextId, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
                              GlobalVariableService globalVariableService, VariableTxService variableTxService,
                              VariableRepository variableRepository,
-                             VariableEntityManagerService variableEntityManagerService,
                              Consumer<SimpleVariable> setAsNullFunction
                              ) {
             this.taskContextId = taskContextId;
@@ -88,7 +86,6 @@ public class EvaluateExpressionLanguage {
             this.variableTxService = variableTxService;
             this.variableRepository = variableRepository;
             this.setAsNullFunction = setAsNullFunction;
-            this.variableEntityManagerService = variableEntityManagerService;
         }
 
         @Override
@@ -202,7 +199,7 @@ public class EvaluateExpressionLanguage {
 
                         try (InputStream is = new ByteArrayInputStream(bytes)) {
                             VariableSyncService.getWithSyncVoid(variableHolderOutput.variable.id,
-                                    ()->variableEntityManagerService.storeData(is, bytes.length, variableHolderOutput.variable.id, null));
+                                    ()-> variableTxService.storeData(is, bytes.length, variableHolderOutput.variable.id, null));
                         }
                         variableHolderOutput.variable.inited = true;
                     }
@@ -429,14 +426,14 @@ public class EvaluateExpressionLanguage {
     public static Object evaluate(
             String taskContextId, String expression, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
             GlobalVariableService globalVariableService, VariableTxService variableService,
-            VariableRepository variableRepository, VariableEntityManagerService variableEntityManagerService, Consumer<SimpleVariable> setAsNullFunction
+            VariableRepository variableRepository, Consumer<SimpleVariable> setAsNullFunction
     ) {
 
         ExpressionParser parser = new SpelExpressionParser();
 
         EvaluateExpressionLanguage.MhEvalContext mhEvalContext = new EvaluateExpressionLanguage.MhEvalContext(
                 taskContextId, execContextId, internalFunctionVariableService, globalVariableService, variableService,
-                variableRepository, variableEntityManagerService, setAsNullFunction);
+                variableRepository, setAsNullFunction);
 
         Expression exp = parser.parseExpression(expression);
         try {

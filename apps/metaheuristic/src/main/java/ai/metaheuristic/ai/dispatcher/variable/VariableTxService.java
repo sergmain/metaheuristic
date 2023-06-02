@@ -57,6 +57,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.hibernate.Hibernate;
+import org.hibernate.engine.spi.SessionImplementor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -65,6 +67,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.persistence.EntityManager;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -93,8 +96,82 @@ public class VariableTxService {
     private final EventPublisherService eventPublisherService;
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextCache execContextCache;
-    private final VariableEntityManagerService variableEntityManagerService;
-    private final VariableTxService variableTxService;
+
+    private final EntityManager em;
+
+    @Transactional
+    public Variable createInitializedWithTx(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId, EnumsApi.VariableType type) {
+        return createInitialized(is, size, variable, filename, execContextId, taskContextId, type);
+    }
+
+    private Variable createInitialized(
+            InputStream is, long size, String variable, @Nullable String filename,
+            Long execContextId, String taskContextId, EnumsApi.VariableType type) {
+        if (size==0) {
+            throw new IllegalStateException("#171.600 Variable can't be of zero length");
+        }
+        TxUtils.checkTxExists();
+
+        Variable data = new Variable();
+        data.inited = true;
+        data.nullified = false;
+        data.setName(variable);
+        data.setFilename(filename);
+        data.setExecContextId(execContextId);
+        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher, variable, type)));
+        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
+        data.setTaskContextId(taskContextId);
+
+        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
+        data.setData(blob);
+
+        variableRepository.save(data);
+
+        return data;
+    }
+
+    private void update(InputStream is, long size, Variable data) {
+        TxUtils.checkTxExists();
+        VariableSyncService.checkWriteLockPresent(data.id);
+
+        if (size==0) {
+            throw new IllegalStateException("#171.690 Variable can't be with zero length");
+        }
+        TxUtils.checkTxExists();
+        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
+
+        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
+        data.setData(blob);
+        data.inited = true;
+        data.nullified = false;
+
+        variableRepository.save(data);
+    }
+
+    @Transactional
+    public void storeData(InputStream is, long size, Long variableId, @Nullable String filename) {
+        VariableSyncService.checkWriteLockPresent(variableId);
+
+        if (size==0) {
+            throw new IllegalStateException("#171.720 Variable can't be with zero length");
+        }
+        TxUtils.checkTxExists();
+
+        Variable data = variableRepository.findById(variableId).orElse(null);
+        if (data==null) {
+            log.error("#171.750 can't find variable #" + variableId);
+            return;
+        }
+        data.filename = filename;
+        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
+
+        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
+        data.setData(blob);
+        data.inited = true;
+        data.nullified = false;
+
+        variableRepository.save(data);
+    }
 
     @Transactional
     public void initInputVariableWithNull(Long execContextId, ExecContextParamsYaml execContextParamsYaml, int varIndex) {
@@ -116,7 +193,7 @@ public class VariableTxService {
         if (execContext==null) {
             log.warn("#697.060 ExecContext #{} wasn't found", execContextId);
         }
-        variableTxService.createInitializedWithNull(inputVariable, execContextId, Consts.TOP_LEVEL_CONTEXT_ID );
+        createInitializedWithNull(inputVariable, execContextId, Consts.TOP_LEVEL_CONTEXT_ID );
     }
 
     /**
@@ -139,7 +216,7 @@ public class VariableTxService {
         if (execContext==null) {
             log.warn("#697.060 ExecContext #{} wasn't found", execContextId);
         }
-        variableEntityManagerService.createInitialized(is, size, inputVariable, originFilename, execContextId, Consts.TOP_LEVEL_CONTEXT_ID, type );
+        createInitialized(is, size, inputVariable, originFilename, execContextId, Consts.TOP_LEVEL_CONTEXT_ID, type );
     }
 
     @SneakyThrows
@@ -152,7 +229,7 @@ public class VariableTxService {
         try {
             InputStream is = Files.newInputStream(file);
             resourceCloseTxEvent.add(is);
-            variableEntityManagerService.update(is, Files.size(file), variable);
+            update(is, Files.size(file), variable);
         } catch (FileNotFoundException e) {
             throw new InternalFunctionException(system_error, "#697.180 Can't open file   "+ file.normalize());
         }
@@ -164,7 +241,7 @@ public class VariableTxService {
 
         byte[] bytes = value.getBytes();
         InputStream is = new ByteArrayInputStream(bytes);
-        variableEntityManagerService.update(is, bytes.length, variable);
+        update(is, bytes.length, variable);
     }
 
     @Transactional
@@ -175,7 +252,7 @@ public class VariableTxService {
         variable.params = DataStorageParamsUtils.toString(dsp);
 
         InputStream is = new ByteArrayInputStream(bytes);
-        variableEntityManagerService.update(is, bytes.length, variable);
+        update(is, bytes.length, variable);
     }
 
     private Variable getVariable(TaskParamsYaml.OutputVariable outputVariable) {
@@ -193,14 +270,13 @@ public class VariableTxService {
     }
 
     @Transactional
-    public Void initOutputVariable(Long execContextId, ExecContextParamsYaml.Variable output) {
+    public void initOutputVariable(Long execContextId, ExecContextParamsYaml.Variable output) {
         TxUtils.checkTxExists();
 
-        SimpleVariable sv = variableTxService.findVariableInAllInternalContexts(output.name, Consts.TOP_LEVEL_CONTEXT_ID, execContextId);
+        SimpleVariable sv = findVariableInAllInternalContexts(output.name, Consts.TOP_LEVEL_CONTEXT_ID, execContextId);
         if (sv == null) {
-            Variable v = variableTxService.createUninitialized(output.name, execContextId, Consts.TOP_LEVEL_CONTEXT_ID);
+            Variable v = createUninitialized(output.name, execContextId, Consts.TOP_LEVEL_CONTEXT_ID);
         }
-        return null;
     }
 
     @Transactional
@@ -223,7 +299,7 @@ public class VariableTxService {
             log.warn(es);
             throw new VariableCommonException(es, variableId);
         }
-        variableEntityManagerService.update(variableIS, length, variable);
+        update(variableIS, length, variable);
     }
 
     public void resetVariable(Long execContextId, Long variableId) {
@@ -304,7 +380,7 @@ public class VariableTxService {
                 try {
                     FileInputStream fis = new FileInputStream(f.file);
                     eventPublisher.publishEvent(new ResourceCloseTxEvent(fis));
-                    Variable v = variableEntityManagerService.createInitialized(fis, f.file.length(), variableName, f.originName, execContextId, currTaskContextId, EnumsApi.VariableType.unknown);
+                    Variable v = createInitialized(fis, f.file.length(), variableName, f.originName, execContextId, currTaskContextId, EnumsApi.VariableType.unknown);
 
                     SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
                     variableHolders.add(new VariableUtils.VariableHolder(sv));
@@ -329,7 +405,7 @@ public class VariableTxService {
             ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
             // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
             eventPublisher.publishEvent(new ResourceCloseTxEvent(bais));
-            Variable v = variableEntityManagerService.createInitialized(bais, bytes.length, inputVariableName, null, execContextId, currTaskContextId, EnumsApi.VariableType.yaml);
+            Variable v = createInitialized(bais, bytes.length, inputVariableName, null, execContextId, currTaskContextId, EnumsApi.VariableType.yaml);
         }
 
         for (Pair<String, Boolean> booleanVariable : booleanVariables) {
@@ -448,7 +524,7 @@ public class VariableTxService {
             return null;
         }
         if (vars.size()>1) {
-            throw new SourceCodeException("#171.360 Too many variable '"+variable+"', actual count: " + vars.size());
+            throw new SourceCodeException("171.360 Too many variable '"+variable+"', actual count: " + vars.size());
         }
         return vars.get(0);
     }
@@ -633,7 +709,7 @@ public class VariableTxService {
         InputStream is = new ByteArrayInputStream(bytes);
         // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
         eventPublisher.publishEvent(new ResourceCloseTxEvent(is));
-        return variableEntityManagerService.createInitialized(is, bytes.length, variable, filename, execContextId, taskContextId, type);
+        return createInitialized(is, bytes.length, variable, filename, execContextId, taskContextId, type);
     }
 
 
@@ -692,15 +768,14 @@ public class VariableTxService {
     }
 
     @Transactional
-    public Void updateWithTx(InputStream is, long size, Long variableId) {
+    public void updateWithTx(InputStream is, long size, Long variableId) {
         Variable v = variableRepository.findById(variableId).orElse(null);
         if (v==null) {
             String es = S.f("#171.660 Variable #%d wasn't found", variableId);
             log.error(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }
-        variableEntityManagerService.update(is, size, v);
-        return null;
+        update(is, size, v);
     }
 
 

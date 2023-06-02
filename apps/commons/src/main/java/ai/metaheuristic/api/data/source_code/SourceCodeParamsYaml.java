@@ -51,8 +51,8 @@ public class SourceCodeParamsYaml implements BaseParams {
         if (source == null || S.b(source.uid) || source.processes == null) {
             throw new CheckIntegrityFailedException("#608.020 (source == null || S.b(source.uid) || source.processes == null)");
         }
-        if (source.uid.length()>50) {
-            throw new CheckIntegrityFailedException("#608.040 uid is too long. max 50 chars");
+        if (source.uid.length()>250) {
+            throw new CheckIntegrityFailedException("#608.040 uid is too long. max 250 chars");
         }
         for (Process process : source.processes) {
             if (process.function ==null) {
