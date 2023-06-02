@@ -159,7 +159,6 @@ public class AggregateFunction implements InternalFunction {
             Path outputDir = tempDir.resolve(outputVariable.name);
             Files.createDirectory(outputDir);
 
-            List<String> stringCollector = new ArrayList<>();
             List<SimpleVariable> simpleVariables = new ArrayList<>();
             LinkedHashSet<String> taskContextIds = new LinkedHashSet<>();
 

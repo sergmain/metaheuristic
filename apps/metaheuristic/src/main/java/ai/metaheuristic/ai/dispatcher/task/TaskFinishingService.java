@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.cache.CacheService;
+import ai.metaheuristic.ai.dispatcher.cache.CacheTxService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
@@ -52,7 +52,7 @@ public class TaskFinishingService {
 
     private final DispatcherEventService dispatcherEventService;
     private final TaskService taskService;
-    private final CacheService cacheService;
+    private final CacheTxService cacheService;
     private final TaskRepository taskRepository;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final EventPublisherService eventPublisherService;

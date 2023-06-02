@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.*;
-import ai.metaheuristic.ai.dispatcher.cache.CacheService;
+import ai.metaheuristic.ai.dispatcher.cache.CacheTxService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
@@ -70,7 +70,7 @@ public class ArtifactCleanerAtDispatcher {
     private final VariableRepository variableRepository;
     private final FunctionRepository functionRepository;
     private final CacheProcessRepository cacheProcessRepository;
-    private final CacheService cacheService;
+    private final CacheTxService cacheService;
     private final ExecContextService execContextService;
     private final DispatcherEventRepository dispatcherEventRepository;
     private final FunctionDataRepository functionDataRepository;

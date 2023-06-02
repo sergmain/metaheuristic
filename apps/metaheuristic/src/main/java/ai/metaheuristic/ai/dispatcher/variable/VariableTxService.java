@@ -466,6 +466,8 @@ public class VariableTxService {
     }
 
     public void storeToFile(Long variableId, Path trgFile) {
+        TxUtils.checkTxExists();
+
         try {
             Blob blob = variableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
@@ -476,6 +478,29 @@ public class VariableTxService {
             try (InputStream is = blob.getBinaryStream()) {
                 DirUtils.copy(is, trgFile);
             }
+        } catch (CommonErrorWithDataException e) {
+            throw e;
+        } catch (Exception e) {
+            String es = "#171.570 Error while storing data to file";
+            log.error(es, e);
+            throw new IllegalStateException(es, e);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] getVariableAsBytes(Long variableId) {
+        try {
+            Blob blob = variableRepository.getDataAsStreamById(variableId);
+            if (blob==null) {
+                String es = "#171.540 Variable #"+variableId+" wasn't found";
+                log.warn(es);
+                throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+            }
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is)) {
+                IOUtils.copy(bis, baos);
+            }
+            return baos.toByteArray();
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Exception e) {

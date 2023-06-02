@@ -26,8 +26,11 @@ import ai.metaheuristic.ww2003.document.persistence.ww2003.property.WW2003Proper
 import ai.metaheuristic.ww2003.document.tags.xml.Para;
 import ai.metaheuristic.ww2003.document.tags.xml.Run;
 import ai.metaheuristic.ww2003.document.tags.xml.Sect;
+import ai.metaheuristic.ww2003.image.ImageConverterUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -54,18 +57,27 @@ public class AggregateToWW2003Service {
         Sect sect = document.findBody().flatMap(body -> body.findFirst(Sect.class)).orElseThrow(()->new InternalFunctionException(data_not_found, "761.100 Section wasn't found"));
 
         for (SimpleVariable v : simpleVariables) {
+            if () {
+                final Run run = Run.t("Variable #" + v.id + ", name: " + v.variable);
+                Para p = new Para(run);
+                p.setShadow(true);
+                WW2003PropertyUtils.addVanishRProp(run);
+                WW2003PropertyUtils.addVanishRProp(p);
+                sect.add(p);
 
-            final Run run = Run.t("Variable #"+v.id+", name: " + v.variable);
-            Para p = new Para(run);
-            p.setShadow(true);
-            WW2003PropertyUtils.addVanishRProp(run);
-            WW2003PropertyUtils.addVanishRProp(p);
-            sect.add(p);
+                String text = variableTxService.getVariableDataAsString(v.id);
+                text.lines().forEach(line -> sect.add(new Para(Run.t(line))));
 
-            String text = variableTxService.getVariableDataAsString(v.id);
-            text.lines().forEach(line->sect.add(new Para(Run.t(line))));
+                sect.add(new Para());
+            }
+            else {
+                byte[] bytes = variableTxService.getVariableAsBytes(v.id);
+                String base64 = Base64.encodeBase64String(bytes);
 
-            sect.add(new Para());
+                final Para para = ImageConverterUtils.getParaForImage(base64);
+                sect.add(para);
+
+            }
         }
 
         WW2003DocumentUtils.writeWW2003Document(tempFile, document);

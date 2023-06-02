@@ -55,7 +55,7 @@ import java.util.List;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
-public class CacheService {
+public class CacheTxService {
 
     private final Globals globals;
     private final CacheProcessRepository cacheProcessRepository;

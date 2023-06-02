@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.cache.CacheService;
+import ai.metaheuristic.ai.dispatcher.cache.CacheTxService;
 import ai.metaheuristic.ai.dispatcher.cache.CacheUtils;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
@@ -82,7 +82,7 @@ public class TaskCheckCachingTopLevelService {
 
     private final TaskCheckCachingTxService taskCheckCachingTxService;
     private final ExecContextReadinessStateService execContextReadinessStateService;
-    private final CacheService cacheService;
+    private final CacheTxService cacheService;
     private final CacheProcessRepository cacheProcessRepository;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;

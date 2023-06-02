@@ -125,7 +125,7 @@ public class ExecContextService {
 
         ExecContextImpl ec = execContextCache.findById(execContextId, true);
         if (ec == null) {
-            ExecContextApiData.RawExecContextStateResult resultWithError = new ExecContextApiData.RawExecContextStateResult("#705.220 Can't find execContext for Id " + execContextId);
+            ExecContextApiData.RawExecContextStateResult resultWithError = new ExecContextApiData.RawExecContextStateResult("705.220 Can't find execContext for Id " + execContextId);
             return resultWithError;
         }
         ExecContextApiData.ExecContextVariableStates info = execContextUtilsServices.getExecContextVariableStates(ec.execContextVariableStateId);
