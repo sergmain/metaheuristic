@@ -316,7 +316,7 @@ public class BatchTopLevelService {
             }
             final ExecContextParamsYaml execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();
             try(InputStream is = Files.newInputStream(tempFile)) {
-                execContextVariableService.initInputVariable(is, file.getSize(), originFilename, creationResult.execContext.id, execContextParamsYaml, 0);
+                execContextVariableService.initInputVariable(is, file.getSize(), originFilename, creationResult.execContext.id, execContextParamsYaml, 0, EnumsApi.VariableType.zip);
             }
             final BatchData.UploadingStatus uploadingStatus;
             uploadingStatus = ExecContextSyncService.getWithSync(creationResult.execContext.id, ()->

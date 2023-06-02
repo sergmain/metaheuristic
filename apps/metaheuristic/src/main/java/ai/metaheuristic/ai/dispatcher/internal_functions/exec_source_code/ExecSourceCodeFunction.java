@@ -172,7 +172,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
                     }
                     try (InputStream is = Files.newInputStream(tempFile)) {
                         execContextVariableService.initInputVariable(
-                                is, Files.size(tempFile), "variable-" + input.name, execContextResultRest.execContext.id, execContextParamsYaml, i);
+                                is, Files.size(tempFile), "variable-" + input.name, execContextResultRest.execContext.id, execContextParamsYaml, i, EnumsApi.VariableType.unknown);
                     }
                 }
             }

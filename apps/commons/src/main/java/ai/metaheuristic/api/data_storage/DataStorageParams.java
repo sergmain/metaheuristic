@@ -40,11 +40,22 @@ public class DataStorageParams {
     public String name;
 
     public EnumsApi.DataSourcing sourcing;
-    public @Nullable GitInfo git;
-    public @Nullable DiskInfo disk;
+    @Nullable
+    public GitInfo git;
+    @Nullable
+    public DiskInfo disk;
+
+    @Nullable
+    public EnumsApi.VariableType type;
 
     public DataStorageParams(EnumsApi.DataSourcing sourcing, String name) {
         this.sourcing = sourcing;
         this.name = name;
+    }
+
+    public DataStorageParams(EnumsApi.DataSourcing sourcing, String name, EnumsApi.VariableType type) {
+        this.sourcing = sourcing;
+        this.name = name;
+        this.type = type;
     }
 }

@@ -193,7 +193,7 @@ public class VariableTxService {
                 try {
                     FileInputStream fis = new FileInputStream(f.file);
                     eventPublisher.publishEvent(new ResourceCloseTxEvent(fis));
-                    Variable v = variableEntityManagerService.createInitialized(fis, f.file.length(), variableName, f.originName, execContextId, currTaskContextId);
+                    Variable v = variableEntityManagerService.createInitialized(fis, f.file.length(), variableName, f.originName, execContextId, currTaskContextId, EnumsApi.VariableType.unknown);
 
                     SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
                     variableHolders.add(new VariableUtils.VariableHolder(sv));
@@ -205,7 +205,7 @@ public class VariableTxService {
 
             if (!S.b(inputVariableContent)) {
                 String variableName = VariableUtils.getNameForVariableInArray();
-                Variable v = createInitialized(inputVariableContent, variableName, variableName, execContextId, currTaskContextId);
+                Variable v = createInitialized(inputVariableContent, variableName, variableName, execContextId, currTaskContextId, EnumsApi.VariableType.text);
 
                 SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
                 VariableUtils.VariableHolder variableHolder = new VariableUtils.VariableHolder(sv);
@@ -218,22 +218,22 @@ public class VariableTxService {
             ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
             // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
             eventPublisher.publishEvent(new ResourceCloseTxEvent(bais));
-            Variable v = variableEntityManagerService.createInitialized(bais, bytes.length, inputVariableName, null, execContextId, currTaskContextId);
+            Variable v = variableEntityManagerService.createInitialized(bais, bytes.length, inputVariableName, null, execContextId, currTaskContextId, EnumsApi.VariableType.yaml);
         }
 
         for (Pair<String, Boolean> booleanVariable : booleanVariables) {
-            Variable v = createInitialized(""+booleanVariable.getValue(), booleanVariable.getKey(), null, execContextId, currTaskContextId);
+            Variable v = createInitialized(booleanVariable.getValue().toString(), booleanVariable.getKey(), null, execContextId, currTaskContextId, EnumsApi.VariableType.text);
         }
 
         if (inputVariableContent!=null && !contentAsArray) {
-            Variable v = createInitialized(inputVariableContent, inputVariableName, null, execContextId, currTaskContextId);
+            Variable v = createInitialized(inputVariableContent, inputVariableName, null, execContextId, currTaskContextId, EnumsApi.VariableType.text);
         }
 
         if (permutation!=null) {
             {
                 VariableArrayParamsYaml vapy = VariableUtils.toVariableArrayParamsYaml(permutation.permutedVariables);
                 String yaml = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.toString(vapy);
-                Variable v = createInitialized(yaml, permutation.permutedVariableName, null, execContextId, currTaskContextId);
+                Variable v = createInitialized(yaml, permutation.permutedVariableName, null, execContextId, currTaskContextId, EnumsApi.VariableType.yaml);
             }
             if (permutation.permuteInlines) {
                 if (permutation.inlineVariableName==null || permutation.inlinePermuted==null) {
@@ -241,7 +241,7 @@ public class VariableTxService {
                 }
                 Yaml yampUtil = YamlUtils.init(Map.class);
                 String yaml = yampUtil.dumpAsMap(permutation.inlinePermuted);
-                Variable v = createInitialized(yaml, permutation.inlineVariableName, null, execContextId, currTaskContextId);
+                Variable v = createInitialized(yaml, permutation.inlineVariableName, null, execContextId, currTaskContextId, EnumsApi.VariableType.yaml);
             }
         }
     }
@@ -517,12 +517,12 @@ public class VariableTxService {
         return variableRepository.getIdAndStorageUrlInVarsForExecContext(execContextId, variables);
     }
 
-    public Variable createInitialized(String data, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
+    public Variable createInitialized(String data, String variable, @Nullable String filename, Long execContextId, String taskContextId, EnumsApi.VariableType type) {
         final byte[] bytes = data.getBytes();
         InputStream is = new ByteArrayInputStream(bytes);
         // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX
         eventPublisher.publishEvent(new ResourceCloseTxEvent(is));
-        return variableEntityManagerService.createInitialized(is, bytes.length, variable, filename, execContextId, taskContextId);
+        return variableEntityManagerService.createInitialized(is, bytes.length, variable, filename, execContextId, taskContextId, type);
     }
 
 

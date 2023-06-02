@@ -186,11 +186,11 @@ public class TxSupportForTestingService {
     }
 
     @Transactional
-    public Variable createInitializedWithTx(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
+    public Variable createInitializedWithTx(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId, EnumsApi.VariableType type) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        return variableEntityManagerService.createInitialized(is, size, variable, filename, execContextId, taskContextId);
+        return variableEntityManagerService.createInitialized(is, size, variable, filename, execContextId, taskContextId, type);
     }
 
     @Transactional

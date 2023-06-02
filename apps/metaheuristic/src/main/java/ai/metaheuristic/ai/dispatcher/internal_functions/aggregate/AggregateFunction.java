@@ -71,7 +71,10 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @RequiredArgsConstructor
 public class AggregateFunction implements InternalFunction {
 
-    public enum AggregateType { zip(true, ".zip"), text(true, ".txt"), ww2003(true, ".xml"), html(false, ".html"), pdf(false, ".pdf");
+    public enum AggregateType {
+        zip(true, ".zip"), text(true, ".txt"),
+        ww2003(true, ".xml"), html(false, ".html"),
+        pdf(false, ".pdf");
 
         public final boolean supported;
         public final String ext;
@@ -116,7 +119,7 @@ public class AggregateFunction implements InternalFunction {
         TxUtils.checkTxNotExists();
         ArtifactCleanerAtDispatcher.setBusy();
         try {
-            processInternal(simpleExecContext, taskId, taskContextId, taskParamsYaml);
+            processInternal(simpleExecContext, taskId, taskParamsYaml);
         }
         finally {
             ArtifactCleanerAtDispatcher.notBusy();
@@ -124,8 +127,7 @@ public class AggregateFunction implements InternalFunction {
     }
 
     @SneakyThrows
-    private void processInternal(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
-                                 TaskParamsYaml taskParamsYaml) {
+    private void processInternal(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml) {
 
         if (taskParamsYaml.task.outputs.size()!=1) {
             throw new InternalFunctionException(

@@ -21,11 +21,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.Nullable;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -51,35 +47,6 @@ public class ExecContextData {
     public static class RootAndParent {
         public Long rootExecContextId;
         public Long parentExecContextId;
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class VariableInitialize {
-        public InputStream is;
-        public long size;
-        public String originFilename;
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class VariableInitializeList implements Closeable {
-        public final List<VariableInitialize> vars = new ArrayList<>();
-        public Long execContextId;
-        public ExecContextParamsYaml execContextParamsYaml;
-
-        @Override
-        public void close() throws IOException {
-            for (VariableInitialize var : vars) {
-                try {
-                    var.is.close();
-                }
-                catch(Throwable th) {
-                    log.error("#439.020 error while closing an input stream", th);
-                }
-            }
-        }
     }
 
     @Data

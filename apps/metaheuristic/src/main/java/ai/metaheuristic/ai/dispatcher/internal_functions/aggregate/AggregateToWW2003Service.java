@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.aggregate;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.ww2003.CreateWW2003Document;
 import ai.metaheuristic.ww2003.document.WW2003Document;
 import ai.metaheuristic.ww2003.document.WW2003DocumentUtils;
@@ -30,7 +31,6 @@ import ai.metaheuristic.ww2003.image.ImageConverterUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.IOUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -57,7 +57,16 @@ public class AggregateToWW2003Service {
         Sect sect = document.findBody().flatMap(body -> body.findFirst(Sect.class)).orElseThrow(()->new InternalFunctionException(data_not_found, "761.100 Section wasn't found"));
 
         for (SimpleVariable v : simpleVariables) {
-            if () {
+            final EnumsApi.VariableType variableType = v.getDataStorageParams().type;
+            EnumsApi.VariableType type = variableType==null ? EnumsApi.VariableType.unknown : variableType;
+
+            if (type.isBinary) {
+                byte[] bytes = variableTxService.getVariableAsBytes(v.id);
+                String base64 = Base64.encodeBase64String(bytes);
+                final Para para = ImageConverterUtils.getParaForImage(base64);
+                sect.add(para);
+            }
+            else {
                 final Run run = Run.t("Variable #" + v.id + ", name: " + v.variable);
                 Para p = new Para(run);
                 p.setShadow(true);
@@ -69,14 +78,6 @@ public class AggregateToWW2003Service {
                 text.lines().forEach(line -> sect.add(new Para(Run.t(line))));
 
                 sect.add(new Para());
-            }
-            else {
-                byte[] bytes = variableTxService.getVariableAsBytes(v.id);
-                String base64 = Base64.encodeBase64String(bytes);
-
-                final Para para = ImageConverterUtils.getParaForImage(base64);
-                sect.add(para);
-
             }
         }
 

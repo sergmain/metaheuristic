@@ -420,4 +420,21 @@ public class EnumsApi {
             this.needDownload = needDownload;
         }
     }
+
+    public enum VariableType {
+        unknown(false, null), text(false, ".txt"), json(false, ".json"),
+        yaml(false, ".yaml"), image(true, ".png"), binary(true, ".json"),
+        zip(true, ".zip");
+
+        public final boolean isBinary;
+        @Nullable
+        public final String ext;
+
+        VariableType(boolean isBinary, @Nullable String ext) {
+            this.isBinary = isBinary;
+            this.ext = ext;
+        }
+    }
+
+
 }

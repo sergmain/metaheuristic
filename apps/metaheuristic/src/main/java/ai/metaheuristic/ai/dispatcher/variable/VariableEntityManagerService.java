@@ -50,7 +50,9 @@ public class VariableEntityManagerService {
     private final EntityManager em;
     private final VariableRepository variableRepository;
 
-    public Variable createInitialized(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
+    public Variable createInitialized(
+            InputStream is, long size, String variable, @Nullable String filename,
+            Long execContextId, String taskContextId, EnumsApi.VariableType type) {
         if (size==0) {
             throw new IllegalStateException("#171.600 Variable can't be of zero length");
         }
@@ -62,7 +64,7 @@ public class VariableEntityManagerService {
         data.setName(variable);
         data.setFilename(filename);
         data.setExecContextId(execContextId);
-        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher, variable)));
+        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher, variable, type)));
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
         data.setTaskContextId(taskContextId);
 
@@ -88,6 +90,7 @@ public class VariableEntityManagerService {
         data.setData(blob);
         data.inited = true;
         data.nullified = false;
+
         variableRepository.save(data);
     }
 

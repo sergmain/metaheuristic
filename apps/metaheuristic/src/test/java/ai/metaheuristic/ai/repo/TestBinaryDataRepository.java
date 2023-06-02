@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
+import ai.metaheuristic.api.EnumsApi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,7 +69,8 @@ public class TestBinaryDataRepository {
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
         d1 = ExecContextSyncService.getWithSync(10L,
-                ()-> txSupportForTestingService.createInitializedWithTx(inputStream, bytes.length, "test-01","test-file.bin", 10L, Consts.TOP_LEVEL_CONTEXT_ID));
+                ()-> txSupportForTestingService.createInitializedWithTx(
+                        inputStream, bytes.length, "test-01","test-file.bin", 10L, Consts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.binary));
 
         Timestamp ts = d1.getUploadTs();
 

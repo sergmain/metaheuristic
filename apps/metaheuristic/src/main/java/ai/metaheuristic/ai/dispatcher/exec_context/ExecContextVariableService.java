@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
@@ -40,7 +39,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -87,13 +88,12 @@ public class ExecContextVariableService {
     }
 
     /**
-     * this method is expecting only one input variable in execContext
-     * for initializing more that one input variable the method initInputVariables has to be used
-     *
      * varIndex - index of variable, start with 0
      */
     @Transactional
-    public void initInputVariable(InputStream is, long size, String originFilename, Long execContextId, ExecContextParamsYaml execContextParamsYaml, int varIndex) {
+    public void initInputVariable(
+            InputStream is, long size, String originFilename, Long execContextId, ExecContextParamsYaml execContextParamsYaml,
+            int varIndex, EnumsApi.VariableType type) {
         if (execContextParamsYaml.variables.inputs.size()<varIndex+1) {
             throw new ExecContextCommonException(
                     S.f("#697.020 varIndex is bigger than number of input variables. varIndex: %s, number: %s",
@@ -107,29 +107,7 @@ public class ExecContextVariableService {
         if (execContext==null) {
             log.warn("#697.060 ExecContext #{} wasn't found", execContextId);
         }
-        variableEntityManagerService.createInitialized(is, size, inputVariable, originFilename, execContextId, Consts.TOP_LEVEL_CONTEXT_ID );
-    }
-
-    @Transactional
-    public void initInputVariables(ExecContextData.VariableInitializeList list) {
-        if (list.execContextParamsYaml.variables.inputs.size()!=list.vars.size()) {
-            throw new ExecContextCommonException(
-                    S.f("#697.080 the number of input streams and variables for initing are different. is count: %d, vars count: %d",
-                            list.vars.size(), list.execContextParamsYaml.variables.inputs.size()));
-        }
-        ExecContextImpl execContext = execContextCache.findById(list.execContextId);
-        if (execContext==null) {
-            throw new ExecContextCommonException(
-                    S.f("#697.100 ExecContext #{} wasn't found", list.execContextId));
-        }
-        for (int i = 0; i < list.vars.size(); i++) {
-            ExecContextData.VariableInitialize var = list.vars.get(i);
-            String inputVariable = list.execContextParamsYaml.variables.inputs.get(i).name;
-            if (S.b(inputVariable)) {
-                throw new ExecContextCommonException("#697.120 Wrong format of sourceCode, input variable for source code isn't specified");
-            }
-            variableEntityManagerService.createInitialized(var.is, var.size, inputVariable, var.originFilename, execContext.id, Consts.TOP_LEVEL_CONTEXT_ID );
-        }
+        variableEntityManagerService.createInitialized(is, size, inputVariable, originFilename, execContextId, Consts.TOP_LEVEL_CONTEXT_ID, type );
     }
 
     @SneakyThrows
