@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.ReduceVariablesData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
@@ -58,7 +57,6 @@ public class ReduceVariablesFunction implements InternalFunction {
 
     private final VariableTxService variableService;
     private final GlobalVariableService globalVariableService;
-    private final ExecContextVariableService execContextVariableService;
 
     @Override
     public String getCode() {

@@ -23,7 +23,6 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.el.EvaluateExpressionLanguage;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
@@ -66,8 +65,7 @@ public class EvaluationFunction implements InternalFunction {
     public final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     public final SourceCodeRepository sourceCodeRepository;
     public final GlobalVariableService globalVariableService;
-    public final VariableTxService variableService;
-    public final ExecContextVariableService execContextVariableService;
+    public final VariableTxService variableTxService;
     public final VariableRepository variableRepository;
     public final ExecContextCache execContextCache;
     public final VariableTopLevelService variableTopLevelService;
@@ -105,10 +103,10 @@ public class EvaluationFunction implements InternalFunction {
         // because mh.evaluate doesn't have any output variables
         Object obj = EvaluateExpressionLanguage.evaluate(
                 taskContextId, expression, simpleExecContext.execContextId,
-                this.internalFunctionVariableService, this.globalVariableService, this.variableService, this.execContextVariableService, variableRepository,
+                this.internalFunctionVariableService, this.globalVariableService, this.variableTxService, variableRepository,
                 variableEntityManagerService,
                 (v) -> VariableSyncService.getWithSyncVoidForCreation(v.id,
-                        ()->variableService.setVariableAsNull(v.id)));
+                        ()-> variableTxService.setVariableAsNull(v.id)));
 
         System.out.println("mh.evaluation, expression: "+expression+", result:" + obj);
         int i=0;

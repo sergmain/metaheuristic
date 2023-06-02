@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevel
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -67,9 +66,8 @@ public class ExecSourceCodeFunction implements InternalFunction {
 
     private final SourceCodeCache sourceCodeCache;
     private final SourceCodeRepository sourceCodeRepository;
-    private final VariableTxService variableService;
+    private final VariableTxService variableTxService;
     private final GlobalVariableService globalVariableService;
-    private final ExecContextVariableService execContextVariableService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final ExecContextCreatorService execContextCreatorService;
@@ -156,7 +154,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
                     throw new InternalFunctionException(variable_not_found, "#508.073 can't find a variable #"+input.id);
                 }
                 if (sv.nullified) {
-                    execContextVariableService.initInputVariableWithNull(execContextResultRest.execContext.id, execContextParamsYaml, i);
+                    variableTxService.initInputVariableWithNull(execContextResultRest.execContext.id, execContextParamsYaml, i);
                 }
                 else {
                     Path tempFile = Files.createTempFile(tempDir, "input-", ".bin");
@@ -165,19 +163,19 @@ public class ExecSourceCodeFunction implements InternalFunction {
                             globalVariableService.storeToFileWithTx(input.id, tempFile);
                             break;
                         case local:
-                            variableService.storeToFileWithTx(input.id, tempFile);
+                            variableTxService.storeToFileWithTx(input.id, tempFile);
                             break;
                         case array:
                             throw new NotImplementedException("Not yet");
                     }
                     try (InputStream is = Files.newInputStream(tempFile)) {
-                        execContextVariableService.initInputVariable(
+                        variableTxService.initInputVariable(
                                 is, Files.size(tempFile), "variable-" + input.name, execContextResultRest.execContext.id, execContextParamsYaml, i, EnumsApi.VariableType.unknown);
                     }
                 }
             }
             for (ExecContextParamsYaml.Variable output : execContextParamsYaml.variables.outputs) {
-                execContextVariableService.initOutputVariable(execContextResultRest.execContext.id, output);
+                variableTxService.initOutputVariable(execContextResultRest.execContext.id, output);
             }
         }
         catch (InternalFunctionException e) {

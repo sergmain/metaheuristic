@@ -79,8 +79,7 @@ public class TaskWithInternalContextEventService {
     private final TaskRepository taskRepository;
 
     private final TaskService taskService;
-    private final ExecContextVariableService execContextVariableService;
-    private final VariableTxService variableService;
+    private final VariableTxService variableTxService;
     public final InternalFunctionVariableService internalFunctionVariableService;
     public final SourceCodeCache sourceCodeCache;
     public final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
@@ -296,10 +295,10 @@ public class TaskWithInternalContextEventService {
                 // because mh.evaluate doesn't have any output variables
                 Object obj = EvaluateExpressionLanguage.evaluate(
                         taskParamsYaml.task.taskContextId, p.condition, simpleExecContext.execContextId,
-                        internalFunctionVariableService, globalVariableService, variableService, this.execContextVariableService, variableRepository,
+                        internalFunctionVariableService, globalVariableService, variableTxService, variableRepository,
                         variableEntityManagerService,
                         (v) -> VariableSyncService.getWithSyncVoidForCreation(v.id,
-                                ()->variableService.setVariableAsNull(v.id)));
+                                ()-> variableTxService.setVariableAsNull(v.id)));
                 if (obj!=null && !(obj instanceof Boolean)) {
                     final String es = "#706.300 condition '" + p.condition + " has returned not boolean value but " + obj.getClass().getSimpleName();
                     log.error(es);

@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.el;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.*;
@@ -74,12 +73,11 @@ public class EvaluateExpressionLanguage {
         public final VariableTxService variableTxService;
         public final VariableEntityManagerService variableEntityManagerService;
         public final VariableRepository variableRepository;
-        public final ExecContextVariableService execContextVariableService;
         public final Consumer<SimpleVariable> setAsNullFunction;
 
         public MhEvalContext(String taskContextId, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
                              GlobalVariableService globalVariableService, VariableTxService variableTxService,
-                             ExecContextVariableService execContextVariableService, VariableRepository variableRepository,
+                             VariableRepository variableRepository,
                              VariableEntityManagerService variableEntityManagerService,
                              Consumer<SimpleVariable> setAsNullFunction
                              ) {
@@ -88,7 +86,6 @@ public class EvaluateExpressionLanguage {
             this.internalFunctionVariableService = internalFunctionVariableService;
             this.globalVariableService = globalVariableService;
             this.variableTxService = variableTxService;
-            this.execContextVariableService = execContextVariableService;
             this.variableRepository = variableRepository;
             this.setAsNullFunction = setAsNullFunction;
             this.variableEntityManagerService = variableEntityManagerService;
@@ -431,7 +428,7 @@ public class EvaluateExpressionLanguage {
     @Nullable
     public static Object evaluate(
             String taskContextId, String expression, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
-            GlobalVariableService globalVariableService, VariableTxService variableService, ExecContextVariableService execContextVariableService,
+            GlobalVariableService globalVariableService, VariableTxService variableService,
             VariableRepository variableRepository, VariableEntityManagerService variableEntityManagerService, Consumer<SimpleVariable> setAsNullFunction
     ) {
 
@@ -439,7 +436,7 @@ public class EvaluateExpressionLanguage {
 
         EvaluateExpressionLanguage.MhEvalContext mhEvalContext = new EvaluateExpressionLanguage.MhEvalContext(
                 taskContextId, execContextId, internalFunctionVariableService, globalVariableService, variableService,
-                execContextVariableService, variableRepository, variableEntityManagerService, setAsNullFunction);
+                variableRepository, variableEntityManagerService, setAsNullFunction);
 
         Expression exp = parser.parseExpression(expression);
         try {

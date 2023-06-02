@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.experiment_reduce_vari
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
@@ -50,9 +49,8 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @RequiredArgsConstructor
 public class ExperimentReduceVariablesFunction implements InternalFunction {
 
-    private final VariableTxService variableService;
+    private final VariableTxService variableTxService;
     private final GlobalVariableService globalVariableService;
-    private final ExecContextVariableService execContextVariableService;
     @Override
     public String getCode() {
         return Consts.MH_EXPERIMENT_REDUCE_VARIABLES;
@@ -99,7 +97,7 @@ public class ExperimentReduceVariablesFunction implements InternalFunction {
         String newValues = inputOfVariants.values.stream().filter(o->!filterOfVariants.values.contains(o)).collect(Collectors.joining(", ", "[", "]"));
 
         final TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
-        execContextVariableService.storeStringInVariable(outputVariable, newValues);
+        variableTxService.storeStringInVariable(outputVariable, newValues);
     }
 
     @Nullable
@@ -110,7 +108,7 @@ public class ExperimentReduceVariablesFunction implements InternalFunction {
                 value = globalVariableService.getVariableDataAsString(input.id);
                 break;
             case local:
-                value = variableService.getVariableDataAsString(input.id);
+                value = variableTxService.getVariableDataAsString(input.id);
                 break;
             case array:
             default:

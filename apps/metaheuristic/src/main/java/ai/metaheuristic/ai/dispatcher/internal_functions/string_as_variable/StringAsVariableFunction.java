@@ -20,10 +20,10 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.StringVariableData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -56,7 +56,7 @@ public class StringAsVariableFunction implements InternalFunction {
 
     private static final String MAPPING = "mapping";
 
-    private final ExecContextVariableService execContextVariableService;
+    private final VariableTxService variableTxService;
     private final InternalFunctionVariableService internalFunctionVariableService;
 
     @Override
@@ -126,7 +126,7 @@ public class StringAsVariableFunction implements InternalFunction {
                     .findFirst()
                     .orElseThrow(()->new InternalFunctionException(variable_not_found, "#513.380 output variable not found '"+inlineAsVar.output+"'"));
 
-            VariableSyncService.getWithSyncVoid(outputVariable.id, ()->execContextVariableService.storeStringInVariable(outputVariable, value));
+            VariableSyncService.getWithSyncVoid(outputVariable.id, ()-> variableTxService.storeStringInVariable(outputVariable, value));
         }
 
         //noinspection unused

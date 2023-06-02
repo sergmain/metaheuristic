@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.variable;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
@@ -66,6 +67,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Blob;
 import java.sql.Timestamp;
@@ -73,6 +75,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 
 @SuppressWarnings("unused")
@@ -91,6 +94,114 @@ public class VariableTxService {
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextCache execContextCache;
     private final VariableEntityManagerService variableEntityManagerService;
+    private final VariableTxService variableTxService;
+
+    @Transactional
+    public void initInputVariableWithNull(Long execContextId, ExecContextParamsYaml execContextParamsYaml, int varIndex) {
+        if (execContextParamsYaml.variables.inputs.size()<varIndex+1) {
+            throw new ExecContextCommonException(
+                    S.f("#697.020 varIndex is bigger than number of input variables. varIndex: %s, number: %s",
+                            varIndex, execContextParamsYaml.variables.inputs.size()));
+        }
+        final ExecContextParamsYaml.Variable variable = execContextParamsYaml.variables.inputs.get(varIndex);
+        if (!variable.getNullable()) {
+            throw new ExecContextCommonException(S.f("#697.025 sourceCode %s, input variable %s must be declared as nullable to be set as null",
+                    execContextParamsYaml.sourceCodeUid, variable.name));
+        }
+        String inputVariable = variable.name;
+        if (S.b(inputVariable)) {
+            throw new ExecContextCommonException("##697.040 Wrong format of sourceCode, input variable for source code isn't specified");
+        }
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            log.warn("#697.060 ExecContext #{} wasn't found", execContextId);
+        }
+        variableTxService.createInitializedWithNull(inputVariable, execContextId, Consts.TOP_LEVEL_CONTEXT_ID );
+    }
+
+    /**
+     * varIndex - index of variable, start with 0
+     */
+    @Transactional
+    public void initInputVariable(
+            InputStream is, long size, String originFilename, Long execContextId, ExecContextParamsYaml execContextParamsYaml,
+            int varIndex, EnumsApi.VariableType type) {
+        if (execContextParamsYaml.variables.inputs.size()<varIndex+1) {
+            throw new ExecContextCommonException(
+                    S.f("#697.020 varIndex is bigger than number of input variables. varIndex: %s, number: %s",
+                            varIndex, execContextParamsYaml.variables.inputs.size()));
+        }
+        String inputVariable = execContextParamsYaml.variables.inputs.get(varIndex).name;
+        if (S.b(inputVariable)) {
+            throw new ExecContextCommonException("##697.040 Wrong format of sourceCode, input variable for source code isn't specified");
+        }
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            log.warn("#697.060 ExecContext #{} wasn't found", execContextId);
+        }
+        variableEntityManagerService.createInitialized(is, size, inputVariable, originFilename, execContextId, Consts.TOP_LEVEL_CONTEXT_ID, type );
+    }
+
+    @SneakyThrows
+    @Transactional
+    public void storeDataInVariable(TaskParamsYaml.OutputVariable outputVariable, Path file) {
+        Variable variable = getVariable(outputVariable);
+
+        final ResourceCloseTxEvent resourceCloseTxEvent = new ResourceCloseTxEvent();
+        eventPublisher.publishEvent(resourceCloseTxEvent);
+        try {
+            InputStream is = Files.newInputStream(file);
+            resourceCloseTxEvent.add(is);
+            variableEntityManagerService.update(is, Files.size(file), variable);
+        } catch (FileNotFoundException e) {
+            throw new InternalFunctionException(system_error, "#697.180 Can't open file   "+ file.normalize());
+        }
+    }
+
+    @Transactional
+    public void storeStringInVariable(TaskParamsYaml.OutputVariable outputVariable, String value) {
+        Variable variable = getVariable(outputVariable);
+
+        byte[] bytes = value.getBytes();
+        InputStream is = new ByteArrayInputStream(bytes);
+        variableEntityManagerService.update(is, bytes.length, variable);
+    }
+
+    @Transactional
+    public void storeBytesInVariable(TaskParamsYaml.OutputVariable outputVariable, byte[] bytes, EnumsApi.VariableType type) {
+        Variable variable = getVariable(outputVariable);
+        DataStorageParams dsp = DataStorageParamsUtils.to(variable.params);
+        dsp.type = type;
+        variable.params = DataStorageParamsUtils.toString(dsp);
+
+        InputStream is = new ByteArrayInputStream(bytes);
+        variableEntityManagerService.update(is, bytes.length, variable);
+    }
+
+    private Variable getVariable(TaskParamsYaml.OutputVariable outputVariable) {
+        Variable variable;
+        if (outputVariable.context == EnumsApi.VariableContext.local) {
+            variable = variableRepository.findById(outputVariable.id).orElse(null);
+            if (variable == null) {
+                throw new InternalFunctionException(variable_not_found, "697.140 Variable not found for id #" + outputVariable.id);
+            }
+        }
+        else {
+            throw new InternalFunctionException(global_variable_is_immutable, "697.160 Can't store data in a global variable " + outputVariable.name);
+        }
+        return variable;
+    }
+
+    @Transactional
+    public Void initOutputVariable(Long execContextId, ExecContextParamsYaml.Variable output) {
+        TxUtils.checkTxExists();
+
+        SimpleVariable sv = variableTxService.findVariableInAllInternalContexts(output.name, Consts.TOP_LEVEL_CONTEXT_ID, execContextId);
+        if (sv == null) {
+            Variable v = variableTxService.createUninitialized(output.name, execContextId, Consts.TOP_LEVEL_CONTEXT_ID);
+        }
+        return null;
+    }
 
     @Transactional
     public void setVariableAsNull(Long taskId, Long variableId) {

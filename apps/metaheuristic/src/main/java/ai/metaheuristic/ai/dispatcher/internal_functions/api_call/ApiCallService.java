@@ -17,15 +17,16 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.api_call;
 
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.provider.ProviderData;
 import ai.metaheuristic.ai.mhbp.provider.ProviderQueryService;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
@@ -58,7 +59,7 @@ public class ApiCallService {
     public static final String API_CODE = "apiCode";
 
     private final InternalFunctionVariableService internalFunctionVariableService;
-    private final ExecContextVariableService execContextVariableService;
+    private final VariableTxService variableTxService;
     private final ProviderQueryService providerQueryService;
     private final ApiRepository apiRepository;
 
@@ -109,14 +110,20 @@ public class ApiCallService {
                 throw new InternalFunctionException(data_not_found, "513.400 processedAnswer.rawAnswerFromAPI().bytes() is null, error: "+answer.error()+", prompt: " + prompt);
             }
             TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
-            VariableSyncService.getWithSyncVoid(outputVariable.id, () -> execContextVariableService.storeBytesInVariable(outputVariable, answer.a().processedAnswer.rawAnswerFromAPI().bytes()));
+            // right now only image supported
+//            final EnumsApi.VariableType variableType = v.getDataStorageParams().type;
+//            EnumsApi.VariableType type = variableType==null ? EnumsApi.VariableType.unknown : variableType;
+            EnumsApi.VariableType type = EnumsApi.VariableType.image;
+
+            VariableSyncService.getWithSyncVoid(outputVariable.id,
+                    ()-> variableTxService.storeBytesInVariable(outputVariable, answer.a().processedAnswer.rawAnswerFromAPI().bytes(), type));
         }
         else {
             if (answer.a().processedAnswer.answer()==null) {
                 throw new InternalFunctionException(data_not_found, "513.360 processedAnswer.answer() is null, error: "+answer.error()+", prompt: " + prompt);
             }
             TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
-            VariableSyncService.getWithSyncVoid(outputVariable.id, () -> execContextVariableService.storeStringInVariable(outputVariable, answer.a().processedAnswer.answer()));
+            VariableSyncService.getWithSyncVoid(outputVariable.id, () -> variableTxService.storeStringInVariable(outputVariable, answer.a().processedAnswer.answer()));
         }
         return answer;
     }

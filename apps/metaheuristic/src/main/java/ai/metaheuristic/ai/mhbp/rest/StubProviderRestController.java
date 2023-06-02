@@ -142,7 +142,7 @@ public class StubProviderRestController {
         }
 
         try {
-            final PathToImage pathToImage = fruits.getOrDefault(prompt.strip(), DEFAULT_PATH_TO_IMAGE);
+            final PathToImage pathToImage = fruits.getOrDefault(prompt.strip().toLowerCase(), DEFAULT_PATH_TO_IMAGE);
             byte[] bytes = IOUtils.resourceToByteArray(pathToImage.path);
 
             HttpHeaders httpHeaders = new HttpHeaders();

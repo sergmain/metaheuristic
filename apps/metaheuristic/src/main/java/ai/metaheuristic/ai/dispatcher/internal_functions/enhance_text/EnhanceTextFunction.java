@@ -19,10 +19,10 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.enhance_text;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -56,7 +56,7 @@ public class EnhanceTextFunction implements InternalFunction {
     public static final String TEXT = "text";
 
     private final InternalFunctionVariableService internalFunctionVariableService;
-    private final ExecContextVariableService execContextVariableService;
+    private final VariableTxService variableTxService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
@@ -102,7 +102,7 @@ public class EnhanceTextFunction implements InternalFunction {
 
         TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
         final String finalText = text;
-        VariableSyncService.getWithSyncVoid(outputVariable.id, ()->execContextVariableService.storeStringInVariable(outputVariable, finalText));
+        VariableSyncService.getWithSyncVoid(outputVariable.id, ()-> variableTxService.storeStringInVariable(outputVariable, finalText));
 
         eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
 

@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextUtilsService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
@@ -94,7 +93,6 @@ public class AggregateFunction implements InternalFunction {
 
     private final VariableRepository variableRepository;
     private final VariableTxService variableTxService;
-    private final ExecContextVariableService execContextVariableService;
     private final ExecContextUtilsService execContextUtilsService;
     private final AggregateToWW2003Service aggregateToWW2003Service;
 
@@ -226,19 +224,19 @@ public class AggregateFunction implements InternalFunction {
                     ZipUtils.createZip(outputDir, zipFile);
 
                     VariableSyncService.getWithSyncVoidForCreation(outputVariable.id,
-                            ()->execContextVariableService.storeDataInVariable(outputVariable, zipFile));
+                            ()-> variableTxService.storeDataInVariable(outputVariable, zipFile));
                 }
                 case text -> {
                     String text = simpleVariables.stream().map(v-> variableTxService.getVariableDataAsString(v.id)).collect(Collectors.joining("\n\n"));
                     VariableSyncService.getWithSyncVoidForCreation(outputVariable.id,
-                            ()->execContextVariableService.storeStringInVariable(outputVariable, text));
+                            ()-> variableTxService.storeStringInVariable(outputVariable, text));
                 }
                 case ww2003 -> {
                     Path ww2003File = tempDir.resolve("result-for-"+outputVariable.id+'-'+outputVariable.name+".xml");
                     aggregateToWW2003Service.aggregate(ww2003File, simpleVariables);
 
                     VariableSyncService.getWithSyncVoidForCreation(outputVariable.id,
-                            ()->execContextVariableService.storeDataInVariable(outputVariable, ww2003File));
+                            ()-> variableTxService.storeDataInVariable(outputVariable, ww2003File));
                 }
             }
         }

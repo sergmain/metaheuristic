@@ -32,6 +32,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskSta
 import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
@@ -99,7 +100,7 @@ public class BatchTopLevelService {
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final BatchHelperService batchHelperService;
-    private final ExecContextVariableService execContextVariableService;
+    private final VariableTxService variableTxService;
 
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_ENTRY_SIZE_FUNCTION = BatchTopLevelService::isZipEntitySizeOk;
@@ -316,7 +317,7 @@ public class BatchTopLevelService {
             }
             final ExecContextParamsYaml execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();
             try(InputStream is = Files.newInputStream(tempFile)) {
-                execContextVariableService.initInputVariable(is, file.getSize(), originFilename, creationResult.execContext.id, execContextParamsYaml, 0, EnumsApi.VariableType.zip);
+                variableTxService.initInputVariable(is, file.getSize(), originFilename, creationResult.execContext.id, execContextParamsYaml, 0, EnumsApi.VariableType.zip);
             }
             final BatchData.UploadingStatus uploadingStatus;
             uploadingStatus = ExecContextSyncService.getWithSync(creationResult.execContext.id, ()->
@@ -404,6 +405,7 @@ public class BatchTopLevelService {
         }
     }
 
+    @Nullable
     public CleanerInfo getBatchOriginFile(Long batchId) {
         try {
             return batchService.getBatchOriginFile(batchId);
