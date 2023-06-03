@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunc
 import ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter.BatchLineSplitterFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.enhance_text.EnhanceTextFunction;
-import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
 import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
@@ -111,10 +110,6 @@ public class ScenarioUtils {
         }
     }
 
-    public static SourceCodeParamsYaml to(Scenario s) {
-        return to(getUid(s), s.getScenarioParams(), null);
-    }
-
     public static String getUid(Scenario s) {
         final String suffix = getString(s);
         final String uid = StrUtils.getCode(StringUtils.substring(s.name, 0, MAX_LENGTH_OF_UID - suffix.length()) + suffix, () -> "scenario" + suffix).toLowerCase();
@@ -201,7 +196,7 @@ public class ScenarioUtils {
                 p.metas.add(Map.of(ApiCallService.API_CODE, step.api.code));
                 p.triesAfterError = 0;
 //                p.triesAfterError = 2;
-                p.cache = new SourceCodeParamsYaml.Cache(true, true, true);
+                p.cache = step.isCachable ? new SourceCodeParamsYaml.Cache(true, true, true) : null;
             }
             else {
                 if (Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code)) {
