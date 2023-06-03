@@ -49,7 +49,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.*;
@@ -643,12 +642,12 @@ public class ExecContextGraphService {
             Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state, @Nullable String taskContextId) {
 
         Set<ExecContextData.TaskVertex> set = findDescendantsInternal(graph, taskId);
-        String context = taskContextId!=null ? ContextUtils.getWithoutSubContext(taskContextId) : null;
+        String context = taskContextId!=null ? ContextUtils.getLevel(taskContextId) : null;
 
         // find and filter a 'mh.finish' vertex, which doesn't have any outgoing edges
         //noinspection SimplifiableConditionalExpression
         Set<ExecContextData.TaskVertex> setFiltered = set.stream()
-                .filter(tv -> !graph.outgoingEdgesOf(tv).isEmpty() && (context==null ? true : ContextUtils.getWithoutSubContext(tv.taskContextId).startsWith(context)))
+                .filter(tv -> !graph.outgoingEdgesOf(tv).isEmpty() && (context==null ? true : ContextUtils.getLevel(tv.taskContextId).startsWith(context)))
                 .collect(Collectors.toSet());
 
         setFiltered.stream()

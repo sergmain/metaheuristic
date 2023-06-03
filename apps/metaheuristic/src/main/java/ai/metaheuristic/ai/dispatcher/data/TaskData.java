@@ -30,6 +30,62 @@ import org.springframework.lang.Nullable;
  * Time: 6:32 PM
  */
 public class TaskData {
+
+    public record DetailedTaskContextId(String level, @Nullable String path) {}
+
+/*
+    public static class TaskContextId implements CollectionUtils.TreeUtils.TreeItem<String> {
+        public String id;
+        @Nullable
+        public String parentId;
+        @Nullable
+        public List<TaskContextId> items = null;
+
+        public TaskContextId(String id, String parentId) {
+            this.id = id;
+            this.parentId = parentId;
+        }
+
+        @Nullable
+        @Override
+        public String getTopId() {
+            return parentId;
+        }
+
+        @Override
+        public String getId() {
+            return id;
+        }
+
+        @JsonIgnore
+        @Nullable
+        @Override
+        public List<CollectionUtils.TreeUtils.TreeItem<String>> getSubTree() {
+            return (List)items;
+        }
+
+        @JsonIgnore
+        @Override
+        public void setSubTree(@Nullable List<CollectionUtils.TreeUtils.TreeItem<String>> list) {
+            this.items = (List)list;
+        }
+
+        @SuppressWarnings("ConstantValue")
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || this.getClass() != o.getClass()) {
+                return false;
+            }
+            TaskContextId that = (TaskContextId) o;
+            if (!this.id.equals(that.id)) {
+                return false;
+            }
+            return true;
+        }
+    }
+*/
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

@@ -121,7 +121,7 @@ public class BatchLineSplitterTxService {
         final List<Long> lastIds = new ArrayList<>();
         AtomicInteger currTaskNumber = new AtomicInteger(0);
         String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
-                taskId, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
+                taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
         allLines.forEach( lines -> {
             if (lines.isEmpty()) {
@@ -129,7 +129,7 @@ public class BatchLineSplitterTxService {
                 return;
             }
             currTaskNumber.incrementAndGet();
-            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
+            String currTaskContextId = ContextUtils.buildTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
             String str = StringUtils.join(lines, '\n' );
             VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(str);
 

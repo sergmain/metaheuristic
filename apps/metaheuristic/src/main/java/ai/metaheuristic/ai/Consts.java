@@ -148,6 +148,7 @@ public class Consts {
 
     public static final String UNKNOWN_FILENAME_IN_BATCH = Consts.UNKNOWN_INFO;
     public static final String TOP_LEVEL_CONTEXT_ID = "1";
+    public static final String SECOND_LEVEL_CONTEXT_ID = "1,2";
 
     // Processor's version for communicating with dispatcher
     public static final int PROCESSOR_COMM_VERSION = new ProcessorCommParamsYaml().version;

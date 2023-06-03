@@ -110,7 +110,7 @@ public class ApiCallService {
                 throw new InternalFunctionException(data_not_found, "513.400 processedAnswer.rawAnswerFromAPI().bytes() is null, error: "+answer.error()+", prompt: " + prompt);
             }
             TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
-            // right now only image supported
+            // right now, only image is supported
 //            final EnumsApi.VariableType variableType = v.getDataStorageParams().type;
 //            EnumsApi.VariableType type = variableType==null ? EnumsApi.VariableType.unknown : variableType;
             EnumsApi.VariableType type = EnumsApi.VariableType.image;

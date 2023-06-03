@@ -145,7 +145,7 @@ public class PermuteVariablesService {
         }
 
         currTaskNumber.incrementAndGet();
-        final String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
+        final String currTaskContextId = ContextUtils.buildTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
 
         VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(
                 new VariableData.Permutation(permutedVariables, variableName, Map.of(),

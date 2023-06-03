@@ -97,7 +97,7 @@ public class BatchSplitterTxService {
         final List<Long> lastIds = new ArrayList<>();
         AtomicInteger currTaskNumber = new AtomicInteger(0);
         String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
-                taskId, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
+                taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
         try {
             // do not remove try(Stream<Path>){}
@@ -111,7 +111,7 @@ public class BatchSplitterTxService {
                                 if (variableDataSource == null) {
                                     return;
                                 }
-                                String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
+                                String currTaskContextId = ContextUtils.buildTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
                                 variableService.createInputVariablesForSubProcess(
                                         variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, true);
 

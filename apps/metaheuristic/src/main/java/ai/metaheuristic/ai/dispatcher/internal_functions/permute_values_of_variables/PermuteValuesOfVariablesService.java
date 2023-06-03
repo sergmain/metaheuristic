@@ -66,7 +66,7 @@ public class PermuteValuesOfVariablesService {
         for (InlineVariable inlineVariable : inlineVariables) {
             try {
                 currTaskNumber.incrementAndGet();
-                String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
+                String currTaskContextId = ContextUtils.buildTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
 
                 for (Map.Entry<String, String> entry : inlineVariable.params.entrySet()) {
                     VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(entry.getValue());

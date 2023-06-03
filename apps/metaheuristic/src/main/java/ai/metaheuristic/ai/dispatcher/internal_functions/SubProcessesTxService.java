@@ -35,7 +35,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Serge
@@ -64,13 +63,12 @@ public class SubProcessesTxService {
         }
 
         final List<Long> lastIds = new ArrayList<>();
-        AtomicInteger currTaskNumber = new AtomicInteger(0);
         String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
-                taskId, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
+                taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
+
+        String currTaskContextId = ContextUtils.buildTaskContextId(subProcessContextId, "0");
 
         try {
-            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
-
             taskProducingService.createTasksForSubProcesses(
                     simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
 
