@@ -83,6 +83,8 @@ public class ScenarioParams implements BaseParams {
 
         @Nullable
         public AggregateFunction.AggregateType aggregateType;
+
+        public boolean isCachable = false;
     }
 
     public List<Step> steps = new ArrayList<>();

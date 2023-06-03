@@ -248,7 +248,7 @@ public class ScenarioService {
 
         ScenarioParams.Step step;
         if (S.b(uuid)) {
-            step = new ScenarioParams.Step(UUID.randomUUID().toString(), parentUuid, name, prompt, null, resultCode, expected, null, null, null);
+            step = new ScenarioParams.Step(UUID.randomUUID().toString(), parentUuid, name, prompt, null, resultCode, expected, null, null, null, false);
             sp.steps.add(step);
         }
         else {

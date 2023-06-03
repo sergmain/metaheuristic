@@ -118,6 +118,8 @@ public class ScenarioData {
         @Nullable
         public String aggregateType;
 
+        public boolean isCachable = false;
+
         @Nullable
         public SimpleScenarioStep[] steps;
 
@@ -125,13 +127,16 @@ public class ScenarioData {
             this.scenarioId = scenarioId;
             this.uuid = step.uuid;
             this.parentUuid = step.parentUuid;
-            this.apiId = apiUid.id;
-            this.apiCode = apiUid.uid;
             this.name = step.name;
             this.prompt = step.p;
             this.r = step.r;
             this.expected = step.expected;
             this.resultCode = step.resultCode;
+            this.isCachable = step.isCachable;
+
+            this.apiId = apiUid.id;
+            this.apiCode = apiUid.uid;
+
             this.functionCode = functionCode;
             this.aggregateType = aggregateType;
         }
