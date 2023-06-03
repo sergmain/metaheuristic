@@ -98,7 +98,7 @@ public class TestRestReplicationJson {
         assets = JsonUtils.getMapper().readValue(content, ReplicationData.AssetStateResponse.class);
 
 
-        result = mockMvc.perform(get("/test/asset-with-error")
+        result = mockMvc.perform(get("/rest/v1/dispatcher/test/asset-with-error")
                 .contentType(Consts.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk()).andReturn();
 
@@ -110,7 +110,7 @@ public class TestRestReplicationJson {
         assertEquals(1, assets.errorMessages.size());
         assertEquals("asset-error", assets.errorMessages.get(0));
 
-        result = mockMvc.perform(get("/test/asset-with-info")
+        result = mockMvc.perform(get("/rest/v1/dispatcher/test/asset-with-info")
                 .contentType(Consts.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk()).andReturn();
 
@@ -122,7 +122,7 @@ public class TestRestReplicationJson {
         assertEquals(1, assets.infoMessages.size());
         assertEquals("asset-info", assets.infoMessages.get(0));
 
-        result = mockMvc.perform(get("/test/asset-with-info-and-error")
+        result = mockMvc.perform(get("/rest/v1/dispatcher/test/asset-with-info-and-error")
                 .contentType(Consts.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk()).andReturn();
 
@@ -136,7 +136,7 @@ public class TestRestReplicationJson {
         assertEquals("asset-info", assets.infoMessages.get(0));
         assertEquals("asset-error", assets.errorMessages.get(0));
 
-        result = mockMvc.perform(get("/test/asset-ok-info")
+        result = mockMvc.perform(get("/rest/v1/dispatcher/test/asset-ok-info")
                 .contentType(Consts.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk()).andReturn();
 

@@ -157,7 +157,10 @@ public class ScenarioService {
         String uid = ScenarioUtils.getUid(s);
         SourceCodeImpl sc = sourceCodeRepository.findByUid(uid);
         if (sc==null) {
-            SourceCodeParamsYaml scpy = ScenarioUtils.to(uid, s.getScenarioParams(), apiRepository::findByApiCode);
+            SourceCodeParamsYaml scpy = ScenarioUtils.to(uid, s.getScenarioParams(), apiCode -> {
+                final Api api = apiRepository.findByApiCode(apiCode);
+                return api!=null ? api.getApiScheme() : null;
+            });
             String yaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(scpy);
             SourceCodeApiData.SourceCodeResult result = sourceCodeService.createSourceCode(yaml, scpy, context.getCompanyId());
             if (!result.isValid()) {

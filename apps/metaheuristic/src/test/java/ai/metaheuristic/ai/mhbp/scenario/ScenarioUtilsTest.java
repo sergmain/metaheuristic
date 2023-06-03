@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunc
 import ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter.BatchLineSplitterFunction;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
+import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
+import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiSchemeUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -57,6 +59,8 @@ public class ScenarioUtilsTest {
         assertEquals(250, uid.length());
     }
 
+
+
     @Test
     public void test_to_1() throws IOException {
         String yaml = IOUtils.resourceToString("/mhbp/scenario/scenario-fruits.yaml", StandardCharsets.UTF_8);
@@ -67,10 +71,10 @@ public class ScenarioUtilsTest {
         scenario.name = "Fruit production";
         scenario.setParams(yaml);
 
-        // main function for testing
-        //noinspection ReturnOfNull
-        SourceCodeParamsYaml sc = ScenarioUtils.to(getUid(scenario), scenario.getScenarioParams(), (code)-> null);
+        final ApiScheme apiScheme = ApiSchemeUtils.UTILS.to(IOUtils.resourceToString("/mhbp/api/simple-provider.yaml", StandardCharsets.UTF_8));
 
+        // main function for testing
+        SourceCodeParamsYaml sc = ScenarioUtils.to(getUid(scenario), scenario.getScenarioParams(), (code)-> apiScheme);
 
         String result = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(sc);
         System.out.println(result);

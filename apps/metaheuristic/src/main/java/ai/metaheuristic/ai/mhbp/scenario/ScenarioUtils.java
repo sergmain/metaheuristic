@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.enhance_text.EnhanceTex
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
+import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -125,7 +126,7 @@ public class ScenarioUtils {
         return suffix;
     }
 
-    public static SourceCodeParamsYaml to(String uid, ScenarioParams sp, Function<String, Api> apiResolverFunc) {
+    public static SourceCodeParamsYaml to(String uid, ScenarioParams sp, Function<String, ApiScheme> apiSchemeResolverFunc) {
         List<ItemWithUuid> list = sp.steps.stream().map(o->new ItemWithUuid(o.uuid, o.parentUuid)).toList();
         CollectionUtils.TreeUtils<String> treeUtils = new CollectionUtils.TreeUtils<>();
         List<ItemWithUuid> tree = treeUtils.rebuildTree((List)list);
@@ -139,11 +140,12 @@ public class ScenarioUtils {
         sc.source.variables = null;
         sc.source.metas = null;
 
-        processTree(sc.source.processes, sp, tree, processNumber, apiResolverFunc);
+        processTree(sc.source.processes, sp, tree, processNumber, apiSchemeResolverFunc);
         return sc;
     }
 
-    private static void processTree(List<SourceCodeParamsYaml.Process> processes, ScenarioParams sp, List<ItemWithUuid> tree, AtomicInteger processNumber, Function<String, Api> apiResolverFunc) {
+    private static void processTree(List<SourceCodeParamsYaml.Process> processes, ScenarioParams sp, List<ItemWithUuid> tree,
+                                    AtomicInteger processNumber, Function<String, ApiScheme> apiSchemeResolverFunc) {
         for (ItemWithUuid itemWithUuid : tree) {
             ScenarioParams.Step step = findStepByUuid(sp, itemWithUuid.uuid);
             if (step==null) {
@@ -177,7 +179,11 @@ public class ScenarioUtils {
                 extractInputVariables(p.inputs, step);
                 EnumsApi.VariableType type = null;
                 if (step.api!=null) {
-                    type = switch(apiResolverFunc.apply(step.api.code).getApiScheme().scheme.response.type) {
+                    final ApiScheme apiScheme = apiSchemeResolverFunc.apply(step.api.code);
+                    if (apiScheme==null) {
+                        throw new IllegalStateException("(apiScheme==null)");
+                    }
+                    type = switch(apiScheme.scheme.response.type) {
                         case json, text -> EnumsApi.VariableType.text;
                         case image -> EnumsApi.VariableType.image;
                     };
@@ -229,7 +235,7 @@ public class ScenarioUtils {
 
             if (CollectionUtils.isNotEmpty(itemWithUuid.items)) {
                 p.subProcesses = new SourceCodeParamsYaml.SubProcesses(EnumsApi.SourceCodeSubProcessLogic.sequential, new ArrayList<>());
-                processTree(p.subProcesses.processes, sp, itemWithUuid.items, processNumber, apiResolverFunc);
+                processTree(p.subProcesses.processes, sp, itemWithUuid.items, processNumber, apiSchemeResolverFunc);
             }
 
             processes.add(p);
