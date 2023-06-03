@@ -221,7 +221,7 @@ public class ScenarioService {
 
     public OperationStatusRest createOrChangeScenarioStep(
             String scenarioGroupId, String scenarioId, String uuid, String parentUuid, String name, String prompt,
-            String apiId, String resultCode, String expected, String functionCode, String aggregateType,
+            String apiId, String resultCode, String expected, String functionCode, String aggregateType, boolean isCachable,
             DispatcherContext context) {
 
         if (S.b(scenarioGroupId)) {
@@ -248,7 +248,7 @@ public class ScenarioService {
 
         ScenarioParams.Step step;
         if (S.b(uuid)) {
-            step = new ScenarioParams.Step(UUID.randomUUID().toString(), parentUuid, name, prompt, null, resultCode, expected, null, null, null, false);
+            step = new ScenarioParams.Step(UUID.randomUUID().toString(), parentUuid, name, prompt, null, resultCode, expected, null, null, null, isCachable);
             sp.steps.add(step);
         }
         else {

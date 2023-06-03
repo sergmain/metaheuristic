@@ -146,9 +146,12 @@ public class ScenarioRestController {
             @RequestParam(name = "functionCode", required = false) String functionCode,
             @RequestParam(name = "expected", required = false) String expected,
             @RequestParam(name = "aggregateType", required = false) String aggregateType,
+            @RequestParam(name = "isCachable", required = false, defaultValue = "false") boolean isCachable,
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return scenarioService.createOrChangeScenarioStep(scenarioGroupId, scenarioId, uuid, parentUuid, name, prompt, apiId, resultCode, expected, functionCode, aggregateType, context);
+        return scenarioService.createOrChangeScenarioStep(
+                scenarioGroupId, scenarioId, uuid, parentUuid, name, prompt, apiId,
+                resultCode, expected, functionCode, aggregateType, isCachable, context);
     }
 
     @PostMapping("/scenario-group-delete-commit")
