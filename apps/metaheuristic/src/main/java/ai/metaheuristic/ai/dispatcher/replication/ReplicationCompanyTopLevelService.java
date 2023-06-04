@@ -29,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -119,9 +120,8 @@ public class ReplicationCompanyTopLevelService {
     private ReplicationData.CompanyAsset requestCompanyAsset(Long uniqueId) {
         Object data = replicationCoreService.getData(
                 "/rest/v1/replication/company", ReplicationData.CompanyAsset.class, List.of(new BasicNameValuePair("uniqueId", uniqueId.toString())),
-                (uri) -> Request.Get(uri)
-                        .connectTimeout(5000)
-                        .socketTimeout(20000)
+                (uri) -> Request.get(uri).connectTimeout(Timeout.ofSeconds(5))
+//                        .socketTimeout(20000)
         );
         if (data instanceof ReplicationData.AssetAcquiringError) {
             return new ReplicationData.CompanyAsset(((ReplicationData.AssetAcquiringError) data).getErrorMessagesAsList());

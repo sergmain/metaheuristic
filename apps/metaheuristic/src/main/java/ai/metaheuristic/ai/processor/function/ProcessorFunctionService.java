@@ -28,10 +28,11 @@ import ai.metaheuristic.commons.utils.TaskParamsUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.core5.http.client.HttpResponseException;
+import org.apache.hc.client5.http.HttpResponseException;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
-import org.apache.hc.core5.http.client.utils.URIBuilder;
+import org.apache.hc.core5.net.URIBuilder;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -80,7 +81,7 @@ public class ProcessorFunctionService {
                     .setCharset(StandardCharsets.UTF_8)
                     .addParameter("code", functionCode).build();
 
-            final Request request = Request.Get(uri).connectTimeout(5000).socketTimeout(20000);
+            final Request request = Request.get(uri).connectTimeout(Timeout.ofSeconds(5));//.socketTimeout(20000);
 
             RestUtils.addHeaders(request);
 
@@ -128,7 +129,7 @@ public class ProcessorFunctionService {
         final DownloadedFunctionConfigsStatus functionConfigStatus = new DownloadedFunctionConfigsStatus();
         functionConfigStatus.status = ConfigStatus.error;
         try {
-            final Request request = Request.Get(functionConfigsUrl + randomPartUri).connectTimeout(5000).socketTimeout(20000);
+            final Request request = Request.get(functionConfigsUrl + randomPartUri).connectTimeout(Timeout.ofSeconds(5)); //.socketTimeout(20000);
 
             RestUtils.addHeaders(request);
 

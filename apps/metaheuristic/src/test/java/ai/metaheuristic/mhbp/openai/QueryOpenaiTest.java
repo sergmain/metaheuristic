@@ -24,7 +24,7 @@ import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.client5.http.fluent.Executor;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
-import org.apache.hc.core5.http.client.utils.URIBuilder;
+import org.apache.hc.core5.net.URIBuilder;
 import org.apache.hc.core5.http.entity.StringEntity;
 import org.junit.jupiter.api.Test;
 
@@ -81,7 +81,7 @@ public class QueryOpenaiTest {
         final URI uri = new URIBuilder("https://api.openai.com/v1/completions")
                 .setCharset(StandardCharsets.UTF_8)
                 .build();
-        final Request request = Request.Post(uri).connectTimeout(5000).socketTimeout(20000);
+        final Request request = Request.Post(uri).connectTimeout(Timeout.ofSeconds(5)).socketTimeout(20000);
 
         request.body(new StringEntity(json3, StandardCharsets.UTF_8));
 
@@ -94,7 +94,7 @@ public class QueryOpenaiTest {
 
         final HttpResponse httpResponse = response.returnResponse();
         final HttpEntity entity = httpResponse.getEntity();
-        final int statusCode = httpResponse.getStatusLine().getStatusCode();
+        final int statusCode = httpResponse.getCode();
         System.out.println("statusCode: " + statusCode);
         System.out.println("entity: " + IOUtils.toString(entity.getContent(), StandardCharsets.UTF_8));
     }
@@ -106,7 +106,7 @@ public class QueryOpenaiTest {
         final URI uri = new URIBuilder("https://api.openai.com/v1/models")
                 .setCharset(StandardCharsets.UTF_8)
                 .build();
-        final Request request = Request.Get(uri).connectTimeout(5000).socketTimeout(20000);
+        final Request request = Request.get(uri).connectTimeout(Timeout.ofSeconds(5)).socketTimeout(20000);
 
         request.addHeader("Authorization", "Bearer " + key);
         final Executor executor = Executor.newInstance();
@@ -115,7 +115,7 @@ public class QueryOpenaiTest {
 
         final HttpResponse httpResponse = response.returnResponse();
         final HttpEntity entity = httpResponse.getEntity();
-        final int statusCode = httpResponse.getStatusLine().getStatusCode();
+        final int statusCode = httpResponse.getCode();
         System.out.println("statusCode: " + statusCode);
         System.out.println("entity: " + IOUtils.toString(entity.getContent(), StandardCharsets.UTF_8));
     }

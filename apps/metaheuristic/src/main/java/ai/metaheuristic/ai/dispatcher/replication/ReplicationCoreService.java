@@ -111,7 +111,7 @@ public class ReplicationCoreService {
             final HttpResponse httpResponse = response.returnResponse();
             final Content content = response.returnContent();
             if (httpResponse.getCode()!=200) {
-                log.error("Server response:\n" + content.asString());
+                log.error("Server response:\n" + content.asString(StandardCharsets.UTF_8));
                 return new ReplicationData.AssetAcquiringError( S.f("Error while accessing url %s, http status code: %d",
                         globals.dispatcher.asset.sourceUrl, httpResponse.getCode()));
             }

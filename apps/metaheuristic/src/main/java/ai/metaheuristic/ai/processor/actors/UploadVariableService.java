@@ -35,16 +35,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.http.HttpHost;
-import org.apache.hc.core5.http.HttpResponse;
-import org.apache.hc.core5.http.NoHttpResponseException;
-import org.apache.hc.client5.http.fluent.Executor;
-import org.apache.hc.client5.http.fluent.Form;
-import org.apache.hc.client5.http.fluent.Request;
-import org.apache.hc.client5.http.fluent.Response;
+import org.apache.hc.client5.http.ConnectTimeoutException;
+import org.apache.hc.client5.http.HttpHostConnectException;
+import org.apache.hc.client5.http.HttpResponseException;
+import org.apache.hc.client5.http.fluent.*;
+import org.apache.hc.client5.http.utils.URIUtils;
+import org.apache.hc.core5.http.*;
 import org.apache.hc.client5.http.entity.mime.HttpMultipartMode;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.core5.net.URIBuilder;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -161,7 +161,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 final String uri = uploadRestUrl + randonPart;
 
                 final MultipartEntityBuilder builder = MultipartEntityBuilder.create()
-                        .setMode(HttpMultipartMode.RFC6532)
+                        .setMode(HttpMultipartMode.EXTENDED)
                         .setCharset(StandardCharsets.UTF_8)
                         .addTextBody("processorId", ""+task.core.processorId)
                         .addTextBody("taskId", Long.toString(task.taskId))
@@ -178,11 +178,13 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 }
                 HttpEntity entity = builder.build();
 
-                Request request = Request.Post(uri).connectTimeout(5000).socketTimeout(20000).body(entity);
+                Request request = Request.post(uri).connectTimeout(Timeout.ofSeconds(5))
+//                        .socketTimeout(20000)
+                        .body(entity);
 
                 log.info("Start uploading a variable to rest-server, {}", randonPart);
                 Response response = executor.execute(request);
-                String json = response.returnContent().asString();
+                String json = response.returnContent().asString(StandardCharsets.UTF_8);
                 UploadResult result = fromJson(json);
                 log.info("Server response: {}", result);
 
@@ -199,30 +201,30 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                     log.error("#311.056 Server error, code: 500, error: {}", e.getMessage());
                 }
                 else {
-                    log.error("#311.060 Error uploading variable to server, code: " + e.getStatusCode()+", " +
+                    log.error("311.060 Error uploading variable to server, code: " + e.getStatusCode()+", " +
                             "size: " + (task.file!=null ? Long.toString(task.file.length()) : "file is null"), e);
                 }
             }
-            catch (SocketTimeoutException e) {
-                log.error("#311.070 SocketTimeoutException, {}", e.toString());
-            }
             catch (ConnectException e) {
-                log.error("#311.073 ConnectException, {}", e.toString());
+                log.error("311.073 ConnectException, {}", e.toString());
             }
             catch (NoHttpResponseException e) {
-                log.error("#311.075 org.apache.http.NoHttpResponseException, {}", e.toString());
+                log.error("311.075 org.apache.http.NoHttpResponseException, {}", e.toString());
             }
-            catch (org.apache.http.conn.ConnectTimeoutException e) {
-                log.warn("#311.076 org.apache.http.conn.ConnectTimeoutException, {}", e.toString());
+            catch (ConnectTimeoutException e) {
+                log.warn("311.076 org.apache.http.conn.ConnectTimeoutException, {}", e.toString());
+            }
+            catch (SocketTimeoutException e) {
+                log.error("311.070 SocketTimeoutException, {}", e.toString());
             }
             catch (java.net.UnknownHostException e) {
-                log.warn("#311.077 java.net.UnknownHostException, {}", e.toString());
+                log.warn("311.077 java.net.UnknownHostException, {}", e.toString());
             }
             catch (IOException e) {
-                log.error("#311.080 IOException", e);
+                log.error("311.080 IOException", e);
             }
             catch (Throwable th) {
-                log.error("#311.090 Throwable", th);
+                log.error("311.090 Throwable", th);
             }
             if (status!=null) {
                 switch(status) {
@@ -265,42 +267,26 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
 
         try {
             final URI build = new URIBuilder(variableStatusRestUrl).setCharset(StandardCharsets.UTF_8).build();
-            final Request request = Request.Post(build)
+            final Request request = Request.post(build)
                     .bodyForm(Form.form().add("variableId", ""+variableId).build(), StandardCharsets.UTF_8)
-                    .connectTimeout(5000).socketTimeout(20000);
+                    .connectTimeout(Timeout.ofSeconds(5));
+                    //.socketTimeout(20000);
 
             RestUtils.addHeaders(request);
             Response response = executor.execute(request);
 
             final HttpResponse httpResponse = response.returnResponse();
-            if (httpResponse.getStatusLine().getStatusCode()!=200) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                final HttpEntity entity = httpResponse.getEntity();
-                if (entity != null) {
-                    entity.writeTo(baos);
-                }
-
-                log.error("Server response:\n" + baos.toString());
+            final Content content = response.returnContent();
+            if (httpResponse.getCode()!=200) {
+                log.error("Server response:\n" + content.asString(StandardCharsets.UTF_8));
                 // let's try to upload variable anyway
                 return true;
             }
-            final HttpEntity entity = httpResponse.getEntity();
-            if (entity != null) {
-                String value;
-                try (final InputStream content = entity.getContent()) {
-                    value = IOUtils.toString(content, StandardCharsets.UTF_8);
-                }
-                // right now uri /variable-status returns value of 'inited' field
-
-                return switch (value) {
-                    case "false" -> true;
-                    case "true" -> false;
-                    default -> null;
-                };
-            }
-            else {
-                return true;
-            }
+            return switch (content.asString()) {
+                case "false" -> true;
+                case "true" -> false;
+                default -> null;
+            };
         }
         catch (UnknownHostException | HttpHostConnectException | SocketTimeoutException th) {
             log.error("Error: {}", th.getMessage());
@@ -321,7 +307,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
         }
         return Executor.newInstance()
                 .authPreemptive(dispatcherHttpHostWithAuth)
-                .auth(dispatcherHttpHostWithAuth, restUsername, restPassword);
+                .auth(dispatcherHttpHostWithAuth, restUsername, restPassword.toCharArray());
     }
 
 }

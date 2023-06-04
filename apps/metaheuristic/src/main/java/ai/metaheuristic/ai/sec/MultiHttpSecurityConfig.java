@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -33,6 +34,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+import static org.springframework.http.HttpMethod.OPTIONS;
+
 /**
  * User: Serg
  * Date: 11.06.2017
@@ -40,7 +43,7 @@ import java.util.List;
  */
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class MultiHttpSecurityConfig {
 
@@ -76,15 +79,18 @@ public class MultiHttpSecurityConfig {
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .authorizeRequests()
-                .antMatchers("/","/index.html", "/*.js", "/*.css", "/favicon.ico", "/assets/**","/resources/**", "/rest/login").permitAll()
-                .antMatchers("/rest/**/**").authenticated()
-                .anyRequest().denyAll()
-                .and()
+                .authorizeHttpRequests((requests) -> requests
+                        .requestMatchers(OPTIONS).permitAll() // allow CORS option calls for Swagger UI
+                        .requestMatchers("/","/index.html", "/*.js", "/*.css", "/favicon.ico", "/assets/**","/resources/**", "/rest/login").permitAll()
+                        .requestMatchers("/rest/**/**").authenticated()
+                        .anyRequest().denyAll()
+                )
                 .csrf().disable().headers().cacheControl();
 
         if (globals.sslRequired) {
-            http.requiresChannel().antMatchers("/**").requiresSecure();
+            http.requiresChannel((requiresChannel) ->
+                    requiresChannel.anyRequest().requiresSecure()
+            );
         }
         return http.build();
     }

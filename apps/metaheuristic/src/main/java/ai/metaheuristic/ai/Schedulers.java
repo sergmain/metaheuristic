@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueu
 import ai.metaheuristic.ai.dispatcher.event.StartProcessReadinessEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskAssigningTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
@@ -29,6 +28,8 @@ import ai.metaheuristic.ai.dispatcher.long_running.LongRunningTopLevelService;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.thread.DeadLockDetector;
+import ai.metaheuristic.ai.mhbp.kb.KbInitializingService;
+import ai.metaheuristic.ai.mhbp.provider.ProcessSessionOfEvaluationService;
 import ai.metaheuristic.ai.processor.*;
 import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
 import ai.metaheuristic.ai.processor.actors.DownloadVariableService;
@@ -38,29 +39,32 @@ import ai.metaheuristic.ai.processor.dispatcher_selection.ActiveDispatchers;
 import ai.metaheuristic.ai.processor.event.KeepAliveEvent;
 import ai.metaheuristic.ai.processor.event.ProcessorEventBusService;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.ai.mhbp.kb.KbInitializingService;
-import ai.metaheuristic.ai.mhbp.provider.ProcessSessionOfEvaluationService;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
+import org.springframework.scheduling.TriggerContext;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
+import java.time.Duration;
 import java.time.Instant;
-import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Schedulers {
+
+    private static Instant getInstant(TriggerContext context, Duration duration) {
+        return Optional.ofNullable(context.lastCompletion()).orElseGet(Instant::now).plus(duration);
+    }
 
     @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
     @Profile("dispatcher")
@@ -71,15 +75,8 @@ public class Schedulers {
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
             taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
-            taskRegistrar.addTriggerTask( this::artifactCleanerAtDispatcher,
-                    context -> {
-                        Optional<Date> lastCompletionTime = Optional.ofNullable(context.lastCompletionTime());
-                        Instant nextExecutionTime = lastCompletionTime.orElseGet(Date::new).toInstant().plusSeconds(globals.dispatcher.timeout.getArtifactCleaner().toSeconds());
-                        return Date.from(nextExecutionTime);
-                    }
-            );
+            taskRegistrar.addTriggerTask(this::artifactCleanerAtDispatcher, context -> getInstant(context, globals.dispatcher.timeout.getArtifactCleaner()));
         }
-
         public void artifactCleanerAtDispatcher() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
@@ -98,13 +95,7 @@ public class Schedulers {
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
             taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
-            taskRegistrar.addTriggerTask( this::updateBatchStatuses,
-                    context -> {
-                        Optional<Date> lastCompletionTime = Optional.ofNullable(context.lastCompletionTime());
-                        Instant nextExecutionTime = lastCompletionTime.orElseGet(Date::new).toInstant().plusSeconds(globals.dispatcher.timeout.getUpdateBatchStatuses().toSeconds());
-                        return Date.from(nextExecutionTime);
-                    }
-            );
+            taskRegistrar.addTriggerTask( this::updateBatchStatuses, context -> getInstant(context, globals.dispatcher.timeout.getUpdateBatchStatuses()));
         }
 
         public void updateBatchStatuses() {
@@ -133,13 +124,7 @@ public class Schedulers {
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
             taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
-            taskRegistrar.addTriggerTask( this::garbageCollectionAtDispatcher,
-                    context -> {
-                        Optional<Date> lastCompletionTime = Optional.ofNullable(context.lastCompletionTime());
-                        Instant nextExecutionTime = lastCompletionTime.orElseGet(Date::new).toInstant().plusSeconds(globals.dispatcher.timeout.getGc().toSeconds());
-                        return Date.from(nextExecutionTime);
-                    }
-            );
+            taskRegistrar.addTriggerTask( this::garbageCollectionAtDispatcher, context -> getInstant(context, globals.dispatcher.timeout.getGc()));
         }
 
         public void garbageCollectionAtDispatcher() {
@@ -162,13 +147,7 @@ public class Schedulers {
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
             taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
-            taskRegistrar.addTriggerTask( this::syncReplication,
-                    context -> {
-                        Optional<Date> lastCompletionTime = Optional.ofNullable(context.lastCompletionTime());
-                        Instant nextExecutionTime = lastCompletionTime.orElseGet(Date::new).toInstant().plusSeconds(globals.dispatcher.asset.getSyncTimeout().toSeconds());
-                        return Date.from(nextExecutionTime);
-                    }
-            );
+            taskRegistrar.addTriggerTask( this::syncReplication, context -> getInstant(context, globals.dispatcher.asset.getSyncTimeout()));
         }
 
         public void syncReplication() {
@@ -202,7 +181,6 @@ public class Schedulers {
         private final ApplicationEventPublisher eventPublisher;
         private final ExecContextStatusService execContextStatusService;
         private final ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
-        private final ExecContextTaskAssigningTopLevelService execContextTaskAssigningTopLevelService;
 
         // Dispatcher schedulers with fixed delay
 
@@ -268,7 +246,6 @@ public class Schedulers {
             ArtifactCleanerAtDispatcher.setBusy();
             try {
                 eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueEvent());
-                //execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue();
             }
             finally {
                 ArtifactCleanerAtDispatcher.notBusy();
@@ -369,13 +346,7 @@ public class Schedulers {
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
             taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
-            taskRegistrar.addTriggerTask( this::dispatcherRequester,
-                    context -> {
-                        Optional<Date> lastCompletionTime = Optional.ofNullable(context.lastCompletionTime());
-                        Instant nextExecutionTime = lastCompletionTime.orElseGet(Date::new).toInstant().plusSeconds(globals.processor.timeout.getRequestDispatcher().toSeconds());
-                        return Date.from(nextExecutionTime);
-                    }
-            );
+            taskRegistrar.addTriggerTask( this::dispatcherRequester, context -> getInstant(context, globals.processor.timeout.getRequestDispatcher()));
         }
 
         public void dispatcherRequester() {
@@ -410,17 +381,10 @@ public class Schedulers {
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
             taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
-            taskRegistrar.addTriggerTask( this::taskAssigner,
-                    context -> {
-                        Optional<Date> lastCompletionTime = Optional.ofNullable(context.lastCompletionTime());
-                        Instant nextExecutionTime = lastCompletionTime.orElseGet(Date::new).toInstant().plusSeconds(globals.processor.timeout.getTaskAssigner().toSeconds());
-                        return Date.from(nextExecutionTime);
-                    }
-            );
+            taskRegistrar.addTriggerTask( this::taskAssigner, context -> getInstant(context, globals.processor.timeout.getTaskAssigner()));
         }
 
         // Prepare assets for tasks
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.taskAssigner.toSeconds(), 3, 20)*1000 }")
         public void taskAssigner() {
             if (globals.testing || !globals.processor.enabled) {
                 return;
@@ -439,16 +403,9 @@ public class Schedulers {
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
             taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
-            taskRegistrar.addTriggerTask( this::taskProcessor,
-                    context -> {
-                        Optional<Date> lastCompletionTime = Optional.ofNullable(context.lastCompletionTime());
-                        Instant nextExecutionTime = lastCompletionTime.orElseGet(Date::new).toInstant().plusSeconds(globals.processor.timeout.getTaskProcessor().toSeconds());
-                        return Date.from(nextExecutionTime);
-                    }
-            );
+            taskRegistrar.addTriggerTask( this::taskProcessor, context -> getInstant(context, globals.processor.timeout.getTaskProcessor()));
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.taskProcessor.toSeconds(), 3, 20)*1000 }")
         public void taskProcessor() {
             if (globals.testing || !globals.processor.enabled) {
                 return;
@@ -467,16 +424,9 @@ public class Schedulers {
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
             taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
-            taskRegistrar.addTriggerTask( this::downloadFunctionActor,
-                    context -> {
-                        Optional<Date> lastCompletionTime = Optional.ofNullable(context.lastCompletionTime());
-                        Instant nextExecutionTime = lastCompletionTime.orElseGet(Date::new).toInstant().plusSeconds(globals.processor.timeout.getDownloadFunction().toSeconds());
-                        return Date.from(nextExecutionTime);
-                    }
-            );
+            taskRegistrar.addTriggerTask( this::downloadFunctionActor, context -> getInstant(context, globals.processor.timeout.getDownloadFunction()));
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.downloadFunction.toSeconds(), 3, 20)*1000 }")
         public void downloadFunctionActor() {
             if (globals.testing || !globals.processor.enabled) {
                 return;
@@ -495,16 +445,9 @@ public class Schedulers {
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
             taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
-            taskRegistrar.addTriggerTask( this::prepareFunctionForDownloading,
-                    context -> {
-                        Optional<Date> lastCompletionTime = Optional.ofNullable(context.lastCompletionTime());
-                        Instant nextExecutionTime = lastCompletionTime.orElseGet(Date::new).toInstant().plusSeconds(globals.processor.timeout.getPrepareFunctionForDownloading().toSeconds());
-                        return Date.from(nextExecutionTime);
-                    }
-            );
+            taskRegistrar.addTriggerTask( this::prepareFunctionForDownloading, context -> getInstant(context, globals.processor.timeout.getPrepareFunctionForDownloading()));
         }
 
-//        @Scheduled(initialDelay = 20_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.prepareFunctionForDownloading.toSeconds(), 20, 60)*1000 }")
         public void prepareFunctionForDownloading() {
             if (globals.testing || !globals.processor.enabled) {
                 return;
@@ -512,7 +455,6 @@ public class Schedulers {
             log.info("Run downloadFunctionActor.prepareFunctionForDownloading()");
             downloadFunctionActor.prepareFunctionForDownloading();
         }
-
     }
 
     @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
@@ -524,16 +466,9 @@ public class Schedulers {
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
             taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
-            taskRegistrar.addTriggerTask( this::downloadVariableService,
-                    context -> {
-                        Optional<Date> lastCompletionTime = Optional.ofNullable(context.lastCompletionTime());
-                        Instant nextExecutionTime = lastCompletionTime.orElseGet(Date::new).toInstant().plusSeconds(globals.processor.timeout.getDownloadResource().toSeconds());
-                        return Date.from(nextExecutionTime);
-                    }
-            );
+            taskRegistrar.addTriggerTask( this::downloadVariableService, context -> getInstant(context, globals.processor.timeout.getDownloadResource()));
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.downloadResource.toSeconds(), 3, 20)*1000 }")
         public void downloadVariableService() {
             if (globals.testing || !globals.processor.enabled) {
                 return;
@@ -541,7 +476,6 @@ public class Schedulers {
             log.info("Run downloadVariableService.process()");
             downloadVariableService.process();
         }
-
     }
 
     @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
@@ -553,16 +487,9 @@ public class Schedulers {
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
             taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
-            taskRegistrar.addTriggerTask( this::uploadResourceActor,
-                    context -> {
-                        Optional<Date> lastCompletionTime = Optional.ofNullable(context.lastCompletionTime());
-                        Instant nextExecutionTime = lastCompletionTime.orElseGet(Date::new).toInstant().plusSeconds(globals.processor.timeout.getUploadResultResource().toSeconds());
-                        return Date.from(nextExecutionTime);
-                    }
-            );
+            taskRegistrar.addTriggerTask( this::uploadResourceActor, context -> getInstant(context, globals.processor.timeout.getUploadResultResource()));
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.uploadResultResource.toSeconds(), 3, 20)*1000 }")
         public void uploadResourceActor() {
             if (globals.testing || !globals.processor.enabled) {
                 return;
@@ -570,7 +497,6 @@ public class Schedulers {
             log.info("Run uploadResourceActor.process()");
             uploadResourceActor.process();
         }
-
     }
 
     @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
@@ -582,16 +508,9 @@ public class Schedulers {
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
             taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
-            taskRegistrar.addTriggerTask( this::getDispatcherContextInfoActor,
-                    context -> {
-                        Optional<Date> lastCompletionTime = Optional.ofNullable(context.lastCompletionTime());
-                        Instant nextExecutionTime = lastCompletionTime.orElseGet(Date::new).toInstant().plusSeconds(globals.processor.timeout.getDispatcherContextInfo().toSeconds());
-                        return Date.from(nextExecutionTime);
-                    }
-            );
+            taskRegistrar.addTriggerTask( this::getDispatcherContextInfoActor, context -> getInstant(context, globals.processor.timeout.getDispatcherContextInfo()));
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.dispatcherContextInfo.toSeconds(), 10, 60)*1000 }")
         public void getDispatcherContextInfoActor() {
             if (globals.testing || !globals.processor.enabled) {
                 return;
@@ -599,7 +518,6 @@ public class Schedulers {
             log.info("Run getDispatcherContextInfoService.process()");
             getDispatcherContextInfoService.process();
         }
-
     }
 
     @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
@@ -611,16 +529,9 @@ public class Schedulers {
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
             taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
-            taskRegistrar.addTriggerTask( this::artifactCleaner,
-                    context -> {
-                        Optional<Date> lastCompletionTime = Optional.ofNullable(context.lastCompletionTime());
-                        Instant nextExecutionTime = lastCompletionTime.orElseGet(Date::new).toInstant().plusSeconds(globals.processor.timeout.getArtifactCleaner().toSeconds());
-                        return Date.from(nextExecutionTime);
-                    }
-            );
+            taskRegistrar.addTriggerTask( this::artifactCleaner, context -> getInstant(context, globals.processor.timeout.getArtifactCleaner()));
         }
 
-//        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( globals.processor.timeout.artifactCleaner.toSeconds(), 10, 60)*1000 }")
         public void artifactCleaner() {
             if (globals.testing || !globals.processor.enabled) {
                 return;

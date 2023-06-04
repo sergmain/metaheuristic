@@ -18,7 +18,9 @@ package ai.metaheuristic.ai.processor.actors;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.data.DispatcherData;
-import ai.metaheuristic.ai.processor.*;
+import ai.metaheuristic.ai.processor.CurrentExecState;
+import ai.metaheuristic.ai.processor.DispatcherContextInfoHolder;
+import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
 import ai.metaheuristic.ai.utils.RestUtils;
@@ -26,19 +28,21 @@ import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.EnumsApi;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.core5.http.Header;
-import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.http.HttpResponse;
-import org.apache.hc.core5.http.client.HttpResponseException;
+import org.apache.commons.io.IOUtils;
+import org.apache.hc.client5.http.HttpResponseException;
+import org.apache.hc.client5.http.fluent.Content;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
-import org.apache.hc.core5.http.client.utils.URIBuilder;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.net.URIBuilder;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -157,9 +161,9 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                             .addParameter("chunkNum", Integer.toString(idx));
 
                     final URI build = builder.build();
-                    final Request request = Request.Get(build)
-                            .connectTimeout(5000)
-                            .socketTimeout(20000);
+                    final Request request = Request.get(build)
+                            .connectTimeout(Timeout.ofSeconds(5));
+//                            .socketTimeout(20000);
 
                     RestUtils.addHeaders(request);
 
@@ -167,7 +171,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                             task.core.dispatcherUrl.url, task.dispatcher.restUsername, task.dispatcher.restPassword).execute(request);
                     File partFile = new File(dir, String.format(mask, idx));
                     final HttpResponse httpResponse = response.returnResponse();
-                    final int statusCode = httpResponse.getStatusLine().getStatusCode();
+                    final int statusCode = httpResponse.getCode();
                     if (statusCode ==HttpServletResponse.SC_NO_CONTENT) {
                         if (task.nullable) {
                             processorTaskService.setInputAsEmpty(task.core, task.taskId, task.variableId);
@@ -193,21 +197,16 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                         return;
                     }
                     else if (statusCode != HttpServletResponse.SC_OK ) {
-                        es = "#810.030 An unexpected http status code: "+statusCode+",  #"+task.variableId+"";
+                        es = "#810.030 An unexpected http status code: "+statusCode+",  #"+task.variableId;
                         log.error(es);
                         return;
                     }
 
+                    Content content = response.returnContent();
                     try (final FileOutputStream out = new FileOutputStream(partFile)) {
-                        final HttpEntity entity = httpResponse.getEntity();
-                        if (entity != null) {
-                            entity.writeTo(out);
-                        }
-                        else {
-                            log.warn("#810.031 http entity is null");
-                        }
+                        IOUtils.copy(content.asStream(), out);
                     }
-                    final Header[] headers = httpResponse.getAllHeaders();
+                    final Header[] headers = httpResponse.getHeaders();
                     if (!DownloadUtils.isChunkConsistent(partFile, headers)) {
                         log.error("#810.032 error while downloading chunk of resource {}, size is different", assetFile.file.getPath());
                         resourceState = Enums.VariableState.transmitting_error;

@@ -29,13 +29,13 @@ import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.hc.core5.http.conn.ConnectTimeoutException;
+import org.apache.hc.client5.http.ConnectTimeoutException;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.client.*;
 
-import jakarta.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -45,6 +45,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
+import static org.springframework.http.HttpStatus.*;
 
 /**
  * User: Serg
@@ -164,16 +165,12 @@ public class ProcessorKeepAliveRequestor {
                 processorKeepAliveProcessor.processKeepAliveResponseParamYaml(dispatcherUrl, responseParamYaml);
             }
             catch (HttpClientErrorException e) {
-                switch(e.getStatusCode()) {
-                    case UNAUTHORIZED:
-                    case FORBIDDEN:
-                    case NOT_FOUND:
-                    case BAD_GATEWAY:
-                    case SERVICE_UNAVAILABLE:
-                        log.error("#776.070 Error {} accessing url {}", e.getStatusCode().value(), dispatcherRestUrl);
-                        break;
-                    default:
-                        throw e;
+                int value = e.getStatusCode().value();
+                if (value==UNAUTHORIZED.value() || value==FORBIDDEN.value() || value==NOT_FOUND.value() || value==BAD_GATEWAY.value() || value==SERVICE_UNAVAILABLE.value()) {
+                    log.error("#776.070 Error {} accessing url {}", e.getStatusCode().value(), dispatcherRestUrl);
+                }
+                else {
+                    throw e;
                 }
             }
             catch (ResourceAccessException e) {
@@ -198,8 +195,8 @@ public class ProcessorKeepAliveRequestor {
                 }
             }
             catch (RestClientException e) {
-                if (e instanceof HttpStatusCodeException && ((HttpStatusCodeException)e).getRawStatusCode()>=500 && ((HttpStatusCodeException)e).getRawStatusCode()<600 ) {
-                    int errorCode = ((HttpStatusCodeException)e).getRawStatusCode();
+                if (e instanceof HttpStatusCodeException httpStatusCodeException && httpStatusCodeException.getStatusCode().value()>=500 && httpStatusCodeException.getStatusCode().value()<600 ) {
+                    int errorCode = httpStatusCodeException.getStatusCode().value();
                     if (errorCode==502) {
                         log.error("#776.105 Error accessing url: {}, error: 502 Bad Gateway", url);
                     }
@@ -219,7 +216,7 @@ public class ProcessorKeepAliveRequestor {
                 }
             }
         } catch (Throwable e) {
-            log.error("#776.130 Error in fixedDelay(), dispatcher url: "+ dispatcherRestUrl +", error: {}", e);
+            log.error("#776.130 Error in fixedDelay(), dispatcher url: {}, error: {}", dispatcherRestUrl, e.getMessage());
         }
     }
 }

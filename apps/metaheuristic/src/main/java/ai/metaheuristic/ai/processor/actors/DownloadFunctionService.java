@@ -154,7 +154,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                             File partFile = new File(dir, String.format(mask, idx));
 
                             final HttpResponse httpResponse = response.returnResponse();
-//                            int statusCode = httpResponse.getStatusLine().getStatusCode();
+//                            int statusCode = httpResponse.getCode();
                             int statusCode = httpResponse.getCode();
                             if (statusCode == HttpStatus.UNPROCESSABLE_ENTITY.value()) {
                                 final String es = S.f("#811.047 Function %s can't be downloaded, assetManager manager %s was mis-configure. Reason: Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions", task.functionCode, assetManager.url);

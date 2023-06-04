@@ -33,6 +33,6 @@ public class HttpClientExecutor {
         }
         return Executor.newInstance()
                 .authPreemptive(dispatcherHttpHostWithAuth)
-                .auth(dispatcherHttpHostWithAuth,restUsername, restPassword);
+                .auth(dispatcherHttpHostWithAuth,restUsername, restPassword.toCharArray());
     }
 }

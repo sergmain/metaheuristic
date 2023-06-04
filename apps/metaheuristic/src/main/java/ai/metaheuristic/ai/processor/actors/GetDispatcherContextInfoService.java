@@ -29,11 +29,12 @@ import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.core5.http.client5.HttpResponseException;
+import org.apache.hc.client5.http.HttpHostConnectException;
+import org.apache.hc.client5.http.HttpResponseException;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
-import org.apache.hc.core5.http.client.utils.URIBuilder;
-import org.apache.hc.core5.http.conn.HttpHostConnectException;
+import org.apache.hc.core5.net.URIBuilder;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -81,7 +82,8 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
 
                 final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8);
 
-                final Request request = Request.Get(builder.build()).connectTimeout(5000).socketTimeout(20000);
+                final Request request = Request.get(builder.build()).connectTimeout(Timeout.ofSeconds(5));
+                //.socketTimeout(20000);
 
                 RestUtils.addHeaders(request);
 

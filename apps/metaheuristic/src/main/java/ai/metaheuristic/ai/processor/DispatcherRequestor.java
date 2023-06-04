@@ -267,8 +267,8 @@ public class DispatcherRequestor {
                     log.error("#775.100 Error, url: " + url, e);
                 }
             } catch (RestClientException e) {
-                if (e instanceof HttpStatusCodeException && ((HttpStatusCodeException)e).getRawStatusCode()>=500 && ((HttpStatusCodeException)e).getRawStatusCode()<600 ) {
-                    int errorCode = ((HttpStatusCodeException)e).getRawStatusCode();
+                if (e instanceof HttpStatusCodeException httpStatusCodeException && httpStatusCodeException.getStatusCode().value()>=500 && httpStatusCodeException.getStatusCode().value()<600 ) {
+                    int errorCode = httpStatusCodeException.getStatusCode().value();
                     if (errorCode==503) {
                         log.warn("#775.110 Error accessing url: {}, error: 503 Service Unavailable", url);
                     }
@@ -285,7 +285,7 @@ public class DispatcherRequestor {
                 }
             }
         } catch (Throwable e) {
-            log.error("#775.130 Error in fixedDelay(), url: "+serverRestUrl+", error: {}", e);
+            log.error("#775.130 Error in fixedDelay(), url: {}, error: {}", serverRestUrl, e.getMessage());
         }
     }
 

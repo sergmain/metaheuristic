@@ -17,12 +17,15 @@
 package ai.metaheuristic.ai.processor.utils;
 
 import ai.metaheuristic.ai.Consts;
-import org.apache.hc.core5.http.client.HttpClient;
-import org.apache.hc.core5.http.config.SocketConfig;
-import org.apache.hc.core5.http.impl.client.HttpClientBuilder;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.core5.http.io.SocketConfig;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
-import static org.apache.http.client.config.RequestConfig.custom;
+import static org.apache.hc.client5.http.config.RequestConfig.custom;
 
 /**
  * @author Serge
@@ -36,19 +39,19 @@ public class DispatcherUtils {
         // https://issues.apache.org/jira/browse/HTTPCLIENT-1892
         // https://github.com/spring-projects/spring-framework/issues/21238
 
-        SocketConfig socketConfig = SocketConfig.custom().setSoTimeout((int) Consts.DISPATCHER_SOCKET_TIMEOUT_MILLISECONDS).build();
+        SocketConfig socketConfig = SocketConfig.custom().setSoTimeout(Timeout.ofSeconds(10)).build();
 
-        final HttpClientBuilder clientBuilder = HttpClientBuilder.create();
-        clientBuilder.setDefaultSocketConfig(socketConfig);
-        clientBuilder.useSystemProperties();
-        clientBuilder.setDefaultRequestConfig(custom().setConnectTimeout((int) Consts.DISPATCHER_SOCKET_TIMEOUT_MILLISECONDS)
-                .setSocketTimeout((int) Consts.DISPATCHER_SOCKET_TIMEOUT_MILLISECONDS)
-                .build());
-        final HttpClient httpClient = clientBuilder.build();
+        PoolingHttpClientConnectionManager manager = PoolingHttpClientConnectionManagerBuilder.create().setDefaultSocketConfig(socketConfig).build();
+
+        final HttpClient httpClient = HttpClientBuilder.create()
+                .setConnectionManager(manager)
+                .useSystemProperties()
+                .setDefaultRequestConfig(custom().setConnectTimeout(Timeout.ofSeconds(5)).build())
+                .build();
 
         final HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
         requestFactory.setConnectTimeout((int) Consts.DISPATCHER_SOCKET_TIMEOUT_MILLISECONDS);
-        requestFactory.setReadTimeout((int) Consts.DISPATCHER_SOCKET_TIMEOUT_MILLISECONDS);
+
         return requestFactory;
     }
 
