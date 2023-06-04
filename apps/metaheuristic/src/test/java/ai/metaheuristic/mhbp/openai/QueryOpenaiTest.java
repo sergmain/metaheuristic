@@ -19,13 +19,13 @@ package ai.metaheuristic.mhbp.openai;
 
 import ai.metaheuristic.ai.utils.RestUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.fluent.Executor;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.client.fluent.Response;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.StringEntity;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.client5.http.fluent.Executor;
+import org.apache.hc.client5.http.fluent.Request;
+import org.apache.hc.client5.http.fluent.Response;
+import org.apache.hc.core5.http.client.utils.URIBuilder;
+import org.apache.hc.core5.http.entity.StringEntity;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

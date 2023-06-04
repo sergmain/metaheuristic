@@ -16,9 +16,9 @@
 
 package ai.metaheuristic.ai.processor.net;
 
-import org.apache.http.HttpHost;
-import org.apache.http.client.fluent.Executor;
-import org.apache.http.client.utils.URIUtils;
+import org.apache.hc.client5.http.utils.URIUtils;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.client5.http.fluent.Executor;
 
 import java.net.URL;
 

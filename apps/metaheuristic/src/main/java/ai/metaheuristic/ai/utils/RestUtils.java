@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.utils;
 
-import org.apache.http.client.fluent.Request;
+import org.apache.hc.client5.http.fluent.Request;
 import org.springframework.http.HttpHeaders;
 import org.springframework.lang.Nullable;
 

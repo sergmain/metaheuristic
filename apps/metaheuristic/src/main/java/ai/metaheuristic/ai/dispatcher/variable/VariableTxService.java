@@ -51,13 +51,13 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.hibernate.Hibernate;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
@@ -67,7 +67,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.Yaml;
 
-import javax.persistence.EntityManager;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -122,7 +121,7 @@ public class VariableTxService {
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
         data.setTaskContextId(taskContextId);
 
-        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
+        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
         data.setData(blob);
 
         variableRepository.save(data);
@@ -140,7 +139,7 @@ public class VariableTxService {
         TxUtils.checkTxExists();
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
+        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
         data.setData(blob);
         data.inited = true;
         data.nullified = false;
@@ -165,7 +164,7 @@ public class VariableTxService {
         data.filename = filename;
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
+        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
         data.setData(blob);
         data.inited = true;
         data.nullified = false;

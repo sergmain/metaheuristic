@@ -35,20 +35,22 @@ import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpResponseException;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.client.fluent.Response;
-import org.apache.http.client.utils.URIBuilder;
+import org.apache.commons.io.IOUtils;
+import org.apache.hc.client5.http.HttpResponseException;
+import org.apache.hc.client5.http.fluent.Content;
+import org.apache.hc.client5.http.fluent.Request;
+import org.apache.hc.client5.http.fluent.Response;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.net.URIBuilder;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -143,7 +145,8 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                                     .addParameter("chunkSize", contextInfo.chunkSize.toString())
                                     .addParameter("chunkNum", Integer.toString(idx));
 
-                            final Request request = Request.Get(builder.build()).connectTimeout(5000).socketTimeout(20000);
+                            final Request request = Request.get(builder.build()).connectTimeout(Timeout.ofSeconds(5));
+                                    //.socketTimeout(20000);
 
                             RestUtils.addHeaders(request);
 
@@ -151,7 +154,8 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                             File partFile = new File(dir, String.format(mask, idx));
 
                             final HttpResponse httpResponse = response.returnResponse();
-                            int statusCode = httpResponse.getStatusLine().getStatusCode();
+//                            int statusCode = httpResponse.getStatusLine().getStatusCode();
+                            int statusCode = httpResponse.getCode();
                             if (statusCode == HttpStatus.UNPROCESSABLE_ENTITY.value()) {
                                 final String es = S.f("#811.047 Function %s can't be downloaded, assetManager manager %s was mis-configure. Reason: Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions", task.functionCode, assetManager.url);
                                 log.error(es);
@@ -176,14 +180,17 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                             }
 
                             try (final FileOutputStream out = new FileOutputStream(partFile)) {
-                                final HttpEntity entity = httpResponse.getEntity();
-                                if (entity != null) {
-                                    entity.writeTo(out);
+                                final Content content = response.returnContent();
+                                IOUtils.copy(content.asStream(), out);
+/*
+                                if (content != null) {
+                                    content.writeTo(out);
                                 } else {
                                     log.warn("#811.055 http entity is null");
                                 }
+*/
                             }
-                            final Header[] headers = httpResponse.getAllHeaders();
+                            final Header[] headers = httpResponse.getHeaders();
                             if (!DownloadUtils.isChunkConsistent(partFile, headers)) {
                                 log.error("#811.060 error while downloading chunk of function {}, size is different", functionCode);
                                 metadataService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.download_error);

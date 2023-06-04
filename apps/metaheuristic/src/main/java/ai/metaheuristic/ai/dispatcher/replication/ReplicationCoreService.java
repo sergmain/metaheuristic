@@ -23,17 +23,19 @@ import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.fluent.Executor;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.client.fluent.Response;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.client.utils.URIUtils;
-import org.apache.http.conn.ConnectTimeoutException;
-import org.apache.http.conn.HttpHostConnectException;
+import org.apache.hc.client5.http.ConnectTimeoutException;
+import org.apache.hc.client5.http.HttpHostConnectException;
+import org.apache.hc.client5.http.fluent.Content;
+import org.apache.hc.client5.http.utils.URIUtils;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.client5.http.fluent.Executor;
+import org.apache.hc.client5.http.fluent.Request;
+import org.apache.hc.client5.http.fluent.Response;
+import org.apache.hc.core5.net.URIBuilder;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -64,7 +66,8 @@ public class ReplicationCoreService {
     public ReplicationData.AssetStateResponse getAssetStates() {
         ReplicationData.ReplicationAsset data = getData(
                 "/rest/v1/replication/current-assets", ReplicationData.AssetStateResponse.class, null,
-                (uri) -> Request.Get(uri).connectTimeout(5000).socketTimeout(20000)
+                (uri) -> Request.get(uri).connectTimeout(Timeout.ofSeconds(5))
+                //.socketTimeout(20000)
         );
         if (data instanceof ReplicationData.AssetAcquiringError) {
             return new ReplicationData.AssetStateResponse(((ReplicationData.AssetAcquiringError) data).getErrorMessagesAsList());
@@ -82,7 +85,7 @@ public class ReplicationCoreService {
         }
         return Executor.newInstance()
                 .authPreemptive(dispatcherHttpHostWithAuth)
-                .auth(dispatcherHttpHostWithAuth, restUsername, restPassword);
+                .auth(dispatcherHttpHostWithAuth, restUsername, restPassword.toCharArray());
     }
 
     public ReplicationData.ReplicationAsset getData(String uri, Class clazz, @Nullable List<NameValuePair> nvps, Function<URI, Request> requestFunc) {
@@ -106,29 +109,21 @@ public class ReplicationCoreService {
                     .execute(request);
 
             final HttpResponse httpResponse = response.returnResponse();
-            if (httpResponse.getStatusLine().getStatusCode()!=200) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                final HttpEntity entity = httpResponse.getEntity();
-                if (entity != null) {
-                    entity.writeTo(baos);
-                }
-
-                log.error("Server response:\n" + baos.toString());
+            final Content content = response.returnContent();
+            if (httpResponse.getCode()!=200) {
+                log.error("Server response:\n" + content.asString());
                 return new ReplicationData.AssetAcquiringError( S.f("Error while accessing url %s, http status code: %d",
-                        globals.dispatcher.asset.sourceUrl, httpResponse.getStatusLine().getStatusCode()));
+                        globals.dispatcher.asset.sourceUrl, httpResponse.getCode()));
             }
-            final HttpEntity entity = httpResponse.getEntity();
-            if (entity != null) {
-                try (final InputStream content = entity.getContent()) {
-                    return getReplicationAsset(content, clazz);
-                }
+            if (content != Content.NO_CONTENT) {
+                return getReplicationAsset(content.asStream(), clazz);
             }
             else {
                 return new ReplicationData.AssetAcquiringError( S.f("Entry is null, url %s",
                         globals.dispatcher.asset.sourceUrl));
             }
         }
-        catch (ConnectTimeoutException | HttpHostConnectException | SocketTimeoutException th) {
+        catch (ConnectTimeoutException | HttpHostConnectException th) {
             log.error("Error: {}", th.getMessage());
             return new ReplicationData.AssetAcquiringError( S.f("Error while accessing url %s, error message: %s",
                     globals.dispatcher.asset.sourceUrl, th.getMessage()));

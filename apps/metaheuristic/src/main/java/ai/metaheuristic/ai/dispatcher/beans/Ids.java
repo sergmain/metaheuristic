@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.beans;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 

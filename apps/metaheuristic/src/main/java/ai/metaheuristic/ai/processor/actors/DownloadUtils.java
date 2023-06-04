@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.processor.actors;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import org.apache.commons.io.FileUtils;
-import org.apache.http.Header;
+import org.apache.hc.core5.http.Header;
 import org.springframework.lang.Nullable;
 
 import java.io.File;

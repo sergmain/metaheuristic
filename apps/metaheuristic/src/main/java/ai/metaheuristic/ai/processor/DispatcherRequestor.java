@@ -30,7 +30,7 @@ import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.commons.CommonConsts;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.http.conn.ConnectTimeoutException;
+import org.apache.hc.client5.http.ConnectTimeoutException;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -47,6 +47,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
+import static org.springframework.http.HttpStatus.*;
 
 /**
  * User: Serg
@@ -235,14 +236,12 @@ public class DispatcherRequestor {
                 processDispatcherCommParamsYaml(pcpy, dispatcherUrl, dispatcherYaml);
 
             } catch (HttpClientErrorException e) {
-                switch(e.getStatusCode()) {
-                    case UNAUTHORIZED:
-                    case FORBIDDEN:
-                    case NOT_FOUND:
-                        log.error("#775.070 Error {} accessing url {}", e.getStatusCode().value(), serverRestUrl);
-                        break;
-                    default:
-                        throw e;
+                int value = e.getStatusCode().value();
+                if (value==UNAUTHORIZED.value() || value==FORBIDDEN.value() || value==NOT_FOUND.value()) {
+                    log.error("#775.070 Error {} accessing url {}", e.getStatusCode().value(), serverRestUrl);
+                }
+                else {
+                    throw e;
                 }
             } catch (ResourceAccessException e) {
                 Throwable cause = e.getCause();

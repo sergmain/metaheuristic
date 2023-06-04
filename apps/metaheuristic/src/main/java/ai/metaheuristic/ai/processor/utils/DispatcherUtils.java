@@ -17,9 +17,9 @@
 package ai.metaheuristic.ai.processor.utils;
 
 import ai.metaheuristic.ai.Consts;
-import org.apache.http.client.HttpClient;
-import org.apache.http.config.SocketConfig;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.hc.core5.http.client.HttpClient;
+import org.apache.hc.core5.http.config.SocketConfig;
+import org.apache.hc.core5.http.impl.client.HttpClientBuilder;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
 import static org.apache.http.client.config.RequestConfig.custom;

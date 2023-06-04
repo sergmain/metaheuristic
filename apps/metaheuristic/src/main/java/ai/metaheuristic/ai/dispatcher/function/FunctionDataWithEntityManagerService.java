@@ -23,16 +23,15 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Hibernate;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
 import java.io.InputStream;
 import java.sql.Blob;
 import java.sql.Timestamp;
@@ -55,7 +54,7 @@ public class FunctionDataWithEntityManagerService {
         TxUtils.checkTxExists();
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
+        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
         data.setData(blob);
 
         functionDataRepository.save(data);
@@ -78,7 +77,7 @@ public class FunctionDataWithEntityManagerService {
             }
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-            Blob blob = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
+            Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
             data.setData(blob);
 
             functionDataRepository.save(data);

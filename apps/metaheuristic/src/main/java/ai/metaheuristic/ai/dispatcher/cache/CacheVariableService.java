@@ -23,16 +23,15 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Hibernate;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -87,7 +86,7 @@ public class CacheVariableService {
             data.nullified = true;
         }
         else {
-            data.data = Hibernate.getLobCreator(em.unwrap(SessionImplementor.class)).createBlob(is, size);
+            data.data = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
             data.nullified = false;
         }
 
