@@ -209,7 +209,7 @@
             <!-- EPL 2.0, LGPL 2.1-->
             <groupId>org.jgrapht</groupId>
             <artifactId>jgrapht-core</artifactId>
-            <version>1.5.1</version>
+            <version>1.5.2</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.jgrapht/jgrapht-io -->
@@ -217,7 +217,7 @@
             <!-- EPL 2.0, LGPL 2.1-->
             <groupId>org.jgrapht</groupId>
             <artifactId>jgrapht-io</artifactId>
-            <version>1.5.1</version>
+            <version>1.5.2</version>
         </dependency>
 
         <dependency>
