@@ -529,7 +529,11 @@ public class Globals {
 
     public Path getHome() {
         if (home==null) {
-            throw new IllegalArgumentException("mh.home isn't specified");
+            String mhHome = System.getenv("MH_HOME");
+            if (S.b(mhHome)) {
+                throw new IllegalArgumentException("mh.home isn't specified");
+            }
+            home = Path.of(mhHome);
         }
         return home;
     }
@@ -591,9 +595,7 @@ public class Globals {
         logGlobals();
         logSystemEnvs();
         logGarbageCollectors();
-        logDeprecated();
-
-//        logUlimitSh();
+//        logDeprecated();
 
     }
 
