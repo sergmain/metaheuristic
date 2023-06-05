@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.mhbp.rest;
 
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.mhbp.data.ScenarioData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
@@ -188,7 +189,7 @@ public class ScenarioRestController {
 
     @PostMapping("/scenario-run")
 //    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
-    public OperationStatusRest runScenario(
+    public SourceCodeData.OperationStatusWithSourceCodeId runScenario(
             @RequestParam(name = "scenarioGroupId") long scenarioGroupId,
             @RequestParam(name = "scenarioId") long scenarioId,
             Authentication authentication) {
