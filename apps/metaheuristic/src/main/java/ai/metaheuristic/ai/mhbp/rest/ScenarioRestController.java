@@ -197,4 +197,11 @@ public class ScenarioRestController {
         return scenarioService.runScenario(scenarioGroupId, scenarioId, context);
     }
 
+    @Nullable
+    @GetMapping("/scenarios/{scenarioGroupId}/scenario/{scenarioId}/sourceCodeId")
+    public SourceCodeData.SimpleSourceCodeUid getSourceCodeId(@PathVariable long scenarioGroupId, @PathVariable long scenarioId, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        final SourceCodeData.SimpleSourceCodeUid result = scenarioService.getSourceCodeId(scenarioGroupId, scenarioId, context);
+        return result;
+    }
 }

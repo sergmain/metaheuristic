@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
@@ -181,6 +182,21 @@ public class ScenarioService {
         SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(execContextResult.sourceCode, execContextResult.execContext);
 
         return new OperationStatusWithSourceCodeId(OperationStatusRest.OPERATION_STATUS_OK, sc.id);
+    }
+
+    public SourceCodeData.SimpleSourceCodeUid getSourceCodeId(long scenarioGroupId, long scenarioId, DispatcherContext context) {
+        Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
+        if (s==null || s.scenarioGroupId!=scenarioGroupId || s.accountId!=context.getAccountId()) {
+            return new SourceCodeData.SimpleSourceCodeUid("373.120 scenario wasn't found, " + scenarioGroupId+", " + scenarioId);
+        }
+
+        String uid = ScenarioUtils.getUid(s);
+        SourceCodeImpl sc = sourceCodeRepository.findByUid(uid);
+        if (sc==null) {
+            // SourceCode wasn't created for this Scenario
+            return new SourceCodeData.SimpleSourceCodeUid();
+        }
+        return new SourceCodeData.SimpleSourceCodeUid(new SourceCodeData.SourceCodeUid(sc.id, sc.uid));
     }
 
     public OperationStatusRest copyScenario(String scenarioGroupId, String scenarioId, DispatcherContext context) {

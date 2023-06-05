@@ -64,6 +64,22 @@ public class SourceCodeData {
     @EqualsAndHashCode(callSuper = false)
     @AllArgsConstructor
     @NoArgsConstructor
+    public static class SimpleSourceCodeUid extends BaseDataClass {
+        public SourceCodeUid simpleSourceCode;
+
+        public SimpleSourceCodeUid(List<String> errorMessage) {
+            this.errorMessages = errorMessage;
+        }
+
+        public SimpleSourceCodeUid(String errorMessage) {
+            this.errorMessages = Collections.singletonList(errorMessage);
+        }
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class SourceCodeUidsForCompany extends BaseDataClass {
         public List<SourceCodeUid> items;
     }
