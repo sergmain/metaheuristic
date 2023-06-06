@@ -31,11 +31,10 @@ import ai.metaheuristic.api.EnumsApi;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.HttpResponseException;
-import org.apache.hc.client5.http.fluent.Content;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.net.URIBuilder;
@@ -171,7 +170,10 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                             task.core.dispatcherUrl.url, task.dispatcher.restUsername, task.dispatcher.restPassword).execute(request);
                     File partFile = new File(dir, String.format(mask, idx));
                     final HttpResponse httpResponse = response.returnResponse();
-                    final int statusCode = httpResponse.getCode();
+                    if (!(httpResponse instanceof ClassicHttpResponse classicHttpResponse)) {
+                        throw new IllegalStateException("(!(httpResponse instanceof ClassicHttpResponse classicHttpResponse))");
+                    }
+                    final int statusCode = classicHttpResponse.getCode();
                     if (statusCode ==HttpServletResponse.SC_NO_CONTENT) {
                         if (task.nullable) {
                             processorTaskService.setInputAsEmpty(task.core, task.taskId, task.variableId);
@@ -202,9 +204,8 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                         return;
                     }
 
-                    Content content = response.returnContent();
-                    try (final FileOutputStream out = new FileOutputStream(partFile)) {
-                        IOUtils.copy(content.asStream(), out);
+                    try (FileOutputStream out = new FileOutputStream(partFile)) {
+                        classicHttpResponse.getEntity().writeTo(out);
                     }
                     final Header[] headers = httpResponse.getHeaders();
                     if (!DownloadUtils.isChunkConsistent(partFile, headers)) {

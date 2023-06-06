@@ -32,14 +32,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hc.client5.http.fluent.Content;
 import org.apache.hc.client5.http.fluent.Executor;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
 import org.apache.hc.client5.http.utils.URIUtils;
-import org.apache.hc.core5.http.HttpHost;
-import org.apache.hc.core5.http.HttpResponse;
-import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.apache.hc.core5.net.URIBuilder;
@@ -48,6 +45,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -168,14 +166,22 @@ public class ProviderApiSchemeService {
         Response response = executor.execute(request);
 
         final HttpResponse httpResponse = response.returnResponse();
-        final Content content = response.returnContent();
-        final int statusCode = httpResponse.getCode();
+        if (!(httpResponse instanceof ClassicHttpResponse classicHttpResponse)) {
+            throw new IllegalStateException("(!(httpResponse instanceof ClassicHttpResponse classicHttpResponse))");
+        }
+        final HttpEntity entity = classicHttpResponse.getEntity();
+        final int statusCode = classicHttpResponse.getCode();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        if (entity != null) {
+            entity.writeTo(baos);
+        }
+        byte[] bytes = baos.toByteArray();
         if (statusCode!=HttpStatus.OK.value()) {
             //noinspection
 //            String d = schemeAndParams.scheme.scheme.response.type.binary ? "<response for API is binary>" : new String(bytes, StandardCharsets.UTF_8);
             String d;
             try {
-                d = StringUtils.substring(content.asString(StandardCharsets.UTF_8), 0, 512);
+                d = StringUtils.substring(new String(bytes, StandardCharsets.UTF_8), 0, 512);
             }
             catch (Throwable e) {
                 d = "<response for API is binary>";
@@ -186,8 +192,8 @@ public class ProviderApiSchemeService {
         }
         ApiData.RawAnswerFromAPI rawAnswerFromAPI =
                 schemeAndParams.scheme.scheme.response.type.binary
-                        ? new ApiData.RawAnswerFromAPI(schemeAndParams.scheme.scheme.response.type, content.asBytes())
-                        : new ApiData.RawAnswerFromAPI(schemeAndParams.scheme.scheme.response.type, content.asString(StandardCharsets.UTF_8));
+                        ? new ApiData.RawAnswerFromAPI(schemeAndParams.scheme.scheme.response.type, bytes)
+                        : new ApiData.RawAnswerFromAPI(schemeAndParams.scheme.scheme.response.type, new String(bytes, StandardCharsets.UTF_8));
         return new ApiData.SchemeAndParamResult(schemeAndParams, OK, rawAnswerFromAPI, null, HttpStatus.OK.value());
     }
 

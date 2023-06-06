@@ -23,26 +23,21 @@ import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.ConnectTimeoutException;
 import org.apache.hc.client5.http.HttpHostConnectException;
-import org.apache.hc.client5.http.fluent.Content;
-import org.apache.hc.client5.http.utils.URIUtils;
-import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.http.HttpHost;
-import org.apache.hc.core5.http.HttpResponse;
-import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.client5.http.fluent.Executor;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
+import org.apache.hc.client5.http.utils.URIUtils;
+import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.net.URIBuilder;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -109,14 +104,24 @@ public class ReplicationCoreService {
                     .execute(request);
 
             final HttpResponse httpResponse = response.returnResponse();
-            final Content content = response.returnContent();
-            if (httpResponse.getCode()!=200) {
-                log.error("Server response:\n" + content.asString(StandardCharsets.UTF_8));
+            if (!(httpResponse instanceof ClassicHttpResponse classicHttpResponse)) {
+                throw new IllegalStateException("(!(httpResponse instanceof ClassicHttpResponse classicHttpResponse))");
+            }
+            final int statusCode = classicHttpResponse.getCode();
+            if (statusCode!=200) {
+                String content;
+                try (final InputStream is = classicHttpResponse.getEntity().getContent()) {
+                    content = IOUtils.toString(is, StandardCharsets.UTF_8);
+                }
+                log.error("Server response:\n" + content);
                 return new ReplicationData.AssetAcquiringError( S.f("Error while accessing url %s, http status code: %d",
                         globals.dispatcher.asset.sourceUrl, httpResponse.getCode()));
             }
-            if (content != Content.NO_CONTENT) {
-                return getReplicationAsset(content.asStream(), clazz);
+            final HttpEntity entity = classicHttpResponse.getEntity();
+            if (entity != null) {
+                try (final InputStream content = entity.getContent()) {
+                    return getReplicationAsset(content, clazz);
+                }
             }
             else {
                 return new ReplicationData.AssetAcquiringError( S.f("Entry is null, url %s",

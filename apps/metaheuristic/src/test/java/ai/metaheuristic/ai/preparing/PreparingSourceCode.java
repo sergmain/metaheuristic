@@ -63,7 +63,6 @@ public abstract class PreparingSourceCode extends PreparingCore {
     @Autowired private ExecContextStatusService execContextStatusService;
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
     @Autowired private TxSupportForTestingService txSupportForTestingService;
-    @Autowired private SourceCodeValidationService sourceCodeValidationService;
 
     public SourceCodeImpl getSourceCode() {
         return preparingSourceCodeData.sourceCode;

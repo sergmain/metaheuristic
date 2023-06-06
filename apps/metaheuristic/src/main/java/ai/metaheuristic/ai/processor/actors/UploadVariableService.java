@@ -268,7 +268,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
         try {
             final URI build = new URIBuilder(variableStatusRestUrl).setCharset(StandardCharsets.UTF_8).build();
             final Request request = Request.post(build)
-                    .bodyForm(Form.form().add("variableId", ""+variableId).build(), StandardCharsets.UTF_8)
+                    .bodyForm(Form.form().add("variableId", variableId.toString()).build(), StandardCharsets.UTF_8)
                     .connectTimeout(Timeout.ofSeconds(5));
                     //.socketTimeout(20000);
 
@@ -276,18 +276,38 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             Response response = executor.execute(request);
 
             final HttpResponse httpResponse = response.returnResponse();
-            final Content content = response.returnContent();
-            if (httpResponse.getCode()!=200) {
-                log.error("Server response:\n" + content.asString(StandardCharsets.UTF_8));
+            if (!(httpResponse instanceof ClassicHttpResponse classicHttpResponse)) {
+                throw new IllegalStateException("(!(httpResponse instanceof ClassicHttpResponse classicHttpResponse))");
+            }
+            final int statusCode = classicHttpResponse.getCode();
+            if (statusCode!=200) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                final HttpEntity entity = classicHttpResponse.getEntity();
+                if (entity != null) {
+                    entity.writeTo(baos);
+                }
+
+                log.error("Server response:\n{}", baos.toString());
                 // let's try to upload variable anyway
                 return true;
             }
-            return switch (content.asString()) {
-                case "false" -> true;
-                case "true" -> false;
-                default -> null;
-            };
-        }
+            final HttpEntity entity = classicHttpResponse.getEntity();
+            if (entity != null) {
+                String value;
+                try (final InputStream content = entity.getContent()) {
+                    value = IOUtils.toString(content, StandardCharsets.UTF_8);
+                }
+                // right now uri /variable-status returns value of 'inited' field
+
+                return switch (value) {
+                    case "false" -> true;
+                    case "true" -> false;
+                    default -> null;
+                };
+            }
+            else {
+                return true;
+            }        }
         catch (UnknownHostException | HttpHostConnectException | SocketTimeoutException th) {
             log.error("Error: {}", th.getMessage());
             return true;

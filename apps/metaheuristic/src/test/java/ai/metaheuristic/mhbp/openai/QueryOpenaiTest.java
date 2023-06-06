@@ -18,10 +18,13 @@
 package ai.metaheuristic.mhbp.openai;
 
 import ai.metaheuristic.ai.utils.RestUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.fluent.Content;
 import org.apache.hc.client5.http.fluent.Executor;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.net.URIBuilder;
@@ -95,10 +98,13 @@ public class QueryOpenaiTest {
         Response response = executor.execute(request);
 
         final HttpResponse httpResponse = response.returnResponse();
-        final Content content = response.returnContent();
-        final int statusCode = httpResponse.getCode();
+        if (!(httpResponse instanceof ClassicHttpResponse classicHttpResponse)) {
+            throw new IllegalStateException("(!(httpResponse instanceof ClassicHttpResponse classicHttpResponse))");
+        }
+        final int statusCode = classicHttpResponse.getCode();
+        final HttpEntity entity = classicHttpResponse.getEntity();
         System.out.println("statusCode: " + statusCode);
-        System.out.println("entity: " + content.asString(StandardCharsets.UTF_8));
+        System.out.println("entity: " + IOUtils.toString(entity.getContent(), StandardCharsets.UTF_8));
     }
 
     @Test
@@ -116,9 +122,12 @@ public class QueryOpenaiTest {
         Response response = executor.execute(request);
 
         final HttpResponse httpResponse = response.returnResponse();
-        final Content content = response.returnContent();
-        final int statusCode = httpResponse.getCode();
+        if (!(httpResponse instanceof ClassicHttpResponse classicHttpResponse)) {
+            throw new IllegalStateException("(!(httpResponse instanceof ClassicHttpResponse classicHttpResponse))");
+        }
+        final int statusCode = classicHttpResponse.getCode();
+        final HttpEntity entity = classicHttpResponse.getEntity();
         System.out.println("statusCode: " + statusCode);
-        System.out.println("entity: " + content.asString(StandardCharsets.UTF_8));
+        System.out.println("entity: " + IOUtils.toString(entity.getContent(), StandardCharsets.UTF_8));
     }
 }

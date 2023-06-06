@@ -84,11 +84,13 @@ public class PreparingCoreInitService {
         envYaml.quotas.disabled = true;
 
         envYaml.getEnvs().put("python-3", "C:\\Anaconda3\\envs\\python-36\\python.exe" );
+        envYaml.getEnvs().put("java-17", "/path/to/java-17" );
         envYaml.getEnvs().put("env-function-01:1.1", "python.exe" );
         envYaml.getEnvs().put("env-function-02:1.1", "python.exe" );
         envYaml.getEnvs().put("env-function-03:1.1", "python.exe" );
         envYaml.getEnvs().put("env-function-04:1.1", "python.exe" );
         envYaml.getEnvs().put("env-function-05:1.1", "python.exe" );
+
         ProcessorStatusYaml ss = new ProcessorStatusYaml(new TreeMap<>(), envYaml,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "",
                 ""+ UUID.randomUUID(), System.currentTimeMillis(),
@@ -96,6 +98,14 @@ public class PreparingCoreInitService {
                 TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(), EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
         final String description = "Test processor. Must be deleted automatically";
         final String descriptionCore = "Test processor core. Must be deleted automatically";
+        ss.functions.put(PreparingConsts.TEST_FIT_FUNCTION, EnumsApi.FunctionState.ready);
+        ss.functions.put(PreparingConsts.TEST_PREDICT_FUNCTION, EnumsApi.FunctionState.ready);
+
+        ss.functions.put("function-01:1.1", EnumsApi.FunctionState.ready);
+        ss.functions.put("function-02:1.1", EnumsApi.FunctionState.ready);
+        ss.functions.put("function-03:1.1", EnumsApi.FunctionState.ready);
+        ss.functions.put("function-04:1.1", EnumsApi.FunctionState.ready);
+        ss.functions.put("function-05:1.1", EnumsApi.FunctionState.ready);
 
         mills = System.currentTimeMillis();
         log.info("Start processorRepository.saveAndFlush()");

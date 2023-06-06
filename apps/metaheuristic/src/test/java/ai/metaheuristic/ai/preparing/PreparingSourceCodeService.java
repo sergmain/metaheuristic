@@ -202,6 +202,7 @@ public class PreparingSourceCodeService {
         final KeepAliveRequestParamYaml.Env env = new KeepAliveRequestParamYaml.Env();
         env.envs.put("env-for-test-function", "/path/to/cmd");
         env.envs.put("python-3", "/path/to/python-3");
+        env.envs.put("java-17", "/path/to/java-17");
 
         pr.status = new KeepAliveRequestParamYaml.ProcessorStatus(
                 env,
