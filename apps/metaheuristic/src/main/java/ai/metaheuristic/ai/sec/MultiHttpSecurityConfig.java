@@ -82,7 +82,7 @@ public class MultiHttpSecurityConfig {
                 .authorizeHttpRequests((requests) -> requests
                         .requestMatchers(OPTIONS).permitAll() // allow CORS option calls for Swagger UI
                         .requestMatchers("/","/index.html", "/*.js", "/*.css", "/favicon.ico", "/assets/**","/resources/**", "/rest/login").permitAll()
-                        .requestMatchers("/rest/**/**").authenticated()
+                        .requestMatchers("/rest/**").authenticated()
                         .anyRequest().denyAll()
                 )
                 .csrf().disable().headers().cacheControl();

@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.utils.EnvProperty;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.SecUtils;
+import jakarta.annotation.PostConstruct;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.file.PathUtils;
@@ -41,7 +42,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 import org.springframework.util.unit.DataUnit;
 
-import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.GarbageCollectorMXBean;
@@ -81,9 +81,6 @@ public class Globals {
     public static final Duration DAYS_14 = Duration.ofDays(14);
     public static final Period DAYS_90 = Period.ofDays(90);
     public static final Period DAYS_IN_YEARS_3 = Period.ofDays(365*3);
-
-
-    private final Environment env;
 
     public static final String METAHEURISTIC_PROJECT = "Metaheuristic project";
 
@@ -528,12 +525,17 @@ public class Globals {
     public Path home;
 
     public Path getHome() {
+/*
         if (home==null) {
             String mhHome = System.getenv("MH_HOME");
             if (S.b(mhHome)) {
                 throw new IllegalArgumentException("mh.home isn't specified");
             }
             home = Path.of(mhHome);
+        }
+*/
+        if (home==null) {
+            throw new IllegalArgumentException("mh.home isn't specified");
         }
         return home;
     }
@@ -666,19 +668,6 @@ public class Globals {
             Pair.of("MH_CHUNK_SIZE", "MH_DISPATCHER_CHUNKSIZE"),
             Pair.of("MH_DISPATCHER_ASSET_SOURCE_URL", "MH_DISPATCHER_ASSET_SOURCEURL")
     );
-
-    private void logDeprecated() {
-        boolean isError = false;
-        for (Pair<String, String> checkEnv : checkEnvs) {
-            if (env.getProperty(checkEnv.getKey())!=null) {
-                isError = true;
-                log.warn("environment variable "+checkEnv.getKey()+" must be replaced with "+checkEnv.getValue());
-            }
-        }
-        if (isError) {
-            throw new GlobalConfigurationException("there is some error in configuration of environment variable. sse log above");
-        }
-    }
 
     private void initOperationSystem() {
         if (SystemUtils.IS_OS_WINDOWS) {
