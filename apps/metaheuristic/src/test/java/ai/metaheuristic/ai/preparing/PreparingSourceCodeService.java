@@ -227,6 +227,7 @@ public class PreparingSourceCodeService {
     public void findTaskForRegisteringInQueueAndWait(ExecContextImpl execContext) {
         eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
                 execContext.id, execContext.execContextGraphId, execContext.execContextTaskStateId));
+        Thread.sleep(500);
         execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContext.id);
 
         boolean isQueueEmpty = true;

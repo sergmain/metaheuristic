@@ -92,6 +92,10 @@ public class TaskProviderUnassignedTaskTopLevelService {
      */
     private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
 
+    public Map<Long, AtomicLong> getBannedSince() {
+        return bannedSince;
+    }
+
     @SuppressWarnings("TextBlockMigration")
     @Nullable
     private TaskData.AssignedTask findUnassignedTaskAndAssignInternal(
@@ -108,7 +112,7 @@ public class TaskProviderUnassignedTaskTopLevelService {
             return null;
         }
 
-        AtomicLong longHolder = bannedSince.computeIfAbsent(coreId, o -> new AtomicLong(0));
+        AtomicLong longHolder = getBannedSince().computeIfAbsent(coreId, o -> new AtomicLong(0));
         if (longHolder.get() != 0 && System.currentTimeMillis() - longHolder.get() < TimeUnit.MINUTES.toMillis(30)) {
             return null;
         }
