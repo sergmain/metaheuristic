@@ -45,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @Slf4j
-@ActiveProfiles("dispatcher")
+@ActiveProfiles({"dispatcher", "mysql"})
 public class TestReAssignProcessorIdUnknownProcessorId {
 
     @Autowired

@@ -51,7 +51,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @Slf4j
-@ActiveProfiles("dispatcher")
+@ActiveProfiles({"dispatcher", "mysql"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class TestTaskRequest extends FeatureMethods {
 
@@ -90,7 +90,7 @@ public class TestTaskRequest extends FeatureMethods {
     }
 
     private void step_2(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
-        //preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+//        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
 
         // get a task for processing

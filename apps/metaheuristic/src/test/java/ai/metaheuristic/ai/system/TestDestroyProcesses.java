@@ -44,7 +44,7 @@ public class TestDestroyProcesses {
         if (!StringUtils.startsWithIgnoreCase(System.getProperty("os.name"), "Windows")) {
             log.info("this test can't be run on non-window OS");
         }
-        File f = new File("config\\exe\\HelloWorldCmd.exe");
+        File f = new File("work\\exe\\HelloWorldCmd.exe");
         if (!f.exists()) {
             log.info("this test can't run, exe file doesn't exist.");
         }
