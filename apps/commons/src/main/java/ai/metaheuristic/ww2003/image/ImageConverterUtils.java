@@ -117,7 +117,7 @@ public class ImageConverterUtils {
         public final File resultImageFile;
     }
 
-    public static Para getParaForImage(String base64) {
+    public static Para getParaForImage(String base64, int binaryIndex) {
     /*
     <w:pict>
         <v:shape id="_x0_0_0_0" style=";visibility:visible;mso-wrap-style:square">
@@ -138,15 +138,15 @@ public class ImageConverterUtils {
         </w:pict>
     */
         BinData binData = new BinData();
-        binData.addAttribute(Attr.get("w", "name", "wordml://Image1"));
+        binData.addAttribute(Attr.get("w", "name", "wordml://Image"+binaryIndex));
         binData.text.append(base64);
 
         ai.metaheuristic.ww2003.document.tags.xml.ImageData imageData = new ai.metaheuristic.ww2003.document.tags.xml.ImageData();
-        imageData.addAttribute(Attr.get(null, "src", "wordml://Image1"));
+        imageData.addAttribute(Attr.get(null, "src", "wordml://Image"+binaryIndex));
         Shape shape = new Shape(imageData);
 
         Pict pict = new Pict(shape, binData);
-        pict.addAttribute(Attr.get(null, "id", "Image 1"));
+        pict.addAttribute(Attr.get(null, "id", "Image "+binaryIndex));
         pict.addAttribute(Attr.get(null, "style", "visibility:visible;mso-wrap-style:square"));
 
         final Para para = new Para(new Run(pict));

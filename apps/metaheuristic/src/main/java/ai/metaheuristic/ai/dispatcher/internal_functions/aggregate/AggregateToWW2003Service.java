@@ -56,24 +56,25 @@ public class AggregateToWW2003Service {
         WW2003Document document = CreateWW2003Document.createWW2003Document();
         Sect sect = document.findBody().flatMap(body -> body.findFirst(Sect.class)).orElseThrow(()->new InternalFunctionException(data_not_found, "761.100 Section wasn't found"));
 
+        int binaryIndex = 1;
         for (SimpleVariable v : simpleVariables) {
+
+            final Run run = Run.t("Variable #" + v.id + ", name: " + v.variable);
+            Para p = new Para(run);
+            p.setShadow(true);
+            WW2003PropertyUtils.addVanishRProp(run);
+            WW2003PropertyUtils.addVanishRProp(p);
+            sect.add(p);
+
             final EnumsApi.VariableType variableType = v.getDataStorageParams().type;
             EnumsApi.VariableType type = variableType==null ? EnumsApi.VariableType.unknown : variableType;
-
             if (type.isBinary) {
                 byte[] bytes = variableTxService.getVariableAsBytes(v.id);
                 String base64 = Base64.encodeBase64String(bytes);
-                final Para para = ImageConverterUtils.getParaForImage(base64);
+                final Para para = ImageConverterUtils.getParaForImage(base64, binaryIndex++);
                 sect.add(para);
             }
             else {
-                final Run run = Run.t("Variable #" + v.id + ", name: " + v.variable);
-                Para p = new Para(run);
-                p.setShadow(true);
-                WW2003PropertyUtils.addVanishRProp(run);
-                WW2003PropertyUtils.addVanishRProp(p);
-                sect.add(p);
-
                 String text = variableTxService.getVariableDataAsString(v.id);
                 text.lines().forEach(line -> sect.add(new Para(Run.t(line))));
 

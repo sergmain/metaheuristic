@@ -138,7 +138,7 @@ public class SystemProcessLauncher {
             final AtomicBoolean isDone = new AtomicBoolean(false);
             final Thread reader = new Thread(() -> {
                 try {
-                    log.info("thread #" + Thread.currentThread().getId() + ", start receiving stream from external process");
+                    log.info("thread #{}, start receiving stream from external process", Thread.currentThread().getId());
                     streamHolder.is = process.getInputStream();
                     int c;
                     isRun.set(true);
@@ -175,10 +175,10 @@ public class SystemProcessLauncher {
                 timeoutThread = new Thread(() -> {
                     try {
                         while (!isRun.get()) {
-                            log.info("thread #" + Thread.currentThread().getId() + " is waiting for reader thread, time - " + new Date());
+                            log.info("thread #{} is waiting for reader thread, time - {}", Thread.currentThread().getId(), new Date());
                             Thread.sleep(TimeUnit.MILLISECONDS.toMillis(500));
                         }
-                        log.info("thread #" + Thread.currentThread().getId() + ", time before sleep - " + new Date());
+                        log.info("thread #{}, time before sleep - {}", Thread.currentThread().getId(), new Date());
                         while (true) {
                             Thread.sleep(TimeUnit.SECONDS.toMillis(2));
                             if (interrupters.stream().anyMatch(Supplier::get)) {
@@ -190,7 +190,7 @@ public class SystemProcessLauncher {
                                 return;
                             }
                         }
-                        log.info("thread #" + Thread.currentThread().getId() + ", time before destroy - " + new Date());
+                        log.info("thread #{}, time before destroy - {}", Thread.currentThread().getId(), new Date());
 
                         final LinkedList<ProcessHandle> handles = new LinkedList<>();
                         collectHandlers(handles, process.toHandle());
@@ -201,10 +201,10 @@ public class SystemProcessLauncher {
                         destroy(handles);
                         timeoutMessage.append(String.format(TIMEOUT_MESSAGE, timeoutBeforeTerminate));
                         isTerminated.set(true);
-                        log.info("thread #" + Thread.currentThread().getId() + ", time after destroy - " + new Date());
+                        log.info("thread #{}, time after destroy - {}",  Thread.currentThread().getId(), new Date());
                     } catch (InterruptedException e) {
                         // this is a normal operation so it'll be debug level
-                        log.debug("thread #" + Thread.currentThread().getId() + ", current thread was interrupted");
+                        log.debug("thread #{}, current thread was interrupted", Thread.currentThread().getId());
                     }
                 });
                 timeoutThread.start();
@@ -267,7 +267,7 @@ public class SystemProcessLauncher {
                 boolean status = h.destroyForcibly();
                 log.info("\t\tstatus of destroying: {}",status);
             } catch (Throwable th) {
-                log.warn("Can't destroy process {}", h.toString());
+                log.warn("Can't destroy process {}, error: {}", h.pid(), th.getMessage());
             }
         }
     }

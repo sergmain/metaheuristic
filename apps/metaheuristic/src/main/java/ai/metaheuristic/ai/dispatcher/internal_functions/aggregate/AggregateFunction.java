@@ -165,58 +165,59 @@ public class AggregateFunction implements InternalFunction {
             List<SimpleVariable> simpleVariables = new ArrayList<>();
             LinkedHashSet<String> taskContextIds = new LinkedHashSet<>();
 
-            list.stream().map(o->o.taskContextId).collect(Collectors.toCollection(()->taskContextIds))
-                    .forEach(contextId->{
-                        Path taskContextDir = outputDir.resolve(contextId);
-                        MetadataAggregateFunctionParamsYaml mafpy = new MetadataAggregateFunctionParamsYaml();
-                        try {
-                            Files.createDirectory(taskContextDir);
-                        }
-                        catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                        list.stream().filter(t-> contextId.equals(t.taskContextId))
-                                .forEach( v->{
-                                    if (v.nullified) {
-                                        return;
-                                    }
-                                    try {
-                                        switch(resultType) {
-                                            case zip -> {
-                                                String ext = execContextUtilsService.getExtensionForVariable(simpleExecContext.execContextVariableStateId, v.id, "");
-                                                Path varFile = taskContextDir.resolve(v.variable+ext);
-                                                if (produceMetadata) {
-                                                    mafpy.mapping.add(Map.of(varFile.getFileName().toString(), v.variable));
-                                                }
-                                                variableTxService.storeToFileWithTx(v.id, varFile);
-                                            }
-                                            case text, ww2003 -> {
-                                                simpleVariables.add(v);
-                                            }
-                                            default -> throw new InternalFunctionException(
-                                                    system_error, "#979.100 Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR);
-                                        }
-                                    } catch (VariableDataNotFoundException e) {
-                                        log.error("#979.140 Variable #{}, name {},  wasn't found", v.id, v.variable);
-                                        if (policy==ErrorControlPolicy.fail) {
-                                            throw e;
-                                        }
-                                    }
-                                });
-                        if (produceMetadata) {
-                            Path metadataFile = taskContextDir.resolve(Consts.MH_METADATA_YAML_FILE_NAME);
+            // TODO p3 2023-06-06 replace with sorting which is being used for 'State of Tasks'
+            list.stream().map(o->o.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
+
+            for (String contextId : taskContextIds) {
+                Path taskContextDir = outputDir.resolve(contextId);
+                MetadataAggregateFunctionParamsYaml mafpy = new MetadataAggregateFunctionParamsYaml();
+                try {
+                    Files.createDirectory(taskContextDir);
+                }
+                catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                list.stream().filter(t-> contextId.equals(t.taskContextId))
+                        .forEach( v->{
+                            if (v.nullified) {
+                                return;
+                            }
                             try {
-                                Files.writeString(metadataFile, MetadataAggregateFunctionParamsYamlUtils.BASE_YAML_UTILS.toString(mafpy));
-                            } catch (IOException e) {
-                                final String es = "#979.200 error";
-                                log.error(es, e);
+                                switch(resultType) {
+                                    case zip -> {
+                                        String ext = execContextUtilsService.getExtensionForVariable(simpleExecContext.execContextVariableStateId, v.id, "");
+                                        Path varFile = taskContextDir.resolve(v.variable+ext);
+                                        if (produceMetadata) {
+                                            mafpy.mapping.add(Map.of(varFile.getFileName().toString(), v.variable));
+                                        }
+                                        variableTxService.storeToFileWithTx(v.id, varFile);
+                                    }
+                                    case text, ww2003 -> {
+                                        simpleVariables.add(v);
+                                    }
+                                    default -> throw new InternalFunctionException(
+                                            system_error, "#979.100 Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR);
+                                }
+                            } catch (VariableDataNotFoundException e) {
+                                log.error("#979.140 Variable #{}, name {},  wasn't found", v.id, v.variable);
                                 if (policy==ErrorControlPolicy.fail) {
-                                    throw new RuntimeException(es, e);
+                                    throw e;
                                 }
                             }
+                        });
+                if (produceMetadata) {
+                    Path metadataFile = taskContextDir.resolve(Consts.MH_METADATA_YAML_FILE_NAME);
+                    try {
+                        Files.writeString(metadataFile, MetadataAggregateFunctionParamsYamlUtils.BASE_YAML_UTILS.toString(mafpy));
+                    } catch (IOException e) {
+                        final String es = "#979.200 error";
+                        log.error(es, e);
+                        if (policy==ErrorControlPolicy.fail) {
+                            throw new RuntimeException(es, e);
                         }
-
-                    });
+                    }
+                }
+            };
 
             switch(resultType) {
                 case zip -> {

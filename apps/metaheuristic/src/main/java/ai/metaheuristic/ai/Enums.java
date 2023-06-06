@@ -72,17 +72,6 @@ public final class Enums {
         SEND_SCHEDULED, VARIABLE_NOT_FOUND, TASK_IS_BROKEN, TASK_NOT_FOUND, TASK_PARAM_FILE_NOT_FOUND, OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE
     }
 
-    @SuppressWarnings("unused")
-    public enum FEATURE_STATUS {
-        NONE(0), OK(1), ERROR(2), OBSOLETE(3);
-
-        public final int value;
-
-        FEATURE_STATUS(int value) {
-            this.value = value;
-        }
-    }
-
     public enum FeatureExecStatus {
         unknown(0, "None"),
         processing(1, "Processing"),
