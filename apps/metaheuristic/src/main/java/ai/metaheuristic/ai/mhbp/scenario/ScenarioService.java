@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
@@ -61,6 +62,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.OperationStatusWithSourceCodeId;
 import static ai.metaheuristic.ai.utils.CollectionUtils.TreeUtils;
 
 /**
@@ -148,10 +150,11 @@ public class ScenarioService {
         return new ScenarioData.SimpleScenarioSteps(new ScenarioData.SimpleScenarioInfo(s.name, s.description), stepTree);
     }
 
-    public OperationStatusRest runScenario(long scenarioGroupId, long scenarioId, DispatcherContext context) {
+    public OperationStatusWithSourceCodeId runScenario(long scenarioGroupId, long scenarioId, DispatcherContext context) {
         Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
         if (s==null || s.scenarioGroupId!=scenarioGroupId || s.accountId!=context.getAccountId()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "373.120 scenario wasn't found, " + scenarioGroupId+", " + scenarioId);
+            return new OperationStatusWithSourceCodeId(
+                    new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "373.120 scenario wasn't found, " + scenarioGroupId+", " + scenarioId), null);
         }
 
         String uid = ScenarioUtils.getUid(s);
@@ -166,17 +169,34 @@ public class ScenarioService {
             if (!result.isValid()) {
                 final String es = S.f("373.160 validation: %s, %s", result.validationResult.status, result.validationResult.error);
                 log.error(es);
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+                return new OperationStatusWithSourceCodeId(
+                        new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es), null);
             }
             sc = sourceCodeRepository.findById(result.id).orElse(null);
             if (sc==null) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, S.f("373.180 SourceCode not found: %d", result.id));
+                return new OperationStatusWithSourceCodeId(
+                        new OperationStatusRest(EnumsApi.OperationStatus.ERROR, S.f("373.180 SourceCode not found: %d", result.id)), null);
             }
         }
         ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sc.id, context.getCompanyId(), true);
         SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(execContextResult.sourceCode, execContextResult.execContext);
 
-        return OperationStatusRest.OPERATION_STATUS_OK;
+        return new OperationStatusWithSourceCodeId(OperationStatusRest.OPERATION_STATUS_OK, sc.id);
+    }
+
+    public SourceCodeData.SimpleSourceCodeUid getSourceCodeId(long scenarioGroupId, long scenarioId, DispatcherContext context) {
+        Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
+        if (s==null || s.scenarioGroupId!=scenarioGroupId || s.accountId!=context.getAccountId()) {
+            return new SourceCodeData.SimpleSourceCodeUid("373.120 scenario wasn't found, " + scenarioGroupId+", " + scenarioId);
+        }
+
+        String uid = ScenarioUtils.getUid(s);
+        SourceCodeImpl sc = sourceCodeRepository.findByUid(uid);
+        if (sc==null) {
+            // SourceCode wasn't created for this Scenario
+            return new SourceCodeData.SimpleSourceCodeUid();
+        }
+        return new SourceCodeData.SimpleSourceCodeUid(new SourceCodeData.SourceCodeUid(sc.id, sc.uid));
     }
 
     public OperationStatusRest copyScenario(String scenarioGroupId, String scenarioId, DispatcherContext context) {
