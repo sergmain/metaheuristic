@@ -24,11 +24,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
 import java.time.Duration;
+import java.util.LinkedList;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -122,6 +125,85 @@ public class ThreadUtils {
         }
     }
 
+    public static class ThreadedPool<T> {
+        private final int maxThreadInPool;
+        private final int maxQueueSize;
+        private final Consumer<T> process;
+
+        private final ThreadPoolExecutor executor;
+        private final LinkedList<T> queue = new LinkedList<>();
+
+        private final ReentrantReadWriteLock queueReadWriteLock = new ReentrantReadWriteLock();
+        private final ReentrantReadWriteLock.WriteLock queueWriteLock = queueReadWriteLock.writeLock();
+
+        public ThreadedPool(int maxQueueSize, Consumer<T> process) {
+            this.maxThreadInPool = 1;
+            this.maxQueueSize = maxQueueSize;
+            this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxThreadInPool);
+            this.process = process;
+        }
+
+        public ThreadedPool(int maxThreadInPool, int maxQueueSize, Consumer<T> process) {
+            this.maxThreadInPool = maxThreadInPool;
+            this.maxQueueSize = maxQueueSize;
+            this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxThreadInPool);
+            this.process = process;
+        }
+
+        public void putToQueue(final T event) {
+            final int activeCount = executor.getActiveCount();
+            if (log.isDebugEnabled()) {
+                final long completedTaskCount = executor.getCompletedTaskCount();
+                final long taskCount = executor.getTaskCount();
+                log.debug("putToQueue({}), active task in executor: {}, awaiting tasks: {}", event.getClass().getSimpleName(), activeCount, taskCount - completedTaskCount);
+            }
+
+            if (activeCount>0 || queue.size()>0) {
+                return;
+            }
+
+            queueWriteLock.lock();
+            try {
+                queue.add(event);
+            }
+            finally {
+                queueWriteLock.unlock();
+            }
+            processEvent();
+        }
+
+        @Nullable
+        private T pullFromQueue() {
+            queueWriteLock.lock();
+            try {
+                return queue.pollFirst();
+            }
+            finally {
+                queueWriteLock.unlock();
+            }
+        }
+
+        public int getActiveCount() {
+            return executor.getActiveCount();
+        }
+
+        public int getQueueSize() {
+            return queue.size();
+        }
+
+        public void processEvent() {
+            if (executor.getActiveCount()>0) {
+                return;
+            }
+            executor.submit(() -> {
+                T event;
+                while ((event = pullFromQueue())!=null) {
+                    process.accept(event);
+                }
+            });
+        }
+    }
+
     public static void checkInterrupted() {
         if (Thread.currentThread().isInterrupted()) {
             throw new CustomInterruptedException();
@@ -144,7 +226,6 @@ public class ThreadUtils {
             }
         }
     }
-
 
     public static long execStat(long mills, ThreadPoolExecutor executor) {
         final long curr = System.currentTimeMillis();

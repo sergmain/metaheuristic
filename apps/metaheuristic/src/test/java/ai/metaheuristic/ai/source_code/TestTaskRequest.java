@@ -91,7 +91,7 @@ public class TestTaskRequest extends FeatureMethods {
 
     private void step_2(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
 //        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         // get a task for processing
         DispatcherCommParamsYaml.AssignedTask t = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
@@ -154,7 +154,7 @@ public class TestTaskRequest extends FeatureMethods {
 
     private void step_3(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
         ProcessorCommParamsYaml.ProcessorRequest req0 = processorComm0.request;

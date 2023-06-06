@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.utils.ThreadUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +38,9 @@ import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -119,26 +122,43 @@ public class ExecContextTaskStateTopLevelService {
         }
     }
 
+    private OperationStatusRest updateTaskExecStatesInGraph(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState state, String taskContextId) {
+        return execContextTaskStateService.updateTaskExecStatesInGraph(execContextGraphId, execContextTaskStateId, taskId, state, taskContextId);
+    }
+
+    private final LinkedHashMap<Long, ThreadUtils.ThreadedPool<TransferStateFromTaskQueueToExecContextEvent>> threadedPoolMap = new LinkedHashMap<>(100) {
+        protected boolean removeEldestEntry(Map.Entry<Long, ThreadUtils.ThreadedPool<TransferStateFromTaskQueueToExecContextEvent>> entry) {
+            return this.size()>50 && entry.getValue().getQueueSize()==0 && entry.getValue().getActiveCount()==0;
+        }
+    };
+
+    private final ThreadUtils.ThreadedPool<TransferStateFromTaskQueueToExecContextEvent> threadedPool
+            = new ThreadUtils.ThreadedPool<>(2, this::transferStateFromTaskQueueToExecContext);
+
     @Async
     @EventListener
+    public void handleEvent(TransferStateFromTaskQueueToExecContextEvent event) {
+        threadedPoolMap.computeIfAbsent(event.execContextId, (id)-> new ThreadUtils.ThreadedPool<>(2, this::transferStateFromTaskQueueToExecContext)).putToQueue(event);
+    }
+
     public void transferStateFromTaskQueueToExecContext(TransferStateFromTaskQueueToExecContextEvent event) {
         try {
             log.debug("call ExecContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext({})", event.execContextId);
             TaskQueue.TaskGroup taskGroup;
             int i = 1;
+            long mills = System.currentTimeMillis();
             while ((taskGroup =
                     ExecContextGraphSyncService.getWithSync(event.execContextGraphId, ()->
                             ExecContextTaskStateSyncService.getWithSync(event.execContextTaskStateId, ()->
                                     transferStateFromTaskQueueToExecContext(
                                             event.execContextId, event.execContextGraphId, event.execContextTaskStateId))))!=null) {
                 taskGroup.reset();
-                i++;
-                if (i>10_000) {
-                    log.error("#417.040 To many calls to transferStateFromTaskQueueToExecContext()");
+                if (System.currentTimeMillis() - mills > 1_000) {
                     break;
                 }
+                i++;
             }
-            log.info("#417.060 transferStateFromTaskQueueToExecContext() was completed in {} loops", i-1);
+            log.info("#417.060 transferStateFromTaskQueueToExecContext() was completed in {} loops within {} milliseconds", i-1, System.currentTimeMillis() - mills);
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }
@@ -149,7 +169,4 @@ public class ExecContextTaskStateTopLevelService {
         return execContextTaskStateService.transferStateFromTaskQueueToExecContext(execContextId, execContextGraphId, execContextTaskStateId);
     }
 
-    private OperationStatusRest updateTaskExecStatesInGraph(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState state, String taskContextId) {
-        return execContextTaskStateService.updateTaskExecStatesInGraph(execContextGraphId, execContextTaskStateId, taskId, state, taskContextId);
-    }
 }

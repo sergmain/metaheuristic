@@ -62,7 +62,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
         mills = System.currentTimeMillis();
 
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         // get a task for processing
         log.info("Start experimentService.getTaskAndAssignToProcessor()");

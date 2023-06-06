@@ -31,8 +31,8 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
@@ -51,7 +51,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -120,7 +119,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
         //preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #1");
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         System.out.println("start step_AssembledRaw()");
         step_AssembledRaw(processorIdAndCoreIds, true);
@@ -128,7 +127,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
         step_AssembledRaw(processorIdAndCoreIds, false);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #2");
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
         System.out.println("start step_DatasetProcessing()");
         step_DatasetProcessing(processorIdAndCoreIds);
 

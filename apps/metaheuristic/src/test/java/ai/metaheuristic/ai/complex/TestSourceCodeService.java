@@ -125,26 +125,26 @@ public class TestSourceCodeService extends PreparingSourceCode {
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #1");
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         System.out.println("start step_AssembledRaw()");
         step_AssembledRaw(processorIdAndCoreIds);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #2");
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         System.out.println("start step_DatasetProcessing()");
         step_DatasetProcessing(processorIdAndCoreIds);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #3");
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         //   processCode: feature-processing-1, function code: function-03:1.1
         System.out.println("start step_CommonProcessing(feature-output-1)");
         step_CommonProcessing(processorIdAndCoreIds, "feature-output-1");
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #4");
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         //   processCode: feature-processing-2, function code: function-04:1.1
         System.out.println("start step_CommonProcessing(feature-output-2)");
@@ -324,7 +324,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     }
 
     private void step_FitAndPredict(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         DispatcherCommParamsYaml.AssignedTask simpleTask32 =
                 taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);

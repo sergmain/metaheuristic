@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
+
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -53,7 +53,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
         preparingSourceCodeService.step_1_1_register_function_statuses(processorIdAndCoreIds, preparingSourceCodeData, preparingCodeData);
 
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         long mills = System.currentTimeMillis();
         log.info("Start getTaskAndAssignToProcessor_mustBeNewTask()");
@@ -71,7 +71,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
         storeConsoleResultAsError(processorIdAndCoreIds);
         log.info("storeConsoleResultAsError() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         mills = System.currentTimeMillis();
         log.info("Start noNewTask()");

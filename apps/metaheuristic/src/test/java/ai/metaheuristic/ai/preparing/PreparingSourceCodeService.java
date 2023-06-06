@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
+import ai.metaheuristic.ai.dispatcher.event.TransferStateFromTaskQueueToExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
@@ -45,13 +46,13 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -86,6 +87,7 @@ public class PreparingSourceCodeService {
     private final ExecContextCache execContextCache;
     private final ExecContextTaskStateCache execContextTaskStateCache;
     private final ExecContextTaskAssigningTopLevelService execContextTaskAssigningTopLevelService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public void cleanUp(String sourceCodeUid) {
         SourceCode sc = sourceCodeRepository.findByUid(sourceCodeUid);
@@ -222,13 +224,15 @@ public class PreparingSourceCodeService {
     }
 
     @SneakyThrows
-    public void findTaskForRegisteringInQueueAndWait(Long execContextId) {
-        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContextId);
+    public void findTaskForRegisteringInQueueAndWait(ExecContextImpl execContext) {
+        eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
+                execContext.id, execContext.execContextGraphId, execContext.execContextTaskStateId));
+        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContext.id);
 
         boolean isQueueEmpty = true;
         for (int i = 0; i < 30; i++) {
-            Thread.sleep(2_000);
-            isQueueEmpty = TaskProviderTopLevelService.allTaskGroupFinished(execContextId);
+            Thread.sleep(500);
+            isQueueEmpty = TaskProviderTopLevelService.allTaskGroupFinished(execContext.id);
             if (!isQueueEmpty) {
                 break;
             }
