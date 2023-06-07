@@ -108,7 +108,8 @@ public class ExecContextReadinessService {
     @EventListener
     @SneakyThrows
     public void checkReadiness(StartProcessReadinessEvent event) {
-//        TimeUnit.SECONDS.sleep(5);
+        // at this point queue was already filled with execContextIds in @PostConstruct method
+
         log.info("checkReadiness() here, queue: {}", getIdsFromQueue());
         executor.submit(() -> {
             Long execContextId;

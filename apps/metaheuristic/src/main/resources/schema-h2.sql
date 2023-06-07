@@ -202,7 +202,7 @@ CREATE TABLE mh_variable
     UPLOAD_TS       TIMESTAMP       NOT NULL ON UPDATE CURRENT_TIMESTAMP,
     DATA            LONGBLOB,
     FILENAME        VARCHAR(150),
-    PARAMS          MEDIUMTEXT      not null
+    PARAMS          VARCHAR(250)    not null
 );
 
 CREATE INDEX mh_variable_exec_context_id_idx

@@ -18,8 +18,10 @@ package ai.metaheuristic.ai.dispatcher.test.tx;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
-import ai.metaheuristic.ai.dispatcher.beans.*;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Function;
+import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
@@ -30,7 +32,6 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
-import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -43,7 +44,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
-import java.sql.Blob;
 import java.util.List;
 
 /**
@@ -181,14 +181,6 @@ public class TxSupportForTestingService {
 
 
     @Transactional
-    public List<ExecContextData.TaskVertex> findAllForAssigningWithTx(Long execContextGraphId, Long execContextTaskStateId) {
-        if (!globals.testing) {
-            throw new IllegalStateException("Only for testing");
-        }
-        return execContextGraphService.findAllForAssigning(execContextGraphId, execContextTaskStateId, true);
-    }
-
-    @Transactional
     public void produceAndStartAllTasks(SourceCodeImpl sourceCode, Long execContextId) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
@@ -218,26 +210,6 @@ public class TxSupportForTestingService {
         }
         execContext.setState(EnumsApi.ExecContextState.STARTED.code);
         execContextCache.save(execContext);
-    }
-
-    @Nullable
-    @Transactional(readOnly = true)
-    public Variable getVariableWithData(Long id) {
-        if (!globals.testing) {
-            throw new IllegalStateException("Only for testing");
-        }
-
-        try {
-            Variable v = variableRepository.findById(id).orElse(null);
-            if (v==null) {
-                return null;
-            }
-            Blob blob = v.getData();
-            v.bytes = blob==null ? new byte[0] : blob.getBytes(1, (int) blob.length());
-            return v;
-        } catch (Throwable th) {
-            throw new VariableCommonException("#087.020 Error: " + th.getMessage(), id);
-        }
     }
 
     @Transactional

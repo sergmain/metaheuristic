@@ -136,7 +136,6 @@ public class VariableTxService {
         if (size==0) {
             throw new IllegalStateException("#171.690 Variable can't be with zero length");
         }
-        TxUtils.checkTxExists();
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
         Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
@@ -221,7 +220,7 @@ public class VariableTxService {
     @SneakyThrows
     @Transactional
     public void storeDataInVariable(TaskParamsYaml.OutputVariable outputVariable, Path file) {
-        Variable variable = getVariable(outputVariable);
+        Variable variable = findVariableInLocalContext(outputVariable);
 
         final ResourceCloseTxEvent resourceCloseTxEvent = new ResourceCloseTxEvent();
         eventPublisher.publishEvent(resourceCloseTxEvent);
@@ -236,7 +235,7 @@ public class VariableTxService {
 
     @Transactional
     public void storeStringInVariable(TaskParamsYaml.OutputVariable outputVariable, String value) {
-        Variable variable = getVariable(outputVariable);
+        Variable variable = findVariableInLocalContext(outputVariable);
 
         byte[] bytes = value.getBytes();
         InputStream is = new ByteArrayInputStream(bytes);
@@ -245,7 +244,7 @@ public class VariableTxService {
 
     @Transactional
     public void storeBytesInVariable(TaskParamsYaml.OutputVariable outputVariable, byte[] bytes, EnumsApi.VariableType type) {
-        Variable variable = getVariable(outputVariable);
+        Variable variable = findVariableInLocalContext(outputVariable);
         DataStorageParams dsp = DataStorageParamsUtils.to(variable.params);
         dsp.type = type;
         variable.params = DataStorageParamsUtils.toString(dsp);
@@ -254,18 +253,22 @@ public class VariableTxService {
         update(is, bytes.length, variable);
     }
 
-    private Variable getVariable(TaskParamsYaml.OutputVariable outputVariable) {
+    private Variable findVariableInLocalContext(TaskParamsYaml.OutputVariable outputVariable) {
         Variable variable;
         if (outputVariable.context == EnumsApi.VariableContext.local) {
             variable = variableRepository.findById(outputVariable.id).orElse(null);
             if (variable == null) {
                 throw new InternalFunctionException(variable_not_found, "697.140 Variable not found for id #" + outputVariable.id);
             }
+            return variable;
         }
-        else {
+        else if (outputVariable.context == EnumsApi.VariableContext.global) {
             throw new InternalFunctionException(global_variable_is_immutable, "697.160 Can't store data in a global variable " + outputVariable.name);
         }
-        return variable;
+        else if (outputVariable.context == EnumsApi.VariableContext.array) {
+            throw new InternalFunctionException(general_error, "697.165 variable as array not supported yet " + outputVariable.name);
+        }
+        throw new IllegalStateException();
     }
 
     @Transactional
