@@ -17,9 +17,9 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
@@ -70,7 +70,7 @@ public class InternalFunctionVariableService {
     public List<VariableUtils.VariableHolder> discoverVariables(Long execContextId, String taskContextId, String[] names, boolean throwsException) {
         List<VariableUtils.VariableHolder> holders = new ArrayList<>();
         for (String name : names) {
-            SimpleVariable v = variableService.findVariableInAllInternalContexts(name, taskContextId, execContextId);
+            Variable v = variableService.findVariableInAllInternalContexts(name, taskContextId, execContextId);
             if (v!=null) {
                 holders.add(new VariableUtils.VariableHolder(v));
             }

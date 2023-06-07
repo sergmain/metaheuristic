@@ -18,10 +18,10 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.ReduceVariablesData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -134,7 +134,7 @@ public class ReduceVariablesFunction implements InternalFunction {
         ReduceVariablesData.Request request = new ReduceVariablesData.Request();
 
         for (ReduceVariablesConfigParamsYaml.ByInstance byInstance : config.config.reduceByInstance) {
-            SimpleVariable sv = variableService.findVariableInAllInternalContexts(byInstance.inputIs, taskContextId, execContextId);
+            Variable sv = variableService.findVariableInAllInternalContexts(byInstance.inputIs, taskContextId, execContextId);
             if (sv==null) {
                 throw new InternalFunctionException(Enums.InternalFunctionProcessing.meta_not_found,
                                 "#961.200 Input variable "+byInstance.inputIs+" wasn't found");
@@ -144,7 +144,7 @@ public class ReduceVariablesFunction implements InternalFunction {
                 throw new InternalFunctionException(Enums.InternalFunctionProcessing.meta_not_found,
                         "#961.240 Input variable "+byInstance.inputIs+" is empty");
             }
-            request.nullifiedVars.put(sv.variable, Boolean.valueOf(content));
+            request.nullifiedVars.put(sv.name, Boolean.valueOf(content));
         }
 
         return request;

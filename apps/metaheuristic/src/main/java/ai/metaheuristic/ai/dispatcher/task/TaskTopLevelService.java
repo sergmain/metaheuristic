@@ -19,10 +19,10 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.event.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -183,7 +183,7 @@ public class TaskTopLevelService {
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
                 if (!output.uploaded) {
-                    SimpleVariable sv = variableService.getVariableAsSimple(output.id);
+                    Variable sv = variableService.getVariableAsSimple(output.id);
                     if (sv!=null && sv.inited) {
                         TaskSyncService.getWithSync(task.id, () -> taskVariableTopLevelService.updateStatusOfVariable(task.id, output.id));
                     }

@@ -186,7 +186,6 @@ CREATE TABLE mh_variable
     TASK_CONTEXT_ID     VARCHAR(250) not null,
     EXEC_CONTEXT_ID     NUMERIC(10, 0) not null,
     UPLOAD_TS           TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP default CURRENT_TIMESTAMP,
-    DATA                LONGBLOB,
     FILENAME            VARCHAR(150),
     PARAMS              VARCHAR(250) not null
 );
@@ -199,6 +198,17 @@ CREATE INDEX mh_variable_name_idx
 
 CREATE UNIQUE INDEX mh_variable_name_all_context_ids_unq_idx
     ON mh_variable (NAME, TASK_CONTEXT_ID, EXEC_CONTEXT_ID);
+
+CREATE TABLE mh_variable_blob
+(
+    ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION             INT UNSIGNED    NOT NULL,
+    VARIABLE_ID         NUMERIC(10, 0)  not null,
+    DATA                LONGBLOB        not null
+);
+
+CREATE UNIQUE INDEX mh_variable_blob_variable_id_unq_idx
+    ON mh_variable_blob (VARIABLE_ID);
 
 -- its name is VARIABLE_GLOBAL, not GLOBAL_VARIABLE because I want these tables to be in the same spot in scheme;
 

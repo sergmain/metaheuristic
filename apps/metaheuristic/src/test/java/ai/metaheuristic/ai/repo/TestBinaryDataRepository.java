@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.api.EnumsApi;
@@ -74,7 +73,7 @@ public class TestBinaryDataRepository {
 
         Timestamp ts = var1.getUploadTs();
 
-        final SimpleVariable var2 = variableTxService.getVariableAsSimple(var1.getId());
+        final Variable var2 = variableTxService.getVariableAsSimple(var1.getId());
         assertNotNull(var2);
         final byte[] bytesVar2 = variableTxService.getVariableAsBytes(var1.getId());
         assertArrayEquals(bytes, bytesVar2);

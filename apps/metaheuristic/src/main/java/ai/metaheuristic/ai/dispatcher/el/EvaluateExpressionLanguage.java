@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.el;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -72,12 +73,12 @@ public class EvaluateExpressionLanguage {
         public final GlobalVariableService globalVariableService;
         public final VariableTxService variableTxService;
         public final VariableRepository variableRepository;
-        public final Consumer<SimpleVariable> setAsNullFunction;
+        public final Consumer<Variable> setAsNullFunction;
 
         public MhEvalContext(String taskContextId, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
                              GlobalVariableService globalVariableService, VariableTxService variableTxService,
                              VariableRepository variableRepository,
-                             Consumer<SimpleVariable> setAsNullFunction
+                             Consumer<Variable> setAsNullFunction
                              ) {
             this.taskContextId = taskContextId;
             this.execContextId = execContextId;
@@ -426,7 +427,7 @@ public class EvaluateExpressionLanguage {
     public static Object evaluate(
             String taskContextId, String expression, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
             GlobalVariableService globalVariableService, VariableTxService variableService,
-            VariableRepository variableRepository, Consumer<SimpleVariable> setAsNullFunction
+            VariableRepository variableRepository, Consumer<Variable> setAsNullFunction
     ) {
 
         ExpressionParser parser = new SpelExpressionParser();

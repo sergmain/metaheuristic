@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.exec_source_code;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
@@ -28,7 +29,6 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -149,7 +149,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
             }
             for (int i = 0; i < taskParamsYaml.task.inputs.size(); i++) {
                 TaskParamsYaml.InputVariable input = taskParamsYaml.task.inputs.get(i);
-                SimpleVariable sv = variableRepository.findByIdAsSimple(input.id);
+                Variable sv = variableRepository.findByIdAsSimple(input.id);
                 if (sv==null) {
                     throw new InternalFunctionException(variable_not_found, "#508.073 can't find a variable #"+input.id);
                 }
@@ -169,7 +169,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
                             throw new NotImplementedException("Not yet");
                     }
                     try (InputStream is = Files.newInputStream(tempFile)) {
-                        variableTxService.initInputVariable(
+                        variableTxService.createInputVariable(
                                 is, Files.size(tempFile), "variable-" + input.name, execContextResultRest.execContext.id, execContextParamsYaml, i, EnumsApi.VariableType.unknown);
                     }
                 }

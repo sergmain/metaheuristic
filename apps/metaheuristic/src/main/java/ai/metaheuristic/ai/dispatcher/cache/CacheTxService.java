@@ -18,13 +18,10 @@ package ai.metaheuristic.ai.dispatcher.cache;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
-import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
+import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -62,6 +59,7 @@ public class CacheTxService {
     private final CacheVariableService cacheVariableService;
     private final VariableTxService variableService;
     private final VariableRepository variableRepository;
+    private final VariableBlobRepository variableBlobRepository;
     private final GlobalVariableRepository globalVariableRepository;
     private final CacheVariableRepository cacheVariableRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -102,7 +100,7 @@ public class CacheTxService {
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
             final Path tempFile;
 
-            SimpleVariable simple = variableRepository.findByIdAsSimple(output.id);
+            Variable simple = variableRepository.findByIdAsSimple(output.id);
             if (simple==null) {
                 throw new VariableCommonException("#611.040 ExecContext is broken, variable #"+output.id+" wasn't found", output.id);
             }
@@ -144,7 +142,7 @@ public class CacheTxService {
 
     @Transactional(readOnly = true)
     public CacheData.FullKey getKey(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
-        return CacheUtils.getKey(tpy, function, variableService::getVariableDataAsString, variableRepository::getDataAsStreamById, globalVariableRepository::getDataAsStreamById);
+        return CacheUtils.getKey(tpy, function, variableService::getVariableDataAsString, variableBlobRepository::getDataAsStreamById, globalVariableRepository::getDataAsStreamById);
     }
 
 }

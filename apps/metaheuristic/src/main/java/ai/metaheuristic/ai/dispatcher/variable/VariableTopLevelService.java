@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
@@ -86,10 +87,10 @@ public class VariableTopLevelService {
                 if (variableHolder.variable == null) {
                     throw new InternalFunctionException(variable_not_found, "#992.360 local variable with name: " + execContextOutput.name + " wasn't found");
                 }
-                SimpleVariable sv = variableService.getVariableAsSimple(variableHolder.variable.id);
+                Variable sv = variableService.getVariableAsSimple(variableHolder.variable.id);
                 if (sv==null) {
                     throw new InternalFunctionException(variable_not_found,
-                            S.f("#992.300 variable %s in execContext #%d wasn't found", variableHolder.variable.variable, subExecContextId));
+                            S.f("#992.300 variable %s in execContext #%d wasn't found", variableHolder.variable.name, subExecContextId));
                 }
             }
         } catch (InternalFunctionException e) {

@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.internal_functions.aggregate;
 
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.api.EnumsApi;
@@ -52,14 +52,14 @@ public class AggregateToWW2003Service {
 
     private final VariableTxService variableTxService;
 
-    public void aggregate(Path tempFile, List<SimpleVariable> simpleVariables) {
+    public void aggregate(Path tempFile, List<Variable> variables) {
         WW2003Document document = CreateWW2003Document.createWW2003Document();
         Sect sect = document.findBody().flatMap(body -> body.findFirst(Sect.class)).orElseThrow(()->new InternalFunctionException(data_not_found, "761.100 Section wasn't found"));
 
         int binaryIndex = 1;
-        for (SimpleVariable v : simpleVariables) {
+        for (Variable v : variables) {
 
-            final Run run = Run.t("Variable #" + v.id + ", name: " + v.variable);
+            final Run run = Run.t("Variable #" + v.id + ", name: " + v.name);
             Para p = new Para(run);
             p.setShadow(true);
             WW2003PropertyUtils.addVanishRProp(run);

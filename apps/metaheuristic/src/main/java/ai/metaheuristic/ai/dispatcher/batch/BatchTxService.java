@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdEvent;
@@ -31,7 +32,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
@@ -341,7 +341,7 @@ public class BatchTxService {
             SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
             String resultBatchVariable = variableSelector.apply(batch.execContextId, scpy);
 
-            SimpleVariable variable = variableService.getVariableAsSimple(batch.execContextId, resultBatchVariable);
+            Variable variable = variableService.getVariableAsSimple(batch.execContextId, resultBatchVariable);
             if (variable==null) {
                 final String es = "#981.480 Can't find variable '"+resultBatchVariable+"'";
                 log.warn(es);
@@ -416,12 +416,16 @@ public class BatchTxService {
                 return null;
             }
 
-            SimpleVariable inputVariable = variableService.getVariableAsSimple(execContextId, variableName);
+            Variable inputVariable = variableService.getVariableAsSimple(execContextId, variableName);
             if (inputVariable==null) {
                 final String es = "#981.620 Can't find a start input variable '"+variableName+"'";
                 log.warn(es);
                 return null;
-
+            }
+            if (S.b(inputVariable.filename)) {
+                final String es = "#981.640 input variable '"+variableName+"' has an empty filename";
+                log.warn(es);
+                return null;
             }
             String filename = StrUtils.getName(inputVariable.filename) + BatchUtils.getActualExtension(scpy, globals.dispatcher.defaultResultFileExtension);
             return filename;

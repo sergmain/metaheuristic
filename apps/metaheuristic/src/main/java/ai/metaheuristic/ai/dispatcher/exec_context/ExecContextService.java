@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.event.DeleteExecContextInListTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
@@ -28,7 +29,6 @@ import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.RestUtils;
@@ -268,7 +268,7 @@ public class ExecContextService {
                 return resource;
             }
 
-            SimpleVariable variable = variableRepository.findByIdAsSimple(variableId);
+            Variable variable = variableRepository.findByIdAsSimple(variableId);
             if (variable==null) {
                 final String es = "#705.330 Can't find variable #"+variableId;
                 log.warn(es);
@@ -277,7 +277,7 @@ public class ExecContextService {
 
             String ext = execContextUtilsServices.getExtensionForVariable(execContext.execContextVariableStateId, variableId, ".bin");
 
-            String filename = S.f("variable-%s-%s%s", variableId, variable.variable, ext);
+            String filename = S.f("variable-%s-%s%s", variableId, variable.name, ext);
 
             Path varFile = resultDir.resolve("variable-"+variableId+".bin");
             variableService.storeToFileWithTx(variable.id, varFile);

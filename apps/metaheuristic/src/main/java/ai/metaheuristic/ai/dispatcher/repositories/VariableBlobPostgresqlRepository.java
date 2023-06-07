@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.repositories;
 
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -31,14 +31,15 @@ import java.sql.Timestamp;
  * Time: 10:22 PM
  */
 @Repository
-@Profile(value={"dispatcher & mysql"})
-public interface VariableMysqlRepository extends VariableDatabaseSpecificRepository<Variable, Long>  {
+@Profile(value={"dispatcher & postgresql"})
+public interface VariableBlobPostgresqlRepository extends VariableBlobDatabaseSpecificRepository<VariableBlob, Long> {
 
     @Override
     @Modifying
-    @Query(nativeQuery = true, value="update mh_variable as trg, (select data from mh_cache_variable where id=:srcId) as src " +
-            "set trg.DATA= src.data, trg.FILENAME=:filename, trg.IS_INITED=true, trg.IS_NULLIFIED=false, trg.UPLOAD_TS=:uploadedOn " +
-            "where trg.id=:trgId")
+    @Query(nativeQuery = true, value="update mh_variable " +
+            "set DATA= (select data from mh_cache_variable where id=:srcId), " +
+            "FILENAME=:filename, IS_INITED=true, IS_NULLIFIED=false, UPLOAD_TS=:uploadedOn " +
+            "where id=:trgId")
     void copyData(Long srcId, Long trgId, @Nullable String filename, Timestamp uploadedOn);
 
 

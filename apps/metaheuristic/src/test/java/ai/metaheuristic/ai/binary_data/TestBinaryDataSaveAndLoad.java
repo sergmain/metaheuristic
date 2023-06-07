@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.batch_result_processor.BatchResultProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
@@ -142,11 +141,11 @@ public class TestBinaryDataSaveAndLoad {
         bimy.targetPath = tempDir;
         bimy.filenames.put(variable.id.toString(), SYSTEM_PARAMS_V_2_YAML);
 
-        SimpleVariable sv = variableRepository.findByIdAsSimple(variable.id);
+        Variable sv = variableRepository.findByIdAsSimple(variable.id);
         assertNotNull(sv);
 
         final Path defaultPath = tempDir.resolve("default-path-for-variables");
-        Function<SimpleVariable, Path> mappingFunc = (simpleVariable) -> BatchResultProcessorTxService.resolvePathFromMapping(List.of(bimy), defaultPath, sv);
+        Function<Variable, Path> mappingFunc = (var) -> BatchResultProcessorTxService.resolvePathFromMapping(List.of(bimy), defaultPath, var);
 
         variableService.storeVariableToFileWithTx(mappingFunc, List.of(sv));
 

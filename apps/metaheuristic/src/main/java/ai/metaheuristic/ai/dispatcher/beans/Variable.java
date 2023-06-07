@@ -16,27 +16,30 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
+import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
-import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
-import java.sql.Blob;
 import java.sql.Timestamp;
 
 @Entity
 @Table(name = "MH_VARIABLE")
 @Data
 @EqualsAndHashCode(of = {"id", "version"})
-@ToString(exclude={"data", "bytes"})
 @NoArgsConstructor
+@AllArgsConstructor
+@Cacheable
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Variable implements Serializable {
     @Serial
     private static final long serialVersionUID = 7768428475142175426L;
@@ -69,16 +72,11 @@ public class Variable implements Serializable {
     public Timestamp uploadTs;
 
     @Nullable
-    @Column(name = "DATA")
-    @Lob
-    private Blob data;
-
-    @Nullable
     @Column(name = "FILENAME")
     public String filename;
 
-    @Transient
-    public byte[] bytes;
+//    @Transient
+//    public byte[] bytes;
 
     // ai.metaheuristic.api.data_storage.DataStorageParams is here
     @Column(name = "PARAMS")
@@ -86,4 +84,9 @@ public class Variable implements Serializable {
 
     // TODO 2020-12-21 need to add a way to check the length of variable with length of stored on disk variable
     //  maybe even with checksum
+
+    @JsonIgnore
+    public DataStorageParams getDataStorageParams() {
+        return DataStorageParamsUtils.to(params);
+    }
 }

@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableMysqlRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobMysqlRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.sql.Timestamp;
 
 /**
@@ -39,7 +38,7 @@ import java.sql.Timestamp;
 @RequiredArgsConstructor
 public class VariableMysqlService implements VariableDatabaseSpecificService {
 
-    public final VariableMysqlRepository variableMysqlRepository;
+    public final VariableBlobMysqlRepository variableMysqlRepository;
 
     public void copyData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) {
         TxUtils.checkTxExists();

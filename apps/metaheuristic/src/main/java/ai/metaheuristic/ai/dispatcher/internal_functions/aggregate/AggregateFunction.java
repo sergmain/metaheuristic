@@ -17,12 +17,12 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.aggregate;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextUtilsService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -145,7 +145,7 @@ public class AggregateFunction implements InternalFunction {
                     meta_not_found, "#979.080 Meta 'variables' wasn't found or empty, process: " + taskParamsYaml.task.processCode);
         }
 
-        List<SimpleVariable> list = variableRepository.getIdAndStorageUrlInVarsForExecContext(simpleExecContext.execContextId, names.toArray(String[]::new));
+        List<Variable> list = variableRepository.getIdAndStorageUrlInVarsForExecContext(simpleExecContext.execContextId, names.toArray(String[]::new));
 
         String policyMeta = MetaUtils.getValue(taskParamsYaml.task.metas, META_ERROR_CONTROL);
         ErrorControlPolicy policy = S.b(policyMeta) ? ErrorControlPolicy.ignore : ErrorControlPolicy.valueOf(policyMeta);
@@ -162,7 +162,7 @@ public class AggregateFunction implements InternalFunction {
             Path outputDir = tempDir.resolve(outputVariable.name);
             Files.createDirectory(outputDir);
 
-            List<SimpleVariable> simpleVariables = new ArrayList<>();
+            List<Variable> variables = new ArrayList<>();
             LinkedHashSet<String> taskContextIds = new LinkedHashSet<>();
 
             // TODO p3 2023-06-06 replace with sorting which is being used for 'State of Tasks'
@@ -186,20 +186,20 @@ public class AggregateFunction implements InternalFunction {
                                 switch(resultType) {
                                     case zip -> {
                                         String ext = execContextUtilsService.getExtensionForVariable(simpleExecContext.execContextVariableStateId, v.id, "");
-                                        Path varFile = taskContextDir.resolve(v.variable+ext);
+                                        Path varFile = taskContextDir.resolve(v.name + ext);
                                         if (produceMetadata) {
-                                            mafpy.mapping.add(Map.of(varFile.getFileName().toString(), v.variable));
+                                            mafpy.mapping.add(Map.of(varFile.getFileName().toString(), v.name));
                                         }
                                         variableTxService.storeToFileWithTx(v.id, varFile);
                                     }
                                     case text, ww2003 -> {
-                                        simpleVariables.add(v);
+                                        variables.add(v);
                                     }
                                     default -> throw new InternalFunctionException(
                                             system_error, "#979.100 Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR);
                                 }
                             } catch (VariableDataNotFoundException e) {
-                                log.error("#979.140 Variable #{}, name {},  wasn't found", v.id, v.variable);
+                                log.error("#979.140 Variable #{}, name {},  wasn't found", v.id, v.name);
                                 if (policy==ErrorControlPolicy.fail) {
                                     throw e;
                                 }
@@ -228,13 +228,13 @@ public class AggregateFunction implements InternalFunction {
                             ()-> variableTxService.storeDataInVariable(outputVariable, zipFile));
                 }
                 case text -> {
-                    String text = simpleVariables.stream().map(v-> variableTxService.getVariableDataAsString(v.id)).collect(Collectors.joining("\n\n"));
+                    String text = variables.stream().map(v-> variableTxService.getVariableDataAsString(v.id)).collect(Collectors.joining("\n\n"));
                     VariableSyncService.getWithSyncVoidForCreation(outputVariable.id,
                             ()-> variableTxService.storeStringInVariable(outputVariable, text));
                 }
                 case ww2003 -> {
                     Path ww2003File = tempDir.resolve("result-for-"+outputVariable.id+'-'+outputVariable.name+".xml");
-                    aggregateToWW2003Service.aggregate(ww2003File, simpleVariables);
+                    aggregateToWW2003Service.aggregate(ww2003File, variables);
 
                     VariableSyncService.getWithSyncVoidForCreation(outputVariable.id,
                             ()-> variableTxService.storeDataInVariable(outputVariable, ww2003File));

@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.internal_function.permute_variables_and_hyper_params_as_variable;
 
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import org.apache.commons.io.IOUtils;
@@ -25,6 +25,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +45,8 @@ public class PermutationMappingTest {
     @Test
     public void testJsonMapping() throws IOException {
 
-        SimpleVariable sv1 = new SimpleVariable(41L, "name1", "params1", "filename1", true, false, "taskContextId1");
+        Variable sv1 = new Variable(41L, 0, true, false, "name1", 13L, "taskContextId1",
+                Timestamp.from(Instant.now()), "filename1", "");
 
         VariableData.Permutation p1 = new VariableData.Permutation(
                 List.of(new VariableUtils.VariableHolder(sv1)),
@@ -55,7 +58,7 @@ public class PermutationMappingTest {
         );
 
 
-        SimpleVariable sv2 = new SimpleVariable(42L, "name2", "params2", "filename2", true, false, "taskContextId2");
+        Variable sv2 = new Variable(42L, 0, true, false, "name2", 13L, "taskContextId2", Timestamp.from(Instant.now()), "filename2", "");
 
         VariableData.Permutation p2 = new VariableData.Permutation(
                 List.of(new VariableUtils.VariableHolder(sv2)),

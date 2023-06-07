@@ -31,7 +31,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.preparing.PreparingData;
@@ -395,7 +394,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     private void storeOutputVariable(String variableName, String variableData, String processCode) {
 
-        SimpleVariable v = variableService.getVariableAsSimple(
+        Variable v = variableService.getVariableAsSimple(
                 variableName, processCode, getExecContextForTest());
 
         assertNotNull(v);
@@ -409,7 +408,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
 
 
-        v = variableService.getVariableAsSimple(v.variable, processCode, getExecContextForTest());
+        v = variableService.getVariableAsSimple(v.name, processCode, getExecContextForTest());
         assertNotNull(v);
         assertTrue(v.inited);
 

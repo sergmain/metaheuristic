@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -40,14 +40,14 @@ public class TaskProviderUtils {
     @Nullable
     public static String initEmptiness(
             Long coreId, int taskParamsVersion, String taskParams, Long taskId,
-            Function<Long, SimpleVariable> simpleVariableFunc, Consumer<TaskFinishWithErrorEvent> eventPublisherFunc) {
+            Function<Long, Variable> variableFunction, Consumer<TaskFinishWithErrorEvent> eventPublisherFunc) {
         String params;
         try {
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(taskParams);
 
             for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
                 if (input.context!=EnumsApi.VariableContext.global) {
-                    SimpleVariable sv = simpleVariableFunc.apply(input.id);
+                    Variable sv = variableFunction.apply(input.id);
                     if (sv==null) {
                         final String es = S.f("211.120 Can't find a %s variable %s, #%d", input.context.toString(), input.name, input.id);
                         log.error(es);

@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.variable;
 
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.utils.ContextUtils;
@@ -58,9 +59,9 @@ public class VariableUtils {
                 v.dataType = EnumsApi.DataType.global_variable;
             }
             else {
-                SimpleVariable variable = Objects.requireNonNull(pv.variable);
+                Variable variable = Objects.requireNonNull(pv.variable);
                 v.id = variable.id.toString();
-                v.name = variable.variable;
+                v.name = variable.name;
 
                 DataStorageParams dsp = variable.getDataStorageParams();
                 v.sourcing = dsp.sourcing;
@@ -104,7 +105,7 @@ public class VariableUtils {
     @NoArgsConstructor
     public static class VariableHolder {
         @Nullable
-        public SimpleVariable variable;
+        public Variable variable;
 
         @Nullable
         public SimpleGlobalVariable globalVariable;
@@ -113,14 +114,15 @@ public class VariableUtils {
             this.globalVariable = globalVariable;
         }
 
-        public VariableHolder(SimpleVariable variable) {
+        public VariableHolder(Variable variable) {
             this.variable = variable;
         }
 
         public String getName() {
-            return globalVariable!=null ? globalVariable.variable : Objects.requireNonNull(variable).variable;
+            return globalVariable!=null ? globalVariable.variable : Objects.requireNonNull(variable).name;
         }
 
+        @Nullable
         public String getFilename() {
             return globalVariable!=null ? globalVariable.filename : Objects.requireNonNull(variable).filename;
         }

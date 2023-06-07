@@ -16,18 +16,30 @@
 
 package ai.metaheuristic.ai.dispatcher.repositories;
 
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.NoRepositoryBean;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.lang.Nullable;
+import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
 
 /**
  * @author Serge
  * Date: 12/22/2021
- * Time: 10:29 PM
+ * Time: 10:22 PM
  */
-@NoRepositoryBean
-public interface VariableDatabaseSpecificRepository<T, ID> extends CrudRepository<T, ID> {
+@Repository
+@Profile(value={"dispatcher & mysql"})
+public interface VariableBlobMysqlRepository extends VariableBlobDatabaseSpecificRepository<Variable, Long> {
+
+    @Override
+    @Modifying
+    @Query(nativeQuery = true, value="update mh_variable as trg, (select data from mh_cache_variable where id=:srcId) as src " +
+            "set trg.DATA= src.data, trg.FILENAME=:filename, trg.IS_INITED=true, trg.IS_NULLIFIED=false, trg.UPLOAD_TS=:uploadedOn " +
+            "where trg.id=:trgId")
     void copyData(Long srcId, Long trgId, @Nullable String filename, Timestamp uploadedOn);
+
+
 }

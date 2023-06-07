@@ -18,13 +18,13 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.event.TaskCommunicationEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskVariableTopLevelService;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
@@ -149,7 +149,7 @@ public class ExecContextVariableTopLevelService {
             }
 
             UploadResult uploadResult = VariableSyncService.getWithSync(variableId, () -> {
-                SimpleVariable v = variableRepository.findByIdAsSimple(variableId);
+                Variable v = variableRepository.findByIdAsSimple(variableId);
                 if (v == null) {
                     return new UploadResult(Enums.UploadVariableStatus.VARIABLE_NOT_FOUND, "#440.285 variable #" + variableId + " wasn't found");
                 }
@@ -229,8 +229,8 @@ public class ExecContextVariableTopLevelService {
     public String getVariableStatus(Long variableId) {
         return VariableSyncService.getWithSync(variableId,
                 () -> {
-                    SimpleVariable v = variableRepository.findByIdAsSimple(variableId);
-                    return v == null ? "null" : "" + v.inited;
+                    Variable v = variableRepository.findByIdAsSimple(variableId);
+                    return v == null ? "null" : String.valueOf(v.inited);
                 });
     }
 }

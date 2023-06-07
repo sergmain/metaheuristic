@@ -29,7 +29,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentTaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.CollectionUtils;
@@ -103,7 +102,7 @@ public class ExperimentResultService {
     @Data
     @AllArgsConstructor
     public static class VariableWithStatus {
-        public SimpleVariable variable;
+        public Variable variable;
         public OperationStatusRest status;
 
         public VariableWithStatus(OperationStatusRest status) {
@@ -216,10 +215,10 @@ public class ExperimentResultService {
         final List<ExperimentFeature> features = new ArrayList<>();
         final List<ExperimentTaskFeature> taskFeatures = new ArrayList<>();
 
-        List<SimpleVariable> metricsVariables = variableService.getSimpleVariablesInExecContext(simpleExecContext.execContextId, metricsVariableName);
-        List<SimpleVariable> featureVariables = variableService.getSimpleVariablesInExecContext(simpleExecContext.execContextId, featureVariableName);
-        List<SimpleVariable> fittingVariables = variableService.getSimpleVariablesInExecContext(simpleExecContext.execContextId, fittingVariableName);
-        List<SimpleVariable> inlineVariables = variableService.getSimpleVariablesInExecContext(simpleExecContext.execContextId, inlineVariableName);
+        List<Variable> metricsVariables = variableService.getVariablesInExecContext(simpleExecContext.execContextId, metricsVariableName);
+        List<Variable> featureVariables = variableService.getVariablesInExecContext(simpleExecContext.execContextId, featureVariableName);
+        List<Variable> fittingVariables = variableService.getVariablesInExecContext(simpleExecContext.execContextId, fittingVariableName);
+        List<Variable> inlineVariables = variableService.getVariablesInExecContext(simpleExecContext.execContextId, inlineVariableName);
         Set<String> taskContextIds = inlineVariables.stream().map(v->v.taskContextId).collect(Collectors.toSet());
         featureVariables.stream().map(v->v.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
         fittingVariables.stream().map(v->v.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
@@ -344,8 +343,8 @@ public class ExperimentResultService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    private static VariableWithStatus getVariableWithStatus(List<SimpleVariable> allVars, Long execContextId, String taskContextId, String varName) {
-        List<SimpleVariable> variables = allVars.stream().filter(v->v.taskContextId.equals(taskContextId)).collect(Collectors.toList());
+    private static VariableWithStatus getVariableWithStatus(List<Variable> allVars, Long execContextId, String taskContextId, String varName) {
+        List<Variable> variables = allVars.stream().filter(v->v.taskContextId.equals(taskContextId)).collect(Collectors.toList());
         if (variables.isEmpty()) {
 
             return new VariableWithStatus(new OperationStatusRest(EnumsApi.OperationStatus.ERROR,

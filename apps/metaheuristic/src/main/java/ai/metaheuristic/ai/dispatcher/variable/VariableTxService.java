@@ -51,7 +51,6 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -95,8 +94,6 @@ public class VariableTxService {
     private final EventPublisherService eventPublisherService;
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextCache execContextCache;
-
-    private final EntityManager em;
 
     @Transactional
     public Variable createInitializedWithTx(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId, EnumsApi.VariableType type) {
@@ -198,7 +195,7 @@ public class VariableTxService {
      * varIndex - index of variable, start with 0
      */
     @Transactional
-    public void initInputVariable(
+    public long createInputVariable(
             InputStream is, long size, String originFilename, Long execContextId, ExecContextParamsYaml execContextParamsYaml,
             int varIndex, EnumsApi.VariableType type) {
         if (execContextParamsYaml.variables.inputs.size()<varIndex+1) {
@@ -214,7 +211,8 @@ public class VariableTxService {
         if (execContext==null) {
             log.warn("#697.060 ExecContext #{} wasn't found", execContextId);
         }
-        createInitialized(is, size, inputVariable, originFilename, execContextId, Consts.TOP_LEVEL_CONTEXT_ID, type );
+        long id = createInitialized(is, size, inputVariable, originFilename, execContextId, Consts.TOP_LEVEL_CONTEXT_ID, type );
+        return id;
     }
 
     @SneakyThrows
@@ -275,7 +273,7 @@ public class VariableTxService {
     public void initOutputVariable(Long execContextId, ExecContextParamsYaml.Variable output) {
         TxUtils.checkTxExists();
 
-        SimpleVariable sv = findVariableInAllInternalContexts(output.name, Consts.TOP_LEVEL_CONTEXT_ID, execContextId);
+        Variable sv = findVariableInAllInternalContexts(output.name, Consts.TOP_LEVEL_CONTEXT_ID, execContextId);
         if (sv == null) {
             Variable v = createUninitialized(output.name, execContextId, Consts.TOP_LEVEL_CONTEXT_ID);
         }
@@ -321,7 +319,8 @@ public class VariableTxService {
         v.uploadTs = new Timestamp(System.currentTimeMillis());
         v.inited = false;
         v.nullified = true;
-        v.setData(null);
+        // TODO 2023-06-07 do we need to reset data?
+//        v.setData(null);
         variableRepository.save(v);
     }
 
@@ -337,7 +336,8 @@ public class VariableTxService {
         }
         variable.inited = true;
         variable.nullified = true;
-        variable.setData(null);
+        // TODO 2023-06-07 do we need to reset data?
+//        variable.setData(null);
         variableRepository.save(variable);
     }
 
@@ -352,7 +352,6 @@ public class VariableTxService {
         data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
         data.setTaskContextId(taskContextId);
-        data.setData(null);
         variableRepository.save(data);
 
         return data;
@@ -383,9 +382,7 @@ public class VariableTxService {
                     FileInputStream fis = new FileInputStream(f.file);
                     eventPublisher.publishEvent(new ResourceCloseTxEvent(fis));
                     Variable v = createInitialized(fis, f.file.length(), variableName, f.originName, execContextId, currTaskContextId, EnumsApi.VariableType.unknown);
-
-                    SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
-                    variableHolders.add(new VariableUtils.VariableHolder(sv));
+                    variableHolders.add(new VariableUtils.VariableHolder(v));
                 }
                 catch (FileNotFoundException e) {
                     ExceptionUtils.rethrow(e);
@@ -396,8 +393,7 @@ public class VariableTxService {
                 String variableName = VariableUtils.getNameForVariableInArray();
                 Variable v = createInitialized(inputVariableContent, variableName, variableName, execContextId, currTaskContextId, EnumsApi.VariableType.text);
 
-                SimpleVariable sv = new SimpleVariable(v.id, v.name, v.params, v.filename, v.inited, v.nullified, v.taskContextId);
-                VariableUtils.VariableHolder variableHolder = new VariableUtils.VariableHolder(sv);
+                VariableUtils.VariableHolder variableHolder = new VariableUtils.VariableHolder(v);
                 variableHolders.add(variableHolder);
             }
 
@@ -519,8 +515,8 @@ public class VariableTxService {
 
     @SuppressWarnings({"SameParameterValue"})
     @Nullable
-    public SimpleVariable getVariableAsSimple(Long execContextId, String variable) {
-        List<SimpleVariable> vars = variableRepository.findByExecContextIdAndNames(execContextId, List.of(variable));
+    public Variable getVariableAsSimple(Long execContextId, String variable) {
+        List<Variable> vars = variableRepository.findByExecContextIdAndNames(execContextId, List.of(variable));
 
         if (vars.isEmpty()) {
             return null;
@@ -532,27 +528,27 @@ public class VariableTxService {
     }
 
     @Nullable
-    public SimpleVariable getVariableAsSimple(Long variableId) {
-        SimpleVariable var = variableRepository.findByIdAsSimple(variableId);
+    public Variable getVariableAsSimple(Long variableId) {
+        Variable var = variableRepository.findByIdAsSimple(variableId);
         return var;
     }
 
     @SuppressWarnings({"SameParameterValue"})
     @Nullable
-    public SimpleVariable getVariableAsSimple(String variable, String processCode, ExecContextImpl execContext) {
+    public Variable getVariableAsSimple(String variable, String processCode, ExecContextImpl execContext) {
         ExecContextParamsYaml.Process p = execContext.getExecContextParamsYaml().findProcess(processCode);
         if (p==null) {
             return null;
         }
-        SimpleVariable v = findVariableInAllInternalContexts(variable, p.internalContextId, execContext.id);
+        Variable v = findVariableInAllInternalContexts(variable, p.internalContextId, execContext.id);
         return v;
     }
 
     @Nullable
-    public SimpleVariable findVariableInAllInternalContexts(String variable, String taskContextId, Long execContextId) {
+    public Variable findVariableInAllInternalContexts(String variable, String taskContextId, Long execContextId) {
         String currTaskContextId = taskContextId;
         while( !S.b(currTaskContextId)) {
-            SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, currTaskContextId, execContextId);
+            Variable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, currTaskContextId, execContextId);
             if (v!=null) {
                 return v;
             }
@@ -573,9 +569,9 @@ public class VariableTxService {
     }
 
     @Nullable
-    private SimpleVariable findVariableInAllInternalContexts_old(List<String> taskCtxIds, String variable, String taskContextId, Long execContextId) {
+    private Variable findVariableInAllInternalContexts_old(List<String> taskCtxIds, String variable, String taskContextId, Long execContextId) {
         for (String taskCtxId : taskCtxIds) {
-            SimpleVariable obj = variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, taskCtxId, execContextId);
+            Variable obj = variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, taskCtxId, execContextId);
             if (obj!=null) {
                 return obj;
             }
@@ -623,26 +619,26 @@ public class VariableTxService {
 
     @SneakyThrows
     @Transactional(readOnly = true)
-    public void storeVariableToFileWithTx(Function<SimpleVariable, Path> mappingFunc, List<SimpleVariable> simpleVariables) {
-        storeVariableToFile(mappingFunc, simpleVariables);
+    public void storeVariableToFileWithTx(Function<Variable, Path> mappingFunc, List<Variable> variables) {
+        storeVariableToFile(mappingFunc, variables);
     }
 
-    public void storeVariableToFile(Function<SimpleVariable, Path> mappingFunc, List<SimpleVariable> simpleVariables) {
+    public void storeVariableToFile(Function<Variable, Path> mappingFunc, List<Variable> variables) {
         TxUtils.checkTxExists();
 
-        for (SimpleVariable simpleVariable : simpleVariables) {
-            if (simpleVariable.nullified) {
-                log.info("#993.215 Variable #{} {} is null", simpleVariable.id, simpleVariable.variable);
+        for (Variable variable : variables) {
+            if (variable.nullified) {
+                log.info("#993.215 Variable #{} {} is null", variable.id, variable.name);
                 continue;
             }
-            Path file = mappingFunc.apply(simpleVariable);
-            storeToFile(simpleVariable.id, file);
+            Path file = mappingFunc.apply(variable);
+            storeToFile(variable.id, file);
         }
     }
 
     @Transactional(readOnly = true)
     public void storeToFileWithTx(Long variableId, Path trgFile) {
-        SimpleVariable sv = variableRepository.findByIdAsSimple(variableId);
+        Variable sv = variableRepository.findByIdAsSimple(variableId);
         if (sv==null) {
             String es = "#171.535 Variable #"+variableId+" wasn't found";
             log.warn(es);
@@ -699,7 +695,7 @@ public class VariableTxService {
         }
     }
 
-    public List<SimpleVariable> getSimpleVariablesInExecContext(Long execContextId, String ... variables) {
+    public List<Variable> getVariablesInExecContext(Long execContextId, String ... variables) {
         if (variables.length==0) {
             return List.of();
         }
@@ -726,7 +722,7 @@ public class VariableTxService {
                                 p.processCode, variable.context, p.internalContextId, execContextId));
             }
 
-            SimpleVariable sv = findVariableInAllInternalContexts(variable.name, contextId, execContextId);
+            Variable sv = findVariableInAllInternalContexts(variable.name, contextId, execContextId);
             if (sv == null) {
                 Variable v = createUninitialized(variable.name, execContextId, contextId);
 
