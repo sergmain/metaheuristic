@@ -45,11 +45,7 @@ import java.nio.charset.StandardCharsets;
 @Disabled
 public class QueryOpenaiTest {
 
-    @Test
-    public void test_query() throws URISyntaxException, IOException {
-
-        String key = System.getenv("OPENAI_API_KEY");
-        String json = """
+    String json = """
             {
               "model": "text-davinci-003",
               "prompt": "answer 2+2 with only digit",
@@ -62,33 +58,42 @@ public class QueryOpenaiTest {
             }
             """;
 
-        String json1 = """
+    String json1 = """
             {
               "model": "text-davinci-003",
               "prompt": "answer 2+2 with only digit"
             }
             """;
 
-        String json2 = """
+    String json2 = """
             {
               "model": "text-davinci-003",
               "prompt": "answer square root of 9 with only digits"
             }
             """;
 
-        String json3 = """
+    String json3 = """
             {
               "model": "text-davinci-003",
               "prompt": "List of fruits which can be grown in US. Output only name of fruit, put each name on new line,max 2 fruits"
             }
             """;
+    String json4 = """
+            {
+              "model": "text-davinci-003",
+              "prompt": "List 2 fruits which can be grown in US and also include Orange in the list. Output only name of fruit, put each name on new line"
+            }
+            """;
+    @Test
+    public void test_query() throws URISyntaxException, IOException {
+        String key = System.getenv("OPENAI_API_KEY");
 
         final URI uri = new URIBuilder("https://api.openai.com/v1/completions")
                 .setCharset(StandardCharsets.UTF_8)
                 .build();
         final Request request = Request.post(uri).connectTimeout(Timeout.ofSeconds(5));//.socketTimeout(20000);
 
-        request.body(new StringEntity(json3, StandardCharsets.UTF_8));
+        request.body(new StringEntity(json4, StandardCharsets.UTF_8));
 
         RestUtils.addHeaders(request);
         request.addHeader("Content-Type", "application/json");

@@ -38,6 +38,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getNameForVariable;
@@ -57,6 +58,7 @@ public class ApiCallService {
 
     public static final String PROMPT = "prompt";
     public static final String API_CODE = "apiCode";
+    public static final String RAW_OUTPUT = "rawOutput";
 
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final VariableTxService variableTxService;
@@ -95,7 +97,7 @@ public class ApiCallService {
             }
             prompt = StringUtils.replaceEach(prompt, new String[]{"[[" + variable + "]]", "{{" + variable + "}}"}, new String[]{value, value});
         }
-        log.info("513.240 prompt: {}", prompt);
+        log.info("513.240 task #{}, prompt: {}", taskId, prompt);
         ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, null);
         ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
         if (answer.status()!=OK) {
@@ -107,7 +109,7 @@ public class ApiCallService {
 
         if (answer.a().processedAnswer.rawAnswerFromAPI().type().binary) {
             if (answer.a().processedAnswer.rawAnswerFromAPI().bytes()==null) {
-                throw new InternalFunctionException(data_not_found, "513.400 processedAnswer.rawAnswerFromAPI().bytes() is null, error: "+answer.error()+", prompt: " + prompt);
+                throw new InternalFunctionException(data_not_found, "513.340 processedAnswer.rawAnswerFromAPI().bytes() is null, error: "+answer.error()+", prompt: " + prompt);
             }
             TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
             // right now, only image is supported
@@ -122,8 +124,35 @@ public class ApiCallService {
             if (answer.a().processedAnswer.answer()==null) {
                 throw new InternalFunctionException(data_not_found, "513.360 processedAnswer.answer() is null, error: "+answer.error()+", prompt: " + prompt);
             }
-            TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
-            VariableSyncService.getWithSyncVoid(outputVariable.id, () -> variableTxService.storeStringInVariable(outputVariable, answer.a().processedAnswer.answer()));
+            log.info("513.380 task #{}, raw answer: {}", taskId, answer.a().processedAnswer.rawAnswerFromAPI().raw());
+            log.info("513.385 task #{}, answer: {}", taskId, answer.a().processedAnswer.answer());
+
+            String rawOutputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, RAW_OUTPUT);
+            TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.stream().filter(o->!o.name.equals(rawOutputVariableName)).findFirst().orElse(null);
+            if (outputVariable==null) {
+                String names = taskParamsYaml.task.outputs.stream().map(TaskParamsYaml.OutputVariable::getName).collect(Collectors.joining(", "));
+                throw new InternalFunctionException(output_variable_not_found, "513.345 nn-raw output variable wasn't fount, all outputs: " + names);
+            }
+            VariableSyncService.getWithSyncVoid(outputVariable.id,
+                    () -> variableTxService.storeStringInVariable(outputVariable, answer.a().processedAnswer.answer()));
+
+
+            TaskParamsYaml.OutputVariable rawOutputVariable = taskParamsYaml.task.outputs.stream()
+                    .filter(o1->o1.name.equals(rawOutputVariableName))
+                    .findFirst()
+                    .orElse(null);
+
+            if (rawOutputVariable!=null) {
+                if (S.b(answer.a().processedAnswer.rawAnswerFromAPI().raw())) {
+                    VariableSyncService.getWithSyncVoid(rawOutputVariable.id,
+                            () -> variableTxService.setVariableAsNull(rawOutputVariable.id));
+                }
+                else {
+                    VariableSyncService.getWithSyncVoid(rawOutputVariable.id,
+                            () -> variableTxService.storeStringInVariable(rawOutputVariable, answer.a().processedAnswer.rawAnswerFromAPI().raw()));
+                }
+            }
+
         }
         return answer;
     }

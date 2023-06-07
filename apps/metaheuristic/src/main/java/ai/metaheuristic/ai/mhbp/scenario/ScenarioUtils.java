@@ -42,6 +42,8 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallService.RAW_OUTPUT;
+
 /**
  * @author Sergio Lissner
  * Date: 5/14/2023
@@ -110,6 +112,8 @@ public class ScenarioUtils {
         }
     }
 
+    public record OutputVariables(String main, @Nullable String raw) {}
+
     public static String getUid(Scenario s) {
         final String suffix = getString(s);
         final String uid = StrUtils.getCode(StringUtils.substring(s.name, 0, MAX_LENGTH_OF_UID - suffix.length()) + suffix, () -> "scenario" + suffix).toLowerCase();
@@ -171,15 +175,20 @@ public class ScenarioUtils {
             }
 
             if (step.function==null || (!Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code) && !Consts.MH_AGGREGATE_FUNCTION.equals(step.function.code))) {
+//            if (step.function==null || Consts.MH_ACCEPTANCE_TEST_FUNCTION.equals(step.function.code)) {
                 extractInputVariables(p.inputs, step);
                 EnumsApi.VariableType type = null;
+                boolean needRawOutput = false;
                 if (step.api!=null) {
                     final ApiScheme apiScheme = apiSchemeResolverFunc.apply(step.api.code);
                     if (apiScheme==null) {
                         throw new IllegalStateException("(apiScheme==null)");
                     }
                     type = switch(apiScheme.scheme.response.type) {
-                        case json, text -> EnumsApi.VariableType.text;
+                        case json, text -> {
+                            needRawOutput = true;
+                            yield EnumsApi.VariableType.text;
+                        }
                         case image -> EnumsApi.VariableType.image;
                     };
                 }
@@ -187,7 +196,10 @@ public class ScenarioUtils {
                 if (type==null) {
                     type = EnumsApi.VariableType.text;
                 }
-                extractOutputVariables(p.outputs, step, type);
+                OutputVariables outputVariables = extractOutputVariables(p.outputs, step, type, needRawOutput);
+                if (outputVariables.raw!=null) {
+                    p.metas.add(Map.of(RAW_OUTPUT, outputVariables.raw));
+                }
             }
 
             p.cache = null;
@@ -223,10 +235,9 @@ public class ScenarioUtils {
                     p.metas.add(Map.of(AggregateFunction.VARIABLES, step.p));
                     p.metas.add(Map.of(AggregateFunction.TYPE, step.aggregateType.toString()));
                     p.metas.add(Map.of(AggregateFunction.PRODUCE_METADATA, "false"));
-                    extractOutputVariables(p.outputs, step, step.aggregateType.type);
+                    extractOutputVariables(p.outputs, step, step.aggregateType.type, false);
                 }
             }
-
 
             if (CollectionUtils.isNotEmpty(itemWithUuid.items)) {
                 p.subProcesses = new SourceCodeParamsYaml.SubProcesses(EnumsApi.SourceCodeSubProcessLogic.sequential, new ArrayList<>());
@@ -237,7 +248,9 @@ public class ScenarioUtils {
         }
     }
 
-    private static void extractOutputVariables(List<SourceCodeParamsYaml.Variable> outputs, ScenarioParams.Step step, EnumsApi.VariableType type) {
+    private static OutputVariables extractOutputVariables(
+            List<SourceCodeParamsYaml.Variable> outputs, ScenarioParams.Step step,
+            EnumsApi.VariableType type, boolean needRawOutput) {
         if (S.b(step.resultCode)) {
             throw new IllegalStateException("(S.b(step.resultCode))");
         }
@@ -246,6 +259,17 @@ public class ScenarioUtils {
         v.name = getNameForVariable(outputName);
         v.ext = type.ext;
         outputs.add(v);
+
+        String rawOutputName = null;
+        if (needRawOutput) {
+            rawOutputName = getNameForVariable(outputName + "_raw");
+            final SourceCodeParamsYaml.Variable v1 = new SourceCodeParamsYaml.Variable();
+            v1.name = rawOutputName;
+            v1.ext = ".txt";
+            v1.setNullable(true);
+            outputs.add(v1);
+        }
+        return new OutputVariables(outputName, rawOutputName);
     }
 
     private static void extractInputVariables(List<SourceCodeParamsYaml.Variable> inputs, ScenarioParams.Step step) {

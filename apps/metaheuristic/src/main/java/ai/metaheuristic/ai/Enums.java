@@ -38,7 +38,7 @@ public final class Enums {
         process_not_found,
         sub_process_not_found,
         task_not_found,
-        output_variable_not_defined, inline_not_found,
+        output_variable_not_defined, output_variable_not_found, inline_not_found,
         number_of_metas_is_incorrect,
         meta_not_found, name_of_variable_in_meta_is_broken,
         broken_graph_error,
