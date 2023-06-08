@@ -19,10 +19,7 @@ package ai.metaheuristic.ai.dispatcher.variable;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
@@ -33,6 +30,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
@@ -57,7 +55,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.hibernate.engine.spi.SessionImplementor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -94,15 +91,16 @@ public class VariableTxService {
     private final EventPublisherService eventPublisherService;
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextCache execContextCache;
+    private final VariableBlobTxService variableBlobTxService;
+    private final VariableBlobRepository variableBlobRepository;
 
-    @Transactional
-    public Variable createInitializedWithTx(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId, EnumsApi.VariableType type) {
-        return createInitialized(is, size, variable, filename, execContextId, taskContextId, type);
-    }
 
     private Variable createInitialized(
             InputStream is, long size, String variable, @Nullable String filename,
             Long execContextId, String taskContextId, EnumsApi.VariableType type) {
+        if (S.b(variable)) {
+            throw new ExecContextCommonException("697.040 Wrong format of sourceCode, input variable for source code isn't specified");
+        }
         if (size==0) {
             throw new IllegalStateException("#171.600 Variable can't be of zero length");
         }
@@ -118,8 +116,10 @@ public class VariableTxService {
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
         data.setTaskContextId(taskContextId);
 
-        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
-        data.setData(blob);
+        VariableBlob variableBlob = variableBlobTxService.createWithInputStream(is,size);
+        data.variableBlobId = variableBlob.id;
+//        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
+//        data.setData(blob);
 
         variableRepository.save(data);
 
@@ -131,12 +131,16 @@ public class VariableTxService {
         VariableSyncService.checkWriteLockPresent(data.id);
 
         if (size==0) {
-            throw new IllegalStateException("#171.690 Variable can't be with zero length");
+            throw new IllegalStateException("171.690 Variable can't be with zero length");
         }
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
-        data.setData(blob);
+        VariableBlob variableBlob = variableBlobTxService.createOrUpdateWithInputStream(data.variableBlobId, is, size);
+        data.variableBlobId = variableBlob.id;
+
+//        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
+//        data.setData(blob);
+
         data.inited = true;
         data.nullified = false;
 
@@ -148,20 +152,23 @@ public class VariableTxService {
         VariableSyncService.checkWriteLockPresent(variableId);
 
         if (size==0) {
-            throw new IllegalStateException("#171.720 Variable can't be with zero length");
+            throw new IllegalStateException("171.720 Variable can't be with zero length");
         }
         TxUtils.checkTxExists();
 
         Variable data = variableRepository.findById(variableId).orElse(null);
         if (data==null) {
-            log.error("#171.750 can't find variable #" + variableId);
+            log.error("171.750 can't find variable #" + variableId);
             return;
         }
         data.filename = filename;
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
-        data.setData(blob);
+        VariableBlob variableBlob = variableBlobTxService.createOrUpdateWithInputStream(data.variableBlobId, is, size);
+        data.variableBlobId = variableBlob.id;
+//        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
+//        data.setData(blob);
+
         data.inited = true;
         data.nullified = false;
 
@@ -172,21 +179,21 @@ public class VariableTxService {
     public void initInputVariableWithNull(Long execContextId, ExecContextParamsYaml execContextParamsYaml, int varIndex) {
         if (execContextParamsYaml.variables.inputs.size()<varIndex+1) {
             throw new ExecContextCommonException(
-                    S.f("#697.020 varIndex is bigger than number of input variables. varIndex: %s, number: %s",
+                    S.f("697.020 varIndex is bigger than number of input variables. varIndex: %s, number: %s",
                             varIndex, execContextParamsYaml.variables.inputs.size()));
         }
         final ExecContextParamsYaml.Variable variable = execContextParamsYaml.variables.inputs.get(varIndex);
         if (!variable.getNullable()) {
-            throw new ExecContextCommonException(S.f("#697.025 sourceCode %s, input variable %s must be declared as nullable to be set as null",
+            throw new ExecContextCommonException(S.f("697.025 sourceCode %s, input variable %s must be declared as nullable to be set as null",
                     execContextParamsYaml.sourceCodeUid, variable.name));
         }
         String inputVariable = variable.name;
         if (S.b(inputVariable)) {
-            throw new ExecContextCommonException("##697.040 Wrong format of sourceCode, input variable for source code isn't specified");
+            throw new ExecContextCommonException("697.040 Wrong format of sourceCode, input variable for source code isn't specified");
         }
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
-            log.warn("#697.060 ExecContext #{} wasn't found", execContextId);
+            log.warn("697.060 ExecContext #{} wasn't found", execContextId);
         }
         createInitializedWithNull(inputVariable, execContextId, Consts.TOP_LEVEL_CONTEXT_ID );
     }
@@ -195,24 +202,10 @@ public class VariableTxService {
      * varIndex - index of variable, start with 0
      */
     @Transactional
-    public long createInputVariable(
-            InputStream is, long size, String originFilename, Long execContextId, ExecContextParamsYaml execContextParamsYaml,
-            int varIndex, EnumsApi.VariableType type) {
-        if (execContextParamsYaml.variables.inputs.size()<varIndex+1) {
-            throw new ExecContextCommonException(
-                    S.f("#697.020 varIndex is bigger than number of input variables. varIndex: %s, number: %s",
-                            varIndex, execContextParamsYaml.variables.inputs.size()));
-        }
-        String inputVariable = execContextParamsYaml.variables.inputs.get(varIndex).name;
-        if (S.b(inputVariable)) {
-            throw new ExecContextCommonException("##697.040 Wrong format of sourceCode, input variable for source code isn't specified");
-        }
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext==null) {
-            log.warn("#697.060 ExecContext #{} wasn't found", execContextId);
-        }
-        long id = createInitialized(is, size, inputVariable, originFilename, execContextId, Consts.TOP_LEVEL_CONTEXT_ID, type );
-        return id;
+    public Variable createInitializedTx(
+            InputStream is, long size, String inputVariableName, String originFilename, Long execContextId, String taskContextId, EnumsApi.VariableType type) {
+        Variable v = createInitialized(is, size, inputVariableName, originFilename, execContextId, taskContextId, type );
+        return v;
     }
 
     @SneakyThrows
@@ -319,8 +312,8 @@ public class VariableTxService {
         v.uploadTs = new Timestamp(System.currentTimeMillis());
         v.inited = false;
         v.nullified = true;
-        // TODO 2023-06-07 do we need to reset data?
-//        v.setData(null);
+        // TODO 2023-06-07 p3 add an event to delete related variableBlob
+        v.variableBlobId = null;
         variableRepository.save(v);
     }
 
@@ -336,8 +329,8 @@ public class VariableTxService {
         }
         variable.inited = true;
         variable.nullified = true;
-        // TODO 2023-06-07 do we need to reset data?
-//        variable.setData(null);
+        // TODO 2023-06-07 p3 add an event to delete related variableBlob
+        variable.variableBlobId = null;
         variableRepository.save(variable);
     }
 
@@ -352,6 +345,7 @@ public class VariableTxService {
         data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
         data.setTaskContextId(taskContextId);
+        data.variableBlobId = null;
         variableRepository.save(data);
 
         return data;
@@ -593,7 +587,7 @@ public class VariableTxService {
     @Nullable
     private String getVariableDataAsString(Long variableId, boolean nullable) {
         try {
-            Blob blob = variableRepository.getDataAsStreamById(variableId);
+            Blob blob = variableBlobRepository.getDataAsStreamById(variableId);
             if (blob==null) {
                 if (nullable) {
                     log.info("#171.420 Variable #{} is nullable and current value is null", variableId);
@@ -654,7 +648,7 @@ public class VariableTxService {
         TxUtils.checkTxExists();
 
         try {
-            Blob blob = variableRepository.getDataAsStreamById(variableId);
+            Blob blob = variableBlobRepository.getDataAsStreamById(variableId);
             if (blob==null) {
                 String es = "#171.540 Variable #"+variableId+" wasn't found";
                 log.warn(es);
@@ -675,7 +669,7 @@ public class VariableTxService {
     @Transactional(readOnly = true)
     public byte[] getVariableAsBytes(Long variableId) {
         try {
-            Blob blob = variableRepository.getDataAsStreamById(variableId);
+            Blob blob = variableBlobRepository.getDataAsStreamById(variableId);
             if (blob==null) {
                 String es = "#171.540 Variable #"+variableId+" wasn't found";
                 log.warn(es);
@@ -702,7 +696,7 @@ public class VariableTxService {
         return variableRepository.getIdAndStorageUrlInVarsForExecContext(execContextId, variables);
     }
 
-    public Variable createInitialized(String data, String variable, @Nullable String filename, Long execContextId, String taskContextId, EnumsApi.VariableType type) {
+    private Variable createInitialized(String data, String variable, @Nullable String filename, Long execContextId, String taskContextId, EnumsApi.VariableType type) {
         final byte[] bytes = data.getBytes();
         InputStream is = new ByteArrayInputStream(bytes);
         // we fire this event to be sure that ref to ByteArrayInputStream live longer than TX

@@ -57,6 +57,10 @@ public class Variable implements Serializable {
     @Column(name = "IS_NULLIFIED")
     public boolean nullified;
 
+    @Nullable
+    @Column(name = "VARIABLE_BLOB_ID")
+    public Long variableBlobId;
+
     @Column(name = "NAME")
     public String name;
 
@@ -74,9 +78,6 @@ public class Variable implements Serializable {
     @Nullable
     @Column(name = "FILENAME")
     public String filename;
-
-//    @Transient
-//    public byte[] bytes;
 
     // ai.metaheuristic.api.data_storage.DataStorageParams is here
     @Column(name = "PARAMS")

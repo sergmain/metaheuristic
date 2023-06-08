@@ -16,7 +16,7 @@ CREATE TABLE mh_variable_blob
 (
     ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,
-    VARIABLE_ID         NUMERIC(10, 0)  not null,
+    VARIABLE_ID         NUMERIC(10, 0),
     DATA                LONGBLOB        not null
 );
 
@@ -26,8 +26,20 @@ insert into mh_variable_blob
 select VERSION, ID, DATA from mh_variable where IS_NULLIFIED=0;
 
 
-CREATE UNIQUE INDEX mh_variable_blob_variable_id_unq_idx
-    ON mh_variable_blob (VARIABLE_ID);
+alter table mh_variable
+    add VARIABLE_BLOB_ID NUMERIC(10);
+
+
+# noinspection SqlWithoutWhere
+update mh_variable v
+set v.VARIABLE_BLOB_ID = (
+    select vb.id from mh_variable_blob vb where vb.VARIABLE_ID=v.ID
+);
+
+
+alter table mh_variable_blob drop column VARIABLE_ID;
 
 
 alter table mh_variable drop column data;
+
+

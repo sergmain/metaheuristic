@@ -16,28 +16,20 @@
 
 package ai.metaheuristic.ai.dispatcher.variable;
 
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
-import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.engine.spi.SessionImplementor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.sql.Blob;
-import java.sql.Timestamp;
 
 /**
  * @author Sergio Lissner
@@ -50,39 +42,42 @@ import java.sql.Timestamp;
 @RequiredArgsConstructor
 public class VariableBlobTxService {
 
-    private final VariableRepository variableRepository;
-    private final GlobalVariableRepository globalVariableRepository;
-    private final ApplicationEventPublisher eventPublisher;
-    private final EventPublisherService eventPublisherService;
-    private final ExecContextGraphCache execContextGraphCache;
-    private final ExecContextCache execContextCache;
+    private final VariableBlobRepository variableBlobRepository;
 
     private final EntityManager em;
 
-    public Variable createInitialized(
-            InputStream is, long size, String variable, @Nullable String filename,
-            Long execContextId, String taskContextId, EnumsApi.VariableType type) {
-
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public VariableBlob createWithInputStream(InputStream is, long size ) {
         if (size==0) {
             throw new IllegalStateException("#171.600 Variable can't be of zero length");
         }
-        TxUtils.checkTxExists();
-
-        Variable data = new Variable();
-        data.inited = true;
-        data.nullified = false;
-        data.setName(variable);
-        data.setFilename(filename);
-        data.setExecContextId(execContextId);
-        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher, variable, type)));
-        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-        data.setTaskContextId(taskContextId);
+        VariableBlob data = new VariableBlob();
 
         Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
         data.setData(blob);
 
-        variableRepository.save(data);
+        variableBlobRepository.save(data);
 
         return data;
     }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public VariableBlob createOrUpdateWithInputStream(@Nullable Long variableBlobId, InputStream is, long size ) {
+        VariableBlob variableBlob = null;
+        if (variableBlobId!=null) {
+            variableBlob = variableBlobRepository.findById(variableBlobId).orElse(null);
+        }
+
+        if (variableBlob==null) {
+            return createWithInputStream(is, size);
+        }
+
+        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
+        variableBlob.setData(blob);
+        variableBlobRepository.save(variableBlob);
+
+        return variableBlob;
+    }
+
+
 }

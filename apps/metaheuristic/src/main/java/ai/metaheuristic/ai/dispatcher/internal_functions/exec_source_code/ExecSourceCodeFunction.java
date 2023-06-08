@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.exceptions.ExecContextCommonException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -145,7 +146,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
         try {
             tempDir = DirUtils.createMhTempPath("mh-exec-source-code-");
             if (tempDir == null) {
-                throw new InternalFunctionException(system_error, "#508.070 can't create a temporary file");
+                throw new InternalFunctionException(system_error, "508.070 can't create a temporary file");
             }
             for (int i = 0; i < taskParamsYaml.task.inputs.size(); i++) {
                 TaskParamsYaml.InputVariable input = taskParamsYaml.task.inputs.get(i);
@@ -153,6 +154,13 @@ public class ExecSourceCodeFunction implements InternalFunction {
                 if (sv==null) {
                     throw new InternalFunctionException(variable_not_found, "#508.073 can't find a variable #"+input.id);
                 }
+                if (execContextParamsYaml.variables.inputs.size()<i+1) {
+                    throw new ExecContextCommonException(
+                            S.f("508.075 i is bigger than number of input variables. varIndex: %s, number: %s",
+                                    i, execContextParamsYaml.variables.inputs.size()));
+                }
+                ExecContextParamsYaml.Variable inputVariable = execContextParamsYaml.variables.inputs.get(i);
+
                 if (sv.nullified) {
                     variableTxService.initInputVariableWithNull(execContextResultRest.execContext.id, execContextParamsYaml, i);
                 }
@@ -169,8 +177,8 @@ public class ExecSourceCodeFunction implements InternalFunction {
                             throw new NotImplementedException("Not yet");
                     }
                     try (InputStream is = Files.newInputStream(tempFile)) {
-                        variableTxService.createInputVariable(
-                                is, Files.size(tempFile), "variable-" + input.name, execContextResultRest.execContext.id, execContextParamsYaml, i, EnumsApi.VariableType.unknown);
+                        variableTxService.createInitializedTx(
+                                is, Files.size(tempFile), inputVariable.name, "variable-" + input.name, execContextResultRest.execContext.id, Consts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.unknown);
                     }
                 }
             }

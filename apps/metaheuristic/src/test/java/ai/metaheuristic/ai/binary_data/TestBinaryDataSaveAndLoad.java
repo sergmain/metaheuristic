@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.binary_data;
 
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.batch_result_processor.BatchResultProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
@@ -108,8 +107,7 @@ public class TestBinaryDataSaveAndLoad {
         Variable variable;
         try (InputStream is = Files.newInputStream(dataFile)) {
             final long size = Files.size(dataFile);
-            variable = ExecContextSyncService.getWithSync(1L,
-                    ()-> variableTxService.createInitializedWithTx(is, size, TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3", EnumsApi.VariableType.binary));
+            variable = variableTxService.createInitializedTx(is, size, TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3", EnumsApi.VariableType.binary);
         }
         assertNotNull(variable);
         assertNotNull(variable.id);
@@ -130,8 +128,7 @@ public class TestBinaryDataSaveAndLoad {
         Variable variable;
         try (InputStream is = Files.newInputStream(dataFile)) {
             final long size = Files.size(dataFile);
-            variable = ExecContextSyncService.getWithSync(1L,
-                    ()-> variableTxService.createInitializedWithTx(is, size, TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3", EnumsApi.VariableType.binary));
+            variable = variableTxService.createInitializedTx(is, size, TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3", EnumsApi.VariableType.binary);
         }
         assertNotNull(variable);
         assertNotNull(variable.id);

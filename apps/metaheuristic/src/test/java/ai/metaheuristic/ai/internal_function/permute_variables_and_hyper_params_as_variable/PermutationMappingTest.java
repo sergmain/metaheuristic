@@ -45,7 +45,7 @@ public class PermutationMappingTest {
     @Test
     public void testJsonMapping() throws IOException {
 
-        Variable sv1 = new Variable(41L, 0, true, false, "name1", 13L, "taskContextId1",
+        Variable sv1 = new Variable(41L, 0, true, false, null, "name1", 13L, "taskContextId1",
                 Timestamp.from(Instant.now()), "filename1", "");
 
         VariableData.Permutation p1 = new VariableData.Permutation(
@@ -58,7 +58,7 @@ public class PermutationMappingTest {
         );
 
 
-        Variable sv2 = new Variable(42L, 0, true, false, "name2", 13L, "taskContextId2", Timestamp.from(Instant.now()), "filename2", "");
+        Variable sv2 = new Variable(42L, 0, true, false, null, "name2", 13L, "taskContextId2", Timestamp.from(Instant.now()), "filename2", "");
 
         VariableData.Permutation p2 = new VariableData.Permutation(
                 List.of(new VariableUtils.VariableHolder(sv2)),

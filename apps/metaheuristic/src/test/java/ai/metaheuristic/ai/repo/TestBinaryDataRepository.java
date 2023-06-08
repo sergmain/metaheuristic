@@ -67,9 +67,8 @@ public class TestBinaryDataRepository {
 
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
-        var1 = ExecContextSyncService.getWithSync(10L,
-                ()-> variableTxService.createInitializedWithTx(
-                        inputStream, bytes.length, "test-01","test-file.bin", 10L, Consts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.binary));
+        var1 = variableTxService.createInitializedTx(
+                        inputStream, bytes.length, "test-01", "test-file.bin", 10L, Consts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.binary);
 
         Timestamp ts = var1.getUploadTs();
 

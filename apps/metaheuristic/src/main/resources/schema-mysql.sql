@@ -185,6 +185,7 @@ CREATE TABLE mh_variable
     NAME                VARCHAR(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin not null,
     TASK_CONTEXT_ID     VARCHAR(250) not null,
     EXEC_CONTEXT_ID     NUMERIC(10, 0) not null,
+    VARIABLE_BLOB_ID    NUMERIC(10),
     UPLOAD_TS           TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP default CURRENT_TIMESTAMP,
     FILENAME            VARCHAR(150),
     PARAMS              VARCHAR(250) not null
@@ -199,11 +200,13 @@ CREATE INDEX mh_variable_name_idx
 CREATE UNIQUE INDEX mh_variable_name_all_context_ids_unq_idx
     ON mh_variable (NAME, TASK_CONTEXT_ID, EXEC_CONTEXT_ID);
 
+CREATE INDEX mh_variable_variable_bolb_id_unq_idx
+    ON mh_variable (VARIABLE_BLOB_ID);
+
 CREATE TABLE mh_variable_blob
 (
     ID                  INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
     VERSION             INT UNSIGNED    NOT NULL,
-    VARIABLE_ID         NUMERIC(10, 0)  not null,
     DATA                LONGBLOB        not null
 );
 
