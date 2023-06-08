@@ -170,6 +170,8 @@ public class TaskCheckCachingTxService {
             task.setCompleted(1);
             task.setCompletedOn(System.currentTimeMillis());
 
+            taskRepository.save(task);
+
             eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
         }
         else {

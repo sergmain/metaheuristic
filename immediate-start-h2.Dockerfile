@@ -10,7 +10,7 @@ RUN apk add --update git
 RUN apk add --update tzdata
 
 
-FROM eclipse-temurin:17.0.1_12-jdk
+FROM eclipse-temurin:17.0.7_7-jdk
 
 
 # Set language
@@ -33,17 +33,15 @@ ENV LANG=en_EN.UTF-8 \
     TZ=America/Los_Angeles
 
 RUN mkdir -p /metaheuristic
-RUN mkdir -p /metaheuristic/logs
-RUN mkdir -p /metaheuristic/config
-RUN mkdir -p /metaheuristic/mh-processor
-RUN mkdir -p /metaheuristic/mh-dispatcher
 
-COPY /apps/metaheuristic/target/metaheuristic.jar /metaheuristic
-COPY /docker/quickstart/processor/* /metaheuristic/mh-processor/
+COPY /apps/distrib/metaheuristic.jar /metaheuristic
+COPY /docker/quickstart/processor/* /metaheuristic/processor/
 #COPY /apps/metaheuristic/src/main/resources/application-quickstart.prop /metaheuristic/config/application.properties
 
 WORKDIR /metaheuristic
 EXPOSE 8083
 
-ENTRYPOINT ["java", "-Dserver.port=8083", "-Dserver.address=0.0.0.0", "-Xrs", "-Xms384m", "-Xmx384m", "-jar", "/metaheuristic/metaheuristic.jar"]
+# java -Xms1g -Xmx1g -Dfile.encoding=UTF-8 -Dspring.profiles.active=dispatcher,h2 -DMH_HOME=/mhbp_home -jar distrib/metaheuristic.jar
+ENTRYPOINT ["java", "-Dserver.port=8083", "-Dserver.address=0.0.0.0", "-Xrs", "-Xms384m", "-Xmx384m", "-Dfile.encoding=UTF-8", "-Dspring.profiles.active=dispatcher,h2", "-DMH_HOME=/metaheuristic", "-jar", "/metaheuristic/metaheuristic.jar"]
+
 
