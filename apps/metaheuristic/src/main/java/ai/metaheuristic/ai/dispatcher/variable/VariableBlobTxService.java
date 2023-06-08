@@ -74,9 +74,9 @@ public class VariableBlobTxService {
 
         Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
         variableBlob.setData(blob);
-        variableBlobRepository.save(variableBlob);
+        VariableBlob result = variableBlobRepository.save(variableBlob);
 
-        return variableBlob;
+        return result;
     }
 
 
