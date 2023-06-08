@@ -72,7 +72,7 @@ public class TestBinaryDataRepository {
 
         Timestamp ts = var1.getUploadTs();
 
-        final Variable var2 = variableTxService.getVariableAsSimple(var1.getId());
+        final Variable var2 = variableTxService.getVariable(var1.getId());
         assertNotNull(var2);
         final byte[] bytesVar2 = variableTxService.getVariableAsBytes(var1.getId());
         assertArrayEquals(bytes, bytesVar2);

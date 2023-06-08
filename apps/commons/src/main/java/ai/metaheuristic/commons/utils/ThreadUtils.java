@@ -71,7 +71,18 @@ public class ThreadUtils {
             this.supplier = supplier;
         }
 
+        @Nullable
         private T holder = null;
+
+        public void reset(Runnable run) {
+            try {
+                writeLock.lock();
+                run.run();
+                this.holder = null;
+            } finally {
+                writeLock.unlock();
+            }
+        }
 
         public T get() {
             try {

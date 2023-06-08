@@ -47,7 +47,7 @@ public class ExecContextUtilsService {
 
     @SuppressWarnings("DataFlowIssue")
     public String getExtensionForVariable(Long execContextVariableStateId, Long variableId, String defaultExt) {
-        Variable variable = variableTxService.getVariableAsSimple(variableId);
+        Variable variable = variableTxService.getVariable(variableId);
         if (variable==null) {
             return defaultExt;
         }

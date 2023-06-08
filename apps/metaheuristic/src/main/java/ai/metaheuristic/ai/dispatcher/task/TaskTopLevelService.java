@@ -183,7 +183,7 @@ public class TaskTopLevelService {
             TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
                 if (!output.uploaded) {
-                    Variable sv = variableService.getVariableAsSimple(output.id);
+                    Variable sv = variableService.getVariable(output.id);
                     if (sv!=null && sv.inited) {
                         TaskSyncService.getWithSync(task.id, () -> taskVariableTopLevelService.updateStatusOfVariable(task.id, output.id));
                     }

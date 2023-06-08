@@ -512,14 +512,14 @@ public class VariableTxService {
 
     @Nullable
     @Transactional(readOnly = true)
-    public Variable getVariableAsSimple(Long variableId) {
+    public Variable getVariable(Long variableId) {
         Variable var = variableRepository.findById(variableId).orElse(null);
         return var;
     }
 
     @SuppressWarnings({"SameParameterValue"})
     @Nullable
-    public Variable getVariableAsSimple(String variable, String processCode, ExecContextImpl execContext) {
+    public Variable getVariable(String variable, String processCode, ExecContextImpl execContext) {
         ExecContextParamsYaml.Process p = execContext.getExecContextParamsYaml().findProcess(processCode);
         if (p==null) {
             return null;
@@ -664,7 +664,7 @@ public class VariableTxService {
     public void storeToFile(Long variableId, Path trgFile) {
         TxUtils.checkTxExists();
 
-        Variable v = getVariable(variableId);
+        Variable v = getVariableNotNullAndHasVariableBlobId(variableId);
 
         try {
             Blob blob = variableBlobRepository.getDataAsStreamById(Objects.requireNonNull(v.variableBlobId));
@@ -687,7 +687,7 @@ public class VariableTxService {
 
     @Transactional(readOnly = true)
     public byte[] getVariableAsBytes(Long variableId) {
-        Variable v = getVariable(variableId);
+        Variable v = getVariableNotNullAndHasVariableBlobId(variableId);
 
         try {
             Blob blob = variableBlobRepository.getDataAsStreamById(Objects.requireNonNull(v.variableBlobId));
@@ -710,7 +710,7 @@ public class VariableTxService {
         }
     }
 
-    private Variable getVariable(Long variableId) {
+    private Variable getVariableNotNullAndHasVariableBlobId(Long variableId) {
         Variable v = variableRepository.findById(variableId).orElse(null);
         if (v==null || v.variableBlobId==null) {
             String es = "171.540 Variable #" + variableId + " wasn't found";

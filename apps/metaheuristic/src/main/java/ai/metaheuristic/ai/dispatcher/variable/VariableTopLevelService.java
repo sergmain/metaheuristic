@@ -100,7 +100,7 @@ public class VariableTopLevelService {
                 if (variableHolder.variable == null) {
                     throw new InternalFunctionException(variable_not_found, "#992.360 local variable with name: " + execContextOutput.name + " wasn't found");
                 }
-                Variable sv = variableService.getVariableAsSimple(variableHolder.variable.id);
+                Variable sv = variableService.getVariable(variableHolder.variable.id);
                 if (sv==null) {
                     throw new InternalFunctionException(variable_not_found,
                             S.f("#992.300 variable %s in execContext #%d wasn't found", variableHolder.variable.name, subExecContextId));

@@ -181,7 +181,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
 
     private void storeOutputVariable(String variableName, String variableData, String processCode) {
 
-        Variable v = variableService.getVariableAsSimple(
+        Variable v = variableService.getVariable(
                 variableName, processCode, getExecContextForTest());
 
         assertNotNull(v);
@@ -195,7 +195,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
 
 
 
-        v = variableService.getVariableAsSimple(v.name, processCode, getExecContextForTest());
+        v = variableService.getVariable(v.name, processCode, getExecContextForTest());
         assertNotNull(v);
         assertTrue(v.inited);
 

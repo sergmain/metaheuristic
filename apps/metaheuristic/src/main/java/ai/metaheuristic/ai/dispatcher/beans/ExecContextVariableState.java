@@ -19,7 +19,10 @@ package ai.metaheuristic.ai.dispatcher.beans;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextUtils;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
+import ai.metaheuristic.commons.utils.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
@@ -27,8 +30,6 @@ import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -41,7 +42,7 @@ import java.io.Serializable;
 @Table(name = "MH_EXEC_CONTEXT_VARIABLE_STATE")
 @Data
 @NoArgsConstructor
-@ToString(exclude = {"ecpy"})
+@ToString(exclude = {"paramsLocked"})
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class ExecContextVariableState implements Serializable {
@@ -67,33 +68,28 @@ public class ExecContextVariableState implements Serializable {
     @Column(name = "PARAMS")
     private String params;
 
-    public void setParams(String params) {
-        synchronized (this) {
-            this.params = params;
-            this.ecpy =null;
-        }
-    }
-
     public String getParams() {
         return params;
     }
 
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
+
     @Transient
     @JsonIgnore
-    @Nullable
-    private ExecContextApiData.ExecContextVariableStates ecpy = null;
+    private final ThreadUtils.CommonThreadLocker<ExecContextApiData.ExecContextVariableStates> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private ExecContextApiData.ExecContextVariableStates parseParams() {
+        ExecContextApiData.ExecContextVariableStates temp = ExecContextUtils.getExecContextTasksStatesInfo(params);
+        ExecContextApiData.ExecContextVariableStates ecpy = temp==null ? new ExecContextApiData.ExecContextVariableStates() : temp;
+        return ecpy;
+    }
 
     @JsonIgnore
     public ExecContextApiData.ExecContextVariableStates getExecContextVariableStateInfo() {
-        if (ecpy ==null) {
-            synchronized (this) {
-                if (ecpy ==null) {
-                    ExecContextApiData.ExecContextVariableStates temp = ExecContextUtils.getExecContextTasksStatesInfo(params);
-                    ecpy = temp==null ? new ExecContextApiData.ExecContextVariableStates() : temp;
-                }
-            }
-        }
-        return ecpy;
+        return paramsLocked.get();
     }
 
     @JsonIgnore

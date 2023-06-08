@@ -19,16 +19,17 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.commons.utils.ThreadUtils.CommonThreadLocker;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -36,7 +37,7 @@ import java.io.Serializable;
 @Table(name = "MH_EXEC_CONTEXT")
 @Data
 @NoArgsConstructor
-@ToString(exclude = {"ecpy"})
+@ToString(exclude = {"paramsLocked"})
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class ExecContextImpl implements Serializable, ExecContext {
@@ -69,17 +70,6 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name = "PARAMS")
     private String params;
 
-    public void setParams(String params) {
-        synchronized (this) {
-            this.params = params;
-            this.ecpy =null;
-        }
-    }
-
-    public String getParams() {
-        return params;
-    }
-
     @Column(name = "IS_VALID")
     public boolean valid;
 
@@ -99,22 +89,27 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name = "ROOT_EXEC_CONTEXT_ID")
     public Long rootExecContextId;
 
+    public String getParams() {
+        return params;
+    }
+
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
+
     @Transient
     @JsonIgnore
-    @Nullable
-    private ExecContextParamsYaml ecpy = null;
+    private final CommonThreadLocker<ExecContextParamsYaml> paramsLocked = new CommonThreadLocker<>(this::parseParams);
+
+    private ExecContextParamsYaml parseParams() {
+        ExecContextParamsYaml temp = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(params);
+        ExecContextParamsYaml ecpy = temp==null ? new ExecContextParamsYaml() : temp;
+        return ecpy;
+    }
 
     @JsonIgnore
     public ExecContextParamsYaml getExecContextParamsYaml() {
-        if (ecpy ==null) {
-            synchronized (this) {
-                if (ecpy ==null) {
-                    ExecContextParamsYaml temp = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(params);
-                    ecpy = temp==null ? new ExecContextParamsYaml() : temp;
-                }
-            }
-        }
-        return ecpy;
+        return paramsLocked.get();
     }
 
     @JsonIgnore
