@@ -29,9 +29,8 @@ public class VariableUploadedTxEvent {
     public final Long taskId;
     public final Long variableId;
     public final boolean nullified;
-    public final boolean fromCache;
 
     public VariableUploadedEvent to() {
-        return new VariableUploadedEvent(execContextId, taskId, variableId, nullified, fromCache);
+        return new VariableUploadedEvent(execContextId, taskId, variableId, nullified);
     }
 }

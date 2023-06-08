@@ -246,6 +246,9 @@ public class TaskParamsYamlV1 implements BaseParams {
 
         @Nullable
         public Integer triesAfterError;
+
+        // all output variables were initialized from cache
+        public boolean fromCache;
     }
 
     public TaskYamlV1 task = new TaskYamlV1();

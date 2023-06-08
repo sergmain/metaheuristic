@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
@@ -468,6 +469,8 @@ public class ArtifactCleanerAtDispatcher {
 
     private void deleteOrphanCacheData() {
         List<String> funcCodes = functionRepository.findAllFunctionCodes();
+        funcCodes.addAll(InternalFunctionRegisterService.getCachableFunctions());
+
         Set<String> currFuncCodes = cacheProcessRepository.findAllFunctionCodes();
 
         //noinspection SimplifyStreamApiCallChains

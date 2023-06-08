@@ -146,7 +146,7 @@ public class TaskCheckCachingTxService {
                     else {
                         variableDatabaseSpecificService.copyData(storedVariable, output);
                     }
-                    eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, output.id, storedVariable.nullified, true));
+                    eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, output.id, storedVariable.nullified));
 
                     output.uploaded = true;
 
@@ -155,6 +155,7 @@ public class TaskCheckCachingTxService {
                     throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
                 }
             }
+            tpy.task.fromCache = true;
             task.updateParams(tpy);
 
             FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();

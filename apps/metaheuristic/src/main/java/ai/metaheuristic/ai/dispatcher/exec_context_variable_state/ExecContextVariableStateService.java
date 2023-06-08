@@ -68,7 +68,6 @@ public class ExecContextVariableStateService {
                                 if (output.id.equals(event.variableId)) {
                                     output.inited = true;
                                     output.nullified = event.nullified;
-                                    output.cached = event.fromCache;
                                 }
                             }
                         }

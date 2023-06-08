@@ -125,7 +125,7 @@ public class TaskWithInternalContextTopLevelService {
                             ()-> variableTxService.storeDataInVariable(output, tempFile));
                 }
                 // we don't need to use 'flushing' of state because this method is for copying variable from long-running process
-                VariableUploadedEvent event = new VariableUploadedEvent(ec.id, task.id, output.id, variableHolder.variable.nullified, false);
+                VariableUploadedEvent event = new VariableUploadedEvent(ec.id, task.id, output.id, variableHolder.variable.nullified);
                 execContextVariableStateTopLevelService.registerVariableStateInternal(event.execContextId, List.of(event), ec.execContextVariableStateId);
             }
         }

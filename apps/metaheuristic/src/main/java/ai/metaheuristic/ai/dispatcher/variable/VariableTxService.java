@@ -269,7 +269,7 @@ public class VariableTxService {
 
     @Transactional
     public void setVariableAsNull(Long taskId, Long variableId) {
-        eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, variableId, true, false));
+        eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, variableId, true));
         setVariableAsNull(variableId);
     }
 

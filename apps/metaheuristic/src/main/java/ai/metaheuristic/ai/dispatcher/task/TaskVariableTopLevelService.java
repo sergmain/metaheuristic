@@ -48,7 +48,7 @@ public class TaskVariableTopLevelService {
             log.debug("call TaskVariableTopLevelService.setVariableReceived({},{}, {})", event.variableId, event.variableId, event.nullified);
             try {
                 TaskSyncService.getWithSyncVoid(event.taskId,
-                        () -> taskVariableService.updateStatusOfVariable(event.taskId, event.variableId, event.nullified, event.fromCache));
+                        () -> taskVariableService.updateStatusOfVariable(event.taskId, event.variableId, event.nullified));
 
             } catch (TaskVariableService.UpdateStatusOfVariableException e) {
                 log.error("{}, status: {}", e.uploadResult.error, e.uploadResult.status);
@@ -60,7 +60,7 @@ public class TaskVariableTopLevelService {
 
     public UploadResult updateStatusOfVariable(Long taskId, Long variableId) {
         try {
-            taskVariableService.updateStatusOfVariable(taskId, variableId, false, false);
+            taskVariableService.updateStatusOfVariable(taskId, variableId, false);
             return OK_UPLOAD_RESULT;
         } catch( TaskVariableService.UpdateStatusOfVariableException e) {
             return e.uploadResult;

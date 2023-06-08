@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -45,6 +46,10 @@ public class InternalFunctionRegisterService {
     public void postConstruct() {
         internalFunctionMap = internalFunctions.stream()
                 .collect(Collectors.toUnmodifiableMap(InternalFunction::getCode, o -> o, (a, b) -> b));
+    }
+
+    public static Set<String> getCachableFunctions() {
+        return internalFunctionMap.entrySet().stream().filter(e->e.getValue().isCachable()).map(Map.Entry::getKey).collect(Collectors.toSet());
     }
 
     public static InternalFunction getInternalFunction(String functionCode) {

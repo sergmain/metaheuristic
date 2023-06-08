@@ -68,10 +68,6 @@ public class ExecContextApiData {
         @JsonProperty("n")
         public boolean nullified;
 
-        // is this variable was created fro cache
-        @JsonProperty("c")
-        public boolean cached;
-
         @Nullable
         @JsonProperty("e")
         public String ext;
