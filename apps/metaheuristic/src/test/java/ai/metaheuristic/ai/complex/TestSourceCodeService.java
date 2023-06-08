@@ -121,7 +121,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         preparingSourceCodeService.step_1_1_register_function_statuses(processorIdAndCoreIds, preparingSourceCodeData, preparingCodeData);
 
         System.out.println("start findInternalTaskForRegisteringInQueue()");
-        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+        //preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #1");
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());

@@ -225,10 +225,6 @@ CREATE TABLE mh_variable_blob
     DATA                LONGBLOB        not null
 );
 
-CREATE UNIQUE INDEX mh_variable_blob_variable_id_unq_idx
-    ON mh_variable_blob (VARIABLE_ID);
-
-
 -- its name is VARIABLE_GLOBAL, not GLOBAL_VARIABLE because I want these tables to be in the same spot in scheme
 
 CREATE TABLE mh_variable_global

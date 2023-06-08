@@ -150,8 +150,8 @@ public class ExecSourceCodeFunction implements InternalFunction {
             }
             for (int i = 0; i < taskParamsYaml.task.inputs.size(); i++) {
                 TaskParamsYaml.InputVariable input = taskParamsYaml.task.inputs.get(i);
-                Variable sv = variableRepository.findByIdAsSimple(input.id);
-                if (sv==null) {
+                Variable v = variableRepository.findByIdAsSimple(input.id);
+                if (v==null) {
                     throw new InternalFunctionException(variable_not_found, "#508.073 can't find a variable #"+input.id);
                 }
                 if (execContextParamsYaml.variables.inputs.size()<i+1) {
@@ -161,7 +161,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
                 }
                 ExecContextParamsYaml.Variable inputVariable = execContextParamsYaml.variables.inputs.get(i);
 
-                if (sv.nullified) {
+                if (v.nullified) {
                     variableTxService.initInputVariableWithNull(execContextResultRest.execContext.id, execContextParamsYaml, i);
                 }
                 else {

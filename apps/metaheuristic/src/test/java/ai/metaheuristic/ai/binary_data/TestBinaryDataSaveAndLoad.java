@@ -138,13 +138,13 @@ public class TestBinaryDataSaveAndLoad {
         bimy.targetPath = tempDir;
         bimy.filenames.put(variable.id.toString(), SYSTEM_PARAMS_V_2_YAML);
 
-        Variable sv = variableRepository.findByIdAsSimple(variable.id);
-        assertNotNull(sv);
+        Variable v = variableRepository.findByIdAsSimple(variable.id);
+        assertNotNull(v);
 
         final Path defaultPath = tempDir.resolve("default-path-for-variables");
         Function<Variable, Path> mappingFunc = (var) -> BatchResultProcessorTxService.resolvePathFromMapping(List.of(bimy), defaultPath, var);
 
-        variableService.storeVariableToFileWithTx(mappingFunc, List.of(sv));
+        variableService.storeVariableToFileWithTx(mappingFunc, List.of(v));
 
         Path trgFile = tempDir.resolve(SYSTEM_PARAMS_V_2_YAML);
         assertTrue(FileUtils.contentEquals(dataFile.toFile(), trgFile.toFile()));

@@ -268,8 +268,8 @@ public class ExecContextService {
                 return resource;
             }
 
-            Variable variable = variableRepository.findByIdAsSimple(variableId);
-            if (variable==null) {
+            Variable v = variableRepository.findByIdAsSimple(variableId);
+            if (v==null) {
                 final String es = "#705.330 Can't find variable #"+variableId;
                 log.warn(es);
                 return resource;
@@ -277,10 +277,10 @@ public class ExecContextService {
 
             String ext = execContextUtilsServices.getExtensionForVariable(execContext.execContextVariableStateId, variableId, ".bin");
 
-            String filename = S.f("variable-%s-%s%s", variableId, variable.name, ext);
+            String filename = S.f("variable-%s-%s%s", variableId, v.name, ext);
 
             Path varFile = resultDir.resolve("variable-"+variableId+".bin");
-            variableService.storeToFileWithTx(variable.id, varFile);
+            variableService.storeToFileWithTx(v.id, varFile);
 
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);

@@ -156,11 +156,8 @@ public class VariableTxService {
         }
         TxUtils.checkTxExists();
 
-        Variable data = variableRepository.findById(variableId).orElse(null);
-        if (data==null) {
-            log.error("171.750 can't find variable #" + variableId);
-            return;
-        }
+        Variable data = getVariableNotNull(variableId);
+
         data.filename = filename;
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
@@ -282,27 +279,23 @@ public class VariableTxService {
     public void storeVariable(InputStream variableIS, long length, Long execContextId, Long taskId, Long variableId) {
         VariableSyncService.checkWriteLockPresent(variableId);
 
-        Variable variable = variableRepository.findById(variableId).orElse(null);
-        if (variable ==null) {
-            throw new VariableCommonException("#171.030 Variable #"+variableId+" wasn't found", variableId);
-        }
-        if (!execContextId.equals(variable.execContextId)) {
+        Variable v = getVariableNotNull(variableId);
+
+        if (!execContextId.equals(v.execContextId)) {
             final String es = "#171.060 Task #"+taskId+" has the different execContextId than variable #"+variableId+", " +
-                    "task execContextId: "+execContextId+", var execContextId: "+variable.execContextId;
+                    "task execContextId: "+execContextId+", var execContextId: "+v.execContextId;
             log.warn(es);
             throw new VariableCommonException(es, variableId);
         }
-        update(variableIS, length, variable);
+        update(variableIS, length, v);
     }
 
     public void resetVariable(Long execContextId, Long variableId) {
         TxUtils.checkTxExists();
         VariableSyncService.checkWriteLockPresent(variableId);
 
-        Variable v = variableRepository.findById(variableId).orElse(null);
-        if (v ==null) {
-            throw new VariableCommonException("#171.090 Variable #"+variableId+" wasn't found", variableId);
-        }
+        Variable v = getVariableNotNull(variableId);
+
         if (!execContextId.equals(v.execContextId)) {
             final String es = "#171.120 the different execContextId than variable #"+variableId+", " +
                     "task execContextId: #"+execContextId+", var execContextId: #"+v.execContextId;
@@ -321,17 +314,13 @@ public class VariableTxService {
     public void setVariableAsNull(Long variableId) {
         VariableSyncService.checkWriteLockPresent(variableId);
 
-        Variable variable = variableRepository.findById(variableId).orElse(null);
-        if (variable ==null) {
-            String es = S.f("#171.150 variable #%d wasn't found", variableId);
-            log.warn(es);
-            throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
-        }
-        variable.inited = true;
-        variable.nullified = true;
+        Variable v = getVariableNotNull(variableId);
+
+        v.inited = true;
+        v.nullified = true;
         // TODO 2023-06-07 p3 add an event to delete related variableBlob
-        variable.variableBlobId = null;
-        variableRepository.save(variable);
+        v.variableBlobId = null;
+        variableRepository.save(v);
     }
 
     @Transactional
@@ -522,8 +511,9 @@ public class VariableTxService {
     }
 
     @Nullable
+    @Transactional(readOnly = true)
     public Variable getVariableAsSimple(Long variableId) {
-        Variable var = variableRepository.findByIdAsSimple(variableId);
+        Variable var = variableRepository.findById(variableId).orElse(null);
         return var;
     }
 
@@ -574,7 +564,21 @@ public class VariableTxService {
     }
 
     @Transactional(readOnly = true)
-    public String getVariableDataAsString(Long variableBlobId) {
+    public String getVariableDataAsString(Long variableId) {
+
+        Variable v = getVariableNotNull(variableId);
+
+        final String data = getVariableDataAsString(v.variableBlobId, false);
+        if (S.b(data)) {
+            final String es = "171.390 Variable data wasn't found, variableId: " + variableId;
+            log.warn(es);
+            throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+        }
+        return data;
+    }
+
+    @Transactional(readOnly = true)
+    public String getVariableBlobDataAsString(Long variableBlobId) {
         final String data = getVariableDataAsString(variableBlobId, false);
         if (S.b(data)) {
             final String es = "#171.390 Variable data wasn't found, variableBlobId: " + variableBlobId;
@@ -640,16 +644,21 @@ public class VariableTxService {
 
     @Transactional(readOnly = true)
     public void storeToFileWithTx(Long variableId, Path trgFile) {
-        Variable sv = variableRepository.findByIdAsSimple(variableId);
-        if (sv==null) {
-            String es = "#171.535 Variable #"+variableId+" wasn't found";
-            log.warn(es);
-            throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
-        }
+        Variable sv = getVariableNotNull(variableId);
         if (sv.nullified) {
             throw new VariableIsNullException(variableId);
         }
         storeToFile(variableId, trgFile);
+    }
+
+    private Variable getVariableNotNull(Long variableId) {
+        Variable v = variableRepository.findByIdAsSimple(variableId);
+        if (v==null) {
+            String es = "171.535 Variable #" + variableId + " wasn't found";
+            log.warn(es);
+            throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+        }
+        return v;
     }
 
     public void storeToFile(Long variableId, Path trgFile) {
@@ -784,12 +793,7 @@ public class VariableTxService {
 
     @Transactional
     public void updateWithTx(InputStream is, long size, Long variableId) {
-        Variable v = variableRepository.findById(variableId).orElse(null);
-        if (v==null) {
-            String es = S.f("#171.660 Variable #%d wasn't found", variableId);
-            log.error(es);
-            throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
-        }
+        Variable v = getVariableNotNull(variableId);
         update(is, size, v);
     }
 

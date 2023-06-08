@@ -92,7 +92,4 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
             "where b.id=:id")
     SimpleGlobalVariable getByIdAsSimpleGlobalVariable(Long id);
 
-//    @Transactional(readOnly = true)
-    @Query(value="select b.id from GlobalVariable b")
-    List<Long> getAllIds();
 }

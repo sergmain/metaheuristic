@@ -102,11 +102,11 @@ public class CacheTxService {
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
             final Path tempFile;
 
-            Variable simple = variableRepository.findByIdAsSimple(output.id);
-            if (simple==null) {
+            Variable v = variableRepository.findByIdAsSimple(output.id);
+            if (v==null) {
                 throw new VariableCommonException("#611.040 ExecContext is broken, variable #"+output.id+" wasn't found", output.id);
             }
-            if (simple.nullified) {
+            if (v.nullified) {
                 cacheVariableService.createAsNull(cacheProcess.id, output.name);
             }
             else {
@@ -142,9 +142,9 @@ public class CacheTxService {
         }
     }
 
-    @Transactional(readOnly = true)
+//    @Transactional(readOnly = true)
     public CacheData.FullKey getKey(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
-        return CacheUtils.getKey(tpy, function, variableTopLevelService::variableBlobIdRef, variableTxService::getVariableDataAsString, variableBlobRepository::getDataAsStreamById, globalVariableRepository::getDataAsStreamById);
+        return CacheUtils.getKey(tpy, function, variableTopLevelService::variableBlobIdRef, variableTxService::getVariableBlobDataAsString, variableBlobRepository::getDataAsStreamById, globalVariableRepository::getDataAsStreamById);
     }
 
 }
