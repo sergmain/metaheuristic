@@ -62,7 +62,7 @@ public class TaskVariableService {
     }
 
     @Transactional
-    public void updateStatusOfVariable(Long taskId, Long variableId, boolean nullified) {
+    public void updateStatusOfVariable(Long taskId, Long variableId, boolean nullified, boolean fromCache) {
         TaskSyncService.checkWriteLockPresent(taskId);
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
@@ -72,7 +72,7 @@ public class TaskVariableService {
             throw new UpdateStatusOfVariableException(new UploadResult(Enums.UploadVariableStatus.TASK_NOT_FOUND, es));
         }
 
-        eventPublisherService.publishVariableUploadedTxEvent(new VariableUploadedTxEvent(task.execContextId, task.id, variableId, nullified));
+        eventPublisherService.publishVariableUploadedTxEvent(new VariableUploadedTxEvent(task.execContextId, task.id, variableId, nullified, fromCache));
 
         Enums.UploadVariableStatus status = setVariableReceived(task, variableId);
 

@@ -68,6 +68,7 @@ public class ExecContextVariableStateService {
                                 if (output.id.equals(event.variableId)) {
                                     output.inited = true;
                                     output.nullified = event.nullified;
+                                    output.cached = event.fromCache;
                                 }
                             }
                         }
@@ -82,7 +83,7 @@ public class ExecContextVariableStateService {
     }
 
     @Transactional
-    public Void registerCreatedTasks(Long execContextVariableStateId, List<ExecContextApiData.VariableState> events) {
+    public void registerCreatedTasks(Long execContextVariableStateId, List<ExecContextApiData.VariableState> events) {
         register(execContextVariableStateId, (ecpy)-> {
             for (ExecContextApiData.VariableState event : events) {
                 boolean isNew = true;
@@ -105,7 +106,6 @@ public class ExecContextVariableStateService {
                 }
             }
         });
-        return null;
     }
 
     private Void register(Long execContextVariableStateId, Consumer<ExecContextApiData.ExecContextVariableStates> supplier) {
@@ -124,9 +124,8 @@ public class ExecContextVariableStateService {
     }
 
     @Transactional
-    public Void deleteOrphanVariableStates(List<Long> ids) {
+    public void deleteOrphanVariableStates(List<Long> ids) {
         execContextVariableStateRepository.deleteAllByIdIn(ids);
-        return null;
     }
 
 }

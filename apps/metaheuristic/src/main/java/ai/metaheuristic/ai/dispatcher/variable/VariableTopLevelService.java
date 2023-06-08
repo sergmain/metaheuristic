@@ -20,9 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -54,10 +52,9 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @RequiredArgsConstructor
 public class VariableTopLevelService {
 
-    private final VariableTxService variableService;
+    private final VariableTxService variableTxService;
     private final VariableRepository variableRepository;
     private final ExecContextCache execContextCache;
-    private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     private final InternalFunctionVariableService internalFunctionVariableService;
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -66,7 +63,7 @@ public class VariableTopLevelService {
             Long execContextId, String inputVariableName,
             String currTaskContextId, boolean contentAsArray) {
         TxUtils.checkTxNotExists();
-        variableService.createInputVariablesForSubProcess(variableDataSource, execContextId, inputVariableName, currTaskContextId, contentAsArray);
+        variableTxService.createInputVariablesForSubProcess(variableDataSource, execContextId, inputVariableName, currTaskContextId, contentAsArray);
     }
 
     @Nullable
@@ -83,7 +80,7 @@ public class VariableTopLevelService {
     public void checkFinalOutputVariables(TaskParamsYaml taskParamsYaml, Long subExecContextId) {
         ExecContextImpl execContext = execContextCache.findById(subExecContextId, true);
         if (execContext == null) {
-            throw new InternalFunctionException(exec_context_not_found, "#992.300 ExecContext Not found");
+            throw new InternalFunctionException(exec_context_not_found, "992.300 ExecContext Not found");
         }
         ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
         try {
@@ -93,31 +90,25 @@ public class VariableTopLevelService {
                         subExecContextId, Consts.TOP_LEVEL_CONTEXT_ID, execContextOutput.name);
                 if (holders.size() > 1) {
                     throw new InternalFunctionException(source_code_is_broken,
-                            "#992.340 Too many variables with the same name at top-level context, name: " + execContextOutput.name);
+                            "992.340 Too many variables with the same name at top-level context, name: " + execContextOutput.name);
                 }
 
                 VariableUtils.VariableHolder variableHolder = holders.get(0);
                 if (variableHolder.variable == null) {
-                    throw new InternalFunctionException(variable_not_found, "#992.360 local variable with name: " + execContextOutput.name + " wasn't found");
+                    throw new InternalFunctionException(variable_not_found, "992.360 local variable with name: " + execContextOutput.name + " wasn't found");
                 }
-                Variable sv = variableService.getVariable(variableHolder.variable.id);
+                Variable sv = variableTxService.getVariable(variableHolder.variable.id);
                 if (sv==null) {
                     throw new InternalFunctionException(variable_not_found,
-                            S.f("#992.300 variable %s in execContext #%d wasn't found", variableHolder.variable.name, subExecContextId));
+                            S.f("992.300 variable %s in execContext #%d wasn't found", variableHolder.variable.name, subExecContextId));
                 }
             }
         } catch (InternalFunctionException e) {
             throw e;
         } catch (Throwable th) {
-            String es = "#992.400 error: " + th.getMessage();
+            String es = "992.400 error: " + th.getMessage();
             log.error(es, th);
             throw new InternalFunctionException(system_error, es);
         }
-    }
-
-    public void setAsNullFunction(Long variableId, VariableUploadedEvent event, Long execContextVariableStateId) {
-        variableService.setVariableAsNull(variableId);
-        execContextVariableStateTopLevelService.registerVariableStateInternal(event.execContextId, List.of(event), execContextVariableStateId);
-
     }
 }

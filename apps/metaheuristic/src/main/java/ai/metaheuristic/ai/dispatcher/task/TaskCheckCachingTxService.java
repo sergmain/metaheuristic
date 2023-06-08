@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
+import ai.metaheuristic.ai.dispatcher.event.SetVariableReceivedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
@@ -136,17 +137,16 @@ public class TaskCheckCachingTxService {
             }
 
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
-                Object[] obj = vars.stream().filter(o->o[1].equals(output.name)).findFirst().orElseThrow(()->new IllegalStateException("#609.120 ???? How???"));
+                Object[] obj = vars.stream().filter(o->o[1].equals(output.name)).findFirst().orElseThrow(()->new IllegalStateException("609.120 ???? How???"));
                 try {
                     VariableData.StoredVariable storedVariable = new VariableData.StoredVariable( ((Number)obj[0]).longValue(), (String)obj[1], Boolean.TRUE.equals(obj[2]));
                     if (storedVariable.nullified) {
-                        VariableSyncService.getWithSyncVoidForCreation(output.id,
-                                () -> variableService.setVariableAsNull(taskId, output.id));
+                        VariableSyncService.getWithSyncVoidForCreation(output.id, () -> variableService.setVariableAsNull(output.id));
                     }
                     else {
-                        VariableSyncService.getWithSyncVoidForCreation(output.id,
-                                () -> variableDatabaseSpecificService.copyData(storedVariable, output));
+                        variableDatabaseSpecificService.copyData(storedVariable, output);
                     }
+                    eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, output.id, storedVariable.nullified, true));
 
                     output.uploaded = true;
 

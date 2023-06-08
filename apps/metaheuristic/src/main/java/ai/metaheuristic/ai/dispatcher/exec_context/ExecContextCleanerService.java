@@ -63,7 +63,7 @@ public class ExecContextCleanerService {
     }
 
     private void deleteOrphanExecContextVariableState(ProcessDeletedExecContextEvent event) {
-        ExecContextSyncService.getWithSyncNullable(event.execContextId,
+        ExecContextSyncService.getWithSyncVoid(event.execContextId,
                 () -> execContextVariableStateService.deleteOrphanVariableStates(List.of(event.execContextVariableStateId)));
     }
 }

@@ -204,7 +204,6 @@ public class VariableTxService {
         return v;
     }
 
-    @SneakyThrows
     @Transactional
     public void storeDataInVariable(TaskParamsYaml.OutputVariable outputVariable, Path file) {
         Variable variable = findVariableInLocalContext(outputVariable);
@@ -215,7 +214,7 @@ public class VariableTxService {
             InputStream is = Files.newInputStream(file);
             resourceCloseTxEvent.add(is);
             update(is, Files.size(file), variable);
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             throw new InternalFunctionException(system_error, "#697.180 Can't open file   "+ file.normalize());
         }
     }
@@ -270,7 +269,7 @@ public class VariableTxService {
 
     @Transactional
     public void setVariableAsNull(Long taskId, Long variableId) {
-        eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, variableId, true));
+        eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, variableId, true, false));
         setVariableAsNull(variableId);
     }
 

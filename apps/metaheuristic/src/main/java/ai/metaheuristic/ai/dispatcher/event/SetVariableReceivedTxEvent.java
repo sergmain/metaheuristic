@@ -28,8 +28,9 @@ public class SetVariableReceivedTxEvent {
     public final Long taskId;
     public final Long variableId;
     public final boolean nullified;
+    public final boolean fromCache;
 
     public SetVariableReceivedEvent to() {
-        return new SetVariableReceivedEvent(taskId, variableId, nullified);
+        return new SetVariableReceivedEvent(taskId, variableId, nullified, fromCache);
     }
 }

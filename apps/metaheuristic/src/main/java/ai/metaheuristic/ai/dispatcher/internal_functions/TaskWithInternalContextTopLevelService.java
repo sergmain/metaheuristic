@@ -21,9 +21,9 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -57,10 +57,10 @@ public class TaskWithInternalContextTopLevelService {
 
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final TaskWithInternalContextService taskWithInternalContextService;
-    private final VariableTopLevelService variableTopLevelService;
     private final VariableTxService variableTxService;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
+    private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
 
     public void storeResult(Long taskId, Long subExecContextId) {
         TxUtils.checkTxNotExists();
@@ -115,9 +115,8 @@ public class TaskWithInternalContextTopLevelService {
                             "#992.120 local variable name " + execContextOutput.name + " wasn't inited, variableId: #"+variableHolder.variable.id);
                 }
                 if (variableHolder.variable.nullified) {
-                    VariableUploadedEvent event = new VariableUploadedEvent(ec.id, task.id, output.id, true);
                     VariableSyncService.getWithSyncVoidForCreation(output.id,
-                            ()->variableTopLevelService.setAsNullFunction(output.id, event, ec.execContextVariableStateId));
+                            ()->variableTxService.setVariableAsNull(output.id));
                 }
                 else {
                     Path tempFile = Files.createTempFile(tempDir, "output-", ".bin");
@@ -125,6 +124,9 @@ public class TaskWithInternalContextTopLevelService {
                     VariableSyncService.getWithSyncVoidForCreation(output.id,
                             ()-> variableTxService.storeDataInVariable(output, tempFile));
                 }
+                // we don't need to use 'flushing' of state because this method is for copying variable from long-running process
+                VariableUploadedEvent event = new VariableUploadedEvent(ec.id, task.id, output.id, variableHolder.variable.nullified, false);
+                execContextVariableStateTopLevelService.registerVariableStateInternal(event.execContextId, List.of(event), ec.execContextVariableStateId);
             }
         }
         catch (IOException e) {

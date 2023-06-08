@@ -175,7 +175,6 @@ public class ScenarioUtils {
             }
 
             if (step.function==null || (!Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code) && !Consts.MH_AGGREGATE_FUNCTION.equals(step.function.code))) {
-//            if (step.function==null || Consts.MH_ACCEPTANCE_TEST_FUNCTION.equals(step.function.code)) {
                 extractInputVariables(p.inputs, step);
                 EnumsApi.VariableType type = null;
                 boolean needRawOutput = false;
@@ -208,7 +207,8 @@ public class ScenarioUtils {
                 p.metas.add(Map.of(ApiCallService.API_CODE, step.api.code));
                 p.triesAfterError = 0;
 //                p.triesAfterError = 2;
-                p.cache = step.isCachable ? new SourceCodeParamsYaml.Cache(true, true, true) : null;
+//                p.cache = step.isCachable ? new SourceCodeParamsYaml.Cache(true, true, true) : null;
+                p.cache = new SourceCodeParamsYaml.Cache(true, true, true);
             }
             else {
                 if (Consts.MH_BATCH_LINE_SPLITTER_FUNCTION.equals(step.function.code)) {

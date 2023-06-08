@@ -28,4 +28,5 @@ public class SetVariableReceivedEvent {
     public final Long taskId;
     public final Long variableId;
     public final boolean nullified;
+    public final boolean fromCache;
 }
