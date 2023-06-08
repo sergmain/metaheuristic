@@ -27,7 +27,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -271,7 +270,7 @@ public class ExecContextTaskAssigningTopLevelService {
                 if (task.execState == EnumsApi.TaskExecState.NONE.value) {
                     final TaskParamsYaml taskParamYaml;
                     try {
-                        taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                        taskParamYaml = task.getTaskParamsYaml();
                     }
                     catch (YAMLException e) {
                         log.error("#703.260 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.getMessage(), task.getParams());
@@ -316,7 +315,7 @@ public class ExecContextTaskAssigningTopLevelService {
             return;
         }
         try {
-            TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            TaskParamsYaml taskParamYaml = task.getTaskParamsYaml();
             if (taskParamYaml.task.context != EnumsApi.FunctionExecContext.internal) {
                 log.warn("#703.520 task #{} with IN_PROGRESS is there? Function: {}", task.id, taskParamYaml.task.function.code);
             }

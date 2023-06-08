@@ -57,6 +57,26 @@ public class ExecContextProcessGraphService {
     private static final String PROCESS_NAME_ATTR = "process";
     private static final String PROCESS_CONTEXT_ID_NAME_ATTR = "process_context_id";
 
+    public static final DOTImporter<ExecContextData.ProcessVertex, DefaultEdge> DOT_IMPORTER = new DOTImporter<>();
+    static {
+        // https://stackoverflow.com/questions/60461351/import-graph-with-1-4-0
+        DOT_IMPORTER.addVertexAttributeConsumer(((vertex, attribute) -> {
+            switch (vertex.getSecond()) {
+                case PROCESS_NAME_ATTR:
+                    vertex.getFirst().process = attribute.getValue();
+                    break;
+                case PROCESS_CONTEXT_ID_NAME_ATTR:
+                    vertex.getFirst().processContextId = attribute.getValue();
+                    break;
+                case "ID":
+                    // do nothing
+                    break;
+                default:
+                    log.error("Unknown attribute in process graph, attr: " + vertex.getSecond() + ", attr value: " + attribute.getValue());
+            }
+        }));
+    }
+
     public static String asString(DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph) {
         Function<ExecContextData.ProcessVertex, String> vertexIdProvider = v -> v.id.toString();
         Function<ExecContextData.ProcessVertex, Map<String, Attribute>> vertexAttributeProvider = v -> {
@@ -86,26 +106,8 @@ public class ExecContextProcessGraphService {
         AtomicLong id = new AtomicLong();
         processGraph.setVertexSupplier(() -> new ExecContextData.ProcessVertex(id.incrementAndGet()));
 
-        // https://stackoverflow.com/questions/60461351/import-graph-with-1-4-0
-        DOTImporter<ExecContextData.ProcessVertex, DefaultEdge> importer = new DOTImporter<>();
-        importer.addVertexAttributeConsumer(((vertex, attribute) -> {
-            switch (vertex.getSecond()) {
-                case PROCESS_NAME_ATTR:
-                    vertex.getFirst().process = attribute.getValue();
-                    break;
-                case PROCESS_CONTEXT_ID_NAME_ATTR:
-                    vertex.getFirst().processContextId = attribute.getValue();
-                    break;
-                case "ID":
-                    // do nothing
-                    break;
-                default:
-                    log.error("Unknown attribute in process graph, attr: " + vertex.getSecond() + ", attr value: " + attribute.getValue());
-            }
-        }));
-
         try (final StringReader stringReader = new StringReader(processGraphAsStr)) {
-            importer.importGraph(processGraph, stringReader);
+            DOT_IMPORTER.importGraph(processGraph, stringReader);
         }
         return processGraph;
     }

@@ -27,7 +27,6 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -180,7 +179,7 @@ public class TaskTopLevelService {
             if (ec==null || EnumsApi.ExecContextState.isFinishedState(ec.state)) {
                 continue;
             }
-            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            TaskParamsYaml tpy = task.getTaskParamsYaml();
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
                 if (!output.uploaded) {
                     Variable sv = variableService.getVariable(output.id);

@@ -99,12 +99,12 @@ public class TaskCheckCachingTxService {
         TaskParamsYaml tpy = task.getTaskParamsYaml();
 
         if (cacheProcess!=null) {
-            log.info("#609.060 cached data was found for task #{}, variables will be copied and will task be set as OK", taskId);
+            log.info("609.060 cached data was found for task #{}, variables will be copied and will task be set as OK", taskId);
             // finish task with cached data
 
             List<Object[]> vars = cacheVariableRepository.getVarsByCacheProcessId(cacheProcess.id);
             if (vars.size()!=tpy.task.outputs.size()) {
-                log.warn("#609.080 cashProcess #{} is broken. Number of stored variable is {} but expected {}. CacheProcess will be invalidated", cacheProcess.id, vars.size(), tpy.task.outputs.size());
+                log.warn("609.080 cashProcess #{} is broken. Number of stored variable is {} but expected {}. CacheProcess will be invalidated", cacheProcess.id, vars.size(), tpy.task.outputs.size());
                 throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
             }
             for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
@@ -117,7 +117,7 @@ public class TaskCheckCachingTxService {
                 }
                 if (!found) {
                     log.warn("""
-                        #609.100 cacheProcess #{} is broken. output variable {} wasn't found. CacheProcess will be invalidated.
+                        609.100 cacheProcess #{} is broken. output variable {} wasn't found. CacheProcess will be invalidated.
                         vars[0]: {}
                         vars[1]: {}
                         vars[2]: {}

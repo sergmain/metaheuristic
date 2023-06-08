@@ -29,7 +29,6 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -82,7 +81,7 @@ public class TaskFinishingService {
 
         eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, taskId));
 
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+        TaskParamsYaml tpy = task.getTaskParamsYaml();
 
         taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK, true);
 
@@ -118,7 +117,7 @@ public class TaskFinishingService {
             TaskParamsYaml taskParamYaml=null;
             try {
                 //noinspection unused
-                taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                taskParamYaml = task.getTaskParamsYaml();
             } catch (YAMLException e) {
                 String es = S.f("#319.160 Task #%s has broken params yaml, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
                 log.error(es, e.getMessage());

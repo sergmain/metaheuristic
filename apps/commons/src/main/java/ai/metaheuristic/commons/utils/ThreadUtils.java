@@ -84,6 +84,7 @@ public class ThreadUtils {
             }
         }
 
+        @SuppressWarnings("DataFlowIssue")
         public T get() {
             try {
                 readLock.lock();

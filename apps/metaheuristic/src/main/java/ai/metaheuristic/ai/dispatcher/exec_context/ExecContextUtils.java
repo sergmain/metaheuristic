@@ -94,12 +94,12 @@ public class ExecContextUtils {
             r.lines[i].context = sortedContexts.get(i);
         }
 
-        for (ExecContextApiData.VariableState taskInfo : raw.infos) {
+        for (ExecContextApiData.VariableState variableState : raw.infos) {
             for (int i = 0; i < r.lines.length; i++) {
                 ExecContextApiData.VariableState simpleTaskInfo = null;
                 List<ExecContextApiData.VariableState> tasksInContext = map.get(r.lines[i].context);
                 for (ExecContextApiData.VariableState contextTaskInfo : tasksInContext) {
-                    if (contextTaskInfo.taskId.equals(taskInfo.taskId)) {
+                    if (contextTaskInfo.taskId.equals(variableState.taskId)) {
                         simpleTaskInfo = contextTaskInfo;
                         break;
                     }
@@ -123,6 +123,7 @@ public class ExecContextUtils {
                         outputs = simpleTaskInfo.outputs;
                     }
                 }
+                // TODO 2023-06-07 p5 add input variables' states here
                 r.lines[i].cells[j] = new ExecContextApiData.StateCell(simpleTaskInfo.taskId, stateAsStr, simpleTaskInfo.taskContextId, outputs);
             }
         }

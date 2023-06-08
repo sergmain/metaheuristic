@@ -43,7 +43,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -94,7 +93,7 @@ public class TaskProviderTopLevelService {
             }
             final TaskParamsYaml taskParamYaml;
             try {
-                taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                taskParamYaml = task.getTaskParamsYaml();
             } catch (YAMLException e) {
                 String es = S.f("#393.080 Task #%s has broken params yaml and will be skipped, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
                 log.error(es, e.getMessage());
@@ -407,7 +406,7 @@ public class TaskProviderTopLevelService {
 
                         final TaskParamsYaml taskParamYaml;
                         try {
-                            taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                            taskParamYaml = task.getTaskParamsYaml();
                         } catch (YAMLException e) {
                             String es = S.f("#393.780 Task #%s has broken params yaml and will be finished with error, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
                             log.error(es, e.getMessage());

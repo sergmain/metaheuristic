@@ -242,7 +242,7 @@ public class TaskProviderUnassignedTaskTopLevelService {
                     ParamsVersion v = YamlForVersioning.getParamsVersion(queuedTask.task.getParams());
                     if (v.getActualVersion()!=psy.taskParamsVersion) {
                         log.info("#317.138 check downgrading is possible, actual version: {}, required version: {}", v.getActualVersion(), psy.taskParamsVersion);
-                        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(queuedTask.task.getParams());
+                        TaskParamsYaml tpy = queuedTask.task.getTaskParamsYaml();
                         //noinspection unused
                         String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
                     }

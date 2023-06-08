@@ -29,7 +29,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.ThreadUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -104,7 +103,7 @@ public class ExecContextTaskStateTopLevelService {
             if (task==null) {
                 return;
             }
-            TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            TaskParamsYaml taskParams = task.getTaskParamsYaml();
             if (!event.execContextId.equals(task.execContextId)) {
                 log.error("#417.020 (!execContextId.equals(task.execContextId))");
                 return;

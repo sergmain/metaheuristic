@@ -15,12 +15,12 @@
  */
 package ai.metaheuristic.ai.dispatcher.beans;
 
-import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
-import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
+import ai.metaheuristic.commons.utils.ThreadUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -28,7 +28,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
-import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -108,34 +107,28 @@ public class TaskImpl implements Serializable, Task {
     @Column(name = "PARAMS")
     private String params;
 
-    public void setParams(String params) {
-        synchronized (this) {
-            this.params = params;
-            this.tpy =null;
-        }
-    }
-
     public String getParams() {
         return params;
     }
 
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
+
     @Transient
     @JsonIgnore
-    @Nullable
-    private TaskParamsYaml tpy = null;
+    private final ThreadUtils.CommonThreadLocker<TaskParamsYaml> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private TaskParamsYaml parseParams() {
+        TaskParamsYaml temp = TaskParamsYamlUtils.BASE_YAML_UTILS.to(params);
+        TaskParamsYaml ecpy = temp==null ? new TaskParamsYaml() : temp;
+        return ecpy;
+    }
 
     @JsonIgnore
     public TaskParamsYaml getTaskParamsYaml() {
-        if (tpy==null) {
-            synchronized (this) {
-                if (tpy==null) {
-                    //noinspection UnnecessaryLocalVariable
-                    TaskParamsYaml temp = TaskParamsYamlUtils.BASE_YAML_UTILS.to(params);
-                    tpy = temp;
-                }
-            }
-        }
-        return tpy;
+        return paramsLocked.get();
     }
 
     @JsonIgnore

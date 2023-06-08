@@ -21,8 +21,8 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
-import ai.metaheuristic.ai.dispatcher.data.StringVariableData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.data.StringVariableData;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
@@ -51,7 +51,6 @@ import ai.metaheuristic.commons.utils.PageUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYaml;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYamlUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
@@ -234,7 +233,7 @@ public class ExperimentResultService {
             if (t == null) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"Task #"+taskId+" wasn't found");
             }
-            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(t.getParams());
+            TaskParamsYaml tpy = t.getTaskParamsYaml();
             String taskContextId = tpy.task.taskContextId;
             if (!taskContextIds.contains(taskContextId)) {
                 log.info(S.f("Skip task %s with taskContextId #%s", t.id, taskContextId));

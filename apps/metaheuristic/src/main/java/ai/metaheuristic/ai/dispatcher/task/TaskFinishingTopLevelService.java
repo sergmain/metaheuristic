@@ -29,7 +29,6 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -37,10 +36,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
 import java.util.function.BiFunction;
-
-import static com.fasterxml.jackson.databind.type.LogicalType.Collection;
 
 /**
  * @author Serge
@@ -122,7 +118,7 @@ public class TaskFinishingTopLevelService {
             }
         }
 
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+        TaskParamsYaml tpy = task.getTaskParamsYaml();
         boolean allUploaded = tpy.task.outputs.isEmpty() || tpy.task.outputs.stream()
                 .filter(o->o.sourcing==EnumsApi.DataSourcing.dispatcher)
                 .allMatch(o->o.uploaded);
