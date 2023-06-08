@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.exceptions;
 
 import ai.metaheuristic.api.EnumsApi;
+import org.springframework.lang.Nullable;
 
 /**
  * @author Serge
@@ -25,10 +26,11 @@ import ai.metaheuristic.api.EnumsApi;
  */
 public class VariableDataNotFoundException extends VariableCommonException {
 
+    @Nullable
     public Long variableId;
     public EnumsApi.VariableContext context;
 
-    public VariableDataNotFoundException(Long variableId, EnumsApi.VariableContext context, String message) {
+    public VariableDataNotFoundException(@Nullable Long variableId, EnumsApi.VariableContext context, String message) {
         super(message, variableId);
         this.variableId = variableId;
         this.context = context;

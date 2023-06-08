@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.repositories;
 
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -34,7 +33,7 @@ import java.sql.Blob;
 public interface VariableBlobRepository extends CrudRepository<VariableBlob, Long> {
 
     @Nullable
-    @Query(value="select b.data from VariableBlob b where b.variableId=:id")
+    @Query(value="select vb.data from VariableBlob vb where vb.id=:id")
     @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
-    Blob getDataAsStreamById(Long variableId);
+    Blob getDataAsStreamById(Long id);
 }

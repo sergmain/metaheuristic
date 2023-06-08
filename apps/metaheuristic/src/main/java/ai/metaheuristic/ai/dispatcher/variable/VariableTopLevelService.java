@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -32,6 +33,7 @@ import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +55,7 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 public class VariableTopLevelService {
 
     private final VariableTxService variableService;
+    private final VariableRepository variableRepository;
     private final ExecContextCache execContextCache;
     private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     private final InternalFunctionVariableService internalFunctionVariableService;
@@ -66,6 +69,16 @@ public class VariableTopLevelService {
         variableService.createInputVariablesForSubProcess(variableDataSource, execContextId, inputVariableName, currTaskContextId, contentAsArray);
     }
 
+    @Nullable
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public Long variableBlobIdRef(Long variableId) {
+        Variable v = variableRepository.findById(variableId).orElse(null);
+        return v==null ? null : v.variableBlobId;
+    }
+
+    public List<String> getFilenameByVariableAndExecContextId(Long execContextId, String variable) {
+        return variableRepository.findFilenameByVariableAndExecContextId(execContextId, variable);
+    }
 
     public void checkFinalOutputVariables(TaskParamsYaml taskParamsYaml, Long subExecContextId) {
         ExecContextImpl execContext = execContextCache.findById(subExecContextId, true);

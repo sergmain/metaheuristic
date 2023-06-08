@@ -52,7 +52,10 @@ public class CacheUtils {
     public static CacheData.FullKey getKey(
             TaskParamsYaml tpy,
             ExecContextParamsYaml.FunctionDefinition function,
-            Function<Long, String> variableAsString, Function<Long, Blob> variableAsStream, Function<Long, Blob> globalVariableAsStream) {
+            Function<Long, Long> variableBlobIdRefFunc,
+            Function<Long, String> variableAsStringFunc,
+            Function<Long, Blob> variableAsStreamFunc,
+            Function<Long, Blob> globalVariableAsStreamFunc) {
 
         String params = S.b(tpy.task.function.params) ? "" : tpy.task.function.params;
         if (!S.b(function.params)) {
@@ -74,22 +77,26 @@ public class CacheUtils {
             }
         }
         for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
+            Long variableBlobId = variableBlobIdRefFunc.apply(input.id);
+            if (variableBlobId==null) {
+                throw new IllegalStateException("(variableBlobId==null)");
+            }
             switch (input.context) {
                 case array -> {
-                    String data = variableAsString.apply(input.id);
+                    String data = variableAsStringFunc.apply(variableBlobId);
                     VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(data);
                     for (VariableArrayParamsYaml.Variable variable : vapy.array) {
                         if (variable.dataType==EnumsApi.DataType.variable) {
                             long variableId = Long.parseLong(variable.id);
-                            fullKey.inputs.add(getSha256Length(variableId, variableAsStream));
+                            fullKey.inputs.add(getSha256Length(variableId, variableAsStreamFunc));
                         }
                         else {
-                            fullKey.inputs.add(getSha256Length(input.id, globalVariableAsStream));
+                            fullKey.inputs.add(getSha256Length(variableBlobId, globalVariableAsStreamFunc));
                         }
                     }
                 }
-                case local -> fullKey.inputs.add(getSha256Length(input.id, variableAsStream));
-                case global -> fullKey.inputs.add(getSha256Length(input.id, globalVariableAsStream));
+                case local -> fullKey.inputs.add(getSha256Length(variableBlobId, variableAsStreamFunc));
+                case global -> fullKey.inputs.add(getSha256Length(variableBlobId, globalVariableAsStreamFunc));
                 default -> throw new IllegalStateException("input.context " + input.context);
             }
 

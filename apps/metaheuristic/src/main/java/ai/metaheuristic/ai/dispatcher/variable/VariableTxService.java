@@ -574,30 +574,38 @@ public class VariableTxService {
     }
 
     @Transactional(readOnly = true)
-    public String getVariableDataAsString(Long variableId) {
-        final String data = getVariableDataAsString(variableId, false);
+    public String getVariableDataAsString(Long variableBlobId) {
+        final String data = getVariableDataAsString(variableBlobId, false);
         if (S.b(data)) {
-            final String es = "#171.390 Variable data wasn't found, variableId: " + variableId;
+            final String es = "#171.390 Variable data wasn't found, variableBlobId: " + variableBlobId;
             log.warn(es);
-            throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+            throw new VariableDataNotFoundException(variableBlobId, EnumsApi.VariableContext.local, es);
         }
         return data;
     }
 
     @Nullable
-    private String getVariableDataAsString(Long variableId, boolean nullable) {
+    private String getVariableDataAsString(@Nullable Long variableBlobId, boolean nullable) {
+        if (variableBlobId==null) {
+            if (nullable) {
+                log.info("#171.420 Variable #{} is nullable and current value is null", variableBlobId);
+                return null;
+            }
+            final String es = "#171.450 Variable data wasn't found, variableBlobId: " + variableBlobId;
+            log.warn(es);
+            throw new VariableDataNotFoundException(null, EnumsApi.VariableContext.local, es);
+        }
+
         try {
-            Blob blob = variableBlobRepository.getDataAsStreamById(variableId);
+            Blob blob = variableBlobRepository.getDataAsStreamById(variableBlobId);
             if (blob==null) {
                 if (nullable) {
-                    log.info("#171.420 Variable #{} is nullable and current value is null", variableId);
+                    log.info("#171.420 Variable #{} is nullable and current value is null", variableBlobId);
                     return null;
                 }
-                else {
-                    final String es = "#171.450 Variable data wasn't found, variableId: " + variableId;
-                    log.warn(es);
-                    throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
-                }
+                final String es = "#171.450 Variable data wasn't found, variableBlobId: " + variableBlobId;
+                log.warn(es);
+                throw new VariableDataNotFoundException(variableBlobId, EnumsApi.VariableContext.local, es);
             }
             try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
                 String s = IOUtils.toString(bis, StandardCharsets.UTF_8);
@@ -607,7 +615,7 @@ public class VariableTxService {
             throw e;
         } catch (Throwable th) {
             log.error("#171.480", th);
-            throw new VariableCommonException("#171.510 Error: " + th.getMessage(), variableId);
+            throw new VariableCommonException("#171.510 Error: " + th.getMessage(), variableBlobId);
         }
     }
 
@@ -647,12 +655,14 @@ public class VariableTxService {
     public void storeToFile(Long variableId, Path trgFile) {
         TxUtils.checkTxExists();
 
+        Variable v = getVariable(variableId);
+
         try {
-            Blob blob = variableBlobRepository.getDataAsStreamById(variableId);
+            Blob blob = variableBlobRepository.getDataAsStreamById(Objects.requireNonNull(v.variableBlobId));
             if (blob==null) {
-                String es = "#171.540 Variable #"+variableId+" wasn't found";
+                String es = "171.540 VariableBlob #"+v.variableBlobId+" wasn't found";
                 log.warn(es);
-                throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+                throw new VariableDataNotFoundException(v.variableBlobId, EnumsApi.VariableContext.local, es);
             }
             try (InputStream is = blob.getBinaryStream()) {
                 DirUtils.copy(is, trgFile);
@@ -660,7 +670,7 @@ public class VariableTxService {
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Exception e) {
-            String es = "#171.570 Error while storing data to file";
+            String es = "171.570 Error while storing data to file";
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
@@ -668,12 +678,14 @@ public class VariableTxService {
 
     @Transactional(readOnly = true)
     public byte[] getVariableAsBytes(Long variableId) {
+        Variable v = getVariable(variableId);
+
         try {
-            Blob blob = variableBlobRepository.getDataAsStreamById(variableId);
+            Blob blob = variableBlobRepository.getDataAsStreamById(Objects.requireNonNull(v.variableBlobId));
             if (blob==null) {
-                String es = "#171.540 Variable #"+variableId+" wasn't found";
+                String es = "#171.540 Variable #"+v.variableBlobId+" wasn't found";
                 log.warn(es);
-                throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+                throw new VariableDataNotFoundException(v.variableBlobId, EnumsApi.VariableContext.local, es);
             }
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is)) {
@@ -687,6 +699,16 @@ public class VariableTxService {
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
+    }
+
+    private Variable getVariable(Long variableId) {
+        Variable v = variableRepository.findById(variableId).orElse(null);
+        if (v==null || v.variableBlobId==null) {
+            String es = "171.540 Variable #" + variableId + " wasn't found";
+            log.warn(es);
+            throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+        }
+        return v;
     }
 
     public List<Variable> getVariablesInExecContext(Long execContextId, String ... variables) {
@@ -745,6 +767,7 @@ public class VariableTxService {
 
     public Variable createUninitialized(String variable, Long execContextId, String taskContextId) {
         Variable v = new Variable();
+        v.variableBlobId = null;
         v.name = variable;
         v.execContextId = execContextId;
         v.taskContextId = taskContextId;
@@ -770,24 +793,9 @@ public class VariableTxService {
         update(is, size, v);
     }
 
-
-
-    public void deleteById(Long id) {
-        variableRepository.deleteById(id);
-    }
-
-    public List<String> getFilenameByVariableAndExecContextId(Long execContextId, String variable) {
-        return variableRepository.findFilenameByVariableAndExecContextId(execContextId, variable);
-    }
-
     @Transactional
     public void deleteOrphanVariables(List<Long> ids) {
         variableRepository.deleteByIds(ids);
-    }
-
-    @Transactional
-    public void deleteOrphanVariable(Long id) {
-        variableRepository.deleteById(id);
     }
 
 }

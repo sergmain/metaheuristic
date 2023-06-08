@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.event.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -57,7 +58,8 @@ public class CacheTxService {
     private final Globals globals;
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheVariableService cacheVariableService;
-    private final VariableTxService variableService;
+    private final VariableTopLevelService variableTopLevelService;
+    private final VariableTxService variableTxService;
     private final VariableRepository variableRepository;
     private final VariableBlobRepository variableBlobRepository;
     private final GlobalVariableRepository globalVariableRepository;
@@ -115,7 +117,7 @@ public class CacheTxService {
                     log.error(es, e);
                     throw new VariableCommonException(es, output.id);
                 }
-                variableService.storeToFile(output.id, tempFile);
+                variableTxService.storeToFile(output.id, tempFile);
 
                 InputStream is;
                 BufferedInputStream bis;
@@ -142,7 +144,7 @@ public class CacheTxService {
 
     @Transactional(readOnly = true)
     public CacheData.FullKey getKey(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
-        return CacheUtils.getKey(tpy, function, variableService::getVariableDataAsString, variableBlobRepository::getDataAsStreamById, globalVariableRepository::getDataAsStreamById);
+        return CacheUtils.getKey(tpy, function, variableTopLevelService::variableBlobIdRef, variableTxService::getVariableDataAsString, variableBlobRepository::getDataAsStreamById, globalVariableRepository::getDataAsStreamById);
     }
 
 }
