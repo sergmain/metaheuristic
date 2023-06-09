@@ -21,10 +21,10 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
@@ -69,11 +69,10 @@ public class ExecContextCreatorService {
 
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final ExecContextRepository execContextRepository;
-    private final ExecContextService execContextService;
     private final ExecContextCache execContextCache;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
-    private final ExecContextTaskStateCache execContextTaskStateCache;
+    private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextVariableStateTxService execContextVariableStateCache;
 
@@ -216,7 +215,7 @@ public class ExecContextCreatorService {
         ExecContextTaskState execContextTaskState = new ExecContextTaskState();
         execContextTaskState.updateParams(new ExecContextTaskStateParamsYaml());
         execContextTaskState.createdOn = System.currentTimeMillis();
-        execContextTaskState = execContextTaskStateCache.save(execContextTaskState);
+        execContextTaskState = execContextTaskStateRepository.save(execContextTaskState);
         ec.execContextTaskStateId = execContextTaskState.id;
 
         ExecContextGraph execContextGraph = new ExecContextGraph();

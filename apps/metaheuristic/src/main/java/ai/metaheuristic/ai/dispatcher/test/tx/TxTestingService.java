@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.test.tx;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +50,7 @@ public class TxTestingService {
     private final TaskRepository taskRepository;
     private final TxTesting1Service txTesting1Service;
     private final ExecContextCache execContextCache;
+    private final ExecContextRepository execContextRepository;
     private final EntityManager em;
 
     @Transactional
@@ -210,7 +212,7 @@ public class TxTestingService {
 
     @Transactional
     public void testDetachedInTxQueryNewTx(Long execContextId) {
-        ExecContextImpl ec = execContextCache.findByIdWithNewTx(execContextId);
+        ExecContextImpl ec = execContextRepository.findById(execContextId).orElse(null);
         if (em.contains(ec)) {
             throw new RuntimeException();
         }

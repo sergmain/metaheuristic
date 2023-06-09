@@ -90,7 +90,7 @@ public class ExecContextTaskAssigningTopLevelService {
         putToQueue(event);
     }
 
-    private void putToQueue(final FindUnassignedTasksAndRegisterInQueueEvent event) {
+    public void putToQueue(final FindUnassignedTasksAndRegisterInQueueEvent event) {
         final int activeCount = executor.getActiveCount();
         if (log.isDebugEnabled()) {
             final long completedTaskCount = executor.getCompletedTaskCount();
@@ -145,7 +145,7 @@ public class ExecContextTaskAssigningTopLevelService {
             execContextIds.sort(Comparator.naturalOrder());
             UnassignedTasksStat statTotal = new UnassignedTasksStat();
             for (Long execContextId : execContextIds) {
-                UnassignedTasksStat stat = findUnassignedTasksAndRegisterInQueue(execContextId);
+                UnassignedTasksStat stat = findUnassignedTasksAndRegisterInQueueInternal(execContextId);
                 statTotal.add(stat);
             }
             if (log.isInfoEnabled()) {
@@ -160,18 +160,7 @@ public class ExecContextTaskAssigningTopLevelService {
         }
     }
 
-    public UnassignedTasksStat findUnassignedTasksAndRegisterInQueue(Long execContextId) {
-        writeLock.lock();
-        try {
-            return findUnassignedTasksAndRegisterInQueueInternal(execContextId);
-        }
-        finally {
-            writeLock.unlock();;
-        }
-    }
-
     private long mills = 0L;
-
     private UnassignedTasksStat findUnassignedTasksAndRegisterInQueueInternal(Long execContextId) {
 
         UnassignedTasksStat stat = new UnassignedTasksStat();

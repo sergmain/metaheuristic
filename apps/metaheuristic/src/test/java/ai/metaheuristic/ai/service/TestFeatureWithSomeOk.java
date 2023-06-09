@@ -15,12 +15,14 @@
  */
 package ai.metaheuristic.ai.service;
 
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
@@ -33,7 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -55,6 +56,8 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
     @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
     @Autowired private ExecContextCache execContextCache;
+    @Autowired private TaskRepository taskRepository;
+    @Autowired private ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
 
     @Test
     public void testFeatureCompletionWithPartialError() {
@@ -95,6 +98,11 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         assertEquals(assignedTask.taskId, task.taskId);
 
         storeConsoleResultAsError(processorIdAndCoreIds);
+
+//        TaskImpl t2 = taskRepository.findByIdReadOnly(task.taskId);
+//        assertNotNull(t2);
+//        assertEquals(EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value, t2.execState);
+//
 
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 

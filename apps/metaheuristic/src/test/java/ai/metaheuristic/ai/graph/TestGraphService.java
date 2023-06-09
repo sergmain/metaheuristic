@@ -22,8 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
-import ai.metaheuristic.ai.preparing.PreparingCoreInitService;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +46,7 @@ import java.util.Set;
 public class TestGraphService {
 
     @Autowired private ExecContextGraphCache execContextGraphCache;
-    @Autowired private ExecContextTaskStateCache execContextTaskStateCache;
+    @Autowired private ExecContextTaskStateRepository execContextTaskStateRepository;
 
     public List<ExecContextData.TaskVertex> findLeafs(ExecContextImpl execContext) {
         if (execContext.execContextGraphId==null) {
@@ -75,7 +74,7 @@ public class TestGraphService {
         if (execContext.execContextTaskStateId==null) {
             return Set.of();
         }
-        ExecContextTaskState ects = execContextTaskStateCache.findById(execContext.execContextTaskStateId);
+        ExecContextTaskState ects = execContextTaskStateRepository.findById(execContext.execContextTaskStateId).orElse(null);
         if (ects==null) {
             return Set.of();
         }

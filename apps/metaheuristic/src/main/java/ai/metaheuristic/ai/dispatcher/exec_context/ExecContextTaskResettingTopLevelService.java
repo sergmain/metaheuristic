@@ -23,8 +23,8 @@ import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.ResetTaskEvent;
 import ai.metaheuristic.ai.dispatcher.event.ResetTaskShortEvent;
 import ai.metaheuristic.ai.dispatcher.event.ResetTasksWithErrorEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
@@ -57,7 +57,7 @@ public class ExecContextTaskResettingTopLevelService {
 
     private final TaskRepository taskRepository;
     private final ExecContextTaskResettingService execContextTaskResettingService;
-    private final ExecContextTaskStateCache execContextTaskStateCache;
+    private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextCache execContextCache;
 
     private static final LinkedList<ResetTasksWithErrorEvent> QUEUE = new LinkedList<>();
@@ -130,7 +130,7 @@ public class ExecContextTaskResettingTopLevelService {
             return;
         }
 
-        ExecContextTaskState execContextTaskState = execContextTaskStateCache.findById(ec.execContextTaskStateId);
+        ExecContextTaskState execContextTaskState = execContextTaskStateRepository.findById(ec.execContextTaskStateId).orElse(null);
         if (execContextTaskState==null) {
             log.error("#155.030 ExecContextTaskState wasn't found for execContext #{}", execContextId);
             return;

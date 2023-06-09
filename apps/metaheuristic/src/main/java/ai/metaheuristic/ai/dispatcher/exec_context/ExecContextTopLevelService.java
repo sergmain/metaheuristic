@@ -228,7 +228,7 @@ public class ExecContextTopLevelService {
         return task.id;
     }
 
-    // this methd here because there was a strange behaviour
+    // this method here because there was a strange behaviour
     // when execContextFSM.storeExecResultWithTx() was called as lambda directly
     private void storeExecResultInternal(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         execContextFSM.storeExecResultWithTx(result);

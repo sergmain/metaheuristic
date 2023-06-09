@@ -25,8 +25,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Serge
@@ -91,12 +89,6 @@ public class ExecContextCache {
             final ExecContextImpl execContext = execContextRepository.findByIdNullable(id);
             return execContext;
         }
-        return execContextRepository.findById(id).orElse(null);
-    }
-
-    @Nullable
-    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
-    public ExecContextImpl findByIdWithNewTx(Long id) {
         return execContextRepository.findById(id).orElse(null);
     }
 }

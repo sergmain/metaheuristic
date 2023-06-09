@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateTxEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
@@ -61,7 +61,7 @@ public class ExecContextTaskResettingService {
     private final TaskRepository taskRepository;
     private final TaskTxService taskService;
     private final EventPublisherService eventPublisherService;
-    private final ExecContextTaskStateCache execContextTaskStateCache;
+    private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final TaskFinishingService taskFinishingService;
 
     @Transactional
@@ -73,7 +73,7 @@ public class ExecContextTaskResettingService {
             return;
         }
 
-        ExecContextTaskState execContextTaskState = execContextTaskStateCache.findById(ec.execContextTaskStateId);
+        ExecContextTaskState execContextTaskState = execContextTaskStateRepository.findById(ec.execContextTaskStateId).orElse(null);
         if (execContextTaskState==null) {
             log.error("#155.030 ExecContextTaskState wasn't found for execContext #{}", execContextId);
             return;
@@ -95,6 +95,7 @@ public class ExecContextTaskResettingService {
             }
         }
         execContextTaskState.updateParams(ectspy);
+        execContextTaskStateRepository.save(execContextTaskState);
     }
 
     @Transactional

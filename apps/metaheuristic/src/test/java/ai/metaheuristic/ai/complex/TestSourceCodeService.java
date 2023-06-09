@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
@@ -254,7 +255,11 @@ public class TestSourceCodeService extends PreparingSourceCode {
         // and 1 'mh.finish' task
         assertEquals(2, taskIds.size());
 
-        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(getExecContextForTest().id);
+
+        execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
+        execContextTaskAssigningTopLevelService.procesEvent();
+        //execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(getExecContextForTest().id);
+
         DispatcherCommParamsYaml.AssignedTask t =
                 taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         // null because current task is 'internal' and will be processed in async way
@@ -274,7 +279,10 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertEquals(1, taskIds.size());
         });
 
-        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(getExecContextForTest().id);
+        execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
+        execContextTaskAssigningTopLevelService.procesEvent();
+//        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(getExecContextForTest().id);
+
         t = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         // null because current task is 'internal' and will be processed in async way
         assertNull(t);

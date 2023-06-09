@@ -105,7 +105,7 @@ public class ExecContextTaskStateTopLevelService {
             }
             TaskParamsYaml taskParams = task.getTaskParamsYaml();
             if (!event.execContextId.equals(task.execContextId)) {
-                log.error("#417.020 (!execContextId.equals(task.execContextId))");
+                log.error("417.020 (!execContextId.equals(task.execContextId))");
                 return;
             }
             ExecContextImpl ec = execContextCache.findById(task.execContextId, true);
@@ -117,7 +117,7 @@ public class ExecContextTaskStateTopLevelService {
                             () -> updateTaskExecStatesInGraph(ec.execContextGraphId, ec.execContextTaskStateId, event.taskId, EnumsApi.TaskExecState.from(task.execState), taskParams.task.taskContextId)));
 
         } catch (Throwable th) {
-            log.error("#417.020 Error, need to investigate ", th);
+            log.error("417.020 Error, need to investigate ", th);
         }
     }
 
@@ -130,9 +130,6 @@ public class ExecContextTaskStateTopLevelService {
             return this.size()>50 && entry.getValue().getQueueSize()==0 && entry.getValue().getActiveCount()==0;
         }
     };
-
-    private final ThreadUtils.ThreadedPool<TransferStateFromTaskQueueToExecContextEvent> threadedPool
-            = new ThreadUtils.ThreadedPool<>(2, this::transferStateFromTaskQueueToExecContext);
 
     @Async
     @EventListener
@@ -157,7 +154,7 @@ public class ExecContextTaskStateTopLevelService {
                 }
                 i++;
             }
-            log.info("#417.060 transferStateFromTaskQueueToExecContext() was completed in {} loops within {} milliseconds", i-1, System.currentTimeMillis() - mills);
+            log.info("417.060 transferStateFromTaskQueueToExecContext() was completed in {} loops within {} milliseconds", i-1, System.currentTimeMillis() - mills);
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }

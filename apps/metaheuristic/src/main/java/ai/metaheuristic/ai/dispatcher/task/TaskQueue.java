@@ -385,7 +385,7 @@ public class TaskQueue {
         if (state== EnumsApi.TaskExecState.IN_PROGRESS || state== EnumsApi.TaskExecState.OK) {
             log.debug("#029.200 set task #{} as {}, execContextId: #{}", taskId, state, execContextId);
         }
-        boolean ok = false;
+        boolean changed = false;
         for (TaskGroup taskGroup : taskGroups) {
             if (!execContextId.equals(taskGroup.execContextId)) {
                 continue;
@@ -422,11 +422,11 @@ public class TaskQueue {
                 if (task.state== EnumsApi.TaskExecState.NONE) {
                     task.assigned = false;
                 }
-                ok = true;
+                changed = true;
                 break;
             }
-            log.debug("#029.300 task #{}, state {}, execContextId: #{}, changed: {}", taskId, state, execContextId, ok);
-            if (ok) {
+            log.debug("#029.300 task #{}, state {}, execContextId: #{}, changed: {}", taskId, state, execContextId, changed);
+            if (changed) {
                 return groupFinished(taskGroup);
             }
         }

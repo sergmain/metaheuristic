@@ -20,9 +20,9 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
@@ -74,20 +74,13 @@ public class ExecContextGraphService {
 
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextGraphRepository execContextGraphRepository;
-    private final ExecContextTaskStateCache execContextTaskStateCache;
-//    private final EntityManager em;
+    private final ExecContextTaskStateRepository execContextTaskStateRepository;
 
     public ExecContextGraph save(ExecContextGraph execContextGraph) {
         TxUtils.checkTxExists();
         if (execContextGraph.id!=null) {
             ExecContextGraphSyncService.checkWriteLockPresent(execContextGraph.id);
         }
-/*
-        if (execContextGraph.id!=null && !em.contains(execContextGraph)) {
-            //            https://stackoverflow.com/questions/13135309/how-to-find-out-whether-an-entity-is-detached-in-jpa-hibernate
-            throw new IllegalStateException(S.f("#705.020 Bean %s isn't managed by EntityManager", execContextGraph));
-        }
-*/
         final ExecContextGraph ec = execContextGraphCache.save(execContextGraph);
         return ec;
     }
@@ -98,33 +91,18 @@ public class ExecContextGraphService {
         if (execContextGraph.id!=null) {
             ExecContextGraphSyncService.checkWriteLockPresent(execContextGraph.id);
         }
-/*
-        if (execContextGraph.id!=null && !em.contains(execContextGraph)) {
-            throw new IllegalStateException(S.f("#705.023 Bean %s isn't managed by EntityManager", execContextGraph));
-        }
-*/
         final ExecContextGraph ecg = execContextGraphCache.save(execContextGraph);
 
         if (execContextTaskState.id!=null) {
             ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskState.id);
         }
-/*
-        if (execContextTaskState.id!=null && !em.contains(execContextTaskState)) {
-            throw new IllegalStateException(S.f("#705.025 Bean %s isn't managed by EntityManager", execContextTaskState));
-        }
-*/
-        final ExecContextTaskState ects = execContextTaskStateCache.save(execContextTaskState);
+        final ExecContextTaskState ects = execContextTaskStateRepository.save(execContextTaskState);
     }
 
     @SuppressWarnings("unused")
     public void saveState(ExecContextTaskState execContextTaskState) {
         TxUtils.checkTxExists();
-/*
-        if (execContextTaskState.id!=null && !em.contains(execContextTaskState)) {
-            throw new IllegalStateException(S.f("#705.025 Bean %s isn't managed by EntityManager", execContextTaskState));
-        }
-*/
-        final ExecContextTaskState ects = execContextTaskStateCache.save(execContextTaskState);
+        final ExecContextTaskState ects = execContextTaskStateRepository.save(execContextTaskState);
     }
 
     private void changeGraph(ExecContextGraph execContextGraph, Consumer<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>> callable) {
@@ -689,8 +667,7 @@ public class ExecContextGraphService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    @Nullable
-    public Void createEdges(Long execContextGraphId, List<Long> lastIds, Set<ExecContextData.TaskVertex> descendants) {
+    public void createEdges(Long execContextGraphId, List<Long> lastIds, Set<ExecContextData.TaskVertex> descendants) {
         TxUtils.checkTxExists();
         ExecContextGraph execContextGraph = prepareExecContextGraph(execContextGraphId);
         changeGraph(execContextGraph, graph ->
@@ -698,7 +675,6 @@ public class ExecContextGraphService {
                         .filter(o -> lastIds.contains(o.taskId))
                         .forEach(parentV-> descendants.forEach(trgV -> graph.addEdge(parentV, trgV)))
         );
-        return null;
     }
 
     private ExecContextGraph prepareExecContextGraph(Long execContextGraphId) {
@@ -710,7 +686,7 @@ public class ExecContextGraphService {
     }
 
     public ExecContextTaskState prepareExecContextTaskState(Long execContextTaskStateId) {
-        ExecContextTaskState execContextTaskState = execContextTaskStateCache.findById(execContextTaskStateId);
+        ExecContextTaskState execContextTaskState = execContextTaskStateRepository.findById(execContextTaskStateId).orElse(null);
         if (execContextTaskState==null) {
             throw new IllegalStateException("(execContextTaskState==null)");
         }

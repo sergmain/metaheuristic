@@ -19,13 +19,15 @@ package ai.metaheuristic.ai.preparing;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.exec_context.*;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
@@ -54,7 +56,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
     @Autowired private PreparingSourceCodeInitService preparingSourceCodeInitService;
     @Autowired private Globals globals;
-    @Autowired private ExecContextTaskStateCache execContextTaskStateCache;
+    @Autowired private ExecContextTaskStateRepository execContextTaskStateRepository;
     @Autowired private ExecContextGraphTopLevelService execContextGraphTopLevelService;
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
     @Autowired private ExecContextCache execContextCache;
@@ -224,7 +226,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         if (execContext.execContextTaskStateId==null) {
             return List.of();
         }
-        ExecContextTaskState ects = execContextTaskStateCache.findById(execContext.execContextTaskStateId);
+        ExecContextTaskState ects = execContextTaskStateRepository.findById(execContext.execContextTaskStateId).orElse(null);
         if (ects==null) {
             return List.of();
         }

@@ -15,23 +15,17 @@
  */
 package ai.metaheuristic.ai.dispatcher.experiment;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @Profile("dispatcher")
@@ -55,17 +49,7 @@ public class ExperimentCache {
     }
 
     public void delete(@NonNull Experiment experiment) {
-        TxUtils.checkTxExists();
-        try {
-            experimentRepository.delete(experiment);
-        } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Error", e);
-        }
-    }
-
-    public void invalidate(Long id) {
-        TxUtils.checkTxExists();
-        //
+        experimentRepository.deleteById(experiment.id);
     }
 
     public void deleteById(@NonNull Long id) {
