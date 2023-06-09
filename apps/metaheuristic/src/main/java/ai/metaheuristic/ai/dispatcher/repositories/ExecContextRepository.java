@@ -32,15 +32,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 @Profile("dispatcher")
 public interface ExecContextRepository extends CrudRepository<ExecContextImpl, Long> {
 
-    @NonNull
-    @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+    @Nullable
+    @Transactional(readOnly = true)
     @Query(value="select e from ExecContextImpl e where e.id=:execContextId")
-    Optional<ExecContextImpl> findByIdReadOnly(Long execContextId);
+    ExecContextImpl findByIdNullable(Long execContextId);
 
     @Nullable
     @Query(value="select e.id from ExecContextImpl e where e.id=:execContextId")
@@ -60,7 +61,7 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
     int findState(Long execContextId);
 
     @Query(value="select w.id from ExecContextImpl w")
-    @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
+    @Transactional(readOnly = true)
     List<Long> findAllIds();
 
     @Query(value="select w.id from ExecContextImpl w where w.rootExecContextId=:rootExecContextId")
@@ -100,6 +101,15 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
             "where b.sourceCodeId=:sourceCodeId " +
             "order by b.createdOn desc ")
     Slice<ExecContextsListItem> findBySourceCodeIdOrderByCreatedOnDesc(Pageable pageable, Long sourceCodeId);
+
+    @Query("SELECT t.execContextTaskStateId FROM ExecContextImpl t where t.id in :execContextIds")
+    Set<Long> findExecContextTaskStateIds(List<Long> execContextIds);
+
+    @Query("SELECT t.execContextVariableStateId FROM ExecContextImpl t where t.id in :execContextIds")
+    Set<Long> findExecContextVariableStateIds(List<Long> execContextIds);
+
+    @Query("SELECT t.execContextGraphId FROM ExecContextImpl t where t.id in :execContextIds")
+    Set<Long> findExecContextGraphIds(List<Long> execContextIds);
 
 }
 

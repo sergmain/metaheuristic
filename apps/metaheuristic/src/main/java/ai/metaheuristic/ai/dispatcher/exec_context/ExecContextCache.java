@@ -88,15 +88,10 @@ public class ExecContextCache {
     @Nullable
     public ExecContextImpl findById(Long id, boolean detached) {
         if (detached) {
-            return findByIdDetached(id);
+            final ExecContextImpl execContext = execContextRepository.findByIdNullable(id);
+            return execContext;
         }
         return execContextRepository.findById(id).orElse(null);
-    }
-
-    @Nullable
-    public ExecContextImpl findByIdDetached(Long id) {
-        final ExecContextImpl execContext = execContextRepository.findByIdReadOnly(id).orElse(null);
-        return execContext;
     }
 
     @Nullable

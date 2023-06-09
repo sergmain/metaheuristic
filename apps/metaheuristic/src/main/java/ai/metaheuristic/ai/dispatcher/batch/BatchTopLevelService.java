@@ -94,7 +94,7 @@ public class BatchTopLevelService {
     private final SourceCodeCache sourceCodeCache;
     private final ExecContextCache execContextCache;
     private final BatchRepository batchRepository;
-    private final BatchTxService batchService;
+    private final BatchTxService batchTxService;
     private final BatchCache batchCache;
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
@@ -113,7 +113,7 @@ public class BatchTopLevelService {
     public void deleteOrphanOrObsoletedBatches(Set<Long> batchIds) {
         for (Long batchId : batchIds) {
             try {
-                batchService.deleteBatch(batchId);
+                batchTxService.deleteBatch(batchId);
                 log.info("210.140 Orphan or obsoleted batch #{} was deleted", batchId);
             }
             catch (Throwable th) {
@@ -324,7 +324,7 @@ public class BatchTopLevelService {
             uploadingStatus = ExecContextSyncService.getWithSync(creationResult.execContext.id, ()->
                     ExecContextGraphSyncService.getWithSync(creationResult.execContext.execContextGraphId, ()->
                             ExecContextTaskStateSyncService.getWithSync(creationResult.execContext.execContextTaskStateId, ()->
-                                    batchService.createBatchForFile(
+                                    batchTxService.createBatchForFile(
                                             sc, creationResult.execContext.id, dispatcherContext))));
             return uploadingStatus;
         }
@@ -373,10 +373,10 @@ public class BatchTopLevelService {
             if (batch.deleted) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batchId + " was deleted successfully.", null);
             }
-            return ExecContextSyncService.getWithSync(execContextId, ()->batchService.deleteBatchVirtually(execContextId, companyUniqueId, batchId));
+            return ExecContextSyncService.getWithSync(execContextId, ()-> batchTxService.deleteBatchVirtually(execContextId, companyUniqueId, batchId));
         }
         else {
-            return ExecContextSyncService.getWithSync(execContextId, ()->batchService.deleteBatch(execContextId, companyUniqueId, batchId));
+            return ExecContextSyncService.getWithSync(execContextId, ()-> batchTxService.deleteBatch(execContextId, companyUniqueId, batchId));
         }
     }
 
@@ -392,13 +392,13 @@ public class BatchTopLevelService {
     }
 
     public BatchData.Status getBatchProcessingStatus(Long batchId, Long companyUniqueId, boolean includeDeleted) {
-        return batchService.getBatchProcessingStatus(batchId, companyUniqueId, includeDeleted);
+        return batchTxService.getBatchProcessingStatus(batchId, companyUniqueId, includeDeleted);
     }
 
     @Nullable
     public CleanerInfo getBatchProcessingResultWitTx(Long batchId, Long companyUniqueId, boolean includeDeleted) {
         try {
-            return batchService.getBatchProcessingResultWitTx(batchId, companyUniqueId, includeDeleted);
+            return batchTxService.getBatchProcessingResultWitTx(batchId, companyUniqueId, includeDeleted);
         } catch (Throwable th) {
             String es = S.f("#981.400 Error while getting a result of processing for batch #%d, error: %s", batchId, th.getMessage());
             log.error(es, th);
@@ -409,7 +409,7 @@ public class BatchTopLevelService {
     @Nullable
     public CleanerInfo getBatchOriginFile(Long batchId) {
         try {
-            return batchService.getBatchOriginFile(batchId);
+            return batchTxService.getBatchOriginFile(batchId);
         } catch (Throwable th) {
             String es = S.f("#981.420 Error while getting an original file for batch #%d, error: %s", batchId, th.getMessage());
             log.error(es, th);

@@ -76,6 +76,7 @@ public class Globals {
     public static final Duration SECONDS_31 = Duration.ofSeconds(31);
     public static final Duration SECONDS_60 = Duration.ofSeconds(60);
     public static final Duration SECONDS_120 = Duration.ofSeconds(120);
+    public static final Duration SECONDS_300 = Duration.ofSeconds(300);
     public static final Duration SECONDS_3600 = Duration.ofSeconds(3600);
     public static final Duration DAYS_14 = Duration.ofDays(14);
     public static final Period DAYS_90 = Period.ofDays(90);
@@ -232,7 +233,7 @@ public class Globals {
         }
 
         public Duration getArtifactCleaner() {
-            return artifactCleaner.toSeconds() >= 60 && artifactCleaner.toSeconds() <=600 ? artifactCleaner : SECONDS_60;
+            return artifactCleaner.toSeconds() >= 60 && artifactCleaner.toSeconds() <=600 ? artifactCleaner : SECONDS_300;
         }
 
         public Duration getGc() {

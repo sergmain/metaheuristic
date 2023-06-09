@@ -34,6 +34,13 @@ import java.util.List;
 @Profile("dispatcher")
 public interface BatchRepository extends CrudRepository<Batch, Long> {
 
+
+    @Nullable
+    @Transactional(readOnly = true)
+    @Query(value="select b from Batch b where b.id=:id")
+    Batch findByIdWithNull(Long id);
+
+
     @Query(value="select b.id from Batch b")
     List<Long> findAllIds();
 

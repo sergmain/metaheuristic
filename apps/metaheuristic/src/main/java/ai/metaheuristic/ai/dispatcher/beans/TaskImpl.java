@@ -34,7 +34,7 @@ import java.io.Serializable;
 @Entity
 @Table(name = "MH_TASK")
 @Data
-@ToString(exclude = {"params"} )
+@ToString(exclude = {"paramsLocked", "params"} )
 @NoArgsConstructor
 @EntityListeners(value=TaskImpl.LastUpdateListener.class)
 @Cacheable

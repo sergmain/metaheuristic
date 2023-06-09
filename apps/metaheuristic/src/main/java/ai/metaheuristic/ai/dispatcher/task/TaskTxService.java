@@ -54,6 +54,7 @@ public class TaskTxService {
 
     @Transactional(readOnly = true)
     public Map<Long, TaskApiData.TaskState> getExecStateOfTasks(Long execContextId) {
+        long mills = System.currentTimeMillis();
         List<Long> ids = taskRepository.findAllTaskIdsByExecContextId(execContextId);
         Map<Long, TaskApiData.TaskState> states = new HashMap<>(ids.size() + 1);
         if (ids.isEmpty()) {
@@ -66,6 +67,7 @@ public class TaskTxService {
             TaskApiData.TaskState taskState = new TaskApiData.TaskState(t.id, t.execState, updatedOn, t.getTaskParamsYaml().task.fromCache);
             states.put(taskState.taskId, taskState);
         });
+        log.info("540.040 getExecStateOfTasks() with {} tasks was finished for {} mills", ids.size(), System.currentTimeMillis()-mills);
         return states;
     }
 

@@ -37,7 +37,7 @@ import java.io.Serializable;
 @Table(name = "MH_EXEC_CONTEXT")
 @Data
 @NoArgsConstructor
-@ToString(exclude = {"paramsLocked"})
+@ToString(exclude = {"paramsLocked", "params"})
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class ExecContextImpl implements Serializable, ExecContext {

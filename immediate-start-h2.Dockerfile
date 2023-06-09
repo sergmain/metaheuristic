@@ -7,6 +7,7 @@ FROM alpine:latest
 RUN addgroup -S metaheuristic && adduser -S mh -G metaheuristic
 
 RUN apk add --update git
+RUN apt-get -y install git
 RUN apk add --update tzdata
 
 
