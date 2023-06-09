@@ -49,12 +49,12 @@ public class TestExecContextState {
         );
 
         Map<Long, TaskApiData.TaskState> states = Map.of(
-                100L, new TaskApiData.TaskState(100L, TaskExecState.OK.value, 0L),
-                120L, new TaskApiData.TaskState(120L, TaskExecState.IN_PROGRESS.value, 0L),
-                140L, new TaskApiData.TaskState(140L, TaskExecState.NONE.value, 0L),
-                160L, new TaskApiData.TaskState(160L, TaskExecState.OK.value, 0L),
-                180L, new TaskApiData.TaskState(180L, TaskExecState.ERROR.value, 0L),
-                190L, new TaskApiData.TaskState(190L, TaskExecState.OK.value, 0L)
+                100L, new TaskApiData.TaskState(100L, TaskExecState.OK.value, 0L, false),
+                120L, new TaskApiData.TaskState(120L, TaskExecState.IN_PROGRESS.value, 0L, false),
+                140L, new TaskApiData.TaskState(140L, TaskExecState.NONE.value, 0L, false),
+                160L, new TaskApiData.TaskState(160L, TaskExecState.OK.value, 0L, false),
+                180L, new TaskApiData.TaskState(180L, TaskExecState.ERROR.value, 0L, false),
+                190L, new TaskApiData.TaskState(190L, TaskExecState.OK.value, 0L, false)
         );
         List<String> processCodes = List.of("process-1", "process-2", "process-3", "mh.finish");
         ExecContextApiData.RawExecContextStateResult raw = new ExecContextApiData.RawExecContextStateResult(

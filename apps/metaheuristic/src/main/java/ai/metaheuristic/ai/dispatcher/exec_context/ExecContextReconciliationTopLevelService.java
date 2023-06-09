@@ -227,7 +227,7 @@ public class ExecContextReconciliationTopLevelService {
                 .filter(e-> TaskExecState.IN_PROGRESS.value==e.getValue().execState)
                 .forEach(e->{
                     Long taskId = e.getKey();
-                    TaskImpl task = taskRepository.findById(taskId).orElse(null);
+                    TaskImpl task = taskRepository.findByIdReadOnly(taskId);
                     if (task != null) {
                         TaskParamsYaml tpy = task.getTaskParamsYaml();
 

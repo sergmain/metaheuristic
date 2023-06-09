@@ -61,7 +61,7 @@ public class TaskFinishingTopLevelService {
 
     private void checkTaskCanBeFinishedInternal(Long taskId, BiFunction<Long, ExecContextParamsYaml, Void> finishAndStoreVariableFunction) {
         TxUtils.checkTxNotExists();
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        TaskImpl task = taskRepository.findByIdReadOnly(taskId);
         if (task == null) {
             log.warn("#318.010 Reporting about non-existed task #{}", taskId);
             return;

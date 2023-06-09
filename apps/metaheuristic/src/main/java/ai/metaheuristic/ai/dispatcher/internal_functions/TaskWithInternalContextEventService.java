@@ -261,7 +261,7 @@ public class TaskWithInternalContextEventService {
         TxUtils.checkTxNotExists();
         TaskLastProcessingHelper.lastTaskId = null;
         try {
-            TaskImpl task = taskRepository.findById(taskId).orElse(null);
+            TaskImpl task = taskRepository.findByIdReadOnly(taskId);
             if (task==null) {
                 log.warn("#706.180 Task #{} with internal context doesn't exist", taskId);
                 return;
@@ -307,7 +307,7 @@ public class TaskWithInternalContextEventService {
             if (notSkip) {
                 boolean isLongRunning = InternalFunctionProcessor.process(simpleExecContext, taskId, taskParamsYaml.task.taskContextId, taskParamsYaml);
                 if (!isLongRunning) {
-                    taskWithInternalContextService.storeResult(taskId, taskParamsYaml);
+                    taskWithInternalContextService.storeResult(taskId, taskParamsYaml.task.function.code);
                 }
             }
             else {

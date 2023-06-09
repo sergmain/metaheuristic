@@ -199,7 +199,7 @@ public class TaskCheckCachingTopLevelService {
     private PrepareData getCacheProcess(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
         TxUtils.checkTxNotExists();
 
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        TaskImpl task = taskRepository.findByIdReadOnly(taskId);
         if (task==null) {
             log.debug("Task wasn't found, execContextId: {}, task: {}", simpleExecContext.execContextId, taskId);
             return PREPARE_DATA_NONE;

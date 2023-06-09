@@ -21,6 +21,7 @@ import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -51,7 +52,7 @@ public class YamlUtils {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
-        Representer representer = new Representer() {
+        Representer representer = new Representer(new DumperOptions()) {
 
             @Override
             @Nullable
@@ -71,7 +72,12 @@ public class YamlUtils {
             }
         }
 
-        Constructor constructor = new Constructor(clazz);
+        LoaderOptions loaderOptions = new LoaderOptions();
+        loaderOptions.setAllowDuplicateKeys(true);
+        loaderOptions.setMaxAliasesForCollections(10);
+        loaderOptions.setAllowRecursiveKeys(false);
+
+        Constructor constructor = new Constructor(clazz, loaderOptions);
         if (customTypeDescription!=null) {
             constructor.addTypeDescription(customTypeDescription);
         }

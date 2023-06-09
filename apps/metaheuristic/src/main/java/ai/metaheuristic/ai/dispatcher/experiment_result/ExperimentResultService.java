@@ -229,7 +229,7 @@ public class ExperimentResultService {
 
         for (Long taskId : ids) {
 
-            TaskImpl t = taskRepository.findById(taskId).orElse(null);
+            TaskImpl t = taskRepository.findByIdReadOnly(taskId);
             if (t == null) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"Task #"+taskId+" wasn't found");
             }

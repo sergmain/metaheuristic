@@ -482,7 +482,7 @@ public class BatchResultProcessorTxService {
 
     @SuppressWarnings("DuplicateBranchesInSwitch")
     private void storeStatusOfTask(BatchStatusProcessor bs, Long execContextId, Long taskId) {
-        final TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        final TaskImpl task = taskRepository.findByIdReadOnly(taskId);
         if (task==null) {
             String msg = "#993.220 Can't find task #" + taskId;
             log.info(msg);

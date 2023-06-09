@@ -107,7 +107,7 @@ public class ExecContextTaskResettingTopLevelService {
     @Async
     @EventListener
     public void resetTaskShort(ResetTaskShortEvent event) {
-        TaskImpl task = taskRepository.findById(event.taskId).orElse(null);
+        TaskImpl task = taskRepository.findByIdReadOnly(event.taskId);
         if (task==null || EnumsApi.TaskExecState.isFinishedState(task.execState)) {
             return;
         }
@@ -139,7 +139,7 @@ public class ExecContextTaskResettingTopLevelService {
 
         final List<TaskData.TaskWithRecoveryStatus> statuses = new ArrayList<>(taskIds.size()+1);
         for (Long taskId : taskIds) {
-            TaskImpl task = taskRepository.findById(taskId).orElse(null);
+            TaskImpl task = taskRepository.findByIdReadOnly(taskId);
             if (task==null) {
                 continue;
             }

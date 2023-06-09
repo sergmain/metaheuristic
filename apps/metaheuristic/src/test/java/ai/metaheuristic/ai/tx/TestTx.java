@@ -83,7 +83,8 @@ public class TestTx extends PreparingSourceCode {
         assertNotNull(task1.version);
         assertEquals("BBB", task1.getParams());
         assertTrue((int)task1.version>task.version);
-        TaskImpl t1 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        TaskImpl t1 = taskRepository.findByIdReadOnly(task.id);
+        assertNotNull(t1);
         assertEquals(t1, task1);
 
         ////

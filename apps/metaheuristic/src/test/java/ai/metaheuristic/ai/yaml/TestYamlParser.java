@@ -25,6 +25,7 @@ import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -50,14 +51,19 @@ public class TestYamlParser {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
-        Representer representer = new Representer();
+        Representer representer = new Representer(new DumperOptions());
         if (clazzMap!=null) {
             for (Class<?> clazzTag : clazzMap) {
                 representer.addClassTag(clazzTag, Tag.MAP);
             }
         }
 
-        Constructor constructor = new Constructor(clazz);
+        LoaderOptions loaderOptions = new LoaderOptions();
+        loaderOptions.setAllowDuplicateKeys(true);
+        loaderOptions.setMaxAliasesForCollections(10);
+        loaderOptions.setAllowRecursiveKeys(false);
+
+        Constructor constructor = new Constructor(clazz, loaderOptions);
         if (customTypeDescription!=null) {
             constructor.addTypeDescription(customTypeDescription);
         }

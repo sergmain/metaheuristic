@@ -81,7 +81,7 @@ public class TaskWithInternalContextService {
     }
 
     @Transactional
-    public void storeResult(Long taskId, TaskParamsYaml taskParamsYaml) {
+    public void storeResult(Long taskId, String functionCode) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.warn("#707.090 Task #{} with internal context doesn't exist", taskId);
@@ -93,7 +93,7 @@ public class TaskWithInternalContextService {
         ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult r = new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
         r.taskId = task.id;
         FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
-        functionExec.exec = new FunctionApiData.SystemExecResult(taskParamsYaml.task.function.code, true, 0, "");
+        functionExec.exec = new FunctionApiData.SystemExecResult(functionCode, true, 0, "");
         r.result = FunctionExecUtils.toString(functionExec);
 
         execContextFSM.storeExecResult(task, r);

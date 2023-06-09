@@ -88,7 +88,7 @@ public class ExecContextVariableTopLevelService {
         }
         catch (ObjectOptimisticLockingFailureException th) {
             if (log.isDebugEnabled()) {
-                TaskImpl t = taskRepository.findById(taskId).orElse(null);
+                TaskImpl t = taskRepository.findByIdReadOnly(taskId);
                 if (t==null) {
                     log.debug("#440.080 uploadVariable(), task #{} wasn't found", taskId);
                 }
@@ -177,7 +177,7 @@ public class ExecContextVariableTopLevelService {
                 uploadResult = TaskSyncService.getWithSync(taskId, () -> taskVariableTopLevelService.updateStatusOfVariable(taskId, variableId));
             }
             if (log.isDebugEnabled()) {
-                TaskImpl t = taskRepository.findById(taskId).orElse(null);
+                TaskImpl t = taskRepository.findByIdReadOnly(taskId);
                 if (t==null) {
                     log.debug("#440.300 uploadVariable(), task #{} wasn't found", taskId);
                 }
@@ -189,7 +189,7 @@ public class ExecContextVariableTopLevelService {
         }
         catch (ObjectOptimisticLockingFailureException th) {
             if (log.isDebugEnabled()) {
-                TaskImpl t = taskRepository.findById(taskId).orElse(null);
+                TaskImpl t = taskRepository.findByIdReadOnly(taskId);
                 if (t==null) {
                     log.debug("#440.340 uploadVariable(), task #{} wasn't found", taskId);
                 }

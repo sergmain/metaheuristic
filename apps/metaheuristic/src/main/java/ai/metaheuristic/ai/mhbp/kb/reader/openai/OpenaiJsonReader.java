@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.SneakyThrows;
 import org.springframework.lang.Nullable;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
@@ -107,7 +108,12 @@ public class OpenaiJsonReader {
 
     @Nullable
     public static String parseAndGetJsonlPath(String s) {
-        Constructor c = new Constructor(Map.class);
+        LoaderOptions loaderOptions = new LoaderOptions();
+        loaderOptions.setAllowDuplicateKeys(true);
+        loaderOptions.setMaxAliasesForCollections(10);
+        loaderOptions.setAllowRecursiveKeys(false);
+
+        Constructor c = new Constructor(Map.class, loaderOptions);
         Yaml yaml = new Yaml(c);
 
         Map map = (Map) yaml.load(s);

@@ -81,17 +81,19 @@ public class TaskFinishingService {
 
         eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, taskId));
 
-        TaskParamsYaml tpy = task.getTaskParamsYaml();
-
         taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK, true);
 
-        if (store && tpy.task.cache!=null && tpy.task.cache.enabled) {
-            ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
-            if (p==null) {
-                log.warn("#319.120 Process {} wasn't found", tpy.task.processCode);
-                return null;
+        if (store) {
+            TaskParamsYaml tpy = task.getTaskParamsYaml();
+
+            if (tpy.task.cache!=null && tpy.task.cache.enabled) {
+                ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
+                if (p==null) {
+                    log.warn("#319.120 Process {} wasn't found", tpy.task.processCode);
+                    return null;
+                }
+                cacheService.storeVariables(tpy, p.function);
             }
-            cacheService.storeVariables(tpy, p.function);
         }
         return null;
     }

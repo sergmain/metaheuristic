@@ -226,7 +226,7 @@ public class ExecContextTaskAssigningTopLevelService {
         while ((taskIds = execContextFSM.getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, filteredVertices, page++)).size()>0) {
 
             for (Long taskId : taskIds) {
-                TaskImpl task = taskRepository.findById(taskId).orElse(null);
+                TaskImpl task = taskRepository.findByIdReadOnly(taskId);
                 if (task==null) {
                     if (log.isInfoEnabled()) stat.notAllocatedReasons.add("task #"+ taskId +" wasn't found");
                     continue;

@@ -6,10 +6,14 @@ FROM alpine:latest
 
 RUN addgroup -S metaheuristic && adduser -S mh -G metaheuristic
 
-RUN apk add --update git
-RUN apt-get -y install git
+RUN apk update && \
+    apk upgrade && \
+    apk add --no-cache git
+
+#RUN apk add --update git
 RUN apk add --update tzdata
 
+RUN git --version
 
 FROM eclipse-temurin:17.0.7_7-jdk
 

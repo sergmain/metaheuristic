@@ -198,7 +198,7 @@ public class ExecContextTopLevelService {
 
     @Nullable
     private Long storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
-        TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
+        TaskImpl task = taskRepository.findByIdReadOnly(result.taskId);
         if (task == null) {
             log.warn("#210.150 Reporting about non-existed task #{}", result.taskId);
             return null;
@@ -272,7 +272,7 @@ public class ExecContextTopLevelService {
             return new ExecContextApiData.TaskExecInfo(sourceCodeId, execContextId, taskId, EnumsApi.TaskExecState.ERROR, S.f("ExecContext #%s wasn't found", execContextId));
         }
 
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        TaskImpl task = taskRepository.findByIdReadOnly(taskId);
         if (task == null) {
             log.warn("#210.360 Reporting about non-existed task #{}", taskId);
             return new ExecContextApiData.TaskExecInfo(sourceCodeId, execContextId, taskId, EnumsApi.TaskExecState.ERROR, S.f("Task #%s wasn't found", taskId));

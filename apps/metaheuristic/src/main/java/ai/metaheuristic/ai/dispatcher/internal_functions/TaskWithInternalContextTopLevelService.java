@@ -64,13 +64,16 @@ public class TaskWithInternalContextTopLevelService {
 
     public void storeResult(Long taskId, Long subExecContextId) {
         TxUtils.checkTxNotExists();
-        TaskImpl task = taskRepository.findById(taskId).orElseThrow(
-                () -> new InternalFunctionException(task_not_found, "#992.020 Task not found #" + taskId));
+        TaskImpl task = taskRepository.findByIdReadOnly(taskId);
+
+        if (task==null) {
+            throw new InternalFunctionException(task_not_found, "#992.020 Task not found #" + taskId);
+        }
 
         TaskParamsYaml taskParamsYaml = task.getTaskParamsYaml();
 
         copyVariables(subExecContextId, task, taskParamsYaml);
-        taskWithInternalContextService.storeResult(taskId, taskParamsYaml);
+        taskWithInternalContextService.storeResult(taskId, taskParamsYaml.task.function.code);
     }
 
     private void copyVariables(Long subExecContextId, TaskImpl task, TaskParamsYaml taskParamsYaml) {

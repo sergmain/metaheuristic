@@ -99,7 +99,7 @@ public class ExecContextTaskStateTopLevelService {
     public void updateTaskExecStatesInGraph(UpdateTaskExecStatesInGraphEvent event) {
         try {
             log.debug("call ExecContextTaskStateTopLevelService.updateTaskExecStatesInGraph({}, {})", event.execContextId, event.taskId);
-            TaskImpl task = taskRepository.findById(event.taskId).orElse(null);
+            TaskImpl task = taskRepository.findByIdReadOnly(event.taskId);
             if (task==null) {
                 return;
             }

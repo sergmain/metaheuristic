@@ -18,6 +18,8 @@ package ai.metaheuristic.commons.yaml.versioning;
 
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.ParamsVersion;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.nodes.Tag;
@@ -36,11 +38,16 @@ public class YamlForVersioning {
     }
 
     private static Yaml getYamlForVersion() {
-        Representer representer = new Representer();
+        Representer representer = new Representer(new DumperOptions());
         representer.getPropertyUtils().setSkipMissingProperties(true);
         representer.addClassTag(ParamsVersion.class, Tag.MAP);
 
-        Constructor constructor = new Constructor(ParamsVersion.class);
+        LoaderOptions loaderOptions = new LoaderOptions();
+        loaderOptions.setAllowDuplicateKeys(true);
+        loaderOptions.setMaxAliasesForCollections(10);
+        loaderOptions.setAllowRecursiveKeys(false);
+
+        Constructor constructor = new Constructor(ParamsVersion.class, loaderOptions);
 
         Yaml yaml = new Yaml(constructor, representer);
         return yaml;

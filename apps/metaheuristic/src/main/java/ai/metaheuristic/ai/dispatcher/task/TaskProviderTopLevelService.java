@@ -86,7 +86,7 @@ public class TaskProviderTopLevelService {
             if (TaskQueueService.alreadyRegistered(taskId)) {
                 return;
             }
-            final TaskImpl task = taskRepository.findById(taskId).orElse(null);
+            final TaskImpl task = taskRepository.findByIdReadOnly(taskId);
             if (task == null) {
                 log.warn("#393.040 Can't register task #{}, task doesn't exist", taskId);
                 return;
@@ -303,7 +303,7 @@ public class TaskProviderTopLevelService {
                         ()-> getTaskAndAssignToProcessor(core.id, psy, csy, isAcceptOnlySigned, quotas, taskIds));
 
         if (assignedTask!=null && log.isDebugEnabled()) {
-            TaskImpl task = taskRepository.findById(assignedTask.taskId).orElse(null);
+            TaskImpl task = taskRepository.findByIdReadOnly(assignedTask.taskId);
             if (task==null) {
                 log.debug("#393.480 findTask(), task #{} wasn't found", assignedTask.taskId);
             }
