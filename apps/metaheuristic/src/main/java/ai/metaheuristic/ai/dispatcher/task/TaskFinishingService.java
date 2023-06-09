@@ -50,7 +50,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 public class TaskFinishingService {
 
     private final DispatcherEventService dispatcherEventService;
-    private final TaskService taskService;
+    private final TaskTxService taskService;
     private final CacheTxService cacheService;
     private final TaskRepository taskRepository;
     private final TaskProviderTopLevelService taskProviderTopLevelService;

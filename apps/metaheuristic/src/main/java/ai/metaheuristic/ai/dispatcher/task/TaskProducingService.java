@@ -51,7 +51,7 @@ public class TaskProducingService {
     private final VariableTxService variableService;
     private final ExecContextGraphService execContextGraphService;
     private final FunctionTopLevelService functionTopLevelService;
-    private final TaskService taskService;
+    private final TaskTxService taskService;
     private final Globals globals;
 
     public TaskData.ProduceTaskResult produceTaskForProcess(

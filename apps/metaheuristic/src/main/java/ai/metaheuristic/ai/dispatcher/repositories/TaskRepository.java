@@ -29,10 +29,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 @Repository
 @Profile("dispatcher")
 public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
+
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+    @Query("SELECT t FROM TaskImpl t where t.id in :ids")
+    Stream<TaskImpl> findByIds(List<Long> ids);
 
     @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
     @Query("SELECT t.id FROM TaskImpl t where t.execContextId=:execContextId and t.execState=7")

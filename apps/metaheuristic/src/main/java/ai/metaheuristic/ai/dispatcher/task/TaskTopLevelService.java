@@ -56,7 +56,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TaskTopLevelService {
 
     private final ExecContextCache execContextCache;
-    private final TaskService taskService;
+    private final TaskTxService taskService;
     private final TaskRepository taskRepository;
     private final VariableTxService variableService;
     private final TaskVariableTopLevelService taskVariableTopLevelService;

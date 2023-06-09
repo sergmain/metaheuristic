@@ -19,30 +19,25 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.dispatcher.Task;
-import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.api.data.task.TaskApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class TaskService {
+public class TaskTxService {
 
     private final TaskRepository taskRepository;
-//    private final EntityManager em;
 
     public TaskImpl save(TaskImpl task) {
         TxUtils.checkTxExists();
@@ -54,16 +49,25 @@ public class TaskService {
             return t;
         }
         TaskSyncService.checkWriteLockPresent(task.id);
-
-/*
-        if (!em.contains(task) ) {
-//            https://stackoverflow.com/questions/13135309/how-to-find-out-whether-an-entity-is-detached-in-jpa-hibernate
-            throw new IllegalStateException(S.f("Bean %s isn't managed by EntityManager", task));
-        }
-*/
         return task;
     }
 
+    @Transactional(readOnly = true)
+    public Map<Long, TaskApiData.TaskState> getExecStateOfTasks(Long execContextId) {
+        List<Long> ids = taskRepository.findAllTaskIdsByExecContextId(execContextId);
+        Map<Long, TaskApiData.TaskState> states = new HashMap<>(ids.size() + 1);
+        if (ids.isEmpty()) {
+            return states;
+        }
+        Stream<TaskImpl> stream = taskRepository.findByIds(ids);
+
+        stream.forEach(t-> {
+            long updatedOn = t.updatedOn!=null ? t.updatedOn : 0;
+            TaskApiData.TaskState taskState = new TaskApiData.TaskState(t.id, t.execState, updatedOn, t.getTaskParamsYaml().task.fromCache);
+            states.put(taskState.taskId, taskState);
+        });
+        return states;
+    }
 
     @Transactional
     public void updateAccessByProcessorOn(Long taskId) {

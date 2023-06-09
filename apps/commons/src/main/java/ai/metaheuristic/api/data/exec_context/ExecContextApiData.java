@@ -146,15 +146,18 @@ public class ExecContextApiData {
         public String state;
         // context of function
         public String context;
+        // content of all output variables were created from cache
+        public boolean fromCache;
 
         @Nullable
         public List<VariableInfo> outs;
 
-        public StateCell(Long taskId, String state, String context, @Nullable List<VariableInfo> outs) {
+        public StateCell(Long taskId, String state, String context, boolean fromCache, @Nullable List<VariableInfo> outs) {
             this.empty = false;
             this.taskId = taskId;
             this.state = state;
             this.context = context;
+            this.fromCache = fromCache;
             this.outs = outs;
         }
     }

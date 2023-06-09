@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.RestUtils;
@@ -40,7 +41,6 @@ import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextsListItem;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -59,9 +59,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static ai.metaheuristic.api.EnumsApi.OperationStatus;
 
@@ -77,7 +75,7 @@ public class ExecContextService {
     private final SourceCodeCache sourceCodeCache;
     private final ExecContextCache execContextCache;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
-    private final TaskRepository taskRepository;
+    private final TaskTxService taskTxService;
     private final VariableRepository variableRepository;
     private final VariableTxService variableService;
     private final EventPublisherService eventPublisherService;
@@ -134,11 +132,13 @@ public class ExecContextService {
         List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ecpy);
         return new ExecContextApiData.RawExecContextStateResult(
                 sourceCodeId, info.states, processCodes, result.sourceCodeType, result.sourceCodeUid, result.sourceCodeValid,
-                getExecStateOfTasks(execContextId)
+                taskTxService.getExecStateOfTasks(execContextId)
         );
     }
 
-    public Map<Long, TaskApiData.TaskState> getExecStateOfTasks(Long execContextId) {
+
+/*
+    public Map<Long, TaskApiData.TaskState> getExecStateOfTasks_old(Long execContextId) {
         List<Object[]> list = taskRepository.findExecStateByExecContextId(execContextId);
 
         Map<Long, TaskApiData.TaskState> states = new HashMap<>(list.size()+1);
@@ -148,6 +148,7 @@ public class ExecContextService {
         }
         return states;
     }
+*/
 
     private void initInfoAboutSourceCode(Long sourceCodeId, ExecContextApiData.ExecContextsResult result) {
         SourceCodeImpl sc = sourceCodeCache.findById(sourceCodeId);

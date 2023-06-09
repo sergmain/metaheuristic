@@ -12,7 +12,6 @@ RUN apk add --update tzdata
 
 FROM eclipse-temurin:17.0.7_7-jdk
 
-
 # Set language
 #ENV MUSL_LOCPATH=/usr/local/share/i18n/locales/musl
 ##RUN apk --update add cmake make musl-dev gcc gettext-dev libintl && \
@@ -34,7 +33,7 @@ ENV LANG=en_EN.UTF-8 \
 
 RUN mkdir -p /metaheuristic
 
-COPY /apps/distrib/metaheuristic.jar /metaheuristic
+COPY /distrib/metaheuristic.jar /metaheuristic
 COPY /docker/quickstart/processor/* /metaheuristic/processor/
 #COPY /apps/metaheuristic/src/main/resources/application-quickstart.prop /metaheuristic/config/application.properties
 

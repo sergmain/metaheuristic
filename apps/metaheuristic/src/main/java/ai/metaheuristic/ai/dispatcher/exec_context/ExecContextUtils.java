@@ -112,6 +112,7 @@ public class ExecContextUtils {
                 TaskApiData.TaskState state = raw.states.get(simpleTaskInfo.taskId);
                 String stateAsStr;
                 List<ExecContextApiData.VariableInfo> outputs = null;
+                boolean fromCache = false;
                 if (state==null) {
                     stateAsStr = "<ILLEGAL STATE>";
                 }
@@ -122,9 +123,10 @@ public class ExecContextUtils {
                     if (managerRole && (taskExecState==EnumsApi.TaskExecState.OK || taskExecState== EnumsApi.TaskExecState.ERROR)) {
                         outputs = simpleTaskInfo.outputs;
                     }
+                    fromCache = state.fromCache;
                 }
                 // TODO 2023-06-07 p5 add input variables' states here
-                r.lines[i].cells[j] = new ExecContextApiData.StateCell(simpleTaskInfo.taskId, stateAsStr, simpleTaskInfo.taskContextId, outputs);
+                r.lines[i].cells[j] = new ExecContextApiData.StateCell(simpleTaskInfo.taskId, stateAsStr, simpleTaskInfo.taskContextId, fromCache, outputs);
             }
         }
         for (ExecContextApiData.ColumnHeader ch : r.header) {

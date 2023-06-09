@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -51,7 +51,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Profile("dispatcher")
 public class TaskWithInternalContextService {
 
-    private final TaskService taskService;
+    private final TaskTxService taskService;
     private final TaskStateService taskStateService;
     private final VariableTxService variableService;
     private final TaskRepository taskRepository;

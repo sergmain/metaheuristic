@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
+import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskApiData;
@@ -55,7 +56,7 @@ import static ai.metaheuristic.api.EnumsApi.TaskExecState;
 @RequiredArgsConstructor
 public class ExecContextReconciliationTopLevelService {
 
-    private final ExecContextService execContextService;
+    private final TaskTxService taskTxService;
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -82,7 +83,7 @@ public class ExecContextReconciliationTopLevelService {
         final Set<ExecContextData.TaskWithState> vertices = execContextGraphService.findDescendantsWithState(
                 execContextGraphId, execContextTaskStateId, rootVertices.get(0).taskId);
 
-        final Map<Long, TaskApiData.TaskState> states = execContextService.getExecStateOfTasks(execContextId);
+        final Map<Long, TaskApiData.TaskState> states = taskTxService.getExecStateOfTasks(execContextId);
         final Map<Long, TaskQueue.AllocatedTask> allocatedTasks = TaskProviderTopLevelService.getTaskExecStates(execContextId);
 
         for (ExecContextData.TaskWithState tv : vertices) {

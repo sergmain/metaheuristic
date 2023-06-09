@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.event.StartProcessReadinessEvent;
 import ai.metaheuristic.ai.dispatcher.event.StartTaskProcessingEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import lombok.RequiredArgsConstructor;
@@ -66,6 +67,7 @@ public class ExecContextReadinessService {
     private final ExecContextReadinessStateService execContextReadinessStateService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final DispatcherParamsService dispatcherParamsService;
+    private final TaskTxService taskTxService;
 
     private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
     private final LinkedList<Long> queue = new LinkedList<>();
@@ -127,7 +129,7 @@ public class ExecContextReadinessService {
         }
         ExecContextData.SimpleExecContext simpleExecContext = execContext.asSimple();
 
-        Map<Long, TaskApiData.TaskState> states = execContextService.getExecStateOfTasks(execContextId);
+        Map<Long, TaskApiData.TaskState> states = taskTxService.getExecStateOfTasks(execContextId);
 
         final List<ExecContextData.TaskVertex> vertices = execContextGraphTopLevelService.findAllForAssigning(
                 execContext.execContextGraphId, execContext.execContextTaskStateId, true);
