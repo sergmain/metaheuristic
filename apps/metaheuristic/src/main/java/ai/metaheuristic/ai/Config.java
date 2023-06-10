@@ -31,6 +31,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -60,6 +61,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  * Date: 08.06.2017
  * Time: 17:21
  */
+@EnableCaching
 @Configuration
 @RequiredArgsConstructor
 @Slf4j

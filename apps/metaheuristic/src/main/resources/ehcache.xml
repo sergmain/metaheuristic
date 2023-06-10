@@ -13,10 +13,24 @@
   ~ You should have received a copy of the GNU General Public License
   ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   -->
+<!--        https://www.ehcache.org/documentation/3.0/xsds.html#core-->
+<!--<eh:config
+        xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+        xmlns:eh='http://www.ehcache.org/v3'
+        xmlns:jsr107='http://www.ehcache.org/v3/jsr107'
+        xsi:schemaLocation="
+        http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core-3.0.xsd
+        http://www.ehcache.org/v3/jsr107 http://www.ehcache.org/schema/ehcache-107-ext-3.0.xsd">
+</eh:config>-->
 <config
         xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
         xmlns='http://www.ehcache.org/v3'
-        xsi:noNamespaceSchemaLocation="classpath:/ehcache-core-3.8.xsd">
+        xmlns:jsr107='http://www.ehcache.org/v3/jsr107'
+        xsi:noNamespaceSchemaLocation="classpath:/ehcache-core-3.8.xsd"
+        xsi:schemaLocation="
+        http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core-3.0.xsd
+        http://www.ehcache.org/v3/jsr107 http://www.ehcache.org/schema/ehcache-107-ext-3.0.xsd"
+>
 
     <cache-template name="default-template">
         <expiry>
