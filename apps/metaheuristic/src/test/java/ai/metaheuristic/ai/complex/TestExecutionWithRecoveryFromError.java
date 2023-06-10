@@ -50,6 +50,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -64,6 +65,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles({"dispatcher", "mysql"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@AutoConfigureCache
 public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
@@ -71,7 +73,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
     @Autowired private TaskRepository taskRepository;
     @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
     @Autowired private TaskFinishingTopLevelService taskFinishingTopLevelService;
-    @Autowired private TaskFinishingService taskFinishingService;
+    @Autowired private TaskFinishingTxService taskFinishingTxService;
     @Autowired private ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     @Autowired private TaskVariableTopLevelService taskVariableTopLevelService;
     @Autowired private VariableTxService variableService;
@@ -253,7 +255,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
 
         if (error) {
             TaskSyncService.getWithSyncVoid(simpleTask.taskId,
-                    () -> taskFinishingService.finishWithErrorWithTx(simpleTask.taskId, "1st cycle of error"));
+                    () -> taskFinishingTxService.finishWithErrorWithTx(simpleTask.taskId, "1st cycle of error"));
 
             TaskImpl task1 = taskRepository.findById(simpleTask.taskId).orElse(null);
             assertNotNull(task1);

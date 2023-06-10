@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.DeregisterTasksByExecContextIdEvent;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -36,7 +35,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.function.BiFunction;
+import java.util.function.BiConsumer;
 
 /**
  * @author Serge
@@ -49,9 +48,8 @@ import java.util.function.BiFunction;
 @RequiredArgsConstructor
 public class TaskFinishingTopLevelService {
 
-    private final DispatcherEventService dispatcherEventService;
     private final TaskRepository taskRepository;
-    private final TaskFinishingService taskFinishingService;
+    private final TaskFinishingTxService taskFinishingTxService;
     private final ExecContextCache execContextCache;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -59,7 +57,7 @@ public class TaskFinishingTopLevelService {
         checkTaskCanBeFinishedInternal(taskId, this::finishAndStoreVariableInternal );
     }
 
-    private void checkTaskCanBeFinishedInternal(Long taskId, BiFunction<Long, ExecContextParamsYaml, Void> finishAndStoreVariableFunction) {
+    private void checkTaskCanBeFinishedInternal(Long taskId, BiConsumer<Long, ExecContextParamsYaml> finishAndStoreVariableFunction) {
         TxUtils.checkTxNotExists();
         TaskImpl task = taskRepository.findByIdReadOnly(taskId);
         if (task == null) {
@@ -131,18 +129,18 @@ public class TaskFinishingTopLevelService {
                 return;
             }
 
-            TaskSyncService.getWithSyncNullable(task.id,
-                    () -> finishAndStoreVariableFunction.apply(taskId, execContext.getExecContextParamsYaml()));
+            TaskSyncService.getWithSyncVoid(task.id,
+                    () -> finishAndStoreVariableFunction.accept(taskId, execContext.getExecContextParamsYaml()));
         }
     }
 
     // this method is here because there was a problem with transactional method called from lambda
-    private Void finishAndStoreVariableInternal(Long taskId, ExecContextParamsYaml ecpy) {
-        return taskFinishingService.finishAsOkAndStoreVariable(taskId, ecpy);
+    private void finishAndStoreVariableInternal(Long taskId, ExecContextParamsYaml ecpy) {
+        taskFinishingTxService.finishAsOkAndStoreVariable(taskId, ecpy);
     }
 
     private void finishWithErrorWithInternal(Long taskId, String console) {
-        taskFinishingService.finishWithErrorWithTx(taskId, console);
+        taskFinishingTxService.finishWithErrorWithTx(taskId, console);
     }
 
 

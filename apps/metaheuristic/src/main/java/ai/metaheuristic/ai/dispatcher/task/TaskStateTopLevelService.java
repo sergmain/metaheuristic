@@ -35,14 +35,14 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TaskStateTopLevelService {
 
-    private final TaskFinishingService taskFinishingService;
+    private final TaskFinishingTxService taskFinishingTxService;
 
     @Async
     @EventListener
     public void finishWithErrorWithTx(TaskFinishWithErrorEvent event) {
         try {
             TaskSyncService.getWithSyncVoid(event.taskId,
-                    () -> taskFinishingService.finishWithErrorWithTx(event.taskId, event.error));
+                    () -> taskFinishingTxService.finishWithErrorWithTx(event.taskId, event.error));
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }

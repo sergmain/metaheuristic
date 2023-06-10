@@ -47,7 +47,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
-public class TaskFinishingService {
+public class TaskFinishingTxService {
 
     private final DispatcherEventService dispatcherEventService;
     private final TaskTxService taskService;
@@ -58,16 +58,16 @@ public class TaskFinishingService {
     private final TaskStateService taskStateService;
 
     @Transactional
-    public Void finishAsOkAndStoreVariable(Long taskId, ExecContextParamsYaml ecpy) {
-        return finishAsOk(taskId, ecpy, true);
+    public void finishAsOkAndStoreVariable(Long taskId, ExecContextParamsYaml ecpy) {
+        finishAsOk(taskId, ecpy, true);
     }
 
     @Transactional
-    public Void finishAsOk(Long taskId) {
-        return finishAsOk(taskId, null, false);
+    public void finishAsOk(Long taskId) {
+        finishAsOk(taskId, null, false);
     }
 
-    private Void finishAsOk(Long taskId, @Nullable ExecContextParamsYaml ecpy, boolean store) {
+    private void finishAsOk(Long taskId, @Nullable ExecContextParamsYaml ecpy, boolean store) {
         if (store && ecpy==null) {
             throw new IllegalStateException("(store && ecpy==null)");
         }
@@ -76,7 +76,7 @@ public class TaskFinishingService {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.warn("#319.100 Reporting about non-existed task #{}", taskId);
-            return null;
+            return;
         }
 
         eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, taskId));
@@ -90,12 +90,11 @@ public class TaskFinishingService {
                 ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
                 if (p==null) {
                     log.warn("#319.120 Process {} wasn't found", tpy.task.processCode);
-                    return null;
+                    return;
                 }
                 cacheService.storeVariables(tpy, p.function);
             }
         }
-        return null;
     }
 
     @Transactional

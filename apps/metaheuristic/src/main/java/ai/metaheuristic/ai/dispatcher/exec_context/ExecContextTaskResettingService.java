@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
+import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
@@ -62,7 +62,7 @@ public class ExecContextTaskResettingService {
     private final TaskTxService taskService;
     private final EventPublisherService eventPublisherService;
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
-    private final TaskFinishingService taskFinishingService;
+    private final TaskFinishingTxService taskFinishingTxService;
 
     @Transactional
     public void resetTasksWithErrorForRecovery(Long execContextId, List<TaskData.TaskWithRecoveryStatus> statuses) {
@@ -84,7 +84,7 @@ public class ExecContextTaskResettingService {
             if (status.targetState== EnumsApi.TaskExecState.ERROR) {
                 // console is null because an actual text of error was specified with TaskExecState.ERROR_WITH_RECOVERY
                 TaskSyncService.getWithSyncVoid(status.taskId,
-                        ()->taskFinishingService.finishWithError(status.taskId, null, EnumsApi.TaskExecState.ERROR));
+                        ()-> taskFinishingTxService.finishWithError(status.taskId, null, EnumsApi.TaskExecState.ERROR));
             }
             else if (status.targetState==EnumsApi.TaskExecState.NONE) {
                 TaskSyncService.getWithSyncVoid(status.taskId, ()->resetTask(ec, status.taskId, EnumsApi.TaskExecState.NONE));

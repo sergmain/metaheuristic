@@ -62,7 +62,7 @@ public class ExecContextTaskAssigningTopLevelService {
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final TaskRepository taskRepository;
     private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
-    private final TaskFinishingService taskFinishingService;
+    private final TaskFinishingTxService taskFinishingTxService;
     private final ExecContextRepository execContextRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -264,7 +264,7 @@ public class ExecContextTaskAssigningTopLevelService {
                     catch (YAMLException e) {
                         log.error("#703.260 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.getMessage(), task.getParams());
                         final String es = S.f("#703.260 Task #%s has broken params yaml and will be skipped", task.id);
-                        taskFinishingService.finishWithErrorWithTx(task.id, es);
+                        taskFinishingTxService.finishWithErrorWithTx(task.id, es);
                         if (log.isInfoEnabled()) stat.notAllocatedReasons.add(es);
                         continue;
                     }

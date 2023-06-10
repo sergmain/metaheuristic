@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithUserDetails;
@@ -58,6 +59,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @Import({SpringSecurityWebAuxTestConfig.class, TestRest.JsonTestController.class})
 @ActiveProfiles({"dispatcher", "mysql"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@AutoConfigureCache
 public class TestRest {
 
     private static final String MSG_TEXT = "test msg, ИИИ, 日本語, natürlich";

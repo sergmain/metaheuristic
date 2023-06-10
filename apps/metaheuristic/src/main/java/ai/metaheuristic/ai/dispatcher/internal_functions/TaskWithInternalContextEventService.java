@@ -31,7 +31,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
+import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
@@ -85,7 +85,7 @@ public class TaskWithInternalContextEventService {
     public final SourceCodeRepository sourceCodeRepository;
     public final GlobalVariableService globalVariableService;
     public final VariableRepository variableRepository;
-    private final TaskFinishingService taskFinishingService;
+    private final TaskFinishingTxService taskFinishingTxService;
     private final ApplicationEventPublisher eventPublisher;
     private final VariableTopLevelService variableTopLevelService;
     public final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
@@ -240,7 +240,7 @@ public class TaskWithInternalContextEventService {
                 final String console = "#706.130 Task #" + event.taskId + " was finished with status '" + e.result.processing + "', text of error: " + e.result.error;
                 ExecContextSyncService.getWithSyncVoid(event.execContextId,
                         () -> TaskSyncService.getWithSyncVoid(event.taskId,
-                                () -> taskFinishingService.finishWithErrorWithTx(event.taskId, console)));
+                                () -> taskFinishingTxService.finishWithErrorWithTx(event.taskId, console)));
             }
         }
         catch (Throwable th) {
@@ -250,7 +250,7 @@ public class TaskWithInternalContextEventService {
             log.error(es, th);
             ExecContextSyncService.getWithSyncVoid(event.execContextId,
                     () -> TaskSyncService.getWithSyncVoid(event.taskId,
-                            () -> taskFinishingService.finishWithErrorWithTx(event.taskId, es)));
+                            () -> taskFinishingTxService.finishWithErrorWithTx(event.taskId, es)));
         }
         finally {
             ArtifactCleanerAtDispatcher.notBusy();
