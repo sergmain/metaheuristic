@@ -16,14 +16,10 @@
 
 package ai.metaheuristic.ai.utils;
 
-import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
-import ai.metaheuristic.ai.dispatcher.function.FunctionService;
-import ai.metaheuristic.commons.CommonConsts;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 

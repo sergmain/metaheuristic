@@ -36,6 +36,7 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -51,13 +52,13 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -115,7 +116,7 @@ public class FunctionTopLevelService {
     private final Globals globals;
     private final FunctionRepository functionRepository;
     private final FunctionCache functionCache;
-    private final FunctionService functionService;
+    private final FunctionTxService functionTxService;
     private final ApplicationEventPublisher eventPublisher;
 
     private static final long FUNCTION_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(30);
@@ -147,6 +148,7 @@ public class FunctionTopLevelService {
                 try {
                     if (functionInfosCache == null) {
                         functionInfosCache = collectInfoAboutFunction();
+//                        functionInfosCache = functionTxService.collectInfoAboutFunction();
                         mills = System.currentTimeMillis();
                     }
                     rwl.readLock().lock();
@@ -167,6 +169,20 @@ public class FunctionTopLevelService {
         return functionInfosCache;
     }
 
+    public List<Pair<EnumsApi.FunctionSourcing, String>> collectInfoAboutFunction() {
+        final List<Long> allIds = functionRepository.findAllIds();
+
+        final List<Pair<EnumsApi.FunctionSourcing, String>> result = allIds.stream()
+                .map(id -> functionRepository.findById(id).orElse(null))
+                .filter(Objects::nonNull)
+                .map(s -> {
+                    FunctionConfigYaml fcy = s.getFunctionConfigYaml();
+                    return Pair.of(fcy.sourcing, s.code);
+                })
+                .collect(Collectors.toList());
+        return result;
+    }
+
     @SuppressWarnings("unused")
     @Async
     @EventListener
@@ -174,7 +190,7 @@ public class FunctionTopLevelService {
         rwl.writeLock().lock();
         try {
             if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {
-                functionInfosCache = collectInfoAboutFunction();
+                functionInfosCache = functionTxService.collectInfoAboutFunction();
                 mills = System.currentTimeMillis();
             }
         }
@@ -183,18 +199,7 @@ public class FunctionTopLevelService {
         }
     }
 
-    private List<Pair<EnumsApi.FunctionSourcing, String>> collectInfoAboutFunction() {
-        final List<Long> allIds = functionRepository.findAllIds();
 
-        return allIds.stream()
-                .map(functionCache::findById)
-                .filter(Objects::nonNull)
-                .map(s->{
-                    FunctionConfigYaml fcy = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(s.params);
-                    return Pair.of(fcy.sourcing, s.code);
-                })
-                .collect(Collectors.toList());
-    }
 
     public static String produceFinalCommandLineParams(@Nullable String functionConfigParams, @Nullable String functionDefParams) {
         String s;
@@ -211,15 +216,14 @@ public class FunctionTopLevelService {
     }
 
     public FunctionData.FunctionsResult getFunctions() {
+        return getFunctions(functionRepository::findAllIds, functionRepository::findByIdNullable, globals.dispatcher.asset.mode);
+    }
+
+    public static FunctionData.FunctionsResult getFunctions(Supplier<List<Long>> getAllIdsFunc, java.util.function.Function<Long, Function> findByIdNullableFunc, EnumsApi.DispatcherAssetMode mode) {
         FunctionData.FunctionsResult result = new FunctionData.FunctionsResult();
-
-        List<Long> ids = functionRepository.findAllIds();
-        result.functions = new ArrayList<>();
-
-        ids.forEach(id -> result.functions.add(functionCache.findById(id)));
-
-        result.functions.sort((o1, o2)->o2.getId().compareTo(o1.getId()));
-        result.assetMode = globals.dispatcher.asset.mode;
+        List<Long> ids = getAllIdsFunc.get();
+        result.functions = ids.stream().map(findByIdNullableFunc).filter(Objects::nonNull).sorted((o1, o2)->o2.getId().compareTo(o1.getId())).collect(Collectors.toList());
+        result.assetMode = mode;
         return result;
     }
 
@@ -238,7 +242,7 @@ public class FunctionTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#424.010 function wasn't found, functionId: " + id);
         }
-        functionService.deleteFunction(function.getId(), function.getCode());
+        functionTxService.deleteFunction(function.getId(), function.getCode());
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -446,11 +450,11 @@ public class FunctionTopLevelService {
                     FunctionConfigYaml scy = FunctionCoreUtils.to(functionConfig);
                     if (file != null) {
                         try (InputStream is = Files.newInputStream(file); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-                            functionService.persistFunction(scy, bis, Files.size(file));
+                            functionTxService.persistFunction(scy, bis, Files.size(file));
                         }
                     }
                     else {
-                        functionService.persistFunction(scy, null, 0);
+                        functionTxService.persistFunction(scy, null, 0);
                     }
                 }
             }
@@ -484,7 +488,7 @@ public class FunctionTopLevelService {
                 throw new IllegalStateException("unknown refType: " + functionDef.getRefType());
             }
             if (function != null) {
-                FunctionConfigYaml temp = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(function.params);
+                FunctionConfigYaml temp = function.getFunctionConfigYaml();
                 functionConfig = TaskParamsUtils.toFunctionConfig(temp);
                 if (!functionConfig.skipParams) {
                     functionConfig.params = produceFinalCommandLineParams(functionConfig.params, functionDef.getParams());
@@ -554,7 +558,7 @@ public class FunctionTopLevelService {
             response.sendError(HttpServletResponse.SC_GONE);
             return "";
         }
-        FunctionConfigYaml sc = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(function.params);
+        FunctionConfigYaml sc = function.getFunctionConfigYaml();
         log.info("Send config of function {}", sc.getCode());
         return FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
     }
@@ -566,7 +570,7 @@ public class FunctionTopLevelService {
             response.sendError(HttpServletResponse.SC_GONE);
             return Map.of();
         }
-        FunctionConfigYaml sc = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(function.params);
+        FunctionConfigYaml sc = function.getFunctionConfigYaml();
         log.info("#442.120 Send checksum {} for function {}", sc.checksumMap, sc.getCode());
         return sc.checksumMap==null ? Map.of() : sc.checksumMap;
     }

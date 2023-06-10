@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
-import ai.metaheuristic.ai.dispatcher.function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionTxService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
@@ -37,7 +37,6 @@ import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
-import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +60,7 @@ import java.util.UUID;
 public class PreparingCoreInitService {
 
     private final ExperimentRepository experimentRepository;
-    private final FunctionService functionService;
+    private final FunctionTxService functionService;
     private final FunctionRepository functionRepository;
     private final ExperimentCache experimentCache;
     private final ProcessorTopLevelService processorTopLevelService;
@@ -157,7 +156,7 @@ public class PreparingCoreInitService {
 
             predictFunction.setCode(PreparingConsts.TEST_PREDICT_FUNCTION);
             predictFunction.setType(CommonConsts.PREDICT_TYPE);
-            predictFunction.params = FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
+            predictFunction.updateParams(sc);
 
             mills = System.currentTimeMillis();
             log.info("Start functionRepository.save() #2");

@@ -27,11 +27,19 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Repository
-@Transactional
 @Profile("dispatcher")
 public interface FunctionRepository extends CrudRepository<Function, Long> {
+
+    @Query(value="select b from Function b")
+    Stream<Function> findAllAsStream();
+
+    @Nullable
+    @Transactional(readOnly = true)
+    @Query(value="select b from Function b where b.id=:id")
+    Function findByIdNullable(Long id);
 
     @Override
     @Modifying

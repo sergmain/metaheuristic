@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
@@ -70,7 +70,7 @@ public class PreparingSourceCodeInitService {
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final SourceCodeCache sourceCodeCache;
     private final FunctionRepository functionRepository;
-    private final FunctionService functionService;
+    private final FunctionTxService functionService;
     private final TxSupportForTestingService txSupportForTestingService;
     private final SourceCodeService sourceCodeService;
     private final CompanyRepository companyRepository;

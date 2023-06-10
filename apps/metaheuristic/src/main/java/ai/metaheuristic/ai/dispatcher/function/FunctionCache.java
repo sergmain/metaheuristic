@@ -64,7 +64,7 @@ public class FunctionCache {
 
     @Nullable
     public Function findById(Long id) {
-        return functionRepository.findById(id).orElse(null);
+        return functionRepository.findByIdNullable(id);
     }
 
 }
