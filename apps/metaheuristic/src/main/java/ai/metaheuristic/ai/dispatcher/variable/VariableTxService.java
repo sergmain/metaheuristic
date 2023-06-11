@@ -413,7 +413,7 @@ public class VariableTxService {
     }
 
     @Nullable
-    public TaskImpl prepareVariables(ExecContextParamsYaml execContextParamsYaml, TaskImpl task, List<Long> parentTaskIds) {
+    public TaskImpl prepareVariables(ExecContextParamsYaml execContextParamsYaml, TaskImpl task, List<String> allParentTaskContextIds) {
         TxUtils.checkTxExists();
 
         TaskParamsYaml taskParams = task.getTaskParamsYaml();
@@ -425,39 +425,14 @@ public class VariableTxService {
             return null;
         }
 
-        ExecContextImpl ec = execContextCache.findById(execContextId, true);
-        if (ec==null) {
-            log.error("#171.260 can't find execContext #" + execContextId);
-            return null;
-        }
-
-        ExecContextGraph ecg = execContextGraphCache.findById(ec.execContextGraphId);
-        if (ecg==null) {
-            log.error("#171.265 can't find ExecContextGraph #" + ec.execContextGraphId);
-            return null;
-        }
-        Set<String> set = new HashSet<>();
-        for (Long parentTaskId : parentTaskIds) {
-            ExecContextData.TaskVertex vertex = ExecContextGraphService.findVertexByTaskId(ecg, parentTaskId);
-            if (vertex==null) {
-                throw new RuntimeException("#171.267 vertex wasn't found for task #"+task.id);
-            }
-            set.add(vertex.taskContextId);
-            Set<ExecContextData.TaskVertex> setTemp = ExecContextGraphService.findAncestors(ecg, vertex);
-            setTemp.stream().map(o->o.taskContextId).collect(Collectors.toCollection(()->set));
-        }
-        set.add(taskParams.task.taskContextId);
-
-        List<String> list = ContextUtils.sortSetAsTaskContextId(set);
-
         p.inputs.stream()
-                .map(v -> toInputVariable(list, v, taskParams.task.taskContextId, execContextId))
+                .map(v -> toInputVariable(allParentTaskContextIds, v, taskParams.task.taskContextId, execContextId))
                 .collect(Collectors.toCollection(()->taskParams.task.inputs));
 
         return initOutputVariables(execContextId, task, p, taskParams);
     }
 
-    private TaskParamsYaml.InputVariable toInputVariable(List<String> list, ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {
+    private TaskParamsYaml.InputVariable toInputVariable(List<String> allParentTaskContextIds, ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {
         TaskParamsYaml.InputVariable iv = new TaskParamsYaml.InputVariable();
         if (v.context== EnumsApi.VariableContext.local || v.context== EnumsApi.VariableContext.array) {
             String contextId = Boolean.TRUE.equals(v.parentContext) ? VariableUtils.getParentContext(taskContextId) : taskContextId;
@@ -466,7 +441,7 @@ public class VariableTxService {
                         S.f("#171.270 (S.b(contextId)), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
                                 v.name, v.context, taskContextId, execContextId));
             }
-            Object[] variable = findVariableInAllInternalContexts(list, v.name, contextId, execContextId);
+            Object[] variable = findVariableInAllInternalContexts(allParentTaskContextIds, v.name, contextId, execContextId);
             if (variable==null) {
                 throw new TaskCreationException(
                         S.f("#171.300 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",

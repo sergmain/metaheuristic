@@ -154,7 +154,7 @@ public class ExecContextTaskProducingService {
         return okResult;
     }
 
-    // the logic is following: because we goes through all processed, we have to filter out any processes whose ancesor is internal task
+    // the logic is following: because we goes through all processed, we have to filter out any processes whose ancestor is internal task
     // there is a trick - we have to stop scanning when we've reached the top-level process, i.e. internalContextId=="1"
     @Nullable
     public static ExecContextParamsYaml.Process checkForInternalFunctionAsParent(ExecContextParamsYaml execContextParamsYaml, DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, ExecContextData.ProcessVertex currProcess) {

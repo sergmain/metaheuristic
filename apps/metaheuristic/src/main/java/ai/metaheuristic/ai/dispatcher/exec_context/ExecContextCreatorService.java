@@ -209,7 +209,7 @@ public class ExecContextCreatorService {
             expy.execContextGraph = new ExecContextParamsYaml.ExecContextGraph(rootAndParent.rootExecContextId, rootAndParent.parentExecContextId);
             ec.rootExecContextId = rootAndParent.rootExecContextId;
         }
-        ec.setParams(ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(expy));
+        ec.updateParams(expy);
         ec.setValid(true);
 
         ExecContextTaskState execContextTaskState = new ExecContextTaskState();

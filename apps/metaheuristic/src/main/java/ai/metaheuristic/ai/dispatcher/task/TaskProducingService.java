@@ -17,16 +17,21 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
+import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -39,8 +44,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -48,11 +56,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class TaskProducingService {
 
-    private final VariableTxService variableService;
+    private final VariableTxService variableTxService;
     private final ExecContextGraphService execContextGraphService;
     private final FunctionTopLevelService functionTopLevelService;
-    private final TaskTxService taskService;
+    private final TaskTxService taskTxService;
     private final Globals globals;
+    private final ExecContextGraphCache execContextGraphCache;
+    private final ExecContextCache execContextCache;
 
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParamsYaml.Process process,
@@ -206,10 +216,45 @@ public class TaskProducingService {
         task.execContextId = execContextId;
         task.updateParams(taskParams);
 
-        task = taskService.save(task);
+        task = taskTxService.save(task);
 
-        task = variableService.prepareVariables(execContextParamsYaml, task, parentTaskIds);
+        List<String> allParentTaskContextIds = getAllParentTaskContextIds(task, parentTaskIds, taskParams, execContextId);
+        if (allParentTaskContextIds!=null) {
+            TaskImpl t = variableTxService.prepareVariables(execContextParamsYaml, task, allParentTaskContextIds);
+            if (t!=null) {
+                task = taskTxService.save(t);
+            }
+        }
+
         return task;
     }
 
+    @Nullable
+    private List<String> getAllParentTaskContextIds(TaskImpl task, List<Long> parentTaskIds, TaskParamsYaml taskParams, Long execContextId) {
+        ExecContextImpl ec = execContextCache.findById(execContextId, true);
+        if (ec==null) {
+            log.error("171.260 can't find execContext #" + execContextId);
+            return null;
+        }
+
+        ExecContextGraph ecg = execContextGraphCache.findById(ec.execContextGraphId);
+        if (ecg==null) {
+            log.error("171.265 can't find ExecContextGraph #" + ec.execContextGraphId);
+            return null;
+        }
+        Set<String> set = new HashSet<>();
+        for (Long parentTaskId : parentTaskIds) {
+            ExecContextData.TaskVertex vertex = ExecContextGraphService.findVertexByTaskId(ecg, parentTaskId);
+            if (vertex==null) {
+                throw new RuntimeException("171.267 vertex wasn't found for task #" + task.id);
+            }
+            set.add(vertex.taskContextId);
+            Set<ExecContextData.TaskVertex> setTemp = ExecContextGraphService.findAncestors(ecg, vertex);
+            setTemp.stream().map(o->o.taskContextId).collect(Collectors.toCollection(()->set));
+        }
+        set.add(taskParams.task.taskContextId);
+
+        List<String> list = ContextUtils.sortSetAsTaskContextId(set);
+        return list;
+    }
 }
