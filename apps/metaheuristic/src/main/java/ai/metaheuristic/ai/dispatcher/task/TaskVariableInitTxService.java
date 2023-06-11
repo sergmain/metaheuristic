@@ -21,8 +21,9 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.InitVariablesEvent;
+import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
@@ -67,9 +68,11 @@ public class TaskVariableInitTxService {
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextCache execContextCache;
     private final TaskTxService taskTxService;
+    private final TaskStateService taskStateService;
     private final TaskRepository taskRepository;
     private final GlobalVariableRepository globalVariableRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final EventPublisherService eventPublisherService;
 
     @Transactional
     public void intiVariables(InitVariablesEvent event) {
@@ -93,8 +96,8 @@ public class TaskVariableInitTxService {
         task.execState = event.nextState.value;
 
         taskRepository.save(task);
-        eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
-
+        taskStateService.updateTaskExecStates(task, event.nextState, false);
+        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
     }
 
     @Nullable
