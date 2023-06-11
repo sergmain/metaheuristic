@@ -139,6 +139,8 @@ public class ThreadUtils {
 
     public static class ThreadedPool<T> {
         private final int maxThreadInPool;
+
+        // 0 is for unbound queue
         private final int maxQueueSize;
         private final Consumer<T> process;
 
@@ -170,7 +172,7 @@ public class ThreadUtils {
                 log.debug("putToQueue({}), active task in executor: {}, awaiting tasks: {}", event.getClass().getSimpleName(), activeCount, taskCount - completedTaskCount);
             }
 
-            if (activeCount>0 || queue.size()>0) {
+            if (activeCount>0 || (maxQueueSize!=0 && queue.size()>maxQueueSize)) {
                 return;
             }
 

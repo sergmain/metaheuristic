@@ -114,6 +114,11 @@ public class EventsBoundedToTx {
         eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueEvent());
     }
 
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleInitVariablesTxEventAfterCommit(InitVariablesTxEvent event) {
+        eventPublisher.publishEvent(event.to());
+    }
+
     // TransactionPhase.AFTER_ROLLBACK
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_ROLLBACK)

@@ -138,6 +138,8 @@ public class ExecContextFSM {
         }
 
         storeExecResult(task, result);
+
+        taskRepository.save(task);
     }
 
     public void storeExecResult(TaskImpl task, ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {

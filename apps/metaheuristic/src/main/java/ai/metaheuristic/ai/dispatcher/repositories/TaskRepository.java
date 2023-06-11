@@ -37,10 +37,10 @@ import java.util.stream.Stream;
 @Profile("dispatcher")
 public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
-    @NonNull
-    @Override
-    @Transactional(readOnly = true)
-    Optional<TaskImpl> findById(Long id);
+//    @NonNull
+//    @Override
+//    @Transactional(readOnly = true)
+//    Optional<TaskImpl> findById(Long id);
 
     @Nullable
     @Transactional(readOnly = true)
