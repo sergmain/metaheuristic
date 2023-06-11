@@ -21,17 +21,13 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
+import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.InitVariablesEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
-import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.variable.VariableBlobTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
@@ -72,14 +68,8 @@ public class TaskVariableInitTxService {
     private final ExecContextCache execContextCache;
     private final TaskTxService taskTxService;
     private final TaskRepository taskRepository;
-    private final VariableRepository variableRepository;
     private final GlobalVariableRepository globalVariableRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final EventPublisherService eventPublisherService;
-    private final ExecContextGraphCache execContextGraphCache;
-    private final ExecContextCache execContextCache;
-    private final VariableBlobTxService variableBlobTxService;
-    private final VariableBlobRepository variableBlobRepository;
 
     @Transactional
     public void intiVariables(InitVariablesEvent event) {
@@ -100,6 +90,10 @@ public class TaskVariableInitTxService {
                 task = taskTxService.save(t);
             }
         }
+        task.execState = event.nextState.value;
+
+        taskRepository.save(task);
+        eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
 
     }
 
@@ -120,7 +114,7 @@ public class TaskVariableInitTxService {
                 .map(v -> toInputVariable(allParentTaskContextIds, v, taskParams.task.taskContextId, execContextId))
                 .collect(Collectors.toCollection(()->taskParams.task.inputs));
 
-        return initOutputVariables(execContextId, task, p, taskParams);
+        return variableTxService.initOutputVariables(execContextId, task, p, taskParams);
     }
 
     private TaskParamsYaml.InputVariable toInputVariable(List<String> allParentTaskContextIds, ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {

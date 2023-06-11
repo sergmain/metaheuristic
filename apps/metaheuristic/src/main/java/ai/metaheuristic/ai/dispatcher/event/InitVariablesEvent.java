@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
+import ai.metaheuristic.api.EnumsApi;
 import lombok.AllArgsConstructor;
 
 import java.util.List;
@@ -29,5 +30,5 @@ import java.util.List;
 public class InitVariablesEvent {
     public final Long taskId;
     public final List<Long> parentTaskIds;
-
+    public EnumsApi.TaskExecState nextState;
 }

@@ -98,8 +98,6 @@ public class ExecContextTaskProducingService {
         result.taskProducingStatus = produceTaskResult.status;
 
         log.info("#701.190 SourceCodeService.produceTasks('{}') was processed for {} ms.", sourceCode.uid, System.currentTimeMillis() - mills);
-        eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
-
         return result;
     }
 

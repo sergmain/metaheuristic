@@ -220,7 +220,7 @@ public class TaskProducingService {
 
         task = taskTxService.save(task);
 
-        eventPublisher.publishEvent(new InitVariablesTxEvent(task.id, parentTaskIds));
+        eventPublisher.publishEvent(new InitVariablesTxEvent(task.id, parentTaskIds, process.cache!=null && process.cache.enabled ? EnumsApi.TaskExecState.CHECK_CACHE : EnumsApi.TaskExecState.NONE));
 
 /*
         List<String> allParentTaskContextIds = getAllParentTaskContextIds(task, parentTaskIds, task.getTaskParamsYaml().task.taskContextId, execContextId);
