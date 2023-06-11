@@ -53,7 +53,8 @@ public class TaskVariableInitService {
     }
 
     public void intiVariables(InitVariablesEvent event) {
-        taskVariableInitTxService.intiVariables(event);
+        TaskSyncService.getWithSyncVoid(event.taskId,
+                ()-> taskVariableInitTxService.intiVariables(event));
     }
 
 }

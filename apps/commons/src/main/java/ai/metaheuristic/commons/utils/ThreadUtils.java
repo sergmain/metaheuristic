@@ -172,7 +172,7 @@ public class ThreadUtils {
                 log.debug("putToQueue({}), active task in executor: {}, awaiting tasks: {}", event.getClass().getSimpleName(), activeCount, taskCount - completedTaskCount);
             }
 
-            if (activeCount>0 || (maxQueueSize!=0 && queue.size()>maxQueueSize)) {
+            if (maxQueueSize!=0 && (activeCount>0 || queue.size()>maxQueueSize)) {
                 return;
             }
 
@@ -212,7 +212,12 @@ public class ThreadUtils {
             executor.submit(() -> {
                 T event;
                 while ((event = pullFromQueue())!=null) {
-                    process.accept(event);
+                    try {
+                        process.accept(event);
+                    }
+                    catch (Throwable th) {
+                        log.error("207.040 Error while processing queue: "+ th.getMessage(), th);
+                    }
                 }
             });
         }
