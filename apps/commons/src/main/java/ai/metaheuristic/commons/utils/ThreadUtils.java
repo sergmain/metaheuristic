@@ -206,20 +206,22 @@ public class ThreadUtils {
         }
 
         public void processEvent() {
-            if (executor.getActiveCount()>0) {
+            if (executor.getActiveCount()>=maxThreadInPool) {
                 return;
             }
-            executor.submit(() -> {
-                T event;
-                while ((event = pullFromQueue())!=null) {
-                    try {
-                        process.accept(event);
-                    }
-                    catch (Throwable th) {
-                        log.error("207.040 Error while processing queue: "+ th.getMessage(), th);
-                    }
+            executor.submit(this::actualProcessing);
+        }
+
+        private void actualProcessing() {
+            T event;
+            while ((event = pullFromQueue())!=null) {
+                try {
+                    process.accept(event);
                 }
-            });
+                catch (Throwable th) {
+                    log.error("207.040 Error while processing queue: "+ th.getMessage(), th);
+                }
+            }
         }
     }
 

@@ -83,6 +83,7 @@ public class TaskExecStateService {
             case SKIPPED:
             case NONE:
             case INIT:
+            case CHECK_CACHE:
                 if (task.execState!=state.value) {
                     task.execState = state.value;
                 }
