@@ -222,7 +222,7 @@ public class TaskProducingService {
         if (allParentTaskContextIds!=null) {
             TaskImpl t = variableTxService.prepareVariables(execContextParamsYaml, task, allParentTaskContextIds);
             if (t!=null) {
-                task = taskTxService.save(t);
+                task = TaskSyncService.getWithSyncForCreation(t.id, ()-> taskTxService.save(t));
             }
         }
 
