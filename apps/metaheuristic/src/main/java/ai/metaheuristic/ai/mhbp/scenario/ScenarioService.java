@@ -280,6 +280,7 @@ public class ScenarioService {
             step.p = prompt;
             step.resultCode = resultCode;
             step.expected = expected;
+            step.isCachable = isCachable;
         }
 
         if (S.b(functionCode)) {

@@ -147,7 +147,7 @@ public class ScenarioRestController {
             @RequestParam(name = "functionCode", required = false) String functionCode,
             @RequestParam(name = "expected", required = false) String expected,
             @RequestParam(name = "aggregateType", required = false) String aggregateType,
-            @RequestParam(name = "isCachable", required = false, defaultValue = "false") boolean isCachable,
+            @RequestParam(name = "cachable", required = false, defaultValue = "false") boolean isCachable,
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         return scenarioService.createOrChangeScenarioStep(
