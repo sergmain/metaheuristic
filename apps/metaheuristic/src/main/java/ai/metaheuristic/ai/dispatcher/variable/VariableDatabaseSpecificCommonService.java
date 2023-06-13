@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,34 +16,43 @@
 
 package ai.metaheuristic.ai.dispatcher.variable;
 
+import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobMysqlRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobPostgresqlRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
+import java.sql.Timestamp;
+import java.util.function.BiConsumer;
+
 /**
- * @author Serge
- * Date: 12/22/2021
- * Time: 10:36 PM
+ * @author Sergio Lissner
+ * Date: 6/12/2023
+ * Time: 10:07 PM
  */
 @Service
 @Slf4j
-@Profile({"dispatcher & mysql"})
+@Profile({"dispatcher"})
 @RequiredArgsConstructor
-public class VariableMysqlService implements VariableDatabaseSpecificService {
+public class VariableDatabaseSpecificCommonService {
 
-    public final VariableDatabaseSpecificCommonService variableDatabaseSpecificCommonService;
-    public final VariableBlobMysqlRepository variableMysqlRepository;
+    public final VariableBlobPostgresqlRepository variablePostgresqlRepository;
+    public final VariableRepository variableRepository;
+    public final VariableTxService variableTxService;
+    public final VariableBlobTxService variableBlobTxService;
+    public final CacheVariableRepository cacheVariableRepository;
 
-    public void copyData(VariableData.StoredVariable storedVariable, TaskParamsYaml.OutputVariable targetVariable) {
-        variableDatabaseSpecificCommonService.copyData(storedVariable, targetVariable, variableMysqlRepository::copyData);
-    }
-
-/*
-    public void copyData(VariableData.StoredVariable storedVariable, TaskParamsYaml.OutputVariable targetVariable) {
+    public void copyData(VariableData.StoredVariable storedVariable, TaskParamsYaml.OutputVariable targetVariable, BiConsumer<Long, Long> copyDataFunc) {
         TxUtils.checkTxExists();
 
         CacheVariable src = cacheVariableRepository.findById(storedVariable.id).orElse(null);
@@ -69,9 +78,10 @@ public class VariableMysqlService implements VariableDatabaseSpecificService {
         // that's right - targetVariable.filename
         trg.filename = targetVariable.filename;
         trg.uploadTs = new Timestamp(System.currentTimeMillis());
+        trg.inited = true;
+        trg.nullified = false;
 
-        // TODO 2021-10-14 right now, a variable as array isn't supported
-        variableMysqlRepository.copyData(storedVariable.id, trg.variableBlobId);
+        // TODO 2021-10-14 right now, an array variable isn't supported
+        copyDataFunc.accept(storedVariable.id, trg.variableBlobId);
     }
-*/
 }

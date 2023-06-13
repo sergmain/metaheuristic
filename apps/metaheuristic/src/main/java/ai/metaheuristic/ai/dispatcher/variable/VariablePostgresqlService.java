@@ -16,21 +16,13 @@
 
 package ai.metaheuristic.ai.dispatcher.variable;
 
-import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobPostgresqlRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import java.io.ByteArrayInputStream;
-import java.sql.Timestamp;
 
 /**
  * @author Serge
@@ -43,36 +35,10 @@ import java.sql.Timestamp;
 @RequiredArgsConstructor
 public class VariablePostgresqlService implements VariableDatabaseSpecificService {
 
+    public final VariableDatabaseSpecificCommonService variableDatabaseSpecificCommonService;
     public final VariableBlobPostgresqlRepository variablePostgresqlRepository;
-    public final VariableRepository variableRepository;
-    public final VariableTxService variableTxService;
-    public final VariableBlobTxService variableBlobTxService;
 
-    public void copyData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) {
-        TxUtils.checkTxExists();
-
-        Variable src = variableRepository.findById(srcVariable.id).orElse(null);
-        if (src==null || src.variableBlobId==null) {
-            return;
-        }
-
-        Variable trg = variableRepository.findById(targetVariable.id).orElse(null);
-        if (trg==null) {
-            log.warn("!!! trying to copy date to non-existed variable");
-            return;
-        }
-
-        if (trg.variableBlobId==null) {
-            ByteArrayInputStream bais = new ByteArrayInputStream(Consts.STUB_BYTES);
-            VariableBlob variableBlob = variableBlobTxService.createOrUpdateWithInputStream(null, bais, Consts.STUB_BYTES.length);
-            trg.variableBlobId = variableBlob.id;
-        }
-
-        // that's right - targetVariable.filename
-        trg.filename = targetVariable.filename;
-        trg.uploadTs = new Timestamp(System.currentTimeMillis());
-
-        // TODO 2021-10-14 right now, an array variable isn't supported
-        variablePostgresqlRepository.copyData(src.variableBlobId, trg.variableBlobId);
+    public void copyData(VariableData.StoredVariable storedVariable, TaskParamsYaml.OutputVariable targetVariable) {
+        variableDatabaseSpecificCommonService.copyData(storedVariable, targetVariable, variablePostgresqlRepository::copyData);
     }
 }

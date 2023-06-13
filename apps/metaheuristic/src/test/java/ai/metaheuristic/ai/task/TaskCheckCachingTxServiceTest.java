@@ -142,6 +142,7 @@ public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
         Variable v = variableTxService.getVariable(variableId);
         assertNotNull(v);
         assertFalse(v.inited);
+        assertTrue(v.nullified);
 
         TaskSyncService.getWithSyncVoid(taskId,
                 ()-> taskExecStateService.updateTaskExecStates(taskId, EnumsApi.TaskExecState.CHECK_CACHE));
@@ -162,6 +163,7 @@ public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
         v = variableTxService.getVariable(variableId);
         assertNotNull(v);
         assertTrue(v.inited);
+        assertFalse(v.nullified);
 
         String s = variableTxService.getVariableDataAsString(variableId);
         assertEquals(textWithUUID, s);
