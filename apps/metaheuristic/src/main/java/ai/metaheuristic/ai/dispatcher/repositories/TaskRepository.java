@@ -47,6 +47,10 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query("SELECT t FROM TaskImpl t where t.id=:id")
     TaskImpl findByIdReadOnly(Long id);
 
+    @Transactional(readOnly = true)
+    @Query("SELECT t FROM TaskImpl t where t.execContextId=:execContextId")
+    List<TaskImpl> findByExecContextIdReadOnly(Long execContextId);
+
     @Transactional(readOnly = true, propagation = Propagation.REQUIRED)
     @Query("SELECT t FROM TaskImpl t where t.id in :ids")
     Stream<TaskImpl> findByIds(List<Long> ids);

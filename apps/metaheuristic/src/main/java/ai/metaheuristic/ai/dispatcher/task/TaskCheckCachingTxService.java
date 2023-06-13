@@ -79,9 +79,18 @@ public class TaskCheckCachingTxService {
             return;
         }
 
+        invalidateCacheItemInternal(cacheProcessId);
+        taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE);
+    }
+
+    @Transactional
+    public void invalidateCacheItem(Long cacheProcessId) {
+        invalidateCacheItemInternal(cacheProcessId);
+    }
+
+    public void invalidateCacheItemInternal(Long cacheProcessId) {
         cacheVariableRepository.deleteByCacheProcessId(cacheProcessId);
         cacheProcessRepository.deleteById(cacheProcessId);
-        taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE);
     }
 
     @Transactional
@@ -172,12 +181,12 @@ public class TaskCheckCachingTxService {
 
             taskRepository.save(task);
 
-            eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
         }
         else {
             log.info("#609.080 cached data wasn't found for task #{}", taskId);
             taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE);
         }
+        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
     }
 
 }

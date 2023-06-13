@@ -76,6 +76,11 @@ public class CacheTxService {
         cacheProcessRepository.deleteAllByIdIn(page);
     }
 
+    @Transactional
+    public void storeVariablesTx(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
+        storeVariables(tpy, function);
+    }
+
     public void storeVariables(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
         TxUtils.checkTxExists();
 

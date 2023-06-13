@@ -57,9 +57,9 @@ import java.util.List;
 public class ExecContextTaskResettingService {
 
     private final ExecContextCache execContextCache;
-    private final VariableTxService variableService;
+    private final VariableTxService variableTxService;
     private final TaskRepository taskRepository;
-    private final TaskTxService taskService;
+    private final TaskTxService taskTxService;
     private final EventPublisherService eventPublisherService;
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final TaskFinishingTxService taskFinishingTxService;
@@ -148,12 +148,12 @@ public class ExecContextTaskResettingService {
         }
         task.setResultReceived(1);
         task.setResultResourceScheduledOn(0);
-        taskService.save(task);
+        taskTxService.save(task);
         for (TaskParamsYaml.OutputVariable output : taskParams.task.outputs) {
             if (output.context== EnumsApi.VariableContext.global) {
                 throw new IllegalStateException("(output.context== EnumsApi.VariableContext.global)");
             }
-            VariableSyncService.getWithSyncVoidForCreation(output.id, ()->variableService.resetVariable(execContext.id, output.id));
+            VariableSyncService.getWithSyncVoidForCreation(output.id, ()-> variableTxService.resetVariable(execContext.id, output.id));
         }
 
         eventPublisherService.publishSetTaskExecStateTxEvent(

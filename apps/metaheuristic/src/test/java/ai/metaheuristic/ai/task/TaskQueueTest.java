@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 12/16/2020
  * Time: 3:09 PM
  */
-public class TestTaskQueue {
+public class TaskQueueTest {
 
     private static TaskQueue.QueuedTask createTask(Long execContextId, Long taskId, int priority) {
 

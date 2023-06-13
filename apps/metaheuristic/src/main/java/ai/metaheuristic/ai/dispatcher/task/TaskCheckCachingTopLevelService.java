@@ -196,7 +196,7 @@ public class TaskCheckCachingTopLevelService {
         }
     }
 
-    private PrepareData getCacheProcess(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
+    public PrepareData getCacheProcess(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
         TxUtils.checkTxNotExists();
 
         TaskImpl task = taskRepository.findByIdReadOnly(taskId);
@@ -209,24 +209,8 @@ public class TaskCheckCachingTopLevelService {
             return PREPARE_DATA_NONE;
         }
 
-        TaskParamsYaml tpy = task.getTaskParamsYaml();
         ExecContextParamsYaml ecpy = simpleExecContext.getParamsYaml();
-        ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
-        if (p==null) {
-            log.warn("609.023 Process {} wasn't found", tpy.task.processCode);
-            return PREPARE_DATA_NONE;
-        }
-        CacheData.FullKey fullKey;
-        try {
-            log.debug("start cacheService.getKey(), execContextId: {}, task: {}", simpleExecContext.execContextId, taskId);
-            fullKey = cacheService.getKey(tpy, p.function);
-        } catch (VariableCommonException e) {
-            log.warn("609.025 ExecContext: #{}, VariableCommonException: {}", simpleExecContext.execContextId, e.getAdditionalInfo());
-            return PREPARE_DATA_NONE;
-        }
-        log.debug("done cacheService.getKey(), execContextId: {}, task: {}", simpleExecContext.execContextId, taskId);
-
-        CacheData.SimpleKey key = CacheUtils.fullKeyToSimpleKey(fullKey);
+        CacheData.SimpleKey key = getSimpleKey(ecpy, task);
         if (key==null) {
             return PREPARE_DATA_NONE;
         }
@@ -236,6 +220,28 @@ public class TaskCheckCachingTopLevelService {
 
         log.debug("execContextId: {}, task: {}, CacheProcess: {}", simpleExecContext.execContextId, taskId, cacheProcess);
         return new PrepareData(cacheProcess, PrepareDataState.ok);
+    }
+
+    @Nullable
+    public CacheData.SimpleKey getSimpleKey(ExecContextParamsYaml ecpy, TaskImpl task) {
+        TaskParamsYaml tpy = task.getTaskParamsYaml();
+        ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
+        if (p==null) {
+            log.warn("609.023 Process {} wasn't found", tpy.task.processCode);
+            return null;
+        }
+        CacheData.FullKey fullKey;
+        try {
+            log.debug("start cacheService.getKey(), execContextId: {}, task: {}", task.execContextId, task.id);
+            fullKey = cacheService.getKey(tpy, p.function);
+        } catch (VariableCommonException e) {
+            log.warn("609.025 ExecContext: #{}, VariableCommonException: {}", task.execContextId, e.getAdditionalInfo());
+            return null;
+        }
+        log.debug("done cacheService.getKey(), execContextId: {}, task: {}", task.execContextId, task.id);
+
+        CacheData.SimpleKey key = CacheUtils.fullKeyToSimpleKey(fullKey);
+        return key;
     }
 
 }

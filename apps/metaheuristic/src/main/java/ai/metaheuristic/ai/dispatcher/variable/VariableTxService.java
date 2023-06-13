@@ -291,6 +291,11 @@ public class VariableTxService {
         update(variableIS, length, v);
     }
 
+    @Transactional
+    public void resetVariableTx(Long execContextId, Long variableId) {
+        resetVariable(execContextId, variableId);
+    }
+
     public void resetVariable(Long execContextId, Long variableId) {
         TxUtils.checkTxExists();
         VariableSyncService.checkWriteLockPresent(variableId);
