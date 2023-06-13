@@ -23,11 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.cache.CacheTxService;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
@@ -35,7 +31,6 @@ import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
-import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -72,16 +67,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
 
-    @Autowired private PreparingSourceCodeService preparingSourceCodeService;
-    @Autowired private SourceCodeTopLevelService sourceCodeTopLevelService;
-    @Autowired private SourceCodeCache sourceCodeCache;
-    @Autowired private SourceCodeService sourceCodeService;
     @Autowired private TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
     @Autowired private TaskRepository taskRepository;
     @Autowired private VariableTxService variableTxService;
     @Autowired private CacheTxService cacheTxService;
     @Autowired private CacheProcessRepository cacheProcessRepository;
-    @Autowired private CacheVariableRepository cacheVariableRepository;
     @Autowired private TaskCheckCachingTxService taskCheckCachingTxService;
     @Autowired private TaskExecStateService taskExecStateService;
 

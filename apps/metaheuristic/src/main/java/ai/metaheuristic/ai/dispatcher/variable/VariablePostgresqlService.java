@@ -35,8 +35,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class VariablePostgresqlService implements VariableDatabaseSpecificService {
 
-    public final VariableDatabaseSpecificCommonService variableDatabaseSpecificCommonService;
-    public final VariableBlobPostgresqlRepository variablePostgresqlRepository;
+    private final VariableDatabaseSpecificCommonService variableDatabaseSpecificCommonService;
+    private final VariableBlobPostgresqlRepository variablePostgresqlRepository;
 
     public void copyData(VariableData.StoredVariable storedVariable, TaskParamsYaml.OutputVariable targetVariable) {
         variableDatabaseSpecificCommonService.copyData(storedVariable, targetVariable, variablePostgresqlRepository::copyData);

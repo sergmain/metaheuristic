@@ -35,8 +35,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class VariableMysqlService implements VariableDatabaseSpecificService {
 
-    public final VariableDatabaseSpecificCommonService variableDatabaseSpecificCommonService;
-    public final VariableBlobMysqlRepository variableMysqlRepository;
+    private final VariableDatabaseSpecificCommonService variableDatabaseSpecificCommonService;
+    private final VariableBlobMysqlRepository variableMysqlRepository;
 
     public void copyData(VariableData.StoredVariable storedVariable, TaskParamsYaml.OutputVariable targetVariable) {
         variableDatabaseSpecificCommonService.copyData(storedVariable, targetVariable, variableMysqlRepository::copyData);

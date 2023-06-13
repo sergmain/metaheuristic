@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobPostgresqlRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -46,11 +45,9 @@ import java.util.function.BiConsumer;
 @RequiredArgsConstructor
 public class VariableDatabaseSpecificCommonService {
 
-    public final VariableBlobPostgresqlRepository variablePostgresqlRepository;
-    public final VariableRepository variableRepository;
-    public final VariableTxService variableTxService;
-    public final VariableBlobTxService variableBlobTxService;
-    public final CacheVariableRepository cacheVariableRepository;
+    private final VariableRepository variableRepository;
+    private final VariableBlobTxService variableBlobTxService;
+    private final CacheVariableRepository cacheVariableRepository;
 
     public void copyData(VariableData.StoredVariable storedVariable, TaskParamsYaml.OutputVariable targetVariable, BiConsumer<Long, Long> copyDataFunc) {
         TxUtils.checkTxExists();
