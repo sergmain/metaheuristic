@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
-import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
+import ai.metaheuristic.ai.dispatcher.task.TaskStateTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -51,9 +51,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Profile("dispatcher")
 public class TaskWithInternalContextService {
 
-    private final TaskTxService taskService;
-    private final TaskStateService taskStateService;
-    private final VariableTxService variableService;
+    private final TaskTxService taskTxService;
+    private final TaskStateTxService taskStateTxService;
+    private final VariableTxService variableTxService;
     private final TaskRepository taskRepository;
     private final ExecContextFSM execContextFSM;
 
@@ -77,7 +77,7 @@ public class TaskWithInternalContextService {
             return;
         }
         // TODO 2021-10-15 investigate the possibility to mark as completed such tasks
-        taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.SKIPPED);
+        taskStateTxService.updateTaskExecStates(task, EnumsApi.TaskExecState.SKIPPED);
     }
 
     @Transactional
@@ -113,7 +113,7 @@ public class TaskWithInternalContextService {
         task.setCompleted(1);
         task.setCompletedOn(System.currentTimeMillis());
         task.setResultReceived(1);
-        taskService.save(task);
+        taskTxService.save(task);
         return Enums.UploadVariableStatus.OK;
     }
 
@@ -133,9 +133,9 @@ public class TaskWithInternalContextService {
 
         task.setAssignedOn(System.currentTimeMillis());
         task.setResultResourceScheduledOn(0);
-        task = taskService.save(task);
+        task = taskTxService.save(task);
 
-        taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.IN_PROGRESS);
+        taskStateTxService.updateTaskExecStates(task, EnumsApi.TaskExecState.IN_PROGRESS);
 
         TaskParamsYaml taskParamsYaml = task.getTaskParamsYaml();
         ExecContextParamsYaml.Process p = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
@@ -151,7 +151,7 @@ public class TaskWithInternalContextService {
                 throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.process_not_found, msg));
             }
         }
-        variableService.initOutputVariables(simpleExecContext.execContextId, task, p, taskParamsYaml);
+        variableTxService.initOutputVariables(simpleExecContext.execContextId, task, p, taskParamsYaml);
     }
 
 }

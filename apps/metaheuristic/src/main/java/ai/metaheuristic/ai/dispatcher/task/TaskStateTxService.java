@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Serge
@@ -33,7 +34,7 @@ import org.springframework.stereotype.Service;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor
-public class TaskStateService {
+public class TaskStateTxService {
 
     private final TaskExecStateService taskExecStateService;
 

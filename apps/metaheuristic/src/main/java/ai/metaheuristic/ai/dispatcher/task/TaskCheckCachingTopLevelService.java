@@ -94,8 +94,12 @@ public class TaskCheckCachingTopLevelService {
     private final LinkedList<RegisterTaskForCheckCachingEvent> queue = new LinkedList<>();
 
     private long mills = 0L;
+    public boolean disableCacheChecking = false;
 
     public void putToQueue(final RegisterTaskForCheckCachingEvent event) {
+        if (disableCacheChecking) {
+            return;
+        }
         synchronized (queue) {
             // re-create queueIds, there is a possibility that queueIds was unsyncronized with queue when a task was resetting
             if (System.currentTimeMillis() - mills > 60_000) {

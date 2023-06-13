@@ -60,7 +60,7 @@ public class TaskCheckCachingTxService {
 
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
-    private final TaskStateService taskStateService;
+    private final TaskStateTxService taskStateService;
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheVariableRepository cacheVariableRepository;
     private final VariableTxService variableService;
@@ -93,21 +93,24 @@ public class TaskCheckCachingTxService {
         cacheProcessRepository.deleteById(cacheProcessId);
     }
 
+    public enum CheckCachingStatus {task_not_found, isnt_check_cache_state, copied_from_cache, no_prev_cache}
+
     @Transactional
-    public void checkCaching(Long execContextId, Long taskId, @Nullable CacheProcess cacheProcess) {
+    public CheckCachingStatus checkCaching(Long execContextId, Long taskId, @Nullable CacheProcess cacheProcess) {
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.debug("#609.009 task #{} wasn't found", taskId);
-            return;
+            return CheckCachingStatus.task_not_found;
         }
         if (task.execState!=EnumsApi.TaskExecState.CHECK_CACHE.value) {
             log.info("#609.010 task #{} was already checked for cached variables", taskId);
-            return;
+            return CheckCachingStatus.isnt_check_cache_state;
         }
 
         TaskParamsYaml tpy = task.getTaskParamsYaml();
 
+        CheckCachingStatus status;
         if (cacheProcess!=null) {
             log.info("609.060 cached data was found for task #{}, variables will be copied and will task be set as OK", taskId);
             // finish task with cached data
@@ -180,13 +183,15 @@ public class TaskCheckCachingTxService {
             task.setCompletedOn(System.currentTimeMillis());
 
             taskRepository.save(task);
-
+            status = CheckCachingStatus.copied_from_cache;
         }
         else {
             log.info("#609.080 cached data wasn't found for task #{}", taskId);
             taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE);
+            status = CheckCachingStatus.no_prev_cache;
         }
         eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
+        return status;
     }
 
 }

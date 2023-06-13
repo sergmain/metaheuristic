@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.exec_source_code;
 
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTxService;
-import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
+import ai.metaheuristic.ai.dispatcher.task.TaskStateTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -40,7 +40,7 @@ import org.springframework.stereotype.Service;
 public class ExecSourceCodeTopLevelService {
 
     private final TaskFinishingTxService taskFinishingTxService;
-    public final TaskStateService taskStateService;
+    public final TaskStateTxService taskStateTxService;
     public final TaskWithInternalContextTopLevelService taskWithInternalContextTopLevelService;
 
     public void finishLongRunningTask(DispatcherParamsYaml.LongRunningExecContext longRunningExecContext, EnumsApi.ExecContextState state) {

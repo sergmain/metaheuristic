@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
+import ai.metaheuristic.ai.dispatcher.task.TaskStateTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,7 @@ public class ExecContextReconciliationService {
 
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
-    private final TaskStateService taskStateService;
+    private final TaskStateTxService taskStateTxService;
     private final ExecContextTaskResettingService execContextTaskResettingService;
 
     @Transactional
@@ -74,7 +74,7 @@ public class ExecContextReconciliationService {
                     return;
                 }
                 // TaskParamsYaml tpy = task.getTaskParamsYaml();
-                taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK);
+                taskStateTxService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK);
             });
         }
     }

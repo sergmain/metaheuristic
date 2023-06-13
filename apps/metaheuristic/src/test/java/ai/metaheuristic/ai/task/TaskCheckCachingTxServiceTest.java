@@ -30,6 +30,8 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTxService;
+import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
@@ -45,13 +47,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.lang.Nullable;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.UUID;
 
 import static ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService.PrepareDataState.ok;
@@ -81,6 +83,7 @@ public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
     @Autowired private CacheProcessRepository cacheProcessRepository;
     @Autowired private CacheVariableRepository cacheVariableRepository;
     @Autowired private TaskCheckCachingTxService taskCheckCachingTxService;
+    @Autowired private TaskExecStateService taskExecStateService;
 
     private final String textWithUUID = UUID.randomUUID().toString();
 
@@ -92,11 +95,15 @@ public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
 
     @Test
     public void test() throws IOException {
+        taskCheckCachingTopLevelService.disableCacheChecking = true;
+
         step_0_0_produceTasks();
 
         TaskImpl task = taskRepository.findByExecContextIdReadOnly(getExecContextForTest().id).stream()
                 .filter(t->!t.getTaskParamsYaml().task.function.code.equals(Consts.MH_FINISH_FUNCTION))
                 .findFirst().orElseThrow();
+
+        final Long taskId = Objects.requireNonNull(task.id);
 
         assertEquals(EnumsApi.TaskExecState.CHECK_CACHE.value, task.execState);
         final TaskParamsYaml tpy = task.getTaskParamsYaml();
@@ -136,13 +143,21 @@ public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
         assertNotNull(v);
         assertFalse(v.inited);
 
+        TaskSyncService.getWithSyncVoid(taskId,
+                ()-> taskExecStateService.updateTaskExecStates(taskId, EnumsApi.TaskExecState.CHECK_CACHE));
 
-        TaskCheckCachingTopLevelService.PrepareData prepareData = taskCheckCachingTopLevelService.getCacheProcess(getExecContextForTest().asSimple(), task.id);
+        task = taskRepository.findByIdReadOnly(taskId);
+        assertNotNull(task);
+        assertEquals(EnumsApi.TaskExecState.CHECK_CACHE.value, task.execState);
+
+
+        TaskCheckCachingTopLevelService.PrepareData prepareData = taskCheckCachingTopLevelService.getCacheProcess(getExecContextForTest().asSimple(), taskId);
         assertEquals(ok, prepareData.state);
         assertNotNull(prepareData.cacheProcess);
 
 
-        taskCheckCachingTxService.checkCaching(getExecContextForTest().id, task.id, prepareData.cacheProcess);
+        TaskCheckCachingTxService.CheckCachingStatus status = taskCheckCachingTxService.checkCaching(getExecContextForTest().id, taskId, prepareData.cacheProcess);
+        assertEquals(TaskCheckCachingTxService.CheckCachingStatus.copied_from_cache, status, "Actual: " + status);
 
         v = variableTxService.getVariable(variableId);
         assertNotNull(v);

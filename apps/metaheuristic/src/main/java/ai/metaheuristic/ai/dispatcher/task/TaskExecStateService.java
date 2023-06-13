@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Serge
@@ -43,7 +44,9 @@ public class TaskExecStateService {
     private final TaskRepository taskRepository;
     private final EventPublisherService eventPublisherService;
 
-    public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState) {
+    @Transactional
+    public void updateTaskExecStates(Long taskId, EnumsApi.TaskExecState execState) {
+        TaskImpl task = taskRepository.findById(taskId).orElseThrow();
         updateTaskExecStates(task, execState, false);
     }
 
@@ -77,6 +80,7 @@ public class TaskExecStateService {
             case IN_PROGRESS:
             case SKIPPED:
             case NONE:
+            case CHECK_CACHE:
                 if (task.execState!=state.value) {
                     task.execState = state.value;
                 }
