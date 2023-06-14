@@ -61,6 +61,12 @@ public class ApiCallFunction implements InternalFunction {
         return true;
     }
 
+    // we don't specify this function as compatible with scenario
+    // because this function will be included in any way in dedicated UI
+//    public boolean isScenarioCompatible() {
+//        return true;
+//    }
+
     @SneakyThrows
     @Override
     public void process(
