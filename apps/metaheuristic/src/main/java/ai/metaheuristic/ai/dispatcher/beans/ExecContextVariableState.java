@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.beans;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextUtils;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.commons.utils.ThreadUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;

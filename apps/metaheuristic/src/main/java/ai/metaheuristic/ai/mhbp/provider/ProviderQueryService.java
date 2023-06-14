@@ -36,7 +36,7 @@ import ai.metaheuristic.ai.mhbp.session.SessionTxService;
 import ai.metaheuristic.ai.mhbp.yaml.answer.AnswerParams;
 import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.ThreadUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

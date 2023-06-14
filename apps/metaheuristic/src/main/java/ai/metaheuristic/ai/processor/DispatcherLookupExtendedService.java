@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
 import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.utils.SecUtils;
-import ai.metaheuristic.commons.utils.ThreadUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

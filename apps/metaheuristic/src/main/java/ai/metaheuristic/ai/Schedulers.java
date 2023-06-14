@@ -304,7 +304,7 @@ public class Schedulers {
             }
         }
 
-        @Scheduled(initialDelay = 15_000, fixedDelay = 5_000 )
+        @Scheduled(initialDelay = 15_000, fixedDelay = 1_000 )
         public void processUpdateTaskExecStatesInGraph() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;

@@ -19,7 +19,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
-import ai.metaheuristic.commons.utils.ThreadUtils.CommonThreadLocker;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils.CommonThreadLocker;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
