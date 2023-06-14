@@ -16,19 +16,17 @@
 
 package ai.metaheuristic.ai.mhbp.data;
 
-import ai.metaheuristic.ai.utils.CollectionUtils;
-import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.ai.mhbp.beans.ScenarioGroup;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
+import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.api.data.BaseDataClass;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
 import org.springframework.lang.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author Sergio Lissner
@@ -36,6 +34,43 @@ import java.util.Objects;
  * Time: 7:08 PM
  */
 public class ScenarioData {
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    public static final class PreparedStep extends BaseDataClass {
+        public final String uuid;
+        @Nullable
+        public final Set<String> inputs;
+
+        public PreparedStep(String uuid, @Nullable Set<String> inputs, @Nullable List<String> error) {
+            this.uuid = uuid;
+            this.inputs = inputs;
+            if (error!=null && !error.isEmpty()) {
+                super.addErrorMessages(error);
+            }
+        }
+    }
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class StepInput {
+        public String name;
+        public String value;
+    }
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class EvaluateStep {
+        public String uuid;
+        public final List<StepInput> inputs = new ArrayList<>();
+    }
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class StepEvaluationResult {
+        public String uuid;
+        public final List<StepInput> inputs = new ArrayList<>();
+    }
 
     @Data
     @AllArgsConstructor

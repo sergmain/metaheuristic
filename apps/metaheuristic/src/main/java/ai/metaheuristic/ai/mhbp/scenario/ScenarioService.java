@@ -37,6 +37,7 @@ import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioGroupRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioRepository;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
+import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -55,10 +56,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -117,6 +116,7 @@ public class ScenarioService {
         return r;
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public ScenarioData.SimpleScenarioSteps getScenarioSteps(long scenarioGroupId, long scenarioId, DispatcherContext context) {
         Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
         if (s==null || s.scenarioGroupId!=scenarioGroupId || s.accountId!=context.getAccountId()) {
@@ -151,37 +151,21 @@ public class ScenarioService {
     }
 
     public OperationStatusWithSourceCodeId runScenario(long scenarioGroupId, long scenarioId, DispatcherContext context) {
-        Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
-        if (s==null || s.scenarioGroupId!=scenarioGroupId || s.accountId!=context.getAccountId()) {
+        PreparedScenario preparedScenario = prepareScenario(scenarioId, context);
+        if (preparedScenario.status.status!= EnumsApi.OperationStatus.OK) {
+            return new OperationStatusWithSourceCodeId(preparedScenario.status,
+                    preparedScenario.sourceCode==null ? null : preparedScenario.sourceCode.id);
+        }
+        if (Objects.requireNonNull(preparedScenario.scenario).scenarioGroupId!=scenarioGroupId) {
             return new OperationStatusWithSourceCodeId(
                     new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "373.120 scenario wasn't found, " + scenarioGroupId+", " + scenarioId), null);
         }
 
-        String uid = ScenarioUtils.getUid(s);
-        SourceCodeImpl sc = sourceCodeRepository.findByUid(uid);
-        if (sc==null) {
-            SourceCodeParamsYaml scpy = ScenarioUtils.to(uid, s.getScenarioParams(), apiCode -> {
-                final Api api = apiRepository.findByApiCode(apiCode);
-                return api!=null ? api.getApiScheme() : null;
-            });
-            String yaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(scpy);
-            SourceCodeApiData.SourceCodeResult result = sourceCodeService.createSourceCode(yaml, scpy, context.getCompanyId());
-            if (!result.isValid()) {
-                final String es = S.f("373.160 validation: %s, %s", result.validationResult.status, result.validationResult.error);
-                log.error(es);
-                return new OperationStatusWithSourceCodeId(
-                        new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es), null);
-            }
-            sc = sourceCodeRepository.findById(result.id).orElse(null);
-            if (sc==null) {
-                return new OperationStatusWithSourceCodeId(
-                        new OperationStatusRest(EnumsApi.OperationStatus.ERROR, S.f("373.180 SourceCode not found: %d", result.id)), null);
-            }
-        }
-        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sc.id, context.getCompanyId(), true);
-        SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(execContextResult.sourceCode, execContextResult.execContext);
+        Long sourceCodeId = Objects.requireNonNull(preparedScenario.sourceCode).id;
 
-        return new OperationStatusWithSourceCodeId(OperationStatusRest.OPERATION_STATUS_OK, sc.id);
+        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context.getCompanyId(), true);
+
+        return new OperationStatusWithSourceCodeId(OperationStatusRest.OPERATION_STATUS_OK, sourceCodeId);
     }
 
     public SourceCodeData.SimpleSourceCodeUid getSourceCodeId(long scenarioGroupId, long scenarioId, DispatcherContext context) {
@@ -316,5 +300,57 @@ public class ScenarioService {
         scenarioRepository.save(s);
 
         return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    public record PreparedScenario(@Nullable Scenario scenario, @Nullable SourceCodeImpl sourceCode, OperationStatusRest status) {}
+
+    public PreparedScenario prepareScenario(long scenarioId, DispatcherContext context) {
+        Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
+        if (s==null || s.accountId!=context.getAccountId()) {
+            return new PreparedScenario(null, null,
+                    new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "373.120 scenario wasn't found, " + scenarioId));
+        }
+
+        String uid = ScenarioUtils.getUid(s);
+        SourceCodeImpl sc = sourceCodeRepository.findByUid(uid);
+        if (sc==null) {
+            SourceCodeParamsYaml scpy = ScenarioUtils.to(uid, s.getScenarioParams(), this::apiSchemeResolver);
+            String yaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(scpy);
+            SourceCodeApiData.SourceCodeResult result = sourceCodeService.createSourceCode(yaml, scpy, context.getCompanyId());
+            if (!result.isValid()) {
+                final String es = S.f("373.160 validation: %s, %s", result.validationResult.status, result.validationResult.error);
+                log.error(es);
+                return new PreparedScenario(null, null,
+                        new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es));
+            }
+            sc = sourceCodeRepository.findById(result.id).orElse(null);
+            if (sc==null) {
+                return new PreparedScenario(null, null,
+                        new OperationStatusRest(EnumsApi.OperationStatus.ERROR, S.f("373.180 SourceCode not found: %d", result.id)));
+            }
+        }
+        return new PreparedScenario(s, sc, OperationStatusRest.OPERATION_STATUS_OK);
+    }
+
+    @Nullable
+    private ApiScheme apiSchemeResolver(String apiCode) {
+        final Api api = apiRepository.findByApiCode(apiCode);
+        return api != null ? api.getApiScheme() : null;
+    }
+
+    public ScenarioData.PreparedStep scenarioStepEvaluationPrepare(long scenarioId, String uuid, DispatcherContext context) {
+
+        PreparedScenario preparedScenario = prepareScenario(scenarioId, context);
+        if (preparedScenario.status.status!= EnumsApi.OperationStatus.OK) {
+            return new ScenarioData.PreparedStep(uuid, null, preparedScenario.status.getErrorMessages());
+        }
+
+        final Scenario scenario = Objects.requireNonNull(preparedScenario.scenario);
+        ScenarioParams sp = scenario.getScenarioParams();
+
+        SourceCodeParamsYaml.Process process = ScenarioUtils.getProcess(sp, new AtomicInteger(), this::apiSchemeResolver, uuid);
+
+        ScenarioData.PreparedStep result = new ScenarioData.PreparedStep(uuid, process.inputs.stream().map(i->i.name).collect(Collectors.toSet()), null);
+        return result;
     }
 }
