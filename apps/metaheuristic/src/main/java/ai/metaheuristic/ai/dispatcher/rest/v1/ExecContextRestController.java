@@ -129,6 +129,13 @@ public class ExecContextRestController {
         return execContextTopLevelService.deleteExecContextById(execContextId, context);
     }
 
+    @PostMapping("/exec-context/task-reset-cache")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
+    public OperationStatusRest resetCache(Long taskId, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        return execContextTopLevelService.resetCache(taskId, context);
+    }
+
     @GetMapping("/exec-context-target-state/{sourceCodeId}/{state}/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public OperationStatusRest execContextTargetState(

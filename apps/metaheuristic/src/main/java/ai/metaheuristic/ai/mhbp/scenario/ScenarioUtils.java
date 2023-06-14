@@ -208,7 +208,7 @@ public class ScenarioUtils {
                 p.triesAfterError = 0;
 //                p.triesAfterError = 2;
                 p.cache = initCache(step);
-//                p.cache = new SourceCodeParamsYaml.Cache(true, true, true);
+
                 int i=0;
             }
             else {
@@ -228,7 +228,7 @@ public class ScenarioUtils {
                     p.metas.add(Map.of(ApiCallService.PROMPT, step.p));
                     p.metas.add(Map.of(ApiCallService.API_CODE, step.api.code));
                     p.cache = initCache(step);
-//                    p.cache = new SourceCodeParamsYaml.Cache(true, true, true);
+
                 }
                 else if (Consts.MH_AGGREGATE_FUNCTION.equals(step.function.code)) {
                     if (step.aggregateType==null) {
@@ -250,6 +250,7 @@ public class ScenarioUtils {
         }
     }
 
+    @Nullable
     private static SourceCodeParamsYaml.Cache initCache(ScenarioParams.Step step) {
         return step.isCachable ? new SourceCodeParamsYaml.Cache(true, true, true) : null;
     }
