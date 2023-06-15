@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.mhbp.rest;
 
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.mhbp.data.ScenarioData;
+import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.scenario.ScenarioService;
@@ -92,14 +93,16 @@ public class ScenarioRestController {
         return result;
     }
 
+    // /rest/v1/dispatcher/scenario/scenario-step-evaluation-run/31/c37eff01-4a23-4dda-b7a2-e9193a602a76
     @PostMapping(value = "/scenario-step-evaluation-run/{scenarioId}/{uuid}")
-    public ScenarioData.StepEvaluationPrepareResult scenarioStepEvaluationPrepare(
+    public ScenarioData.StepEvaluationPrepareResult scenarioStepEvaluationRun(
             @PathVariable long scenarioId,
             @PathVariable String uuid,
-            @RequestParam(name = "stepEvaluation") ScenarioData.StepEvaluation stepEvaluation,
+            @RequestParam(name = "stepEvaluation") String stepEvaluation,
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return new ScenarioData.StepEvaluationPrepareResult();
+        ScenarioData.StepEvaluationPrepareResult result = scenarioService.scenarioStepEvaluationRun(stepEvaluation, context);
+        return result;
     }
 
     @PostMapping(value = "/scenario-step-rearrange")

@@ -39,6 +39,7 @@ import ai.metaheuristic.ai.mhbp.repositories.ScenarioRepository;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
 import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
 import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -352,5 +353,20 @@ public class ScenarioService {
 
         ScenarioData.PreparedStep result = new ScenarioData.PreparedStep(uuid, process.inputs.stream().map(i->i.name).collect(Collectors.toSet()), null);
         return result;
+    }
+
+    public ScenarioData.StepEvaluationPrepareResult scenarioStepEvaluationRun(String stepEvaluation, DispatcherContext context) {
+        ScenarioData.StepEvaluationPrepareResult r = new ScenarioData.StepEvaluationPrepareResult();
+        try {
+            ScenarioData.StepEvaluation se = JsonUtils.getMapper().readValue(stepEvaluation, ScenarioData.StepEvaluation.class);
+
+
+            }
+        catch (Throwable th) {
+            r.error = "373.380 error " + th.getMessage();
+            log.error(r.error, th);
+
+        }
+        return r;
     }
 }

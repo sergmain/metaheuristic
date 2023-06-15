@@ -88,6 +88,8 @@ public class ScenarioData {
     public static class StepEvaluationPrepareResult {
         public String uuid;
         public final List<StepInput> inputs = new ArrayList<>();
+        @Nullable
+        public String error;
     }
 
     @Data
