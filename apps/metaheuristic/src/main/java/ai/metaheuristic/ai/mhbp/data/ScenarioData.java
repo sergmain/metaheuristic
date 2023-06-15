@@ -36,8 +36,26 @@ import java.util.*;
 public class ScenarioData {
 
     @Data
+    public static class StepVariable {
+        public String name;
+        public String value;
+    }
+
+    @Data
+    public static class StepEvaluation {
+        public String uuid;
+        public String prompt;
+        public List<StepVariable> variables;
+    }
+
+    @Data
+    public static class StepEvaluationResult {
+        public String result;
+    }
+
+    @Data
     @EqualsAndHashCode(callSuper = false)
-    public static final class PreparedStep extends BaseDataClass {
+    public static class PreparedStep extends BaseDataClass {
         public final String uuid;
         @Nullable
         public final Set<String> inputs;
@@ -67,7 +85,7 @@ public class ScenarioData {
 
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class StepEvaluationResult {
+    public static class StepEvaluationPrepareResult {
         public String uuid;
         public final List<StepInput> inputs = new ArrayList<>();
     }

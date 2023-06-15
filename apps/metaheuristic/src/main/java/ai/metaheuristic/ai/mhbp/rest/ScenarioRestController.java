@@ -92,6 +92,16 @@ public class ScenarioRestController {
         return result;
     }
 
+    @PostMapping(value = "/scenario-step-evaluation-run/{scenarioId}/{uuid}")
+    public ScenarioData.StepEvaluationPrepareResult scenarioStepEvaluationPrepare(
+            @PathVariable long scenarioId,
+            @PathVariable String uuid,
+            @RequestParam(name = "stepEvaluation") ScenarioData.StepEvaluation stepEvaluation,
+            Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        return new ScenarioData.StepEvaluationPrepareResult();
+    }
+
     @PostMapping(value = "/scenario-step-rearrange")
     public OperationStatusRest scenarioStepRearrange(
             @RequestParam(name = "scenarioId") Long scenarioId,
