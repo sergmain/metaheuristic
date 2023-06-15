@@ -20,19 +20,24 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunction;
+import ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.beans.ScenarioGroup;
 import ai.metaheuristic.ai.mhbp.data.ScenarioData;
 import ai.metaheuristic.ai.mhbp.data.SimpleScenario;
+import ai.metaheuristic.ai.mhbp.provider.ProviderData;
+import ai.metaheuristic.ai.mhbp.provider.ProviderQueryService;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioGroupRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioRepository;
@@ -45,11 +50,14 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.PageUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -62,8 +70,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.OperationStatusWithSourceCodeId;
+import static ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallService.API_CODE;
+import static ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallService.PROMPT;
+import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getNameForVariable;
 import static ai.metaheuristic.ai.utils.CollectionUtils.TreeUtils;
+import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
 
 /**
  * @author Sergio Lissner
@@ -76,7 +89,8 @@ import static ai.metaheuristic.ai.utils.CollectionUtils.TreeUtils;
 @Profile("dispatcher")
 public class ScenarioService {
 
-    public static final ScenarioData.ApiUid BROKEN_API = new ScenarioData.ApiUid(0L, "<broken API Id>");
+    private static final ScenarioData.ApiUid BROKEN_API = new ScenarioData.ApiUid(0L, "<broken API Id>");
+
     private final Globals globals;
     private final ApiService apiService;
     private final ApiRepository apiRepository;
@@ -85,6 +99,8 @@ public class ScenarioService {
     private final SourceCodeRepository sourceCodeRepository;
     private final SourceCodeService sourceCodeService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
+    private final ApiCallService apiCallService;
+    private final ProviderQueryService providerQueryService;
 
     public ScenarioData.ScenarioGroupsResult getScenarioGroups(Pageable pageable, DispatcherContext context) {
         pageable = PageUtils.fixPageSize(10, pageable);
@@ -355,13 +371,55 @@ public class ScenarioService {
         return result;
     }
 
-    public ScenarioData.StepEvaluationPrepareResult scenarioStepEvaluationRun(String stepEvaluation, DispatcherContext context) {
-        ScenarioData.StepEvaluationPrepareResult r = new ScenarioData.StepEvaluationPrepareResult();
+    public ScenarioData.StepEvaluationResult scenarioStepEvaluationRun(long scenarioId, String uuid, String stepEvaluation, DispatcherContext context) {
+        ScenarioData.StepEvaluationResult r = new ScenarioData.StepEvaluationResult(scenarioId, uuid);
         try {
             ScenarioData.StepEvaluation se = JsonUtils.getMapper().readValue(stepEvaluation, ScenarioData.StepEvaluation.class);
 
-
+            PreparedScenario preparedScenario = prepareScenario(scenarioId, context);
+            if (preparedScenario.status.status!= EnumsApi.OperationStatus.OK) {
+                r.error = preparedScenario.status.getErrorMessagesAsStr();
+                return r;
             }
+            final Scenario scenario = Objects.requireNonNull(preparedScenario.scenario);
+            ScenarioParams sp = scenario.getScenarioParams();
+            SourceCodeParamsYaml.Process process = ScenarioUtils.getProcess(sp, new AtomicInteger(), this::apiSchemeResolver, uuid);
+
+            String apiCode = MetaUtils.getValue(process.metas, API_CODE);
+            if (S.b(apiCode)) {
+                throw new InternalFunctionException(meta_not_found, "513.080 meta '"+ API_CODE +"' wasn't found or it's blank");
+            }
+            Api api = apiRepository.findByApiCode(apiCode);
+            if (api==null) {
+                throw new InternalFunctionException(general_error, "513.120 API wasn't found with code '"+ PROMPT +"' wasn't found or it's blank");
+            }
+
+            String prompt = se.prompt;
+            for (ScenarioData.StepVariable variable : se.variables) {
+                String varName = getNameForVariable(variable.name);
+                String value = variable.value;
+                if (value==null) {
+                    throw new InternalFunctionException(data_not_found, "373.200 data wasn't found, variable: " + variable + ", normalized: " + varName);
+                }
+                prompt = StringUtils.replaceEach(prompt, new String[]{"[[" + variable + "]]", "{{" + variable + "}}"}, new String[]{value, value});
+            }
+            log.info("373.240 prompt: {}", prompt);
+            ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, null);
+            ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
+            if (answer.status()!=OK) {
+                throw new InternalFunctionException(data_not_found, "373.280 API call error: "+answer.error()+", prompt: " + prompt);
+            }
+            if (answer.a()==null) {
+                throw new InternalFunctionException(data_not_found, "373.320 answer.a() is null, error: "+answer.error()+", prompt: " + prompt);
+            }
+            if (answer.a().processedAnswer.answer()==null) {
+                throw new InternalFunctionException(data_not_found, "373.360 processedAnswer.answer() is null, error: "+answer.error()+", prompt: " + prompt);
+            }
+
+            r.result = answer.a().processedAnswer.answer();
+
+
+        }
         catch (Throwable th) {
             r.error = "373.380 error " + th.getMessage();
             log.error(r.error, th);

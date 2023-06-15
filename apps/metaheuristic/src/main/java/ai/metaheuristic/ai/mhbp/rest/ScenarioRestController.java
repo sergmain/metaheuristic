@@ -95,13 +95,13 @@ public class ScenarioRestController {
 
     // /rest/v1/dispatcher/scenario/scenario-step-evaluation-run/31/c37eff01-4a23-4dda-b7a2-e9193a602a76
     @PostMapping(value = "/scenario-step-evaluation-run/{scenarioId}/{uuid}")
-    public ScenarioData.StepEvaluationPrepareResult scenarioStepEvaluationRun(
+    public ScenarioData.StepEvaluationResult scenarioStepEvaluationRun(
             @PathVariable long scenarioId,
             @PathVariable String uuid,
             @RequestParam(name = "stepEvaluation") String stepEvaluation,
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        ScenarioData.StepEvaluationPrepareResult result = scenarioService.scenarioStepEvaluationRun(stepEvaluation, context);
+        ScenarioData.StepEvaluationResult result = scenarioService.scenarioStepEvaluationRun(scenarioId, uuid, stepEvaluation, context);
         return result;
     }
 

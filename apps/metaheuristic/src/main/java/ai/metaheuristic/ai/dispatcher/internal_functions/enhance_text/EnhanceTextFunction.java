@@ -82,12 +82,12 @@ public class EnhanceTextFunction implements InternalFunction {
         TxUtils.checkTxNotExists();
 
         if (taskParamsYaml.task.outputs.isEmpty()) {
-            throw new InternalFunctionException(variable_not_found, "#513.380 output variable not found for task #" + taskId);
+            throw new InternalFunctionException(variable_not_found, "515.040 output variable not found for task #" + taskId);
         }
 
         String text = MetaUtils.getValue(taskParamsYaml.task.metas, TEXT);
         if (S.b(text)) {
-            throw new InternalFunctionException(meta_not_found, "#513.300 meta '"+ TEXT +"' wasn't found or it's blank");
+            throw new InternalFunctionException(meta_not_found, "515.080 meta '"+ TEXT +"' wasn't found or it's blank");
         }
 
         final List<String> variables = getVariables(text, false);
@@ -95,7 +95,7 @@ public class EnhanceTextFunction implements InternalFunction {
             String varName = getNameForVariable(variable);
             String value = internalFunctionVariableService.getValueOfVariable(simpleExecContext.execContextId, taskContextId, varName);
             if (value==null) {
-                throw new InternalFunctionException(data_not_found, "#513.340 data wasn't found, variable: "+variable+", normalized: " + varName);
+                throw new InternalFunctionException(data_not_found, "515.120 data wasn't found, variable: "+variable+", normalized: " + varName);
             }
             text = StringUtils.replaceEach(text, new String[]{"[[" + variable + "]]", "{{" + variable + "}}"}, new String[]{value, value});
         }

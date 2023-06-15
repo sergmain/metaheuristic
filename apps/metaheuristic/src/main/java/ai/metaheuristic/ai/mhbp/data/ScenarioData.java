@@ -50,7 +50,16 @@ public class ScenarioData {
 
     @Data
     public static class StepEvaluationResult {
+        public long scenarioId;
+        public String uuid;
         public String result;
+        @Nullable
+        public String error;
+
+        public StepEvaluationResult(long scenarioId, String uuid) {
+            this.scenarioId = scenarioId;
+            this.uuid = uuid;
+        }
     }
 
     @Data
@@ -86,10 +95,16 @@ public class ScenarioData {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class StepEvaluationPrepareResult {
+        public long scenarioId;
         public String uuid;
         public final List<StepInput> inputs = new ArrayList<>();
         @Nullable
         public String error;
+
+        public StepEvaluationPrepareResult(long scenarioId, String uuid) {
+            this.scenarioId = scenarioId;
+            this.uuid = uuid;
+        }
     }
 
     @Data
