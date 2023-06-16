@@ -69,6 +69,7 @@
 	"dispatcher.Scenario": "Scenarios",
 	"mhbp.scenario-function-mh.batch-line-splitter": "Split list per line",
 	"mhbp.scenario-function-mh.batch-line-splitter-desc": "Split input data per line.",
+	"scenario.Use cache": "Use cache",
 
 	"step.Prompt": "Prompt",
 	"step.Create": "Create",

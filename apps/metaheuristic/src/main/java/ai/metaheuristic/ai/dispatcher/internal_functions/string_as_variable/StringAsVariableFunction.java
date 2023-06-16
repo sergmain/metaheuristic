@@ -92,10 +92,20 @@ public class StringAsVariableFunction implements InternalFunction {
         for (StringVariableData.StringAsVar inlineAsVar : mapping.mapping) {
 
             // DO NOT remove inlineAsVar.group
-            //noinspection deprecation
-            String keyName = inlineAsVar.key != null ? inlineAsVar.key : inlineAsVar.group;
+            String keyName;
+            if (inlineAsVar.key!=null) {
+                keyName = inlineAsVar.key;
+            }
+            else {
+                //noinspection deprecation
+                if (inlineAsVar.group!=null) {
+                    log.warn("513.335 ai.metaheuristic.ai.dispatcher.data.StringVariableData.StringAsVar.group is deprecated, use key instead");
+                }
+                //noinspection deprecation
+                keyName = inlineAsVar.group;
+            }
             if (keyName==null) {
-                throw new InternalFunctionException(source_code_is_broken, "#513.340 mapping must have a field key or group, "+ inlineAsVar);
+                throw new InternalFunctionException(source_code_is_broken, "513.340 mapping must have a field key or group, "+ inlineAsVar);
             }
             final Map<String, String> map;
             Enums.StringAsVariableSource source = inlineAsVar.source==null ? Enums.StringAsVariableSource.inline : inlineAsVar.source;
