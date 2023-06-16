@@ -93,7 +93,6 @@ public class ScenarioRestController {
         return result;
     }
 
-    // /rest/v1/dispatcher/scenario/scenario-step-evaluation-run/31/c37eff01-4a23-4dda-b7a2-e9193a602a76
     @PostMapping(value = "/scenario-step-evaluation-run/{scenarioId}/{uuid}")
     public ScenarioData.StepEvaluationResult scenarioStepEvaluationRun(
             @PathVariable long scenarioId,
@@ -119,6 +118,16 @@ public class ScenarioRestController {
         return result;
     }
 
+    @PostMapping(value = "/accept-new-prompt-for-step/{scenarioId}/{uuid}")
+    public OperationStatusRest acceptNewPromptForStep(
+            @PathVariable long scenarioId,
+            @PathVariable String uuid,
+            @RequestParam(name = "newPrompt") String newPrompt,
+            Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        OperationStatusRest result = scenarioTxService.acceptNewPromptForStep(scenarioId, uuid, newPrompt, context);
+        return result;
+    }
 
     @PostMapping("/scenario-group-add-commit")
 //    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
@@ -155,7 +164,7 @@ public class ScenarioRestController {
 
     @PostMapping("/scenario-step-add-change-commit")
 //    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
-    public OperationStatusRest addScenarioStepFormCommit(
+    public OperationStatusRest createOrChangeScenarioStep(
             @RequestParam(name = "scenarioGroupId") String scenarioGroupId,
             @RequestParam(name = "scenarioId") String scenarioId,
             @RequestParam(name = "uuid", required = false) String uuid,

@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.mhbp.scenario;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.beans.ScenarioGroup;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
@@ -35,7 +34,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * @author Sergio Lissner
@@ -85,22 +83,33 @@ public class ScenarioTxService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    @Transactional
-    public OperationStatusRest deleteScenarioById(Long scenarioId, DispatcherContext context) {
+    public record FindScenario(Scenario scenario, OperationStatusRest status) {}
+
+    @SuppressWarnings({"ConstantValue", "DataFlowIssue"})
+    private FindScenario findScenario(Long scenarioId, DispatcherContext context) {
         if (scenarioId==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "229.240 scenarioId is null");
+            return new FindScenario(null, new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "229.240 scenarioId is null"));
         }
         Scenario scenario = scenarioRepository.findById(scenarioId).orElse(null);
         if (scenario == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "229.280 Scenario wasn't found, scenarioId: " + scenarioId);
+            return new FindScenario(null, new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "229.280 Scenario wasn't found, scenarioId: " + scenarioId));
         }
         if (scenario.accountId!=context.getAccountId()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.320 scenarioId: " + scenarioId);
+            return new FindScenario(null, new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.320 scenarioId: " + scenarioId));
+        }
+        return new FindScenario(scenario, OperationStatusRest.OPERATION_STATUS_OK);
+    }
+
+    @Transactional
+    public OperationStatusRest deleteScenarioById(Long scenarioId, DispatcherContext context) {
+        FindScenario findScenario = findScenario(scenarioId, context);
+        if (findScenario.status.status!=EnumsApi.OperationStatus.OK) {
+            return findScenario.status;
         }
 
-        scenarioRepository.delete(scenario);
+        scenarioRepository.delete(findScenario.scenario);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -124,48 +133,51 @@ public class ScenarioTxService {
     }
 
     @Transactional
+    public OperationStatusRest acceptNewPromptForStep(long scenarioId, String uuid, String newPrompt, DispatcherContext context) {
+        FindScenario findScenario = findScenario(scenarioId, context);
+        if (findScenario.status.status!=EnumsApi.OperationStatus.OK) {
+            return findScenario.status;
+        }
+
+        ScenarioParams sp = findScenario.scenario.getScenarioParams();
+        ScenarioParams.Step step = sp.steps.stream().filter(o->o.uuid.equals(uuid)).findFirst().orElse(null);
+        if (step==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "239.570 UUID is broken");
+        }
+        step.p = newPrompt;
+        findScenario.scenario.updateParams(sp);
+
+        scenarioRepository.save(findScenario.scenario);
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    @Transactional
     public OperationStatusRest deleteScenarioStep(Long scenarioId, String uuid, DispatcherContext context) {
-        if (scenarioId==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "229.440 scenarioGroupId is null");
-        }
-        Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
-        if (s == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "229.480 Scenario wasn't scenarioGroupId, scenarioId: " + scenarioId);
-        }
-        if (s.accountId!=context.getAccountId()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "239.440 scenarioId: " + scenarioId);
+        FindScenario findScenario = findScenario(scenarioId, context);
+        if (findScenario.status.status!=EnumsApi.OperationStatus.OK) {
+            return findScenario.status;
         }
 
-        ScenarioParams sp = s.getScenarioParams();
+        ScenarioParams sp = findScenario.scenario.getScenarioParams();
         sp.steps = sp.steps.stream().filter(o->!o.uuid.equals(uuid)).toList();
-        s.updateParams(sp);
+        findScenario.scenario.updateParams(sp);
 
-        scenarioRepository.save(s);
+        scenarioRepository.save(findScenario.scenario);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     @Transactional
     public OperationStatusRest scenarioStepRearrange(Long scenarioId, String previousUuid, String currentUuid, DispatcherContext context) {
-        if (scenarioId==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "229.480 scenarioGroupId is null");
-        }
-        Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
-        if (s == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "229.520 Scenario wasn't scenarioGroupId, scenarioId: " + scenarioId);
-        }
-        if (s.accountId!=context.getAccountId()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "239.560 scenarioId: " + scenarioId);
+        FindScenario findScenario = findScenario(scenarioId, context);
+        if (findScenario.status.status!=EnumsApi.OperationStatus.OK) {
+            return findScenario.status;
         }
 
         if (S.b(previousUuid) || S.b(currentUuid)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "239.565 indexes");
         }
 
-        ScenarioParams sp = s.getScenarioParams();
+        ScenarioParams sp = findScenario.scenario.getScenarioParams();
 
         ScenarioParams.Step prevStep = sp.steps.stream().filter(o->o.uuid.equals(previousUuid)).findFirst().orElse(null);
         if (prevStep==null) {
@@ -183,9 +195,9 @@ public class ScenarioTxService {
         }
         sp.steps.add(index, prevStep);
 
-        s.updateParams(sp);
+        findScenario.scenario.updateParams(sp);
 
-        scenarioRepository.save(s);
+        scenarioRepository.save(findScenario.scenario);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
