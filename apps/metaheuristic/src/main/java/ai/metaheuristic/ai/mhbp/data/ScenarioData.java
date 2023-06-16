@@ -53,6 +53,7 @@ public class ScenarioData {
         public long scenarioId;
         public String uuid;
         public String result;
+        public String rawrResult;
         @Nullable
         public String error;
 

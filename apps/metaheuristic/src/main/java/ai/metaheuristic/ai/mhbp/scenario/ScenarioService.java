@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
@@ -29,7 +28,6 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunc
 import ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
-import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
@@ -50,7 +48,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.PageUtils;
@@ -62,6 +59,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -70,10 +68,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.OperationStatusWithSourceCodeId;
 import static ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallService.API_CODE;
 import static ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallService.PROMPT;
+import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.findStepByUuid;
 import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getNameForVariable;
 import static ai.metaheuristic.ai.utils.CollectionUtils.TreeUtils;
 import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
@@ -383,48 +381,87 @@ public class ScenarioService {
             }
             final Scenario scenario = Objects.requireNonNull(preparedScenario.scenario);
             ScenarioParams sp = scenario.getScenarioParams();
-            SourceCodeParamsYaml.Process process = ScenarioUtils.getProcess(sp, new AtomicInteger(), this::apiSchemeResolver, uuid);
+            ScenarioParams.Step step = findStepByUuid(sp, uuid);
+            if (step==null) {
+                r.error = "(step==null), uuid: " + uuid;
+                return r;
+            }
+
+            SourceCodeParamsYaml.Process process = ScenarioUtils.getProcess(step, new AtomicInteger(), this::apiSchemeResolver, uuid);
 
             String apiCode = MetaUtils.getValue(process.metas, API_CODE);
-            if (S.b(apiCode)) {
-                throw new InternalFunctionException(meta_not_found, "513.080 meta '"+ API_CODE +"' wasn't found or it's blank");
-            }
-            Api api = apiRepository.findByApiCode(apiCode);
-            if (api==null) {
-                throw new InternalFunctionException(general_error, "513.120 API wasn't found with code '"+ PROMPT +"' wasn't found or it's blank");
-            }
-
-            String prompt = se.prompt;
-            for (ScenarioData.StepVariable variable : se.variables) {
-                String varName = getNameForVariable(variable.name);
-                String value = variable.value;
-                if (value==null) {
-                    throw new InternalFunctionException(data_not_found, "373.200 data wasn't found, variable: " + variable + ", normalized: " + varName);
+            Api api = null;
+            if (!S.b(apiCode)) {
+                api = apiRepository.findByApiCode(apiCode);
+                if (api==null) {
+                    r.error = "373.190 API wasn't found with code '" + PROMPT + "' wasn't found or it's blank";
+                    return r;
                 }
-                prompt = StringUtils.replaceEach(prompt, new String[]{"[[" + variable + "]]", "{{" + variable + "}}"}, new String[]{value, value});
-            }
-            log.info("373.240 prompt: {}", prompt);
-            ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, null);
-            ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
-            if (answer.status()!=OK) {
-                throw new InternalFunctionException(data_not_found, "373.280 API call error: "+answer.error()+", prompt: " + prompt);
-            }
-            if (answer.a()==null) {
-                throw new InternalFunctionException(data_not_found, "373.320 answer.a() is null, error: "+answer.error()+", prompt: " + prompt);
-            }
-            if (answer.a().processedAnswer.answer()==null) {
-                throw new InternalFunctionException(data_not_found, "373.360 processedAnswer.answer() is null, error: "+answer.error()+", prompt: " + prompt);
             }
 
-            r.result = answer.a().processedAnswer.answer();
-
-
+            if (step.function==null) {
+                return evaluationAsApiCall(r, se, Objects.requireNonNull(api));
+            }
+            else {
+                if (Consts.MH_ENHANCE_TEXT_FUNCTION.equals(step.function.code)) {
+                    return evaluationAsTextEnhance(r, se, Objects.requireNonNull(api));
+                }
+            }
+            return r;
         }
         catch (Throwable th) {
             r.error = "373.380 error " + th.getMessage();
             log.error(r.error, th);
-
+            return r;
         }
+    }
+
+    private static ScenarioData.StepEvaluationResult evaluationAsTextEnhance(ScenarioData.StepEvaluationResult r, ScenarioData.StepEvaluation se, Api api) {
+        String prompt = se.prompt;
+        for (ScenarioData.StepVariable variable : se.variables) {
+            String varName = getNameForVariable(variable.name);
+            String value = variable.value;
+            if (value==null) {
+                r.error = "373.200 data wasn't found, variable: " + variable + ", normalized: " + varName;
+                return r;
+            }
+            prompt = StringUtils.replaceEach(prompt, new String[]{"[[" + variable + "]]", "{{" + variable + "}}"}, new String[]{value, value});
+        }
+        r.result = prompt;
+        r.rawrResult = prompt;
+        return r;
+    }
+
+    @NonNull
+    private ScenarioData.StepEvaluationResult evaluationAsApiCall(ScenarioData.StepEvaluationResult r, ScenarioData.StepEvaluation se, Api api) {
+        String prompt = se.prompt;
+        for (ScenarioData.StepVariable variable : se.variables) {
+            String varName = getNameForVariable(variable.name);
+            String value = variable.value;
+            if (value==null) {
+                r.error = "373.200 data wasn't found, variable: " + variable + ", normalized: " + varName;
+                return r;
+            }
+            prompt = StringUtils.replaceEach(prompt, new String[]{"[[" + variable + "]]", "{{" + variable + "}}"}, new String[]{value, value});
+        }
+        log.info("373.240 prompt: {}", prompt);
+        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, null);
+        ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
+        if (answer.status()!=OK) {
+            r.error = "373.280 API call error: " + answer.error() + ", prompt: " + prompt;
+            return r;
+        }
+        if (answer.a()==null) {
+            r.error = "373.320 answer.a() is null, error: " + answer.error() + ", prompt: " + prompt;
+            return r;
+        }
+        if (answer.a().processedAnswer.answer()==null) {
+            r.error = "373.360 processedAnswer.answer() is null, error: " + answer.error() + ", prompt: " + prompt;
+            return r;
+        }
+
+        r.result = answer.a().processedAnswer.answer();
+        r.rawrResult = Objects.requireNonNull(answer.a().processedAnswer.rawAnswerFromAPI().raw());
         return r;
     }
 }
