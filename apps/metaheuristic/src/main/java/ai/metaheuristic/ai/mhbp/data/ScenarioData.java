@@ -54,6 +54,7 @@ public class ScenarioData {
         public String uuid;
         public String result;
         public String rawrResult;
+        public String prompt;
         @Nullable
         public String error;
 

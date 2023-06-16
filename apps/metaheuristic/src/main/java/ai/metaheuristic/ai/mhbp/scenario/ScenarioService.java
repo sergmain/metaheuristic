@@ -25,7 +25,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunction;
-import ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
@@ -97,7 +96,6 @@ public class ScenarioService {
     private final SourceCodeRepository sourceCodeRepository;
     private final SourceCodeService sourceCodeService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
-    private final ApiCallService apiCallService;
     private final ProviderQueryService providerQueryService;
 
     public ScenarioData.ScenarioGroupsResult getScenarioGroups(Pageable pageable, DispatcherContext context) {
@@ -404,7 +402,7 @@ public class ScenarioService {
             }
             else {
                 if (Consts.MH_ENHANCE_TEXT_FUNCTION.equals(step.function.code)) {
-                    return evaluationAsTextEnhance(r, se, Objects.requireNonNull(api));
+                    return evaluationAsTextEnhance(r, se);
                 }
             }
             return r;
@@ -416,7 +414,7 @@ public class ScenarioService {
         }
     }
 
-    private static ScenarioData.StepEvaluationResult evaluationAsTextEnhance(ScenarioData.StepEvaluationResult r, ScenarioData.StepEvaluation se, Api api) {
+    private static ScenarioData.StepEvaluationResult evaluationAsTextEnhance(ScenarioData.StepEvaluationResult r, ScenarioData.StepEvaluation se) {
         String prompt = se.prompt;
         for (ScenarioData.StepVariable variable : se.variables) {
             String varName = getNameForVariable(variable.name);
@@ -425,8 +423,9 @@ public class ScenarioService {
                 r.error = "373.200 data wasn't found, variable: " + variable + ", normalized: " + varName;
                 return r;
             }
-            prompt = StringUtils.replaceEach(prompt, new String[]{"[[" + variable + "]]", "{{" + variable + "}}"}, new String[]{value, value});
+            prompt = StringUtils.replaceEach(prompt, new String[]{"[[" + varName + "]]", "{{" + varName + "}}"}, new String[]{value, value});
         }
+        r.prompt = prompt;
         r.result = prompt;
         r.rawrResult = prompt;
         return r;
@@ -439,11 +438,12 @@ public class ScenarioService {
             String varName = getNameForVariable(variable.name);
             String value = variable.value;
             if (value==null) {
-                r.error = "373.200 data wasn't found, variable: " + variable + ", normalized: " + varName;
+                r.error = "373.200 data wasn't found, variable: " + variable.name + ", normalized: " + varName;
                 return r;
             }
-            prompt = StringUtils.replaceEach(prompt, new String[]{"[[" + variable + "]]", "{{" + variable + "}}"}, new String[]{value, value});
+            prompt = StringUtils.replaceEach(prompt, new String[]{"[[" + variable.name + "]]", "{{" + variable.name + "}}"}, new String[]{value, value});
         }
+        r.prompt = prompt;
         log.info("373.240 prompt: {}", prompt);
         ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, null);
         ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
