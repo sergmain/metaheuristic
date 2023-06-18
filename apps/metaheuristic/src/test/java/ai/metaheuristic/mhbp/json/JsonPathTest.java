@@ -34,6 +34,29 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class JsonPathTest {
 
+
+    @Test
+    public void test_() throws IOException {
+        String json = """
+                {
+                  "created": 1687060833,
+                  "data": [
+                    {
+                      "b64_json": "iVBOR"
+                    }
+                  ]
+                }
+                """;
+
+        String jsonpath = "$['data'][0]['b64_json']";
+
+
+        DocumentContext jsonContext = JsonPath.parse(json);
+        String content = jsonContext.read(jsonpath);
+
+        assertEquals("iVBOR", content);
+    }
+
     // https://github.com/json-path/JsonPath
     // https://www.baeldung.com/guide-to-jayway-jsonpath
     // https://goessner.net/articles/JsonPath/

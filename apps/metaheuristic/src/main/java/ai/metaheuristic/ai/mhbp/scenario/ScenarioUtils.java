@@ -205,7 +205,7 @@ public class ScenarioUtils {
                         needRawOutput = true;
                         yield EnumsApi.VariableType.text;
                     }
-                    case image -> EnumsApi.VariableType.image;
+                    case image, image_base64 -> EnumsApi.VariableType.image;
                 };
             }
 

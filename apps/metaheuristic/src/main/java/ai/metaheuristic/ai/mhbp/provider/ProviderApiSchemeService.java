@@ -178,7 +178,6 @@ public class ProviderApiSchemeService {
         byte[] bytes = baos.toByteArray();
         if (statusCode!=HttpStatus.OK.value()) {
             //noinspection
-//            String d = schemeAndParams.scheme.scheme.response.type.binary ? "<response for API is binary>" : new String(bytes, StandardCharsets.UTF_8);
             String d;
             try {
                 d = StringUtils.substring(new String(bytes, StandardCharsets.UTF_8), 0, 512);

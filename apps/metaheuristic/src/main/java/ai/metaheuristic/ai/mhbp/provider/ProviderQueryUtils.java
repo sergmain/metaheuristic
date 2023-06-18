@@ -21,7 +21,9 @@ import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
+import org.apache.commons.codec.binary.Base64;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 /**
@@ -45,6 +47,17 @@ public class ProviderQueryUtils {
         if (response.type==Enums.PromptResponseType.image) {
             Objects.requireNonNull(rawAnswerFromAPI.bytes());
             return new ApiData.ProcessedAnswerFromAPI(rawAnswerFromAPI, null);
+        }
+        if (response.type==Enums.PromptResponseType.image_base64) {
+            Objects.requireNonNull(rawAnswerFromAPI.bytes());
+            String base64 = new String(rawAnswerFromAPI.bytes(), StandardCharsets.UTF_8);
+            DocumentContext jsonContext = JsonPath.parse(base64);
+            String content = jsonContext.read(response.path);
+
+            byte[] actualBytes = Base64.decodeBase64(content);
+
+            final ApiData.ProcessedAnswerFromAPI result = new ApiData.ProcessedAnswerFromAPI(new ApiData.RawAnswerFromAPI(response.type, actualBytes), null);
+            return result;
         }
         throw new IllegalStateException();
     }

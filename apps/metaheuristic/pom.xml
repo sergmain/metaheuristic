@@ -139,8 +139,6 @@
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <!--suppress MavenPackageUpdate -->
-            <version>1.15</version>
         </dependency>
 
         <dependency>

@@ -181,10 +181,15 @@ public final class Enums {
 
     public enum TokenPlace { param, header }
     public enum PromptPlace { uri, text }
-    public enum PromptResponseType { json(false), text(false), image(true);
+    public enum PromptResponseType {
+        json(false, false), text(false, false), image(true, false),
+        image_base64(true, true);
+
         public final boolean binary;
-        PromptResponseType(boolean binary) {
+        public final boolean base64;
+        PromptResponseType(boolean binary, boolean base64) {
             this.binary = binary;
+            this.base64 = base64;
         }
     }
     public enum HttpMethodType { get, post }
