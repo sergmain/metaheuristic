@@ -107,6 +107,13 @@ public class ScenarioService {
         return new ScenarioData.ScenarioGroupsResult(new PageImpl<>(sorted, pageable, list.size()));
     }
 
+    public ScenarioData.ScenarioGroupsAllResult getScenarioGroupsAll(DispatcherContext context) {
+        List<ScenarioGroup> scenarioGroups = scenarioGroupRepository.findAllByAccountId(context.getAccountId());
+        List<ScenarioData.SimpleScenarioGroup> list = scenarioGroups.stream().map(ScenarioData.SimpleScenarioGroup::new).toList();
+        var sorted = list.stream().sorted((o1, o2)->Long.compare(o2.scenarioGroupId, o1.scenarioGroupId)).collect(Collectors.toList());
+        return new ScenarioData.ScenarioGroupsAllResult(sorted);
+    }
+
     public ScenarioData.ScenariosResult getScenarios(Pageable pageable, @Nullable Long scenarioGroupId, DispatcherContext context) {
         if (scenarioGroupId==null) {
             return new ScenarioData.ScenariosResult(Page.empty(pageable));

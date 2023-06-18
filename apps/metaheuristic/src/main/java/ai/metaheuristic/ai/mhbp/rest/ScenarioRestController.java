@@ -16,14 +16,13 @@
 
 package ai.metaheuristic.ai.mhbp.rest;
 
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.mhbp.data.ScenarioData;
-import ai.metaheuristic.ai.utils.JsonUtils;
-import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.scenario.ScenarioService;
 import ai.metaheuristic.ai.mhbp.scenario.ScenarioTxService;
-import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -54,6 +53,13 @@ public class ScenarioRestController {
     public ScenarioData.ScenarioGroupsResult scenarioGroups(Pageable pageable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         final ScenarioData.ScenarioGroupsResult result = scenarioService.getScenarioGroups(pageable, context);
+        return result;
+    }
+
+    @GetMapping("/scenario-groups-all")
+    public ScenarioData.ScenarioGroupsAllResult getScenarioGroupsAll(Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        final ScenarioData.ScenarioGroupsAllResult result = scenarioService.getScenarioGroupsAll(context);
         return result;
     }
 
@@ -231,6 +237,18 @@ public class ScenarioRestController {
     public SourceCodeData.SimpleSourceCodeUid getSourceCodeId(@PathVariable long scenarioGroupId, @PathVariable long scenarioId, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         final SourceCodeData.SimpleSourceCodeUid result = scenarioService.getSourceCodeId(scenarioGroupId, scenarioId, context);
+        return result;
+    }
+
+    @Nullable
+    @PostMapping("/move-scenario-to-new-group/{scenarioGroupId}/{scenarioId}")
+    public OperationStatusRest moveScenarioToNewGroup(
+            @PathVariable long scenarioGroupId,
+            @PathVariable long scenarioId,
+            @RequestParam(name = "newScenarioGroupId") long newScenarioGroupId,
+            Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        final OperationStatusRest result = scenarioTxService.moveScenarioToNewGroup(scenarioGroupId, scenarioId, newScenarioGroupId, context);
         return result;
     }
 }

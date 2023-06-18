@@ -136,17 +136,22 @@ public class ScenarioData {
         public List<String> aggregateTypes;
     }
 
-    @RequiredArgsConstructor
-    public static class ScenarioGroupsResult extends BaseDataClass {
-        public final Slice<SimpleScenarioGroup> scenarioGroups;
-    }
-
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
     public static class ScenariosResult extends BaseDataClass {
         public Page<SimpleScenario> scenarios;
+    }
+
+    @RequiredArgsConstructor
+    public static class ScenarioGroupsResult extends BaseDataClass {
+        public final Slice<SimpleScenarioGroup> scenarioGroups;
+    }
+
+    @RequiredArgsConstructor
+    public static class ScenarioGroupsAllResult extends BaseDataClass {
+        public final List<SimpleScenarioGroup> scenarioGroups;
     }
 
     @Data

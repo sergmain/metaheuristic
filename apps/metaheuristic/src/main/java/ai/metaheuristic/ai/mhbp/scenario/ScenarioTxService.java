@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.mhbp.scenario;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.beans.ScenarioGroup;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
@@ -100,6 +101,31 @@ public class ScenarioTxService {
             return new FindScenario(null, new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.320 scenarioId: " + scenarioId));
         }
         return new FindScenario(scenario, OperationStatusRest.OPERATION_STATUS_OK);
+    }
+
+    @Transactional
+    public OperationStatusRest moveScenarioToNewGroup(long scenarioGroupId, long scenarioId, long newScenarioGroupId, DispatcherContext context) {
+        FindScenario findScenario = findScenario(scenarioId, context);
+        if (findScenario.status.status!=EnumsApi.OperationStatus.OK) {
+            return findScenario.status;
+        }
+        if (findScenario.scenario.scenarioGroupId!=scenarioGroupId) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "229.340 Scenario wasn't found, scenarioId: " + scenarioId);
+        }
+        if (findScenario.scenario.scenarioGroupId==newScenarioGroupId) {
+            return OperationStatusRest.OPERATION_STATUS_OK;
+        }
+
+        Long actualNewGroupId = scenarioRepository.findScenarioGroup(newScenarioGroupId, context.getAccountId());
+        if (actualNewGroupId==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "229.345 Target ScenarioGroup wasn't found, newScenarioGroupId: " + newScenarioGroupId);
+        }
+        findScenario.scenario.scenarioGroupId = actualNewGroupId;
+
+        scenarioRepository.save(findScenario.scenario);
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     @Transactional
