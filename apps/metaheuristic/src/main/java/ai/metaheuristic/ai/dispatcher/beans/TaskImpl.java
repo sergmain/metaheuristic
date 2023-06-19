@@ -22,6 +22,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -38,6 +39,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @EntityListeners(value=TaskImpl.LastUpdateListener.class)
 @Cacheable
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class TaskImpl implements Serializable, Task {
     @Serial
@@ -52,10 +54,12 @@ public class TaskImpl implements Serializable, Task {
         }
     }
 
+    @EqualsAndHashCode.Include
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
+    @EqualsAndHashCode.Include
     @Version
     public Integer version;
 

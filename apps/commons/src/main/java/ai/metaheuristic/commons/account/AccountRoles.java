@@ -22,6 +22,7 @@ import lombok.Data;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -69,6 +70,10 @@ public class AccountRoles {
     private final InitedRoles initedRoles = new InitedRoles();
     private final List<SerializableGrantedAuthority> authorities = new ArrayList<>();
 
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+    private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+
     public AccountRoles(Supplier<String> roleGetter, Consumer<String> roleSetter) {
         this.roleSetter = roleSetter;
         this.roleGetter = roleGetter;
@@ -76,42 +81,70 @@ public class AccountRoles {
 
     public boolean hasRole(String role) {
         initRoles();
-        return initedRoles.contains(role);
+        try {
+            readLock.lock();
+            return initedRoles.contains(role);
+        } finally {
+            readLock.unlock();
+        }
     }
 
     public List<SerializableGrantedAuthority> getAuthorities() {
         initRoles();
-        return authorities;
+        try {
+            readLock.lock();
+            return authorities;
+        } finally {
+            readLock.unlock();
+        }
     }
 
     public List<String> getRolesAsList() {
         initRoles();
-        return new ArrayList<>(initedRoles.roles);
+        try {
+            readLock.lock();
+            return new ArrayList<>(initedRoles.roles);
+        } finally {
+            readLock.unlock();
+        }
     }
 
     public String asString() {
         initRoles();
-        return String.join(",", initedRoles.roles);
+        try {
+            readLock.lock();
+            return String.join(",", initedRoles.roles);
+        } finally {
+            readLock.unlock();
+        }
     }
 
     public void addRole(String role) {
-        synchronized (this) {
+        try {
+            writeLock.lock();
+
             initedRoles.addRole(role);
             this.roleSetter.accept(initedRoles.asString());
             initedRoles.reset();
             authorities.clear();
             initRoles();
+        } finally {
+            writeLock.unlock();
         }
     }
 
     public void removeRole(String role) {
-        synchronized (this) {
+        try {
+            writeLock.lock();
+
             initedRoles.removeRole(role);
             this.roleSetter.accept(initedRoles.asString());
             initedRoles.reset();
 
             authorities.clear();
             initRoles();
+        } finally {
+            writeLock.unlock();
         }
     }
 
@@ -119,7 +152,8 @@ public class AccountRoles {
         if (initedRoles.inited) {
             return;
         }
-        synchronized (this) {
+        try {
+            writeLock.lock();
             if (initedRoles.inited) {
                 return;
             }
@@ -136,6 +170,8 @@ public class AccountRoles {
                 }
             }
             initedRoles.inited = true;
+        } finally {
+            writeLock.unlock();
         }
     }
 

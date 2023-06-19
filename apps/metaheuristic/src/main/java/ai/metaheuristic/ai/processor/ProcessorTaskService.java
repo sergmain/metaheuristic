@@ -483,6 +483,7 @@ public class ProcessorTaskService {
     public void createTask(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherCommParamsYaml.AssignedTask assignedTask) {
         try {
             ProcessorSyncHolder.writeLock.lock();
+
             metadataService.registerTaskQuota(core.dispatcherUrl.url, assignedTask.taskId, assignedTask.tag, assignedTask.quota);
 
             log.info("#713.150 Prepare new task #{} on core #{}", assignedTask.taskId, core.coreId);

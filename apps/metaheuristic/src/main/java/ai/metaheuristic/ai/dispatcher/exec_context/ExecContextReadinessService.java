@@ -59,7 +59,6 @@ import java.util.stream.Collectors;
 @Order(1000)
 public class ExecContextReadinessService {
 
-    private final ExecContextService execContextService;
     private final ExecContextCache execContextCache;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final ExecContextReconciliationTopLevelService execContextReconciliationTopLevelService;

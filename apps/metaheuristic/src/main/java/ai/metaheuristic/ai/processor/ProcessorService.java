@@ -141,9 +141,12 @@ public class ProcessorService {
     }
 
     public void assignTasks(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherCommParamsYaml.AssignedTask task) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
+            ProcessorSyncHolder.writeLock.lock();
             currentExecState.registerDelta(core.dispatcherUrl, task.execContextId, task.state);
             processorTaskService.createTask(core, task);
+        } finally {
+            ProcessorSyncHolder.writeLock.unlock();
         }
     }
 
@@ -191,8 +194,6 @@ public class ProcessorService {
                 case inline:
                 default:
                     throw new NotImplementedException("need to set 'uploaded' in params for this variableId");
-//                    status = Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
-//                    break;
             }
             if (status!=Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED) {
                 return status;
