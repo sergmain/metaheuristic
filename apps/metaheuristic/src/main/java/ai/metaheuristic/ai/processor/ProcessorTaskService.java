@@ -29,6 +29,7 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import jakarta.annotation.PostConstruct;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +39,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -101,7 +101,7 @@ public class ProcessorTaskService {
                             return;
                         }
                         try {
-                            AtomicBoolean isEmpty = new AtomicBoolean(true);
+                            final AtomicBoolean isEmpty = new AtomicBoolean(true);
                             try (final Stream<Path> stream = Files.list(p)) {
                                 stream.forEach(s -> {
                                     isEmpty.set(false);
@@ -175,7 +175,8 @@ public class ProcessorTaskService {
     }
 
     public void setReportedOn(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, long taskId) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
+            ProcessorSyncHolder.writeLock.lock();
             log.info("#713.065 setReportedOn({}, {})", core.dispatcherUrl, taskId);
             ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
@@ -185,11 +186,14 @@ public class ProcessorTaskService {
             task.setReported(true);
             task.setReportedOn(System.currentTimeMillis());
             save(core, task);
+        } finally {
+            ProcessorSyncHolder.writeLock.unlock();
         }
     }
 
     public void setInputAsEmpty(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, long taskId, String variableId) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
+            ProcessorSyncHolder.writeLock.lock();
             log.info("#713.075 setInputAsEmpty({}, {})", core.dispatcherUrl, taskId);
             ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
@@ -208,12 +212,15 @@ public class ProcessorTaskService {
 //            task.setReported(true);
 //            task.setReportedOn(System.currentTimeMillis());
 
-            save(core, task);
+        } finally {
+            ProcessorSyncHolder.writeLock.unlock();
         }
     }
 
     public void setDelivered(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
+            ProcessorSyncHolder.writeLock.lock();
+
             log.info("#713.080 setDelivered({}, {})", core.dispatcherUrl.url, taskId);
             ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
@@ -241,11 +248,14 @@ public class ProcessorTaskService {
                 }
             }
             save(core, task);
+        } finally {
+            ProcessorSyncHolder.writeLock.unlock();
         }
     }
 
     public void setVariableUploadedAndCompleted(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, Long outputVariableId) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
+            ProcessorSyncHolder.writeLock.lock();
             log.info("setResourceUploadedAndCompleted({}, {}, {})", core.dispatcherUrl, taskId, outputVariableId);
             ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
@@ -255,12 +265,15 @@ public class ProcessorTaskService {
             task.output.outputStatuses.stream().filter(o -> o.variableId.equals(outputVariableId)).findFirst().ifPresent(status -> status.uploaded = true);
             task.setCompleted( task.isDelivered() );
             save(core, task);
+        } finally {
+            ProcessorSyncHolder.writeLock.unlock();
         }
     }
 
     @SuppressWarnings("unused")
     public void setCompleted(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
+            ProcessorSyncHolder.writeLock.lock();
             log.info("setCompleted({}, {})", core.dispatcherUrl, taskId);
             ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
@@ -269,18 +282,23 @@ public class ProcessorTaskService {
             }
             task.setCompleted(true);
             save(core, task);
+        } finally {
+            ProcessorSyncHolder.writeLock.unlock();
         }
     }
 
     public List<ProcessorCoreTask> getForReporting(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
+            ProcessorSyncHolder.readLock.lock();
             Stream<ProcessorCoreTask> stream = findAllByFinishedOnIsNotNull(core);
             List<ProcessorCoreTask> result = stream
                     .filter(processorTask -> !processorTask.isReported() ||
-                            (!processorTask.isDelivered() &&
-                                    (processorTask.getReportedOn() == null || (System.currentTimeMillis() - processorTask.getReportedOn()) > 60_000)))
+                                             (!processorTask.isDelivered() &&
+                                              (processorTask.getReportedOn() == null || (System.currentTimeMillis() - processorTask.getReportedOn()) > 60_000)))
                     .collect(Collectors.toList());
             return result;
+        } finally {
+            ProcessorSyncHolder.readLock.unlock();
         }
     }
 
@@ -311,17 +329,20 @@ public class ProcessorTaskService {
     }
 
     public void markAsFinishedWithError(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, long taskId, String es) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
+            ProcessorSyncHolder.writeLock.lock();
             markAsFinished(core, taskId,
                     new FunctionApiData.FunctionExec(
                             null, null, null,
                             new FunctionApiData.SystemExecResult("system-error", false, -992, es)));
+        } finally {
+            ProcessorSyncHolder.writeLock.unlock();
         }
     }
 
     void markAsFinished(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, FunctionApiData.FunctionExec functionExec) {
-
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
+            ProcessorSyncHolder.writeLock.lock();
             log.info("markAsFinished({}, #{}, {})", core.dispatcherUrl.url, taskId, functionExec);
 
             metadataService.removeQuota(core.dispatcherUrl.url, taskId);
@@ -353,11 +374,14 @@ public class ProcessorTaskService {
 
                 save(core, task);
             }
+        } finally {
+            ProcessorSyncHolder.writeLock.unlock();
         }
     }
 
     void markAsAssetPrepared(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, boolean status) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
+            ProcessorSyncHolder.writeLock.lock();
             log.info("markAsAssetPrepared(dispatcherUrl: {}, taskId: {}, status: {})", core.dispatcherUrl, taskId, status);
             ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
@@ -366,11 +390,14 @@ public class ProcessorTaskService {
                 task.setAssetsPrepared(status);
                 save(core, task);
             }
+        } finally {
+            ProcessorSyncHolder.writeLock.unlock();
         }
     }
 
     boolean isNeedNewTask(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
+            ProcessorSyncHolder.readLock.lock();
             // TODO 2019-10-24 need to optimize
             List<ProcessorCoreTask> tasks = findAllByCompletedIsFalse(core);
             for (ProcessorCoreTask task : tasks) {
@@ -382,11 +409,15 @@ public class ProcessorTaskService {
                 }
             }
             return true;
+
+        } finally {
+            ProcessorSyncHolder.readLock.unlock();
         }
     }
 
     public List<ProcessorCoreTask> findAllByCompletedIsFalse(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
+            ProcessorSyncHolder.writeLock.lock();
             List<ProcessorCoreTask> list = new ArrayList<>();
             for (ProcessorCoreTask task : getTasksForProcessorCore(core).values()) {
                 if (!task.completed) {
@@ -400,6 +431,8 @@ public class ProcessorTaskService {
                 }
             }
             return list;
+        } finally {
+            ProcessorSyncHolder.writeLock.unlock();
         }
     }
 
@@ -421,7 +454,7 @@ public class ProcessorTaskService {
     }
 
     public List<ProcessorCoreTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, boolean assetsPreparedStatus) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
             List<ProcessorCoreTask> list = new ArrayList<>();
             Map<Long, ProcessorCoreTask> mapForDispatcherUrl = getTasksForProcessorCore(core);
             List<Long> forDeletion = new ArrayList<>();
@@ -438,6 +471,8 @@ public class ProcessorTaskService {
                 mapForDispatcherUrl.remove(id);
             });
             return list;
+        } finally {
+            ProcessorSyncHolder.writeLock.unlock();
         }
     }
 
@@ -446,8 +481,8 @@ public class ProcessorTaskService {
     }
 
     public void createTask(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherCommParamsYaml.AssignedTask assignedTask) {
-
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
+            ProcessorSyncHolder.writeLock.lock();
             metadataService.registerTaskQuota(core.dispatcherUrl.url, assignedTask.taskId, assignedTask.tag, assignedTask.quota);
 
             log.info("#713.150 Prepare new task #{} on core #{}", assignedTask.taskId, core.coreId);
@@ -504,30 +539,38 @@ public class ProcessorTaskService {
                 log.error(es, th);
                 throw new RuntimeException(es, th);
             }
+        } finally {
+            ProcessorSyncHolder.writeLock.unlock();
         }
     }
 
     @Nullable
     public ProcessorCoreTask resetTask(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
+            ProcessorSyncHolder.writeLock.lock();
             ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
                 return null;
             }
             task.setLaunchedOn(null);
             return save(core, task);
+        } finally {
+            ProcessorSyncHolder.writeLock.unlock();
         }
     }
 
     @Nullable
     public ProcessorCoreTask setLaunchOn(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, long taskId) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
+            ProcessorSyncHolder.writeLock.lock();
             ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
                 return null;
             }
             task.setLaunchedOn(System.currentTimeMillis());
             return save(core, task);
+        } finally {
+            ProcessorSyncHolder.writeLock.unlock();
         }
     }
 
@@ -558,7 +601,8 @@ public class ProcessorTaskService {
 
     @Nullable
     public ProcessorCoreTask findByIdForCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
+            ProcessorSyncHolder.readLock.lock();
             return getTasksForProcessorCore(core)
                     .entrySet()
                     .stream()
@@ -566,19 +610,25 @@ public class ProcessorTaskService {
                     .findFirst()
                     .map(Map.Entry::getValue)
                     .orElse(null);
+        } finally {
+            ProcessorSyncHolder.readLock.unlock();
         }
     }
 
     public List<ProcessorCoreTask> findAllForCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
             Collection<ProcessorCoreTask> values = getTasksForProcessorCore(core).values();
             return List.copyOf(values);
+        } finally {
+            ProcessorSyncHolder.readLock.unlock();
         }
     }
 
     @Nullable
     public String findCoreCodeWithTaskId(Long taskId) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
+            ProcessorSyncHolder.readLock.lock();
+
             for (Map.Entry<String, Map<DispatcherUrl, Map<Long, ProcessorCoreTask>>> entry : map.entrySet()) {
                 for (Map.Entry<DispatcherUrl, Map<Long, ProcessorCoreTask>> dispatcherUrlMapEntry : entry.getValue().entrySet()) {
                     for (Map.Entry<Long, ProcessorCoreTask> longProcessorCoreTaskEntry : dispatcherUrlMapEntry.getValue().entrySet()) {
@@ -588,6 +638,9 @@ public class ProcessorTaskService {
                     }
                 }
             }
+
+        } finally {
+            ProcessorSyncHolder.readLock.unlock();
         }
         return null;
     }
@@ -595,29 +648,15 @@ public class ProcessorTaskService {
     public void delete(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, final Long taskId) {
         MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(core);
 
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
-            metadataService.removeQuota(core.dispatcherUrl.url, taskId);
-            final File processorDir = new File(globals.processorPath.toFile(), core.coreCode);
-            final File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
-            final File dispatcherDir = new File(processorTaskDir, processorState.dispatcherCode);
-
-            final String path = getTaskPath(taskId);
-            final File taskDir = new File(dispatcherDir, path);
+        try {
+            ProcessorSyncHolder.writeLock.lock();
+        } finally {
             try {
-                if (taskDir.exists()) {
-                    deleteDir(taskDir, "delete dir in ProcessorTaskService.delete()");
-                }
-                Map<Long, ProcessorCoreTask> mapTask = getTasksForProcessorCore(core);
-                log.debug("Does task present in map before deleting: {}", mapTask.containsKey(taskId));
-                mapTask.remove(taskId);
-                log.debug("Does task present in map after deleting: {}", mapTask.containsKey(taskId));
+                ProcessorSyncHolder.writeLock.lock();
+            } finally {
+                ProcessorSyncHolder.writeLock.unlock();
             }
-            catch (java.lang.NoClassDefFoundError th) {
-                log.error("#713.205 Error deleting task {}, {}", taskId, th.getMessage());
-            }
-            catch (Throwable th) {
-                log.error("#713.210 Error deleting task " + taskId, th);
-            }
+            ProcessorSyncHolder.writeLock.unlock();
         }
     }
 

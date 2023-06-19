@@ -16,8 +16,11 @@
 
 package ai.metaheuristic.ai.processor;
 
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 public class ProcessorSyncHolder {
 
-    public static final Object processorGlobalSync = new Object();
-
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    public static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+    public static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 }

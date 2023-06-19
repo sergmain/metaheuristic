@@ -51,6 +51,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -74,6 +75,10 @@ public class MetadataService {
     private final ProcessorFunctionService processorFunctionService;
 
     private MetadataParamsYaml metadata = null;
+
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+    private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
     @Data
     @AllArgsConstructor
@@ -100,9 +105,6 @@ public class MetadataService {
             this.contentIsInline = false;
         }
     }
-
-    private static class MetadataSync {}
-    private static final MetadataSync syncObj = new MetadataSync();
 
     @PostConstruct
     public void init() {
@@ -266,26 +268,9 @@ public class MetadataService {
         return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.ok), assetFile);
     }
 
-/*
-    @Nullable
-    public DispatcherUrl findDispatcherByCode(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, String code) {
-        synchronized (syncObj) {
-            MetadataParamsYaml.Processor p = metadata.processors.get(ref.processorCode);
-            if (p==null) {
-                return null;
-            }
-            for (Map.Entry<String, MetadataParamsYaml.ProcessorSession> entry : p.states.entrySet()) {
-                if (code.equals(entry.getValue().dispatcherCode)) {
-                    return new DispatcherUrl(entry.getKey());
-                }
-            }
-            return null;
-        }
-    }
-*/
-
     public MetadataParamsYaml.ProcessorSession processorStateByDispatcherUrl(ProcessorCodeAndIdAndDispatcherUrlRef ref) {
-        synchronized (syncObj) {
+        try {
+            writeLock.lock();
             MetadataParamsYaml.ProcessorSession processorState = metadata.processorSessions.get(ref.dispatcherUrl.url);
             // fix for wrong metadata.yaml data
             if (processorState.dispatcherCode == null) {
@@ -293,23 +278,36 @@ public class MetadataService {
                 updateMetadataFile();
             }
             return processorState;
+        } finally {
+            writeLock.unlock();
         }
     }
 
     public MetadataParamsYaml.ProcessorSession processorStateByDispatcherUrl(ProcessorCoreAndProcessorIdAndDispatcherUrlRef ref) {
-        synchronized (syncObj) {
+        try {
+            readLock.lock();
             MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(ref.dispatcherUrl.url);
             // fix for wrong metadata.yaml data
             if (processorState.dispatcherCode == null) {
-                processorState.dispatcherCode = asEmptyProcessorState(ref.dispatcherUrl).dispatcherCode;
-                updateMetadataFile();
+                try {
+                    readLock.unlock();
+                    writeLock.lock();
+                    processorState.dispatcherCode = asEmptyProcessorState(ref.dispatcherUrl).dispatcherCode;
+                    updateMetadataFile();
+                } finally {
+                    writeLock.unlock();
+                    readLock.lock();
+                }
             }
             return processorState;
+        } finally {
+            readLock.unlock();
         }
     }
 
     public void registerTaskQuota(String dispatcherUrl, Long taskId, @Nullable String tag, int quota) {
-        synchronized (syncObj) {
+        try {
+            writeLock.lock();
             MetadataParamsYaml.ProcessorSession ps = getProcessorSession(dispatcherUrl);
             MetadataParamsYaml.Quota q = null;
             for (MetadataParamsYaml.Quota o1 : ps.quotas) {
@@ -326,6 +324,8 @@ public class MetadataService {
                 ps.quotas.add(new MetadataParamsYaml.Quota(taskId, tag, quota));
             }
             updateMetadataFile();
+        } finally {
+            writeLock.unlock();
         }
     }
 
@@ -341,14 +341,18 @@ public class MetadataService {
     }
 
     public void resetAllQuotas() {
-        synchronized (syncObj) {
+        try {
+            writeLock.lock();
             metadata.processorSessions.forEach((k, v)->v.quotas.clear());
             updateMetadataFile();
+        } finally {
+            writeLock.unlock();
         }
     }
 
     public int currentQuota(String dispatcherUrl) {
-        synchronized (syncObj) {
+        try {
+            readLock.lock();
             MetadataParamsYaml.ProcessorSession ps = getProcessorSession(dispatcherUrl);
             int sum = 0;
             for (MetadataParamsYaml.Quota o : ps.quotas) {
@@ -356,11 +360,14 @@ public class MetadataService {
                 sum += quota;
             }
             return sum;
+        } finally {
+            readLock.unlock();
         }
     }
 
     public void removeQuota(String dispatcherUrl, Long taskId) {
-        synchronized (syncObj) {
+        try {
+            writeLock.lock();
             MetadataParamsYaml.ProcessorSession ps = getProcessorSession(dispatcherUrl);
             for (MetadataParamsYaml.Quota o : ps.quotas) {
                 if (o.taskId.equals(taskId)) {
@@ -369,30 +376,14 @@ public class MetadataService {
                 }
             }
             updateMetadataFile();
+        } finally {
+            writeLock.unlock();
         }
-    }
-
-    public Set<ProcessorCodeAndIdAndDispatcherUrlRef> getAllEnabledRefsForDispatcherUrl(DispatcherUrl dispatcherUrl) {
-        return getAllRefs( (du) -> {
-            if (du.equals(dispatcherUrl)) {
-                return selectEnabledDispathcersFunc(dispatcherUrl);
-            }
-            return false;
-        } );
-    }
-
-    public Set<ProcessorCodeAndIdAndDispatcherUrlRef> getRefsForDispatcherUrl(DispatcherUrl dispatcherUrl) {
-        final Set<ProcessorCodeAndIdAndDispatcherUrlRef> set = getAllRefs((du) -> du.equals(dispatcherUrl));
-        return set;
     }
 
     public Set<ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef> getAllCoresForDispatcherUrl(DispatcherUrl dispatcherUrl) {
         final Set<ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef> set = getAllRefsForCores((du) -> du.equals(dispatcherUrl));
         return set;
-    }
-
-    public Set<ProcessorCodeAndIdAndDispatcherUrlRef> getAllRefs() {
-        return getAllRefs( (dispatcherUrl) -> true );
     }
 
     public Set<ProcessorCoreAndProcessorIdAndDispatcherUrlRef> getAllEnabledRefsForCores() {
@@ -409,7 +400,8 @@ public class MetadataService {
     }
 
     private Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getAllRefs(Function<DispatcherUrl, Boolean> function) {
-        synchronized (syncObj) {
+        try {
+            readLock.lock();
             Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> refs = new HashSet<>();
             for (Map.Entry<String, MetadataParamsYaml.ProcessorSession> processorEntry : metadata.processorSessions.entrySet()) {
                 final MetadataParamsYaml.ProcessorSession processorSession = processorEntry.getValue();
@@ -423,11 +415,14 @@ public class MetadataService {
                 }
             }
             return Collections.unmodifiableSet(refs);
+        } finally {
+            readLock.unlock();
         }
     }
 
     private Set<ProcessorCoreAndProcessorIdAndDispatcherUrlRef> getAllRefsForCores(Function<DispatcherUrl, Boolean> function) {
-        synchronized (syncObj) {
+        try {
+            readLock.lock();
             Set<ProcessorCoreAndProcessorIdAndDispatcherUrlRef> refs = new HashSet<>();
             for (Map.Entry<String, MetadataParamsYaml.ProcessorSession> processorEntry : metadata.processorSessions.entrySet()) {
                 final MetadataParamsYaml.ProcessorSession processorSession = processorEntry.getValue();
@@ -443,18 +438,24 @@ public class MetadataService {
                 }
             }
             return Collections.unmodifiableSet(refs);
+        } finally {
+            readLock.unlock();
         }
     }
 
     public MetadataParamsYaml.ProcessorSession getProcessorSession(DispatcherUrl dispatcherUrl) {
-        synchronized (syncObj) {
+        try {
+            readLock.lock();
             return getProcessorSession(dispatcherUrl.url);
+        } finally {
+            readLock.unlock();
         }
     }
 
     @Nullable
     public ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef getCoreRef(String coreCode, DispatcherUrl dispatcherUrl) {
-        synchronized (syncObj) {
+        try {
+            readLock.lock();
             MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(dispatcherUrl.url);
             for (Map.Entry<String, Long> core : processorState.cores.entrySet()) {
                 if (!coreCode.equals(core.getKey())) {
@@ -464,15 +465,20 @@ public class MetadataService {
                         dispatcherUrl, processorState.dispatcherCode, processorState.processorId, coreCode, core.getValue());
             }
             return null;
+        } finally {
+            readLock.unlock();
         }
     }
 
     @Nullable
     public ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef getRef(DispatcherUrl dispatcherUrl) {
-        synchronized (syncObj) {
+        try {
+            readLock.lock();
             MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(dispatcherUrl.url);
             return new ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef(
                     dispatcherUrl, processorState.dispatcherCode, processorState.processorId);
+        } finally {
+            readLock.unlock();
         }
     }
 
@@ -482,27 +488,27 @@ public class MetadataService {
         }
         Long processorId = Long.parseLong(processorIdStr);
 
-        synchronized (syncObj) {
+        try {
+            writeLock.lock();
             final MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(dispatcherUrl.url);
             if (!Objects.equals(processorState.processorId, processorId) || !Objects.equals(processorState.sessionId, sessionId)) {
                 processorState.processorId = processorId;
                 processorState.sessionId = sessionId;
                 updateMetadataFile();
             }
+        } finally {
+            writeLock.unlock();
         }
     }
 
     public void setCoreId(ProcessorAndCoreData.DispatcherUrl dispatcherUrl, String coreCode, Long coreId) {
-        synchronized (syncObj) {
+        try {
+            writeLock.lock();
             final MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(dispatcherUrl.url);
             processorState.cores.put(coreCode, coreId);
             updateMetadataFile();
-        }
-    }
-
-    public void deRegisterFunctionCode(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode) {
-        synchronized (syncObj) {
-            metadata.functions.removeIf(next -> next.assetManagerUrl.equals(assetManagerUrl.url) && next.code.equals(functionCode));
+        } finally {
+            writeLock.unlock();
         }
     }
 
@@ -512,7 +518,6 @@ public class MetadataService {
 
         AssetManagerUrl assetManagerUrl = new AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
 
-
         List<Pair<EnumsApi.FunctionSourcing, String>> list = new ArrayList<>();
         for (Map.Entry<EnumsApi.FunctionSourcing, String> e : infos.entrySet()) {
             String[] codes = e.getValue().split(",");
@@ -521,7 +526,8 @@ public class MetadataService {
             }
         }
 
-        synchronized (syncObj) {
+        try {
+            writeLock.lock();
             boolean isChanged = false;
             for (Pair<EnumsApi.FunctionSourcing, String> info : list) {
                 MetadataParamsYaml.Function status = metadata.functions.stream()
@@ -543,6 +549,8 @@ public class MetadataService {
             if (isChanged) {
                 updateMetadataFile();
             }
+        } finally {
+            writeLock.unlock();
         }
         return metadata.functions;
     }
@@ -552,7 +560,8 @@ public class MetadataService {
         if (S.b(functionCode)) {
             throw new IllegalStateException("#815.240 functionCode is null");
         }
-        synchronized (syncObj) {
+        try {
+            writeLock.lock();
             MetadataParamsYaml.Function status = metadata.functions.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
             if (status == null) {
                 return null;
@@ -565,11 +574,14 @@ public class MetadataService {
             status.lastCheck = System.currentTimeMillis();
             updateMetadataFile();
             return status;
+        } finally {
+            writeLock.unlock();
         }
     }
 
     public void setFunctionFromProcessorAsReady(final AssetManagerUrl assetManagerUrl, String functionCode) {
-        synchronized (syncObj) {
+        try {
+            writeLock.lock();
             if (S.b(functionCode)) {
                 throw new IllegalStateException("#815.240 functionCode is null");
             }
@@ -583,6 +595,8 @@ public class MetadataService {
             status.lastCheck = System.currentTimeMillis();
 
             updateMetadataFile();
+        } finally {
+            writeLock.unlock();
         }
     }
 
@@ -594,7 +608,8 @@ public class MetadataService {
             return;
         }
 
-        synchronized (syncObj) {
+        try {
+            writeLock.lock();
             MetadataParamsYaml.Function status = metadata.functions.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
             if (status == null) {
                 return;
@@ -602,6 +617,8 @@ public class MetadataService {
             status.checksumMap.putAll(checksumMap);
             status.lastCheck = System.currentTimeMillis();
             updateMetadataFile();
+        } finally {
+            writeLock.unlock();
         }
     }
 
@@ -609,7 +626,8 @@ public class MetadataService {
         if (S.b(functionCode)) {
             throw new IllegalStateException("#815.240 functionCode is null");
         }
-        synchronized (syncObj) {
+        try {
+            writeLock.lock();
             MetadataParamsYaml.Function status = metadata.functions.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
             if (status == null) {
                 return;
@@ -618,6 +636,8 @@ public class MetadataService {
             status.signature = checkSumAndSignatureStatus.signature;
             status.lastCheck = System.currentTimeMillis();
             updateMetadataFile();
+        } finally {
+            writeLock.unlock();
         }
     }
 
@@ -629,7 +649,8 @@ public class MetadataService {
         if (S.b(functionCode)) {
             throw new IllegalStateException("#815.280 functionCode is empty");
         }
-        synchronized (syncObj) {
+        try {
+            writeLock.lock();
             List<MetadataParamsYaml.Function> statuses = metadata.functions.stream().filter(o->!(o.assetManagerUrl.equals(assetManagerUrl) && o.code.equals(functionCode))).collect(Collectors.toList());
             if (statuses.size()!= metadata.functions.size()) {
                 metadata.functions.clear();
@@ -637,6 +658,8 @@ public class MetadataService {
                 updateMetadataFile();
             }
             return true;
+        } finally {
+            writeLock.unlock();
         }
     }
 
@@ -644,28 +667,37 @@ public class MetadataService {
         if (S.b(functionCode)) {
             throw new IllegalStateException("#815.360 functionCode is empty");
         }
-        synchronized (syncObj) {
+        try {
+            writeLock.lock();
             setFunctionDownloadStatusInternal(assetManagerUrl, functionCode, sourcing, functionState);
             updateMetadataFile();
+        } finally {
+            writeLock.unlock();
         }
     }
 
     // it could be null if this function was deleted
     @Nullable
     public MetadataParamsYaml.Function getFunctionDownloadStatuses(AssetManagerUrl assetManagerUrl, String functionCode) {
-        synchronized (syncObj) {
+        try {
+            readLock.lock();
             return metadata.functions.stream()
                     .filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(functionCode))
                     .findFirst().orElse(null);
+        } finally {
+            readLock.unlock();
         }
     }
 
     public Map<EnumsApi.FunctionState, String> getAsFunctionDownloadStatuses(final AssetManagerUrl assetManagerUrl) {
         final Map<EnumsApi.FunctionState, List<String>> map = new HashMap<>();
-        synchronized (syncObj) {
+        try {
+            readLock.lock();
             metadata.functions.stream()
                     .filter(o->o.assetManagerUrl.equals(assetManagerUrl.url))
                     .forEach(o->map.computeIfAbsent(o.state, (k)->new ArrayList<>()).add(o.code));
+        } finally {
+            readLock.unlock();
         }
 
         final Map<EnumsApi.FunctionState, String> infos = new HashMap<>();
@@ -688,8 +720,11 @@ public class MetadataService {
     }
 
     public List<MetadataParamsYaml.Function> getStatuses() {
-        synchronized (syncObj) {
+        try {
+            readLock.lock();
             return Collections.unmodifiableList(metadata.functions);
+        } finally {
+            readLock.unlock();
         }
     }
 
@@ -698,9 +733,12 @@ public class MetadataService {
         if (StringUtils.isBlank(sessionId)) {
             throw new IllegalStateException("#815.400 sessionId is null");
         }
-        synchronized (syncObj) {
+        try {
+            writeLock.lock();
             getProcessorSession(dispatcherUrl.url).sessionId = sessionId;
             updateMetadataFile();
+        } finally {
+            writeLock.unlock();
         }
     }
 
