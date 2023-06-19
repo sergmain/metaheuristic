@@ -29,7 +29,6 @@ import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsJsonUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWithCache;
-import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultTaskParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -163,7 +162,7 @@ public class ExperimentResultTopLevelService {
             experimentResult.name = apy.name;
             experimentResult.description = "experiment results "+apy.name+" uploaded on " + dateAsStr + " from file " + originFilename;
             experimentResult.code = apy.code;
-            experimentResult.params = params;
+            experimentResult.updateParams(apy);
             experimentResult.companyId = context.getCompanyId();
             experimentResult.createdOn = System.currentTimeMillis();
             experimentResult = experimentResultRepository.save(experimentResult);
@@ -178,7 +177,7 @@ public class ExperimentResultTopLevelService {
                 ExperimentTask at = new ExperimentTask();
                 at.experimentResultId = experimentResult.id;
                 at.taskId = taskFeature.taskId;
-                at.params = Files.readString(taskFile);
+                at.setParams(Files.readString(taskFile));
                 experimentTaskRepository.save(at);
             }
         }
@@ -228,10 +227,10 @@ public class ExperimentResultTopLevelService {
                 return resource;
             }
             Path exportFile = zipDir.resolve(EXPERIMENT_YAML_FILE);
-            Files.writeString(exportFile, experimentResult.params);
+            Files.writeString(exportFile, experimentResult.getParams());
             Set<Long> experimentTaskIds = experimentTaskRepository.findIdsByExperimentResultId(experimentResultId);
 
-            ExperimentResultParams apy = ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.params);
+            ExperimentResultParams apy = experimentResult.getExperimentResultParams();
             if (experimentTaskIds.size() != apy.taskFeatures.size()) {
                 log.warn("numbers of tasks in params of stored experiment and in db are different, " +
                         "experimentTaskIds.size: {}, apy.taskIds.size: {}", experimentTaskIds.size(), apy.taskFeatures.size());
@@ -249,7 +248,7 @@ public class ExperimentResultTopLevelService {
                 }
                 Path taskFile = taskDir.resolve(S.f(TASK_YAML_FILE, at.taskId));
                 try {
-                    Files.writeString(taskFile, at.params);
+                    Files.writeString(taskFile, at.getParams());
                 } catch (IOException e) {
                     log.error("#422.110 Error writing task's params to file {}", taskFile.normalize());
                     resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -300,7 +299,7 @@ public class ExperimentResultTopLevelService {
 
         ExperimentResultParamsYamlWithCache ypywc;
         try {
-            final ExperimentResultParams erpy = checkVersionAndUpgrade(experimentResult.id, experimentResult.params);
+            final ExperimentResultParams erpy = checkVersionAndUpgrade(experimentResult.id, experimentResult.getParams());
             if (erpy==null) {
                 String es = "#422.177 Can't prepare experimentResult #" + experimentResult.id;
                 log.error(es);
@@ -406,7 +405,7 @@ public class ExperimentResultTopLevelService {
 
         ExperimentResultParamsYamlWithCache ypywc;
         try {
-            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.params));
+            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.getParams()));
         } catch (YAMLException e) {
             String es = "#422.240 Can't parse an experimentResult, error: " + e.getMessage();
             log.error(es, e);
@@ -488,7 +487,7 @@ public class ExperimentResultTopLevelService {
 
         List<ExperimentTask> experimentTasks = experimentTaskRepository.findTasksById(experimentResultId, taskIds);
         List<ExperimentResultTaskParams> selected = experimentTasks.stream()
-                .map(o-> ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.to(o.params))
+                .map(ExperimentTask::getExperimentResultTaskParams)
                 .filter(atpy -> atpy.execState > 1)
                 .collect(Collectors.toList());
 
@@ -632,7 +631,7 @@ public class ExperimentResultTopLevelService {
 
         ExperimentResultParamsYamlWithCache ypywc;
         try {
-            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.params));
+            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.getParams()));
         } catch (YAMLException e) {
             final String es = "#422.270 Can't extract experiment from experimentResult, error: " + e.getMessage();
             log.error(es, e);
@@ -669,7 +668,7 @@ public class ExperimentResultTopLevelService {
                         .stream()
                         .map(id-> experimentTaskRepository.findByExperimentResultIdAndTaskId(experimentResultId, id))
                         .filter(Objects::nonNull)
-                        .map( o-> ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.to(o.params))
+                        .map(ExperimentTask::getExperimentResultTaskParams)
                         .collect(Collectors.toList()),
                 Consts.PAGE_REQUEST_10_REC,
                 taskWIthTypes.size()>10
@@ -743,7 +742,7 @@ public class ExperimentResultTopLevelService {
         if (task==null ) {
             return new ConsoleResult("#422.310 Can't find a console output");
         }
-        ExperimentResultTaskParams atpy = ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+        ExperimentResultTaskParams atpy = task.getExperimentResultTaskParams();
 
         FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(atpy.functionExecResults);
         if (functionExec ==null ) {
@@ -760,7 +759,7 @@ public class ExperimentResultTopLevelService {
 
         ExperimentResultParamsYamlWithCache ypywc;
         try {
-            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.params));
+            ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.getParams()));
         } catch (YAMLException e) {
             final String es = "#422.330 Can't extract experiment from experimentResult, error: " + e.getMessage();
             log.error(es, e);

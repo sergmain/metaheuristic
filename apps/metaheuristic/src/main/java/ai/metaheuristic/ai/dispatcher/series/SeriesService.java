@@ -103,7 +103,7 @@ public class SeriesService {
             String errorMessage = "#354.080 experimentResult wasn't found, experimentResultId: " + experimentResultId;
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, errorMessage);
         }
-        ExperimentResultParams params = ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.params);
+        ExperimentResultParams params = ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.getParams());
         SeriesParamsYaml spy = series.getSeriesParamsYaml();
 
         if (!spy.experimentResults.contains(params.name)) {

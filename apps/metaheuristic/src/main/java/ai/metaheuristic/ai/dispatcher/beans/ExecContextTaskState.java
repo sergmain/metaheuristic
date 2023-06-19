@@ -86,7 +86,7 @@ public class ExecContextTaskState implements Serializable {
     }
 
     @JsonIgnore
-    public ExecContextTaskStateParamsYaml getTaskParamsYaml() {
+    public ExecContextTaskStateParamsYaml getExecContextTaskStateParamsYaml() {
         return paramsLocked.get();
     }
 

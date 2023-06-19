@@ -16,6 +16,12 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
+import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsJsonUtils;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultParams;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -46,10 +52,6 @@ public class ExperimentResult implements Serializable {
     @Column(name = "COMPANY_ID")
     public Long companyId;
 
-    // even thought db field is 'experiment',  field of bean will be named as params
-    @Column(name = "EXPERIMENT")
-    public String params;
-
     @Column(name = "NAME")
     public String name;
 
@@ -61,5 +63,38 @@ public class ExperimentResult implements Serializable {
 
     @Column(name="CREATED_ON")
     public long createdOn;
+
+    // even thought db field is 'experiment',  field of bean will be named as params
+    @Column(name = "EXPERIMENT")
+    private String params;
+
+    public String getParams() {
+        return params;
+    }
+
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
+
+    @Transient
+    @JsonIgnore
+    private final ThreadUtils.CommonThreadLocker<ExperimentResultParams> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private ExperimentResultParams parseParams() {
+        ExperimentResultParams temp = ExperimentResultParamsJsonUtils.BASE_UTILS.to(params);
+        ExperimentResultParams ecpy = temp==null ? new ExperimentResultParams() : temp;
+        return ecpy;
+    }
+
+    @JsonIgnore
+    public ExperimentResultParams getExperimentResultParams() {
+        return paramsLocked.get();
+    }
+
+    @JsonIgnore
+    public void updateParams(ExperimentResultParams tpy) {
+        setParams(TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy));
+    }
 
 }

@@ -33,9 +33,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsJsonUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWithCache;
-import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultTaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -187,7 +185,7 @@ public class ExperimentResultService {
 
         ExperimentResult a = new ExperimentResult();
         try {
-            a.params = ExperimentResultParamsJsonUtils.BASE_UTILS.toString(erpy);
+            a.updateParams(erpy);
         } catch (YAMLException e) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#604.200 General error while storing experiment, " + e.getMessage());
@@ -334,7 +332,7 @@ public class ExperimentResultService {
             ExperimentTask at = new ExperimentTask();
             at.experimentResultId = experimentResult.id;
             at.taskId = t.getId();
-            at.params = ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.toString(ertpy);
+            at.updateParams(ertpy);
             experimentTaskRepository.save(at);
         }
 
@@ -405,7 +403,7 @@ public class ExperimentResultService {
 
         updateMaxValueForExperimentResult(experimentResultParamsYaml);
 
-        experimentResult.params = ExperimentResultParamsJsonUtils.BASE_UTILS.toString(experimentResultParamsYaml);
+        experimentResult.updateParams(experimentResultParamsYaml);
         experimentResultRepository.save(experimentResult);
     }
 
