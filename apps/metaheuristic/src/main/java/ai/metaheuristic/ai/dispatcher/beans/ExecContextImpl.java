@@ -66,10 +66,6 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name="COMPLETED_ON")
     public Long completedOn;
 
-    @NotBlank
-    @Column(name = "PARAMS")
-    private String params;
-
     @Column(name = "IS_VALID")
     public boolean valid;
 
@@ -88,6 +84,10 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Nullable
     @Column(name = "ROOT_EXEC_CONTEXT_ID")
     public Long rootExecContextId;
+
+    @NotBlank
+    @Column(name = "PARAMS")
+    private String params;
 
     public String getParams() {
         return params;

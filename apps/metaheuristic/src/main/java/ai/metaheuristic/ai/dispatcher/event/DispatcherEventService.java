@@ -21,15 +21,14 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.DispatcherEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.DispatcherEventRepository;
-import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.utils.RestUtils;
+import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.CompanyApiData;
 import ai.metaheuristic.api.data.event.DispatcherEventYaml;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
-import ai.metaheuristic.commons.yaml.event.DispatcherEventYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -72,17 +71,6 @@ public class DispatcherEventService {
     private final DispatcherEventRepository dispatcherEventRepository;
     private final CompanyRepository companyRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
-
-    public void publishExecContextLockingEvent(EnumsApi.DispatcherEventType event, Long coreId, Long taskId, Long execContextId) {
-        if (!globals.eventEnabled) {
-            return;
-        }
-        DispatcherEventYaml.TaskEventData taskEventData = new DispatcherEventYaml.TaskEventData();
-        taskEventData.coreId = coreId;
-        taskEventData.taskId = taskId;
-        taskEventData.execContextId = execContextId;
-        applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, taskEventData));
-    }
 
     public void publishBatchEvent(
             EnumsApi.DispatcherEventType event, @Nullable Long companyUniqueId, @Nullable String filename,
@@ -133,7 +121,7 @@ public class DispatcherEventService {
             le.companyId = event.companyUniqueId;
             le.period = getPeriod( LocalDateTime.parse( event.dispatcherEventYaml.createdOn, EVENT_DATE_TIME_FORMATTER) );
             le.event = event.dispatcherEventYaml.event.toString();
-            le.params = DispatcherEventYamlUtils.BASE_YAML_UTILS.toString(event.dispatcherEventYaml);
+            le.updateParams(event.dispatcherEventYaml);
             dispatcherEventRepository.save(le);
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
@@ -178,7 +166,7 @@ public class DispatcherEventService {
                 ListOfEvents listOfEvents = new ListOfEvents();
                 listOfEvents.events = new ArrayList<>();
                 for (DispatcherEvent event : events) {
-                    listOfEvents.events.add(event.params);
+                    listOfEvents.events.add(event.getParams());
                 }
                 Path f = filesDir.resolve("event-file-" + i + ".yaml");
                 Files.writeString(f, yaml.dumpAsMap(listOfEvents));
