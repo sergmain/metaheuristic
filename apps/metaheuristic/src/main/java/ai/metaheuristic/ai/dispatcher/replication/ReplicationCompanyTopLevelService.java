@@ -77,7 +77,7 @@ public class ReplicationCompanyTopLevelService {
             for (ReplicationData.CompanyShortAsset actualCompany : actualCompanies) {
                 if (actualCompany.uniqueId.equals(c.uniqueId)) {
                     isDeleted = false;
-                    CompanyParamsYaml cpy = S.b(c.params) ? new CompanyParamsYaml() : CompanyParamsYamlUtils.BASE_YAML_UTILS.to(c.params);
+                    CompanyParamsYaml cpy = c.getCompanyParamsYaml();
                     if (actualCompany.updateOn != cpy.updatedOn) {
                         CompanyLoopEntry companyLoopEntry = new CompanyLoopEntry(actualCompany, c);
                         forUpdating.add(companyLoopEntry);

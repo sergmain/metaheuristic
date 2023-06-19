@@ -73,7 +73,6 @@ public class ExecContextReconciliationService {
                     log.error("#307.200 task is null");
                     return;
                 }
-                // TaskParamsYaml tpy = task.getTaskParamsYaml();
                 taskStateTxService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK);
             });
         }

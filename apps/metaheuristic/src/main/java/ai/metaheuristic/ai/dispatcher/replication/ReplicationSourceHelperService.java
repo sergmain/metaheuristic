@@ -95,8 +95,7 @@ public class ReplicationSourceHelperService {
                     if (company==null) {
                         return null;
                     }
-//                    CompanyParamsYaml cpy = company.getCompanyParamsYaml();
-                    CompanyParamsYaml cpy = S.b(company.params) ? new CompanyParamsYaml() : CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.params);
+                    CompanyParamsYaml cpy = company.getCompanyParamsYaml();
                     return new ReplicationData.CompanyShortAsset(company.uniqueId, cpy.updatedOn);
                 })
                 .filter(Objects::nonNull)

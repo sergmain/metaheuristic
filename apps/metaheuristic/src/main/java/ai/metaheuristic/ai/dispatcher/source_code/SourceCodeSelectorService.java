@@ -122,7 +122,7 @@ public class SourceCodeSelectorService {
         if (company!=null && !S.b(company.getParams())) {
             final Set<String> groups;
             try {
-                CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.getParams());
+                CompanyParamsYaml cpy = company.getCompanyParamsYaml();
                 if (cpy.ac!=null && !S.b(cpy.ac.groups)) {
                     groups = getGroups(cpy.ac.groups);
                 }
