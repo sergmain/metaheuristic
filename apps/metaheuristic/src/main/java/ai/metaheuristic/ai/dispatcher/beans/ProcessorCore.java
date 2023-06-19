@@ -18,15 +18,15 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYamlUtils;
-import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 
-import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -77,36 +77,28 @@ public class ProcessorCore implements Serializable {
     @Column(name = "STATUS")
     private String status;
 
-    public void setStatus(String status) {
-        synchronized (this) {
-            this.status = status;
-            this.psy =null;
-        }
-    }
-
     public String getStatus() {
         return status;
     }
 
+    public void setStatus(String status) {
+        this.paramsLocked.reset(()->this.status = status);
+    }
+
     @Transient
     @JsonIgnore
-    @Nullable
-    private CoreStatusYaml psy = null;
+    private final ThreadUtils.CommonThreadLocker<CoreStatusYaml> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private CoreStatusYaml parseParams() {
+        CoreStatusYaml temp = CoreStatusYamlUtils.BASE_YAML_UTILS.to(status);
+        CoreStatusYaml ecpy = temp==null ? new CoreStatusYaml() : temp;
+        return ecpy;
+    }
 
     @JsonIgnore
     public CoreStatusYaml getCoreStatusYaml() {
-        if (psy ==null) {
-            synchronized (this) {
-                if (psy ==null) {
-                    // to create a valid structure of params
-                    String p = S.b(status) ? CoreStatusYamlUtils.BASE_YAML_UTILS.toString(new CoreStatusYaml()) : status;
-                    //noinspection UnnecessaryLocalVariable
-                    CoreStatusYaml temp = CoreStatusYamlUtils.BASE_YAML_UTILS.to(p);
-                    psy = temp;
-                }
-            }
-        }
-        return psy;
+        return paramsLocked.get();
     }
 
     @JsonIgnore

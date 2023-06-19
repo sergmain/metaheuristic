@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.beans;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.io.Serial;

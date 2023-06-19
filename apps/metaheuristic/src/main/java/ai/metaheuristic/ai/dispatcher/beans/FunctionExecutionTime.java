@@ -18,16 +18,16 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.yaml.function_execution_time.FunctionExecutionTimeParamsYaml;
 import ai.metaheuristic.ai.yaml.function_execution_time.FunctionExecutionTimeParamsYamlUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -77,33 +77,28 @@ public class FunctionExecutionTime implements Serializable {
     @Column(name = "PARAMS")
     private String params;
 
-    public void setParams(String params) {
-        synchronized (this) {
-            this.params = params;
-            this.ecpy =null;
-        }
-    }
-
     public String getParams() {
         return params;
     }
 
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
+
     @Transient
     @JsonIgnore
-    @Nullable
-    private FunctionExecutionTimeParamsYaml ecpy = null;
+    private final ThreadUtils.CommonThreadLocker<FunctionExecutionTimeParamsYaml> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private FunctionExecutionTimeParamsYaml parseParams() {
+        FunctionExecutionTimeParamsYaml temp = FunctionExecutionTimeParamsYamlUtils.BASE_YAML_UTILS.to(params);
+        FunctionExecutionTimeParamsYaml ecpy = temp==null ? new FunctionExecutionTimeParamsYaml() : temp;
+        return ecpy;
+    }
 
     @JsonIgnore
     public FunctionExecutionTimeParamsYaml getFunctionExecutionTimeParamsYaml() {
-        if (ecpy ==null) {
-            synchronized (this) {
-                if (ecpy ==null) {
-                    FunctionExecutionTimeParamsYaml temp = FunctionExecutionTimeParamsYamlUtils.BASE_YAML_UTILS.to(params);
-                    ecpy = temp==null ? new FunctionExecutionTimeParamsYaml() : temp;
-                }
-            }
-        }
-        return ecpy;
+        return paramsLocked.get();
     }
 
     @JsonIgnore
