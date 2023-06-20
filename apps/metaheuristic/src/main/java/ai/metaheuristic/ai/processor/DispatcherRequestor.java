@@ -45,6 +45,7 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -98,19 +99,15 @@ public class DispatcherRequestor {
     private long lastRequestForMissingResources = 0;
     private long lastCheckForResendTaskOutputResource = 0;
 
-    private static class DispatcherRequestorSync {}
-    private static final DispatcherRequestorSync syncObj = new DispatcherRequestorSync();
-
-    @SuppressWarnings("unused")
-    private static <T> T getWithSync(Supplier<T> function) {
-        synchronized (syncObj) {
-            return function.get();
-        }
-    }
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
     private static void withSync(Supplier<Void> function) {
-        synchronized (syncObj) {
+        writeLock.lock();
+        try {
             function.get();
+        } finally {
+            writeLock.unlock();
         }
     }
 

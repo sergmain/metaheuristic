@@ -57,6 +57,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 /**
@@ -79,16 +80,16 @@ public class TaskWithInternalContextEventService {
 
     private final TaskTxService taskService;
     private final VariableTxService variableTxService;
-    public final InternalFunctionVariableService internalFunctionVariableService;
-    public final SourceCodeCache sourceCodeCache;
-    public final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
-    public final SourceCodeRepository sourceCodeRepository;
-    public final GlobalVariableService globalVariableService;
-    public final VariableRepository variableRepository;
+    private final InternalFunctionVariableService internalFunctionVariableService;
+    private final SourceCodeCache sourceCodeCache;
+    private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
+    private final SourceCodeRepository sourceCodeRepository;
+    private final GlobalVariableService globalVariableService;
+    private final VariableRepository variableRepository;
     private final TaskFinishingTxService taskFinishingTxService;
     private final ApplicationEventPublisher eventPublisher;
     private final VariableTopLevelService variableTopLevelService;
-    public final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
+    private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
 
     private static final int MAX_ACTIVE_THREAD = 1;
     // number of active executers with different execContextId
@@ -104,7 +105,14 @@ public class TaskWithInternalContextEventService {
     }
 
     public static final LinkedHashMap<Long, LinkedList<TaskWithInternalContextEvent>> QUEUE = new LinkedHashMap<>();
+    private static final ReentrantReadWriteLock queueLock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.ReadLock queueReadLock = queueLock.readLock();
+    private static final ReentrantReadWriteLock.WriteLock queueWriteLock = queueLock.writeLock();
+
     public static final ExecutorForExecContext[] POOL_OF_EXECUTORS = new ExecutorForExecContext[MAX_NUMBER_EXECUTORS];
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
     public void putToQueue(final TaskWithInternalContextEvent event) {
         putToQueueInternal(event);
@@ -112,17 +120,21 @@ public class TaskWithInternalContextEventService {
     }
 
     public static void clearQueue() {
-        synchronized (QUEUE) {
+        queueWriteLock.lock();
+        try {
             for (Map.Entry<Long, LinkedList<TaskWithInternalContextEvent>> entry : QUEUE.entrySet()) {
                 entry.getValue().clear();
             }
             QUEUE.clear();
+        } finally {
+            queueWriteLock.unlock();
         }
     }
 
     public static void shutdown() {
         clearQueue();
-        synchronized (POOL_OF_EXECUTORS) {
+        writeLock.lock();
+        try {
             for (int i = 0; i< POOL_OF_EXECUTORS.length; i++) {
                 if (POOL_OF_EXECUTORS[i] == null) {
                     continue;
@@ -130,11 +142,14 @@ public class TaskWithInternalContextEventService {
                 POOL_OF_EXECUTORS[i].executor.shutdownNow();
                 POOL_OF_EXECUTORS[i] = null;
             }
+        } finally {
+            writeLock.unlock();
         }
     }
 
     public static void processPoolOfExecutors(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
-        synchronized (POOL_OF_EXECUTORS) {
+        writeLock.lock();
+        try {
             for (int i = 0; i< POOL_OF_EXECUTORS.length; i++) {
                 if (POOL_OF_EXECUTORS[i] == null) {
                     continue;
@@ -145,14 +160,19 @@ public class TaskWithInternalContextEventService {
                 }
             }
             final LinkedHashSet<Long> execContextIds;
-            synchronized (QUEUE) {
+            queueWriteLock.lock();
+            try {
                 execContextIds = new LinkedHashSet<>(QUEUE.keySet());
+            } finally {
+                queueWriteLock.unlock();
             }
             for (Long id : execContextIds) {
                 if (pokeExecutor(id, taskProcessor)) {
                     break;
                 }
             }
+        } finally {
+            writeLock.unlock();
         }
     }
 
@@ -162,7 +182,8 @@ public class TaskWithInternalContextEventService {
      * @return boolean is POOL_OF_EXECUTORS already full and execContextId wasn't allocated
      */
     public static boolean pokeExecutor(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
-        synchronized (POOL_OF_EXECUTORS) {
+        writeLock.lock();
+        try {
             for (ExecutorForExecContext poolExecutor : POOL_OF_EXECUTORS) {
                 if (poolExecutor==null) {
                     continue;
@@ -181,6 +202,8 @@ public class TaskWithInternalContextEventService {
                 }
             }
             return true;
+        } finally {
+            writeLock.unlock();
         }
     }
 
@@ -192,19 +215,23 @@ public class TaskWithInternalContextEventService {
     }
 
     public static void putToQueueInternal(final TaskWithInternalContextEvent event) {
-        synchronized (QUEUE) {
+        queueWriteLock.lock();
+        try {
             LinkedList<TaskWithInternalContextEvent> q = QUEUE.computeIfAbsent(event.execContextId, (o)->new LinkedList<>());
 
             if (q.contains(event)) {
                 return;
             }
             q.add(event);
+        } finally {
+            queueWriteLock.unlock();
         }
     }
 
     @Nullable
     private static TaskWithInternalContextEvent pullFromQueue(Long execContextId) {
-        synchronized (QUEUE) {
+        queueWriteLock.lock();
+        try {
             final LinkedList<TaskWithInternalContextEvent> events = QUEUE.get(execContextId);
             if (events==null) {
                 return null;
@@ -214,6 +241,8 @@ public class TaskWithInternalContextEventService {
                 return null;
             }
             return events.pollFirst();
+        } finally {
+            queueWriteLock.unlock();
         }
     }
 

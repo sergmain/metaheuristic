@@ -59,7 +59,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.security.PublicKey;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -90,7 +90,10 @@ public class TaskProcessor {
     private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
 
-    public final AtomicBoolean processing = new AtomicBoolean();
+    private boolean processing = false;
+
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
     public TaskProcessor(Globals globals, ProcessorTaskService processorTaskService, CurrentExecState currentExecState,
                          ProcessorEnvironment processorEnvironment, ProcessorService processorService,
@@ -108,22 +111,23 @@ public class TaskProcessor {
         if (!globals.processor.enabled) {
             return;
         }
-        if (processing.get()) {
+        if (processing) {
             return;
         }
-        synchronized (processing) {
-            if (processing.get()) {
+        writeLock.lock();
+        try {
+            if (processing) {
                 return;
             }
-            processing.set(true);
-        }
-        try {
-            processInternal(core);
-        }
-        finally {
-            synchronized (processing) {
-                processing.set(false);
+            processing = true;
+            try {
+                processInternal(core);
             }
+            finally {
+                processing = false;
+            }
+        } finally {
+            writeLock.unlock();
         }
     }
 

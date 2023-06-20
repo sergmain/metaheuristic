@@ -18,30 +18,51 @@ package ai.metaheuristic.ai.processor.actors;
 import org.springframework.lang.Nullable;
 
 import java.util.LinkedList;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-// todo 2020-03-13 replace with Spring's event system
 public abstract class AbstractTaskQueue<T> {
 
     private final LinkedList<T> QUEUE = new LinkedList<>();
 
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+
     public int queueSize(){
-        synchronized (QUEUE) {
+        readLock.lock();
+        try {
             return QUEUE.size();
+        } finally {
+            readLock.unlock();
         }
     }
 
     public void add(T t){
-        synchronized (QUEUE) {
+        readLock.lock();
+        try {
+            if (QUEUE.contains(t)) {
+                return;
+            }
+        } finally {
+            readLock.unlock();
+        }
+        writeLock.lock();
+        try {
             if (!QUEUE.contains(t)) {
                 QUEUE.add(t);
             }
+        } finally {
+            writeLock.unlock();
         }
     }
 
     @Nullable
     public T poll() {
-        synchronized (QUEUE) {
+        writeLock.lock();
+        try {
             return QUEUE.pollFirst();
+        } finally {
+            writeLock.unlock();
         }
     }
 }

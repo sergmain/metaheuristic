@@ -63,10 +63,18 @@ public class CommonSync<T> {
         return getLock(id).readLock();
     }
 
-    public synchronized ReentrantReadWriteLock getLock(T id) {
-        final TimedLock timedLock = map.computeIfAbsent(id, (o) ->new TimedLock());
-        timedLock.mills = System.currentTimeMillis();
-        return timedLock.lock;
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+
+    public ReentrantReadWriteLock getLock(T id) {
+        writeLock.lock();
+        try {
+            final TimedLock timedLock = map.computeIfAbsent(id, (o) ->new TimedLock());
+            timedLock.mills = System.currentTimeMillis();
+            return timedLock.lock;
+        } finally {
+            writeLock.unlock();
+        }
     }
 
 

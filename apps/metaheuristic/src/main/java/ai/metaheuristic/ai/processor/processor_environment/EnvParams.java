@@ -138,8 +138,6 @@ public class EnvParams {
 
     @Nullable
     public String getTags(String coreCode) {
-        synchronized (this) {
-            return envYaml.cores.stream().filter(o->o.code.equals(coreCode)).findFirst().map(o->o.tags).orElse(null);
-        }
+        return envYaml.cores.stream().filter(o->o.code.equals(coreCode)).findFirst().map(o->o.tags).orElse(null);
     }
 }

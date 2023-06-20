@@ -21,6 +21,9 @@ import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParams;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.Transient;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
@@ -37,6 +40,10 @@ public class ExperimentResultParamsYamlWithCache {
 
     // for caching
     private ExecContextParamsYaml execContextParamsYaml = null;
+
+    public ExperimentResultParamsYamlWithCache(ExperimentResultParams experimentResult) {
+        this.experimentResult = experimentResult;
+    }
 
     @Nullable
     public ExperimentResultParams.ExperimentFeature getFeature(Long featureId) {
@@ -65,20 +72,20 @@ public class ExperimentResultParamsYamlWithCache {
         return paramByIndex;
     }
 
-    public ExecContextParamsYaml getExecContextParamsYaml() {
-        if (execContextParamsYaml ==null) {
-            synchronized (this) {
-                if (execContextParamsYaml ==null) {
-                    //noinspection UnnecessaryLocalVariable
-                    ExecContextParamsYaml wpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.execContext.execContextParams);
-                    execContextParamsYaml = wpy;
-                }
-            }
-        }
-        return execContextParamsYaml;
-    };
+    @Transient
+    @JsonIgnore
+    private final ThreadUtils.CommonThreadLocker<ExecContextParamsYaml> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
 
-    public ExperimentResultParamsYamlWithCache(ExperimentResultParams experimentResult) {
-        this.experimentResult = experimentResult;
+    private ExecContextParamsYaml parseParams() {
+        ExecContextParamsYaml temp = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(experimentResult.execContext.execContextParams);
+        ExecContextParamsYaml ecpy = temp==null ? new ExecContextParamsYaml() : temp;
+        return ecpy;
     }
+
+    @JsonIgnore
+    public ExecContextParamsYaml getExecContextParamsYaml() {
+        return paramsLocked.get();
+    }
+
 }
