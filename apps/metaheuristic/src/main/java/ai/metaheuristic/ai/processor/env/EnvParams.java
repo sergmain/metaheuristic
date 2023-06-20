@@ -17,19 +17,14 @@
 package ai.metaheuristic.ai.processor.env;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYamlUtils;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -40,25 +35,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Service
 @Slf4j
-@RequiredArgsConstructor
-@Profile("processor")
 public class EnvParams {
-
-    private final Globals globals;
 
     private EnvParamsYaml envYaml;
 
-    @PostConstruct
-    public void init() {
-        if (!globals.processor.enabled) {
-            return;
-        }
-
-        final Path processorPath = globals.processorPath;
-        final File defaultEnvYamlFile = globals.processor.defaultEnvYamlFile;
-
+    public void init(Path processorPath, @Nullable File defaultEnvYamlFile, int taskConsoleOutputMaxLines) {
         final Path envYamlFile = processorPath.resolve(Consts.ENV_YAML_FILE_NAME);
         if (Files.notExists(envYamlFile)) {
             if (defaultEnvYamlFile==null) {
@@ -107,7 +89,7 @@ public class EnvParams {
                             params.add(s);
                         }
                     }
-                    SystemProcessLauncher.ExecResult result = SystemProcessLauncher.execCmd(params, 10L, globals.processor.taskConsoleOutputMaxLines);
+                    SystemProcessLauncher.ExecResult result = SystemProcessLauncher.execCmd(params, 10L, taskConsoleOutputMaxLines);
                     if (!result.ok) {
                         System.out.println("!!!");
                         System.out.println("!!!");

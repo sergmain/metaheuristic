@@ -18,19 +18,19 @@ package ai.metaheuristic.ai.processor.variable_providers;
 
 import ai.metaheuristic.ai.exceptions.VariableProviderException;
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.processor.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.env.EnvParams;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
-import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
-import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
+import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.sourcing.DiskInfo;
+import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -46,11 +46,11 @@ import java.util.Objects;
 @Profile("processor")
 public class DiskVariableProvider implements VariableProvider {
 
-    private final EnvParams envService;
+    private final ProcessorEnvironment processorEnvironment;
     private final ProcessorTaskService processorTaskService;
 
-    public DiskVariableProvider(EnvParams envService, ProcessorTaskService processorTaskService) {
-        this.envService = envService;
+    public DiskVariableProvider(ProcessorEnvironment processorEnvironment, ProcessorTaskService processorTaskService) {
+        this.processorEnvironment = processorEnvironment;
         this.processorTaskService = processorTaskService;
     }
 
@@ -83,7 +83,7 @@ public class DiskVariableProvider implements VariableProvider {
         }
         DiskInfo diskInfo = variable.disk;
 
-        EnvParamsYaml env = envService.getEnvParamsYaml();
+        EnvParamsYaml env = processorEnvironment.envParams.getEnvParamsYaml();
         EnvParamsYaml.DiskStorage diskStorage = findDiskStorageByCode(env.disk, diskInfo.code);
         if (diskStorage==null) {
             throw new VariableProviderException("#015.020 The disk storage wasn't found for code: " + diskInfo.code);
@@ -148,7 +148,7 @@ public class DiskVariableProvider implements VariableProvider {
             ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, TaskParamsYaml.OutputVariable variable) {
 
-        EnvParamsYaml env = envService.getEnvParamsYaml();
+        EnvParamsYaml env = processorEnvironment.envParams.getEnvParamsYaml();
         if (variable.disk==null) {
             throw new VariableProviderException("#015.036 The disk storage wasn't defined in variable: " + variable);
         }

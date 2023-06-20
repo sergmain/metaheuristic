@@ -33,8 +33,6 @@ import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
 import org.apache.hc.core5.net.URIBuilder;
 import org.apache.hc.core5.util.Timeout;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
 
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -48,11 +46,8 @@ import java.util.UUID;
  * Date: 10/6/2019
  * Time: 4:45 PM
  */
-@SuppressWarnings("DuplicatedCode")
 @Slf4j
-@Service
-@Profile("processor")
-public class ProcessorFunctionService {
+public class ProcessorFunctionUtils {
 
     public enum ConfigStatus {ok, error, not_found}
 
@@ -68,7 +63,7 @@ public class ProcessorFunctionService {
         public ConfigStatus status;
     }
 
-    public DownloadedFunctionConfigStatus downloadFunctionConfig(DispatcherLookupParamsYaml.AssetManager assetManager, String functionCode) {
+    public static DownloadedFunctionConfigStatus downloadFunctionConfig(DispatcherLookupParamsYaml.AssetManager assetManager, String functionCode) {
 
         // 999 - fake processorId for backward compatibility
         final String functionConfigUrl = assetManager.url + Consts.REST_ASSET_URL + "/function-config/999";
@@ -119,7 +114,7 @@ public class ProcessorFunctionService {
         return functionConfigStatus;
     }
 
-    public DownloadedFunctionConfigsStatus downloadFunctionConfigs(
+    public static DownloadedFunctionConfigsStatus downloadFunctionConfigs(
             String dispatcherUrl,
             DispatcherLookupParamsYaml.AssetManager asset, String processorId) {
 

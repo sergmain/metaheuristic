@@ -19,8 +19,8 @@ package ai.metaheuristic.ai.processor.sourcing.git;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
+import ai.metaheuristic.ai.processor.ProcessorEnvironment;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
-import ai.metaheuristic.ai.processor.env.EnvParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -44,13 +44,13 @@ public class GitSourcingService {
     private static final String GIT_VERSION_PREFIX = "git version";
     private static final String GIT_PREFIX = "git";
 
-    private final EnvParams envService;
+    private final ProcessorEnvironment processorEnvironment;
     private final Globals globals;
 
     public final GitStatusInfo gitStatusInfo;
 
-    public GitSourcingService(EnvParams envService, Globals globals) {
-        this.envService = envService;
+    public GitSourcingService(ProcessorEnvironment processorEnvironment, Globals globals) {
+        this.processorEnvironment = processorEnvironment;
         this.globals = globals;
         this.gitStatusInfo = getGitStatus();
     }
@@ -263,7 +263,7 @@ public class GitSourcingService {
     private SystemProcessLauncher.ExecResult execClone(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
         // git -C <path> clone <git-repo-url> git
 
-        String mirror = envService.getEnvParamsYaml().mirrors.get(functionConfig.git.repo);
+        String mirror = processorEnvironment.envParams.getEnvParamsYaml().mirrors.get(functionConfig.git.repo);
         String gitUrl = mirror!=null ? mirror : functionConfig.git.repo;
         List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "clone", gitUrl, "git");
         log.info("exec {}", cmd);

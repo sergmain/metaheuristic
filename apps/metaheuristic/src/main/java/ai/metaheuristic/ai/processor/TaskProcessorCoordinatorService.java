@@ -17,7 +17,6 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.env.EnvParams;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProviderFactory;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +38,7 @@ public class TaskProcessorCoordinatorService {
     private final CurrentExecState currentExecState;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final MetadataService metadataService;
-    private final EnvParams envService;
+    private final ProcessorEnvironment processorEnvironment;
     private final ProcessorService processorService;
     private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
@@ -58,7 +57,7 @@ public class TaskProcessorCoordinatorService {
 
         for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : metadataService.getAllEnabledRefsForCores()) {
             TaskProcessor taskProcessor = taskProcessors.computeIfAbsent( core.coreCode,
-                    o -> new TaskProcessor(globals, processorTaskService, currentExecState, dispatcherLookupExtendedService, metadataService, envService, processorService, resourceProviderFactory, gitSourcingService));
+                    o -> new TaskProcessor(globals, processorTaskService, currentExecState, dispatcherLookupExtendedService, metadataService, processorEnvironment, processorService, resourceProviderFactory, gitSourcingService));
             new Thread(()-> taskProcessor.process(core), "task-processor-"+core.coreCode).start();
         }
     }

@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.processor.env.EnvParams;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +27,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.Map;
 
-import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 
 /**
  * @author Serge
@@ -51,23 +50,20 @@ public class DispatcherRequestorHolderService {
 
     public DispatcherRequestorHolderService(
             Globals globals,
-            ProcessorService processorService, ProcessorTaskService processorTaskService, MetadataService metadataService,
+            ProcessorService processorService, ProcessorTaskService processorTaskService,
             CurrentExecState currentExecState,
-            DispatcherLookupExtendedService dispatcherLookupExtendedService,
             ProcessorCommandProcessor processorCommandProcessor,
-            ProcessorKeepAliveProcessor processorKeepAliveProcessor, EnvParams envService
+            ProcessorKeepAliveProcessor processorKeepAliveProcessor, ProcessorEnvironment processorEnvironment
     ) {
 
-        for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
+        for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
             final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = entry.getValue();
             final DispatcherRequestor requestor = new DispatcherRequestor(dispatcher.getDispatcherUrl(), globals,
-                    processorTaskService, processorService, metadataService, currentExecState,
-                    dispatcherLookupExtendedService, processorCommandProcessor);
+                    processorTaskService, processorService, processorEnvironment.metadataService, currentExecState,
+                    processorEnvironment.dispatcherLookupExtendedService, processorCommandProcessor);
 
             final ProcessorKeepAliveRequestor keepAliveRequestor = new ProcessorKeepAliveRequestor(
-                    dispatcher.dispatcherUrl, globals,
-                    processorService, metadataService, dispatcherLookupExtendedService,
-                    processorKeepAliveProcessor, envService);
+                    dispatcher.dispatcherUrl, globals, processorService, processorKeepAliveProcessor, processorEnvironment);
 
             dispatcherRequestorMap.put(dispatcher.dispatcherUrl, new Requesters(requestor, keepAliveRequestor));
         }

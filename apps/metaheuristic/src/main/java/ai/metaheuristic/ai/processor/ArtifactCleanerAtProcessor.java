@@ -42,7 +42,7 @@ public class ArtifactCleanerAtProcessor {
     private final ProcessorTaskService processorTaskService;
     private final CurrentExecState currentExecState;
     private final Globals globals;
-    private final MetadataService metadataService;
+    private final ProcessorEnvironment processorEnvironment;
 
     @SneakyThrows
     public void fixedDelay() {
@@ -52,7 +52,7 @@ public class ArtifactCleanerAtProcessor {
             return;
         }
 
-        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : metadataService.getAllEnabledRefsForCores()) {
+        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataService.getAllEnabledRefsForCores()) {
             if (currentExecState.getCurrentInitState(core.dispatcherUrl) != Enums.ExecContextInitState.FULL) {
                 // don't delete anything until the processor has received the full list of actual ExecContexts
                 continue;
@@ -60,7 +60,7 @@ public class ArtifactCleanerAtProcessor {
             Path coreDir = globals.processorPath.resolve(core.coreCode);
             Path coreTaskDir = coreDir.resolve(Consts.TASK_DIR);
 
-            MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(core);
+            MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.metadataService.processorStateByDispatcherUrl(core);
             final Path dispatcherDir = coreTaskDir.resolve(processorState.dispatcherCode);
             if (Files.notExists(dispatcherDir)) {
                 Files.createDirectories(dispatcherDir);

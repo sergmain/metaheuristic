@@ -40,11 +40,11 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 @RequiredArgsConstructor
 public class ProcessorCommandProcessor {
     private final ProcessorService processorService;
-    private final MetadataService metadataService;
+    private final ProcessorEnvironment processorEnvironment;
 
     // this method is synchronized outside
     public void processDispatcherCommParamsYaml(ProcessorCommParamsYaml pcpy, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
-        ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = metadataService.getRef(dispatcherUrl);
+        ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = processorEnvironment.metadataService.getRef(dispatcherUrl);
         if(ref==null) {
             log.warn("ref is null for processorId: {}, dispatcherUrl: {}",
                     pcpy.request.processorCommContext!=null ? pcpy.request.processorCommContext.processorId : "<null>", dispatcherUrl);
@@ -91,7 +91,7 @@ public class ProcessorCommandProcessor {
             if (coreRequest.assignedTask==null) {
                 return;
             }
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = metadataService.getCoreRef(coreRequest.code, ref.dispatcherUrl);
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataService.getCoreRef(coreRequest.code, ref.dispatcherUrl);
             if (core==null) {
                 return;
             }
@@ -104,7 +104,7 @@ public class ProcessorCommandProcessor {
             return;
         }
         log.info("storeProcessorId() new processor Id: {}", response.assignedProcessorId);
-        metadataService.setProcessorIdAndSessionId(dispatcherUrl, response.assignedProcessorId.assignedProcessorId, response.assignedProcessorId.assignedSessionId);
+        processorEnvironment.metadataService.setProcessorIdAndSessionId(dispatcherUrl, response.assignedProcessorId.assignedProcessorId, response.assignedProcessorId.assignedSessionId);
     }
 
     // processing at processor side
@@ -113,7 +113,7 @@ public class ProcessorCommandProcessor {
             return;
         }
         Long newProcessorId = Long.parseLong(response.reAssignedProcessorId.reAssignedProcessorId);
-        final MetadataParamsYaml.ProcessorSession processorSession = metadataService.getProcessorSession(dispatcherUrl);
+        final MetadataParamsYaml.ProcessorSession processorSession = processorEnvironment.metadataService.getProcessorSession(dispatcherUrl);
         final Long currProcessorId = processorSession.processorId;
         final String currSessionId = processorSession.sessionId;
         if (currProcessorId!=null && currSessionId!=null &&
@@ -129,7 +129,7 @@ public class ProcessorCommandProcessor {
                 currProcessorId, currSessionId,
                 response.reAssignedProcessorId.getReAssignedProcessorId(), response.reAssignedProcessorId.sessionId
         );
-        metadataService.setProcessorIdAndSessionId(dispatcherUrl, response.reAssignedProcessorId.getReAssignedProcessorId(), response.reAssignedProcessorId.sessionId);
+        processorEnvironment.metadataService.setProcessorIdAndSessionId(dispatcherUrl, response.reAssignedProcessorId.getReAssignedProcessorId(), response.reAssignedProcessorId.sessionId);
     }
 
 }

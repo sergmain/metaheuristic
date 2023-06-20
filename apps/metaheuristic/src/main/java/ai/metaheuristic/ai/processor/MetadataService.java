@@ -17,10 +17,10 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.exceptions.TerminateApplicationException;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.env.EnvParams;
-import ai.metaheuristic.ai.processor.function.ProcessorFunctionService;
+import ai.metaheuristic.ai.processor.function.ProcessorFunctionUtils;
 import ai.metaheuristic.ai.processor.utils.MetadataUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
@@ -34,18 +34,12 @@ import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.boot.SpringApplication;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -62,17 +56,13 @@ import static ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureD
 import static ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData.ChecksumWithSignatureInfo;
 
 @SuppressWarnings("UnusedReturnValue")
-@Service
 @Slf4j
-@Profile("processor")
-@RequiredArgsConstructor
 public class MetadataService {
 
-    private final ApplicationContext appCtx;
-    private final Globals globals;
-    private final EnvParams envService;
+    private final EnvParams envParams;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
-    private final ProcessorFunctionService processorFunctionService;
+    private final Path processorPath;
+    private final Path processorResourcesPath;
 
     private MetadataParamsYaml metadata = null;
 
@@ -106,14 +96,21 @@ public class MetadataService {
         }
     }
 
-    @PostConstruct
-    public void init() {
-        final Path metadataFile = globals.processorPath.resolve(Consts.METADATA_YAML_FILE_NAME);
+    @SneakyThrows
+    public MetadataService(Path processorPath, EnvParams envParams, DispatcherLookupExtendedService dispatcherLookupExtendedService) {
+        this.processorPath = processorPath;
+        this.processorResourcesPath = processorPath.resolve(Consts.RESOURCES_DIR);
+        Files.createDirectories(processorResourcesPath);
+
+        this.envParams = envParams;
+        this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
+
+        final Path metadataFile = processorPath.resolve(Consts.METADATA_YAML_FILE_NAME);
         if (Files.exists(metadataFile)) {
             initMetadataFromFile(metadataFile);
         }
         if (metadata==null) {
-            final Path metadataBackupFile = globals.processorPath.resolve(Consts.METADATA_YAML_BAK_FILE_NAME);
+            final Path metadataBackupFile = processorPath.resolve(Consts.METADATA_YAML_BAK_FILE_NAME);
             if (Files.exists(metadataBackupFile)) {
                 initMetadataFromFile(metadataBackupFile);
             }
@@ -152,7 +149,7 @@ public class MetadataService {
     }
 
     private void fixProcessorCodes() {
-        final List<String> codes = envService.getEnvParamsYaml().cores.stream().map(o -> o.code).collect(Collectors.toList());
+        final List<String> codes = envParams.getEnvParamsYaml().cores.stream().map(o -> o.code).collect(Collectors.toList());
 
         MetadataUtils.fixProcessorCodes(codes, metadata.processorSessions);
     }
@@ -233,13 +230,13 @@ public class MetadataService {
             setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.none);
         }
 
-        ProcessorFunctionService.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus =
-                processorFunctionService.downloadFunctionConfig(assetManager, functionCode);
+        ProcessorFunctionUtils.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus =
+                ProcessorFunctionUtils.downloadFunctionConfig(assetManager, functionCode);
 
-        if (downloadedFunctionConfigStatus.status == ProcessorFunctionService.ConfigStatus.error) {
+        if (downloadedFunctionConfigStatus.status==ProcessorFunctionUtils.ConfigStatus.error) {
             return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.function_config_error));
         }
-        if (downloadedFunctionConfigStatus.status == ProcessorFunctionService.ConfigStatus.not_found) {
+        if (downloadedFunctionConfigStatus.status==ProcessorFunctionUtils.ConfigStatus.not_found) {
             removeFunction(assetManagerUrl, functionCode);
             return null;
         }
@@ -744,10 +741,10 @@ public class MetadataService {
 
     @SneakyThrows
     private void updateMetadataFile() {
-        final Path metadataFile =  globals.processorPath.resolve(Consts.METADATA_YAML_FILE_NAME);
+        final Path metadataFile =  processorPath.resolve(Consts.METADATA_YAML_FILE_NAME);
         if (Files.exists(metadataFile)) {
             log.trace("#815.420 Metadata file exists. Make backup");
-            Path yamlFileBak = globals.processorPath.resolve(Consts.METADATA_YAML_BAK_FILE_NAME);
+            Path yamlFileBak = processorPath.resolve(Consts.METADATA_YAML_BAK_FILE_NAME);
             Files.deleteIfExists(yamlFileBak);
             Files.move(metadataFile, yamlFileBak);
         }
@@ -758,24 +755,24 @@ public class MetadataService {
             String check = Files.readString(metadataFile, StandardCharsets.UTF_8);
             if (!check.equals(data)) {
                 log.error("#815.440 Metadata was persisted with an error, content is different, size - expected: {}, actual: {}, Processor will be closed", data.length(), check.length());
-                System.exit(SpringApplication.exit(appCtx, () -> -500));
+                throw new TerminateApplicationException();
             }
         } catch (Throwable th) {
             log.error("#815.460 Fatal error, Processor will be closed", th);
-            System.exit(SpringApplication.exit(appCtx, () -> -500));
+            throw new TerminateApplicationException();
         }
     }
 
     private void restoreFromBackup() {
         log.info("#815.480 Trying to restore previous state of metadata.yaml");
         try {
-            Path yamlFileBak = globals.processorPath.resolve(Consts.METADATA_YAML_BAK_FILE_NAME);
+            Path yamlFileBak = processorPath.resolve(Consts.METADATA_YAML_BAK_FILE_NAME);
             String content = Files.readString(yamlFileBak, StandardCharsets.UTF_8);
-            Path yamlFile = globals.processorPath.resolve(Consts.METADATA_YAML_FILE_NAME);
+            Path yamlFile = processorPath.resolve(Consts.METADATA_YAML_FILE_NAME);
             Files.writeString(yamlFile, content, StandardCharsets.UTF_8);
         } catch (IOException e) {
             log.error("#815.500 restoring of metadata.yaml from backup was failed. Processor will be stopped.");
-            System.exit(SpringApplication.exit(appCtx, () -> -500));
+            throw new TerminateApplicationException();
         }
 
     }
@@ -804,7 +801,7 @@ public class MetadataService {
 
     @SneakyThrows
     public Path prepareBaseDir(AssetManagerUrl assetManagerUrl) {
-        Path dir = globals.processorResourcesPath.resolve(asCode(assetManagerUrl));
+        Path dir = processorResourcesPath.resolve(asCode(assetManagerUrl));
         if (Files.notExists(dir)) {
             //noinspection unused
             dir = Files.createDirectories(dir);

@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.processor.function;
 
-import ai.metaheuristic.ai.processor.MetadataService;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
+import ai.metaheuristic.ai.processor.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.utils.ProcessorUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
@@ -44,7 +44,7 @@ import java.io.InputStream;
 @AllArgsConstructor
 public class ChecksumAndSignatureService {
 
-    private final MetadataService metadataService;
+    private final ProcessorEnvironment processorEnvironment;
 
     public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
             ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager asset,
@@ -64,7 +64,7 @@ public class ChecksumAndSignatureService {
                 "Asset url: "+ assetManagerUrl.url +", function: "+functionCode, is, ProcessorUtils.createPublicKey(asset),
                 checksumState.originChecksumWithSignature, checksumState.hashAlgo);
 
-        metadataService.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, status);
+        processorEnvironment.metadataService.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, status);
         return status;
     }
 }

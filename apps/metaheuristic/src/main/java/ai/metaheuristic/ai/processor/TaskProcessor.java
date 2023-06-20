@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.env.EnvParams;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProvider;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProviderFactory;
@@ -86,20 +85,22 @@ public class TaskProcessor {
     private final CurrentExecState currentExecState;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final MetadataService metadataService;
-    private final EnvParams envService;
+    private final ProcessorEnvironment processorEnvironment;
     private final ProcessorService processorService;
     private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
 
     public final AtomicBoolean processing = new AtomicBoolean();
 
-    public TaskProcessor(Globals globals, ProcessorTaskService processorTaskService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService, MetadataService metadataService, EnvParams envService, ProcessorService processorService, VariableProviderFactory resourceProviderFactory, GitSourcingService gitSourcingService) {
+    public TaskProcessor(Globals globals, ProcessorTaskService processorTaskService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService,
+                         MetadataService metadataService, ProcessorEnvironment processorEnvironment, ProcessorService processorService,
+                         VariableProviderFactory resourceProviderFactory, GitSourcingService gitSourcingService) {
         this.globals = globals;
         this.processorTaskService = processorTaskService;
         this.currentExecState = currentExecState;
         this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
         this.metadataService = metadataService;
-        this.envService = envService;
+        this.processorEnvironment = processorEnvironment;
         this.processorService = processorService;
         this.resourceProviderFactory = resourceProviderFactory;
         this.gitSourcingService = gitSourcingService;
@@ -221,7 +222,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            String status = EnvServiceUtils.prepareEnvironment(artifactDir, new EnvServiceUtils.EnvYamlShort(envService.getEnvParamsYaml()));
+            String status = EnvServiceUtils.prepareEnvironment(artifactDir, new EnvServiceUtils.EnvYamlShort(processorEnvironment.envParams.getEnvParamsYaml()));
             if (status!=null) {
                 processorTaskService.markAsFinishedWithError(core, task.taskId, status);
             }
@@ -438,7 +439,7 @@ public class TaskProcessor {
         List<String> cmd;
         Interpreter interpreter=null;
         if (StringUtils.isNotBlank(functionPrepareResult.function.env)) {
-            final String exec = envService.getEnvParamsYaml().getEnvs().stream().filter(o -> o.code.equals(functionPrepareResult.function.env)).findFirst().map(o -> o.exec).orElse(null);
+            final String exec = processorEnvironment.envParams.getEnvParamsYaml().getEnvs().stream().filter(o -> o.code.equals(functionPrepareResult.function.env)).findFirst().map(o -> o.exec).orElse(null);
             interpreter = new Interpreter(exec);
             if (interpreter.list == null) {
                 String es = "#100.290 Can't process the task, the interpreter wasn't found for env: " + functionPrepareResult.function.env;

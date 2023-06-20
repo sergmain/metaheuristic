@@ -18,20 +18,17 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
+import ai.metaheuristic.ai.exceptions.TerminateApplicationException;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
+import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.utils.SecUtils;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.SpringApplication;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,10 +45,7 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Element;
 import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Scheme;
 
-@Service
 @Slf4j
-@Profile("processor")
-//@DependsOn({"Globals"})
 public class DispatcherLookupExtendedService {
 
     private static final String SEE_MORE_INFO = "See https://docs.metaheuristic.ai/p/description-of-dispatcher-yaml for more info about structure of this file.\n";
@@ -135,31 +129,31 @@ public class DispatcherLookupExtendedService {
         }
     }
 
-    public DispatcherLookupExtendedService(Globals globals, ApplicationContext appCtx) {
+    public DispatcherLookupExtendedService(Path processorPath, @Nullable File defaultDispatcherYamlFile) {
         Map<DispatcherUrl, DispatcherLookupExtended> dispatcherLookupExtendedMap = Map.of();
         try {
-            final Path dispatcherFile = globals.processorPath.resolve(Consts.DISPATCHER_YAML_FILE_NAME);
+            final Path dispatcherFile = processorPath.resolve(Consts.DISPATCHER_YAML_FILE_NAME);
             final String cfg;
             if (Files.notExists(dispatcherFile)) {
-                if (globals.processor.defaultDispatcherYamlFile == null) {
+                if (defaultDispatcherYamlFile==null) {
                     log.error("Processor's dispatcher config file {} doesn't exist and default file wasn't specified", dispatcherFile);
                     return;
                 }
-                if (!globals.processor.defaultDispatcherYamlFile.exists()) {
-                    log.error("Processor's default dispatcher.yaml file doesn't exist: {}", globals.processor.defaultDispatcherYamlFile.getAbsolutePath());
+                if (!defaultDispatcherYamlFile.exists()) {
+                    log.error("Processor's default dispatcher.yaml file doesn't exist: {}", defaultDispatcherYamlFile.getAbsolutePath());
                     return;
                 }
                 try {
-                    FileSystemUtils.copyFileWithSync(globals.processor.defaultDispatcherYamlFile, dispatcherFile.toFile());
+                    FileSystemUtils.copyFileWithSync(defaultDispatcherYamlFile, dispatcherFile.toFile());
                 } catch (IOException e) {
                     log.error("Error", e);
-                    throw new IllegalStateException("Error while copying "+ globals.processor.defaultDispatcherYamlFile.getAbsolutePath()+" to " + dispatcherFile.normalize(), e);
+                    throw new IllegalStateException("Error while copying " + defaultDispatcherYamlFile.getAbsolutePath() + " to " + dispatcherFile.normalize(), e);
                 }
             }
             if (Files.notExists(dispatcherFile)) {
                 throw new IllegalStateException(
                         "File dispatcher.yaml wasn't found. " +
-                        "It must be configured in directory "+globals.processorPath+" or be provided via application parameter mh.processor.default-dispatcher-yaml-file ");
+                        "It must be configured in directory " + processorPath + " or be provided via application parameter mh.processor.default-dispatcher-yaml-file ");
             }
 
             try {
@@ -173,8 +167,7 @@ public class DispatcherLookupExtendedService {
                     SCHEMES,
                     "the config file dispatcher.yaml",
                     (es)-> {
-                        System.exit(SpringApplication.exit(appCtx, () -> -500));
-                        return true;
+                        throw new TerminateApplicationException();
                     },
                     SEE_MORE_INFO
             );
@@ -187,7 +180,7 @@ public class DispatcherLookupExtendedService {
 
             if (dispatcherLookupConfig == null) {
                 log.error("{} wasn't found or empty. path: {}{}{}",
-                        Consts.DISPATCHER_YAML_FILE_NAME, globals.processorPath,
+                        Consts.DISPATCHER_YAML_FILE_NAME, processorPath,
                         File.separatorChar, Consts.DISPATCHER_YAML_FILE_NAME);
                 throw new IllegalStateException("Processor isn't configured, dispatcher.yaml is empty or doesn't exist");
             }

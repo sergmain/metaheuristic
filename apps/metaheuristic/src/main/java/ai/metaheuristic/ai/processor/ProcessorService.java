@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.VariableProviderException;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.env.EnvParams;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProvider;
@@ -64,7 +63,7 @@ public class ProcessorService {
     private final ProcessorTaskService processorTaskService;
     private final UploadVariableService uploadResourceActor;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
-    private final EnvParams envService;
+    private final ProcessorEnvironment processorEnvironment;
     private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
     private final CurrentExecState currentExecState;
@@ -81,7 +80,7 @@ public class ProcessorService {
         // TODO 2020-11-14 or it's about using TimeZoned value?
 
         KeepAliveRequestParamYaml.ProcessorStatus status = new KeepAliveRequestParamYaml.ProcessorStatus(
-                to(envService.getEnvParamsYaml()),
+                to(processorEnvironment.envParams.getEnvParamsYaml()),
                 gitSourcingService.gitStatusInfo,
                 schedule.asString,
                 "[unknown]", "[unknown]",
