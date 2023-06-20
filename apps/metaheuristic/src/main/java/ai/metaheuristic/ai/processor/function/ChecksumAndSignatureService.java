@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.processor.function;
 
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
-import ai.metaheuristic.ai.processor.ProcessorEnvironment;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.utils.ProcessorUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;

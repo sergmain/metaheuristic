@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.processor;
+package ai.metaheuristic.ai.processor.processor_environment;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.TerminateApplicationException;

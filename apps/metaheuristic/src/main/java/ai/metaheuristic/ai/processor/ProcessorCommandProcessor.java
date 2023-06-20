@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.processor.data.ProcessorData;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;

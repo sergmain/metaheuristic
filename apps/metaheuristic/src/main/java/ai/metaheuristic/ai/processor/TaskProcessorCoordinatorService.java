@@ -19,6 +19,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProviderFactory;
 import lombok.RequiredArgsConstructor;

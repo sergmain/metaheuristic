@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
