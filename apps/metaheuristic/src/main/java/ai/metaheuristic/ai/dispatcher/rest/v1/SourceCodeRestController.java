@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -53,7 +53,7 @@ import jakarta.servlet.http.HttpServletRequest;
 @RequiredArgsConstructor
 public class SourceCodeRestController {
 
-    private final SourceCodeService sourceCodeService;
+    private final SourceCodeTxService sourceCodeTxService;
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final UserContextService userContextService;
 
@@ -61,14 +61,14 @@ public class SourceCodeRestController {
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public SourceCodeApiData.SourceCodesResult sourceCodes(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeService.getSourceCodes(pageable, false, context);
+        return sourceCodeTxService.getSourceCodes(pageable, false, context);
     }
 
     @GetMapping("/source-codes-archived-only")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public SourceCodeApiData.SourceCodesResult sourceCodeArchivedOnly(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeService.getSourceCodes(pageable, true, context);
+        return sourceCodeTxService.getSourceCodes(pageable, true, context);
     }
 
     @GetMapping(value = "/source-code/{id}")
@@ -82,7 +82,7 @@ public class SourceCodeRestController {
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public SourceCodeApiData.SourceCodeResult validate(@PathVariable Long id, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeService.validateSourceCode(id, context);
+        return sourceCodeTxService.validateSourceCode(id, context);
     }
 
     @PostMapping("/source-code-add-commit")
@@ -102,14 +102,14 @@ public class SourceCodeRestController {
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest deleteCommit(Long id, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeService.deleteSourceCodeById(id, context);
+        return sourceCodeTxService.deleteSourceCodeById(id, context);
     }
 
     @PostMapping("/source-code-archive-commit")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest archiveCommit(Long id, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeService.archiveSourceCodeById(id, context);
+        return sourceCodeTxService.archiveSourceCodeById(id, context);
     }
 
     @PostMapping(value = "/source-code-upload-from-file")

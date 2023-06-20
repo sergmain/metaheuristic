@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -65,7 +65,7 @@ public class TestExecSourceCode {
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
     @Autowired private SourceCodeTopLevelService sourceCodeTopLevelService;
     @Autowired private SourceCodeCache sourceCodeCache;
-    @Autowired private SourceCodeService sourceCodeService;
+    @Autowired private SourceCodeTxService sourceCodeTxService;
     @Autowired private CompanyTopLevelService companyTopLevelService;
     @Autowired private CompanyRepository companyRepository;
 
@@ -174,7 +174,7 @@ public class TestExecSourceCode {
         if (scr != null) {
             SourceCodeImpl sc = Objects.requireNonNull(sourceCodeCache.findById(scr.id));
             try {
-                sourceCodeService.deleteSourceCodeById(sc.id);
+                sourceCodeTxService.deleteSourceCodeById(sc.id);
             } catch (Throwable th) {
                 th.printStackTrace();
             }

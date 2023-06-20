@@ -19,7 +19,6 @@ import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
-import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -31,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -64,20 +62,6 @@ public class FunctionTxService {
             functionDataWithEntityManagerService.save(inputStream, size, functionCode);
         }
         return function;
-    }
-
-    public List<Pair<EnumsApi.FunctionSourcing, String>> collectInfoAboutFunction() {
-        final List<Long> allIds = functionRepository.findAllIds();
-
-        final List<Pair<EnumsApi.FunctionSourcing, String>> result = allIds.stream()
-                .map(id -> functionRepository.findById(id).orElse(null))
-                .filter(Objects::nonNull)
-                .map(s -> {
-                    FunctionConfigYaml fcy = s.getFunctionConfigYaml();
-                    return Pair.of(fcy.sourcing, s.code);
-                })
-                .collect(Collectors.toList());
-        return result;
     }
 
     @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)

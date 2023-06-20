@@ -31,7 +31,7 @@ import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
@@ -391,7 +391,7 @@ public class BatchTxService {
 
     private CleanerInfo getBatchProcessingResultInternal(Batch batch, Long companyUniqueId, boolean includeDeleted, String variableType) {
         return getVariable(batch, companyUniqueId, includeDeleted, (execContextId, scpy)-> {
-            List<SourceCodeParamsYaml.Variable> vars = SourceCodeService.findVariableByType(scpy, variableType);
+            List<SourceCodeParamsYaml.Variable> vars = SourceCodeTxService.findVariableByType(scpy, variableType);
             if (vars.isEmpty()) {
                 final String es = "#981.540 variable with type '"+variableType+"' wasn't found";
                 log.warn(es);

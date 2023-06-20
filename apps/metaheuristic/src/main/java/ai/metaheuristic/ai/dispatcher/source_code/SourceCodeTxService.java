@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor
-public class SourceCodeService {
+public class SourceCodeTxService {
 
     private final Globals globals;
     private final SourceCodeCache sourceCodeCache;

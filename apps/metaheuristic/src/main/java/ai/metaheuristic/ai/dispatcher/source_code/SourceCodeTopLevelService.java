@@ -85,7 +85,7 @@ import static ai.metaheuristic.ai.Consts.YML_EXT;
 @RequiredArgsConstructor
 public class SourceCodeTopLevelService {
 
-    private final SourceCodeService sourceCodeService;
+    private final SourceCodeTxService sourceCodeTxService;
     private final Globals globals;
     private final SourceCodeCache sourceCodeCache;
     private final SourceCodeRepository sourceCodeRepository;
@@ -119,7 +119,7 @@ public class SourceCodeTopLevelService {
             }
 
             try {
-                return sourceCodeService.createSourceCode(sourceCodeYamlAsStr, ppy, companyUniqueId);
+                return sourceCodeTxService.createSourceCode(sourceCodeYamlAsStr, ppy, companyUniqueId);
             } catch (DataIntegrityViolationException e) {
                 final String error = ErrorUtils.getAllMessages(e, 1);
                 final String es = "#560.155 data integrity error: " + error;
@@ -232,7 +232,7 @@ public class SourceCodeTopLevelService {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, sourceCodeResult.getErrorMessagesAsList(), sourceCodeResult.getInfoMessagesAsList());
             }
 
-            SourceCodeApiData.SourceCodeResult result = sourceCodeService.createSourceCode(sourceCodeYamlAsStr, ppy, context.getCompanyId());
+            SourceCodeApiData.SourceCodeResult result = sourceCodeTxService.createSourceCode(sourceCodeYamlAsStr, ppy, context.getCompanyId());
 
             if (result.isErrorMessages()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.getErrorMessagesAsList(), result.getInfoMessagesAsList());

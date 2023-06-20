@@ -60,7 +60,7 @@ import java.util.UUID;
 public class PreparingCoreInitService {
 
     private final ExperimentRepository experimentRepository;
-    private final FunctionTxService functionService;
+    private final FunctionTxService functionTxService;
     private final FunctionRepository functionRepository;
     private final ExperimentCache experimentCache;
     private final ProcessorTopLevelService processorTopLevelService;
@@ -139,7 +139,7 @@ public class PreparingCoreInitService {
 
             mills = System.currentTimeMillis();
             log.info("Start functionRepository.save() #1");
-            function = functionService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
+            function = functionTxService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
             log.info("functionRepository.save() #1 was finished for {} milliseconds", System.currentTimeMillis() - mills);
         }
         data.fitFunction = function;
@@ -160,7 +160,7 @@ public class PreparingCoreInitService {
 
             mills = System.currentTimeMillis();
             log.info("Start functionRepository.save() #2");
-            functionService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
+            functionTxService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
             log.info("processorRepository.save() #2 was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
         }

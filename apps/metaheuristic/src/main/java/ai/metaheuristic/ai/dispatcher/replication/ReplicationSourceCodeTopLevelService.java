@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +51,7 @@ public class ReplicationSourceCodeTopLevelService {
     public final ReplicationCoreService replicationCoreService;
     public final ReplicationSourceCodeService replicationSourceCodeService;
     public final SourceCodeRepository sourceCodeRepository;
-    public final SourceCodeService sourceCodeService;
+    public final SourceCodeTxService sourceCodeTxService;
     public final SourceCodeCache sourceCodeCache;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
 
@@ -72,7 +72,7 @@ public class ReplicationSourceCodeTopLevelService {
                 .map(sourceCodeRepository::findByUid)
                 .filter(Objects::nonNull)
                 .forEach(s-> {
-                    sourceCodeService.deleteSourceCodeById(s.id, false);
+                    sourceCodeTxService.deleteSourceCodeById(s.id, false);
                     dispatcherParamsTopLevelService.unregisterSourceCode(s.uid);
                 });
 

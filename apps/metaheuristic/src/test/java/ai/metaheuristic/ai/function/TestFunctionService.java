@@ -63,7 +63,7 @@ public class TestFunctionService {
     private static final String FUNCTION_PARAMS = "AAA";
 
     @Autowired
-    private FunctionTxService functionService;
+    private FunctionTxService functionTxService;
 
     @Autowired
     private FunctionTopLevelService functionTopLevelService;
@@ -126,7 +126,7 @@ public class TestFunctionService {
 
             mills = System.currentTimeMillis();
             log.info("Start functionRepository.save() #2");
-            f = functionService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
+            f = functionTxService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
 
             log.info("functionRepository.save() #2 was finished for {} milliseconds", System.currentTimeMillis() - mills);
         }
@@ -139,7 +139,7 @@ public class TestFunctionService {
         log.info("Start after()");
         if (function != null) {
             try {
-                functionService.deleteFunction(function.getId(), function.code);
+                functionTxService.deleteFunction(function.getId(), function.code);
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }

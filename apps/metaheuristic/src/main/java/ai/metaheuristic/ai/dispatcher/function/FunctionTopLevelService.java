@@ -140,26 +140,31 @@ public class FunctionTopLevelService {
     }
 
     public List<Pair<EnumsApi.FunctionSourcing, String>> getFunctionInfos() {
-        rwl.readLock().lock();
+        final ReentrantReadWriteLock.ReadLock readLock = rwl.readLock();
+        final ReentrantReadWriteLock.WriteLock writeLock = rwl.writeLock();
+
+        readLock.lock();
         try {
-            if (functionInfosCache == null) {
-                rwl.readLock().unlock();
-                rwl.writeLock().lock();
-                try {
-                    if (functionInfosCache == null) {
-                        functionInfosCache = collectInfoAboutFunction();
-//                        functionInfosCache = functionTxService.collectInfoAboutFunction();
-                        mills = System.currentTimeMillis();
-                    }
-                    rwl.readLock().lock();
+            if (functionInfosCache != null) {
+                if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {
+                    eventPublisher.publishEvent(new RefreshInfoAboutFunctionsEvent());
                 }
-                finally {
-                    rwl.writeLock().unlock();
-                }
+                return functionInfosCache;
             }
         }
         finally {
-            rwl.readLock().unlock();
+            readLock.unlock();
+        }
+
+        writeLock.lock();
+        try {
+            if (functionInfosCache == null) {
+                functionInfosCache = collectInfoAboutFunction();
+                mills = System.currentTimeMillis();
+            }
+        }
+        finally {
+            writeLock.unlock();
         }
 
         if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {
@@ -190,7 +195,7 @@ public class FunctionTopLevelService {
         rwl.writeLock().lock();
         try {
             if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {
-                functionInfosCache = functionTxService.collectInfoAboutFunction();
+                functionInfosCache = collectInfoAboutFunction();
                 mills = System.currentTimeMillis();
             }
         }

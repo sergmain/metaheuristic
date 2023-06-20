@@ -26,7 +26,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelSer
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
@@ -94,7 +94,7 @@ public class ScenarioService {
     private final ScenarioGroupRepository scenarioGroupRepository;
     private final ScenarioRepository scenarioRepository;
     private final SourceCodeRepository sourceCodeRepository;
-    private final SourceCodeService sourceCodeService;
+    private final SourceCodeTxService sourceCodeTxService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final ProviderQueryService providerQueryService;
 
@@ -336,7 +336,7 @@ public class ScenarioService {
         if (sc==null) {
             SourceCodeParamsYaml scpy = ScenarioUtils.to(uid, s.getScenarioParams(), this::apiSchemeResolver);
             String yaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(scpy);
-            SourceCodeApiData.SourceCodeResult result = sourceCodeService.createSourceCode(yaml, scpy, context.getCompanyId());
+            SourceCodeApiData.SourceCodeResult result = sourceCodeTxService.createSourceCode(yaml, scpy, context.getCompanyId());
             if (!result.isValid()) {
                 final String es = S.f("373.160 validation: %s, %s", result.validationResult.status, result.validationResult.error);
                 log.error(es);

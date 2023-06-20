@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableEntityManagerTxService;
@@ -70,9 +70,9 @@ public class PreparingSourceCodeInitService {
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final SourceCodeCache sourceCodeCache;
     private final FunctionRepository functionRepository;
-    private final FunctionTxService functionService;
+    private final FunctionTxService functionTxService;
     private final TxSupportForTestingService txSupportForTestingService;
-    private final SourceCodeService sourceCodeService;
+    private final SourceCodeTxService sourceCodeTxService;
     private final CompanyRepository companyRepository;
     private final ExecContextCache execContextCache;
     private final ExecContextRepository execContextRepository;
@@ -145,14 +145,14 @@ public class PreparingSourceCodeInitService {
         }
 
         byte[] bytes = "some code for testing".getBytes();
-        Function f = functionService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
+        Function f = functionTxService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
         return f;
     }
 
     public void afterPreparingSourceCode(PreparingData.PreparingSourceCodeData data) {
         try {
             if (data.getSourceCode() !=null) {
-                sourceCodeService.deleteSourceCodeById(data.getSourceCode().getId());
+                sourceCodeTxService.deleteSourceCodeById(data.getSourceCode().getId());
             }
         } catch (Throwable th) {
             log.error("Error while planCache.deleteById()", th);

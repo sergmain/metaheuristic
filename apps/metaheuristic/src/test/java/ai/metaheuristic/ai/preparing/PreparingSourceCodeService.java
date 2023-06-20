@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncSer
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
@@ -77,7 +77,7 @@ public class PreparingSourceCodeService {
     private final CompanyRepository companyRepository;
     private final ExecContextRepository execContextRepository;
     private final TaskRepositoryForTest taskRepositoryForTest;
-    private final SourceCodeService sourceCodeService;
+    private final SourceCodeTxService sourceCodeTxService;
     private final GlobalVariableService globalVariableService;
     private final TxSupportForTestingService txSupportForTestingService;
     private final SouthbridgeService serverService;
@@ -115,7 +115,7 @@ public class PreparingSourceCodeService {
                 }
             }
             try {
-                sourceCodeService.deleteSourceCodeById(sc.getId());
+                sourceCodeTxService.deleteSourceCodeById(sc.getId());
             } catch (Throwable th) {
                 log.error("Error while planCache.deleteById()", th);
             }

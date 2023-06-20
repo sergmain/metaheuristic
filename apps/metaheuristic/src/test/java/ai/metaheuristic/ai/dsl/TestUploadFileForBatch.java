@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -61,7 +61,7 @@ public class TestUploadFileForBatch extends PreparingSourceCode {
     @Autowired private BatchTopLevelService batchTopLevelService;
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
-    @Autowired private SourceCodeService sourceCodeService;
+    @Autowired private SourceCodeTxService sourceCodeTxService;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -127,7 +127,7 @@ public class TestUploadFileForBatch extends PreparingSourceCode {
         final DispatcherContext context = new DispatcherContext(a, getCompany());
 
 
-        SourceCodeApiData.SourceCodeResult sourceCodeResult = sourceCodeService.validateSourceCode(getSourceCode().id, context);
+        SourceCodeApiData.SourceCodeResult sourceCodeResult = sourceCodeTxService.validateSourceCode(getSourceCode().id, context);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, sourceCodeResult.validationResult.status);
         // TODO p5 delete this line if thest will work ok without it
 //        sourceCode = Objects.requireNonNull(sourceCodeCache.findById(getSourceCode().id));
