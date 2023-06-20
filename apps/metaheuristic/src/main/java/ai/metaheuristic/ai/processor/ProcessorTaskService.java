@@ -406,23 +406,17 @@ public class ProcessorTaskService {
     }
 
     boolean isNeedNewTask(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
-        try {
-            ProcessorSyncHolder.readLock.lock();
-            // TODO 2019-10-24 need to optimize
-            List<ProcessorCoreTask> tasks = findAllByCompletedIsFalse(core);
-            for (ProcessorCoreTask task : tasks) {
-                // we don't need new task because execContext for this task is active
-                // i.e. there is a non-completed task with active execContext
-                // if execContext wasn't active, we would need a new task
-                if (currentExecState.isStarted(new DispatcherUrl(task.dispatcherUrl), task.execContextId)) {
-                    return false;
-                }
+        // TODO 2019-10-24 need to optimize
+        List<ProcessorCoreTask> tasks = findAllByCompletedIsFalse(core);
+        for (ProcessorCoreTask task : tasks) {
+            // we don't need new task because execContext for this task is active
+            // i.e. there is a non-completed task with active execContext
+            // if execContext wasn't active, we would need a new task
+            if (currentExecState.isStarted(new DispatcherUrl(task.dispatcherUrl), task.execContextId)) {
+                return false;
             }
-            return true;
-
-        } finally {
-            ProcessorSyncHolder.readLock.unlock();
         }
+        return true;
     }
 
     public List<ProcessorCoreTask> findAllByCompletedIsFalse(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
