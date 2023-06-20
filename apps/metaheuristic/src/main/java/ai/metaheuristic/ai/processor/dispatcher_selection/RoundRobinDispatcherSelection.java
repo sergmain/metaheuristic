@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.processor.dispatcher_selection;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedParams;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
@@ -31,7 +31,7 @@ public class RoundRobinDispatcherSelection {
 
     private final ActiveDispatchers activeDispatchers;
 
-    public RoundRobinDispatcherSelection(Map<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> dispatchers, String info) {
+    public RoundRobinDispatcherSelection(Map<DispatcherUrl, DispatcherLookupExtendedParams.DispatcherLookupExtended> dispatchers, String info) {
         activeDispatchers = new ActiveDispatchers(dispatchers, info, Enums.DispatcherSelectionStrategy.alphabet);
     }
 

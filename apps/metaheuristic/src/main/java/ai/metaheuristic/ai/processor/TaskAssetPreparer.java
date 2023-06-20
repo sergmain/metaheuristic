@@ -20,8 +20,8 @@ import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.event.AssetPreparingForProcessorTaskEvent;
-import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
-import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
+import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedParams;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
@@ -56,8 +56,7 @@ public class TaskAssetPreparer {
     private final DownloadFunctionService downloadFunctionActor;
     private final CurrentExecState currentExecState;
     private final ProcessorTaskService processorTaskService;
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
-    private final MetadataParams metadataService;
+    private final ProcessorEnvironment processorEnvironment;
     private final ProcessorService processorService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -96,7 +95,7 @@ public class TaskAssetPreparer {
             return;
         }
 
-        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : metadataService.getAllEnabledRefsForCores()) {
+        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataService.getAllEnabledRefsForCores()) {
 
             // delete all orphan tasks
             processorTaskService.findAllForCore(core).forEach(task -> {
@@ -145,10 +144,10 @@ public class TaskAssetPreparer {
             return null;
         }
 
-        final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
-                dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
+        final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
+                processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
 
-        final MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(core);
+        final MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.metadataService.processorStateByDispatcherUrl(core);
         if (processorState.processorId==null || S.b(processorState.sessionId)) {
             log.warn("#951.070 processor {} with dispatcher {} isn't ready", core.coreCode, core.dispatcherUrl.url);
             return null;
@@ -201,7 +200,7 @@ public class TaskAssetPreparer {
             TaskParamsYaml.FunctionConfig functionConfig, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, Long taskId) {
 
         if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-            final MetadataParamsYaml.Function functionDownloadStatuses = metadataService.getFunctionDownloadStatuses(assetManagerUrl, functionConfig.code);
+            final MetadataParamsYaml.Function functionDownloadStatuses = processorEnvironment.metadataService.getFunctionDownloadStatuses(assetManagerUrl, functionConfig.code);
             if (functionDownloadStatuses==null) {
                 return false;
             }
@@ -214,7 +213,7 @@ public class TaskAssetPreparer {
                 if (functionState== EnumsApi.FunctionState.function_config_error || functionState== EnumsApi.FunctionState.download_error) {
                     log.error("#951.170 The function {} has a state as {}, start re-downloading", functionConfig.code, functionState);
 
-                    metadataService.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none);
+                    processorEnvironment.metadataService.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none);
 
                     downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, assetManagerUrl));
                     return true;

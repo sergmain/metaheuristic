@@ -38,7 +38,7 @@ import ai.metaheuristic.ai.processor.actors.UploadVariableService;
 import ai.metaheuristic.ai.processor.dispatcher_selection.ActiveDispatchers;
 import ai.metaheuristic.ai.processor.event.KeepAliveEvent;
 import ai.metaheuristic.ai.processor.event.ProcessorEventBusService;
-import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.api.EnumsApi;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -334,14 +334,14 @@ public class Schedulers {
         private final Globals globals;
         private ActiveDispatchers activeDispatchers;
         private final DispatcherRequestorHolderService dispatcherRequestorHolderService;
-        private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
+        private final ProcessorEnvironment processorEnvironment;
 
         @PostConstruct
         public void post() {
-            if (dispatcherLookupExtendedService.lookupExtendedMap==null) {
+            if (processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap==null) {
                 throw new IllegalStateException("dispatcher.yaml wasn't configured");
             }
-            this.activeDispatchers = new ActiveDispatchers(dispatcherLookupExtendedService.lookupExtendedMap, "ActiveDispatchers for scheduler", Enums.DispatcherSelectionStrategy.priority);
+            this.activeDispatchers = new ActiveDispatchers(processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap, "ActiveDispatchers for scheduler", Enums.DispatcherSelectionStrategy.priority);
         }
 
         @Override

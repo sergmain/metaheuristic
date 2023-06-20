@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
@@ -68,7 +68,7 @@ public class ProcessorKeepAliveRequestor {
     private static final HttpComponentsClientHttpRequestFactory REQUEST_FACTORY = DispatcherUtils.getHttpRequestFactory();
 
     private final RestTemplate restTemplate;
-    private final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
+    private final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher;
     private final String dispatcherRestUrl;
 
     public ProcessorKeepAliveRequestor(
@@ -123,7 +123,7 @@ public class ProcessorKeepAliveRequestor {
                 karpy.cores.add(new KeepAliveRequestParamYaml.Core(coreDir, coreId, coreCode, tags));
             }
 
-            final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
+            final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
                     processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
             ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);

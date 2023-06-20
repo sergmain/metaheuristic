@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.processor.processor_environment;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.TerminateApplicationException;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
@@ -47,7 +46,7 @@ import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Element;
 import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Scheme;
 
 @Slf4j
-public class DispatcherLookupExtendedService {
+public class DispatcherLookupExtendedParams {
 
     private static final String SEE_MORE_INFO = "See https://docs.metaheuristic.ai/p/description-of-dispatcher-yaml for more info about structure of this file.\n";
 
@@ -130,7 +129,7 @@ public class DispatcherLookupExtendedService {
         }
     }
 
-    public DispatcherLookupExtendedService(Path processorPath, @Nullable File defaultDispatcherYamlFile) {
+    public DispatcherLookupExtendedParams(Path processorPath, @Nullable File defaultDispatcherYamlFile) {
         Map<DispatcherUrl, DispatcherLookupExtended> dispatcherLookupExtendedMap = Map.of();
         try {
             final Path dispatcherFile = processorPath.resolve(Consts.DISPATCHER_YAML_FILE_NAME);

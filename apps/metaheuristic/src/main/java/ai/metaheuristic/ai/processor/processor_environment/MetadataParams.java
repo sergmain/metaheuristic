@@ -58,7 +58,7 @@ import static ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureD
 public class MetadataParams {
 
     private final EnvParams envParams;
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
+    private final DispatcherLookupExtendedParams dispatcherLookupExtendedService;
     private final Path processorPath;
     private final Path processorResourcesPath;
 
@@ -95,7 +95,7 @@ public class MetadataParams {
     }
 
     @SneakyThrows
-    public MetadataParams(Path processorPath, EnvParams envParams, DispatcherLookupExtendedService dispatcherLookupExtendedService) {
+    public MetadataParams(Path processorPath, EnvParams envParams, DispatcherLookupExtendedParams dispatcherLookupExtendedService) {
         this.processorPath = processorPath;
         this.processorResourcesPath = processorPath.resolve(Consts.RESOURCES_DIR);
         Files.createDirectories(processorResourcesPath);
@@ -409,7 +409,7 @@ public class MetadataParams {
     }
 
     private boolean selectEnabledDispathcersFunc(DispatcherUrl dispatcherUrl) {
-        final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.getDispatcher(dispatcherUrl);
+        final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.getDispatcher(dispatcherUrl);
         return dispatcher != null && !dispatcher.dispatcherLookup.disabled;
     }
 
@@ -527,7 +527,7 @@ public class MetadataParams {
     }
 
     public List<MetadataParamsYaml.Function> registerNewFunctionCode(DispatcherUrl dispatcherUrl, Map<EnumsApi.FunctionSourcing, String> infos) {
-        final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
+        final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
                 dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
         AssetManagerUrl assetManagerUrl = new AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);

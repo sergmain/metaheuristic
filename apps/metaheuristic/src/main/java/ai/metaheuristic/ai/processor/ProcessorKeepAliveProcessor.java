@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
-import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
+import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedParams;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -42,9 +42,8 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 @RequiredArgsConstructor
 public class ProcessorKeepAliveProcessor {
 
-    private final MetadataParams metadataService;
+    private final ProcessorEnvironment processorEnvironment;
     private final CurrentExecState currentExecState;
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
 
     public void processKeepAliveResponseParamYaml(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
 //        log.debug("#776.020 DispatcherCommParamsYaml:\n{}", responseParamYaml);
@@ -54,7 +53,7 @@ public class ProcessorKeepAliveProcessor {
         registerFunctions(dispatcherUrl, responseParamYaml.functions);
 
         final KeepAliveResponseParamYaml.DispatcherResponse response = responseParamYaml.response;
-        ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = metadataService.getRef(dispatcherUrl);
+        ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = processorEnvironment.metadataService.getRef(dispatcherUrl);
 
         if(ref==null) {
             log.warn("ref is null for processorId: {}, dispatcherUrl: {}", response.processorCode, dispatcherUrl);
@@ -72,8 +71,8 @@ public class ProcessorKeepAliveProcessor {
         if (responseParamYaml.dispatcherInfo ==null) {
             return;
         }
-        DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
-                dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+        DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
+                processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
         if (dispatcher==null) {
             return;
@@ -86,7 +85,7 @@ public class ProcessorKeepAliveProcessor {
     }
 
     private void registerFunctions(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml.Functions functions) {
-        metadataService.registerNewFunctionCode(dispatcherUrl, functions.infos);
+        processorEnvironment.metadataService.registerNewFunctionCode(dispatcherUrl, functions.infos);
     }
 
     private void processExecContextStatus(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml.ExecContextStatus execContextStatus) {
@@ -99,13 +98,13 @@ public class ProcessorKeepAliveProcessor {
             return;
         }
         log.info("storeProcessorId() new processor Id: {}", response.assignedProcessorId);
-        metadataService.setProcessorIdAndSessionId(
+        processorEnvironment.metadataService.setProcessorIdAndSessionId(
                 dispatcherUrl, response.assignedProcessorId.assignedProcessorId.toString(), response.assignedProcessorId.assignedSessionId);
     }
 
     private void storeProcessorCoreId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, List<KeepAliveResponseParamYaml.CoreInfo> coreInfos) {
         for (KeepAliveResponseParamYaml.CoreInfo coreInfo : coreInfos) {
-            metadataService.setCoreId(ref.dispatcherUrl, coreInfo.code, coreInfo.coreId);
+            processorEnvironment.metadataService.setCoreId(ref.dispatcherUrl, coreInfo.code, coreInfo.coreId);
         }
     }
 
@@ -115,7 +114,7 @@ public class ProcessorKeepAliveProcessor {
             return;
         }
         Long newProcessorId = Long.parseLong(response.reAssignedProcessorId.reAssignedProcessorId);
-        final MetadataParamsYaml.ProcessorSession processorSession = metadataService.getProcessorSession(dispatcherUrl);
+        final MetadataParamsYaml.ProcessorSession processorSession = processorEnvironment.metadataService.getProcessorSession(dispatcherUrl);
         final Long currProcessorId = processorSession.processorId;
         final String currSessionId = processorSession.sessionId;
         if (currProcessorId!=null && currSessionId!=null &&
@@ -131,7 +130,7 @@ public class ProcessorKeepAliveProcessor {
                 currProcessorId, currSessionId,
                 response.reAssignedProcessorId.getReAssignedProcessorId(), response.reAssignedProcessorId.sessionId
         );
-        metadataService.setProcessorIdAndSessionId(
+        processorEnvironment.metadataService.setProcessorIdAndSessionId(
                 dispatcherUrl, response.reAssignedProcessorId.getReAssignedProcessorId(), response.reAssignedProcessorId.sessionId);
     }
 

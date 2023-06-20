@@ -19,6 +19,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.utils.DigitUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -64,7 +65,7 @@ public class ProcessorTaskService {
 
     private final Globals globals;
     private final CurrentExecState currentExecState;
-    private final MetadataParams metadataService;
+    private final ProcessorEnvironment processorEnvironment;
 
     /**key - code of core
      * value:
@@ -91,7 +92,7 @@ public class ProcessorTaskService {
     }
 
     public void init(Path processorPath) {
-        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : metadataService.getAllEnabledRefsForCores()) {
+        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataService.getAllEnabledRefsForCores()) {
 
             File processorDir = new File(processorPath.toFile(), core.coreCode);
             File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
@@ -355,7 +356,7 @@ public class ProcessorTaskService {
             ProcessorSyncHolder.writeLock.lock();
             log.info("markAsFinished({}, #{}, {})", core.dispatcherUrl.url, taskId, functionExec);
 
-            metadataService.removeQuota(core.dispatcherUrl.url, taskId);
+            processorEnvironment.metadataService.removeQuota(core.dispatcherUrl.url, taskId);
             ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
                 log.error("#713.110 ProcessorCoreTask wasn't found for Id #" + taskId);
@@ -493,7 +494,7 @@ public class ProcessorTaskService {
     public void createTask(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherCommParamsYaml.AssignedTask assignedTask) {
         try {
             ProcessorSyncHolder.writeLock.lock();
-            metadataService.registerTaskQuota(core.dispatcherUrl.url, assignedTask.taskId, assignedTask.tag, assignedTask.quota);
+            processorEnvironment.metadataService.registerTaskQuota(core.dispatcherUrl.url, assignedTask.taskId, assignedTask.tag, assignedTask.quota);
 
             log.info("#713.150 Prepare new task #{} on core #{}", assignedTask.taskId, core.coreId);
             Map<Long, ProcessorCoreTask> mapForDispatcherUrl = getTasksForProcessorCore(core);
@@ -525,7 +526,7 @@ public class ProcessorTaskService {
             }
             File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
 
-            File dispatcherDir = new File(processorTaskDir, metadataService.processorStateByDispatcherUrl(core).dispatcherCode);
+            File dispatcherDir = new File(processorTaskDir, processorEnvironment.metadataService.processorStateByDispatcherUrl(core).dispatcherCode);
             String path = getTaskPath(assignedTask.taskId);
             File taskDir = new File(dispatcherDir, path);
             try {
@@ -659,11 +660,11 @@ public class ProcessorTaskService {
     }
 
     public void delete(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, final Long taskId) {
-        MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(core);
+        MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.metadataService.processorStateByDispatcherUrl(core);
 
         try {
             ProcessorSyncHolder.writeLock.lock();
-            metadataService.removeQuota(core.dispatcherUrl.url, taskId);
+            processorEnvironment.metadataService.removeQuota(core.dispatcherUrl.url, taskId);
             final File processorDir = new File(processorPath.toFile(), core.coreCode);
             final File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
             final File dispatcherDir = new File(processorTaskDir, processorState.dispatcherCode);

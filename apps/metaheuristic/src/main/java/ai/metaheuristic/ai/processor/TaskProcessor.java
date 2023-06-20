@@ -21,8 +21,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
-import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
+import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProvider;
@@ -86,8 +85,6 @@ public class TaskProcessor {
     private final Globals globals;
     private final ProcessorTaskService processorTaskService;
     private final CurrentExecState currentExecState;
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
-    private final MetadataParams metadataService;
     private final ProcessorEnvironment processorEnvironment;
     private final ProcessorService processorService;
     private final VariableProviderFactory resourceProviderFactory;
@@ -95,14 +92,12 @@ public class TaskProcessor {
 
     public final AtomicBoolean processing = new AtomicBoolean();
 
-    public TaskProcessor(Globals globals, ProcessorTaskService processorTaskService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService,
-                         MetadataParams metadataService, ProcessorEnvironment processorEnvironment, ProcessorService processorService,
+    public TaskProcessor(Globals globals, ProcessorTaskService processorTaskService, CurrentExecState currentExecState,
+                         ProcessorEnvironment processorEnvironment, ProcessorService processorService,
                          VariableProviderFactory resourceProviderFactory, GitSourcingService gitSourcingService) {
         this.globals = globals;
         this.processorTaskService = processorTaskService;
         this.currentExecState = currentExecState;
-        this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
-        this.metadataService = metadataService;
         this.processorEnvironment = processorEnvironment;
         this.processorService = processorService;
         this.resourceProviderFactory = resourceProviderFactory;
@@ -152,13 +147,13 @@ public class TaskProcessor {
 
             processorTaskService.setLaunchOn(core, task.taskId);
 
-            final MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(core);
+            final MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.metadataService.processorStateByDispatcherUrl(core);
             if (processorState.processorId==null || S.b(processorState.sessionId)) {
                 log.warn("#100.010 processor {} with dispatcher {} isn't ready", core.coreCode, dispatcherUrl.url);
                 continue;
             }
 
-            DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+            DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher = processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
             if (dispatcher==null) {
                 final String es = "#100.020 Broken task #"+task.taskId+". dispatcher wasn't found for url " + dispatcherUrl;
                 processorTaskService.markAsFinishedWithError(core, task.taskId, es);
@@ -323,7 +318,7 @@ public class TaskProcessor {
 
     private void execAllFunctions(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core,
                                   ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
-                                  DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+                                  DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
                                   File taskDir, TaskParamsYaml taskParamYaml, File artifactDir,
                                   File systemDir, FunctionPrepareResult[] results) {
         List<FunctionApiData.SystemExecResult> preSystemExecResult = new ArrayList<>();
@@ -589,20 +584,20 @@ public class TaskProcessor {
 
     @SuppressWarnings({"WeakerAccess", "StatementWithEmptyBody"})
     // TODO 2019.05.02 implement unit-test for this method
-    public FunctionPrepareResult prepareFunction(DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, MetadataParamsYaml.ProcessorSession processorState, TaskParamsYaml.FunctionConfig function) {
+    public FunctionPrepareResult prepareFunction(DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, MetadataParamsYaml.ProcessorSession processorState, TaskParamsYaml.FunctionConfig function) {
         FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
         functionPrepareResult.function = function;
 
         try {
             if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-                final Path baseResourceDir = metadataService.prepareBaseDir(assetManagerUrl);
+                final Path baseResourceDir = processorEnvironment.metadataService.prepareBaseDir(assetManagerUrl);
                 functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
                 // is this function prepared?
                 if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
                     log.info("#100.460 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
                     functionPrepareResult.isLoaded = false;
 
-                    metadataService.setFunctionDownloadStatus(assetManagerUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, EnumsApi.FunctionState.none);
+                    processorEnvironment.metadataService.setFunctionDownloadStatus(assetManagerUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, EnumsApi.FunctionState.none);
                 }
             }
             else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.git) {
@@ -614,7 +609,7 @@ public class TaskProcessor {
                     functionPrepareResult.isError = true;
                     return functionPrepareResult;
                 }
-                final Path resourceDir = metadataService.prepareBaseDir(assetManagerUrl);
+                final Path resourceDir = processorEnvironment.metadataService.prepareBaseDir(assetManagerUrl);
                 log.info("Root dir for function: " + resourceDir);
                 SystemProcessLauncher.ExecResult result = gitSourcingService.prepareFunction(resourceDir, functionPrepareResult.function);
                 if (!result.ok) {

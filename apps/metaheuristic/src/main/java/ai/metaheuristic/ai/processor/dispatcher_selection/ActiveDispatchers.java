@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.processor.dispatcher_selection;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import lombok.extern.slf4j.Slf4j;
@@ -36,13 +36,13 @@ public class ActiveDispatchers {
     // key - , value - true if this DispatcherUrl is active
     private final Map<ProcessorAndCoreData.DispatcherUrl, AtomicBoolean> urls;
 
-    public ActiveDispatchers(Map<ProcessorAndCoreData.DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> dispatchers,
+    public ActiveDispatchers(Map<ProcessorAndCoreData.DispatcherUrl, DispatcherLookupExtendedParams.DispatcherLookupExtended> dispatchers,
                              String info, Enums.DispatcherSelectionStrategy selectionStrategy) {
 
         LinkedHashMap<ProcessorAndCoreData.DispatcherUrl, AtomicBoolean> map = new LinkedHashMap<>();
         List<DispatcherLookupParamsYaml.DispatcherLookup> dispatcherLookupList = new ArrayList<>();
 
-        for (Map.Entry<ProcessorAndCoreData.DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatchers.entrySet() ) {
+        for (Map.Entry<ProcessorAndCoreData.DispatcherUrl, DispatcherLookupExtendedParams.DispatcherLookupExtended> entry : dispatchers.entrySet() ) {
             DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup = entry.getValue().dispatcherLookup;
             if (dispatcherLookup.disabled) {
                 log.info("{}, dispatcher {} is disabled", info, dispatcherLookup.url);

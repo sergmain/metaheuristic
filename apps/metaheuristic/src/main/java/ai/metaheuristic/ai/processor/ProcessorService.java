@@ -21,8 +21,7 @@ import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.VariableProviderException;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
-import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
+import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
@@ -65,12 +64,10 @@ public class ProcessorService {
     private final Globals globals;
     private final ProcessorTaskService processorTaskService;
     private final UploadVariableService uploadResourceActor;
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final ProcessorEnvironment processorEnvironment;
     private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
     private final CurrentExecState currentExecState;
-    private final MetadataParams metadataService;
 
 //    @Value("${logging.file.name:#{null}}")
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('logging.file.name' )) }")
@@ -134,7 +131,7 @@ public class ProcessorService {
             if (coreCode==null) {
                 continue;
             }
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = metadataService.getCoreRef(coreCode, ref.dispatcherUrl);
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataService.getCoreRef(coreCode, ref.dispatcherUrl);
             if (core==null) {
                 continue;
             }
@@ -164,7 +161,7 @@ public class ProcessorService {
             if (coreCode==null) {
                 continue;
             }
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = metadataService.getCoreRef(coreCode, ref.dispatcherUrl);
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataService.getCoreRef(coreCode, ref.dispatcherUrl);
             if (core==null) {
                 continue;
             }
@@ -217,8 +214,8 @@ public class ProcessorService {
             return Enums.ResendTaskOutputResourceStatus.VARIABLE_NOT_FOUND;
         }
 
-        final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
-                dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
+        final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
+                processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
 
         UploadVariableTask uploadResourceTask = new UploadVariableTask(taskId, assetFile.file, outputVariable.id, core, dispatcher.dispatcherLookup);
         uploadResourceActor.add(uploadResourceTask);
@@ -235,7 +232,7 @@ public class ProcessorService {
 
     public ProcessorService.ResultOfChecking checkForPreparingVariables(
             ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
-            TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
+            TaskParamsYaml taskParamYaml, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, File taskDir) {
         ProcessorService.ResultOfChecking result = new ProcessorService.ResultOfChecking();
         if (!core.dispatcherUrl.url.equals(task.dispatcherUrl)) {
             throw new IllegalStateException("(!core.dispatcherUrl.url.equals(task.dispatcherUrl))");
@@ -285,7 +282,7 @@ public class ProcessorService {
         return result;
     }
 
-    public boolean checkOutputResourceFile(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
+    public boolean checkOutputResourceFile(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, File taskDir) {
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
             try {
                 VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(outputVariable.sourcing);

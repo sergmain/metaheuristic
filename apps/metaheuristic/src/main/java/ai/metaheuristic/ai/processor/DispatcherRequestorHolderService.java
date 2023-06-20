@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -58,8 +58,8 @@ public class DispatcherRequestorHolderService {
             ProcessorKeepAliveProcessor processorKeepAliveProcessor, ProcessorEnvironment processorEnvironment
     ) {
 
-        for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
-            final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = entry.getValue();
+        for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedParams.DispatcherLookupExtended> entry : processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
+            final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher = entry.getValue();
             final DispatcherRequestor requestor = new DispatcherRequestor(dispatcher.getDispatcherUrl(), globals,
                     processorTaskService, processorService, processorEnvironment.metadataService, currentExecState,
                     processorEnvironment.dispatcherLookupExtendedService, processorCommandProcessor);

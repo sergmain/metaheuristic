@@ -18,9 +18,6 @@ package ai.metaheuristic.ai.processor.processor_environment;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.TerminateApplicationException;
-import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
-import ai.metaheuristic.ai.processor.processor_environment.EnvParams;
-import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -39,7 +36,7 @@ import org.springframework.stereotype.Service;
 public class ProcessorEnvironment {
 
     public final EnvParams envParams = new EnvParams();
-    public DispatcherLookupExtendedService dispatcherLookupExtendedService;
+    public DispatcherLookupExtendedParams dispatcherLookupExtendedService;
     public MetadataParams metadataService;
 
     public ProcessorEnvironment(@Autowired Globals globals, @Autowired ApplicationContext appCtx) {
@@ -50,7 +47,7 @@ public class ProcessorEnvironment {
         envParams.init(globals.processorPath, globals.processor.defaultEnvYamlFile, globals.processor.taskConsoleOutputMaxLines);
 
         try {
-            dispatcherLookupExtendedService = new DispatcherLookupExtendedService(globals.processorPath, globals.processor.defaultDispatcherYamlFile);
+            dispatcherLookupExtendedService = new DispatcherLookupExtendedParams(globals.processorPath, globals.processor.defaultDispatcherYamlFile);
             metadataService = new MetadataParams(globals.processorPath, envParams, dispatcherLookupExtendedService);
         }
         catch (TerminateApplicationException e) {

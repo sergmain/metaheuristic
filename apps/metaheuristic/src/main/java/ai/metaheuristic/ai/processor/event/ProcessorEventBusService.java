@@ -17,17 +17,17 @@
 package ai.metaheuristic.ai.processor.event;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.DispatcherRequestorHolderService;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.dispatcher_selection.ActiveDispatchers;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -48,15 +48,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ProcessorEventBusService {
 
     private final DispatcherRequestorHolderService dispatcherRequestorHolderService;
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
+    private final ProcessorEnvironment processorEnvironment;
     private ActiveDispatchers activeDispatchers;
 
     private ThreadPoolExecutor executor;
 
     @PostConstruct
     public void post() {
-        executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(Math.min(4, dispatcherLookupExtendedService.lookupExtendedMap.size()));
-        this.activeDispatchers = new ActiveDispatchers(dispatcherLookupExtendedService.lookupExtendedMap, "RoundRobin for KeepAlive", Enums.DispatcherSelectionStrategy.alphabet);
+        executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(Math.min(4, processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.size()));
+        this.activeDispatchers = new ActiveDispatchers(processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap, "RoundRobin for KeepAlive", Enums.DispatcherSelectionStrategy.alphabet);
     }
 
     public void keepAlive(KeepAliveEvent event) {

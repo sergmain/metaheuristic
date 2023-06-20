@@ -20,8 +20,8 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.processor.DispatcherContextInfoHolder;
-import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.tasks.GetDispatcherContextInfoTask;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
@@ -57,7 +57,8 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
 
     private final Globals globals;
 
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
+    private final ProcessorEnvironment processorEnvironment;
+
     @Override
     public void process() {
         if (globals.testing) {
@@ -70,7 +71,7 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
         GetDispatcherContextInfoTask task;
         while ((task = poll()) != null) {
 
-            final DispatcherLookupParamsYaml.AssetManager assetManager = dispatcherLookupExtendedService.getAssetManager(task.assetManagerUrl);
+            final DispatcherLookupParamsYaml.AssetManager assetManager = processorEnvironment.dispatcherLookupExtendedService.getAssetManager(task.assetManagerUrl);
             if (assetManager==null) {
                 log.error("#806.020 assetManager server wasn't found for url {}", task.assetManagerUrl.url);
                 continue;
