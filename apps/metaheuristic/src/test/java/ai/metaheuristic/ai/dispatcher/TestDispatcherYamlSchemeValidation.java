@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher;
 
-import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;

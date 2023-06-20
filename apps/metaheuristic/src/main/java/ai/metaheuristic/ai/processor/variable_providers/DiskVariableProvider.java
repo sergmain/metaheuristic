@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.processor.variable_providers;
 
 import ai.metaheuristic.ai.exceptions.VariableProviderException;
-import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;

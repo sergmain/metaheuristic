@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,12 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.processor;
+package ai.metaheuristic.ai.processor.processor_environment;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.TerminateApplicationException;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.processor_environment.EnvParams;
 import ai.metaheuristic.ai.processor.function.ProcessorFunctionUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
@@ -497,7 +496,7 @@ public class MetadataParams {
         }
     }
 
-    public void setProcessorIdAndSessionId(ProcessorAndCoreData.DispatcherUrl dispatcherUrl, String processorIdStr, String sessionId) {
+    public void setProcessorIdAndSessionId(DispatcherUrl dispatcherUrl, String processorIdStr, String sessionId) {
         if (StringUtils.isBlank(processorIdStr)) {
             throw new IllegalStateException("#815.180 processorId is null");
         }
@@ -516,7 +515,7 @@ public class MetadataParams {
         }
     }
 
-    public void setCoreId(ProcessorAndCoreData.DispatcherUrl dispatcherUrl, String coreCode, Long coreId) {
+    public void setCoreId(DispatcherUrl dispatcherUrl, String coreCode, Long coreId) {
         try {
             writeLock.lock();
             final MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(dispatcherUrl.url);

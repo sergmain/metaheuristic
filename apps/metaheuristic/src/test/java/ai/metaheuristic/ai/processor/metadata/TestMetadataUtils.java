@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.processor.metadata;
 
-import ai.metaheuristic.ai.processor.MetadataParams;
+import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import org.junit.jupiter.api.Test;
 

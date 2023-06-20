@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.mhbp.services;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.mhbp.data.KbData;
-import ai.metaheuristic.ai.processor.MetadataParams;
+import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.context.annotation.Profile;

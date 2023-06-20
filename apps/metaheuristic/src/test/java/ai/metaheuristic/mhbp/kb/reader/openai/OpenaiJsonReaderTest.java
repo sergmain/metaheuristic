@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.mhbp.kb.reader.openai.OpenaiInput;
 import ai.metaheuristic.ai.mhbp.kb.reader.openai.OpenaiJsonReader;
-import ai.metaheuristic.ai.processor.MetadataParams;
+import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.mhbp.data.KbData;

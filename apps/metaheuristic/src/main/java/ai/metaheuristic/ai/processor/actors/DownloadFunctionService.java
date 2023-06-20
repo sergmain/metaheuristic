@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.processor.*;
 import ai.metaheuristic.ai.processor.function.ChecksumAndSignatureService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
+import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
 import ai.metaheuristic.ai.processor.tasks.GetDispatcherContextInfoTask;
 import ai.metaheuristic.ai.utils.RestUtils;

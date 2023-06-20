@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.event.AssetPreparingForProcessorTaskEvent;
+import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;

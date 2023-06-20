@@ -17,15 +17,13 @@
 package ai.metaheuristic.ai.processor.event;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.DispatcherRequestorHolderService;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.dispatcher_selection.ActiveDispatchers;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Service;
 

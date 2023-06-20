@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
+import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import lombok.RequiredArgsConstructor;

@@ -38,6 +38,7 @@ import ai.metaheuristic.ai.processor.actors.UploadVariableService;
 import ai.metaheuristic.ai.processor.dispatcher_selection.ActiveDispatchers;
 import ai.metaheuristic.ai.processor.event.KeepAliveEvent;
 import ai.metaheuristic.ai.processor.event.ProcessorEventBusService;
+import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
 import ai.metaheuristic.api.EnumsApi;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;

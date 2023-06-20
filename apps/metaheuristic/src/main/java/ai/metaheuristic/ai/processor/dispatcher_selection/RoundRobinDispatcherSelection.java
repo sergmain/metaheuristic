@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.processor.dispatcher_selection;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
