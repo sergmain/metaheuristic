@@ -23,7 +23,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+
+import java.io.File;
+import java.nio.file.Path;
 
 /**
  * @author Sergio Lissner
@@ -44,15 +48,21 @@ public class ProcessorEnvironment {
             return;
         }
 
-        envParams.init(globals.processorPath, globals.processor.defaultEnvYamlFile, globals.processor.taskConsoleOutputMaxLines);
-
         try {
-            dispatcherLookupExtendedService = new DispatcherLookupExtendedParams(globals.processorPath, globals.processor.defaultDispatcherYamlFile);
-            metadataService = new MetadataParams(globals.processorPath, envParams, dispatcherLookupExtendedService);
+            final Path processorPath = globals.processorPath;
+            final File defaultEnvYamlFile = globals.processor.defaultEnvYamlFile;
+            final int taskConsoleOutputMaxLines = globals.processor.taskConsoleOutputMaxLines;
+            final File defaultDispatcherYamlFile = globals.processor.defaultDispatcherYamlFile;
+            init(processorPath, defaultEnvYamlFile, defaultDispatcherYamlFile, taskConsoleOutputMaxLines);
         }
         catch (TerminateApplicationException e) {
             System.exit(SpringApplication.exit(appCtx, () -> -500));
         }
+    }
 
+    public void init(Path processorPath, @Nullable File defaultEnvYamlFile, @Nullable File defaultDispatcherYamlFile, int taskConsoleOutputMaxLines) {
+        envParams.init(processorPath, defaultEnvYamlFile, taskConsoleOutputMaxLines);
+        dispatcherLookupExtendedService = new DispatcherLookupExtendedParams(processorPath, defaultDispatcherYamlFile);
+        metadataService = new MetadataParams(processorPath, envParams, dispatcherLookupExtendedService);
     }
 }
