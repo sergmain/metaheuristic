@@ -84,7 +84,7 @@ public class TaskProcessor {
     private final ProcessorTaskService processorTaskService;
     private final CurrentExecState currentExecState;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
-    private final MetadataService metadataService;
+    private final MetadataParams metadataService;
     private final ProcessorEnvironment processorEnvironment;
     private final ProcessorService processorService;
     private final VariableProviderFactory resourceProviderFactory;
@@ -93,7 +93,7 @@ public class TaskProcessor {
     public final AtomicBoolean processing = new AtomicBoolean();
 
     public TaskProcessor(Globals globals, ProcessorTaskService processorTaskService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService,
-                         MetadataService metadataService, ProcessorEnvironment processorEnvironment, ProcessorService processorService,
+                         MetadataParams metadataService, ProcessorEnvironment processorEnvironment, ProcessorService processorService,
                          VariableProviderFactory resourceProviderFactory, GitSourcingService gitSourcingService) {
         this.globals = globals;
         this.processorTaskService = processorTaskService;

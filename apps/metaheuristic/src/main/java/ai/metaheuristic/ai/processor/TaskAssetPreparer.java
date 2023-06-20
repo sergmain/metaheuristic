@@ -55,7 +55,7 @@ public class TaskAssetPreparer {
     private final CurrentExecState currentExecState;
     private final ProcessorTaskService processorTaskService;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
-    private final MetadataService metadataService;
+    private final MetadataParams metadataService;
     private final ProcessorService processorService;
     private final ApplicationEventPublisher eventPublisher;
 

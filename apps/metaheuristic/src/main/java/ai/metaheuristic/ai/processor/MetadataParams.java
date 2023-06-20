@@ -56,7 +56,7 @@ import static ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureD
 
 @SuppressWarnings("UnusedReturnValue")
 @Slf4j
-public class MetadataService {
+public class MetadataParams {
 
     private final EnvParams envParams;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
@@ -96,7 +96,7 @@ public class MetadataService {
     }
 
     @SneakyThrows
-    public MetadataService(Path processorPath, EnvParams envParams, DispatcherLookupExtendedService dispatcherLookupExtendedService) {
+    public MetadataParams(Path processorPath, EnvParams envParams, DispatcherLookupExtendedService dispatcherLookupExtendedService) {
         this.processorPath = processorPath;
         this.processorResourcesPath = processorPath.resolve(Consts.RESOURCES_DIR);
         Files.createDirectories(processorResourcesPath);

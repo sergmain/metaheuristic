@@ -97,7 +97,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 continue;
             }
 
-            MetadataService.FunctionConfigAndStatus functionConfigAndStatus = processorEnvironment.metadataService.syncFunctionStatus(assetManagerUrl, assetManager, functionCode);
+            MetadataParams.FunctionConfigAndStatus functionConfigAndStatus = processorEnvironment.metadataService.syncFunctionStatus(assetManagerUrl, assetManager, functionCode);
             if (functionConfigAndStatus==null) {
                 continue;
             }
@@ -290,7 +290,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 log.error("#811.180 assetManager file {} is missing", assetFile.getFile().getAbsolutePath());
                 continue;
             }
-            ChecksumAndSignatureData.ChecksumWithSignatureInfo state = MetadataService.prepareChecksumWithSignature(functionConfigAndStatus.functionConfig);
+            ChecksumAndSignatureData.ChecksumWithSignatureInfo state = MetadataParams.prepareChecksumWithSignature(functionConfigAndStatus.functionConfig);
 
             CheckSumAndSignatureStatus status;
             try {

@@ -67,7 +67,7 @@ public class ProcessorService {
     private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
     private final CurrentExecState currentExecState;
-    private final MetadataService metadataService;
+    private final MetadataParams metadataService;
 
 //    @Value("${logging.file.name:#{null}}")
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('logging.file.name' )) }")

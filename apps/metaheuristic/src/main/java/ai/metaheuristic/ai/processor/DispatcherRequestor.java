@@ -63,7 +63,7 @@ public class DispatcherRequestor {
 
     private final ProcessorTaskService processorTaskService;
     private final ProcessorService processorService;
-    private final MetadataService metadataService;
+    private final MetadataParams metadataService;
     private final CurrentExecState currentExecState;
     private final ProcessorCommandProcessor processorCommandProcessor;
 
@@ -73,7 +73,7 @@ public class DispatcherRequestor {
     private final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
     private final String serverRestUrl;
 
-    public DispatcherRequestor(DispatcherUrl dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService, ProcessorService processorService, MetadataService metadataService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorCommandProcessor processorCommandProcessor) {
+    public DispatcherRequestor(DispatcherUrl dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService, ProcessorService processorService, MetadataParams metadataService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorCommandProcessor processorCommandProcessor) {
         this.dispatcherUrl = dispatcherUrl;
         this.globals = globals;
         this.processorTaskService = processorTaskService;

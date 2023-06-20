@@ -38,7 +38,7 @@ public class ProcessorEnvironment {
 
     public final EnvParams envParams = new EnvParams();
     public DispatcherLookupExtendedService dispatcherLookupExtendedService;
-    public MetadataService metadataService;
+    public MetadataParams metadataService;
 
     public ProcessorEnvironment(@Autowired Globals globals, @Autowired ApplicationContext appCtx) {
         if (!globals.processor.enabled) {
@@ -49,7 +49,7 @@ public class ProcessorEnvironment {
 
         try {
             dispatcherLookupExtendedService = new DispatcherLookupExtendedService(globals.processorPath, globals.processor.defaultDispatcherYamlFile);
-            metadataService = new MetadataService(globals.processorPath, envParams, dispatcherLookupExtendedService);
+            metadataService = new MetadataParams(globals.processorPath, envParams, dispatcherLookupExtendedService);
         }
         catch (TerminateApplicationException e) {
             System.exit(SpringApplication.exit(appCtx, () -> -500));

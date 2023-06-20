@@ -63,7 +63,7 @@ public class ProcessorTaskService {
 
     private final Globals globals;
     private final CurrentExecState currentExecState;
-    private final MetadataService metadataService;
+    private final MetadataParams metadataService;
 
     /**key - code of core
      * value:
@@ -94,7 +94,7 @@ public class ProcessorTaskService {
 
             File processorDir = new File(processorPath.toFile(), core.coreCode);
             File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
-            String dispatcherCode = MetadataService.asCode(core.dispatcherUrl);
+            String dispatcherCode = MetadataParams.asCode(core.dispatcherUrl);
             File dispatcherDir = new File(processorTaskDir, dispatcherCode);
             if (!dispatcherDir.exists()) {
                 dispatcherDir.mkdirs();
@@ -697,7 +697,7 @@ public class ProcessorTaskService {
     public File prepareTaskDir(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
         final File processorDir = new File(processorPath.toFile(), core.coreCode);
         final File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
-        final File dispatcherDir = new File(processorTaskDir, MetadataService.asCode(core.dispatcherUrl));
+        final File dispatcherDir = new File(processorTaskDir, MetadataParams.asCode(core.dispatcherUrl));
         File taskDir = new File(dispatcherDir, getTaskPath(taskId));
         if (taskDir.exists()) {
             return taskDir;

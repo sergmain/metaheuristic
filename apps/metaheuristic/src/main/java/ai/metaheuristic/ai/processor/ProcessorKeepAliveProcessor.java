@@ -40,7 +40,7 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 @RequiredArgsConstructor
 public class ProcessorKeepAliveProcessor {
 
-    private final MetadataService metadataService;
+    private final MetadataParams metadataService;
     private final CurrentExecState currentExecState;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
 

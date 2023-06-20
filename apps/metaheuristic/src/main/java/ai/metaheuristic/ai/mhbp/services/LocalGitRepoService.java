@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.mhbp.services;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.mhbp.data.KbData;
-import ai.metaheuristic.ai.processor.MetadataService;
+import ai.metaheuristic.ai.processor.MetadataParams;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.context.annotation.Profile;
@@ -58,7 +58,7 @@ public class LocalGitRepoService {
     @SneakyThrows
     public static SystemProcessLauncher.ExecResult initGitRepo(KbData.KbGit git, Path gitPath, GitContext gitContext) {
         String url = git.getRepo();
-        String code = MetadataService.asCode(url);
+        String code = MetadataParams.asCode(url);
         Path p = gitPath.resolve(code);
         if (Files.notExists(p)) {
             Files.createDirectories(p);

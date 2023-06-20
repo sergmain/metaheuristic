@@ -37,7 +37,7 @@ public class TaskProcessorCoordinatorService {
     private final ProcessorTaskService processorTaskService;
     private final CurrentExecState currentExecState;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
-    private final MetadataService metadataService;
+    private final MetadataParams metadataService;
     private final ProcessorEnvironment processorEnvironment;
     private final ProcessorService processorService;
     private final VariableProviderFactory resourceProviderFactory;

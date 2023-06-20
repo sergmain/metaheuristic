@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.mhbp.kb.reader.openai.OpenaiInput;
 import ai.metaheuristic.ai.mhbp.kb.reader.openai.OpenaiJsonReader;
-import ai.metaheuristic.ai.processor.MetadataService;
+import ai.metaheuristic.ai.processor.MetadataParams;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.mhbp.data.KbData;
@@ -96,7 +96,7 @@ public class OpenaiJsonReaderTest {
         Path mhbpHome = Path.of(mhbpHomeEnv);
         Path gitPath = mhbpHome.resolve(Consts.GIT_PATH);
 
-        String code = MetadataService.asCode(kbParams.kb.git.repo);
+        String code = MetadataParams.asCode(kbParams.kb.git.repo);
 
         Path p = gitPath.resolve(code);
         assertFalse(Files.notExists(p));
