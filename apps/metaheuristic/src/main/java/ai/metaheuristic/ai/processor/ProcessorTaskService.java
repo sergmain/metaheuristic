@@ -34,6 +34,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -75,14 +76,23 @@ public class ProcessorTaskService {
      */
     private final ConcurrentHashMap<String, Map<DispatcherUrl, Map<Long, ProcessorCoreTask>>> map = new ConcurrentHashMap<>();
 
+    @Value("${globals.processorPath}")
+    public Path processorPath;
+
     @PostConstruct
     public void postConstruct() {
         if (globals.testing) {
             return;
         }
+        init(processorPath);
+        //noinspection unused
+        int i=0;
+    }
+
+    public void init(Path processorPath) {
         for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : metadataService.getAllEnabledRefsForCores()) {
 
-            File processorDir = new File(globals.processorPath.toFile(), core.coreCode);
+            File processorDir = new File(processorPath.toFile(), core.coreCode);
             File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
             String dispatcherCode = MetadataService.asCode(core.dispatcherUrl);
             File dispatcherDir = new File(processorTaskDir, dispatcherCode);
@@ -159,8 +169,6 @@ public class ProcessorTaskService {
                 throw new RuntimeException(es, e);
             }
         }
-        //noinspection unused
-        int i=0;
     }
 
     public static void deleteDir(@NonNull File f, @NonNull String info) {
@@ -212,6 +220,7 @@ public class ProcessorTaskService {
 //            task.setReported(true);
 //            task.setReportedOn(System.currentTimeMillis());
 
+            save(core, task);
         } finally {
             ProcessorSyncHolder.writeLock.unlock();
         }
@@ -483,7 +492,6 @@ public class ProcessorTaskService {
     public void createTask(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherCommParamsYaml.AssignedTask assignedTask) {
         try {
             ProcessorSyncHolder.writeLock.lock();
-
             metadataService.registerTaskQuota(core.dispatcherUrl.url, assignedTask.taskId, assignedTask.tag, assignedTask.quota);
 
             log.info("#713.150 Prepare new task #{} on core #{}", assignedTask.taskId, core.coreId);
@@ -510,7 +518,7 @@ public class ProcessorTaskService {
                     .map(o->new ProcessorCoreTask.OutputStatus(o.id, false) )
                     .collect(Collectors.toCollection(()->task.output.outputStatuses));
 
-            File processorDir = new File(globals.processorPath.toFile(), core.coreCode);
+            File processorDir = new File(processorPath.toFile(), core.coreCode);
             if (!processorDir.exists()) {
                 processorDir.mkdirs();
             }
@@ -604,6 +612,7 @@ public class ProcessorTaskService {
     public ProcessorCoreTask findByIdForCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
         try {
             ProcessorSyncHolder.readLock.lock();
+
             return getTasksForProcessorCore(core)
                     .entrySet()
                     .stream()
@@ -618,6 +627,8 @@ public class ProcessorTaskService {
 
     public List<ProcessorCoreTask> findAllForCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
         try {
+            ProcessorSyncHolder.readLock.lock();
+
             Collection<ProcessorCoreTask> values = getTasksForProcessorCore(core).values();
             return List.copyOf(values);
         } finally {
@@ -651,23 +662,40 @@ public class ProcessorTaskService {
 
         try {
             ProcessorSyncHolder.writeLock.lock();
-        } finally {
+            metadataService.removeQuota(core.dispatcherUrl.url, taskId);
+            final File processorDir = new File(processorPath.toFile(), core.coreCode);
+            final File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
+            final File dispatcherDir = new File(processorTaskDir, processorState.dispatcherCode);
+
+            final String path = getTaskPath(taskId);
+            final File taskDir = new File(dispatcherDir, path);
             try {
-                ProcessorSyncHolder.writeLock.lock();
-            } finally {
-                ProcessorSyncHolder.writeLock.unlock();
+                if (taskDir.exists()) {
+                    deleteDir(taskDir, "delete dir in ProcessorTaskService.delete()");
+                }
+                Map<Long, ProcessorCoreTask> mapTask = getTasksForProcessorCore(core);
+                log.debug("Does task present in map before deleting: {}", mapTask.containsKey(taskId));
+                mapTask.remove(taskId);
+                log.debug("Does task present in map after deleting: {}", mapTask.containsKey(taskId));
             }
+            catch (java.lang.NoClassDefFoundError th) {
+                log.error("#713.205 Error deleting task {}, {}", taskId, th.getMessage());
+            }
+            catch (Throwable th) {
+                log.error("#713.210 Error deleting task " + taskId, th);
+            }
+        } finally {
             ProcessorSyncHolder.writeLock.unlock();
         }
     }
 
     private static String getTaskPath(long taskId) {
         DigitUtils.Power power = DigitUtils.getPower(taskId);
-        return ""+power.power7+File.separatorChar+power.power4+File.separatorChar;
+        return Long.toString(power.power7)+File.separatorChar+power.power4+File.separatorChar;
     }
 
     public File prepareTaskDir(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
-        final File processorDir = new File(globals.processorPath.toFile(), core.coreCode);
+        final File processorDir = new File(processorPath.toFile(), core.coreCode);
         final File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
         final File dispatcherDir = new File(processorTaskDir, MetadataService.asCode(core.dispatcherUrl));
         File taskDir = new File(dispatcherDir, getTaskPath(taskId));

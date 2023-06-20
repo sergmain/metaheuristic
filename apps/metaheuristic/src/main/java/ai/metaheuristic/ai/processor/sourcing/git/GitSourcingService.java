@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
-import ai.metaheuristic.ai.processor.env.EnvService;
+import ai.metaheuristic.ai.processor.env.EnvParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -32,8 +32,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -46,12 +44,12 @@ public class GitSourcingService {
     private static final String GIT_VERSION_PREFIX = "git version";
     private static final String GIT_PREFIX = "git";
 
-    private final EnvService envService;
+    private final EnvParams envService;
     private final Globals globals;
 
     public final GitStatusInfo gitStatusInfo;
 
-    public GitSourcingService(EnvService envService, Globals globals) {
+    public GitSourcingService(EnvParams envService, Globals globals) {
         this.envService = envService;
         this.globals = globals;
         this.gitStatusInfo = getGitStatus();

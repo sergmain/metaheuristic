@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@ParametersAreNonnullByDefault
-package ai.metaheuristic.ai.processor.oauth;
+package ai.metaheuristic.ai.processor;
 
-import javax.annotation.ParametersAreNonnullByDefault;
+/**
+ * @author Sergio Lissner
+ * Date: 6/19/2023
+ * Time: 9:46 PM
+ */
+public class ProcessorEnvironment {
+
+}

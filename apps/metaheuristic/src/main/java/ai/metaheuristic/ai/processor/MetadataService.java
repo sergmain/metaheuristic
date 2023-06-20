@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.env.EnvService;
+import ai.metaheuristic.ai.processor.env.EnvParams;
 import ai.metaheuristic.ai.processor.function.ProcessorFunctionService;
 import ai.metaheuristic.ai.processor.utils.MetadataUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
@@ -70,7 +70,7 @@ public class MetadataService {
 
     private final ApplicationContext appCtx;
     private final Globals globals;
-    private final EnvService envService;
+    private final EnvParams envService;
     private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final ProcessorFunctionService processorFunctionService;
 
@@ -761,12 +761,11 @@ public class MetadataService {
                 System.exit(SpringApplication.exit(appCtx, () -> -500));
             }
         } catch (Throwable th) {
-            log.error("#815.460 Error, Processor will be closed", th);
+            log.error("#815.460 Fatal error, Processor will be closed", th);
             System.exit(SpringApplication.exit(appCtx, () -> -500));
         }
     }
 
-    @SuppressWarnings("unused")
     private void restoreFromBackup() {
         log.info("#815.480 Trying to restore previous state of metadata.yaml");
         try {

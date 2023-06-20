@@ -28,17 +28,6 @@ import lombok.AllArgsConstructor;
 public class MetaheuristicThreadLocal {
 
     public static final ThreadLocal<Boolean> schedule = ThreadLocal.withInitial(()->false);
-
-    public static void setSchedule() {
-        schedule.set(true);
-    }
-
-    public static void checkScheduler() {
-        if (!schedule.get()) {
-            throw new IllegalStateException("THis method must be used only in scheduler");
-        }
-    }
-
     private static final ThreadLocal<ExecutionStat> executionStat =  ThreadLocal.withInitial(ExecutionStat::new);
 
     public static ExecutionStat getExecutionStat() {

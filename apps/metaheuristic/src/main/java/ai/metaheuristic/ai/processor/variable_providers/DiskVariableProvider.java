@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.exceptions.VariableProviderException;
 import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.env.EnvService;
+import ai.metaheuristic.ai.processor.env.EnvParams;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
@@ -46,10 +46,10 @@ import java.util.Objects;
 @Profile("processor")
 public class DiskVariableProvider implements VariableProvider {
 
-    private final EnvService envService;
+    private final EnvParams envService;
     private final ProcessorTaskService processorTaskService;
 
-    public DiskVariableProvider(EnvService envService, ProcessorTaskService processorTaskService) {
+    public DiskVariableProvider(EnvParams envService, ProcessorTaskService processorTaskService) {
         this.envService = envService;
         this.processorTaskService = processorTaskService;
     }

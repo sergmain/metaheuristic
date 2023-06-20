@@ -44,7 +44,7 @@ import java.util.Set;
 @Slf4j
 @RequiredArgsConstructor
 @Profile("processor")
-public class EnvService {
+public class EnvParams {
 
     private final Globals globals;
 
@@ -56,21 +56,24 @@ public class EnvService {
             return;
         }
 
-        final Path envYamlFile = globals.processorPath.resolve(Consts.ENV_YAML_FILE_NAME);
+        final Path processorPath = globals.processorPath;
+        final File defaultEnvYamlFile = globals.processor.defaultEnvYamlFile;
+
+        final Path envYamlFile = processorPath.resolve(Consts.ENV_YAML_FILE_NAME);
         if (Files.notExists(envYamlFile)) {
-            if (globals.processor.defaultEnvYamlFile == null) {
+            if (defaultEnvYamlFile==null) {
                 log.warn("#747.020 Processor's env.yaml config file doesn't exist: {}", envYamlFile.toAbsolutePath());
                 throw new IllegalStateException("#747.012 Processor isn't configured, env.yaml is empty or doesn't exist");
             }
-            if (!globals.processor.defaultEnvYamlFile.exists()) {
-                log.warn("#747.030 Processor's default yaml.yaml file doesn't exist: {}", globals.processor.defaultEnvYamlFile.getAbsolutePath());
+            if (!defaultEnvYamlFile.exists()) {
+                log.warn("#747.030 Processor's default yaml.yaml file doesn't exist: {}", defaultEnvYamlFile.getAbsolutePath());
                 throw new IllegalStateException("#747.014 Processor isn't configured, env.yaml is empty or doesn't exist");
             }
             try {
-                Files.copy(globals.processor.defaultEnvYamlFile.toPath(), envYamlFile);
+                Files.copy(defaultEnvYamlFile.toPath(), envYamlFile);
             } catch (IOException e) {
                 log.error("#747.035 Error", e);
-                throw new IllegalStateException("#747.040 Error while copying "+ globals.processor.defaultEnvYamlFile.getAbsolutePath()+
+                throw new IllegalStateException("#747.040 Error while copying " + defaultEnvYamlFile.getAbsolutePath() +
                                                 " to " + envYamlFile.toAbsolutePath(), e);
             }
         }
@@ -85,7 +88,7 @@ public class EnvService {
 
         envYaml = EnvParamsYamlUtils.BASE_YAML_UTILS.to(env);
         if (envYaml==null) {
-            log.error("#747.060 env.yaml wasn't found or empty. path: {}{}env.yaml", globals.processorPath, File.separatorChar );
+            log.error("#747.060 env.yaml wasn't found or empty. path: {}{}env.yaml", processorPath, File.separatorChar );
             throw new IllegalStateException("#747.062 Processor isn't configured, env.yaml is empty or doesn't exist");
         }
         for (EnvParamsYaml.Env envForVerify : envYaml.envs) {
