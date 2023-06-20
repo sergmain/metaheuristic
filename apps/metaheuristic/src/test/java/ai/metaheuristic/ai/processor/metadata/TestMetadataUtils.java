@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.processor.metadata;
 
-import ai.metaheuristic.ai.processor.utils.MetadataUtils;
+import ai.metaheuristic.ai.processor.MetadataService;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import org.junit.jupiter.api.Test;
 
@@ -41,7 +41,7 @@ public class TestMetadataUtils {
         ps1.cores.putAll(Map.of("aaa1", 15L, "aaa2", 17L));
         map.put("123", ps1);
 
-        MetadataUtils.fixProcessorCodes(codes, map);
+        MetadataService.fixProcessorCodes(codes, map);
 
         assertEquals(2, ps1.cores.size());
         assertEquals(15L, ps1.cores.get("aaa1"));
@@ -57,7 +57,7 @@ public class TestMetadataUtils {
         ps1.cores.putAll(Map.of("aaa1", 15L, "aaa2", 17L));
         map.put("123", ps1);
 
-        MetadataUtils.fixProcessorCodes(codes, map);
+        MetadataService.fixProcessorCodes(codes, map);
 
         assertEquals(1, ps1.cores.size());
         assertEquals(15L, ps1.cores.get("aaa1"));
@@ -71,7 +71,7 @@ public class TestMetadataUtils {
         ps1.cores.putAll(Map.of("aaa1", 15L, "aaa2", 17L));
         map.put("123", ps1);
 
-        MetadataUtils.fixProcessorCodes(codes, map);
+        MetadataService.fixProcessorCodes(codes, map);
 
         assertEquals(3, ps1.cores.size());
         assertEquals(15L, ps1.cores.get("aaa1"));
@@ -87,7 +87,7 @@ public class TestMetadataUtils {
         ps1.cores.putAll(Map.of("aaa1", 15L, "aaa2", 17L));
         map.put("123", ps1);
 
-        MetadataUtils.fixProcessorCodes(codes, map);
+        MetadataService.fixProcessorCodes(codes, map);
 
         assertEquals(2, ps1.cores.size());
         assertEquals(null, ps1.cores.get("aaa3"));

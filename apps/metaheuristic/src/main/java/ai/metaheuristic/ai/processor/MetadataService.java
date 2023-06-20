@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.exceptions.TerminateApplicationException;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.env.EnvParams;
 import ai.metaheuristic.ai.processor.function.ProcessorFunctionUtils;
-import ai.metaheuristic.ai.processor.utils.MetadataUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
@@ -130,6 +129,25 @@ public class MetadataService {
         int i=0;
     }
 
+    public static void fixProcessorCodes(List<String> codes, Map<String, MetadataParamsYaml.ProcessorSession> map) {
+        Set<String> forDeletion = new HashSet<>();
+        for (Map.Entry<String, MetadataParamsYaml.ProcessorSession> entry : map.entrySet()) {
+            final LinkedHashMap<String, Long> cores = entry.getValue().cores;
+            for (String key : cores.keySet()) {
+                if (!codes.contains(key)) {
+                    forDeletion.add(key);
+                }
+            }
+            forDeletion.forEach(cores::remove);
+
+            for (String code : codes) {
+                if (!cores.containsKey(code)) {
+                    cores.put(code, null);
+                }
+            }
+        }
+    }
+
     private void fixDispatcherUrls() {
         List<DispatcherUrl> dispatcherUrls = dispatcherLookupExtendedService.getAllEnabledDispatchers();
         for (DispatcherUrl dispatcherUrl : dispatcherUrls) {
@@ -151,7 +169,7 @@ public class MetadataService {
     private void fixProcessorCodes() {
         final List<String> codes = envParams.getEnvParamsYaml().cores.stream().map(o -> o.code).collect(Collectors.toList());
 
-        MetadataUtils.fixProcessorCodes(codes, metadata.processorSessions);
+        fixProcessorCodes(codes, metadata.processorSessions);
     }
 
     public static ChecksumWithSignatureInfo prepareChecksumWithSignature(TaskParamsYaml.FunctionConfig functionConfig) {
