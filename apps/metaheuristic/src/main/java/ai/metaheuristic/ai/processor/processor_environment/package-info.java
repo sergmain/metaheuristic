@@ -15,6 +15,6 @@
  */
 
 @ParametersAreNonnullByDefault
-package ai.metaheuristic.ai.processor.env;
+package ai.metaheuristic.ai.processor.processor_environment;
 
 import javax.annotation.ParametersAreNonnullByDefault;

@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.TerminateApplicationException;
-import ai.metaheuristic.ai.processor.env.EnvParams;
+import ai.metaheuristic.ai.processor.processor_environment.EnvParams;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
