@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Serge
@@ -49,18 +50,27 @@ public class ExecContextVariableStateTopLevelService {
     private static Map<Long, List<ExecContextApiData.VariableState>> taskCreatedEvents = new HashMap<>();
     private static Map<Long, List<VariableUploadedEvent>> variableUploadedEvents = new HashMap<>();
 
-    private static final Object syncTaskCreatedEvents = new Object();
-    private static final Object syncVariableUploadedEvents = new Object();
+    private final ReentrantReadWriteLock taskLock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.WriteLock taskWriteLock = taskLock.writeLock();
 
-    public static void registerCreatedTask(TaskCreatedEvent event) {
-        synchronized (syncTaskCreatedEvents) {
+    private final ReentrantReadWriteLock varLock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.WriteLock varWriteLock = varLock.writeLock();
+
+    public void registerCreatedTask(TaskCreatedEvent event) {
+        taskWriteLock.lock();
+        try {
             taskCreatedEvents.computeIfAbsent(event.taskVariablesInfo.execContextId, k -> new ArrayList<>()).add(event.taskVariablesInfo);
+        } finally {
+            taskWriteLock.unlock();
         }
     }
 
-    public static void registerVariableState(VariableUploadedEvent event) {
-        synchronized (syncVariableUploadedEvents) {
+    public void registerVariableState(VariableUploadedEvent event) {
+        varWriteLock.lock();
+        try {
             variableUploadedEvents.computeIfAbsent(event.execContextId, k -> new ArrayList<>()).add(event);
+        } finally {
+            varWriteLock.unlock();
         }
     }
 
@@ -71,12 +81,15 @@ public class ExecContextVariableStateTopLevelService {
 
     private void processFlushingVariableUploadedEvents() {
         Map<Long, List<VariableUploadedEvent>> variableUploadedEventsTemp;
-        synchronized (syncVariableUploadedEvents) {
+        varWriteLock.lock();
+        try {
             if (variableUploadedEvents.isEmpty()) {
                 return;
             }
             variableUploadedEventsTemp = variableUploadedEvents;
             variableUploadedEvents = new HashMap<>();
+        } finally {
+            varWriteLock.unlock();
         }
         processVariableStates(variableUploadedEventsTemp);
         for (Map.Entry<Long, List<VariableUploadedEvent>> entry : variableUploadedEventsTemp.entrySet()) {
@@ -87,13 +100,15 @@ public class ExecContextVariableStateTopLevelService {
 
     private void processFlushingTaskCreatedEvents() {
         Map<Long, List<ExecContextApiData.VariableState>> taskCreatedEventsTemp;
-        synchronized (syncTaskCreatedEvents) {
+        taskWriteLock.lock();
+        try {
             if (taskCreatedEvents.isEmpty()) {
                 return;
             }
-
             taskCreatedEventsTemp = taskCreatedEvents;
             taskCreatedEvents = new HashMap<>();
+        } finally {
+            taskWriteLock.unlock();
         }
         processCreatedTasks(taskCreatedEventsTemp);
         for (Map.Entry<Long, List<ExecContextApiData.VariableState>> entry : taskCreatedEventsTemp.entrySet()) {

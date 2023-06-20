@@ -18,13 +18,13 @@ package ai.metaheuristic.ai.mhbp.beans;
 
 import ai.metaheuristic.ai.mhbp.yaml.answer.AnswerParams;
 import ai.metaheuristic.ai.mhbp.yaml.answer.AnswerParamsUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.lang.Nullable;
 
-import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -62,47 +62,37 @@ public class Answer implements Serializable {
 
     public int status;
 
-    @Column(name = "PARAMS")
-    private String params;
-
     public int total;
     public int failed;
 
     @Column(name = "SYSTEM_ERROR")
     public int systemError;
 
-    public void setParams(String params) {
-        synchronized (this) {
-            this.params = params;
-            this.answerParams = null;
-        }
-    }
+    @Column(name = "PARAMS")
+    private String params;
 
     public String getParams() {
         return params;
     }
 
-    @Transient
-    @JsonIgnore
-    @Nullable
-    private AnswerParams answerParams = null;
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
 
     @Transient
     @JsonIgnore
-    private final Object syncParamsObj = new Object();
+    private final ThreadUtils.CommonThreadLocker<AnswerParams> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private AnswerParams parseParams() {
+        AnswerParams temp = AnswerParamsUtils.UTILS.to(params);
+        AnswerParams ecpy = temp==null ? new AnswerParams() : temp;
+        return ecpy;
+    }
 
     @JsonIgnore
     public AnswerParams getAnswerParams() {
-        if (answerParams==null) {
-            synchronized (syncParamsObj) {
-                if (answerParams==null) {
-                    //noinspection UnnecessaryLocalVariable
-                    AnswerParams temp = AnswerParamsUtils.UTILS.to(params);
-                    answerParams = temp;
-                }
-            }
-        }
-        return answerParams;
+        return paramsLocked.get();
     }
 
     @JsonIgnore

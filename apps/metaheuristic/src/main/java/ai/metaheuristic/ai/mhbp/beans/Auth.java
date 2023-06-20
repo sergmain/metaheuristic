@@ -18,13 +18,13 @@ package ai.metaheuristic.ai.mhbp.beans;
 
 import ai.metaheuristic.ai.mhbp.yaml.auth.ApiAuth;
 import ai.metaheuristic.ai.mhbp.yaml.auth.ApiAuthUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.lang.Nullable;
 
-import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -68,43 +68,32 @@ public class Auth implements Serializable {
     @Column(name = "PARAMS")
     private String params;
 
-    public void setParams(String params) {
-        synchronized (this) {
-            this.params = params;
-            this.authParams = null;
-        }
-    }
-
     public String getParams() {
         return params;
     }
 
-    @Transient
-    @JsonIgnore
-    @Nullable
-    private ApiAuth authParams = null;
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
 
     @Transient
     @JsonIgnore
-    private final Object syncParamsObj = new Object();
+    private final ThreadUtils.CommonThreadLocker<ApiAuth> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private ApiAuth parseParams() {
+        ApiAuth temp = ApiAuthUtils.UTILS.to(params);
+        ApiAuth ecpy = temp==null ? new ApiAuth() : temp;
+        return ecpy;
+    }
 
     @JsonIgnore
     public ApiAuth getAuthParams() {
-        if (authParams==null) {
-            synchronized (syncParamsObj) {
-                if (authParams==null) {
-                    //noinspection UnnecessaryLocalVariable
-                    ApiAuth temp = ApiAuthUtils.UTILS.to(params);
-                    authParams = temp;
-                }
-            }
-        }
-        return authParams;
+        return paramsLocked.get();
     }
 
     @JsonIgnore
-    public void updateParams(ApiAuth apy) {
-        setParams(ApiAuthUtils.UTILS.toString(apy));
+    public void updateParams(ApiAuth scspy) {
+        setParams(ApiAuthUtils.UTILS.toString(scspy));
     }
-
 }

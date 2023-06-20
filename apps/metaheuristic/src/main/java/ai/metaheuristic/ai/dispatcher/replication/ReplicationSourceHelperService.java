@@ -29,15 +29,14 @@ import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
-import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
-import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 /**
@@ -63,25 +62,32 @@ public class ReplicationSourceHelperService {
     private ReplicationData.AssetStateResponse currentAssets = null;
     private long mills = 0L;
 
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+
     public ReplicationData.AssetStateResponse currentAssets() {
-        if (currentAssets==null) {
-            synchronized (this) {
-                if (currentAssets==null) {
-                    currentAssets = currentAssetsInternal();
-                    mills = System.currentTimeMillis();
-                    return currentAssets;
-                }
+        writeLock.lock();
+        try {
+            if (currentAssets==null) {
+                currentAssets = currentAssetsInternal();
+                mills = System.currentTimeMillis();
+                return currentAssets;
             }
+        } finally {
+            writeLock.unlock();
         }
 
         long currMills = System.currentTimeMillis();
         if (currMills-mills > 10_000) {
-            synchronized (this) {
+            writeLock.lock();
+            try {
                 if (currMills-mills > 10_000) {
                     currentAssets = currentAssetsInternal();
                     mills = System.currentTimeMillis();
                     return currentAssets;
                 }
+            } finally {
+                writeLock.unlock();
             }
         }
         return currentAssets;

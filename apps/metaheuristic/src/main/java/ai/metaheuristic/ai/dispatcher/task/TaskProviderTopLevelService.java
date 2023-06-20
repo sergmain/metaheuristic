@@ -430,7 +430,7 @@ public class TaskProviderTopLevelService {
                             continue;
                         }
 
-                        quotas.allocated.add(new DispatcherData.AllocatedQuotas(task.id, p.tag, quota.amount));
+                        quotas.addQuotas(new DispatcherData.AllocatedQuotas(task.id, p.tag, quota.amount));
 
                         return new TaskData.AssignedTask(task, p.tag, quota.amount);
                     }

@@ -24,6 +24,7 @@ import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static ai.metaheuristic.ww2003.Enums.Align.center;
@@ -36,12 +37,11 @@ import static ai.metaheuristic.ww2003.Enums.Align.right;
  */
 public class CDNodeUtils {
 
-    private static int nodeId = 0;
+    private static final AtomicInteger nodeId = new AtomicInteger(0);
 
-    public static synchronized int getNewNodeId() {
-        return ++nodeId;
+    public static int getNewNodeId() {
+        return nodeId.incrementAndGet();
     }
-
 
     public static List<Composite> getNodesFromStartToEnd(CDNode startNode, CDNode endNode) {
         final List<CDNode> cdNodes = new ArrayList<>();

@@ -57,6 +57,8 @@ public class QuotasUtils {
             throw new IllegalStateException("(quota.quotaAllocation== Enums.QuotaAllocation.disabled)");
         }
 
-        return processorQuotas.limit >= (quota.amount + quotas.initial + quotas.allocated.stream().mapToInt(o -> o.amount).sum());
+        final int sum = DispatcherData.TaskQuotas.getSumOfAllocated(quotas);
+        return processorQuotas.limit >= (quota.amount + quotas.initial + sum);
     }
+
 }

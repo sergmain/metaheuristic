@@ -29,6 +29,7 @@ import org.springframework.lang.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
@@ -68,21 +69,32 @@ public class Attr implements Comparable<Attr> {
         ATTR_ORDER.add("cs");
     }
 
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+
     public static Attr get(@Nullable String nameSpace, String name, String value) {
         if ("null".equals(nameSpace)) {
             throw new DocumentProcessingException("051.020 (\"null\".equals(nameSpace))");
         }
         String ns = S.b(nameSpace) ? "" :nameSpace;
         String key = ns + ':' + name + ':' + value;
-        synchronized (Attr.class) {
+
+        writeLock.lock();
+        try {
             return ATTR_POOL.computeIfAbsent(key, (o) -> new Attr(ns, name, value));
+        } finally {
+            writeLock.unlock();
         }
     }
 
     public static void destroy() {
-        synchronized (Attr.class) {
+        writeLock.lock();
+        try {
             ATTR_POOL.clear();
             ATTR_ORDER.clear();
+        } finally {
+            writeLock.unlock();
         }
     }
 
@@ -94,9 +106,12 @@ public class Attr implements Comparable<Attr> {
         }
         int ind1;
         int ind2;
-        synchronized (Attr.class) {
+        writeLock.lock();
+        try {
             ind1 = ATTR_ORDER.indexOf(name);
             ind2 = ATTR_ORDER.indexOf(attr.name);
+        } finally {
+            writeLock.unlock();
         }
         return Integer.compare(ind1, ind2);
     }

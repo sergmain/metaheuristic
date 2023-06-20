@@ -58,7 +58,7 @@ public class EventBusService {
     public void registerVariableState(VariableUploadedEvent event) {
         try {
             log.debug("call EventBusService.registerVariableStates(execContextId:#{}, taskId:#{}, variableId:#{}, nullified:{})", event.execContextId, event.taskId, event.variableId, event.nullified);
-            ExecContextVariableStateTopLevelService.registerVariableState(event);
+            execContextVariableStateTopLevelService.registerVariableState(event);
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }
@@ -68,7 +68,7 @@ public class EventBusService {
     @EventListener
     public void registerCreatedTask(TaskCreatedEvent event) {
         try {
-            ExecContextVariableStateTopLevelService.registerCreatedTask(event);
+            execContextVariableStateTopLevelService.registerCreatedTask(event);
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }

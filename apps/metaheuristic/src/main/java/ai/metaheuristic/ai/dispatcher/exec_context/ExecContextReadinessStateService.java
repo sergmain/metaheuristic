@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Serge
@@ -36,23 +37,34 @@ import java.util.List;
 public class ExecContextReadinessStateService {
     private final LinkedList<Long> notReadyExecContextIds = new LinkedList<>();
 
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+    private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+
     public boolean addAll(List<Long> execContextIds) {
-        synchronized (notReadyExecContextIds) {
+        writeLock.lock();
+        try {
             return notReadyExecContextIds.addAll(execContextIds);
+        } finally {
+            writeLock.unlock();
         }
     }
 
     public boolean isNotReady(Long execContextId) {
-        synchronized (notReadyExecContextIds) {
+        readLock.lock();
+        try {
             return !notReadyExecContextIds.isEmpty() && notReadyExecContextIds.contains(execContextId);
+        } finally {
+            readLock.unlock();
         }
     }
 
     public boolean remove(Long execContextId) {
-        synchronized (notReadyExecContextIds) {
+        writeLock.lock();
+        try {
             return notReadyExecContextIds.remove(execContextId);
+        } finally {
+            writeLock.unlock();
         }
     }
-
-
 }

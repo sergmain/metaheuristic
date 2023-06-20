@@ -43,7 +43,7 @@ public class ProcessorCommandProcessor {
     private final ProcessorService processorService;
     private final ProcessorEnvironment processorEnvironment;
 
-    // this method is synchronized outside
+    // this method is synced outside
     public void processDispatcherCommParamsYaml(ProcessorCommParamsYaml pcpy, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
         ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = processorEnvironment.metadataService.getRef(dispatcherUrl);
         if(ref==null) {

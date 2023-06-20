@@ -60,7 +60,7 @@ public class TestQuotasUtils {
 
     private static TaskQuotas get(int initial, List<AllocatedQuotas> allocated) {
         TaskQuotas q = new TaskQuotas(initial);
-        q.allocated.addAll(allocated);
+        q.addAllQuotas(allocated);
         return q;
     }
 

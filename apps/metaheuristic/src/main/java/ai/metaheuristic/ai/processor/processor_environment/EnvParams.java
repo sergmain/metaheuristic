@@ -34,13 +34,26 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Slf4j
 public class EnvParams {
 
     private EnvParamsYaml envYaml;
 
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+
     public void init(Path processorPath, @Nullable File defaultEnvYamlFile, int taskConsoleOutputMaxLines) {
+        writeLock.lock();
+        try {
+            initInternal(processorPath, defaultEnvYamlFile, taskConsoleOutputMaxLines);
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    public void initInternal(Path processorPath, @Nullable File defaultEnvYamlFile, int taskConsoleOutputMaxLines) {
         final Path envYamlFile = processorPath.resolve(Consts.ENV_YAML_FILE_NAME);
         if (Files.notExists(envYamlFile)) {
             if (defaultEnvYamlFile==null) {

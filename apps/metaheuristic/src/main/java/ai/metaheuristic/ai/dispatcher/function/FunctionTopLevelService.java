@@ -516,32 +516,40 @@ public class FunctionTopLevelService {
     private final Map<String, FunctionSimpleCache> mappingCodeToId = new HashMap<>();
     private static final long FUNCTION_SIMPLE_CACHE_TTL = TimeUnit.MINUTES.toMillis(15);
 
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+
     @Nullable
-    public synchronized Function findByCode(String functionCode) {
-        FunctionSimpleCache cache = mappingCodeToId.get(functionCode);
-        if (cache!=null) {
-            if (System.currentTimeMillis() - cache.mills > FUNCTION_SIMPLE_CACHE_TTL) {
-                cache.id = functionRepository.findIdByCode(functionCode);
+    public Function findByCode(String functionCode) {
+        writeLock.lock();
+        try {
+            FunctionSimpleCache cache = mappingCodeToId.get(functionCode);
+            if (cache!=null) {
+                if (System.currentTimeMillis() - cache.mills > FUNCTION_SIMPLE_CACHE_TTL) {
+                    cache.id = functionRepository.findIdByCode(functionCode);
+                    cache.mills = System.currentTimeMillis();
+                }
+            }
+            else {
+                cache = new FunctionSimpleCache(functionRepository.findIdByCode(functionCode), System.currentTimeMillis());
+                mappingCodeToId.put(functionCode, cache);
+            }
+            if (mappingCodeToId.size()>1000) {
+                mappingCodeToId.clear();
+            }
+
+            if (cache.id==null) {
+                return null;
+            }
+            Function function = functionCache.findById(cache.id);
+            if (function == null) {
+                cache.id = null;
                 cache.mills = System.currentTimeMillis();
             }
+            return function;
+        } finally {
+            writeLock.unlock();
         }
-        else {
-            cache = new FunctionSimpleCache(functionRepository.findIdByCode(functionCode), System.currentTimeMillis());
-            mappingCodeToId.put(functionCode, cache);
-        }
-        if (mappingCodeToId.size()>1000) {
-            mappingCodeToId.clear();
-        }
-
-        if (cache.id==null) {
-            return null;
-        }
-        Function function = functionCache.findById(cache.id);
-        if (function == null) {
-            cache.id = null;
-            cache.mills = System.currentTimeMillis();
-        }
-        return function;
     }
 
     public ReplicationApiData.FunctionConfigsReplication getFunctionConfigs() {

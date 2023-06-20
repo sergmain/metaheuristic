@@ -18,13 +18,13 @@ package ai.metaheuristic.ai.mhbp.beans;
 
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParamsUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.lang.Nullable;
 
-import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -68,38 +68,28 @@ public class Scenario implements Serializable {
     @Column(name = "PARAMS")
     private String params;
 
-    public void setParams(String params) {
-        synchronized (this) {
-            this.params = params;
-            this.partParams = null;
-        }
-    }
-
     public String getParams() {
         return params;
     }
 
-    @Transient
-    @JsonIgnore
-    @Nullable
-    private ScenarioParams partParams = null;
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
 
     @Transient
     @JsonIgnore
-    private final Object syncParamsObj = new Object();
+    private final ThreadUtils.CommonThreadLocker<ScenarioParams> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private ScenarioParams parseParams() {
+        ScenarioParams temp = ScenarioParamsUtils.UTILS.to(params);
+        ScenarioParams ecpy = temp==null ? new ScenarioParams() : temp;
+        return ecpy;
+    }
 
     @JsonIgnore
     public ScenarioParams getScenarioParams() {
-        if (partParams==null) {
-            synchronized (syncParamsObj) {
-                if (partParams==null) {
-                    //noinspection UnnecessaryLocalVariable
-                    ScenarioParams temp = ScenarioParamsUtils.UTILS.to(params);
-                    partParams = temp;
-                }
-            }
-        }
-        return partParams;
+        return paramsLocked.get();
     }
 
     @JsonIgnore
