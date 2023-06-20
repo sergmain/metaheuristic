@@ -36,7 +36,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -78,7 +77,6 @@ public class ProcessorTaskService {
      */
     private final ConcurrentHashMap<String, Map<DispatcherUrl, Map<Long, ProcessorCoreTask>>> map = new ConcurrentHashMap<>();
 
-    @Value("${globals.processorPath}")
     public Path processorPath;
 
     @PostConstruct
@@ -86,6 +84,7 @@ public class ProcessorTaskService {
         if (globals.testing) {
             return;
         }
+        this.processorPath = globals.processorPath;
         init(processorPath);
         //noinspection unused
         int i=0;
@@ -466,6 +465,8 @@ public class ProcessorTaskService {
 
     public List<ProcessorCoreTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, boolean assetsPreparedStatus) {
         try {
+            ProcessorSyncHolder.writeLock.lock();
+
             List<ProcessorCoreTask> list = new ArrayList<>();
             Map<Long, ProcessorCoreTask> mapForDispatcherUrl = getTasksForProcessorCore(core);
             List<Long> forDeletion = new ArrayList<>();
