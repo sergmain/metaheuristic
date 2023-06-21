@@ -27,10 +27,9 @@ import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.commons.utils.threads.ThreadedPool;
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
@@ -50,27 +49,37 @@ import java.util.Map;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
 @Order(1000)
 public class ExecContextReadinessService {
 
     private final ExecContextCache execContextCache;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final ExecContextReconciliationTopLevelService execContextReconciliationTopLevelService;
-    private final ExecContextRepository execContextRepository;
-    private final ExecContextReadinessStateService execContextReadinessStateService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final DispatcherParamsService dispatcherParamsService;
     private final TaskTxService taskTxService;
 
-    private final ThreadedPool<Long> startProcessReadinessEventThreadedPool =
-            new ThreadedPool<>(1, 0, false, false, (execContextId)->{
-                prepare(execContextId);
-                execContextReadinessStateService.remove(execContextId);
-            });
+    private final ThreadedPool<Long> startProcessReadinessEventThreadedPool;
 
-    @PostConstruct
-    public void postConstruct() {
+    public ExecContextReadinessService(
+            @Autowired ExecContextCache execContextCache, @Autowired TaskProviderTopLevelService taskProviderTopLevelService,
+            @Autowired ExecContextReconciliationTopLevelService execContextReconciliationTopLevelService,
+            @Autowired ExecContextRepository execContextRepository, @Autowired ExecContextReadinessStateService execContextReadinessStateService,
+            @Autowired ExecContextGraphTopLevelService execContextGraphTopLevelService,
+            @Autowired DispatcherParamsService dispatcherParamsService, @Autowired TaskTxService taskTxService) {
+
+        this.execContextCache = execContextCache;
+        this.taskProviderTopLevelService = taskProviderTopLevelService;
+        this.execContextReconciliationTopLevelService = execContextReconciliationTopLevelService;
+        this.execContextGraphTopLevelService = execContextGraphTopLevelService;
+        this.dispatcherParamsService = dispatcherParamsService;
+        this.taskTxService = taskTxService;
+
+        startProcessReadinessEventThreadedPool = new ThreadedPool<>(1, 0, false, false, (execContextId) -> {
+            prepare(execContextId);
+            execContextReadinessStateService.remove(execContextId);
+        });
+
         final List<Long> ids = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.STARTED.code);
         log.info("Started execContextIds: " + ids);
         execContextReadinessStateService.addAll(ids);

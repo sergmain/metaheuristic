@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.mhbp.kb;
 
 import ai.metaheuristic.ai.mhbp.events.InitKbEvent;
 import ai.metaheuristic.commons.utils.threads.ThreadedPool;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -32,14 +32,18 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @Profile("dispatcher")
 public class KbInitializingService {
 
     public final KbService kbService;
 
-    private final ThreadedPool<InitKbEvent> initKbEventThreadedPool =
-            new ThreadedPool<>(1, 0, true, false, kbService::processInitKbEvent);
+    private final ThreadedPool<InitKbEvent> initKbEventThreadedPool;
+
+    public KbInitializingService(@Autowired KbService kbService) {
+        this.kbService = kbService;
+        this.initKbEventThreadedPool =
+                new ThreadedPool<>(1, 0, true, false, kbService::processInitKbEvent);
+    }
 
     @Async
     @EventListener

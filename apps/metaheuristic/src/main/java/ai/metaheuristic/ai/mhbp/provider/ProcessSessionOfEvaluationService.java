@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.mhbp.provider;
 
 import ai.metaheuristic.ai.mhbp.events.EvaluateProviderEvent;
 import ai.metaheuristic.commons.utils.threads.ThreadedPool;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -32,14 +32,18 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @Profile("dispatcher")
 public class ProcessSessionOfEvaluationService {
 
     public final ProviderQueryService providerQueryService;
 
-    private final ThreadedPool<EvaluateProviderEvent> evaluateProviderEventThreadedPool =
-            new ThreadedPool<>(1, 0, false, true, providerQueryService::evaluateProvider);
+    private final ThreadedPool<EvaluateProviderEvent> evaluateProviderEventThreadedPool;
+
+    public ProcessSessionOfEvaluationService(@Autowired ProviderQueryService providerQueryService) {
+        this.providerQueryService = providerQueryService;
+        this.evaluateProviderEventThreadedPool =
+                new ThreadedPool<>(1, 0, false, true, providerQueryService::evaluateProvider);
+    }
 
     @Async
     @EventListener
