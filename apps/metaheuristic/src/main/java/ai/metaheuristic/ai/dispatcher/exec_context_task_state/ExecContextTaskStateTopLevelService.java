@@ -65,7 +65,7 @@ public class ExecContextTaskStateTopLevelService {
     @EventListener
     public void handleEvent(UpdateTaskExecStatesInGraphEvent event) {
         updateTaskExecStatesInGraphEventThreadedPool.computeIfAbsent(event.execContextId,
-                (id)-> new ThreadedPool<>(1, 0, false, this::updateTaskExecStatesInGraph)).putToQueue(event);
+                (id)-> new ThreadedPool<>(1, 0, false, false, this::updateTaskExecStatesInGraph)).putToQueue(event);
     }
 
     public void processUpdateTaskExecStatesInGraph() {

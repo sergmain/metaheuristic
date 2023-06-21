@@ -49,6 +49,7 @@ import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Serge
@@ -96,11 +97,15 @@ public class TaskCheckCachingTopLevelService {
     private long mills = 0L;
     public boolean disableCacheChecking = false;
 
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+
     public void putToQueue(final RegisterTaskForCheckCachingEvent event) {
         if (disableCacheChecking) {
             return;
         }
-        synchronized (queue) {
+        writeLock.lock();
+        try {
             // re-create queueIds, there is a possibility that queueIds was unsyncronized with queue when a task was resetting
             if (System.currentTimeMillis() - mills > 60_000) {
                 queueIds.clear();
@@ -117,13 +122,16 @@ public class TaskCheckCachingTopLevelService {
             }
             queue.add(event);
             queueIds.add(event.taskId);
+        } finally {
+            writeLock.unlock();
         }
         checkCaching();
     }
 
     @Nullable
     private RegisterTaskForCheckCachingEvent pullFromQueue() {
-        synchronized (queue) {
+        writeLock.lock();
+        try {
             final RegisterTaskForCheckCachingEvent task = queue.pollFirst();
             if (task==null) {
                 if (!queueIds.isEmpty()) {
@@ -133,6 +141,8 @@ public class TaskCheckCachingTopLevelService {
             }
             queueIds.remove(task.taskId);
             return task;
+        } finally {
+            writeLock.unlock();
         }
     }
 

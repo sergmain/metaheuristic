@@ -17,17 +17,13 @@
 package ai.metaheuristic.ai.mhbp.provider;
 
 import ai.metaheuristic.ai.mhbp.events.EvaluateProviderEvent;
+import ai.metaheuristic.commons.utils.threads.ThreadedPool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
-import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.util.LinkedList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @author Sergio Lissner
@@ -42,13 +38,26 @@ public class ProcessSessionOfEvaluationService {
 
     public final ProviderQueryService providerQueryService;
 
-    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
-
-    private final LinkedList<EvaluateProviderEvent> queue = new LinkedList<>();
+    private final ThreadedPool<EvaluateProviderEvent> evaluateProviderEventThreadedPool =
+            new ThreadedPool<>(1, 0, false, true, providerQueryService::evaluateProvider);
 
     @Async
     @EventListener
     public void handleEvaluateProviderEvent(EvaluateProviderEvent event) {
+        evaluateProviderEventThreadedPool.putToQueue(event);
+    }
+
+    public void processSessionEvent() {
+        evaluateProviderEventThreadedPool.processEvent();
+    }
+/*
+//    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+//    private final LinkedList<EvaluateProviderEvent> queue = new LinkedList<>();
+
+    @Async
+    @EventListener
+    public void handleEvaluateProviderEvent(EvaluateProviderEvent event) {
+        evaluateProviderEventThreadedPool.putToQueue(event);
         putToQueue(event);
     }
 
@@ -79,5 +88,6 @@ public class ProcessSessionOfEvaluationService {
             }
         });
     }
+*/
 
 }

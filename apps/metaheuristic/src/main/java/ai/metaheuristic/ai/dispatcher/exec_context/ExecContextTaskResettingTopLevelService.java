@@ -30,19 +30,16 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.utils.threads.ThreadedPool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
-import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @author Serge
@@ -60,42 +57,25 @@ public class ExecContextTaskResettingTopLevelService {
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextCache execContextCache;
 
-    private static final LinkedList<ResetTasksWithErrorEvent> QUEUE = new LinkedList<>();
-    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+    private final ThreadedPool<ResetTasksWithErrorEvent> resetTasksWithErrorEventThreadedPool =
+            new ThreadedPool<>(1, 0, false, false, this::resetTasksWithErrorForRecovery);
 
-    public static void putToQueue(final ResetTasksWithErrorEvent event) {
-        synchronized (QUEUE) {
-            if (QUEUE.contains(event)) {
-                return;
-            }
-            QUEUE.add(event);
-        }
-    }
-
-    @Nullable
-    private static ResetTasksWithErrorEvent pullFromQueue() {
-        synchronized (QUEUE) {
-            return QUEUE.pollFirst();
-        }
+    @Async
+    @EventListener
+    public void handleEvaluateProviderEvent(ResetTasksWithErrorEvent event) {
+        resetTasksWithErrorEventThreadedPool.putToQueue(event);
     }
 
     public void resetTasksWithErrorForRecovery() {
+/*
         final int activeCount = executor.getActiveCount();
         if (log.isDebugEnabled()) {
             final long completedTaskCount = executor.getCompletedTaskCount();
             final long taskCount = executor.getTaskCount();
             log.debug("resetTasksInQueue, active task in executor: {}, awaiting tasks: {}", activeCount, taskCount - completedTaskCount);
         }
-
-        if (activeCount>0) {
-            return;
-        }
-        executor.submit(() -> {
-            ResetTasksWithErrorEvent event;
-            while ((event = pullFromQueue())!=null) {
-                resetTasksWithErrorForRecovery(event.execContextId);
-            }
-        });
+*/
+        resetTasksWithErrorEventThreadedPool.processEvent();
     }
 
     @Async
@@ -117,22 +97,22 @@ public class ExecContextTaskResettingTopLevelService {
         ExecContextSyncService.getWithSyncVoid(task.execContextId, () -> execContextTaskResettingService.resetTaskWithTx(task.execContextId, event.taskId));
     }
 
-    public void resetTasksWithErrorForRecovery(Long execContextId) {
+    public void resetTasksWithErrorForRecovery(ResetTasksWithErrorEvent event) {
         TxUtils.checkTxNotExists();
 
-        List<Long> taskIds = taskRepository.findTaskForErrorWithRecoveryState(execContextId);
+        List<Long> taskIds = taskRepository.findTaskForErrorWithRecoveryState(event.execContextId);
         if (taskIds.isEmpty()) {
             return;
         }
 
-        ExecContextImpl ec = execContextCache.findById(execContextId, true);
+        ExecContextImpl ec = execContextCache.findById(event.execContextId, true);
         if (ec==null) {
             return;
         }
 
         ExecContextTaskState execContextTaskState = execContextTaskStateRepository.findById(ec.execContextTaskStateId).orElse(null);
         if (execContextTaskState==null) {
-            log.error("#155.030 ExecContextTaskState wasn't found for execContext #{}", execContextId);
+            log.error("#155.030 ExecContextTaskState wasn't found for execContext #{}", event.execContextId);
             return;
         }
         ExecContextTaskStateParamsYaml ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
@@ -151,9 +131,9 @@ public class ExecContextTaskResettingTopLevelService {
             final EnumsApi.TaskExecState targetState = maxTries > triesWasMade ? EnumsApi.TaskExecState.NONE : EnumsApi.TaskExecState.ERROR;
             statuses.add(new TaskData.TaskWithRecoveryStatus(taskId, triesWasMade+1, targetState));
         }
-        ExecContextSyncService.getWithSyncVoid(execContextId, ()->
+        ExecContextSyncService.getWithSyncVoid(event.execContextId, ()->
                 ExecContextTaskStateSyncService.getWithSyncVoid(ec.execContextTaskStateId,
-                        () -> execContextTaskResettingService.resetTasksWithErrorForRecovery(execContextId, statuses)));
+                        () -> execContextTaskResettingService.resetTasksWithErrorForRecovery(event.execContextId, statuses)));
         int i=0;
     }
 

@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueEvent;
+import ai.metaheuristic.ai.dispatcher.event.ResetTasksWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.event.TransferStateFromTaskQueueToExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
@@ -238,7 +239,7 @@ public class PreparingSourceCodeService {
         Thread.sleep(500);
 //        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContext.id);
 
-        execContextTaskResettingTopLevelService.resetTasksWithErrorForRecovery(execContext.id);
+        execContextTaskResettingTopLevelService.resetTasksWithErrorForRecovery(new ResetTasksWithErrorEvent(execContext.id));
 
 /*
         boolean isQueueEmpty = true;

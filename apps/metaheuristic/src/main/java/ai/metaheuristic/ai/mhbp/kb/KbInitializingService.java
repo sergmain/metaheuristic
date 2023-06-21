@@ -17,17 +17,13 @@
 package ai.metaheuristic.ai.mhbp.kb;
 
 import ai.metaheuristic.ai.mhbp.events.InitKbEvent;
+import ai.metaheuristic.commons.utils.threads.ThreadedPool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
-import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.util.LinkedList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @author Sergio Lissner
@@ -41,6 +37,21 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class KbInitializingService {
 
     public final KbService kbService;
+
+    private final ThreadedPool<InitKbEvent> initKbEventThreadedPool =
+            new ThreadedPool<>(1, 0, true, false, kbService::processInitKbEvent);
+
+    @Async
+    @EventListener
+    public void handleEvaluateProviderEvent(InitKbEvent event) {
+        initKbEventThreadedPool.putToQueue(event);
+    }
+
+    public void processEvent() {
+        initKbEventThreadedPool.processEvent();
+    }
+
+/*
     private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
     private final LinkedList<InitKbEvent> queue = new LinkedList<>();
 
@@ -82,5 +93,6 @@ public class KbInitializingService {
             }
         });
     }
+*/
 
 }

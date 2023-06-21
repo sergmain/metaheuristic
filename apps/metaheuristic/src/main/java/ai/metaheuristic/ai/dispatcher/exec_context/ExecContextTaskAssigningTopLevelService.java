@@ -64,6 +64,7 @@ public class ExecContextTaskAssigningTopLevelService {
     private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
     private final TaskFinishingTxService taskFinishingTxService;
     private final ExecContextRepository execContextRepository;
+    private final ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
 
     public static class UnassignedTasksStat {
@@ -185,7 +186,7 @@ public class ExecContextTaskAssigningTopLevelService {
         log.debug("#703.140 found {} tasks for registering, execContextId: #{}", vertices.size(), execContextId);
 
         if (vertices.isEmpty()) {
-            ExecContextTaskResettingTopLevelService.putToQueue(new ResetTasksWithErrorEvent(execContextId));
+            execContextTaskResettingTopLevelService.handleEvaluateProviderEvent(new ResetTasksWithErrorEvent(execContextId));
             return stat;
         }
 

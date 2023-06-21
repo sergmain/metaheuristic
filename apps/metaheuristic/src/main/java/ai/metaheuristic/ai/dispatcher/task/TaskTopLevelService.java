@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Serge
@@ -56,26 +57,31 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TaskTopLevelService {
 
     private final ExecContextCache execContextCache;
-    private final TaskTxService taskService;
+    private final TaskTxService taskTxService;
     private final TaskRepository taskRepository;
     private final VariableTxService variableService;
     private final TaskVariableTopLevelService taskVariableTopLevelService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    @Async
-    @EventListener
-    public void handleTaskCommunicationEvent(TaskCommunicationEvent event) {
-        taskService.updateAccessByProcessorOn(event.taskId);
-    }
-
-    public final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
-    private final LinkedList<CheckForLostTaskEvent> queue = new LinkedList<>();
     private final Map<Long, AtomicLong> lastCheckOn = new HashMap<>();
-
     private static final int MILLS_TO_HOLD_CHECK = 30_000;
 
+    private final LinkedList<CheckForLostTaskEvent> queue = new LinkedList<>();
+    public final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+
+    @Async
+    @EventListener
+    public void handleCheckForLostTaskEvent(final CheckForLostTaskEvent event) {
+        putToQueue(event);
+        processCheckForLostTaskEvent();
+    }
+
     private void putToQueue(final CheckForLostTaskEvent event) {
-        synchronized (queue) {
+        writeLock.lock();
+        try {
             final long completedTaskCount = executor.getCompletedTaskCount();
             final long taskCount = executor.getTaskCount();
             if ((taskCount - completedTaskCount)>20) {
@@ -96,21 +102,22 @@ public class TaskTopLevelService {
                     lastCheck.set(System.currentTimeMillis());
                 }
             }
+        } finally {
+            writeLock.unlock();
         }
     }
 
     @Nullable
     private CheckForLostTaskEvent pullFromQueue() {
-        synchronized (queue) {
+        writeLock.lock();
+        try {
             return queue.pollFirst();
+        } finally {
+            writeLock.unlock();
         }
     }
 
-    @Async
-    @EventListener
-    public void handleCheckForLostTaskEvent(final CheckForLostTaskEvent event) {
-        putToQueue(event);
-
+    public void processCheckForLostTaskEvent() {
         executor.submit(() -> {
             CheckForLostTaskEvent currEvent;
             while ((currEvent = pullFromQueue()) != null) {
@@ -150,6 +157,12 @@ public class TaskTopLevelService {
                 applicationEventPublisher.publishEvent(new ResetTaskEvent(task.execContextId, actualTaskId));
             }
         }
+    }
+
+    @Async
+    @EventListener
+    public void handleTaskCommunicationEvent(TaskCommunicationEvent event) {
+        taskTxService.updateAccessByProcessorOn(event.taskId);
     }
 
     public void processResendTaskOutputResourceResult(@Nullable Long processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {

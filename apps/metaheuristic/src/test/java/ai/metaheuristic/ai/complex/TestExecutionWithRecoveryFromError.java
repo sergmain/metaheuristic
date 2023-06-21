@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.complex;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.event.ResetTasksWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingTopLevelService;
@@ -261,7 +262,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
             assertNotNull(task1);
             assertEquals(EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value, task1.execState);
 
-            execContextTaskResettingTopLevelService.resetTasksWithErrorForRecovery(task1.execContextId);
+            execContextTaskResettingTopLevelService.resetTasksWithErrorForRecovery(new ResetTasksWithErrorEvent(task1.execContextId));
 
             TaskImpl task2 = taskRepository.findById(simpleTask.taskId).orElse(null);
             assertNotNull(task2);

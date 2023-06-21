@@ -37,17 +37,20 @@ public class ThreadedPool<T> {
     // 0 is for unbound queue
     private final int maxQueueSize;
     private final boolean immediateProcessing;
+    private final boolean checkForDouble;
     private final Consumer<T> process;
 
     private final ThreadPoolExecutor executor;
     private final LinkedList<T> queue = new LinkedList<>();
 
     private final ReentrantReadWriteLock queueReadWriteLock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.ReadLock queueReadLock = queueReadWriteLock.readLock();
     private final ReentrantReadWriteLock.WriteLock queueWriteLock = queueReadWriteLock.writeLock();
 
     public ThreadedPool(int maxQueueSize, Consumer<T> process) {
         this.maxThreadInPool = 1;
         this.immediateProcessing = true;
+        this.checkForDouble = false;
         this.maxQueueSize = maxQueueSize;
         this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxThreadInPool);
         this.process = process;
@@ -57,14 +60,16 @@ public class ThreadedPool<T> {
         this.maxThreadInPool = maxThreadInPool;
         this.maxQueueSize = maxQueueSize;
         this.immediateProcessing = true;
+        this.checkForDouble = false;
         this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxThreadInPool);
         this.process = process;
     }
 
-    public ThreadedPool(int maxThreadInPool, int maxQueueSize, boolean immediateProcessing, Consumer<T> process) {
+    public ThreadedPool(int maxThreadInPool, int maxQueueSize, boolean immediateProcessing, boolean checkForDouble, Consumer<T> process) {
         this.maxThreadInPool = maxThreadInPool;
         this.maxQueueSize = maxQueueSize;
         this.immediateProcessing = immediateProcessing;
+        this.checkForDouble = checkForDouble;
         this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxThreadInPool);
         this.process = process;
     }
@@ -81,8 +86,23 @@ public class ThreadedPool<T> {
             return;
         }
 
+        if (checkForDouble) {
+            queueReadLock.lock();
+            try {
+                if (queue.contains(event)) {
+                    return;
+                }
+            }
+            finally {
+                queueReadLock.unlock();
+            }
+        }
+
         queueWriteLock.lock();
         try {
+            if (checkForDouble && queue.contains(event)) {
+                return;
+            }
             queue.add(event);
         } finally {
             queueWriteLock.unlock();
