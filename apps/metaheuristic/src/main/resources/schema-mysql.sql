@@ -549,6 +549,17 @@ CREATE table mhbp_chapter
 CREATE UNIQUE INDEX mhbp_chapter_kb_id_code_idx
     ON mhbp_chapter (KB_ID, CODE);
 
+CREATE table mhbp_chat
+(
+    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION         INT UNSIGNED    NOT NULL,
+    COMPANY_ID      INT UNSIGNED    NOT NULL,
+    ACCOUNT_ID      INT UNSIGNED    NOT NULL,
+    CREATED_ON      bigint          NOT NULL,
+    NAME            VARCHAR(100)    NOT NULL,
+    PARAMS          LONGTEXT        not null
+);
+
 CREATE table mhbp_part
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,

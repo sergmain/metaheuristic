@@ -442,3 +442,16 @@ CREATE TABLE MH_EVENT
 CREATE INDEX MH_EVENT_PERIOD_IDX
     ON MH_EVENT (PERIOD);
 
+-- mhbp
+
+CREATE table mhbp_chat
+(
+    ID              SERIAL PRIMARY KEY,
+    VERSION         NUMERIC(10, 0)  NOT NULL,
+    -- company_id can be null
+    COMPANY_ID      NUMERIC(10, 0)  NOT NULL,
+    ACCOUNT_ID      NUMERIC(10, 0)  NOT NULL,
+    CREATED_ON      bigint          NOT NULL,
+    NAME            VARCHAR(100)    NOT NULL,
+    PARAMS          TEXT            not null
+);
