@@ -16,12 +16,17 @@
 
 package ai.metaheuristic.ai.mhbp.chat;
 
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.mhbp.beans.Chat;
 import ai.metaheuristic.ai.mhbp.repositories.ChapterRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ChatRepository;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Sergio Lissner
@@ -36,4 +41,13 @@ public class ChatTxService {
 
     public final ChatRepository chatRepository;
 
+    @Transactional
+    public OperationStatusRest deleteChatById(Long chatId, DispatcherContext context) {
+        Chat chat = chatRepository.findById(chatId).orElse(null);
+        if (chat==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "134.040 Chat #"+chatId+" wasn't fount");
+        }
+        chatRepository.delete(chat);
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
 }

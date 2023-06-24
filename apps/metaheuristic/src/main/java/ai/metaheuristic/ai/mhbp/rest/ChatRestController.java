@@ -19,15 +19,15 @@ package ai.metaheuristic.ai.mhbp.rest;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.mhbp.chat.ChatService;
+import ai.metaheuristic.ai.mhbp.chat.ChatTxService;
 import ai.metaheuristic.ai.mhbp.data.ChatData;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -44,6 +44,7 @@ import java.util.List;
 public class ChatRestController {
 
     private final ChatService chatService;
+    private final ChatTxService chatTxService;
     private final UserContextService userContextService;
 
     @GetMapping("/chats")
@@ -53,5 +54,26 @@ public class ChatRestController {
         return new ChatData.Chats(chats);
     }
 
+    @GetMapping("/chat/{chatId}")
+    public ChatData.FullChat chats(@PathVariable Long chatId, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        final ChatData.FullChat chat = chatService.getChat(chatId, context);
+        return chat;
+    }
+
+    @PostMapping("/ask-prompt/{chatId}")
+    public OperationStatusRest addFormCommit(
+            @PathVariable Long chatId,
+            @RequestParam(name = "prompt") String prompt,
+            Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        return chatService.askPrompt(chatId, prompt, context);
+    }
+
+    @PostMapping("/chat-delete-commit")
+    public OperationStatusRest deleteCommit(Long chatId, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        return chatTxService.deleteChatById(chatId, context);
+    }
 
 }

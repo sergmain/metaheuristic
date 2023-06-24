@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.mhbp.repositories;
 
 import ai.metaheuristic.ai.mhbp.beans.Chapter;
+import ai.metaheuristic.ai.mhbp.beans.Chat;
 import ai.metaheuristic.ai.mhbp.data.ChatData;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -35,7 +36,7 @@ import java.util.List;
 @Repository
 @Transactional
 @Profile("dispatcher")
-public interface ChatRepository extends CrudRepository<Chapter, Long> {
+public interface ChatRepository extends CrudRepository<Chat, Long> {
 
     @Transactional(readOnly = true)
     @Query(value= "select new ai.metaheuristic.ai.mhbp.data.ChatData(a.id, a.name, a.createdOn) " +

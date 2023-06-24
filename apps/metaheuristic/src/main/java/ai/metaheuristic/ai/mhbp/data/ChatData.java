@@ -33,7 +33,6 @@ public class ChatData {
 
     public record SimpleChat(Long chatId, String name, long createdOn) {}
 
-
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
@@ -44,4 +43,19 @@ public class ChatData {
             this.chats = chats;
         }
     }
+
+
+    public record ChatPrompt(int id, String prompt, String answer) {}
+
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class FullChat extends BaseDataClass {
+        public String sessionId;
+        public List<ChatPrompt> prompts;
+
+    }
+
+
 }

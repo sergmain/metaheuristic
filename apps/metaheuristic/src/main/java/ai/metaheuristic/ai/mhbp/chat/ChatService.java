@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.mhbp.chat;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.data.ChatData;
 import ai.metaheuristic.ai.mhbp.repositories.ChatRepository;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -45,4 +46,12 @@ public class ChatService {
         return chats;
     }
 
+    public ChatData.FullChat getChat(Long chatId, DispatcherContext context) {
+
+        return null;
+    }
+
+    public OperationStatusRest askPrompt(Long chatId, String prompt, DispatcherContext context) {
+        return null;
+    }
 }
