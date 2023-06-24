@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.api.data;
 
+import ai.metaheuristic.api.EnumsApi;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
@@ -27,6 +28,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
+
+/**
+ * !!! To include fields from this class constructor must be annotated with @JsonCreator
+ * @see OperationStatusRest#OperationStatusRest(EnumsApi.OperationStatus, List, List)
+ */
 @Data
 public abstract class BaseDataClass {
 
