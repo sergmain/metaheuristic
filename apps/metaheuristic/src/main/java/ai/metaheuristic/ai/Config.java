@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -119,7 +119,7 @@ public class Config {
 
         private static final List<String> POSSIBLE_PROFILES = List.of(
                 // Spring's profiles
-                "dispatcher", "processor", "quickstart",
+                "dispatcher", "processor", "quickstart", "standalone",
 
                 // db's profiles
                 "mysql", "postgresql", "h2", "generic", "custom");
