@@ -104,10 +104,9 @@ public class BatchSplitterTxService {
             try (final Stream<Path> list = Files.list(srcDir)) {
                 list
                         .forEach(dataFilePath -> {
-                            File file = dataFilePath.toFile();
                             currTaskNumber.incrementAndGet();
                             try {
-                                VariableData.VariableDataSource variableDataSource = getVariableDataSource(mapping, dataFilePath, file);
+                                VariableData.VariableDataSource variableDataSource = getVariableDataSource(mapping, dataFilePath, dataFilePath);
                                 if (variableDataSource == null) {
                                     return;
                                 }
@@ -139,18 +138,18 @@ public class BatchSplitterTxService {
     }
 
     @Nullable
-    private static VariableData.VariableDataSource getVariableDataSource(Map<String, String> mapping, Path dataFilePath, File file) throws IOException {
+    private static VariableData.VariableDataSource getVariableDataSource(Map<String, String> mapping, Path dataFilePath, Path file) throws IOException {
         VariableData.VariableDataSource variableDataSource;
-        if (file.isDirectory()) {
+        if (Files.isDirectory(file)) {
             final List<BatchTopLevelService.FileWithMapping> files;
             // do not remove try(Stream<Path>){}
             try (final Stream<Path> stream = Files.list(dataFilePath)) {
                 files = stream
                         .filter(o -> o.toFile().isFile())
                         .map(f -> {
-                            final String currFileName = file.getName() + File.separatorChar + f.toFile().getName();
+                            final String currFileName = file.getFileName().toString() + File.separatorChar + f.getFileName().toString();
                             final String actualFileName = mapping.get(currFileName);
-                            return new BatchTopLevelService.FileWithMapping(f.toFile(), actualFileName);
+                            return new BatchTopLevelService.FileWithMapping(f, actualFileName);
                         }).collect(Collectors.toList());
             }
             if (files.isEmpty()) {
@@ -160,7 +159,7 @@ public class BatchSplitterTxService {
             variableDataSource = new VariableData.VariableDataSource(files);
         } else {
             variableDataSource = new VariableData.VariableDataSource(
-                    List.of(new BatchTopLevelService.FileWithMapping(file, mapping.get(file.getName()))));
+                    List.of(new BatchTopLevelService.FileWithMapping(file, mapping.get(file.getFileName().toString()))));
         }
         return variableDataSource;
     }

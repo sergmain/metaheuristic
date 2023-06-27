@@ -125,7 +125,7 @@ public class BatchTopLevelService {
     @Data
     @AllArgsConstructor
     public static class FileWithMapping {
-        public File file;
+        public Path file;
         public String originName;
     }
 

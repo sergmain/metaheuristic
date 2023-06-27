@@ -32,6 +32,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.NotImplementedException;
@@ -54,6 +55,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -84,6 +86,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
         }
     }
 
+    @SneakyThrows
     @SuppressWarnings("Duplicates")
     public void process() {
         if (globals.testing) {
@@ -130,8 +133,8 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             if (v.sourcing!= EnumsApi.DataSourcing.dispatcher) {
                 throw new NotImplementedException("#311.032 Need to implement");
             }
-            if (!task.nullified && (task.file==null || !task.file.exists())) {
-                log.error("#311.040 File {} doesn't exist", task.file.getPath());
+            if (!task.nullified && (task.file==null || Files.notExists(task.file))) {
+                log.error("#311.040 File {} doesn't exist", task.file.toAbsolutePath());
                 continue;
             }
             if (task.nullified) {
@@ -174,7 +177,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                         //  what is the problem with this state? Should we handle this state in more sophisticated way?
                         throw new IllegalStateException("#311.043 (task.file==null)");
                     }
-                    builder.addBinaryBody("file", task.file, ContentType.APPLICATION_OCTET_STREAM, task.file.getName());
+                    builder.addBinaryBody("file", task.file.toFile(), ContentType.APPLICATION_OCTET_STREAM, task.file.getFileName().toString());
                 }
                 HttpEntity entity = builder.build();
 
@@ -202,7 +205,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 }
                 else {
                     log.error("311.060 Error uploading variable to server, code: " + e.getStatusCode()+", " +
-                            "size: " + (task.file!=null ? Long.toString(task.file.length()) : "file is null"), e);
+                            "size: " + (task.file!=null ? Long.toString(Files.size(task.file)) : "file is null"), e);
                 }
             }
             catch (ConnectException e) {

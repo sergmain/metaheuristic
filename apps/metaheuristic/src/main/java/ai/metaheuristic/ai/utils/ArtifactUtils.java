@@ -22,6 +22,7 @@ import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -48,6 +49,7 @@ public class ArtifactUtils {
      * @param versions
      * @return boolean - true if Ok
      */
+    @SneakyThrows
     public static boolean prepareParamsFileForTask(Path artifactDir, String taskDir, TaskParamsYaml taskParamYaml, Set<Integer> versions) {
         TaskFileParamsYaml taskFileParamYaml = toTaskFileParamsYaml(taskParamYaml);
         taskFileParamYaml.task.workingPath = taskDir;

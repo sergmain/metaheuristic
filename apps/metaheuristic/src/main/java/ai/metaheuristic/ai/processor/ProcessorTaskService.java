@@ -55,6 +55,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
+import static java.nio.file.StandardOpenOption.*;
 
 @SuppressWarnings({"WeakerAccess", "DuplicatedCode"})
 @Service
@@ -581,25 +582,24 @@ public class ProcessorTaskService {
         }
     }
 
+    @SneakyThrows
     private ProcessorCoreTask save(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task) {
-        File taskDir = prepareTaskDir(core, task.taskId);
-        File taskYaml = new File(taskDir, Consts.TASK_YAML);
+        Path taskDir = prepareTaskDir(core, task.taskId);
+        Path taskYaml = taskDir.resolve(Consts.TASK_YAML);
 
-        if (taskYaml.exists()) {
-            log.trace("{} file exists. Make backup", taskYaml.getPath());
-            File yamlFileBak = new File(taskDir, Consts.TASK_YAML + ".bak");
-            //noinspection ResultOfMethodCallIgnored
-            yamlFileBak.delete();
-            if (taskYaml.exists()) {
-                //noinspection ResultOfMethodCallIgnored
-                taskYaml.renameTo(yamlFileBak);
+        if (Files.exists(taskYaml)) {
+            log.trace("{} file exists. Make backup", taskYaml.toAbsolutePath());
+            Path yamlFileBak = taskDir.resolve(Consts.TASK_YAML + ".bak");
+            Files.deleteIfExists(yamlFileBak);
+            if (Files.exists(taskYaml)) {
+                Files.move(taskYaml, yamlFileBak);
             }
         }
 
         try {
-            FileUtils.write(taskYaml, ProcessorTaskUtils.toString(task), StandardCharsets.UTF_8, false);
+            Files.writeString(taskYaml, ProcessorTaskUtils.toString(task), StandardCharsets.UTF_8, READ, WRITE, APPEND, TRUNCATE_EXISTING, SYNC);
         } catch (IOException e) {
-            String es = "#713.200 Error while writing to file: " + taskYaml.getPath();
+            String es = "#713.200 Error while writing to file: " + taskYaml.toAbsolutePath();
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
@@ -705,6 +705,7 @@ public class ProcessorTaskService {
         return taskDir;
     }
 
+    @SneakyThrows
     @Nullable
     public static Path prepareTaskSubDir(Path taskDir, String subDir) {
         Path taskSubDir = taskDir.resolve(subDir);

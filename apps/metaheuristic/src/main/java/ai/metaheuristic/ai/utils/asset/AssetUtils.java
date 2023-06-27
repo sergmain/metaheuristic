@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -45,6 +44,7 @@ public class AssetUtils {
         return prepareAssetFile(rootDir, dataId, null, ConstsApi.ARTIFACTS_DIR);
     }
 
+    @SneakyThrows
     public static AssetFile fromFile(Path file) {
         final AssetFile assetFile = new AssetFile();
         assetFile.file = file;

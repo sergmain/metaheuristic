@@ -25,13 +25,11 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -132,10 +130,15 @@ public class LocalGitSourcingService {
         final String resId = functionCode.replace(':', '_');
         final Path resDir = trgDir.resolve(resId);
         log.info("Resource dir: {}, exist: {}", resDir.toAbsolutePath(), Files.exists(resDir) );
-        if (Files.notExists(resDir)!resDir.exists() && !resDir.mkdirs()) {
-            assetFile.isError = true;
-            log.error("#027.040 Can't create resource dir: {}", resDir.getAbsolutePath());
-            return assetFile;
+        if (Files.notExists(resDir)) {
+            try {
+                Files.createDirectories(resDir);
+            }
+            catch (IOException e) {
+                assetFile.isError = true;
+                log.error("#027.040 Can't create resource dir: {}", resDir.toAbsolutePath());
+                return assetFile;
+            }
         }
         assetFile.file = resDir;
         return assetFile;
@@ -220,6 +223,7 @@ public class LocalGitSourcingService {
         return new ExecResult(repoDir, new FunctionApiData.SystemExecResult(null, true, 0, "" ), true, null);
     }
 
+    @SneakyThrows
     public static ExecResult tryToRepairRepo(Path functionDir, KbData.KbGit git, GitContext gitContext) {
         Path repoDir = functionDir.resolve(Consts.REPO);
         ExecResult result;
@@ -233,7 +237,7 @@ public class LocalGitSourcingService {
         return result;
     }
 
-    private static ExecResult execFileSystemCheck(File repoDir, Globals.Git git, GitContext gitContext) {
+    private static ExecResult execFileSystemCheck(Path repoDir, Globals.Git git, GitContext gitContext) {
 //git>git fsck --full
 //Checking object directories: 100% (256/256), done.
 //Checking objects: 100% (10432/10432), done.
@@ -241,38 +245,38 @@ public class LocalGitSourcingService {
 //fatal: index file corrupt
 
         // git fsck --full
-        ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", git.commit), gitContext.withTimeout(0L));
+        ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "checkout", git.commit), gitContext.withTimeout(0L));
         return result;
     }
 
-    private static ExecResult execCheckoutRevision(File repoDir, KbData.KbGit git, GitContext gitContext) {
+    private static ExecResult execCheckoutRevision(Path repoDir, KbData.KbGit git, GitContext gitContext) {
         // git checkout sha1
-        ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", git.getCommit()), gitContext.withTimeout(0L));
+        ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "checkout", git.getCommit()), gitContext.withTimeout(0L));
         return result;
     }
 
-    private static ExecResult execPullOrigin(File repoDir, KbData.KbGit git, GitContext gitContext) {
+    private static ExecResult execPullOrigin(Path repoDir, KbData.KbGit git, GitContext gitContext) {
         // pull origin master
-        ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "pull", "origin", git.getBranch()), gitContext.withTimeout(0L));
+        ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "pull", "origin", git.getBranch()), gitContext.withTimeout(0L));
         return result;
     }
 
-    private static ExecResult execCleanDF(File repoDir, GitContext gitContext) {
+    private static ExecResult execCleanDF(Path repoDir, GitContext gitContext) {
         // git clean -df
-        ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "clean", "-df"), gitContext.withTimeout(120L));
+        ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "clean", "-df"), gitContext.withTimeout(120L));
         return result;
     }
 
-    private static ExecResult execRevParse(File repoDir, GitContext gitContext) {
+    private static ExecResult execRevParse(Path repoDir, GitContext gitContext) {
         // git rev-parse --is-inside-work-tree
-        ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "rev-parse", "--is-inside-work-tree"), gitContext.withTimeout(60L));
+        ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "rev-parse", "--is-inside-work-tree"), gitContext.withTimeout(60L));
         return result;
     }
 
     // TODO 2019-05-11 add this before checkout for new changes
-    private static ExecResult execResetHardHead(File repoDir, GitContext gitContext) {
+    private static ExecResult execResetHardHead(Path repoDir, GitContext gitContext) {
         // git reset --hard HEAD
-        ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "reset", "--hard", "HEAD"), gitContext.withTimeout(120L));
+        ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "reset", "--hard", "HEAD"), gitContext.withTimeout(120L));
         return result;
     }
 

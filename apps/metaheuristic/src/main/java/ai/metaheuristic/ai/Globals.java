@@ -596,7 +596,7 @@ public class Globals {
                 log.warn("Error of getting ulimit");
                 log.warn("\tresult.ok: {}",  result.ok);
                 log.warn("\tresult.error: {}",  result.error);
-                log.warn("\tresult.functionDir: {}",  result.functionDir !=null ? result.functionDir.getPath() : null);
+                log.warn("\tresult.functionDir: {}",  result.functionDir !=null ? result.functionDir : null);
                 log.warn("\tresult.systemExecResult: {}",  result.systemExecResult);
                 return;
             }

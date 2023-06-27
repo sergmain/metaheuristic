@@ -18,7 +18,8 @@ package ai.metaheuristic.ai.processor.actors;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.data.DispatcherData;
-import ai.metaheuristic.ai.processor.*;
+import ai.metaheuristic.ai.processor.DispatcherContextInfoHolder;
+import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.function.ChecksumAndSignatureService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
@@ -57,6 +58,7 @@ import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.UUID;
 
 @Service
@@ -130,8 +132,8 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
 
                     final String targetUrl = assetManager.url + Consts.REST_ASSET_URL + "/function";
 
-                    String mask = assetFile.file.getName() + ".%s.tmp";
-                    File dir = assetFile.file.getParentFile();
+                    String mask = assetFile.file.getFileName().toString() + ".%s.tmp";
+                    File dir = assetFile.file.toFile().getParentFile();
                     EnumsApi.FunctionState functionState = EnumsApi.FunctionState.none;
                     int idx = 0;
                     do {
@@ -269,11 +271,13 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
 
                     DownloadUtils.combineParts(assetFile, functionTempFile, idx);
 
-                    if (!functionTempFile.renameTo(assetFile.file)) {
-                        log.warn("#811.138 Can't rename file {} to file {}", functionTempFile.getPath(), assetFile.file.getPath());
+                    try {
+                        Files.move(functionTempFile.toPath(), assetFile.file);
+                    }
+                    catch (IOException e) {
+                        log.warn("#811.138 Can't rename file {} to file {}", functionTempFile.getPath(), assetFile.file);
                         return;
                     }
-
                 } catch (HttpResponseException e) {
                     logError(functionCode, e);
                 } catch (SocketTimeoutException e) {
@@ -288,18 +292,18 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                     log.error("#811.165 Throwable", th);
                 }
             }
-            if (!assetFile.getFile().exists()) {
-                log.error("#811.180 assetManager file {} is missing", assetFile.getFile().getAbsolutePath());
+            if (Files.notExists(assetFile.file)) {
+                log.error("#811.180 assetManager file {} is missing", assetFile.file.toAbsolutePath());
                 continue;
             }
             ChecksumAndSignatureData.ChecksumWithSignatureInfo state = MetadataParams.prepareChecksumWithSignature(functionConfigAndStatus.functionConfig);
 
             CheckSumAndSignatureStatus status;
             try {
-                status = checksumAndSignatureService.getCheckSumAndSignatureStatus(assetManagerUrl, assetManager, functionCode, state, assetFile.getFile());
+                status = checksumAndSignatureService.getCheckSumAndSignatureStatus(assetManagerUrl, assetManager, functionCode, state, assetFile.file);
             } catch (IOException e) {
                 log.error("#811.185 Error in getCheckSumAndSignatureStatus(),functionCode: {},  assetManager file {}, error: {}",
-                        functionCode, assetFile.getFile().getAbsolutePath(), e.toString());
+                        functionCode, assetFile.getFile().toAbsolutePath(), e.toString());
                 processorEnvironment.metadataService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.io_error);
                 continue;
             }
@@ -313,7 +317,12 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 else {
                     processorEnvironment.metadataService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.signature_wrong);
                 }
-                assetFile.file.delete();
+                try {
+                    Files.deleteIfExists(assetFile.file);
+                }
+                catch (IOException e) {
+                    //
+                }
             }
         }
     }

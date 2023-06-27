@@ -31,7 +31,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -79,7 +80,7 @@ public class GitSourcingService {
             log.warn("#027.010 Error of getting git status");
             log.warn("\tresult.ok: {}",  result.ok);
             log.warn("\tresult.error: {}",  result.error);
-            log.warn("\tresult.functionDir: {}",  result.functionDir !=null ? result.functionDir.getPath() : null);
+            log.warn("\tresult.functionDir: {}",  result.functionDir !=null ? result.functionDir.toAbsolutePath() : null);
             log.warn("\tresult.systemExecResult: {}",  result.systemExecResult);
             return new GitStatusInfo(Enums.GitStatus.error, null, "#027.010 Error: " + result.error);
         }
@@ -97,22 +98,32 @@ public class GitSourcingService {
         return SystemProcessLauncher.execCmd(gitVersionCmd, timeout, globals.processor.taskConsoleOutputMaxLines);
     }
 
-    private static AssetFile prepareFunctionDir(final File resourceDir, String functionCode) {
+    private static AssetFile prepareFunctionDir(final Path resourceDir, String functionCode) {
         final AssetFile assetFile = new AssetFile();
-        final File trgDir = new File(resourceDir, EnumsApi.DataType.function.toString());
-        log.info("Target dir: {}, exist: {}", trgDir.getAbsolutePath(), trgDir.exists() );
-        if (!trgDir.exists() && !trgDir.mkdirs()) {
-            assetFile.isError = true;
-            log.error("#027.030 Can't create function dir: {}", trgDir.getAbsolutePath());
-            return assetFile;
+        final Path trgDir = resourceDir.resolve(EnumsApi.DataType.function.toString());
+        log.info("Target dir: {}, exist: {}", trgDir.toAbsolutePath(), Files.exists(trgDir));
+        if (Files.notExists(trgDir)) {
+            try {
+                Files.createDirectories(trgDir);
+            }
+            catch (IOException e) {
+                assetFile.isError = true;
+                log.error("#027.030 Can't create function dir: {}", trgDir.toAbsolutePath());
+                return assetFile;
+            }
         }
         final String resId = functionCode.replace(':', '_');
-        final File resDir = new File(trgDir, resId);
-        log.info("Resource dir: {}, exist: {}", resDir.getAbsolutePath(), resDir.exists() );
-        if (!resDir.exists() && !resDir.mkdirs()) {
-            assetFile.isError = true;
-            log.error("#027.040 Can't create resource dir: {}", resDir.getAbsolutePath());
-            return assetFile;
+        final Path resDir = trgDir.resolve(resId);
+        log.info("Resource dir: {}, exist: {}", resDir.toAbsolutePath(), Files.exists(resDir) );
+        if (Files.notExists(resDir)) {
+            try {
+                Files.createDirectories(resDir);
+            }
+            catch (IOException e) {
+                assetFile.isError = true;
+                log.error("#027.040 Can't create resource dir: {}", resDir.toAbsolutePath());
+                return assetFile;
+            }
         }
         assetFile.file = resDir;
         return assetFile;
@@ -121,17 +132,17 @@ public class GitSourcingService {
     public SystemProcessLauncher.ExecResult prepareFunction(final Path resourceDir, TaskParamsYaml.FunctionConfig functionConfig) {
 
         log.info("#027.050 Start preparing function dir");
-        AssetFile assetFile = prepareFunctionDir(resourceDir.toFile(), functionConfig.code);
+        AssetFile assetFile = prepareFunctionDir(resourceDir, functionConfig.code);
         log.info("#027.060 assetFile.isError: {}" , assetFile.isError);
         if (assetFile.isError) {
             return new SystemProcessLauncher.ExecResult(null,false, "#027.060 Can't create dir for function " + functionConfig.code);
         }
 
-        File functionDir = assetFile.file;
-        File repoDir = new File(functionDir, "git");
-        log.info("#027.070 Target dir: {}, exist: {}", repoDir.getAbsolutePath(), repoDir.exists() );
+        Path functionDir = assetFile.file;
+        Path repoDir = functionDir.resolve("git");
+        log.info("#027.070 Target dir: {}, exist: {}", repoDir.toAbsolutePath(), Files.exists(repoDir) );
 
-        if (!repoDir.exists()) {
+        if (Files.notExists(repoDir)) {
             SystemProcessLauncher.ExecResult result = execClone(functionDir, functionConfig);
             log.info("#027.080 Result of cloning repo: {}", result.toString());
             if (!result.ok || !result.systemExecResult.isOk()) {
@@ -194,25 +205,30 @@ public class GitSourcingService {
         if (!result.systemExecResult.isOk) {
             return new SystemProcessLauncher.ExecResult(null,false, result.systemExecResult.console);
         }
-        log.info("#027.160 repoDir: {}, exist: {}", repoDir.getAbsolutePath(), repoDir.exists());
+        log.info("#027.160 repoDir: {}, exist: {}", repoDir.toAbsolutePath(), Files.exists(repoDir));
 
         return new SystemProcessLauncher.ExecResult(repoDir, new FunctionApiData.SystemExecResult(functionConfig.code, true, 0, "" ), true, null);
     }
 
-    public SystemProcessLauncher.ExecResult tryToRepairRepo(File functionDir, TaskParamsYaml.FunctionConfig functionConfig) {
-        File repoDir = new File(functionDir, "git");
+    public SystemProcessLauncher.ExecResult tryToRepairRepo(Path functionDir, TaskParamsYaml.FunctionConfig functionConfig) {
+        Path repoDir = functionDir.resolve("git");
         SystemProcessLauncher.ExecResult result;
-        FileUtils.deleteQuietly(repoDir);
-        if (repoDir.exists()) {
+        try {
+            Files.deleteIfExists(repoDir);
+        }
+        catch (IOException e) {
+            //
+        }
+        if (Files.exists(repoDir)) {
             return new SystemProcessLauncher.ExecResult(null,
                     false,
-                    "#027.170 Function "+functionConfig.code+", can't prepare repo dir for function: " + repoDir.getAbsolutePath());
+                    "#027.170 Function "+functionConfig.code+", can't prepare repo dir for function: " + repoDir.toAbsolutePath());
         }
         result = execClone(functionDir, functionConfig);
         return result;
     }
 
-    private SystemProcessLauncher.ExecResult execFileSystemCheck(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
+    private SystemProcessLauncher.ExecResult execFileSystemCheck(Path repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
 //git>git fsck --full
 //Checking object directories: 100% (256/256), done.
 //Checking objects: 100% (10432/10432), done.
@@ -220,38 +236,38 @@ public class GitSourcingService {
 //fatal: index file corrupt
 
         // git fsck --full
-        SystemProcessLauncher.ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", functionConfig.git.commit),0L);
+        SystemProcessLauncher.ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "checkout", functionConfig.git.commit),0L);
         return result;
     }
 
-    private SystemProcessLauncher.ExecResult execCheckoutRevision(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
+    private SystemProcessLauncher.ExecResult execCheckoutRevision(Path repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
         // git checkout sha1
-        SystemProcessLauncher.ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", functionConfig.git.commit),0L);
+        SystemProcessLauncher.ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "checkout", functionConfig.git.commit),0L);
         return result;
     }
 
-    private SystemProcessLauncher.ExecResult execPullOrigin(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
+    private SystemProcessLauncher.ExecResult execPullOrigin(Path repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
         // pull origin master
-        SystemProcessLauncher.ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "pull", "origin", functionConfig.git.branch),0L);
+        SystemProcessLauncher.ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "pull", "origin", functionConfig.git.branch),0L);
         return result;
     }
 
-    private SystemProcessLauncher.ExecResult execCleanDF(File repoDir) {
+    private SystemProcessLauncher.ExecResult execCleanDF(Path repoDir) {
         // git clean -df
-        SystemProcessLauncher.ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "clean", "-df"),120L);
+        SystemProcessLauncher.ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "clean", "-df"),120L);
         return result;
     }
 
-    private SystemProcessLauncher.ExecResult execRevParse(File repoDir) {
+    private SystemProcessLauncher.ExecResult execRevParse(Path repoDir) {
         // git rev-parse --is-inside-work-tree
-        SystemProcessLauncher.ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "rev-parse", "--is-inside-work-tree"),60L);
+        SystemProcessLauncher.ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "rev-parse", "--is-inside-work-tree"),60L);
         return result;
     }
 
     // TODO 2019-05-11 add this before checkout for new changes
-    private SystemProcessLauncher.ExecResult execResetHardHead(File repoDir) {
+    private SystemProcessLauncher.ExecResult execResetHardHead(Path repoDir) {
         // git reset --hard HEAD
-        SystemProcessLauncher.ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "reset", "--hard", "HEAD"),120L);
+        SystemProcessLauncher.ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "reset", "--hard", "HEAD"),120L);
         return result;
     }
 
@@ -260,12 +276,12 @@ public class GitSourcingService {
         return execGitCmd(cmd, timeout);
     }
 
-    private SystemProcessLauncher.ExecResult execClone(File repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
+    private SystemProcessLauncher.ExecResult execClone(Path repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
         // git -C <path> clone <git-repo-url> git
 
         String mirror = processorEnvironment.envParams.getEnvParamsYaml().mirrors.get(functionConfig.git.repo);
         String gitUrl = mirror!=null ? mirror : functionConfig.git.repo;
-        List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "clone", gitUrl, "git");
+        List<String> cmd = List.of("git", "-C", repoDir.toAbsolutePath().toString(), "clone", gitUrl, "git");
         log.info("exec {}", cmd);
         SystemProcessLauncher.ExecResult result = execGitCmd(cmd, 0L);
         return result;

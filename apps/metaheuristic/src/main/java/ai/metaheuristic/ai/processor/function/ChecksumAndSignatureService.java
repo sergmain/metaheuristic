@@ -28,10 +28,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * @author Serge
@@ -48,9 +48,9 @@ public class ChecksumAndSignatureService {
 
     public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
             ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager asset,
-            String functionCode, ChecksumAndSignatureData.ChecksumWithSignatureInfo checksumState, File functionFile) throws IOException {
+            String functionCode, ChecksumAndSignatureData.ChecksumWithSignatureInfo checksumState, Path functionFile) throws IOException {
 
-        try (FileInputStream fis = new FileInputStream(functionFile)) {
+        try (InputStream fis = Files.newInputStream(functionFile)) {
             return getCheckSumAndSignatureStatus(assetManagerUrl, asset, functionCode, checksumState, fis);
         }
     }
