@@ -368,12 +368,12 @@ public class VariableTxService {
                 String variableName = VariableUtils.getNameForVariableInArray();
 
                 try {
-                    FileInputStream fis = new FileInputStream(f.file);
+                    InputStream fis = Files.newInputStream(f.file);
                     eventPublisher.publishEvent(new ResourceCloseTxEvent(fis));
-                    Variable v = createInitialized(fis, f.file.length(), variableName, f.originName, execContextId, currTaskContextId, EnumsApi.VariableType.unknown);
+                    Variable v = createInitialized(fis, Files.size(f.file), variableName, f.originName, execContextId, currTaskContextId, EnumsApi.VariableType.unknown);
                     variableHolders.add(new VariableUtils.VariableHolder(v));
                 }
-                catch (FileNotFoundException e) {
+                catch (IOException e) {
                     ExceptionUtils.rethrow(e);
                 }
             }

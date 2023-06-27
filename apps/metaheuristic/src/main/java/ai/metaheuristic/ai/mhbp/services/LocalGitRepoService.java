@@ -63,7 +63,7 @@ public class LocalGitRepoService {
         if (Files.notExists(p)) {
             Files.createDirectories(p);
         }
-        SystemProcessLauncher.ExecResult execResult = prepareRepo(p.toFile(), git, gitContext);
+        SystemProcessLauncher.ExecResult execResult = prepareRepo(p, git, gitContext);
         return execResult;
     }
 }

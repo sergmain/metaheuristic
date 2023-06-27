@@ -195,7 +195,7 @@ public class KbService {
                     throw new IllegalStateException();
                 }
                 final String asString = JsonUtils.getMapper().writeValueAsString(execResult);
-                Chapters chapters = OpenaiJsonReader.read(kb.id, execResult.functionDir.toPath(), kbParams.kb.git);
+                Chapters chapters = OpenaiJsonReader.read(kb.id, execResult.functionDir, kbParams.kb.git);
                 storePrompts(chapters, event.companyId(), event.accountId());
             }
         }

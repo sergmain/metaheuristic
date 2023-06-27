@@ -37,7 +37,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -256,13 +255,13 @@ public class OpenaiJsonReaderTest {
         assertNotNull(result.systemExecResult);
         assertTrue(result.systemExecResult.isOk);
         assertNotNull(result.functionDir);
-        assertTrue(result.functionDir.exists());
+        assertTrue(Files.exists(result.functionDir));
 
-        File f = new File(result.functionDir, "pom.xml");
-        assertTrue(f.exists());
-        assertTrue(f.isFile());
+        Path f = result.functionDir.resolve("pom.xml");
+        assertTrue(Files.exists(f));
+        assertTrue(Files.isRegularFile(f));
 
-        QuestionData.Chapters chapters = OpenaiJsonReader.read(10L, result.functionDir.toPath(), kbParams.kb.git);
+        QuestionData.Chapters chapters = OpenaiJsonReader.read(10L, result.functionDir, kbParams.kb.git);
 
         assertEquals(1, chapters.chapters.size());
         assertEquals("math/simple-math.jsonl", chapters.chapters.get(0).chapterCode());
