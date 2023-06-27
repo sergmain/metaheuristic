@@ -23,7 +23,6 @@ import lombok.SneakyThrows;
 import org.springframework.lang.Nullable;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
@@ -113,10 +112,6 @@ public final class WW2003DocumentUtils {
 
     static Optional<LocalDate> parseDateOptional(String str) {
         return Optional.of(LocalDate.parse(str, Consts.DATE_TIME_FORMATTER));
-    }
-
-    public static void writeWW2003Document(File dumpFile, WW2003Document ww2003Document) {
-        writeWW2003Document(dumpFile.toPath(), ww2003Document);
     }
 
     public static void writeWW2003Document(Path dumpFile, WW2003Document ww2003Document) {

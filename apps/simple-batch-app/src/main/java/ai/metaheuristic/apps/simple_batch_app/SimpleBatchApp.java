@@ -26,14 +26,13 @@ import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -69,8 +68,8 @@ public class SimpleBatchApp implements CommandLineRunner {
             throw new RuntimeException(message);
         }
 
-        File yamlFile = new File(args[0]);
-        String config = FileUtils.readFileToString(yamlFile, "utf-8");
+        Path yamlFile = Path.of(args[0]);
+        String config = Files.readString(yamlFile, StandardCharsets.UTF_8);
         System.out.println("Yaml config file:\n"+config);
 
         TaskFileParamsYaml params = TaskFileParamsYamlUtils.BASE_YAML_UTILS.to(config);
@@ -82,7 +81,7 @@ public class SimpleBatchApp implements CommandLineRunner {
         TaskFileParamsYaml.InputVariable arrayVariable = params.task.inputs.get(0);
 
         VariableArrayParamsYaml.Variable variable = TaskFileParamsUtils.getInputVariablesAsArray(params, arrayVariable).array.get(0);
-        File sourceFile = Path.of(params.task.workingPath, variable.dataType.toString(), variable.id).toFile();
+        Path sourceFile = Path.of(params.task.workingPath, variable.dataType.toString(), variable.id);
 
 
         Map<String, List<TaskFileParamsYaml.OutputVariable>> processedVars = getOutputVariableForType(params, List.of("processed-file-type-1", "processed-file-type-2"));
@@ -102,16 +101,16 @@ public class SimpleBatchApp implements CommandLineRunner {
         System.out.println("processingStatusFilename: " + processingStatusFilename);
         System.out.println("mappingFilename: " + mappingFilename);
 
-        File artifactDir = Path.of(params.task.workingPath, ConstsApi.ARTIFACTS_DIR).toFile();
+        Path artifactDir = Path.of(params.task.workingPath, ConstsApi.ARTIFACTS_DIR);
 
-        File processedFile1 = new File(artifactDir, processedFilename1);
-        File processedFile2 = new File(artifactDir, processedFilename2);
-        File processingStatusFile = new File(artifactDir, processingStatusFilename);
-        File mappingFile = new File(artifactDir, mappingFilename);
+        Path processedFile1 = artifactDir.resolve(processedFilename1);
+        Path processedFile2 = artifactDir.resolve(processedFilename2);
+        Path processingStatusFile = artifactDir.resolve(processingStatusFilename);
+        Path mappingFile = artifactDir.resolve(mappingFilename);
 
-        FileUtils.copyFile(sourceFile, processedFile1);
-        FileUtils.write(processingStatusFile, "File "+variable.filename +" was processed successfully", StandardCharsets.UTF_8);
-        FileUtils.write(processedFile2, "File processedFile2 was processed successfully", StandardCharsets.UTF_8);
+        Files.copy(sourceFile, processedFile1);
+        Files.writeString(processingStatusFile, "File "+variable.filename +" was processed successfully", StandardCharsets.UTF_8);
+        Files.writeString(processedFile2, "File processedFile2 was processed successfully", StandardCharsets.UTF_8);
 
         BatchItemMappingYaml bimy = new BatchItemMappingYaml();
         bimy.targetDir = S.b(variable.filename) ? "dir-" + variable.id : StrUtils.getName(variable.filename);
@@ -120,7 +119,7 @@ public class SimpleBatchApp implements CommandLineRunner {
         bimy.filenames.put(processingStatusVar.id, S.b(variable.filename) ? "status.txt" : "status-for-" + StrUtils.getName(variable.filename)+".txt");
 
         String mapping = BatchItemMappingYamlUtils.BASE_YAML_UTILS.toString(bimy);
-        FileUtils.write(mappingFile, mapping, StandardCharsets.UTF_8);
+        Files.writeString(mappingFile, mapping, StandardCharsets.UTF_8);
     }
 
 }

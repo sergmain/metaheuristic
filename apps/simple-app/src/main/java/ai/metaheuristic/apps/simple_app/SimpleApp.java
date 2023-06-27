@@ -20,14 +20,13 @@ import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -62,15 +61,15 @@ public class SimpleApp implements CommandLineRunner {
             throw new RuntimeException(message);
         }
 
-        File yamlFile = new File(args[0]);
-        String config = FileUtils.readFileToString(yamlFile, "utf-8");
+        Path yamlFile = Path.of(args[0]);
+        String config = Files.readString(yamlFile, StandardCharsets.UTF_8);
         System.out.println("Yaml config file:\n"+config);
 
         TaskFileParamsYaml params = TaskFileParamsYamlUtils.BASE_YAML_UTILS.to(config);
 
         List<String> inputFiles = params.task.inputs
                 .stream()
-                .map(o->o.id.toString())
+                .map(o-> o.id)
                 .collect(Collectors.toList());
         System.out.println("input files: " + inputFiles);
 
@@ -83,8 +82,8 @@ public class SimpleApp implements CommandLineRunner {
 
         System.out.println("output filename: " + outputFilename);
 
-        File outputFile = Path.of(params.task.workingPath, ConstsApi.ARTIFACTS_DIR, outputFilename).toFile();
-        FileUtils.write(outputFile, inputFiles.isEmpty() ? "No files were provided" : inputFiles.toString(), StandardCharsets.UTF_8);
+        Path outputFile = Path.of(params.task.workingPath, ConstsApi.ARTIFACTS_DIR, outputFilename);
+        Files.writeString(outputFile, inputFiles.isEmpty() ? "No files were provided" : inputFiles.toString(), StandardCharsets.UTF_8);
     }
 
 }

@@ -48,9 +48,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +72,7 @@ public class ProcessorService {
 
 //    @Value("${logging.file.name:#{null}}")
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('logging.file.name' )) }")
-    public File logFile;
+    public Path logFile;
 
     KeepAliveRequestParamYaml.ProcessorStatus produceReportProcessorStatus(DispatcherSchedule schedule) {
 
@@ -85,7 +85,7 @@ public class ProcessorService {
                 gitSourcingService.gitStatusInfo,
                 schedule.asString,
                 "[unknown]", "[unknown]",
-                logFile!=null && logFile.exists(),
+                logFile!=null && Files.exists(logFile),
                 TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(),
                 globals.os, globals.processorPath.toAbsolutePath().toString(), null);
 

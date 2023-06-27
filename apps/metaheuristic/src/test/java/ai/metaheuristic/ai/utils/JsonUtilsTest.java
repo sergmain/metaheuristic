@@ -17,12 +17,15 @@
 package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.api.data.BaseDataClass;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.junit.jupiter.api.Test;
+import org.springframework.lang.Nullable;
 
 import java.util.List;
 
@@ -43,6 +46,15 @@ public class JsonUtilsTest {
     @AllArgsConstructor
     public static class SimpleList extends BaseDataClass {
         public List<SimpleItem> items;
+
+        @JsonCreator
+        public SimpleList(@JsonProperty("items") List<SimpleItem> items,
+                          @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+                          @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.items = items;
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     public static final SimpleList SIMPLE_LIST;

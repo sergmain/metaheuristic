@@ -22,9 +22,10 @@ import org.springframework.lang.Nullable;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Iterator;
 
 /**
@@ -35,8 +36,8 @@ import java.util.Iterator;
 @Slf4j
 public class ImageUtils {
 
-    public static ImageData.ImageFullInfo getImageInfo(File workingDir, String imageMagicExec, File inputFile) throws IOException, InterruptedException {
-        File consoleLogFile = File.createTempFile("image-converter-console-", ".log", workingDir);
+    public static ImageData.ImageFullInfo getImageInfo(Path workingDir, String imageMagicExec, Path inputFile) throws IOException, InterruptedException {
+        Path consoleLogFile = Files.createTempFile(workingDir, "image-converter-console-", ".log");
 
         ImageData.ImageFullInfo[] fullInfo = new ImageData.ImageFullInfo[]{new ImageData.ImageFullInfo()};
         return fullInfo[0];

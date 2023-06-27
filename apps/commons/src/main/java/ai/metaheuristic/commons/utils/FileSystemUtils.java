@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.commons.utils;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
@@ -34,18 +33,17 @@ import static java.nio.file.StandardOpenOption.*;
 public class FileSystemUtils {
 
     public static void writeStringToFileWithSync(final Path file, final String data, final Charset charset) throws IOException {
-        // TODO P1 2022-04-24 change to modern usage with Path
-//        try (OutputStream out = Files.newOutputStream(file.toPath(), CREATE, WRITE, READ, TRUNCATE_EXISTING)) {
-        try (OutputStream out = Files.newOutputStream(file, SYNC, CREATE, WRITE, READ, TRUNCATE_EXISTING)) {
+        Files.writeString(file, data, charset, SYNC, CREATE, WRITE, TRUNCATE_EXISTING);
+/*
+        try (OutputStream out = Files.newOutputStream(file, SYNC, CREATE, WRITE, TRUNCATE_EXISTING)) {
             IOUtils.write(data, out, charset);
             out.flush();
-/*
-            final FileDescriptor fd = out.getFD();
-            if (fd.valid()) {
-                fd.sync();
-            }
-*/
+//            final FileDescriptor fd = out.getFD();
+//            if (fd.valid()) {
+//                fd.sync();
+//            }
         }
+*/
     }
 
     public static long copyFile(final File input, final OutputStream output) throws IOException {

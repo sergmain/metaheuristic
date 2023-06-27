@@ -29,7 +29,6 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -180,9 +179,8 @@ public class DispatcherLookupExtendedParams {
             DispatcherLookupParamsYaml dispatcherLookupConfig = DispatcherLookupParamsYamlUtils.BASE_YAML_UTILS.to(cfg);
 
             if (dispatcherLookupConfig == null) {
-                log.error("{} wasn't found or empty. path: {}{}{}",
-                        Consts.DISPATCHER_YAML_FILE_NAME, processorPath,
-                        File.separatorChar, Consts.DISPATCHER_YAML_FILE_NAME);
+                log.error("{} wasn't found or empty. path: {}/{}",
+                        Consts.DISPATCHER_YAML_FILE_NAME, processorPath, Consts.DISPATCHER_YAML_FILE_NAME);
                 throw new IllegalStateException("Processor isn't configured, dispatcher.yaml is empty or doesn't exist");
             }
             final Map<DispatcherUrl, DispatcherLookupExtended> map = new HashMap<>();

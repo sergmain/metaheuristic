@@ -13,32 +13,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.utils.asset;
 
-import lombok.Data;
+package ai.metaheuristic.commons.utils;
 
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
-@Data
-public class AssetFile {
-    public Path file;
-    public long fileLength;
-    public boolean isError;
-    public boolean isContent;
-    public boolean isExist;
-    public boolean provided = false;
-    public String error;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
-    @Override
-    public String toString() {
-        return "AssetFile{" +
-                "file=" + (file!=null ? file.getFileName()  : "null") +
-                ", fileLength=" + fileLength +
-                ", isError=" + isError +
-                ", isContent=" + isContent +
-                ", isExist=" + isExist +
-                ", isProvided=" + provided +
-                ", error=" + error +
-                '}';
+/**
+ * @author Sergio Lissner
+ * Date: 6/26/2023
+ * Time: 8:37 PM
+ */
+public class FileSystemUtilsTest {
+
+    @Test
+    public void test_writeStringToFileWithSync(@TempDir Path temp) {
+        final Path file = temp.resolve("test-file.txt");
+        final String data = "test string";
+
+        assertDoesNotThrow(()->FileSystemUtils.writeStringToFileWithSync(file, data, StandardCharsets.UTF_8));
     }
+
 }

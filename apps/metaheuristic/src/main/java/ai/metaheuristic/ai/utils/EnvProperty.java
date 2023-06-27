@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 
 public class EnvProperty {
 
@@ -75,15 +76,15 @@ public class EnvProperty {
         return max;
     }
 
-    public static @Nullable File toFile(@Nullable String dirAsString) {
+    public static @Nullable Path toFile(@Nullable String dirAsString) {
         if (StringUtils.isBlank(dirAsString)) {
             return null;
         }
 
         // special case for ./some-dir
         if (dirAsString.charAt(0) == '.' && (dirAsString.charAt(1) == '\\' || dirAsString.charAt(1) == '/')) {
-            return new File(dirAsString.substring(2));
+            return Path.of(dirAsString.substring(2));
         }
-        return new File(dirAsString);
+        return Path.of(dirAsString);
     }
 }

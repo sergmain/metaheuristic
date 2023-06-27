@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -275,8 +276,9 @@ public class SystemProcessLauncher {
     private static String readLastLines(int maxSize, Path consoleLogFile) throws IOException {
         LinkedList<String> lines = new LinkedList<>();
         String inputLine;
-        try (BufferedReader in = Files.newBufferedReader(consoleLogFile)) {
-            while ((inputLine = in.readLine()) != null) {
+        try (InputStream is = Files.newInputStream(consoleLogFile); InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8);
+                BufferedReader br = new BufferedReader(isr)) {
+            while ((inputLine = br.readLine()) != null) {
                 inputLine = inputLine.trim();
                 if (lines.size()==maxSize) {
                     lines.removeFirst();

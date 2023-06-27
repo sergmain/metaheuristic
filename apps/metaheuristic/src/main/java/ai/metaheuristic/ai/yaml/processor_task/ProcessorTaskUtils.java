@@ -19,8 +19,8 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Path;
 
 @Slf4j
 public class ProcessorTaskUtils {
@@ -41,7 +41,7 @@ public class ProcessorTaskUtils {
         return (ProcessorCoreTask) YamlUtils.to(is, getYaml());
     }
 
-    public static ProcessorCoreTask to(File file) {
+    public static ProcessorCoreTask to(Path file) {
         return (ProcessorCoreTask) YamlUtils.to(file, getYaml());
     }
 }

@@ -36,15 +36,14 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -92,25 +91,26 @@ public class ProcessorTaskService {
         int i=0;
     }
 
+    @SneakyThrows
     public void init(Path processorPath) {
         for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataService.getAllEnabledRefsForCores()) {
 
-            File processorDir = new File(processorPath.toFile(), core.coreCode);
-            File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
+            Path processorDir = processorPath.resolve(core.coreCode);
+            Path processorTaskDir = processorDir.resolve(Consts.TASK_DIR);
             String dispatcherCode = MetadataParams.asCode(core.dispatcherUrl);
-            File dispatcherDir = new File(processorTaskDir, dispatcherCode);
-            if (!dispatcherDir.exists()) {
-                dispatcherDir.mkdirs();
+            Path dispatcherDir = processorTaskDir.resolve(dispatcherCode);
+            if (Files.notExists(dispatcherDir)) {
+                Files.createDirectories(dispatcherDir);
             }
 
             try {
                 DispatcherUrl dispatcherUrl = core.dispatcherUrl;
 
                 // !!! do not remove try(Stream<Path>){}
-                try (final Stream<Path> pathStream = Files.list(dispatcherDir.toPath())) {
+                try (final Stream<Path> pathStream = Files.list(dispatcherDir)) {
                     pathStream.forEach(p -> {
-                        final File taskGroupDir = p.toFile();
-                        if (!taskGroupDir.isDirectory()) {
+                        final Path taskGroupDir = p;
+                        if (!Files.isDirectory(taskGroupDir)) {
                             return;
                         }
                         try {
@@ -118,32 +118,34 @@ public class ProcessorTaskService {
                             try (final Stream<Path> stream = Files.list(p)) {
                                 stream.forEach(s -> {
                                     isEmpty.set(false);
-                                    String groupDirName = taskGroupDir.getName();
-                                    final File currDir = s.toFile();
-                                    String name = currDir.getName();
+                                    String groupDirName = taskGroupDir.getFileName().toString();
+                                    final Path currDir = s;
+                                    String name = currDir.getFileName().toString();
                                     long taskId = Long.parseLong(groupDirName) * DigitUtils.DIV + Long.parseLong(name);
                                     log.info("Found dir of task with id: {}, {}, {}, {}", taskId, groupDirName, name, dispatcherUrl.url);
-                                    File taskYamlFile = new File(currDir, Consts.TASK_YAML);
-                                    if (!taskYamlFile.exists() || taskYamlFile.length() == 0L) {
-                                        deleteDir(currDir, "Delete not valid dir of task " + s + ", exist: " + taskYamlFile.exists() + ", length: " + taskYamlFile.length());
-                                        return;
-                                    }
-
-                                    try (FileInputStream fis = new FileInputStream(taskYamlFile)) {
-                                        ProcessorCoreTask task = ProcessorTaskUtils.to(fis);
-                                        if (S.b(task.dispatcherUrl)) {
-                                            deleteDir(currDir, "#713.005 Delete not valid dir of task " + s);
-                                            log.warn("#713.007 task #{} from dispatcher {} was deleted from disk because dispatcherUrl field was empty", taskId, dispatcherUrl);
+                                    Path taskYamlFile = currDir.resolve(Consts.TASK_YAML);
+                                    try {
+                                        if (Files.notExists(taskYamlFile) || Files.size(taskYamlFile)==0L) {
+                                            deleteDir(currDir, "Delete not valid dir of task " + s + ", exist: " + Files.exists(taskYamlFile) + ", length: " + Files.size(taskYamlFile));
                                             return;
                                         }
-                                        getTasksForProcessorCore(core).put(taskId, task);
 
-                                        // fix state of task
-                                        FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.getFunctionExecResult());
-                                        if (functionExec != null &&
-                                                ((functionExec.generalExec != null && !functionExec.exec.isOk) ||
-                                                        (functionExec.generalExec != null && !functionExec.generalExec.isOk))) {
-                                            markAsFinished(core, taskId, functionExec);
+                                        try (InputStream fis = Files.newInputStream(taskYamlFile)) {
+                                            ProcessorCoreTask task = ProcessorTaskUtils.to(fis);
+                                            if (S.b(task.dispatcherUrl)) {
+                                                deleteDir(currDir, "#713.005 Delete not valid dir of task " + s);
+                                                log.warn("#713.007 task #{} from dispatcher {} was deleted from disk because dispatcherUrl field was empty", taskId, dispatcherUrl);
+                                                return;
+                                            }
+                                            getTasksForProcessorCore(core).put(taskId, task);
+
+                                            // fix state of task
+                                            FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.getFunctionExecResult());
+                                            if (functionExec!=null &&
+                                                ((functionExec.generalExec!=null && !functionExec.exec.isOk) ||
+                                                 (functionExec.generalExec!=null && !functionExec.generalExec.isOk))) {
+                                                markAsFinished(core, taskId, functionExec);
+                                            }
                                         }
                                     }
                                     catch (IOException e) {
@@ -174,14 +176,12 @@ public class ProcessorTaskService {
         }
     }
 
-    public static void deleteDir(@NonNull File f, @NonNull String info) {
-        log.warn(info+", file: " + f.getAbsolutePath());
+    public static void deleteDir(@NonNull Path f, @NonNull String info) {
+        log.warn(info+", file: " + f.toAbsolutePath());
         try {
-            if (f.exists()) {
-                FileUtils.deleteDirectory(f);
-            }
+            Files.deleteIfExists(f);
         } catch (IOException e) {
-            log.warn("#713.060 Error while deleting dir {}, error: {}", f.getPath(), e.getMessage());
+            log.warn("#713.060 Error while deleting dir {}, error: {}", f, e.getMessage());
         }
     }
 
@@ -488,6 +488,7 @@ public class ProcessorTaskService {
         return getTasksForProcessorCore(core).values().stream().filter(o -> o.finishedOn!=null);
     }
 
+    @SneakyThrows
     public void createTask(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherCommParamsYaml.AssignedTask assignedTask) {
         try {
             ProcessorSyncHolder.writeLock.lock();
@@ -517,31 +518,30 @@ public class ProcessorTaskService {
                     .map(o->new ProcessorCoreTask.OutputStatus(o.id, false) )
                     .collect(Collectors.toCollection(()->task.output.outputStatuses));
 
-            File processorDir = new File(processorPath.toFile(), core.coreCode);
-            if (!processorDir.exists()) {
-                processorDir.mkdirs();
+            Path processorDir = processorPath.resolve(core.coreCode);
+            if (Files.notExists(processorDir)) {
+                Files.createDirectories(processorDir);
             }
-            File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
+            Path processorTaskDir = processorDir.resolve(Consts.TASK_DIR);
 
-            File dispatcherDir = new File(processorTaskDir, processorEnvironment.metadataService.processorStateByDispatcherUrl(core).dispatcherCode);
+            Path dispatcherDir = processorTaskDir.resolve(processorEnvironment.metadataService.processorStateByDispatcherUrl(core).dispatcherCode);
             String path = getTaskPath(assignedTask.taskId);
-            File taskDir = new File(dispatcherDir, path);
+            Path taskDir = dispatcherDir.resolve(path);
             try {
-                if (taskDir.exists()) {
+                if (Files.exists(taskDir)) {
                     try {
-                        FileUtils.deleteDirectory(taskDir);
+                        Files.deleteIfExists(taskDir);
                     }
                     catch (IOException e) {
-                        String es = "#713.140 Error while deleting a task dir: " + taskDir.getAbsolutePath();
+                        String es = "#713.140 Error while deleting a task dir: " + taskDir.toAbsolutePath();
                         log.error(es, e);
                         throw new RuntimeException(es, e);
                     }
                 }
-                taskDir.mkdirs();
-                //noinspection ResultOfMethodCallIgnored
-                taskDir.mkdirs();
-                File taskYamlFile = new File(taskDir, Consts.TASK_YAML);
-                FileUtils.write(taskYamlFile, ProcessorTaskUtils.toString(task), StandardCharsets.UTF_8, false);
+                Files.createDirectories(taskDir);
+//                taskDir.mkdirs();
+                Path taskYamlFile = taskDir.resolve(Consts.TASK_YAML);
+                Files.writeString(taskYamlFile, ProcessorTaskUtils.toString(task), StandardCharsets.UTF_8, CREATE, WRITE, TRUNCATE_EXISTING);
             } catch (Throwable th) {
                 String es = "#713.160 Error";
                 log.error(es, th);
@@ -587,6 +587,10 @@ public class ProcessorTaskService {
         Path taskDir = prepareTaskDir(core, task.taskId);
         Path taskYaml = taskDir.resolve(Consts.TASK_YAML);
 
+        return actualSave(task, taskDir, taskYaml);
+    }
+
+    public static ProcessorCoreTask actualSave(ProcessorCoreTask task, Path taskDir, Path taskYaml) throws IOException {
         if (Files.exists(taskYaml)) {
             log.trace("{} file exists. Make backup", taskYaml.toAbsolutePath());
             Path yamlFileBak = taskDir.resolve(Consts.TASK_YAML + ".bak");
@@ -597,7 +601,7 @@ public class ProcessorTaskService {
         }
 
         try {
-            Files.writeString(taskYaml, ProcessorTaskUtils.toString(task), StandardCharsets.UTF_8, READ, WRITE, APPEND, TRUNCATE_EXISTING, SYNC);
+            Files.writeString(taskYaml, ProcessorTaskUtils.toString(task), StandardCharsets.UTF_8, CREATE, WRITE, TRUNCATE_EXISTING, SYNC);
         } catch (IOException e) {
             String es = "#713.200 Error while writing to file: " + taskYaml.toAbsolutePath();
             log.error(es, e);
@@ -661,14 +665,14 @@ public class ProcessorTaskService {
         try {
             ProcessorSyncHolder.writeLock.lock();
             processorEnvironment.metadataService.removeQuota(core.dispatcherUrl.url, taskId);
-            final File processorDir = new File(processorPath.toFile(), core.coreCode);
-            final File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
-            final File dispatcherDir = new File(processorTaskDir, processorState.dispatcherCode);
+            final Path processorDir = processorPath.resolve(core.coreCode);
+            final Path processorTaskDir = processorDir.resolve(Consts.TASK_DIR);
+            final Path dispatcherDir = processorTaskDir.resolve(processorState.dispatcherCode);
 
             final String path = getTaskPath(taskId);
-            final File taskDir = new File(dispatcherDir, path);
+            final Path taskDir = dispatcherDir.resolve(path);
             try {
-                if (taskDir.exists()) {
+                if (Files.exists(taskDir)) {
                     deleteDir(taskDir, "delete dir in ProcessorTaskService.delete()");
                 }
                 Map<Long, ProcessorCoreTask> mapTask = getTasksForProcessorCore(core);
@@ -689,7 +693,7 @@ public class ProcessorTaskService {
 
     private static String getTaskPath(long taskId) {
         DigitUtils.Power power = DigitUtils.getPower(taskId);
-        return Long.toString(power.power7)+File.separatorChar+power.power4+File.separatorChar;
+        return Long.toString(power.power7) + File.separatorChar + power.power4 + File.separatorChar;
     }
 
     @SneakyThrows

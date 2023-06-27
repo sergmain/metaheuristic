@@ -30,10 +30,9 @@ import org.yaml.snakeyaml.nodes.NodeTuple;
 import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @Slf4j
 public class YamlUtils {
@@ -109,11 +108,11 @@ public class YamlUtils {
         return yaml.load(is);
     }
 
-    public static Object to(File file, Yaml yaml) {
-        try(FileInputStream fis =  new FileInputStream(file)) {
-            return yaml.load(fis);
+    public static Object to(Path file, Yaml yaml) {
+        try (InputStream is = Files.newInputStream(file); BufferedInputStream bis = new BufferedInputStream(is, 0x1000);) {
+            return yaml.load(bis);
         } catch (IOException e) {
             log.error("Error", e);
-            throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
+            throw new IllegalStateException("Error while loading file: " + file, e);
         }
     }}

@@ -20,8 +20,8 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Path;
 
 @Slf4j
 public class MetricsUtils {
@@ -46,7 +46,7 @@ public class MetricsUtils {
         return (Metrics) YamlUtils.to(is, getYaml());
     }
 
-    public static Metrics to(File file) {
+    public static Metrics to(Path file) {
         return (Metrics) YamlUtils.to(file, getYaml());
     }
 

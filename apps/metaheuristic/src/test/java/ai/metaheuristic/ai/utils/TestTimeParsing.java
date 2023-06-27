@@ -24,9 +24,9 @@ import lombok.Data;
 import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -63,7 +63,7 @@ public class TestTimeParsing {
             return (SimpleYamlHolder) YamlUtils.to(is, yaml);
         }
 
-        public static SimpleYamlHolder to(File file) {
+        public static SimpleYamlHolder to(Path file) {
             return (SimpleYamlHolder) YamlUtils.to(file, yaml);
         }
     }

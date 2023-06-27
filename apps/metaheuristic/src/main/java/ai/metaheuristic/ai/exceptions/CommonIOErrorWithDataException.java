@@ -16,8 +16,6 @@
 
 package ai.metaheuristic.ai.exceptions;
 
-import java.io.File;
-
 /**
  * @author Serge
  * Date: 8/29/2020

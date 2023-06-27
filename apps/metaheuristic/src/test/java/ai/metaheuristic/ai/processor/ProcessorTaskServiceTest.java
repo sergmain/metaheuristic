@@ -13,32 +13,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.utils.asset;
 
-import lombok.Data;
+package ai.metaheuristic.ai.processor;
+
+import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 
-@Data
-public class AssetFile {
-    public Path file;
-    public long fileLength;
-    public boolean isError;
-    public boolean isContent;
-    public boolean isExist;
-    public boolean provided = false;
-    public String error;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
-    @Override
-    public String toString() {
-        return "AssetFile{" +
-                "file=" + (file!=null ? file.getFileName()  : "null") +
-                ", fileLength=" + fileLength +
-                ", isError=" + isError +
-                ", isContent=" + isContent +
-                ", isExist=" + isExist +
-                ", isProvided=" + provided +
-                ", error=" + error +
-                '}';
+/**
+ * @author Sergio Lissner
+ * Date: 6/26/2023
+ * Time: 8:27 PM
+ */
+public class ProcessorTaskServiceTest {
+
+    @Test
+    public void test_actualSave(@TempDir Path temp) {
+        ProcessorCoreTask task = new ProcessorCoreTask();
+        Path taskDir = temp;
+
+        Path taskYaml = temp.resolve("taskYaml.yaml");
+        assertDoesNotThrow(()->ProcessorTaskService.actualSave(task, taskDir, taskYaml));
     }
 }

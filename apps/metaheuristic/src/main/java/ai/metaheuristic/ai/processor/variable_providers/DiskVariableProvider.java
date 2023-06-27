@@ -36,7 +36,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -127,7 +126,7 @@ public class DiskVariableProvider implements VariableProvider {
             ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.OutputVariable outputVariable, TaskParamsYaml.FunctionConfig functionConfig
     ) {
-        Path outputVariableFile = taskDir.resolve(ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariable.id);
+        Path outputVariableFile = taskDir.resolve(ConstsApi.ARTIFACTS_DIR).resolve(outputVariable.id.toString());
         if (Files.exists(outputVariableFile)) {
             log.info("The result variable #{} was already written to file {}, no need to upload to dispatcher", outputVariable.id, outputVariableFile.toAbsolutePath());
             processorTaskService.setVariableUploadedAndCompleted(core, task.taskId, outputVariable.id);

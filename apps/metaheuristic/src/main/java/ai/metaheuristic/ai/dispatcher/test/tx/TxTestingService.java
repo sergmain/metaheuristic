@@ -16,10 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.test.tx;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +27,6 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-
-import jakarta.persistence.EntityManager;
 
 /**
  * @author Serge
@@ -49,9 +44,6 @@ public class TxTestingService {
     private static final String AAA2 = AAA+AAA;
     private final TaskRepository taskRepository;
     private final TxTesting1Service txTesting1Service;
-    private final ExecContextCache execContextCache;
-    private final ExecContextRepository execContextRepository;
-    private final EntityManager em;
 
     @Transactional
     public TaskImpl create(Long execContextId, String params) {
@@ -202,27 +194,4 @@ public class TxTestingService {
         TaskImpl t1 = taskRepository.findById(id).orElseThrow(() -> new IllegalStateException("Task not found"));
     }
 
-    @Transactional
-    public void testDetachedInTx(Long execContextId) {
-        ExecContextImpl ec = execContextCache.findById(execContextId);
-        if (em.contains(ec)) {
-            throw new RuntimeException();
-        }
-    }
-
-    @Transactional
-    public void testDetachedInTxQueryNewTx(Long execContextId) {
-        ExecContextImpl ec = execContextRepository.findById(execContextId).orElse(null);
-        if (em.contains(ec)) {
-            throw new RuntimeException();
-        }
-    }
-
-    @Transactional
-    public void testDetachedInDetachManually(Long execContextId) {
-        ExecContextImpl ec = execContextCache.findById(execContextId, true);
-        if (em.contains(ec)) {
-            throw new RuntimeException();
-        }
-    }
 }

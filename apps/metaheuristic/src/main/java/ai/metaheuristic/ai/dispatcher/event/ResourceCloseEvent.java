@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.event;
 
-import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;

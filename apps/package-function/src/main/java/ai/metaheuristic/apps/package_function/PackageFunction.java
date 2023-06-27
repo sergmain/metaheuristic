@@ -29,11 +29,11 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
 import java.util.HashMap;
@@ -64,12 +64,12 @@ public class PackageFunction implements CommandLineRunner {
 
         PrivateKey privateKey = null;
         if (args.length>1) {
-            File privateKeyFile = new File(args[1]);
-            if (!privateKeyFile.exists()) {
-                System.out.println("Private key file wasn't found. File: " + args[1]);
+            Path privateKeyFile = Path.of(args[1]);
+            if (Files.notExists(privateKeyFile)) {
+                System.out.println("Private key file wasn't found. File: " + privateKeyFile);
                 return;
             }
-            String privateKeyStr = FileUtils.readFileToString(privateKeyFile, StandardCharsets.UTF_8);
+            String privateKeyStr = Files.readString(privateKeyFile, StandardCharsets.UTF_8);
             privateKey = SecUtils.getPrivateKey(privateKeyStr);
         }
 
@@ -87,9 +87,9 @@ public class PackageFunction implements CommandLineRunner {
 
         String tempDirName = args[0].substring(0, args[0].length() - ZIP_EXTENSION.length());
 
-        File targetDir = new File(tempDirName);
-        if (targetDir.exists()) {
-            System.out.println("Directory "+targetDir.getPath()+" already exists");
+        Path targetDir = Path.of(tempDirName);
+        if (Files.exists(targetDir)) {
+            System.out.println("Directory "+targetDir+" already exists");
             return;
         }
         String yamlContent = FileUtils.readFileToString(functionYamlFile, StandardCharsets.UTF_8);
@@ -144,9 +144,9 @@ public class PackageFunction implements CommandLineRunner {
                 sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, new ByteArrayInputStream(s.getBytes()));
             }
             else if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-                final File functionFile = new File(targetDir, functionConfig.file);
-                FileUtils.copyFile(new File(functionConfig.file), functionFile);
-                try (FileInputStream fis = new FileInputStream(functionFile)) {
+                final Path functionFile = targetDir.resolve(functionConfig.file);
+                Files.copy(Path.of(functionConfig.file), functionFile, StandardCopyOption.REPLACE_EXISTING);
+                try (InputStream fis = Files.newInputStream(functionFile)) {
                     sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, fis);
                 }
             }
@@ -165,11 +165,11 @@ public class PackageFunction implements CommandLineRunner {
         }
 
         String yaml = FunctionConfigListYamlUtils.BASE_YAML_UTILS.toString(functionConfigList);
-        final File file = new File(targetDir, FUNCTIONS_YAML);
-        FileUtils.writeStringToFile(file, yaml, StandardCharsets.UTF_8);
+        final Path file = targetDir.resolve(FUNCTIONS_YAML);
+        Files.writeString(file, yaml, StandardCharsets.UTF_8);
 
-        ZipUtils.createZip(targetDir.toPath(), targetZip.toPath());
-        FileUtils.deleteDirectory(targetDir);
+        ZipUtils.createZip(targetDir, targetZip.toPath());
+        Files.deleteIfExists(targetDir);
 
         System.out.println("All done.");
     }

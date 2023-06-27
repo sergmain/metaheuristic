@@ -20,7 +20,7 @@ import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import lombok.Data;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,13 +35,13 @@ public class BatchApiData {
     @Data
     public static class TaskVariables {
         public List<VariableArrayParamsYaml.Variable> inputVariables = new ArrayList<>();
-        public List<File> sourceFiles;
+        public List<Path> sourceFiles;
 
         public Map<String, List<TaskFileParamsYaml.OutputVariable>> processedVars;
         public TaskFileParamsYaml.OutputVariable processingStatusVar;
         public TaskFileParamsYaml.OutputVariable mappingVar;
 
-        public File processingStatusFile;
-        public File mappingFile;
+        public Path processingStatusFile;
+        public Path mappingFile;
     }
 }

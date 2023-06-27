@@ -19,8 +19,8 @@ import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Path;
 
 /**
  * @author Serge
@@ -45,7 +45,7 @@ public class DataStorageParamsUtils {
         return (DataStorageParams) YamlUtils.to(is, getYaml());
     }
 
-    public static DataStorageParams to(File file) {
+    public static DataStorageParams to(Path file) {
         return (DataStorageParams) YamlUtils.to(file, getYaml());
     }
 

@@ -23,7 +23,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.lang.Nullable;
 
-import java.io.File;
 import java.nio.file.Path;
 
 @Data

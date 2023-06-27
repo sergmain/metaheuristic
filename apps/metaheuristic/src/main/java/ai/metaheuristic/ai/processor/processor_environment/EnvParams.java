@@ -25,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -83,7 +82,7 @@ public class EnvParams {
 
         envYaml = EnvParamsYamlUtils.BASE_YAML_UTILS.to(env);
         if (envYaml==null) {
-            log.error("#747.060 env.yaml wasn't found or empty. path: {}{}env.yaml", processorPath, File.separatorChar );
+            log.error("#747.060 env.yaml wasn't found or empty. path: {}/env.yaml", processorPath);
             throw new IllegalStateException("#747.062 Processor isn't configured, env.yaml is empty or doesn't exist");
         }
         for (EnvParamsYaml.Env envForVerify : envYaml.envs) {

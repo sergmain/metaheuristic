@@ -37,12 +37,10 @@ import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -159,7 +157,7 @@ public class DispatcherVariableProvider implements VariableProvider {
             ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.OutputVariable outputVariable, TaskParamsYaml.FunctionConfig functionConfig) {
-        Path outputVariableFile = taskDir.resolve(ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariable.id);
+        Path outputVariableFile = taskDir.resolve(ConstsApi.ARTIFACTS_DIR).resolve(outputVariable.id.toString());
         if (Files.exists(outputVariableFile)) {
             log.info("Register task for uploading result data to server, resultDataFile: {}", outputVariableFile.toAbsolutePath());
             UploadVariableTask uploadVariableTask = new UploadVariableTask(task.taskId, outputVariableFile, outputVariable.id, core, dispatcher.dispatcherLookup);
@@ -184,7 +182,7 @@ public class DispatcherVariableProvider implements VariableProvider {
             ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, TaskParamsYaml.OutputVariable variable) {
 
-        Path resultDataFile = taskDir.resolve(ConstsApi.ARTIFACTS_DIR + File.separatorChar + variable.id);
+        Path resultDataFile = taskDir.resolve(ConstsApi.ARTIFACTS_DIR).resolve(variable.id.toString());
         return resultDataFile;
     }
 }
