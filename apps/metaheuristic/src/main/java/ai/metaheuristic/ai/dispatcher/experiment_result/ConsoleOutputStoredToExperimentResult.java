@@ -21,6 +21,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.nio.file.Path;
 import java.util.Collections;
 
 @Data
@@ -39,9 +40,9 @@ public class ConsoleOutputStoredToExperimentResult extends BaseDataClass {
         this.errorMessages = Collections.singletonList(errorMessage);
     }
 
-    public ConsoleOutputStoredToExperimentResult(File dumpOfConsoleOutputs) {
+    public ConsoleOutputStoredToExperimentResult(Path dumpOfConsoleOutputs) {
         this.dumpOfConsoleOutputs = dumpOfConsoleOutputs;
     }
 
-    public File dumpOfConsoleOutputs;
+    public Path dumpOfConsoleOutputs;
 }

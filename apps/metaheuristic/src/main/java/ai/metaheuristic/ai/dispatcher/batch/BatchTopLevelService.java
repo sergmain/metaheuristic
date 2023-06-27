@@ -252,7 +252,7 @@ public class BatchTopLevelService {
             return new BatchData.UploadingStatus("#981.040 name of uploaded file is blank");
         }
         // fix for the case when browser sends a full path, ie Edge
-        final String originFilename = new File(tempFilename).getName();
+        final String originFilename = Path.of(tempFilename).getFileName().toString();
 
         String extTemp = StrUtils.getExtension(originFilename);
         if (extTemp==null) {

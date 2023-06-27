@@ -142,7 +142,7 @@ public class BatchTxService {
     public static class PrepareZipData {
         public BatchStatusProcessor bs;
         public Task task;
-        public File zipDir;
+        public Path zipDir;
         public String mainDocument;
         public Long execContextId;
     }
