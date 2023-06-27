@@ -154,7 +154,7 @@ public class BatchSplitterTxService {
                         }).collect(Collectors.toList());
             }
             if (files.isEmpty()) {
-                log.error("#995.290 there isn't any files in dir {}", file.getAbsolutePath());
+                log.error("#995.290 there isn't any files in dir {}", file.toAbsolutePath());
                 return null;
             }
             variableDataSource = new VariableData.VariableDataSource(files);

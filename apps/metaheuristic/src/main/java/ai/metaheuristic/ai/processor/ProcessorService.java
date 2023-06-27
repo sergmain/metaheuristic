@@ -51,6 +51,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -177,7 +178,7 @@ public class ProcessorService {
             return Enums.ResendTaskOutputResourceStatus.TASK_NOT_FOUND;
         }
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-        File taskDir = processorTaskService.prepareTaskDir(core, taskId);
+        Path taskDir = processorTaskService.prepareTaskDir(core, taskId);
 
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
             if (!outputVariable.id.equals(variableId)) {
@@ -201,7 +202,7 @@ public class ProcessorService {
         return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
     }
 
-    private Enums.ResendTaskOutputResourceStatus scheduleSendingToDispatcher(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, File taskDir, TaskParamsYaml.OutputVariable outputVariable) {
+    private Enums.ResendTaskOutputResourceStatus scheduleSendingToDispatcher(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, Path taskDir, TaskParamsYaml.OutputVariable outputVariable) {
         final AssetFile assetFile = AssetUtils.prepareOutputAssetFile(taskDir, outputVariable.id.toString());
 
         // is this variable prepared?
@@ -232,7 +233,7 @@ public class ProcessorService {
 
     public ProcessorService.ResultOfChecking checkForPreparingVariables(
             ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
-            TaskParamsYaml taskParamYaml, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, File taskDir) {
+            TaskParamsYaml taskParamYaml, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, Path taskDir) {
         ProcessorService.ResultOfChecking result = new ProcessorService.ResultOfChecking();
         if (!core.dispatcherUrl.url.equals(task.dispatcherUrl)) {
             throw new IllegalStateException("(!core.dispatcherUrl.url.equals(task.dispatcherUrl))");
@@ -282,13 +283,13 @@ public class ProcessorService {
         return result;
     }
 
-    public boolean checkOutputResourceFile(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, File taskDir) {
+    public boolean checkOutputResourceFile(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, Path taskDir) {
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
             try {
                 VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(outputVariable.sourcing);
 
                 //noinspection unused
-                File outputResourceFile = resourceProvider.getOutputVariableFromFile(core, taskDir, dispatcher, task, outputVariable);
+                Path outputResourceFile = resourceProvider.getOutputVariableFromFile(core, taskDir, dispatcher, task, outputVariable);
             } catch (VariableProviderException e) {
                 final String msg = "#749.080 Error: " + e.getMessage();
                 log.error(msg, e);

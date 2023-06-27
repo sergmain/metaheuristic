@@ -45,6 +45,8 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,7 +69,7 @@ public class DispatcherVariableProvider implements VariableProvider {
 
     @Override
     public List<AssetFile> prepareForDownloadingVariable(
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.InputVariable variable) {
 
@@ -109,7 +111,7 @@ public class DispatcherVariableProvider implements VariableProvider {
 
     private void createDownloadTasksForArray(
             ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core,
-            Long variableId, Long taskId, File taskDir, DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup,
+            Long variableId, Long taskId, Path taskDir, DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup,
             boolean nullable) throws IOException {
         DownloadVariableTask task = new DownloadVariableTask(
                 core, variableId, EnumsApi.VariableContext.local, taskId, taskDir, dispatcherLookup, nullable);
@@ -128,7 +130,7 @@ public class DispatcherVariableProvider implements VariableProvider {
         }
     }
 
-    private static List<AssetFile> prepareArrayVariable(File taskDir, TaskParamsYaml.InputVariable variable) throws IOException {
+    private static List<AssetFile> prepareArrayVariable(Path taskDir, TaskParamsYaml.InputVariable variable) throws IOException {
         AssetFile assetFile = AssetUtils.prepareFileForVariable(taskDir, variable.id.toString(), null, DataType.variable);
         List<AssetFile> assetFiles = new ArrayList<>();
         assetFiles.add(assetFile);
@@ -144,7 +146,7 @@ public class DispatcherVariableProvider implements VariableProvider {
     private static List<VariableArrayParamsYaml.Variable> getVariablesForArray(AssetFile assetFile) throws IOException {
         List<VariableArrayParamsYaml.Variable> variables = new ArrayList<>();
         if (assetFile.isContent && !assetFile.isError) {
-            String data = FileUtils.readFileToString(assetFile.file, StandardCharsets.UTF_8);
+            String data = Files.readString(assetFile.file, StandardCharsets.UTF_8);
             VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(data);
             variables.addAll(vapy.array);
         }
@@ -154,12 +156,12 @@ public class DispatcherVariableProvider implements VariableProvider {
     @Override
     @Nullable
     public FunctionApiData.SystemExecResult processOutputVariable(
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.OutputVariable outputVariable, TaskParamsYaml.FunctionConfig functionConfig) {
-        File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariable.id);
-        if (outputVariableFile.exists()) {
-            log.info("Register task for uploading result data to server, resultDataFile: {}", outputVariableFile.getPath());
+        Path outputVariableFile = taskDir.resolve(ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariable.id);
+        if (Files.exists(outputVariableFile)) {
+            log.info("Register task for uploading result data to server, resultDataFile: {}", outputVariableFile.toAbsolutePath());
             UploadVariableTask uploadVariableTask = new UploadVariableTask(task.taskId, outputVariableFile, outputVariable.id, core, dispatcher.dispatcherLookup);
             uploadVariableService.add(uploadVariableTask);
             return null;
@@ -171,18 +173,18 @@ public class DispatcherVariableProvider implements VariableProvider {
             return null;
         }
         else {
-            String es = "Result data file doesn't exist, resultDataFile: " + outputVariableFile.getPath();
+            String es = "Result data file doesn't exist, resultDataFile: " + outputVariableFile.toAbsolutePath();
             log.error(es);
             return new FunctionApiData.SystemExecResult(functionConfig.code,false, -1, es);
         }
     }
 
     @Override
-    public File getOutputVariableFromFile(
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
+    public Path getOutputVariableFromFile(
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, TaskParamsYaml.OutputVariable variable) {
 
-        File resultDataFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + variable.id);
+        Path resultDataFile = taskDir.resolve(ConstsApi.ARTIFACTS_DIR + File.separatorChar + variable.id);
         return resultDataFile;
     }
 }

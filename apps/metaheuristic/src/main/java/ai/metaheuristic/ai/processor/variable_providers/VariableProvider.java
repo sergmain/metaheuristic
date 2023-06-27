@@ -27,24 +27,25 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import org.springframework.lang.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 public interface VariableProvider {
     List<AssetFile> prepareForDownloadingVariable(
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.InputVariable variable);
 
     @Nullable
     FunctionApiData.SystemExecResult processOutputVariable(
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.OutputVariable outputVariable,
             TaskParamsYaml.FunctionConfig functionConfig
     );
 
-    File getOutputVariableFromFile(
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir,
+    Path getOutputVariableFromFile(
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir,
             DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, TaskParamsYaml.OutputVariable variable);
 

@@ -24,19 +24,20 @@ import lombok.EqualsAndHashCode;
 import org.springframework.lang.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 
 @Data
 @EqualsAndHashCode(of={"core", "taskId", "variableId"}, callSuper = false)
 public class UploadVariableTask extends ProcessorRestTask {
     public Long taskId;
     @Nullable
-    public File file = null;
+    public Path file = null;
     public Long variableId;
     public boolean nullified = false;
     public final ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core;
     public final DispatcherLookupParamsYaml.DispatcherLookup dispatcher;
 
-    public UploadVariableTask(Long taskId, @Nullable File file, Long variableId, ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherLookupParamsYaml.DispatcherLookup dispatcher) {
+    public UploadVariableTask(Long taskId, @Nullable Path file, Long variableId, ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherLookupParamsYaml.DispatcherLookup dispatcher) {
         this.taskId = taskId;
         this.file = file;
         this.variableId = variableId;

@@ -22,7 +22,7 @@ import ai.metaheuristic.api.EnumsApi;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.io.File;
+import java.nio.file.Path;
 
 @Data
 @EqualsAndHashCode(of = {"core", "variableId", "context"}, callSuper = false)
@@ -30,21 +30,21 @@ public class DownloadVariableTask extends ProcessorRestTask {
     public final String variableId;
     public final EnumsApi.VariableContext context;
     public final long taskId;
-    public final File targetDir;
+    public final Path targetDir;
     public final boolean nullable;
     public final DispatcherLookupParamsYaml.DispatcherLookup dispatcher;
     public final ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core;
 
     public DownloadVariableTask(
             ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core,
-            Long variableId, EnumsApi.VariableContext context, long taskId, File targetDir,
+            Long variableId, EnumsApi.VariableContext context, long taskId, Path targetDir,
             DispatcherLookupParamsYaml.DispatcherLookup dispatcher, boolean nullable) {
         this(core, variableId.toString(), context, taskId, targetDir, dispatcher, nullable);
     }
 
     public DownloadVariableTask(
             ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core,
-            String variableId, EnumsApi.VariableContext context, long taskId, File targetDir,
+            String variableId, EnumsApi.VariableContext context, long taskId, Path targetDir,
             DispatcherLookupParamsYaml.DispatcherLookup dispatcher, boolean nullable) {
         this.core = core;
         this.variableId = variableId;
@@ -60,7 +60,7 @@ public class DownloadVariableTask extends ProcessorRestTask {
         return "DownloadVariableTask{" +
                 "variableId='" + variableId + '\'' +
                 "context='" + context + '\'' +
-                ", targetDir=" + targetDir.getPath() +
+                ", targetDir=" + targetDir.toAbsolutePath() +
                 '}';
     }
 

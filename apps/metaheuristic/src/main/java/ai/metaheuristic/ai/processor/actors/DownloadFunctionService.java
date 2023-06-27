@@ -126,7 +126,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
             if (functionDownloadStatus.state.needDownload) {
                 try {
 
-                    File functionTempFile = new File(assetFile.file.getAbsolutePath() + ".tmp");
+                    File functionTempFile = new File(assetFile.file.toAbsolutePath() + ".tmp");
 
                     final String targetUrl = assetManager.url + Consts.REST_ASSET_URL + "/function";
 

@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
 import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
-import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.utils.SecUtils;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
@@ -34,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.security.PublicKey;
 import java.util.Collections;
 import java.util.HashMap;
@@ -129,7 +129,7 @@ public class DispatcherLookupExtendedParams {
         }
     }
 
-    public DispatcherLookupExtendedParams(Path processorPath, @Nullable File defaultDispatcherYamlFile) {
+    public DispatcherLookupExtendedParams(Path processorPath, @Nullable Path defaultDispatcherYamlFile) {
         Map<DispatcherUrl, DispatcherLookupExtended> dispatcherLookupExtendedMap = Map.of();
         try {
             final Path dispatcherFile = processorPath.resolve(Consts.DISPATCHER_YAML_FILE_NAME);
@@ -139,15 +139,16 @@ public class DispatcherLookupExtendedParams {
                     log.error("Processor's dispatcher config file {} doesn't exist and default file wasn't specified", dispatcherFile);
                     return;
                 }
-                if (!defaultDispatcherYamlFile.exists()) {
-                    log.error("Processor's default dispatcher.yaml file doesn't exist: {}", defaultDispatcherYamlFile.getAbsolutePath());
+                if (Files.notExists(defaultDispatcherYamlFile)) {
+                    log.error("Processor's default dispatcher.yaml file doesn't exist: {}", defaultDispatcherYamlFile.toAbsolutePath());
                     return;
                 }
                 try {
-                    FileSystemUtils.copyFileWithSync(defaultDispatcherYamlFile, dispatcherFile.toFile());
+                    Files.copy(defaultDispatcherYamlFile, dispatcherFile, StandardCopyOption.ATOMIC_MOVE);
+//                    FileSystemUtils.copyFileWithSync(defaultDispatcherYamlFile, dispatcherFile.toFile());
                 } catch (IOException e) {
                     log.error("Error", e);
-                    throw new IllegalStateException("Error while copying " + defaultDispatcherYamlFile.getAbsolutePath() + " to " + dispatcherFile.normalize(), e);
+                    throw new IllegalStateException("Error while copying " + defaultDispatcherYamlFile.toAbsolutePath() + " to " + dispatcherFile.normalize(), e);
                 }
             }
             if (Files.notExists(dispatcherFile)) {

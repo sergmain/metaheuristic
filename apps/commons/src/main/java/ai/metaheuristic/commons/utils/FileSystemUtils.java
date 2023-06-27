@@ -21,6 +21,10 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import static java.nio.file.StandardOpenOption.*;
 
 /**
  * @author Serge
@@ -29,16 +33,18 @@ import java.nio.charset.Charset;
  */
 public class FileSystemUtils {
 
-    public static void writeStringToFileWithSync(final File file, final String data, final Charset charset) throws IOException {
+    public static void writeStringToFileWithSync(final Path file, final String data, final Charset charset) throws IOException {
         // TODO P1 2022-04-24 change to modern usage with Path
 //        try (OutputStream out = Files.newOutputStream(file.toPath(), CREATE, WRITE, READ, TRUNCATE_EXISTING)) {
-        try (FileOutputStream out = FileUtils.openOutputStream(file, false)) {
+        try (OutputStream out = Files.newOutputStream(file, SYNC, CREATE, WRITE, READ, TRUNCATE_EXISTING)) {
             IOUtils.write(data, out, charset);
             out.flush();
+/*
             final FileDescriptor fd = out.getFD();
             if (fd.valid()) {
                 fd.sync();
             }
+*/
         }
     }
 

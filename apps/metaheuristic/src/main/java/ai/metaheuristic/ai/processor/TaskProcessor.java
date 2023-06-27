@@ -54,8 +54,8 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.lang.Nullable;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.PublicKey;
 import java.util.*;
@@ -188,7 +188,7 @@ public class TaskProcessor {
             }
 
             log.info("Start processing task {}", task);
-            File taskDir = processorTaskService.prepareTaskDir(core, task.taskId);
+            Path taskDir = processorTaskService.prepareTaskDir(core, task.taskId);
 
             final TaskParamsYaml taskParamYaml;
             try {
@@ -212,13 +212,13 @@ public class TaskProcessor {
                 continue;
             }
 
-            File artifactDir = ProcessorTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
+            Path artifactDir = ProcessorTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
             if (artifactDir == null) {
                 processorTaskService.markAsFinishedWithError(core, task.taskId, "#100.090 Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
                 continue;
             }
 
-            File systemDir = ProcessorTaskService.prepareTaskSubDir(taskDir, Consts.SYSTEM_DIR);
+            Path systemDir = ProcessorTaskService.prepareTaskSubDir(taskDir, Consts.SYSTEM_DIR);
             if (systemDir == null) {
                 processorTaskService.markAsFinishedWithError(core, task.taskId, "#100.100 Error of configuring of environment. 'system' directory wasn't created, task can't be processed.");
                 continue;
@@ -323,8 +323,8 @@ public class TaskProcessor {
     private void execAllFunctions(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core,
                                   ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
                                   DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
-                                  File taskDir, TaskParamsYaml taskParamYaml, File artifactDir,
-                                  File systemDir, FunctionPrepareResult[] results) {
+                                  Path taskDir, TaskParamsYaml taskParamYaml, Path artifactDir,
+                                  Path systemDir, FunctionPrepareResult[] results) {
         List<FunctionApiData.SystemExecResult> preSystemExecResult = new ArrayList<>();
         List<FunctionApiData.SystemExecResult> postSystemExecResult = new ArrayList<>();
         boolean isOk = true;
@@ -405,9 +405,9 @@ public class TaskProcessor {
                 new FunctionApiData.FunctionExec(systemExecResult, preSystemExecResult, postSystemExecResult, generalExec));
     }
 
-    private static boolean prepareParamsFileForTask(File taskDir, TaskParamsYaml taskParamYaml, FunctionPrepareResult[] results) {
+    private static boolean prepareParamsFileForTask(Path taskDir, TaskParamsYaml taskParamYaml, FunctionPrepareResult[] results) {
 
-        File artifactDir = ProcessorTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
+        Path artifactDir = ProcessorTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
         if (artifactDir == null) {
             return false;
         }
@@ -416,7 +416,7 @@ public class TaskProcessor {
                 .map(o-> FunctionCoreUtils.getTaskParamsVersion(o.function.metas))
                 .collect(Collectors.toSet());
 
-        return ArtifactUtils.prepareParamsFileForTask(artifactDir, taskDir.getAbsolutePath(), taskParamYaml, versions);
+        return ArtifactUtils.prepareParamsFileForTask(artifactDir, taskDir.toAbsolutePath().toString(), taskParamYaml, versions);
     }
 
     private static int totalCountOfFunctions(TaskParamsYaml.TaskYaml taskYaml) {
@@ -430,13 +430,12 @@ public class TaskProcessor {
     @SuppressWarnings({"WeakerAccess"})
     // TODO 2019.05.02 implement unit-test for this method
     public FunctionApiData.SystemExecResult execFunction(
-            ProcessorCoreTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, FunctionPrepareResult functionPrepareResult,
+            ProcessorCoreTask task, Path taskDir, TaskParamsYaml taskParamYaml, Path systemDir, FunctionPrepareResult functionPrepareResult,
             @Nullable DispatcherSchedule schedule) {
 
-        File paramFile = new File(
-                taskDir,
-                ConstsApi.ARTIFACTS_DIR + File.separatorChar +
-                        String.format(Consts.PARAMS_YAML_MASK, FunctionCoreUtils.getTaskParamsVersion(functionPrepareResult.function.metas)));
+        Path paramFile = taskDir
+                .resolve(ConstsApi.ARTIFACTS_DIR)
+                .resolve(String.format(Consts.PARAMS_YAML_MASK, FunctionCoreUtils.getTaskParamsVersion(functionPrepareResult.function.metas)));
 
         List<String> cmd;
         Interpreter interpreter=null;
@@ -467,7 +466,7 @@ public class TaskProcessor {
                     if (functionPrepareResult.functionAssetFile ==null) {
                         throw new IllegalStateException("#100.310 functionAssetFile is null");
                     }
-                    cmd.add(functionPrepareResult.functionAssetFile.file.getAbsolutePath());
+                    cmd.add(functionPrepareResult.functionAssetFile.file.toAbsolutePath().toString());
                     break;
                 case processor:
                     if (!S.b(functionPrepareResult.function.file)) {
@@ -482,10 +481,10 @@ public class TaskProcessor {
                             ext = "." + ext;
                         }
 
-                        File execFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + toFilename(functionPrepareResult.function.code) + ext);
+                        Path execFile = taskDir.resolve(ConstsApi.ARTIFACTS_DIR).resolve(toFilename(functionPrepareResult.function.code) + ext);
                         FileSystemUtils.writeStringToFileWithSync(execFile, functionPrepareResult.function.content, StandardCharsets.UTF_8 );
 
-                        cmd.add(execFile.getAbsolutePath());
+                        cmd.add(execFile.toAbsolutePath().toString());
                     }
                     else {
                         log.warn("#100.325 How?");
@@ -500,10 +499,10 @@ public class TaskProcessor {
                     List<String> list = Arrays.stream(StringUtils.split(functionPrepareResult.function.params)).filter(o->!S.b(o)).collect(Collectors.toList());
                     cmd.addAll(list);
                 }
-                cmd.add(paramFile.getAbsolutePath());
+                cmd.add(paramFile.toAbsolutePath().toString());
             }
 
-            File consoleLogFile = new File(systemDir, Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
+            Path consoleLogFile = systemDir.resolve(Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
 
             final Supplier<Boolean> execContextDeletionCheck =
                     () -> currentExecState.isState(new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl), task.execContextId,
@@ -512,7 +511,7 @@ public class TaskProcessor {
 
             // Exec function
             systemExecResult = SystemProcessLauncher.execCommand(
-                    cmd, taskDir, consoleLogFile.toPath(), taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
+                    cmd, taskDir, consoleLogFile, taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
                     globals.processor.taskConsoleOutputMaxLines, List.of(execContextDeletionCheck));
 
         }
@@ -524,7 +523,7 @@ public class TaskProcessor {
                     "\tenv: " + functionPrepareResult.function.env +"\n" +
                     "\tinterpreter: " + interpreter+"\n" +
                     "\tfile: " + (functionPrepareResult.functionAssetFile !=null && functionPrepareResult.functionAssetFile.file!=null
-                    ? functionPrepareResult.functionAssetFile.file.getAbsolutePath()
+                    ? functionPrepareResult.functionAssetFile.file.toAbsolutePath()
                     : functionPrepareResult.function.file) +"\n" +
                     "\tparams", th);
             systemExecResult = new FunctionApiData.SystemExecResult(
@@ -624,8 +623,8 @@ public class TaskProcessor {
                     return functionPrepareResult;
                 }
                 functionPrepareResult.functionAssetFile = new AssetFile();
-                functionPrepareResult.functionAssetFile.file = new File(result.functionDir, Objects.requireNonNull(functionPrepareResult.function.file));
-                log.info("Function asset file: {}, exist: {}", functionPrepareResult.functionAssetFile.file.getAbsolutePath(), functionPrepareResult.functionAssetFile.file.exists() );
+                functionPrepareResult.functionAssetFile.file = result.functionDir.resolve(Objects.requireNonNull(functionPrepareResult.function.file));
+                log.info("Function asset file: {}, exist: {}", functionPrepareResult.functionAssetFile.file.toAbsolutePath(), Files.exists(functionPrepareResult.functionAssetFile.file));
             }
             else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.processor) {
 

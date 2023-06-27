@@ -66,9 +66,9 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
@@ -135,7 +135,7 @@ public class SouthbridgeService {
                 dataSaver = functionDataService::storeToFile;
                 break;
             case variable:
-                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempPath.toFile(), "" + EnumsApi.DataType.variable + '-' + dataId, null, binaryType);
+                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempPath, "" + EnumsApi.DataType.variable + '-' + dataId, null, binaryType);
                 if (assetFile.isError) {
                     String es = "#444.120 Resource with id " + dataId + " is broken";
                     log.error(es);
@@ -147,7 +147,7 @@ public class SouthbridgeService {
                 }
                 break;
             case global_variable:
-                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempPath.toFile(), "" + EnumsApi.DataType.global_variable + '-' + dataId, null, binaryType);
+                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempPath, "" + EnumsApi.DataType.global_variable + '-' + dataId, null, binaryType);
                 if (assetFile.isError) {
                     String es = "#444.140 Global variable with id " + dataId + " is broken";
                     log.error(es);
@@ -163,40 +163,40 @@ public class SouthbridgeService {
 
         if (!assetFile.isContent) {
             try {
-                getWithSyncVoid(binaryType, dataId, () -> dataSaver.accept(dataId, assetFile.file.toPath()));
+                getWithSyncVoid(binaryType, dataId, () -> dataSaver.accept(dataId, assetFile.file));
             }
             catch(VariableIsNullException e) {
                 resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, new HttpHeaders(), HttpStatus.NO_CONTENT);
                 return resource;
             }
             catch (CommonErrorWithDataException e) {
-                log.error("#444.180 Error store data to temp file, data doesn't exist in db, id " + dataId + ", file: " + assetFile.file.getPath());
+                log.error("#444.180 Error store data to temp file, data doesn't exist in db, id " + dataId + ", file: " + assetFile.file);
                 throw e;
             }
         }
 
-        FileInputStream fis;
+        InputStream fis;
         try {
-            fis = new FileInputStream(assetFile.file);
+            fis = Files.newInputStream(assetFile.file);
             resource.inputStreams.add(fis);
 
             InputStream realInputStream = fis;
 
             boolean isLastChunk;
-            long byteToRead = assetFile.file.length();
+            long byteToRead = Files.size(assetFile.file);
             if (chunkSize == null || chunkSize.isBlank()) {
                 isLastChunk = true;
             } else {
                 final long size = Long.parseLong(chunkSize);
                 final long offset = size * chunkNum;
-                if (offset >= assetFile.file.length()) {
+                if (offset >= Files.size(assetFile.file)) {
                     MultiValueMap<String, String> headers = new HttpHeaders();
                     headers.add(Consts.HEADER_MH_IS_LAST_CHUNK, "true");
                     headers.add(Consts.HEADER_MH_CHUNK_SIZE, "0");
                     resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, headers, HttpStatus.OK);
                     return resource;
                 }
-                final long realSize = assetFile.file.length() < offset + size ? assetFile.file.length() - offset : size;
+                final long realSize = Files.size(assetFile.file) < offset + size ? Files.size(assetFile.file) - offset : size;
                 byteToRead = realSize;
                 long skipped = fis.skip(offset);
                 if (skipped!=offset) {
@@ -206,7 +206,7 @@ public class SouthbridgeService {
 
                 }
                 realInputStream = new BoundedInputStream(fis, realSize);
-                isLastChunk = (assetFile.file.length() == (offset + realSize));
+                isLastChunk = (Files.size(assetFile.file) == (offset + realSize));
             }
             final HttpHeaders headers = RestUtils.getHeader(byteToRead);
             headers.add(Consts.HEADER_MH_CHUNK_SIZE, Long.toString(byteToRead));

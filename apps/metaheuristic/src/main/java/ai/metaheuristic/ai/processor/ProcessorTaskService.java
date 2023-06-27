@@ -34,6 +34,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
@@ -691,26 +692,25 @@ public class ProcessorTaskService {
         return Long.toString(power.power7)+File.separatorChar+power.power4+File.separatorChar;
     }
 
-    public File prepareTaskDir(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
-        final File processorDir = new File(processorPath.toFile(), core.coreCode);
-        final File processorTaskDir = new File(processorDir, Consts.TASK_DIR);
-        final File dispatcherDir = new File(processorTaskDir, MetadataParams.asCode(core.dispatcherUrl));
-        File taskDir = new File(dispatcherDir, getTaskPath(taskId));
-        if (taskDir.exists()) {
+    @SneakyThrows
+    public Path prepareTaskDir(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
+        final Path processorDir = processorPath.resolve(core.coreCode);
+        final Path processorTaskDir = processorDir.resolve(Consts.TASK_DIR);
+        final Path dispatcherDir = processorTaskDir.resolve(MetadataParams.asCode(core.dispatcherUrl));
+        Path taskDir = dispatcherDir.resolve(getTaskPath(taskId));
+        if (Files.exists(taskDir)) {
             return taskDir;
         }
-        //noinspection unused
-        boolean status = taskDir.mkdirs();
+        Files.createDirectories(taskDir);
         return taskDir;
     }
 
     @Nullable
-    public static File prepareTaskSubDir(File taskDir, String subDir) {
-        File taskSubDir = new File(taskDir, subDir);
-        //noinspection ResultOfMethodCallIgnored
-        taskSubDir.mkdirs();
-        if (!taskSubDir.exists()) {
-            log.warn("#713.220 Can't create taskSubDir: {}", taskSubDir.getAbsolutePath());
+    public static Path prepareTaskSubDir(Path taskDir, String subDir) {
+        Path taskSubDir = taskDir.resolve(subDir);
+        Files.createDirectories(taskSubDir);
+        if (Files.notExists(taskSubDir)) {
+            log.warn("#713.220 Can't create taskSubDir: {}", taskSubDir.toAbsolutePath());
             return null;
         }
         return taskSubDir;

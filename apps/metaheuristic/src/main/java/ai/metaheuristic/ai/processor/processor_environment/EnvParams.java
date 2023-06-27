@@ -44,7 +44,7 @@ public class EnvParams {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
-    public void init(Path processorPath, @Nullable File defaultEnvYamlFile, int taskConsoleOutputMaxLines) {
+    public void init(Path processorPath, @Nullable Path defaultEnvYamlFile, int taskConsoleOutputMaxLines) {
         writeLock.lock();
         try {
             initInternal(processorPath, defaultEnvYamlFile, taskConsoleOutputMaxLines);
@@ -53,22 +53,22 @@ public class EnvParams {
         }
     }
 
-    public void initInternal(Path processorPath, @Nullable File defaultEnvYamlFile, int taskConsoleOutputMaxLines) {
+    public void initInternal(Path processorPath, @Nullable Path defaultEnvYamlFile, int taskConsoleOutputMaxLines) {
         final Path envYamlFile = processorPath.resolve(Consts.ENV_YAML_FILE_NAME);
         if (Files.notExists(envYamlFile)) {
             if (defaultEnvYamlFile==null) {
                 log.warn("#747.020 Processor's env.yaml config file doesn't exist: {}", envYamlFile.toAbsolutePath());
                 throw new IllegalStateException("#747.012 Processor isn't configured, env.yaml is empty or doesn't exist");
             }
-            if (!defaultEnvYamlFile.exists()) {
-                log.warn("#747.030 Processor's default yaml.yaml file doesn't exist: {}", defaultEnvYamlFile.getAbsolutePath());
+            if (Files.notExists(defaultEnvYamlFile)) {
+                log.warn("#747.030 Processor's default yaml.yaml file doesn't exist: {}", defaultEnvYamlFile.toAbsolutePath());
                 throw new IllegalStateException("#747.014 Processor isn't configured, env.yaml is empty or doesn't exist");
             }
             try {
-                Files.copy(defaultEnvYamlFile.toPath(), envYamlFile);
+                Files.copy(defaultEnvYamlFile, envYamlFile);
             } catch (IOException e) {
                 log.error("#747.035 Error", e);
-                throw new IllegalStateException("#747.040 Error while copying " + defaultEnvYamlFile.getAbsolutePath() +
+                throw new IllegalStateException("#747.040 Error while copying " + defaultEnvYamlFile.toAbsolutePath() +
                                                 " to " + envYamlFile.toAbsolutePath(), e);
             }
         }

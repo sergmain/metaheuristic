@@ -50,9 +50,9 @@ public class ProcessorEnvironment {
 
         try {
             final Path processorPath = globals.processorPath;
-            final File defaultEnvYamlFile = globals.processor.defaultEnvYamlFile;
+            final Path defaultEnvYamlFile = globals.processor.defaultEnvYamlFile;
             final int taskConsoleOutputMaxLines = globals.processor.taskConsoleOutputMaxLines;
-            final File defaultDispatcherYamlFile = globals.processor.defaultDispatcherYamlFile;
+            final Path defaultDispatcherYamlFile = globals.processor.defaultDispatcherYamlFile;
             init(processorPath, defaultEnvYamlFile, defaultDispatcherYamlFile, taskConsoleOutputMaxLines);
         }
         catch (TerminateApplicationException e) {
@@ -60,7 +60,7 @@ public class ProcessorEnvironment {
         }
     }
 
-    public void init(Path processorPath, @Nullable File defaultEnvYamlFile, @Nullable File defaultDispatcherYamlFile, int taskConsoleOutputMaxLines) {
+    public void init(Path processorPath, @Nullable Path defaultEnvYamlFile, @Nullable Path defaultDispatcherYamlFile, int taskConsoleOutputMaxLines) {
         envParams.init(processorPath, defaultEnvYamlFile, taskConsoleOutputMaxLines);
         dispatcherLookupExtendedService = new DispatcherLookupExtendedParams(processorPath, defaultDispatcherYamlFile);
         metadataService = new MetadataParams(processorPath, envParams, dispatcherLookupExtendedService);

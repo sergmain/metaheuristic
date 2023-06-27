@@ -61,7 +61,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
@@ -371,15 +370,15 @@ public class SourceCodeTopLevelService {
     private static boolean createArtifactsDir(Path outputDir, TaskParamsYaml tpy) throws IOException {
         Path artifactsDir = outputDir.resolve(ConstsApi.ARTIFACTS_DIR);
         Files.createDirectory(artifactsDir);
-        if (createEnvParamsFile(artifactsDir.toFile())) {
+        if (createEnvParamsFile(artifactsDir)) {
             return true;
         }
 
-        return !ArtifactUtils.prepareParamsFileForTask(artifactsDir.toFile(), outputDir.getFileName().toString(), tpy,
+        return !ArtifactUtils.prepareParamsFileForTask(artifactsDir, outputDir.getFileName().toString(), tpy,
                 Set.of(TaskFileParamsYamlUtils.DEFAULT_UTILS.getVersion()));
     }
 
-    private static boolean createEnvParamsFile(File artefactsDir) {
+    private static boolean createEnvParamsFile(Path artefactsDir) {
         EnvParamsYaml epy = new EnvParamsYaml();
 
         epy.envs.addAll(List.of(

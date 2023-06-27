@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.mhbp.beans;
 
 import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
 import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiSchemeUtils;
-import ai.metaheuristic.commons.utils.threads.ThreadUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils.CommonThreadLocker;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -81,8 +81,7 @@ public class Api implements Serializable {
 
     @Transient
     @JsonIgnore
-    private final ThreadUtils.CommonThreadLocker<ApiScheme> paramsLocked =
-            new ThreadUtils.CommonThreadLocker<>(this::parseScheme);
+    private final CommonThreadLocker<ApiScheme> paramsLocked = new CommonThreadLocker<>(this::parseScheme);
 
     private ApiScheme parseScheme() {
         ApiScheme temp = ApiSchemeUtils.UTILS.to(scheme);

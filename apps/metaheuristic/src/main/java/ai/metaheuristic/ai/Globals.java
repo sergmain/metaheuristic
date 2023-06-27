@@ -41,7 +41,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 import org.springframework.util.unit.DataUnit;
 
-import java.io.File;
+//import java.io.File;
 import java.io.IOException;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
@@ -453,10 +453,10 @@ public class Globals {
         public boolean enabled = false;
 
         @Nullable
-        public File defaultDispatcherYamlFile = null;
+        public Path defaultDispatcherYamlFile = null;
 
         @Nullable
-        public File defaultEnvYamlFile = null;
+        public Path defaultEnvYamlFile = null;
 
         public int taskConsoleOutputMaxLines = 1000;
 
@@ -525,17 +525,8 @@ public class Globals {
     public Path home;
 
     public Path getHome() {
-/*
         if (home==null) {
-            String mhHome = System.getenv("MH_HOME");
-            if (S.b(mhHome)) {
-                throw new IllegalArgumentException("mh.home isn't specified");
-            }
-            home = Path.of(mhHome);
-        }
-*/
-        if (home==null) {
-            throw new IllegalArgumentException("mh.home isn't specified");
+            throw new IllegalArgumentException("property mh.home isn't specified");
         }
         return home;
     }
@@ -681,14 +672,13 @@ public class Globals {
         }
     }
 
-    private static void checkOwnership(File file, @Nullable String systemOwner) {
+    private static void checkOwnership(Path path, @Nullable String systemOwner) {
         try {
-            Path path = file.toPath();
 
             FileSystem fileSystem = path.getFileSystem();
             UserPrincipalLookupService service = fileSystem.getUserPrincipalLookupService();
 
-            log.info("Check ownership of {}", file.getAbsolutePath());
+            log.info("Check ownership of {}", path.toAbsolutePath());
             log.info("File: " + path);
             log.info("Exists: " + Files.exists(path));
             log.info("-- owner before --");
@@ -715,7 +705,7 @@ public class Globals {
                 log.info("new system owner wasn't defined");
             }
         } catch (IOException e) {
-            log.error("An error while checking ownership of path " + file.getPath(), e);
+            log.error("An error while checking ownership of path " + path.toAbsolutePath(), e);
         }
     }
 

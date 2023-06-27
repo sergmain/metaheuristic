@@ -32,11 +32,14 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import static ai.metaheuristic.ai.core.SystemProcessLauncher.*;
 import static ai.metaheuristic.ai.core.SystemProcessLauncher.execCmd;
+import static org.apache.commons.io.FileUtils.deleteQuietly;
 
 /**
  * @author Sergio Lissner
@@ -94,7 +97,7 @@ public class LocalGitSourcingService {
             log.warn("#027.010 Error of getting git status");
             log.warn("\tresult.ok: {}",  result.ok);
             log.warn("\tresult.error: {}",  result.error);
-            log.warn("\tresult.functionDir: {}", result.functionDir!=null ? result.functionDir.getPath() : null);
+            log.warn("\tresult.functionDir: {}", result.functionDir!=null ? result.functionDir.toAbsolutePath() : null);
             log.warn("\tresult.systemExecResult: {}",  result.systemExecResult);
             return new GitStatusInfo(Enums.GitStatus.error, null, "#027.010 Error: " + result.error);
         }
@@ -112,19 +115,24 @@ public class LocalGitSourcingService {
         return execCmd(gitVersionCmd, gitContext.timeout, gitContext.consoleOutputMaxLines);
     }
 
-    private static AssetFile prepareFunctionDir(final File resourceDir, String functionCode) {
+    private static AssetFile prepareFunctionDir(final Path resourceDir, String functionCode) {
         final AssetFile assetFile = new AssetFile();
-        final File trgDir = new File(resourceDir, EnumsApi.DataType.function.toString());
-        log.info("Target dir: {}, exist: {}", trgDir.getAbsolutePath(), trgDir.exists() );
-        if (!trgDir.exists() && !trgDir.mkdirs()) {
-            assetFile.isError = true;
-            log.error("#027.030 Can't create function dir: {}", trgDir.getAbsolutePath());
-            return assetFile;
+        final Path trgDir = resourceDir.resolve(EnumsApi.DataType.function.toString());
+        log.info("Target dir: {}, exist: {}", trgDir.toAbsolutePath(), Files.exists(trgDir) );
+        if (Files.notExists(trgDir)) {
+            try {
+                Files.createDirectories(trgDir);
+            }
+            catch (IOException e) {
+                assetFile.isError = true;
+                log.error("#027.030 Can't create function dir: {}", trgDir.toAbsolutePath());
+                return assetFile;
+            }
         }
         final String resId = functionCode.replace(':', '_');
-        final File resDir = new File(trgDir, resId);
-        log.info("Resource dir: {}, exist: {}", resDir.getAbsolutePath(), resDir.exists() );
-        if (!resDir.exists() && !resDir.mkdirs()) {
+        final Path resDir = trgDir.resolve(resId);
+        log.info("Resource dir: {}, exist: {}", resDir.toAbsolutePath(), Files.exists(resDir) );
+        if (Files.notExists(resDir)!resDir.exists() && !resDir.mkdirs()) {
             assetFile.isError = true;
             log.error("#027.040 Can't create resource dir: {}", resDir.getAbsolutePath());
             return assetFile;
@@ -134,17 +142,17 @@ public class LocalGitSourcingService {
     }
 
     @SneakyThrows
-    public static ExecResult prepareRepo(final File resourceDir, KbData.KbGit git, GitContext gitContext) {
+    public static ExecResult prepareRepo(final Path resourceDir, KbData.KbGit git, GitContext gitContext) {
 
-        File functionDir = resourceDir;
-        File repoDir = new File(functionDir, Consts.REPO);
-        log.info("#027.070 Target dir: {}, exist: {}", repoDir.getAbsolutePath(), repoDir.exists() );
+        Path functionDir = resourceDir;
+        Path repoDir = functionDir.resolve(Consts.REPO);
+        log.info("#027.070 Target dir: {}, exist: {}", repoDir.toAbsolutePath(), Files.exists(repoDir));
 
-        if (repoDir.exists() && PathUtils.isEmpty(repoDir.toPath())) {
-            Files.delete(repoDir.toPath());
+        if (Files.exists(repoDir) && PathUtils.isEmpty(repoDir)) {
+            Files.delete(repoDir);
         }
 
-        if (!repoDir.exists()) {
+        if (Files.notExists(repoDir)) {
             ExecResult result = execClone(functionDir, git, gitContext);
             log.info("#027.080 Result of cloning repo: {}", result.toString());
             if (!result.ok || !result.systemExecResult.isOk()) {
@@ -207,19 +215,19 @@ public class LocalGitSourcingService {
         if (!result.systemExecResult.isOk) {
             return new ExecResult(null,false, result.systemExecResult.console);
         }
-        log.info("#027.160 repoDir: {}, exist: {}", repoDir.getAbsolutePath(), repoDir.exists());
+        log.info("#027.160 repoDir: {}, exist: {}", repoDir.toAbsolutePath(), Files.exists(repoDir));
 
         return new ExecResult(repoDir, new FunctionApiData.SystemExecResult(null, true, 0, "" ), true, null);
     }
 
-    public static ExecResult tryToRepairRepo(File functionDir, KbData.KbGit git, GitContext gitContext) {
-        File repoDir = new File(functionDir, Consts.REPO);
+    public static ExecResult tryToRepairRepo(Path functionDir, KbData.KbGit git, GitContext gitContext) {
+        Path repoDir = functionDir.resolve(Consts.REPO);
         ExecResult result;
-        FileUtils.deleteQuietly(repoDir);
-        if (repoDir.exists()) {
+        Files.deleteIfExists(repoDir);
+        if (Files.exists(repoDir)) {
             return new ExecResult(null,
                     false,
-                    "#027.170 can't prepare repo dir for function: " + repoDir.getAbsolutePath());
+                    "#027.170 can't prepare repo dir for function: " + repoDir.toAbsolutePath());
         }
         result = execClone(functionDir, git, gitContext);
         return result;
@@ -273,10 +281,10 @@ public class LocalGitSourcingService {
         return execGitCmd(cmd, gitContext);
     }
 
-    private static ExecResult execClone(File repoDir, KbData.KbGit git, GitContext gitContext) {
+    private static ExecResult execClone(Path repoDir, KbData.KbGit git, GitContext gitContext) {
         // git -C <path> clone <git-repo-url> repo
         String gitUrl = git.getRepo();
-        List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "clone", gitUrl, Consts.REPO);
+        List<String> cmd = List.of("git", "-C", repoDir.toAbsolutePath().toString(), "clone", gitUrl, Consts.REPO);
         log.info("exec {}", cmd);
         ExecResult result = execGitCmd(cmd, gitContext.withTimeout(0L));
         return result;

@@ -40,6 +40,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -163,7 +164,7 @@ public class TaskAssetPreparer {
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 
         // Start preparing data for function
-        File taskDir = processorTaskService.prepareTaskDir(core, task.taskId);
+        Path taskDir = processorTaskService.prepareTaskDir(core, task.taskId);
         ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingVariables(core, task, processorState, taskParamYaml, dispatcher, taskDir);
         if (resultOfChecking.isError) {
             return null;

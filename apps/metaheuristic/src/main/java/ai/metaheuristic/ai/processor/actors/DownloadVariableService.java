@@ -133,7 +133,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
 
             File parentDir = assetFile.file.getParentFile();
             if (parentDir==null) {
-                es = "#810.020 Can't get parent dir for asset file " + assetFile.file.getAbsolutePath();
+                es = "#810.020 Can't get parent dir for asset file " + assetFile.file.toAbsolutePath();
                 log.error(es);
                 processorTaskService.markAsFinishedWithError(task.core, task.taskId, es);
                 return;

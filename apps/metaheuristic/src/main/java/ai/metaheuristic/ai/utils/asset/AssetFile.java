@@ -18,10 +18,11 @@ package ai.metaheuristic.ai.utils.asset;
 import lombok.Data;
 
 import java.io.File;
+import java.nio.file.Path;
 
 @Data
 public class AssetFile {
-    public File file;
+    public Path file;
     public long fileLength;
     public boolean isError;
     public boolean isContent;
@@ -32,7 +33,7 @@ public class AssetFile {
     @Override
     public String toString() {
         return "AssetFile{" +
-                "file=" + (file!=null ? file.getPath()  : "null") +
+                "file=" + (file!=null ? file.getFileName()  : "null") +
                 ", fileLength=" + fileLength +
                 ", isError=" + isError +
                 ", isContent=" + isContent +
