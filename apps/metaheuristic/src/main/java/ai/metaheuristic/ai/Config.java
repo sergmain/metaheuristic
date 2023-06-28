@@ -189,16 +189,28 @@ public class Config {
     @Configuration
     @ComponentScan(value={"ai.metaheuristic.ai.dispatcher", "ai.metaheuristic.ai.processor", "ai.metaheuristic.ai.mhbp"},
     excludeFilters = {
-            @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.yaml\\..*"),
-            @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.utils\\..*"),
-            @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.exceptions\\..*"),
-            @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.data\\..*"),
-            @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.dispatcher\\.data\\..*"),
-            @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.dispatcher\\.event\\.events\\..*"),
-            @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.api\\..*"),
-            @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.commons\\..*"),
-            @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ww2003\\..*"),
+            @ComponentScan.Filter(type= FilterType.REGEX, pattern=
+                    "ai\\.metaheuristic\\.(ai\\.yaml|ai\\.utils|ai\\.exceptions|ai\\.data|ai\\.dispatcher\\.(beans|data|event\\.events|repositories)|ai\\.mhbp\\.(repositories|data|yaml|events|beans)|api|commons|ww2003)\\..*"),
     })
+/*
+    @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.utils\\..*"),
+    @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.exceptions\\..*"),
+    @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.data\\..*"),
+    @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.dispatcher\\.beans\\..*"),
+    @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.dispatcher\\.data\\..*"),
+    @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.dispatcher\\.event\\.events\\..*"),
+    @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.dispatcher\\.repositories\\..*"),
+
+    @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.mhbp\\.repositories\\..*"),
+    @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.mhbp\\.data\\..*"),
+    @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.mhbp\\.yaml\\..*"),
+    @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.mhbp\\.events\\..*"),
+    @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.mhbp\\.beans\\..*"),
+
+    @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.api\\..*"),
+    @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.commons\\..*"),
+    @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ww2003\\..*")
+*/
     @Profile("dispatcher")
     @EnableTransactionManagement
     @EnableJpaRepositories(basePackageClasses = {RefToDispatcherRepositories.class, RefToMhbpRepositories.class} )
