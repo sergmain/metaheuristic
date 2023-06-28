@@ -18,7 +18,7 @@ package ai.metaheuristic.api;
 
 import ai.metaheuristic.commons.S;
 import lombok.ToString;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 public class EnumsApi {
 

@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.dispatcher.event.StartTaskProcessingEvent;
-import ai.metaheuristic.ai.dispatcher.event.UnAssignTaskEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.StartTaskProcessingEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.UnAssignTaskEvent;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import org.springframework.lang.Nullable;

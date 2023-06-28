@@ -20,7 +20,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
+import javax.annotation.Nonnull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;
@@ -38,15 +38,15 @@ public class EnvParamsYamlUtilsV2
         return 2;
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(EnvParamsYamlV2.class);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public EnvParamsYamlV3 upgradeTo(@NonNull EnvParamsYamlV2 src) {
+    public EnvParamsYamlV3 upgradeTo(@Nonnull EnvParamsYamlV2 src) {
         src.checkIntegrity();
         EnvParamsYamlV3 trg = new EnvParamsYamlV3();
 
@@ -59,9 +59,9 @@ public class EnvParamsYamlUtilsV2
         return trg;
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(@Nonnull Void yaml) {
         return null;
     }
 
@@ -76,13 +76,13 @@ public class EnvParamsYamlUtilsV2
     }
 
     @Override
-    public String toString(@NonNull EnvParamsYamlV2 yaml) {
+    public String toString(@Nonnull EnvParamsYamlV2 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public EnvParamsYamlV2 to(@NonNull String yaml) {
+    public EnvParamsYamlV2 to(@Nonnull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

@@ -18,7 +18,7 @@ package ai.metaheuristic.commons.yaml.task_ml.metrics;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;

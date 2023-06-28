@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.event;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.DispatcherEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.DispatcherApplicationEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.DispatcherEventRepository;
 import ai.metaheuristic.ai.utils.RestUtils;

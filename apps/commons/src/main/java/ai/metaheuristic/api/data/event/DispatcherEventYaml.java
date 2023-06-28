@@ -19,7 +19,7 @@ package ai.metaheuristic.api.data.event;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.Data;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 /**
  * @author Serge

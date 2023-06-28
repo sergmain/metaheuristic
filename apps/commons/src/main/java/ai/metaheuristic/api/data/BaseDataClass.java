@@ -20,8 +20,8 @@ import ai.metaheuristic.api.EnumsApi;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,7 +49,7 @@ public abstract class BaseDataClass {
         this.errorMessages.add(errorMessage);
     }
 
-    public void addErrorMessages(@NonNull List<String> errorMessages) {
+    public void addErrorMessages(@Nonnull List<String> errorMessages) {
         if (this.errorMessages==null) {
             this.errorMessages = new ArrayList<>();
         }
@@ -63,7 +63,7 @@ public abstract class BaseDataClass {
         this.infoMessages.add(infoMessage);
     }
 
-    public void addInfoMessages(@NonNull List<String> infoMessages) {
+    public void addInfoMessages(@Nonnull List<String> infoMessages) {
         if (this.infoMessages==null) {
             this.infoMessages = new ArrayList<>();
         }

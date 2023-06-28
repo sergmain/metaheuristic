@@ -17,7 +17,7 @@
 package ai.metaheuristic.api.data.function;
 
 import ai.metaheuristic.api.EnumsApi;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 /**
  * @author Serge

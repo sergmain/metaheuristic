@@ -17,7 +17,7 @@
 package ai.metaheuristic.ww2003.image;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;

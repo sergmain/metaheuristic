@@ -19,7 +19,7 @@ package ai.metaheuristic.commons.yaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.*;

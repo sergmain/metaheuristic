@@ -42,7 +42,7 @@ import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
-import org.springframework.lang.NonNull;
+import javax.annotation.Nonnull;
 
 import java.lang.reflect.Constructor;
 import java.util.Arrays;

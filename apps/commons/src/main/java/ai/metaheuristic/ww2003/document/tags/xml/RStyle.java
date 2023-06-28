@@ -18,7 +18,7 @@ package ai.metaheuristic.ww2003.document.tags.xml;
 
 import ai.metaheuristic.ww2003.document.Leaf;
 import ai.metaheuristic.ww2003.document.tags.PropertyElement;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 public class RStyle extends Leaf implements XmlTag, PropertyElement {
 

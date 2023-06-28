@@ -17,8 +17,8 @@
 package ai.metaheuristic.commons.yaml.versioning;
 
 import ai.metaheuristic.api.data.BaseParams;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -33,11 +33,11 @@ import org.yaml.snakeyaml.Yaml;
 abstract public class AbstractParamsYamlUtils
         <CurrT extends BaseParams, NextT extends BaseParams, NextU, PrevT, PrevU, CurrForDownT> {
 
-    public abstract @NonNull Yaml getYaml();
+    public abstract @Nonnull Yaml getYaml();
 
-    public abstract @NonNull NextT upgradeTo(@NonNull CurrT yaml);
+    public abstract @Nonnull NextT upgradeTo(@Nonnull CurrT yaml);
 
-    public abstract @NonNull PrevT downgradeTo(@NonNull CurrForDownT yaml);
+    public abstract @Nonnull PrevT downgradeTo(@Nonnull CurrForDownT yaml);
 
     public abstract @Nullable NextU nextUtil();
 
@@ -45,7 +45,7 @@ abstract public class AbstractParamsYamlUtils
 
     public abstract String toString(CurrT yaml);
 
-    public abstract @NonNull CurrT to(String s);
+    public abstract @Nonnull CurrT to(String s);
 
     public abstract int getVersion();
 }

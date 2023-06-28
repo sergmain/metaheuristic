@@ -28,7 +28,7 @@ import ai.metaheuristic.ww2003.document.tags.Shadowed;
 import ai.metaheuristic.ww2003.document.tags.ww2003.*;
 import ai.metaheuristic.ww2003.document.tags.xml.*;
 import lombok.SneakyThrows;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import java.io.Writer;
 import java.util.function.Consumer;

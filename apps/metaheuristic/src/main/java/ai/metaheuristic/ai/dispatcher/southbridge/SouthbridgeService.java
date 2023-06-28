@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
-import ai.metaheuristic.ai.dispatcher.event.TaskCommunicationEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.TaskCommunicationEvent;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.keep_alive.KeepAliveTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;

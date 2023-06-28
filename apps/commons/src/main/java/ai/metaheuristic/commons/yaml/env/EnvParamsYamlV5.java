@@ -17,7 +17,7 @@ package ai.metaheuristic.commons.yaml.env;
 
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.*;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;

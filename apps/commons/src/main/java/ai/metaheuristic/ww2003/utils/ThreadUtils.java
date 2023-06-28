@@ -17,7 +17,7 @@
 package ai.metaheuristic.ww2003.utils;
 
 import ai.metaheuristic.ww2003.exception.CustomInterruptedException;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;

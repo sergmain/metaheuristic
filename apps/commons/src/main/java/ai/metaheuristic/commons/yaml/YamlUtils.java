@@ -19,7 +19,7 @@ package ai.metaheuristic.commons.yaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.TypeDescription;

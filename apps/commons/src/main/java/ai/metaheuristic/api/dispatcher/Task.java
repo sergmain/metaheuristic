@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.api.dispatcher;
 
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 // We need an interface because of not putting an implementation (which is Entity bean) here
 public interface Task {

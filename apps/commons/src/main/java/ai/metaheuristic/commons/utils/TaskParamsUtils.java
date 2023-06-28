@@ -18,7 +18,7 @@ package ai.metaheuristic.commons.utils;
 
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
-import org.springframework.lang.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * @author Serge

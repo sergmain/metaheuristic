@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.internal_function;
 
-import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;

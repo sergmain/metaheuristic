@@ -18,7 +18,7 @@ package ai.metaheuristic.ww2003.image;
 
 import ai.metaheuristic.ww2003.document.tags.xml.*;
 import lombok.Data;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;

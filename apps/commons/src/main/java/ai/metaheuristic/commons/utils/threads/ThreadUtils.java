@@ -21,7 +21,7 @@ import ai.metaheuristic.commons.exceptions.CustomInterruptedException;
 import com.google.errorprone.annotations.MustBeClosed;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import java.time.Duration;
 import java.util.concurrent.ThreadPoolExecutor;

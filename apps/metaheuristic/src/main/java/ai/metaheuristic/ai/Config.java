@@ -33,10 +33,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.*;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -190,7 +187,18 @@ public class Config {
     }
 
     @Configuration
-    @ComponentScan(value={"ai.metaheuristic.ai.dispatcher", "ai.metaheuristic.ai.mhbp"})
+    @ComponentScan(value={"ai.metaheuristic.ai.dispatcher", "ai.metaheuristic.ai.processor", "ai.metaheuristic.ai.mhbp"},
+    excludeFilters = {
+            @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.yaml\\..*"),
+            @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.utils\\..*"),
+            @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.exceptions\\..*"),
+            @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.data\\..*"),
+            @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.dispatcher\\.data\\..*"),
+            @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ai\\.dispatcher\\.event\\.events\\..*"),
+            @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.api\\..*"),
+            @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.commons\\..*"),
+            @ComponentScan.Filter(type= FilterType.REGEX, pattern="ai\\.metaheuristic\\.ww2003\\..*"),
+    })
     @Profile("dispatcher")
     @EnableTransactionManagement
     @EnableJpaRepositories(basePackageClasses = {RefToDispatcherRepositories.class, RefToMhbpRepositories.class} )

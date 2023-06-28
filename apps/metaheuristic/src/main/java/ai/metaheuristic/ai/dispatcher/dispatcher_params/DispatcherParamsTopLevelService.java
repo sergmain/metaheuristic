@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.dispatcher_params;
 
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherCacheRemoveSourceCodeEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.DispatcherCacheRemoveSourceCodeEvent;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.dispatcher_params;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Dispatcher;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherCacheCheckingEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.DispatcherCacheCheckingEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.DispatcherParamsRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;

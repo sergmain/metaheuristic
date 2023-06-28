@@ -18,7 +18,7 @@ package ai.metaheuristic.commons.stat;
 
 import ai.metaheuristic.commons.S;
 import lombok.Data;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import java.io.PrintStream;
 import java.util.*;

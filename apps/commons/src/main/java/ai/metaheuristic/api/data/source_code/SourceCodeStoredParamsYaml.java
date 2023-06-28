@@ -22,7 +22,7 @@ import ai.metaheuristic.api.data.Meta;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import java.util.List;
 

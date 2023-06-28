@@ -21,7 +21,7 @@ import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.lang.NonNull;
+import javax.annotation.Nonnull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
@@ -41,15 +41,15 @@ public class FunctionConfigListYamlUtilsV1
         return 1;
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(FunctionConfigListYamlV1.class);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public FunctionConfigListYamlV2 upgradeTo(@NonNull FunctionConfigListYamlV1 src) {
+    public FunctionConfigListYamlV2 upgradeTo(@Nonnull FunctionConfigListYamlV1 src) {
         src.checkIntegrity();
         FunctionConfigListYamlV2 trg = new FunctionConfigListYamlV2();
         trg.functions = src.functions.stream().map(snSrc-> {
@@ -68,9 +68,9 @@ public class FunctionConfigListYamlUtilsV1
         return trg;
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(@Nonnull Void yaml) {
         return null;
     }
 
@@ -85,13 +85,13 @@ public class FunctionConfigListYamlUtilsV1
     }
 
     @Override
-    public String toString(@NonNull FunctionConfigListYamlV1 yaml) {
+    public String toString(@Nonnull FunctionConfigListYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public FunctionConfigListYamlV1 to(@NonNull String yaml) {
+    public FunctionConfigListYamlV1 to(@Nonnull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

@@ -17,7 +17,7 @@
 package ai.metaheuristic.commons.utils.threads;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import java.util.LinkedList;
 import java.util.concurrent.Executors;
