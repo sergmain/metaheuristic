@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.mhbp.data;
 
 import ai.metaheuristic.api.data.BaseDataClass;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
