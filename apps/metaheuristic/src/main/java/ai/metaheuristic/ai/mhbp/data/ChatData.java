@@ -41,6 +41,11 @@ public class ChatData {
         public Chats(List<SimpleChat> chats) {
             this.chats = chats;
         }
+
+        public Chats(String error) {
+            this.chats = List.of();
+            addErrorMessage(error);
+        }
     }
 
 

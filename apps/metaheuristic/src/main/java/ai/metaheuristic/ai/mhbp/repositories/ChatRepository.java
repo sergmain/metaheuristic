@@ -39,7 +39,7 @@ import java.util.List;
 public interface ChatRepository extends CrudRepository<Chat, Long> {
 
     @Transactional(readOnly = true)
-    @Query(value= "select new ai.metaheuristic.ai.mhbp.data.ChatData(a.id, a.name, a.createdOn) " +
+    @Query(value= "select new ai.metaheuristic.ai.mhbp.data.ChatData$SimpleChat(a.id, a.name, a.createdOn) " +
                   " from Chat a where a.accountId=:accountId")
     List<ChatData.SimpleChat> findAll(Pageable pageable, Long accountId);
 }

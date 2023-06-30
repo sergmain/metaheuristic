@@ -50,8 +50,8 @@ public class ChatRestController {
     @GetMapping("/chats")
     public ChatData.Chats chats(Pageable pageable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        final List<ChatData.SimpleChat> chats = chatService.getChats(pageable, context);
-        return new ChatData.Chats(chats);
+        final ChatData.Chats chats = chatService.getChats(pageable, context);
+        return chats;
     }
 
     @GetMapping("/chat/{chatId}")

@@ -41,9 +41,16 @@ public class ChatService {
 
     public final ChatRepository chatRepository;
 
-    public List<ChatData.SimpleChat> getChats(Pageable pageable, DispatcherContext context) {
-        List<ChatData.SimpleChat> chats = chatRepository.findAll(pageable, context.getAccountId());
-        return chats;
+    public ChatData.Chats getChats(Pageable pageable, DispatcherContext context) {
+
+        try {
+            List<ChatData.SimpleChat> chats = chatRepository.findAll(pageable, context.getAccountId());
+            return new ChatData.Chats(chats);
+        }
+        catch (Throwable th) {
+            log.error("Error:", th);
+            return new ChatData.Chats("Error: " + th.getMessage());
+        }
     }
 
     public ChatData.FullChat getChat(Long chatId, DispatcherContext context) {
