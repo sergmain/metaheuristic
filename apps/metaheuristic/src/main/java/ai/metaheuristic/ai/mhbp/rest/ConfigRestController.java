@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.mhbp.rest;
 
+import ai.metaheuristic.ai.dispatcher.data.GitData;
 import ai.metaheuristic.ai.mhbp.services.LocalGitRepoService;
 import ai.metaheuristic.ai.mhbp.services.LocalGitSourcingService;
 import lombok.RequiredArgsConstructor;
@@ -45,8 +46,8 @@ public class ConfigRestController {
 
     @PreAuthorize("hasAnyRole('MAIN_ADMIN', 'MAIN_OPERATOR', 'MAIN_SUPPORT', 'MANAGER')")
     @GetMapping("/info")
-    public String info() {
-        return ""+gitSourcingService.getGitStatus();
+    public GitData.GitStatusInfo info() {
+        return gitSourcingService.getGitStatus();
     }
 
 }

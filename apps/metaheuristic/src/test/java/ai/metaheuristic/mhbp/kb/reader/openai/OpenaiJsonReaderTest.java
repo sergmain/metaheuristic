@@ -19,6 +19,7 @@ package ai.metaheuristic.mhbp.kb.reader.openai;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
+import ai.metaheuristic.ai.dispatcher.data.GitData;
 import ai.metaheuristic.ai.mhbp.kb.reader.openai.OpenaiInput;
 import ai.metaheuristic.ai.mhbp.kb.reader.openai.OpenaiJsonReader;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
@@ -27,7 +28,6 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.mhbp.data.KbData;
 import ai.metaheuristic.ai.mhbp.questions.QuestionData;
 import ai.metaheuristic.ai.mhbp.services.LocalGitRepoService;
-import ai.metaheuristic.ai.mhbp.services.LocalGitSourcingService;
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParams;
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParamsUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -244,12 +244,12 @@ public class OpenaiJsonReaderTest {
         KbParams kbParams = KbParamsUtils.UTILS.to(yaml);
         assertNotNull(kbParams.kb.git);
 
-        LocalGitSourcingService.GitStatusInfo statusInfo = getGitStatus(new LocalGitSourcingService.GitContext(30L, 100));
+        GitData.GitStatusInfo statusInfo = getGitStatus(new GitData.GitContext(30L, 100));
         assertEquals(Enums.GitStatus.installed, statusInfo.status);
 
         KbData.KbGit git = new KbParams.Git(kbParams.kb.git.repo, kbParams.kb.git.branch, kbParams.kb.git.commit);
         Path gitPath = temp.resolve("git");
-        LocalGitSourcingService.GitContext gitContext = new LocalGitSourcingService.GitContext(60L, 100);
+        GitData.GitContext gitContext = new GitData.GitContext(60L, 100);
 
         SystemProcessLauncher.ExecResult result = LocalGitRepoService.initGitRepo(git, gitPath, gitContext);
         assertNotNull(result.systemExecResult);

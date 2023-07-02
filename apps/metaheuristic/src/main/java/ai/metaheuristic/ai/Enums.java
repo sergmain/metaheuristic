@@ -51,7 +51,7 @@ public final class Enums {
 
     public enum AssetType { company, account, function, source}
 
-    public enum GitStatus {unknown, installed, not_found, error }
+    public enum GitStatus {unknown, processing, installed, not_found, error }
 
     public enum StoringStatus {OK, CANT_BE_STORED}
 

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.mhbp.services;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.data.GitData;
 import ai.metaheuristic.ai.mhbp.data.KbData;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.api.EnumsApi;
@@ -27,6 +28,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -34,10 +36,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static ai.metaheuristic.ai.core.SystemProcessLauncher.*;
+import static ai.metaheuristic.ai.core.SystemProcessLauncher.ExecResult;
 import static ai.metaheuristic.ai.core.SystemProcessLauncher.execCmd;
-import static org.apache.commons.io.FileUtils.deleteQuietly;
 
 /**
  * @author Sergio Lissner
@@ -55,41 +57,51 @@ public class LocalGitSourcingService {
 
     private final Globals globals;
 
-    public final GitStatusInfo gitStatusInfo;
+    public final GitData.GitStatusInfo gitStatusInfo = new GitData.GitStatusInfo(Enums.GitStatus.unknown);
 
-    public record GitContext(long timeout, int consoleOutputMaxLines) {
-        public GitContext withTimeout(long newTimeout) {
-            return new GitContext(newTimeout, this.consoleOutputMaxLines);}
-    }
-
-    public LocalGitSourcingService(Globals globals) {
+    public LocalGitSourcingService(@Autowired Globals globals) {
         this.globals = globals;
-        this.gitStatusInfo = getGitStatus();
     }
 
-    // !!! DO NOT CHANGE THIS CLASS !!!
-    // If you need to, then copy it to ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml
-    // before any changing
-    @Data
-    @ToString
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @EqualsAndHashCode(of={"status", "version", "error"})
-    public static class GitStatusInfo {
-        public Enums.GitStatus status;
-        public String version;
-        public String error;
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
-        public GitStatusInfo(Enums.GitStatus status) {
-            this.status = status;
+    public GitData.GitStatusInfo getGitStatus() {
+        readLock.lock();
+        try {
+            if (gitStatusInfo.status!=Enums.GitStatus.unknown) {
+                return gitStatusInfo;
+            }
+        } finally {
+            readLock.unlock();
+        }
+        writeLock.lock();
+        try {
+            if (gitStatusInfo.status!=Enums.GitStatus.unknown) {
+                return gitStatusInfo;
+            }
+            this.gitStatusInfo.status = Enums.GitStatus.processing;
+            Thread t = new Thread(() -> {
+                try {
+                    this.gitStatusInfo.updateWith( getGitStatusInternal() );
+                } catch(Throwable th){
+                    this.gitStatusInfo.status = Enums.GitStatus.error;
+                    log.error("Git info retrival failed", th);
+                }
+            });
+            t.start();
+            return gitStatusInfo;
+        } finally {
+            writeLock.unlock();
         }
     }
 
-    public GitStatusInfo getGitStatus() {
-        return getGitStatus(new GitContext(30L, globals.mhbp.max.consoleOutputLines));
+    public GitData.GitStatusInfo getGitStatusInternal() {
+        return getGitStatus(new GitData.GitContext(30L, globals.mhbp.max.consoleOutputLines));
     }
 
-    public static GitStatusInfo getGitStatus(GitContext gitContext) {
+    public static GitData.GitStatusInfo getGitStatus(GitData.GitContext gitContext) {
         ExecResult result = execGitCmd(GIT_VERSION_CMD, gitContext);
         if (!result.ok) {
             log.warn("#027.010 Error of getting git status");
@@ -97,20 +109,22 @@ public class LocalGitSourcingService {
             log.warn("\tresult.error: {}",  result.error);
             log.warn("\tresult.functionDir: {}", result.functionDir!=null ? result.functionDir.toAbsolutePath() : null);
             log.warn("\tresult.systemExecResult: {}",  result.systemExecResult);
-            return new GitStatusInfo(Enums.GitStatus.error, null, "#027.010 Error: " + result.error);
+            return new GitData.GitStatusInfo(Enums.GitStatus.error, null, "#027.010 Error: " + result.error);
         }
 
-        // at this point result.systemExecResult must be not null, it can be null only if result.ok==false, but see above
+        // at this point result.systemExecResult must be not null,
+        // it can be null only if result.ok==false, but see above
+        //noinspection DataFlowIssue
         if (result.systemExecResult.exitCode!=0) {
-            return new GitStatusInfo(
+            return new GitData.GitStatusInfo(
                     Enums.GitStatus.not_found, null,
                     "#027.013 Console: " + result.systemExecResult.console);
         }
-        return new GitStatusInfo(Enums.GitStatus.installed, getGitVersion(result.systemExecResult.console.toLowerCase()), null);
+        return new GitData.GitStatusInfo(Enums.GitStatus.installed, getGitVersion(result.systemExecResult.console.toLowerCase()), null);
     }
 
-    public static ExecResult execGitCmd(List<String> gitVersionCmd, GitContext gitContext) {
-        return execCmd(gitVersionCmd, gitContext.timeout, gitContext.consoleOutputMaxLines);
+    public static ExecResult execGitCmd(List<String> gitVersionCmd, GitData.GitContext gitContext) {
+        return execCmd(gitVersionCmd, gitContext.timeout(), gitContext.consoleOutputMaxLines());
     }
 
     private static AssetFile prepareFunctionDir(final Path resourceDir, String functionCode) {
@@ -145,7 +159,7 @@ public class LocalGitSourcingService {
     }
 
     @SneakyThrows
-    public static ExecResult prepareRepo(final Path resourceDir, KbData.KbGit git, GitContext gitContext) {
+    public static ExecResult prepareRepo(final Path resourceDir, KbData.KbGit git, GitData.GitContext gitContext) {
 
         Path functionDir = resourceDir;
         Path repoDir = functionDir.resolve(Consts.REPO);
@@ -224,7 +238,7 @@ public class LocalGitSourcingService {
     }
 
     @SneakyThrows
-    public static ExecResult tryToRepairRepo(Path functionDir, KbData.KbGit git, GitContext gitContext) {
+    public static ExecResult tryToRepairRepo(Path functionDir, KbData.KbGit git, GitData.GitContext gitContext) {
         Path repoDir = functionDir.resolve(Consts.REPO);
         ExecResult result;
         Files.deleteIfExists(repoDir);
@@ -237,7 +251,7 @@ public class LocalGitSourcingService {
         return result;
     }
 
-    private static ExecResult execFileSystemCheck(Path repoDir, Globals.Git git, GitContext gitContext) {
+    private static ExecResult execFileSystemCheck(Path repoDir, Globals.Git git, GitData.GitContext gitContext) {
 //git>git fsck --full
 //Checking object directories: 100% (256/256), done.
 //Checking objects: 100% (10432/10432), done.
@@ -249,43 +263,43 @@ public class LocalGitSourcingService {
         return result;
     }
 
-    private static ExecResult execCheckoutRevision(Path repoDir, KbData.KbGit git, GitContext gitContext) {
+    private static ExecResult execCheckoutRevision(Path repoDir, KbData.KbGit git, GitData.GitContext gitContext) {
         // git checkout sha1
         ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "checkout", git.getCommit()), gitContext.withTimeout(0L));
         return result;
     }
 
-    private static ExecResult execPullOrigin(Path repoDir, KbData.KbGit git, GitContext gitContext) {
+    private static ExecResult execPullOrigin(Path repoDir, KbData.KbGit git, GitData.GitContext gitContext) {
         // pull origin master
         ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "pull", "origin", git.getBranch()), gitContext.withTimeout(0L));
         return result;
     }
 
-    private static ExecResult execCleanDF(Path repoDir, GitContext gitContext) {
+    private static ExecResult execCleanDF(Path repoDir, GitData.GitContext gitContext) {
         // git clean -df
         ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "clean", "-df"), gitContext.withTimeout(120L));
         return result;
     }
 
-    private static ExecResult execRevParse(Path repoDir, GitContext gitContext) {
+    private static ExecResult execRevParse(Path repoDir, GitData.GitContext gitContext) {
         // git rev-parse --is-inside-work-tree
         ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "rev-parse", "--is-inside-work-tree"), gitContext.withTimeout(60L));
         return result;
     }
 
     // TODO 2019-05-11 add this before checkout for new changes
-    private static ExecResult execResetHardHead(Path repoDir, GitContext gitContext) {
+    private static ExecResult execResetHardHead(Path repoDir, GitData.GitContext gitContext) {
         // git reset --hard HEAD
         ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "reset", "--hard", "HEAD"), gitContext.withTimeout(120L));
         return result;
     }
 
-    private static ExecResult execCommonCmd(List<String> cmd, GitContext gitContext) {
+    private static ExecResult execCommonCmd(List<String> cmd, GitData.GitContext gitContext) {
         log.info("exec {}", cmd);
         return execGitCmd(cmd, gitContext);
     }
 
-    private static ExecResult execClone(Path repoDir, KbData.KbGit git, GitContext gitContext) {
+    private static ExecResult execClone(Path repoDir, KbData.KbGit git, GitData.GitContext gitContext) {
         // git -C <path> clone <git-repo-url> repo
         String gitUrl = git.getRepo();
         List<String> cmd = List.of("git", "-C", repoDir.toAbsolutePath().toString(), "clone", gitUrl, Consts.REPO);

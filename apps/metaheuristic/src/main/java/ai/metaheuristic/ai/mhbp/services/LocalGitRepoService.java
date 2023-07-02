@@ -16,20 +16,21 @@
 
 package ai.metaheuristic.ai.mhbp.services;
 
-import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.mhbp.data.KbData;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
-import lombok.RequiredArgsConstructor;
+import jakarta.annotation.PostConstruct;
 import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static ai.metaheuristic.ai.mhbp.services.LocalGitSourcingService.*;
+import static ai.metaheuristic.ai.dispatcher.data.GitData.GitContext;
+import static ai.metaheuristic.ai.mhbp.services.LocalGitSourcingService.prepareRepo;
 
 /**
  * @author Sergio Lissner
@@ -37,14 +38,16 @@ import static ai.metaheuristic.ai.mhbp.services.LocalGitSourcingService.*;
  * Time: 10:00 PM
  */
 @Service
-@RequiredArgsConstructor
 @Profile("dispatcher")
 public class LocalGitRepoService {
 
-    public final Globals globals;
-    public final LocalGitSourcingService gitSourcingService;
+    private final Globals globals;
 
     private Path gitPath;
+
+    public LocalGitRepoService(@Autowired Globals globals) {
+        this.globals = globals;
+    }
 
     @PostConstruct
     public void postConstruct() {
