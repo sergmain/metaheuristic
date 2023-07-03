@@ -16,9 +16,7 @@
 
 package ai.metaheuristic.ai.mhbp.repositories;
 
-import ai.metaheuristic.ai.mhbp.beans.Chapter;
 import ai.metaheuristic.ai.mhbp.beans.Chat;
-import ai.metaheuristic.ai.mhbp.data.ChatData;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -39,8 +37,16 @@ import java.util.List;
 public interface ChatRepository extends CrudRepository<Chat, Long> {
 
     @Transactional(readOnly = true)
-    @Query(value= "select new ai.metaheuristic.ai.mhbp.data.ChatData$SimpleChat(a.id, a.name, a.createdOn) " +
-                  " from Chat a where a.accountId=:accountId")
-    List<ChatData.SimpleChat> findAll(Pageable pageable, Long accountId);
+    @Query(value= "select c.id from Chat c where c.accountId=:accountId")
+    List<Long> findIds(Pageable pageable, Long accountId);
+
+//    @Transactional(readOnly = true)
+//    @Query(value= "select c from Chat c where c.accountId=:accountId")
+//    List<Chat> findAll(Pageable pageable, Long accountId);
+
+//    @Transactional(readOnly = true)
+//    @Query(value= "select new ai.metaheuristic.ai.mhbp.data.ChatData$SimpleChat(a.id, a.name, a.createdOn) " +
+//                  " from Chat a where a.accountId=:accountId")
+//    List<ChatData.SimpleChat> findAll(Pageable pageable, Long accountId);
 }
 

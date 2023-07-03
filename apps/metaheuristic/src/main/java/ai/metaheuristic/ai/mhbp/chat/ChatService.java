@@ -19,12 +19,12 @@ package ai.metaheuristic.ai.mhbp.chat;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.beans.Api;
+import ai.metaheuristic.ai.mhbp.beans.Chat;
 import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.ai.mhbp.data.ChatData;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ChatRepository;
 import ai.metaheuristic.ai.mhbp.yaml.chat.ChatParams;
-import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.extern.slf4j.Slf4j;
@@ -61,15 +61,21 @@ public class ChatService {
     }
 
     public ChatData.Chats getChats(Pageable pageable, DispatcherContext context) {
-
         try {
-            List<ChatData.SimpleChat> chats = chatRepository.findAll(pageable, context.getAccountId());
+            List<ChatData.SimpleChat> chats = chatRepository.findIds(pageable, context.getAccountId()).stream()
+                    .map(this::to).toList();
             return new ChatData.Chats(chats);
         }
         catch (Throwable th) {
             log.error("Error:", th);
             return new ChatData.Chats("Error: " + th.getMessage());
         }
+    }
+
+    private ChatData.SimpleChat to(Long id) {
+        Chat chat = chatRepository.findById(id).orElseThrow();
+        ChatParams params = chat.getChatParams();
+        return new ChatData.SimpleChat(chat.id, chat.name, chat.createdOn, new ApiData.ApiUid(params.api.apiId, params.api.code));
     }
 
     public ChatData.FullChat getChat(Long chatId, DispatcherContext context) {

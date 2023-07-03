@@ -89,7 +89,7 @@ public class Chat implements Serializable {
     }
 
     @JsonIgnore
-    public ChatParams getChapterParams() {
+    public ChatParams getChatParams() {
         return paramsLocked.get();
     }
 

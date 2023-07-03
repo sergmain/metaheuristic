@@ -44,7 +44,6 @@ public class ScenarioParams implements BaseParams {
     @AllArgsConstructor
     public static class Api {
         public long apiId;
-        // stored just for info
         public String code;
     }
 

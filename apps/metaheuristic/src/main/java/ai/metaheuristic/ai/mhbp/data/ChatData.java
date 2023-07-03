@@ -17,10 +17,13 @@
 package ai.metaheuristic.ai.mhbp.data;
 
 import ai.metaheuristic.api.data.BaseDataClass;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.List;
 
@@ -31,7 +34,7 @@ import java.util.List;
  */
 public class ChatData {
 
-    public record SimpleChat(Long chatId, String name, long createdOn) {}
+    public record SimpleChat(Long chatId, String name, long createdOn, ApiData.ApiUid apiUid) {}
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -54,6 +57,14 @@ public class ChatData {
         public Chats(String error) {
             this.chats = List.of();
             addErrorMessage(error);
+        }
+
+        @JsonCreator
+        public Chats(
+                @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+                @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
         }
     }
 

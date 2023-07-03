@@ -45,7 +45,6 @@ public class ChatParamsV1 implements BaseParams  {
     @AllArgsConstructor
     public static class ApiV1 {
         public long apiId;
-        // stored just for info
         public String code;
     }
 
