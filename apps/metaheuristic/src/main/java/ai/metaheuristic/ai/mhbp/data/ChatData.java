@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.mhbp.data;
 
 import ai.metaheuristic.api.data.BaseDataClass;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -31,6 +32,14 @@ import java.util.List;
 public class ChatData {
 
     public record SimpleChat(Long chatId, String name, long createdOn) {}
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ApiForCompany extends BaseDataClass {
+        public List<ApiData.ApiUid> apis;
+    }
 
     @Data
     @EqualsAndHashCode(callSuper = false)

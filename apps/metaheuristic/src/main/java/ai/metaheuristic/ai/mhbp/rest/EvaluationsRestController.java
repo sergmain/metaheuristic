@@ -70,7 +70,7 @@ public class EvaluationsRestController {
     }
 
     @GetMapping(value = "/evaluation-add")
-    public EvaluationData.EvaluationUidsForCompany batchAdd(Authentication authentication) {
+    public EvaluationData.EvaluationUidsForCompany evaluationAdd(Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         EvaluationData.EvaluationUidsForCompany result = evaluationService.getEvaluationUidsForCompany(context);
         return result;

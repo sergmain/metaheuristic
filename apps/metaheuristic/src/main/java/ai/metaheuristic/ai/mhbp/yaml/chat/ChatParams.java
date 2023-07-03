@@ -16,10 +16,13 @@
 
 package ai.metaheuristic.ai.mhbp.yaml.chat;
 
+import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +35,19 @@ public class ChatParams implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
+        if (api==null) {
+            throw new CheckIntegrityFailedException("(api==null)");
+        }
         return true;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Api {
+        public long apiId;
+        // stored just for info
+        public String code;
     }
 
     @Data
@@ -44,6 +59,8 @@ public class ChatParams implements BaseParams {
         // answer
         public String a;
     }
+
+    public Api api;
 
     public List<Prompt> prompts = new ArrayList<>();
 }

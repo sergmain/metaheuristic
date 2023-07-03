@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class StandaloneAnonRestController {
 
     @GetMapping("/ping")
-    public boolean ping() {
-        return true;
+    public String ping() {
+        return "Metaheuristic";
     }
 }

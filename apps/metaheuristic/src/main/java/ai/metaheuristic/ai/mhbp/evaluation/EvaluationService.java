@@ -23,7 +23,9 @@ import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Chapter;
 import ai.metaheuristic.ai.mhbp.beans.Evaluation;
 import ai.metaheuristic.ai.mhbp.chapter.ChapterService;
+import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.ai.mhbp.data.EvaluationData;
+import ai.metaheuristic.ai.mhbp.data.ScenarioData;
 import ai.metaheuristic.ai.mhbp.events.EvaluateProviderEvent;
 import ai.metaheuristic.ai.mhbp.kb.KbService;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
@@ -80,7 +82,7 @@ public class EvaluationService {
         EvaluationData.EvaluationUidsForCompany r = new EvaluationData.EvaluationUidsForCompany();
 
         r.apis = apiService.getApisAllowedForCompany(context).stream()
-                .map(o->new EvaluationData.ApiUid(o.id, o.code))
+                .map(o->new ApiData.ApiUid(o.id, o.code))
                 .toList();
         r.chapters = chapterService.getChaptersAllowedForCompany(context);
         return r;

@@ -31,19 +31,11 @@ import java.util.List;
 public class EvaluationData {
 
     @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class ApiUid {
-        public Long id;
-        public String uid;
-    }
-
-    @Data
     @EqualsAndHashCode(callSuper = false)
     @AllArgsConstructor
     @NoArgsConstructor
     public static class EvaluationUidsForCompany extends BaseDataClass {
-        public List<ApiUid> apis;
+        public List<ApiData.ApiUid> apis;
         public List<SimpleChapterUid> chapters;
     }
 

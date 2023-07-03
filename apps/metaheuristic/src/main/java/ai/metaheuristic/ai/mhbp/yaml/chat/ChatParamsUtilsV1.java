@@ -45,6 +45,7 @@ public class ChatParamsUtilsV1 extends
 
         ChatParams t = new ChatParams();
         t.prompts = v1.prompts.stream().map(ChatParamsUtilsV1::toPrompt).collect(Collectors.toList());
+        t.api = new ChatParams.Api(v1.api.apiId, v1.api.code);
         t.checkIntegrity();
         return t;
     }

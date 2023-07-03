@@ -17,11 +17,18 @@
 package ai.metaheuristic.ai.mhbp.chat;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.mhbp.api.ApiService;
+import ai.metaheuristic.ai.mhbp.beans.Api;
+import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.ai.mhbp.data.ChatData;
+import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ChatRepository;
+import ai.metaheuristic.ai.mhbp.yaml.chat.ChatParams;
+import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,11 +42,23 @@ import java.util.List;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @Profile("dispatcher")
 public class ChatService {
 
-    public final ChatRepository chatRepository;
+    private final ChatRepository chatRepository;
+    private final ChatTxService chatTxService;
+    private final ApiService apiService;
+    private final ApiRepository apiRepository;
+
+    public ChatService(@Autowired ChatRepository chatRepository,
+                       @Autowired ChatTxService chatTxService,
+                       @Autowired ApiService apiService,
+                       @Autowired ApiRepository apiRepository) {
+        this.chatRepository = chatRepository;
+        this.chatTxService = chatTxService;
+        this.apiService = apiService;
+        this.apiRepository = apiRepository;
+    }
 
     public ChatData.Chats getChats(Pageable pageable, DispatcherContext context) {
 
@@ -61,4 +80,31 @@ public class ChatService {
     public OperationStatusRest askPrompt(Long chatId, String prompt, DispatcherContext context) {
         return null;
     }
+
+
+    public ChatData.ApiForCompany getApiForCompany(DispatcherContext context) {
+        ChatData.ApiForCompany r = new ChatData.ApiForCompany();
+
+        r.apis = apiService.getApisAllowedForCompany(context).stream()
+                .map(o->new ApiData.ApiUid(o.id, o.code))
+                .toList();
+        return r;
+    }
+
+    public OperationStatusRest createChat(String name, String apiId, long companyId, long accountId, DispatcherContext context) {
+        try {
+            Api api = apiRepository.findById(Long.parseLong(apiId)).orElse(null);
+            if (api==null || api.companyId!=context.getCompanyId()) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.480 apiId is null");
+            }
+            ChatParams.Api apiRef = new ChatParams.Api(api.id, api.code);
+
+            return chatTxService.createChat(name, apiRef, companyId, accountId);
+        }
+        catch (Throwable th) {
+            log.error("Error", th);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
+        }
+    }
+
 }

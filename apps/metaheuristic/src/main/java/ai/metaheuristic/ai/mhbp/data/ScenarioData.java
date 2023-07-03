@@ -112,15 +112,6 @@ public class ScenarioData {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class ApiUid {
-        public Long id;
-        // actually, it's a 'code'
-        public String uid;
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
     public static class InternalFunction {
         public String code;
         public String translate;
@@ -132,7 +123,7 @@ public class ScenarioData {
     @NoArgsConstructor
     public static class ScenarioUidsForAccount extends BaseDataClass {
         public List<InternalFunction> functions;
-        public List<ApiUid> apis;
+        public List<ApiData.ApiUid> apis;
         public List<String> aggregateTypes;
     }
 
@@ -200,7 +191,7 @@ public class ScenarioData {
         @Nullable
         public SimpleScenarioStep[] steps;
 
-        public SimpleScenarioStep(Long scenarioId, ApiUid apiUid, ScenarioParams.Step step, @Nullable String functionCode, @Nullable String aggregateType ) {
+        public SimpleScenarioStep(Long scenarioId, ApiData.ApiUid apiUid, ScenarioParams.Step step, @Nullable String functionCode, @Nullable String aggregateType ) {
             this.scenarioId = scenarioId;
             this.uuid = step.uuid;
             this.parentUuid = step.parentUuid;

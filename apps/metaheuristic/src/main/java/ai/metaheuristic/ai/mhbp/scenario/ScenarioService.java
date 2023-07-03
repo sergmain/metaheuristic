@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.beans.ScenarioGroup;
+import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.ai.mhbp.data.ScenarioData;
 import ai.metaheuristic.ai.mhbp.data.SimpleScenario;
 import ai.metaheuristic.ai.mhbp.provider.ProviderData;
@@ -86,7 +87,7 @@ import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
 @Profile("dispatcher")
 public class ScenarioService {
 
-    private static final ScenarioData.ApiUid BROKEN_API = new ScenarioData.ApiUid(0L, "<broken API Id>");
+    private static final ApiData.ApiUid BROKEN_API = new ApiData.ApiUid(0L, "<broken API Id>");
 
     private final Globals globals;
     private final ApiService apiService;
@@ -127,7 +128,7 @@ public class ScenarioService {
     public ScenarioData.ScenarioUidsForAccount getScenarioUidsForAccount(DispatcherContext context) {
         ScenarioData.ScenarioUidsForAccount r = new ScenarioData.ScenarioUidsForAccount();
         r.apis = apiService.getApisAllowedForCompany(context).stream()
-                .map(o ->new ScenarioData.ApiUid(o.id, o.code))
+                .map(o ->new ApiData.ApiUid(o.id, o.code))
                 .toList();
         r.functions = InternalFunctionRegisterService.internalFunctionMap.entrySet().stream()
                 .filter(e->e.getValue().isScenarioCompatible())
@@ -144,14 +145,14 @@ public class ScenarioService {
         }
         ScenarioParams scenarioParams = s.getScenarioParams();
 
-        Map<String, ScenarioData.ApiUid> apis = new HashMap<>();
+        Map<String, ApiData.ApiUid> apis = new HashMap<>();
         List<ScenarioData.SimpleScenarioStep> steps = scenarioParams.steps.stream()
                 .map(o-> {
-                    ScenarioData.ApiUid apiUid;
+                    ApiData.ApiUid apiUid;
                     if (o.api!=null) {
                         apiUid = apis.computeIfAbsent(o.api.code,
                                 (apiCode) -> apiRepository.findByApiCodeOptional(apiCode)
-                                        .map(api -> new ScenarioData.ApiUid(api.id, api.code))
+                                        .map(api -> new ApiData.ApiUid(api.id, api.code))
                                         .orElse(BROKEN_API));
                     }
                     else {

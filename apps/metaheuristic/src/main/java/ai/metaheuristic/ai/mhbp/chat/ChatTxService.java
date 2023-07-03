@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.mhbp.chat;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.beans.Chat;
-import ai.metaheuristic.ai.mhbp.repositories.ChapterRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ChatRepository;
+import ai.metaheuristic.ai.mhbp.yaml.chat.ChatParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
@@ -50,4 +50,21 @@ public class ChatTxService {
         chatRepository.delete(chat);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
+
+    @Transactional
+    public OperationStatusRest createChat(String name, ChatParams.Api apiRef, long companyId, long accountId) {
+        Chat chat = new Chat();
+        chat.companyId = companyId;
+        chat.accountId = accountId;
+        chat.createdOn = System.currentTimeMillis();
+        chat.name = name;
+        final ChatParams chatParams = new ChatParams();
+        chatParams.api = apiRef;
+
+        chat.updateParams(chatParams);
+        chatRepository.save(chat);
+
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
 }

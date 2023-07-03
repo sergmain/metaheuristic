@@ -36,6 +36,15 @@ import java.util.Collections;
 public class ApiData {
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ApiUid {
+        public Long id;
+        // actually, it's a 'code'
+        public String uid;
+    }
+
+    @Data
     @NoArgsConstructor
     @AllArgsConstructor
     public static class SimpleError {

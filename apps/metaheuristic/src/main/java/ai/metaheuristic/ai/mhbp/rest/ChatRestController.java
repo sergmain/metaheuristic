@@ -29,8 +29,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 /**
  * @author Sergio Lissner
  * Date: 6/21/2023
@@ -74,6 +72,22 @@ public class ChatRestController {
     public OperationStatusRest deleteCommit(Long chatId, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         return chatTxService.deleteChatById(chatId, context);
+    }
+
+    @GetMapping(value = "/chat-add")
+    public ChatData.ApiForCompany chatAdd(Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        ChatData.ApiForCompany result = chatService.getApiForCompany(context);
+        return result;
+    }
+
+    @PostMapping("/chat-add-commit")
+    public OperationStatusRest chatAddCommit(
+            @RequestParam(name = "name") String name,
+            @RequestParam(name = "apiId") String apiId,
+            Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        return chatService.createChat(name, apiId, context.getCompanyId(), context.getAccountId(), context);
     }
 
 }
