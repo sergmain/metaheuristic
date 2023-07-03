@@ -23,6 +23,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Slice;
 import org.springframework.lang.Nullable;
 
 import java.util.List;
@@ -48,14 +49,14 @@ public class ChatData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class Chats extends BaseDataClass {
-        public List<SimpleChat> chats;
+        public Slice<SimpleChat> chats;
 
-        public Chats(List<SimpleChat> chats) {
+        public Chats(Slice<SimpleChat> chats) {
             this.chats = chats;
         }
 
-        public Chats(String error) {
-            this.chats = List.of();
+        public Chats(Slice<SimpleChat> chats, String error) {
+            this.chats = chats;
             addErrorMessage(error);
         }
 

@@ -30,6 +30,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -64,11 +65,11 @@ public class ChatService {
         try {
             List<ChatData.SimpleChat> chats = chatRepository.findIds(pageable, context.getAccountId()).stream()
                     .map(this::to).toList();
-            return new ChatData.Chats(chats);
+            return new ChatData.Chats(new PageImpl<>(chats, pageable, chats.size()));
         }
         catch (Throwable th) {
             log.error("Error:", th);
-            return new ChatData.Chats("Error: " + th.getMessage());
+            return new ChatData.Chats(new PageImpl<>(List.of(), pageable, 0), "Error: " + th.getMessage());
         }
     }
 
