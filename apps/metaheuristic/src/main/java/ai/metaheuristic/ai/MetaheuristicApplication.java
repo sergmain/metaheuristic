@@ -31,8 +31,6 @@ public class MetaheuristicApplication {
             System.out.println("Must be run with -Dfile.encoding=UTF-8, actual file.encoding: " + encoding);
             System.exit(-1);
         }
-//        System.setProperty("file.encoding", StandardCharsets.UTF_8.toString());
-//        System.setProperty("sun.jnu.encoding", StandardCharsets.UTF_8.toString());
         SpringApplication.run(MetaheuristicApplication.class, args);
     }
 }
