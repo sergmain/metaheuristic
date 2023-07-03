@@ -17,9 +17,6 @@
 package ai.metaheuristic.ai.standalone.rest;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringApplication;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,20 +29,14 @@ import org.springframework.web.bind.annotation.RestController;
  * Time: 9:51 PM
  */
 @RestController
-@RequestMapping("/rest/v1/standalone")
+@RequestMapping("/rest/v1/standalone/anon")
 @Slf4j
 @Profile("standalone")
 @CrossOrigin
-public class StandaloneRestController {
+public class StandaloneAnonRestController {
 
-    private final ApplicationContext appCtx;
-
-    public StandaloneRestController(@Autowired ApplicationContext appCtx) {
-        this.appCtx = appCtx;
-    }
-
-    @GetMapping("/shutdown")
-    public void shutdown() {
-        System.exit(SpringApplication.exit(appCtx, ()->0));
+    @GetMapping("/ping")
+    public boolean ping() {
+        return true;
     }
 }
