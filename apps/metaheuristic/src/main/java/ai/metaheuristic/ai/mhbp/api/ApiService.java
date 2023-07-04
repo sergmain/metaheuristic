@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -101,6 +102,9 @@ public class ApiService {
         Api api = apiRepository.findById(apiId).orElse(null);
         if (api == null) {
             return new ApiData.Api("217.200 Not found");
+        }
+        if (api.getCompanyId()!=context.getCompanyId()) {
+            throw new AccessDeniedException("Access denied for apiId " + apiId);
         }
         return new ApiData.Api(new ApiData.SimpleApi(api));
     }

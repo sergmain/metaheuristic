@@ -69,17 +69,24 @@ public class ChatData {
         }
     }
 
-
-    public record ChatPrompt(int id, String prompt, String answer) {}
-
+    public record ChatPrompt(String prompt, String answer) {}
 
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class FullChat extends BaseDataClass {
         public String sessionId;
+        public Long chatId;
+        public ApiData.ApiUid apiUid;
         public List<ChatPrompt> prompts;
 
+        @JsonCreator
+        public FullChat(
+                @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+                @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
 

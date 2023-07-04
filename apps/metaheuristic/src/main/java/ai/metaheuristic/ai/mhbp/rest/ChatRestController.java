@@ -53,7 +53,7 @@ public class ChatRestController {
     }
 
     @GetMapping("/chat/{chatId}")
-    public ChatData.FullChat chats(@PathVariable Long chatId, Authentication authentication) {
+    public ChatData.FullChat chat(@PathVariable Long chatId, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         final ChatData.FullChat chat = chatService.getChat(chatId, context);
         return chat;
@@ -89,5 +89,4 @@ public class ChatRestController {
         DispatcherContext context = userContextService.getContext(authentication);
         return chatService.createChat(name, apiId, context.getCompanyId(), context.getAccountId(), context);
     }
-
 }

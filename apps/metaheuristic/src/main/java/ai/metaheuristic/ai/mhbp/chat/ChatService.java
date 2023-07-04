@@ -80,9 +80,30 @@ public class ChatService {
     }
 
     public ChatData.FullChat getChat(Long chatId, DispatcherContext context) {
+        ChatData.FullChat fullChat = new ChatData.FullChat();
 
-        return null;
+        Chat chat = chatRepository.findById(chatId).orElseThrow();
+        ChatParams params = chat.getChatParams();
+
+        ApiData.Api api = apiService.getApi(params.api.apiId, context);
+        if (!api.getErrorMessagesAsList().isEmpty()) {
+            fullChat.addErrorMessages(api.getErrorMessagesAsList());
+            return fullChat;
+        }
+
+        fullChat.apiUid = new ApiData.ApiUid(api.getApi().id, api.getApi().code);
+        fullChat.prompts = params.prompts.stream().map(ChatService::to).toList();
+        fullChat.chatId = chatId;
+
+        //fullChat.sessionId = null;
+
+        return fullChat;
     }
+
+    private static ChatData.ChatPrompt to(ChatParams.Prompt p) {
+        return new ChatData.ChatPrompt(p.p, p.a);
+    }
+
 
     public OperationStatusRest askPrompt(Long chatId, String prompt, DispatcherContext context) {
         return null;
