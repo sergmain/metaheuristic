@@ -57,6 +57,8 @@ public class ChatParams implements BaseParams {
         public String p;
         // answer
         public String a;
+        // raw result
+        public String r;
     }
 
     public Api api;

@@ -101,12 +101,12 @@ public class ChatService {
     }
 
     private static ChatData.ChatPrompt to(ChatParams.Prompt p) {
-        return new ChatData.ChatPrompt(p.p, p.a);
+        return new ChatData.ChatPrompt(p.p, p.a, p.r, null);
     }
 
 
     public OperationStatusRest askPrompt(Long chatId, String prompt, DispatcherContext context) {
-        return null;
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
 

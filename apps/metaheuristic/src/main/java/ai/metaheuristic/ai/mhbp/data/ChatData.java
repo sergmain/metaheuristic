@@ -69,7 +69,7 @@ public class ChatData {
         }
     }
 
-    public record ChatPrompt(String prompt, String answer) {}
+    public record ChatPrompt(String prompt, String result, String raw, @Nullable String error) {}
 
     @Data
     @EqualsAndHashCode(callSuper = false)
