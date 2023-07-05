@@ -38,6 +38,7 @@ import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.ai.mhbp.data.ChatData;
 import ai.metaheuristic.ai.mhbp.data.ScenarioData;
 import ai.metaheuristic.ai.mhbp.data.SimpleScenario;
+import ai.metaheuristic.ai.mhbp.events.StoreChatLogEvent;
 import ai.metaheuristic.ai.mhbp.provider.ProviderQueryService;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioGroupRepository;
@@ -59,6 +60,7 @@ import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -101,6 +103,7 @@ public class ScenarioService {
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final ChatService chatService;
     private final ChatLogService chatLogService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ScenarioData.ScenarioGroupsResult getScenarioGroups(Pageable pageable, DispatcherContext context) {
         pageable = PageUtils.fixPageSize(10, pageable);
@@ -411,7 +414,9 @@ public class ScenarioService {
             ChatData.ChatPrompt  chatResult = new ChatData.ChatPrompt ();
             if (step.function==null) {
                 chatService.evaluationAsApiCall(chatResult, se, Objects.requireNonNull(api));
-                chatLogService.saveToChatLog(null, scenarioId, api, chatResult, context);
+                eventPublisher.publishEvent(new StoreChatLogEvent(
+                        ChatLogService.toChatLogParams(null, scenarioId, api, chatResult, context),
+                        context.getCompanyId(), context.getAccountId()));
             }
             else {
                 if (Consts.MH_ENHANCE_TEXT_FUNCTION.equals(step.function.code)) {

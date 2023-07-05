@@ -21,22 +21,22 @@ import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Chat;
 import ai.metaheuristic.ai.mhbp.chat_log.ChatLogService;
-import ai.metaheuristic.ai.mhbp.chat_log.ChatLogTxService;
 import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.ai.mhbp.data.ChatData;
 import ai.metaheuristic.ai.mhbp.data.ScenarioData;
+import ai.metaheuristic.ai.mhbp.events.StoreChatLogEvent;
 import ai.metaheuristic.ai.mhbp.provider.ProviderData;
 import ai.metaheuristic.ai.mhbp.provider.ProviderQueryService;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ChatRepository;
 import ai.metaheuristic.ai.mhbp.yaml.chat.ChatParams;
-import ai.metaheuristic.ai.mhbp.yaml.chat_log.ChatLogParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -62,23 +62,23 @@ public class ChatService {
 
     private final ChatRepository chatRepository;
     private final ChatTxService chatTxService;
-    private final ChatLogService chatLogService;
     private final ApiService apiService;
     private final ApiRepository apiRepository;
     private final ProviderQueryService providerQueryService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ChatService(@Autowired ChatRepository chatRepository,
                        @Autowired ProviderQueryService providerQueryService,
                        @Autowired ChatTxService chatTxService,
-                       @Autowired ChatLogService chatLogService,
                        @Autowired ApiService apiService,
-                       @Autowired ApiRepository apiRepository) {
+                       @Autowired ApiRepository apiRepository,
+                       @Autowired ApplicationEventPublisher eventPublisher) {
         this.chatRepository = chatRepository;
         this.chatTxService = chatTxService;
-        this.chatLogService = chatLogService;
         this.apiService = apiService;
         this.apiRepository = apiRepository;
         this.providerQueryService = providerQueryService;
+        this.eventPublisher = eventPublisher;
     }
 
     public ChatData.Chats getChats(Pageable pageable, DispatcherContext context) {
@@ -155,7 +155,10 @@ public class ChatService {
             ChatData.ChatPrompt result = new ChatData.ChatPrompt();
             evaluationAsApiCall(result, new ChatData.PromptEvaluation("n/a", prompt, List.of()), chatInfo.api);
             chatTxService.storePrompt(chatId, result);
-            chatLogService.saveToChatLog(chatInfo.chat.id, null, chatInfo.api, result, context);
+            eventPublisher.publishEvent(new StoreChatLogEvent(
+                    ChatLogService.toChatLogParams(chatInfo.chat.id, null, chatInfo.api, result, context),
+                    context.getCompanyId(), context.getAccountId()));
+
             r.update(result);
             return r;
         }
@@ -163,23 +166,6 @@ public class ChatService {
             r.error = "373.380 error " + th.getMessage();
             log.error(r.error, th);
             return r;
-        }
-    }
-
-    private void saveToChatLog(Chat chat, Api api, ChatData.ChatPrompt prompt, DispatcherContext context) {
-        ChatLogParams params = new ChatLogParams();
-        params.api = new ChatLogParams.Api(api.id, api.code);
-        params.prompt = new ChatLogParams.Prompt(prompt.prompt, prompt.result, prompt.raw, prompt.error);
-        params.chatId = chat.id;
-        params.scenarioId = null;
-        params.stateless = false;
-
-        try {
-            chatLogService.save(params, context.getCompanyId(), context.getAccountId());
-        }
-        catch (Throwable th) {
-            log.error("Error", th);
-            // we can skip an error of saving to ChatLog
         }
     }
 
