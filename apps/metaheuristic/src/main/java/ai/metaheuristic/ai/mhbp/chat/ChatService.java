@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.mhbp.repositories.ChatRepository;
 import ai.metaheuristic.ai.mhbp.yaml.chat.ChatParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -129,7 +130,7 @@ public class ChatService {
     }
 
     private static ChatData.ChatPrompt to(ChatParams.Prompt p) {
-        return new ChatData.ChatPrompt(p.p, p.a, p.r, null);
+        return new ChatData.ChatPrompt(S.b(p.p) ? "" : p.p.strip(), S.b(p.a) ? "" : p.a.strip(), S.b(p.r) ? "" : p.r.strip(), null);
     }
 
     public ChatData.OnePrompt postPrompt(Long chatId, String prompt, DispatcherContext context) {
