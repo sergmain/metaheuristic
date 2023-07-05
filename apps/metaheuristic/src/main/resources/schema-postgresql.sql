@@ -455,3 +455,14 @@ CREATE table mhbp_chat
     NAME            VARCHAR(100)    NOT NULL,
     PARAMS          TEXT            not null
 );
+
+CREATE table mhbp_chat_log
+(
+    ID              SERIAL PRIMARY KEY,
+    VERSION         NUMERIC(10, 0)  NOT NULL,
+    -- company_id can be null
+    COMPANY_ID      NUMERIC(10, 0)  NOT NULL,
+    ACCOUNT_ID      NUMERIC(10, 0)  NOT NULL,
+    CREATED_ON      bigint          NOT NULL,
+    PARAMS          TEXT            not null
+);

@@ -14,18 +14,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mhbp.yaml.chat;
+package ai.metaheuristic.ai.mhbp.yaml.chat_log;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.stream.Collectors;
-
-public class ChatParamsUtilsV1 extends
-        AbstractParamsYamlUtils<ChatParamsV1, ChatParams, Void, Void, Void, Void> {
+public class ChatLogParamsUtilsV1 extends
+        AbstractParamsYamlUtils<ChatLogParamsV1, ChatLogParams, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -35,23 +32,27 @@ public class ChatParamsUtilsV1 extends
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(ChatParamsV1.class);
+        return YamlUtils.init(ChatLogParamsV1.class);
     }
 
     @NonNull
     @Override
-    public ChatParams upgradeTo(@NonNull ChatParamsV1 v1) {
+    public ChatLogParams upgradeTo(@NonNull ChatLogParamsV1 v1) {
         v1.checkIntegrity();
 
-        ChatParams t = new ChatParams();
-        t.api = new ChatParams.Api(v1.api.apiId, v1.api.code);
-        t.prompts = v1.prompts.stream().map(ChatParamsUtilsV1::toPrompt).collect(Collectors.toList());
+        ChatLogParams t = new ChatLogParams();
+        t.api = new ChatLogParams.Api(v1.api.apiId, v1.api.code);
+        t.prompt = ChatLogParamsUtilsV1.toPrompt(v1.prompt);
+        t.scenarioId = v1.scenarioId;
+        t.chatId = v1.chatId;
+        t.stateless = v1.stateless;
+
         t.checkIntegrity();
         return t;
     }
 
-    private static ChatParams.Prompt toPrompt(ChatParamsV1.PromptV1 v1) {
-        ChatParams.Prompt f = new ChatParams.Prompt(v1.p, v1.a, v1.r, v1.e);
+    private static ChatLogParams.Prompt toPrompt(ChatLogParamsV1.PromptV1 v1) {
+        ChatLogParams.Prompt f = new ChatLogParams.Prompt(v1.p, v1.a, v1.r, v1.e);
         return f;
     }
 
@@ -72,7 +73,7 @@ public class ChatParamsUtilsV1 extends
     }
 
     @Override
-    public String toString(@NonNull ChatParamsV1 yaml) {
+    public String toString(@NonNull ChatLogParamsV1 yaml) {
         yaml.checkIntegrity();
 
         return getYaml().dump(yaml);
@@ -80,8 +81,8 @@ public class ChatParamsUtilsV1 extends
 
     @NonNull
     @Override
-    public ChatParamsV1 to(@NonNull String s) {
-        final ChatParamsV1 p = getYaml().load(s);
+    public ChatLogParamsV1 to(@NonNull String s) {
+        final ChatLogParamsV1 p = getYaml().load(s);
         return p;
     }
 

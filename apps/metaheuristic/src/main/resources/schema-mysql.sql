@@ -560,6 +560,19 @@ CREATE table mhbp_chat
     PARAMS          LONGTEXT        not null
 );
 
+CREATE INDEX mhbp_chat_company_id_idx
+    ON mhbp_chat (COMPANY_ID);
+
+CREATE table mhbp_chat_log
+(
+    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION         INT UNSIGNED    NOT NULL,
+    COMPANY_ID      INT UNSIGNED    NOT NULL,
+    ACCOUNT_ID      INT UNSIGNED    NOT NULL,
+    CREATED_ON      bigint          NOT NULL,
+    PARAMS          LONGTEXT        not null
+);
+
 CREATE table mhbp_part
 (
     ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,

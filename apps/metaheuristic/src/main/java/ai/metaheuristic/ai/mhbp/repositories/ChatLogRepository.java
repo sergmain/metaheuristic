@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.mhbp.repositories;
 
 import ai.metaheuristic.ai.mhbp.beans.Chat;
+import ai.metaheuristic.ai.mhbp.beans.ChatLog;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -34,10 +35,7 @@ import java.util.List;
 @Repository
 @Transactional
 @Profile("dispatcher")
-public interface ChatRepository extends CrudRepository<Chat, Long> {
+public interface ChatLogRepository extends CrudRepository<ChatLog, Long> {
 
-    @Transactional(readOnly = true)
-    @Query(value= "select c.id from Chat c where c.accountId=:accountId")
-    List<Long> findIds(Pageable pageable, Long accountId);
 }
 

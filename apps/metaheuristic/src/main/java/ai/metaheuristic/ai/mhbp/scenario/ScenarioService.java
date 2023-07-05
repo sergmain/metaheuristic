@@ -29,9 +29,11 @@ import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.beans.Api;
+import ai.metaheuristic.ai.mhbp.beans.Chat;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.beans.ScenarioGroup;
 import ai.metaheuristic.ai.mhbp.chat.ChatService;
+import ai.metaheuristic.ai.mhbp.chat_log.ChatLogService;
 import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.ai.mhbp.data.ChatData;
 import ai.metaheuristic.ai.mhbp.data.ScenarioData;
@@ -40,6 +42,7 @@ import ai.metaheuristic.ai.mhbp.provider.ProviderQueryService;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioGroupRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioRepository;
+import ai.metaheuristic.ai.mhbp.yaml.chat_log.ChatLogParams;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
 import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
 import ai.metaheuristic.ai.utils.CollectionUtils;
@@ -96,8 +99,8 @@ public class ScenarioService {
     private final SourceCodeRepository sourceCodeRepository;
     private final SourceCodeTxService sourceCodeTxService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
-    private final ProviderQueryService providerQueryService;
     private final ChatService chatService;
+    private final ChatLogService chatLogService;
 
     public ScenarioData.ScenarioGroupsResult getScenarioGroups(Pageable pageable, DispatcherContext context) {
         pageable = PageUtils.fixPageSize(10, pageable);
@@ -408,6 +411,7 @@ public class ScenarioService {
             ChatData.ChatPrompt  chatResult = new ChatData.ChatPrompt ();
             if (step.function==null) {
                 chatService.evaluationAsApiCall(chatResult, se, Objects.requireNonNull(api));
+                chatLogService.saveToChatLog(null, scenarioId, api, chatResult, context);
             }
             else {
                 if (Consts.MH_ENHANCE_TEXT_FUNCTION.equals(step.function.code)) {
@@ -426,6 +430,8 @@ public class ScenarioService {
             return r;
         }
     }
+
+
 
     private static ChatData.ChatPrompt evaluationAsTextEnhance(ChatData.ChatPrompt r, ChatData.PromptEvaluation se) {
         String prompt = se.prompt;

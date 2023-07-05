@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Chat;
+import ai.metaheuristic.ai.mhbp.chat_log.ChatLogService;
+import ai.metaheuristic.ai.mhbp.chat_log.ChatLogTxService;
 import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.ai.mhbp.data.ChatData;
 import ai.metaheuristic.ai.mhbp.data.ScenarioData;
@@ -28,6 +30,7 @@ import ai.metaheuristic.ai.mhbp.provider.ProviderQueryService;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ChatRepository;
 import ai.metaheuristic.ai.mhbp.yaml.chat.ChatParams;
+import ai.metaheuristic.ai.mhbp.yaml.chat_log.ChatLogParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
@@ -59,6 +62,7 @@ public class ChatService {
 
     private final ChatRepository chatRepository;
     private final ChatTxService chatTxService;
+    private final ChatLogService chatLogService;
     private final ApiService apiService;
     private final ApiRepository apiRepository;
     private final ProviderQueryService providerQueryService;
@@ -66,10 +70,12 @@ public class ChatService {
     public ChatService(@Autowired ChatRepository chatRepository,
                        @Autowired ProviderQueryService providerQueryService,
                        @Autowired ChatTxService chatTxService,
+                       @Autowired ChatLogService chatLogService,
                        @Autowired ApiService apiService,
                        @Autowired ApiRepository apiRepository) {
         this.chatRepository = chatRepository;
         this.chatTxService = chatTxService;
+        this.chatLogService = chatLogService;
         this.apiService = apiService;
         this.apiRepository = apiRepository;
         this.providerQueryService = providerQueryService;
@@ -149,6 +155,7 @@ public class ChatService {
             ChatData.ChatPrompt result = new ChatData.ChatPrompt();
             evaluationAsApiCall(result, new ChatData.PromptEvaluation("n/a", prompt, List.of()), chatInfo.api);
             chatTxService.storePrompt(chatId, result);
+            chatLogService.saveToChatLog(chatInfo.chat.id, null, chatInfo.api, result, context);
             r.update(result);
             return r;
         }
@@ -156,6 +163,23 @@ public class ChatService {
             r.error = "373.380 error " + th.getMessage();
             log.error(r.error, th);
             return r;
+        }
+    }
+
+    private void saveToChatLog(Chat chat, Api api, ChatData.ChatPrompt prompt, DispatcherContext context) {
+        ChatLogParams params = new ChatLogParams();
+        params.api = new ChatLogParams.Api(api.id, api.code);
+        params.prompt = new ChatLogParams.Prompt(prompt.prompt, prompt.result, prompt.raw, prompt.error);
+        params.chatId = chat.id;
+        params.scenarioId = null;
+        params.stateless = false;
+
+        try {
+            chatLogService.save(params, context.getCompanyId(), context.getAccountId());
+        }
+        catch (Throwable th) {
+            log.error("Error", th);
+            // we can skip an error of saving to ChatLog
         }
     }
 
