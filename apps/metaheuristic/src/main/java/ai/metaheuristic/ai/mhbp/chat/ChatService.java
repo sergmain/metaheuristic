@@ -22,19 +22,29 @@ import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Chat;
 import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.ai.mhbp.data.ChatData;
+import ai.metaheuristic.ai.mhbp.data.ScenarioData;
+import ai.metaheuristic.ai.mhbp.provider.ProviderData;
+import ai.metaheuristic.ai.mhbp.provider.ProviderQueryService;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ChatRepository;
 import ai.metaheuristic.ai.mhbp.yaml.chat.ChatParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.Nullable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
+
+import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getNameForVariable;
+import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
 
 /**
  * @author Sergio Lissner
@@ -50,8 +60,10 @@ public class ChatService {
     private final ChatTxService chatTxService;
     private final ApiService apiService;
     private final ApiRepository apiRepository;
+    private final ProviderQueryService providerQueryService;
 
     public ChatService(@Autowired ChatRepository chatRepository,
+                       @Autowired ProviderQueryService providerQueryService,
                        @Autowired ChatTxService chatTxService,
                        @Autowired ApiService apiService,
                        @Autowired ApiRepository apiRepository) {
@@ -59,6 +71,7 @@ public class ChatService {
         this.chatTxService = chatTxService;
         this.apiService = apiService;
         this.apiRepository = apiRepository;
+        this.providerQueryService = providerQueryService;
     }
 
     public ChatData.Chats getChats(Pageable pageable, DispatcherContext context) {
@@ -79,19 +92,23 @@ public class ChatService {
         return new ChatData.SimpleChat(chat.id, chat.name, chat.createdOn, new ApiData.ApiUid(params.api.apiId, params.api.code));
     }
 
+    public record ChatInfo(Chat chat, @Nullable Api api, @Nullable String error) {}
+
     public ChatData.FullChat getChat(Long chatId, DispatcherContext context) {
+        ChatInfo chatInfo = getChatInfo(chatId, context);
+        ChatParams params = chatInfo.chat.getChatParams();
+
         ChatData.FullChat fullChat = new ChatData.FullChat();
 
-        Chat chat = chatRepository.findById(chatId).orElseThrow();
-        ChatParams params = chat.getChatParams();
-
-        ApiData.Api api = apiService.getApi(params.api.apiId, context);
-        if (!api.getErrorMessagesAsList().isEmpty()) {
-            fullChat.addErrorMessages(api.getErrorMessagesAsList());
+        if (chatInfo.error!=null) {
+            fullChat.addErrorMessage(chatInfo.error);
             return fullChat;
         }
+        if (chatInfo.api==null) {
+            throw new IllegalStateException("(chatInfo.api==null)");
+        }
 
-        fullChat.apiUid = new ApiData.ApiUid(api.getApi().id, api.getApi().code);
+        fullChat.apiUid = new ApiData.ApiUid(chatInfo.api.id, chatInfo.api.code);
         fullChat.prompts = params.prompts.stream().map(ChatService::to).toList();
         fullChat.chatId = chatId;
 
@@ -100,15 +117,46 @@ public class ChatService {
         return fullChat;
     }
 
+    private ChatInfo getChatInfo(Long chatId, DispatcherContext context) {
+        Chat chat = chatRepository.findById(chatId).orElseThrow();
+        ChatParams params = chat.getChatParams();
+
+        if (chat.getAccountId()!=context.getAccountId()) {
+            throw new AccessDeniedException("Access denied for chat #" + chatId);
+        }
+        Api api = apiService.getApi(params.api.apiId, context);
+        return new ChatInfo(chat, api, api==null ? "Api not found #" + params.api.apiId : null);
+    }
+
     private static ChatData.ChatPrompt to(ChatParams.Prompt p) {
         return new ChatData.ChatPrompt(p.p, p.a, p.r, null);
     }
 
+    public ChatData.OnePrompt postPrompt(Long chatId, String prompt, DispatcherContext context) {
+        ChatData.OnePrompt r = new ChatData.OnePrompt();
 
-    public OperationStatusRest askPrompt(Long chatId, String prompt, DispatcherContext context) {
-        return OperationStatusRest.OPERATION_STATUS_OK;
+        ChatInfo chatInfo = getChatInfo(chatId, context);
+        if (chatInfo.error!=null) {
+            r.addErrorMessage(chatInfo.error);
+            return r;
+        }
+        if (chatInfo.api==null) {
+            throw new IllegalStateException("(chatInfo.api==null)");
+        }
+
+        try {
+            ChatData.ChatPrompt result = new ChatData.ChatPrompt();
+            evaluationAsApiCall(result, new ChatData.PromptEvaluation("n/a", prompt, List.of()), chatInfo.api);
+            chatTxService.storePrompt(chatId, result);
+            r.update(result);
+            return r;
+        }
+        catch (Throwable th) {
+            r.error = "373.380 error " + th.getMessage();
+            log.error(r.error, th);
+            return r;
+        }
     }
-
 
     public ChatData.ApiForCompany getApiForCompany(DispatcherContext context) {
         ChatData.ApiForCompany r = new ChatData.ApiForCompany();
@@ -135,4 +183,37 @@ public class ChatService {
         }
     }
 
+    @SuppressWarnings("UnusedReturnValue")
+    public ChatData.ChatPrompt evaluationAsApiCall(ChatData.ChatPrompt r, ChatData.PromptEvaluation se, Api api) {
+        String prompt = se.prompt;
+        for (ScenarioData.StepVariable variable : se.variables) {
+            String varName = getNameForVariable(variable.name);
+            String value = variable.value;
+            if (value==null) {
+                r.error = "373.200 data wasn't found, variable: " + variable.name + ", normalized: " + varName;
+                return r;
+            }
+            prompt = StringUtils.replaceEach(prompt, new String[]{"[[" + variable.name + "]]", "{{" + variable.name + "}}"}, new String[]{value, value});
+        }
+        r.prompt = prompt;
+        log.info("373.240 prompt: {}", prompt);
+        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, null);
+        ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
+        if (answer.status()!=OK) {
+            r.error = "373.280 API call error: " + answer.error() + ", prompt: " + prompt;
+            return r;
+        }
+        if (answer.a()==null) {
+            r.error = "373.320 answer.a() is null, error: " + answer.error() + ", prompt: " + prompt;
+            return r;
+        }
+        if (answer.a().processedAnswer.answer()==null) {
+            r.error = "373.360 processedAnswer.answer() is null, error: " + answer.error() + ", prompt: " + prompt;
+            return r;
+        }
+
+        r.result = answer.a().processedAnswer.answer();
+        r.raw = Objects.requireNonNull(answer.a().processedAnswer.rawAnswerFromAPI().raw());
+        return r;
+    }
 }

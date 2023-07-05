@@ -69,7 +69,31 @@ public class ChatData {
         }
     }
 
-    public record ChatPrompt(String prompt, String result, String raw, @Nullable String error) {}
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class OnePrompt extends BaseDataClass {
+        public String prompt;
+        public String result;
+        public String raw;
+        @Nullable
+        public  String error;
+
+        @JsonCreator
+        public OnePrompt(
+                @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+                @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
+
+        public void update(ChatPrompt chatPrompt) {
+            this.prompt = chatPrompt.prompt;
+            this.result = chatPrompt.result;
+            this.raw = chatPrompt.raw;
+            this.error = chatPrompt.error;
+        }
+    }
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -90,4 +114,22 @@ public class ChatData {
     }
 
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ChatPrompt {
+        public String prompt;
+        public String result;
+        public String raw;
+        @Nullable
+        public String error;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class PromptEvaluation {
+        public String uuid;
+        public String prompt;
+        public List<ScenarioData.StepVariable> variables;
+    }
 }

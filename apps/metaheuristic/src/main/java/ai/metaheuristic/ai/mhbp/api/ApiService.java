@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.Nullable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -95,17 +96,26 @@ public class ApiService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public ApiData.Api getApi(Long apiId, DispatcherContext context) {
-        if (apiId==null) {
+    public ApiData.Api getApiAsData(@Nullable Long apiId, DispatcherContext context) {
+        Api api = getApi(apiId, context);
+        if (api==null) {
             return new ApiData.Api("217.150 Not found");
+        }
+        return new ApiData.Api(new ApiData.SimpleApi(api));
+    }
+
+    @Nullable
+    public Api getApi(@Nullable Long apiId, DispatcherContext context) {
+        if (apiId==null) {
+            return null;
         }
         Api api = apiRepository.findById(apiId).orElse(null);
         if (api == null) {
-            return new ApiData.Api("217.200 Not found");
+            return null;
         }
         if (api.getCompanyId()!=context.getCompanyId()) {
             throw new AccessDeniedException("Access denied for apiId " + apiId);
         }
-        return new ApiData.Api(new ApiData.SimpleApi(api));
+        return api;
     }
 }

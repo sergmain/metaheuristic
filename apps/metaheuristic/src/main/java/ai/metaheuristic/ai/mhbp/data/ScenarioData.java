@@ -62,6 +62,13 @@ public class ScenarioData {
             this.scenarioId = scenarioId;
             this.uuid = uuid;
         }
+
+        public void update(ChatData.ChatPrompt chatPrompt) {
+            this.prompt = chatPrompt.prompt;
+            this.result = chatPrompt.result;
+            this.rawrResult = chatPrompt.raw;
+            this.error = chatPrompt.error;
+        }
     }
 
     @Data

@@ -52,7 +52,7 @@ public class ChatParamsUtilsV1 extends
 
     @Nullable
     private static ChatParams.Prompt toPrompt(ChatParamsV1.PromptV1 v1) {
-        ChatParams.Prompt f = new ChatParams.Prompt(v1.p, v1.a);
+        ChatParams.Prompt f = new ChatParams.Prompt(v1.p, v1.a, v1.r, v1.e);
         return f;
     }
 

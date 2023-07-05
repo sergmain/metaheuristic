@@ -56,6 +56,10 @@ public class ChatParamsV1 implements BaseParams  {
         public String p;
         // answer
         public String a;
+        // raw result
+        public String r;
+        // error
+        public String e;
     }
 
     public ApiV1 api;

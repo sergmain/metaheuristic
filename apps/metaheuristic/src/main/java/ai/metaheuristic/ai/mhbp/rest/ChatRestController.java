@@ -59,13 +59,13 @@ public class ChatRestController {
         return chat;
     }
 
-    @PostMapping("/ask-prompt/{chatId}")
-    public OperationStatusRest addFormCommit(
+    @PostMapping("/post-prompt/{chatId}")
+    public ChatData.OnePrompt addFormCommit(
             @PathVariable Long chatId,
             @RequestParam(name = "prompt") String prompt,
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return chatService.askPrompt(chatId, prompt, context);
+        return chatService.postPrompt(chatId, prompt, context);
     }
 
     @PostMapping("/chat-delete-commit")

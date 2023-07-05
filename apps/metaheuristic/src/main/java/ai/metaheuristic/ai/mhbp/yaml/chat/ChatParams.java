@@ -59,6 +59,8 @@ public class ChatParams implements BaseParams {
         public String a;
         // raw result
         public String r;
+        // error
+        public String e;
     }
 
     public Api api;

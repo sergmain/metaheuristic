@@ -54,7 +54,7 @@ public class ApiRestController {
     @GetMapping("/api/{apiId}")
     public ApiData.Api apis(@PathVariable @Nullable Long apiId, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        final ApiData.Api api = apiService.getApi(apiId, context);
+        final ApiData.Api api = apiService.getApiAsData(apiId, context);
         return api;
     }
 

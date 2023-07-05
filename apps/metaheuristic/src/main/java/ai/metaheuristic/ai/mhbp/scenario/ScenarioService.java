@@ -31,10 +31,11 @@ import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.beans.ScenarioGroup;
+import ai.metaheuristic.ai.mhbp.chat.ChatService;
 import ai.metaheuristic.ai.mhbp.data.ApiData;
+import ai.metaheuristic.ai.mhbp.data.ChatData;
 import ai.metaheuristic.ai.mhbp.data.ScenarioData;
 import ai.metaheuristic.ai.mhbp.data.SimpleScenario;
-import ai.metaheuristic.ai.mhbp.provider.ProviderData;
 import ai.metaheuristic.ai.mhbp.provider.ProviderQueryService;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioGroupRepository;
@@ -59,7 +60,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -74,7 +74,6 @@ import static ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCall
 import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.findStepByUuid;
 import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getNameForVariable;
 import static ai.metaheuristic.ai.utils.CollectionUtils.TreeUtils;
-import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
 
 /**
  * @author Sergio Lissner
@@ -98,6 +97,7 @@ public class ScenarioService {
     private final SourceCodeTxService sourceCodeTxService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final ProviderQueryService providerQueryService;
+    private final ChatService chatService;
 
     public ScenarioData.ScenarioGroupsResult getScenarioGroups(Pageable pageable, DispatcherContext context) {
         pageable = PageUtils.fixPageSize(10, pageable);
@@ -378,7 +378,7 @@ public class ScenarioService {
     public ScenarioData.StepEvaluationResult scenarioStepEvaluationRun(long scenarioId, String uuid, String stepEvaluation, DispatcherContext context) {
         ScenarioData.StepEvaluationResult r = new ScenarioData.StepEvaluationResult(scenarioId, uuid);
         try {
-            ScenarioData.StepEvaluation se = JsonUtils.getMapper().readValue(stepEvaluation, ScenarioData.StepEvaluation.class);
+            ChatData.PromptEvaluation se = JsonUtils.getMapper().readValue(stepEvaluation, ChatData.PromptEvaluation.class);
 
             PreparedScenario preparedScenario = prepareScenario(scenarioId, context);
             if (preparedScenario.status.status!= EnumsApi.OperationStatus.OK) {
@@ -405,14 +405,19 @@ public class ScenarioService {
                 }
             }
 
+            ChatData.ChatPrompt  chatResult = new ChatData.ChatPrompt ();
             if (step.function==null) {
-                return evaluationAsApiCall(r, se, Objects.requireNonNull(api));
+                chatService.evaluationAsApiCall(chatResult, se, Objects.requireNonNull(api));
             }
             else {
                 if (Consts.MH_ENHANCE_TEXT_FUNCTION.equals(step.function.code)) {
-                    return evaluationAsTextEnhance(r, se);
+                    evaluationAsTextEnhance(chatResult, se);
+                }
+                else {
+                    throw new IllegalStateException();
                 }
             }
+            r.update(chatResult);
             return r;
         }
         catch (Throwable th) {
@@ -422,7 +427,7 @@ public class ScenarioService {
         }
     }
 
-    private static ScenarioData.StepEvaluationResult evaluationAsTextEnhance(ScenarioData.StepEvaluationResult r, ScenarioData.StepEvaluation se) {
+    private static ChatData.ChatPrompt evaluationAsTextEnhance(ChatData.ChatPrompt r, ChatData.PromptEvaluation se) {
         String prompt = se.prompt;
         for (ScenarioData.StepVariable variable : se.variables) {
             String varName = getNameForVariable(variable.name);
@@ -435,41 +440,8 @@ public class ScenarioService {
         }
         r.prompt = prompt;
         r.result = prompt;
-        r.rawrResult = prompt;
+        r.raw = prompt;
         return r;
     }
 
-    @NonNull
-    private ScenarioData.StepEvaluationResult evaluationAsApiCall(ScenarioData.StepEvaluationResult r, ScenarioData.StepEvaluation se, Api api) {
-        String prompt = se.prompt;
-        for (ScenarioData.StepVariable variable : se.variables) {
-            String varName = getNameForVariable(variable.name);
-            String value = variable.value;
-            if (value==null) {
-                r.error = "373.200 data wasn't found, variable: " + variable.name + ", normalized: " + varName;
-                return r;
-            }
-            prompt = StringUtils.replaceEach(prompt, new String[]{"[[" + variable.name + "]]", "{{" + variable.name + "}}"}, new String[]{value, value});
-        }
-        r.prompt = prompt;
-        log.info("373.240 prompt: {}", prompt);
-        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, null);
-        ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
-        if (answer.status()!=OK) {
-            r.error = "373.280 API call error: " + answer.error() + ", prompt: " + prompt;
-            return r;
-        }
-        if (answer.a()==null) {
-            r.error = "373.320 answer.a() is null, error: " + answer.error() + ", prompt: " + prompt;
-            return r;
-        }
-        if (answer.a().processedAnswer.answer()==null) {
-            r.error = "373.360 processedAnswer.answer() is null, error: " + answer.error() + ", prompt: " + prompt;
-            return r;
-        }
-
-        r.result = answer.a().processedAnswer.answer();
-        r.rawrResult = Objects.requireNonNull(answer.a().processedAnswer.rawAnswerFromAPI().raw());
-        return r;
-    }
 }

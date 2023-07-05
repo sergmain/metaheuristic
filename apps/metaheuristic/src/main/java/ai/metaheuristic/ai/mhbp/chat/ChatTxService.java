@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.mhbp.chat;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.beans.Chat;
+import ai.metaheuristic.ai.mhbp.data.ChatData;
 import ai.metaheuristic.ai.mhbp.repositories.ChatRepository;
 import ai.metaheuristic.ai.mhbp.yaml.chat.ChatParams;
 import ai.metaheuristic.api.EnumsApi;
@@ -27,6 +28,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Sergio Lissner
@@ -67,4 +71,20 @@ public class ChatTxService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
+    @Transactional
+    public void storePrompt(Long chatId, ChatData.ChatPrompt result) {
+        Chat chat = chatRepository.findById(chatId).orElse(null);
+        if (chat==null) {
+            return;
+        }
+
+        ChatParams params = chat.getChatParams();
+
+//        List<ChatParams.Prompt> list = new ArrayList<>(params.prompts);
+//        list.add(new ChatParams.Prompt());
+        params.prompts.add(new ChatParams.Prompt(result.prompt, result.result, result.raw, result.error));
+
+        chat.updateParams(params);
+        chatRepository.save(chat);
+    }
 }
