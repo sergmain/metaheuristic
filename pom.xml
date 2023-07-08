@@ -41,6 +41,7 @@
         <module>apps/simple-batch-app</module>
 
         <module>apps/utils/db_copy</module>
+        <module>apps/utils/liquibase</module>
     </modules>
 
 </project>
