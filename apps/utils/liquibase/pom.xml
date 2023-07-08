@@ -7,7 +7,7 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <!-- Typical Maven information for your project -->
-    <groupId>is.metaheuristic</groupId>
+    <groupId>ai.metaheuristic</groupId>
     <artifactId>liquibase-helper</artifactId>
     <version>1.0</version>
 
