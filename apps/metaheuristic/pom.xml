@@ -126,8 +126,15 @@
         <!-- End of spring's section -->
 
         <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <version>4.23.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.liquibase</groupId>
+                    <artifactId>liquibase-commercial</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
