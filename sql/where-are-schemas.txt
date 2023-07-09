@@ -1,1 +1,1 @@
-all sql schemas files were moved to apps/metaheuristic/src/main/resources/database
+all initial sql schemas files were moved to apps/metaheuristic/src/main/resources/database/00010_2023-07-07
