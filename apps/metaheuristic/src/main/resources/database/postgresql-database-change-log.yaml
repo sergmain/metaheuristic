@@ -1,0 +1,4 @@
+databaseChangeLog:
+  - includeAll:
+      path: postgesql
+      relativeToChangelogFile: true

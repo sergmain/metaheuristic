@@ -167,7 +167,6 @@ CREATE TABLE MH_VARIABLE
   EXEC_CONTEXT_ID   NUMERIC(10, 0) not null,
   VARIABLE_BLOB_ID  NUMERIC(10, 0),
   UPLOAD_TS         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  DATA              OID,
   FILENAME          VARCHAR(150),
   PARAMS            VARCHAR(250) not null
 );
@@ -181,7 +180,7 @@ CREATE INDEX MH_DATA_VAR_ID_IDX
 CREATE UNIQUE INDEX mh_variable_name_all_context_ids_unq_idx
     ON MH_VARIABLE (NAME, TASK_CONTEXT_ID, EXEC_CONTEXT_ID);
 
-CREATE INDEX mh_variable_variable_bolb_id_unq_idx
+CREATE INDEX mh_variable_variable_blob_id_unq_idx
     ON mh_variable (VARIABLE_BLOB_ID);
 
 CREATE TABLE mh_variable_blob
@@ -275,8 +274,7 @@ CREATE TABLE MH_FUNCTION
   VERSION           NUMERIC(5, 0)  NOT NULL,
   FUNCTION_CODE     VARCHAR(100)  not null,
   FUNCTION_TYPE     VARCHAR(50) not null,
-  PARAMS            TEXT not null,
-  RT_PARAMS         TEXT
+  PARAMS            TEXT not null
 );
 
 CREATE UNIQUE INDEX MH_FUNCTION_FUNCTION_CODE_UNQ_IDX

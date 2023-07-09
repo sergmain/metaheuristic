@@ -201,7 +201,6 @@ CREATE TABLE mh_variable
     EXEC_CONTEXT_ID     NUMERIC(10, 0)  not null,
     VARIABLE_BLOB_ID    NUMERIC(10),
     UPLOAD_TS           TIMESTAMP       NOT NULL ON UPDATE CURRENT_TIMESTAMP,
-    DATA                LONGBLOB,
     FILENAME            VARCHAR(150),
     PARAMS              VARCHAR(250)    not null
 );
@@ -310,8 +309,7 @@ CREATE TABLE mh_function
     VERSION         NUMERIC(5, 0) NOT NULL,
     FUNCTION_CODE   VARCHAR(100)  not null,
     FUNCTION_TYPE   VARCHAR(50)   not null,
-    PARAMS          MEDIUMTEXT    not null,
-    RT_PARAMS       MEDIUMTEXT
+    PARAMS          MEDIUMTEXT    not null
 );
 
 CREATE UNIQUE INDEX mh_function_function_code_unq_idx

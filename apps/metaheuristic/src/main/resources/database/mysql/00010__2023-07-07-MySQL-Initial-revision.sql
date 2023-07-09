@@ -194,13 +194,15 @@ CREATE TABLE mh_variable
 CREATE INDEX mh_variable_exec_context_id_idx
   ON mh_variable (EXEC_CONTEXT_ID);
 
-CREATE INDEX mh_variable_name_idx
-    ON mh_variable (NAME);
+# No need to create this index in mysql because there is already mh_variable_name_all_context_ids_unq_idx
+# which contains 'name' field
+# CREATE INDEX mh_variable_name_idx
+#     ON mh_variable (NAME);
 
 CREATE UNIQUE INDEX mh_variable_name_all_context_ids_unq_idx
     ON mh_variable (NAME, TASK_CONTEXT_ID, EXEC_CONTEXT_ID);
 
-CREATE INDEX mh_variable_variable_bolb_id_unq_idx
+CREATE INDEX mh_variable_variable_blob_id_unq_idx
     ON mh_variable (VARIABLE_BLOB_ID);
 
 CREATE TABLE mh_variable_blob
@@ -209,9 +211,6 @@ CREATE TABLE mh_variable_blob
     VERSION             INT UNSIGNED    NOT NULL,
     DATA                LONGBLOB        not null
 );
-
-CREATE UNIQUE INDEX mh_variable_blob_variable_id_unq_idx
-    ON mh_variable_blob (VARIABLE_ID);
 
 -- its name is VARIABLE_GLOBAL, not GLOBAL_VARIABLE because I want these tables to be in the same spot in scheme;
 
@@ -298,8 +297,7 @@ CREATE TABLE mh_function
     VERSION         INT UNSIGNED    NOT NULL,
     FUNCTION_CODE   VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin not null,
     FUNCTION_TYPE   VARCHAR(50) not null,
-    PARAMS          MEDIUMTEXT not null,
-    RT_PARAMS       MEDIUMTEXT
+    PARAMS          MEDIUMTEXT not null
 );
 
 CREATE UNIQUE INDEX mh_function_function_code_unq_idx

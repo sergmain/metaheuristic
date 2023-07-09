@@ -298,8 +298,7 @@ CREATE TABLE mh_function
     VERSION         INT UNSIGNED    NOT NULL,
     FUNCTION_CODE   VARCHAR(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin not null,
     FUNCTION_TYPE   VARCHAR(50) not null,
-    PARAMS          MEDIUMTEXT not null,
-    RT_PARAMS       MEDIUMTEXT
+    PARAMS          MEDIUMTEXT not null
 );
 
 CREATE UNIQUE INDEX mh_function_function_code_unq_idx
