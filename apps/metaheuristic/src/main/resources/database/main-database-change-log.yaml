@@ -1,4 +1,5 @@
 databaseChangeLog:
-  - includeAll:
-      path: mysql
+  - include:
+      file: 00010_2023-07-07/00010.yaml
       relativeToChangelogFile: true
+

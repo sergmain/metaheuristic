@@ -1,0 +1,21 @@
+databaseChangeLog:
+  -  changeSet:
+       id:  '00010-init-commit'
+       author:  sergmain
+       changes:
+         -  sqlFile:
+              dbms:  'h2'
+              path:  00010-H2-Initial-revision.sql
+              stripComments:  true
+              relativeToChangelogFile: true
+         -  sqlFile:
+              dbms:  'mysql'
+              path:  00010-MySQL-Initial-revision.sql
+              stripComments:  true
+              relativeToChangelogFile: true
+         -  sqlFile:
+              dbms:  'postgresql'
+              path:  00010-PostgreSQL-Initial-revision.sql
+              stripComments:  true
+              relativeToChangelogFile: true
+
