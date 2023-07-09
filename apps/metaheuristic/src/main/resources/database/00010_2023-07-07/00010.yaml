@@ -2,6 +2,7 @@ databaseChangeLog:
   -  changeSet:
        id:  '00010-init-commit'
        author:  sergmain
+       validCheckSum: any
        changes:
          -  sqlFile:
               dbms:  'h2'
