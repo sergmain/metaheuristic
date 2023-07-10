@@ -32,6 +32,16 @@
         http://www.ehcache.org/v3/jsr107 http://www.ehcache.org/schema/ehcache-107-ext-3.0.xsd"
 >
 
+    <service>
+        <jsr107:defaults enable-statistics="false"/>
+    </service>
+<!--
+    <service>
+        <jsr107:defaults default-template="default-template" enable-statistics="false">
+        </jsr107:defaults>
+    </service>
+-->
+
     <cache-template name="default-template">
         <expiry>
             <ttl unit="hours">1</ttl>

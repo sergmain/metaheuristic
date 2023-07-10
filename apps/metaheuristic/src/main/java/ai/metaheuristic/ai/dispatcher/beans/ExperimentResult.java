@@ -27,7 +27,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
+//import jakarta.validation.constraints.NotNull;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -48,7 +48,7 @@ public class ExperimentResult implements Serializable {
     @Version
     public Integer version;
 
-    @NotNull
+//    @NotNull
     @Column(name = "COMPANY_ID")
     public Long companyId;
 

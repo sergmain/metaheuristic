@@ -21,8 +21,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
+//import jakarta.validation.constraints.NotEmpty;
+//import jakarta.validation.constraints.NotNull;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -50,21 +50,21 @@ public class CacheProcess implements Serializable {
     @Column(name="CREATED_ON")
     public long createdOn;
 
-    @NotNull
-    @NotEmpty
+//    @NotNull
+//    @NotEmpty
     @Column(name = "FUNCTION_CODE")
     public String functionCode;
 
     /**
      * this field contains SHA256 checksum AND the length of data
      */
-    @NotNull
-    @NotEmpty
+//    @NotNull
+//    @NotEmpty
     @Column(name = "KEY_SHA256_LENGTH")
     public String keySha256Length;
 
-    @NotNull
-    @NotEmpty
+//    @NotNull
+//    @NotEmpty
     @Column(name = "KEY_VALUE")
     public String keyValue;
 

@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYamlUti
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
+//import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -62,7 +62,7 @@ public class ExecContextGraph implements Serializable {
     @Column(name="CREATED_ON")
     public Long createdOn;
 
-    @NotBlank
+//    @NotBlank
     @Column(name = "PARAMS")
     private String params;
 

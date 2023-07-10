@@ -21,9 +21,6 @@ import ai.metaheuristic.ai.yaml.function_execution_time.FunctionExecutionTimePar
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -55,25 +52,25 @@ public class FunctionExecutionTime implements Serializable {
     @Column(name="CREATED_ON")
     public long createdOn;
 
-    @NotNull
-    @NotEmpty
+//    @NotNull
+//    @NotEmpty
     @Column(name = "FUNCTION_TYPE")
     public String functionCode;
 
     /**
      * this field contains SHA256 checksum AND the length of data
      */
-    @NotNull
-    @NotEmpty
+//    @NotNull
+//    @NotEmpty
     @Column(name = "KEY_SHA256_LENGTH")
     public String keySha256Length;
 
-    @NotNull
-    @NotEmpty
+//    @NotNull
+//    @NotEmpty
     @Column(name = "KEY_VALUE")
     public String keyValue;
 
-    @NotBlank
+//    @NotBlank
     @Column(name = "PARAMS")
     private String params;
 

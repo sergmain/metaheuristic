@@ -171,7 +171,7 @@ public class ArtifactCleanerAtDispatcher {
                     functionDataRepository.deleteByFunctionCode(functionCode);
                 }
                 catch (Throwable th) {
-                    log.warn("#510.120 error while deleting obsolete funcion " + functionCode);
+                    log.warn("#510.120 error while deleting obsolete function " + functionCode);
                 }
             }
         }

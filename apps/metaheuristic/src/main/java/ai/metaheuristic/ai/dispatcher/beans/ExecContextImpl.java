@@ -22,8 +22,8 @@ import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils.CommonThreadLocker;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+//import jakarta.validation.constraints.NotBlank;
+//import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -55,7 +55,7 @@ public class ExecContextImpl implements Serializable, ExecContext {
     public Long sourceCodeId;
 
     // This field contains a value from MH_COMPANY.UNIQUE_ID, !NOT! from ID field
-    @NotNull
+//    @NotNull
     @Column(name = "COMPANY_ID")
     public Long companyId;
 
@@ -85,7 +85,7 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name = "ROOT_EXEC_CONTEXT_ID")
     public Long rootExecContextId;
 
-    @NotBlank
+//    @NotBlank
     @Column(name = "PARAMS")
     private String params;
 

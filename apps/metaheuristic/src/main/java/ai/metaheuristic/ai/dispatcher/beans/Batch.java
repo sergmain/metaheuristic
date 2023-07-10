@@ -23,7 +23,8 @@ import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
+import org.springframework.lang.NonNull;
+
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -46,19 +47,19 @@ public class Batch implements Serializable {
     private Integer version;
 
     // This field contains a value from MH_COMPANY.UNIQUE_ID, !NOT! from ID field
-    @NotNull
+    @NonNull
     @Column(name = "COMPANY_ID")
     public Long companyId;
 
-    @NotNull
+    @NonNull
     @Column(name = "ACCOUNT_ID")
     public Long accountId;
 
-    @NotNull
+    @NonNull
     @Column(name = "SOURCE_CODE_ID")
     public Long sourceCodeId;
 
-    @NotNull
+    @NonNull
     @Column(name = "EXEC_CONTEXT_ID")
     public Long execContextId;
 

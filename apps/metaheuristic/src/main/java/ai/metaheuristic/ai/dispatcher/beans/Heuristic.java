@@ -21,8 +21,8 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+//import jakarta.validation.constraints.NotBlank;
+//import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -54,7 +54,7 @@ public class Heuristic implements Serializable {
     public Integer version;
 
     // This field contains a value from MH_COMPANY.UNIQUE_ID, !NOT! from ID field
-    @NotNull
+//    @NotNull
     @Column(name = "COMPANY_ID")
     public Long companyId;
 
@@ -64,7 +64,7 @@ public class Heuristic implements Serializable {
     @Column(name = "IS_DELETED")
     public boolean deleted;
 
-    @NotBlank
+//    @NotBlank
     @Column(name = "PARAMS")
     private String params;
 
