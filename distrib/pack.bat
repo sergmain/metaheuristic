@@ -1,0 +1,1 @@
+C:\jdk-17.0.7\bin\jpackage.exe --verbose -i jar -d output -n metaheuristic --main-jar metaheuristic.jar --main-class org.springframework.boot.loader.JarLauncher --type app-image --java-options "-Xms512m -Xmx512m -ea -Dfile.encoding=UTF-8 -Dspring.profiles.active=dispatcher,h2,standalone"

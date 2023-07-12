@@ -44,8 +44,5 @@ public class StandaloneAuthRestController {
         this.appCtx = appCtx;
     }
 
-    @GetMapping("/shutdown")
-    public void shutdown() {
-        System.exit(SpringApplication.exit(appCtx, ()->0));
-    }
+
 }
