@@ -75,6 +75,7 @@ public class ArtifactCleanerAtDispatcher {
     private final ProcessorRepository processorRepository;
     private final ProcessorCoreService processorCoreService;
     private final ProcessorCoreRepository processorCoreRepository;
+    private final InternalFunctionRegisterService internalFunctionRegisterService;
 
     private static final AtomicInteger busy = new AtomicInteger(0);
     private static long mills = 0L;
@@ -457,7 +458,7 @@ public class ArtifactCleanerAtDispatcher {
     private void deleteOrphanCacheData() {
         log.info("510.840 start deleteOrphanCacheData()");
         List<String> funcCodes = functionRepository.findAllFunctionCodes();
-        funcCodes.addAll(InternalFunctionRegisterService.getCachableFunctions());
+        funcCodes.addAll(internalFunctionRegisterService.getCachableFunctions());
 
         Set<String> currFuncCodes = cacheProcessRepository.findAllFunctionCodes();
 

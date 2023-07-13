@@ -57,6 +57,7 @@ public class ExecContextTaskProducingService {
     private final ExecContextCache execContextCache;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final ApplicationEventPublisher eventPublisher;
+    private final InternalFunctionRegisterService internalFunctionRegisterService;
 
     public SourceCodeApiData.TaskProducingResultComplex produceAndStartAllTasks(
             SourceCodeImpl sourceCode, ExecContextImpl execContext) {
@@ -122,7 +123,7 @@ public class ExecContextTaskProducingService {
                     return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.PROCESS_NOT_FOUND_ERROR, "#701.200 Process '"+processCode+"' wasn't found");
                 }
             }
-            if (InternalFunctionRegisterService.getInternalFunction(p.function.code)!=null && p.function.context!=EnumsApi.FunctionExecContext.internal) {
+            if (internalFunctionRegisterService.get(p.function.code)!=null && p.function.context!=EnumsApi.FunctionExecContext.internal) {
                 return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.INTERNAL_FUNCTION_DECLARED_AS_EXTERNAL_ERROR,
                         "#701.220 Process '"+processCode+"' must be internal");
             }

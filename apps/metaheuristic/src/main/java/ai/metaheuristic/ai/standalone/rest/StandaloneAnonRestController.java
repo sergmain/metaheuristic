@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
+
 /**
  * @author Sergio Lissner
  * Date: 7/2/2023
@@ -38,7 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin
 public class StandaloneAnonRestController {
 
-    public static final String SHUTDOWN_IN_PROGRESS = "Shutdown in progress ...";
+    public static final String SHUTDOWN_IN_PROGRESS = "Shutdown of Metaheuristic was started at ";
     private final ApplicationContext appCtx;
 
     public StandaloneAnonRestController(@Autowired ApplicationContext appCtx) {
@@ -52,8 +54,9 @@ public class StandaloneAnonRestController {
 
     @GetMapping("/shutdown")
     public String shutdown() {
+        final String s = SHUTDOWN_IN_PROGRESS + LocalDateTime.now();
         new Thread(()-> {
-            log.warn(SHUTDOWN_IN_PROGRESS);
+            log.warn(s);
             try {
                 Thread.sleep(500);
             } catch (Throwable th) {
@@ -61,6 +64,6 @@ public class StandaloneAnonRestController {
             }
             System.exit(SpringApplication.exit(appCtx, () -> 0));
         }).start();
-        return SHUTDOWN_IN_PROGRESS;
+        return s;
     }
 }

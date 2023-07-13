@@ -101,6 +101,7 @@ public class ScenarioService {
     private final ChatService chatService;
     private final ChatLogService chatLogService;
     private final ApplicationEventPublisher eventPublisher;
+    private final InternalFunctionRegisterService internalFunctionRegisterService;
 
     public ScenarioData.ScenarioGroupsResult getScenarioGroups(Pageable pageable, DispatcherContext context) {
         pageable = PageUtils.fixPageSize(10, pageable);
@@ -133,9 +134,7 @@ public class ScenarioService {
         r.apis = apiService.getApisAllowedForCompany(context).stream()
                 .map(o ->new ApiData.ApiUid(o.id, o.code))
                 .toList();
-        r.functions = InternalFunctionRegisterService.internalFunctionMap.entrySet().stream()
-                .filter(e->e.getValue().isScenarioCompatible())
-                .map(e->new ScenarioData.InternalFunction(e.getKey(), e.getValue().getClass().getSimpleName())).collect(Collectors.toList());
+        r.functions = internalFunctionRegisterService.getScenarioCompatibleFunctions();
         r.aggregateTypes = Stream.of(AggregateFunction.AggregateType.values()).filter(o->o.supported).map(Enum::toString).toList();
         return r;
     }

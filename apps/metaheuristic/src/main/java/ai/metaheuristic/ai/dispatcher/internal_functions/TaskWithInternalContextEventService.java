@@ -90,6 +90,7 @@ public class TaskWithInternalContextEventService {
     private final ApplicationEventPublisher eventPublisher;
     private final VariableTopLevelService variableTopLevelService;
     private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
+    private final InternalFunctionProcessor internalFunctionProcessor;
 
     private static final int MAX_ACTIVE_THREAD = 1;
     // number of active executers with different execContextId
@@ -334,7 +335,7 @@ public class TaskWithInternalContextEventService {
                 int i=0;
             }
             if (notSkip) {
-                boolean isLongRunning = InternalFunctionProcessor.process(simpleExecContext, taskId, taskParamsYaml.task.taskContextId, taskParamsYaml);
+                boolean isLongRunning = internalFunctionProcessor.process(simpleExecContext, taskId, taskParamsYaml.task.taskContextId, taskParamsYaml);
                 if (!isLongRunning) {
                     taskWithInternalContextService.storeResult(taskId, taskParamsYaml.task.function.code);
                 }
