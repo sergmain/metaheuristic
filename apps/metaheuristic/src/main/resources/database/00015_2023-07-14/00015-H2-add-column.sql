@@ -14,8 +14,9 @@
 --  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-alter table MH_ACCOUNT
-    add     PARAMS          MEDIUMTEXT    null;
+alter table MH_ACCOUNT add PARAMS MEDIUMTEXT    null;
+
+alter table MH_EXEC_CONTEXT add ACCOUNT_ID      NUMERIC(10, 0);
 
 
 

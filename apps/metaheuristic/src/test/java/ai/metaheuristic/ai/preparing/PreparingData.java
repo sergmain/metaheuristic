@@ -52,6 +52,7 @@ public class PreparingData {
     public static class PreparingSourceCodeData {
         public SourceCodeImpl sourceCode = null;
         public Company company;
+        public Account account;
         public Function f1 = null;
         public Function f2 = null;
         public Function f3 = null;

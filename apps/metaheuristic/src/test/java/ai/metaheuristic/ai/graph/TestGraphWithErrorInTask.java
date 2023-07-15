@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.graph;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
@@ -74,7 +75,9 @@ public class TestGraphWithErrorInTask extends PreparingSourceCode {
     @Test
     public void test() {
         System.out.println("Started at " + new Date());
-        ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(getSourceCode(), getCompany().getUniqueId());
+        DispatcherContext context = new DispatcherContext(getAccount(), getCompany());
+
+        ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(getSourceCode(), context.asUserExecContext());
         setExecContextForTest(result.execContext);
         assertNotNull(getExecContextForTest());
 

@@ -17,8 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.test.tx;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
 import ai.metaheuristic.ai.dispatcher.beans.*;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
@@ -66,12 +68,12 @@ public class TxSupportForTestingService {
     private final ExecContextCache execContextCache;
 
     @Transactional
-    public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
+    public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, ExecContextData.UserExecContext context) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         return SourceCodeSyncService.getWithSyncForCreation(sourceCode.id,
-                () -> execContextCreatorService.createExecContext(sourceCode, companyId, null));
+                () -> execContextCreatorService.createExecContext(sourceCode, context, null));
     }
 
     @Transactional

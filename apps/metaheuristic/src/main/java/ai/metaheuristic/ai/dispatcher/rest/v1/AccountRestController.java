@@ -52,7 +52,7 @@ public class AccountRestController {
     @PostMapping("/account-add-commit")
     public OperationStatusRest addFormCommit(@RequestBody AccountData.NewAccount account, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return accountTopLevelService.addAccount(account, context);
+        return accountTopLevelService.addAccount(account, context.getCompanyId());
     }
 
     @GetMapping(value = "/account/{id}")

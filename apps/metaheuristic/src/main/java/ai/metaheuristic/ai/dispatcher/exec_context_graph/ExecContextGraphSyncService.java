@@ -107,6 +107,20 @@ public class ExecContextGraphSyncService {
         }
     }
 
+    // ForCreation means that the presence of TX won't be checked
+    public static void getWithSyncVoidForCreation(Long execContextGraphId, Runnable runnable) {
+        TxUtils.checkTxNotExists();
+        checkWriteLockNotPresent(execContextGraphId);
+
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextGraphId);
+        try {
+            lock.lock();
+            runnable.run();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public static <T> T getWithSyncReadOnly(ExecContextVariableState execContextVariableState, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(execContextVariableState.id);

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
@@ -272,7 +273,8 @@ public class PreparingSourceCodeService {
     }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextForTest(PreparingData.PreparingSourceCodeData preparingSourceCodeData) {
-        return txSupportForTestingService.createExecContext(preparingSourceCodeData.getSourceCode(), preparingSourceCodeData.getCompany().getUniqueId());
+        DispatcherContext context = new DispatcherContext(preparingSourceCodeData.getAccount(), preparingSourceCodeData.getCompany());
+        return txSupportForTestingService.createExecContext(preparingSourceCodeData.getSourceCode(), context.asUserExecContext());
     }
 
     public void produceTasksForTest(String sourceCodeParams, PreparingData.PreparingSourceCodeData preparingSourceCodeData ) {

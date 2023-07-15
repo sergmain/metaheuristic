@@ -186,7 +186,7 @@ public class ScenarioService {
 
         Long sourceCodeId = Objects.requireNonNull(preparedScenario.sourceCode).id;
 
-        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context.getCompanyId(), true);
+        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context.asUserExecContext(), true);
 
         return new OperationStatusWithSourceCodeId(OperationStatusRest.OPERATION_STATUS_OK, sourceCodeId);
     }

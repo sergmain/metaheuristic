@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
@@ -31,7 +32,6 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -102,21 +102,21 @@ public class ExecContextCreatorService {
 
     @Transactional
     public ExecContextCreationResult createExecContextAndStart(
-            Long sourceCodeId, Long companyId, boolean isStart, @Nullable ExecContextData.RootAndParent rootAndParent) {
+            Long sourceCodeId, ExecContextData.UserExecContext context, boolean isStart, @Nullable ExecContextData.RootAndParent rootAndParent) {
 
         SourceCodeSyncService.checkWriteLockPresent(sourceCodeId);
 
-        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, companyId);
+        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, context.companyId());
         if (sourceCodesForCompany.isErrorMessages()) {
             return new ExecContextCreationResult("#562.060 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
-                    "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + companyId);
+                    "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + context.companyId());
         }
         SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
         if (sourceCode==null) {
             return new ExecContextCreationResult("#562.080 Error creating execContext: " +
-                    "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + companyId);
+                    "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + context.companyId());
         }
-        final ExecContextCreationResult creationResult = createExecContext(sourceCode, companyId, rootAndParent);
+        final ExecContextCreationResult creationResult = createExecContext(sourceCode, context, rootAndParent);
         if (!isStart || creationResult.isErrorMessages()) {
             return creationResult;
         }
@@ -138,9 +138,9 @@ public class ExecContextCreatorService {
 
     private void produceTasksForExecContextInternal(SourceCodeImpl sourceCode, ExecContextCreationResult creationResult) {
         TxUtils.checkTxExists();
-        ExecContextSyncService.getWithSyncNullableForCreation(creationResult.execContext.id, () ->
-                ExecContextGraphSyncService.getWithSyncNullableForCreation(creationResult.execContext.execContextGraphId, ()->
-                        ExecContextTaskStateSyncService.getWithSyncNullableForCreation(creationResult.execContext.execContextTaskStateId, () -> {
+        ExecContextSyncService.getWithSyncVoidForCreation(creationResult.execContext.id, () ->
+                ExecContextGraphSyncService.getWithSyncVoidForCreation(creationResult.execContext.execContextGraphId, ()->
+                        ExecContextTaskStateSyncService.getWithSyncVoidForCreation(creationResult.execContext.execContextTaskStateId, () -> {
                             SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(
                                     sourceCode, creationResult.execContext);
                             if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK) {
@@ -149,7 +149,6 @@ public class ExecContextCreatorService {
                             if (result.taskProducingStatus != EnumsApi.TaskProducingStatus.OK) {
                                 creationResult.addErrorMessage("562.100 Error while producing new tasks " + result.taskProducingStatus);
                             }
-                            return null;
                         })));
     }
 
@@ -159,7 +158,7 @@ public class ExecContextCreatorService {
      * @param companyId Long companyId can be different from sourceCode.companyId
      * @return ExecContextCreationResult
      */
-    public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId, @Nullable ExecContextData.RootAndParent rootAndParent) {
+    public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, ExecContextData.UserExecContext context, @Nullable ExecContextData.RootAndParent rootAndParent) {
         TxUtils.checkTxExists();
         SourceCodeSyncService.checkWriteLockPresent(sourceCode.id);
 
@@ -181,24 +180,25 @@ public class ExecContextCreatorService {
 
         AtomicLong contextId = new AtomicLong();
         SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(
-                EnumsApi.SourceCodeLang.yaml, scspy.source, () -> "" + contextId.incrementAndGet());
+                EnumsApi.SourceCodeLang.yaml, scspy.source, () -> String.valueOf(contextId.incrementAndGet()));
 
         if (ExecContextProcessGraphService.anyError(sourceCodeGraph)) {
             return new ExecContextCreationResult("#562.120 processGraph is broken");
         }
 
-        ExecContextImpl execContext = createExecContext(sourceCode, companyId, sourceCodeGraph, rootAndParent);
+        ExecContextImpl execContext = createExecContext(sourceCode, context, sourceCodeGraph, rootAndParent);
         ExecContextCreationResult ecr = new ExecContextCreationResult();
         ecr.execContext = execContext;
         return ecr;
     }
 
     private ExecContextImpl createExecContext(
-            SourceCodeImpl sourceCode, Long companyId, SourceCodeData.SourceCodeGraph sourceCodeGraph,
+            SourceCodeImpl sourceCode, ExecContextData.UserExecContext context, SourceCodeData.SourceCodeGraph sourceCodeGraph,
             @Nullable ExecContextData.RootAndParent rootAndParent) {
 
         ExecContextImpl ec = new ExecContextImpl();
-        ec.companyId = companyId;
+        ec.companyId = context.companyId();
+        ec.accountId = context.accountId();
         ec.setSourceCodeId(sourceCode.id);
         ec.setCreatedOn(System.currentTimeMillis());
         ec.setState(EnumsApi.ExecContextState.NONE.code);

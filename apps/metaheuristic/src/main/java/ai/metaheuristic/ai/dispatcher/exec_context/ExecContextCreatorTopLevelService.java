@@ -44,35 +44,31 @@ public class ExecContextCreatorTopLevelService {
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextCreatorService execContextCreatorService;
 
-    public ExecContextCreatorService.ExecContextCreationResult createExecContext(Long sourceCodeId, DispatcherContext context) {
-        return createExecContextAndStart(sourceCodeId, context.getCompanyId(), false);
-    }
-
-    public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(String sourceCodeUid, Long companyUniqueId) {
-        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeByUid(sourceCodeUid, companyUniqueId);
+    public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(String sourceCodeUid, ExecContextData.UserExecContext context) {
+        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeByUid(sourceCodeUid, context.companyId());
         if (sourceCodesForCompany.isErrorMessages()) {
             return new ExecContextCreatorService.ExecContextCreationResult("#563.020 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
-                    "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + companyUniqueId);
+                    "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + context.companyId());
         }
         SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
         if (sourceCode==null) {
             return new ExecContextCreatorService.ExecContextCreationResult("#563.040 Error creating execContext: " +
-                    "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + companyUniqueId);
+                    "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + context.companyId());
         }
-        return createExecContextAndStart(sourceCode.id, companyUniqueId, true);
+        return createExecContextAndStart(sourceCode.id, context, true);
     }
 
-    public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, Long companyUniqueId, boolean isStart) {
-        return createExecContextAndStart(sourceCodeId, companyUniqueId, isStart, null);
+    public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, ExecContextData.UserExecContext context, boolean isStart) {
+        return createExecContextAndStart(sourceCodeId, context, isStart, null);
     }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(
-            Long sourceCodeId, Long companyUniqueId, boolean isStart, @Nullable ExecContextData.RootAndParent rootAndParent) {
+            Long sourceCodeId, ExecContextData.UserExecContext context, boolean isStart, @Nullable ExecContextData.RootAndParent rootAndParent) {
         return SourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
                 () -> {
                     try {
                         ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContextAndStart(
-                                sourceCodeId, companyUniqueId, isStart, rootAndParent);
+                                sourceCodeId, context, isStart, rootAndParent);
                         return result;
                     }
                     catch (ExecContextTooManyInstancesException e) {

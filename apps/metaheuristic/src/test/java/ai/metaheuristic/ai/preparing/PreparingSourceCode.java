@@ -106,6 +106,10 @@ public abstract class PreparingSourceCode extends PreparingCore {
         return preparingSourceCodeData.company;
     }
 
+    public Account getAccount() {
+        return preparingSourceCodeData.account;
+    }
+
     public GlobalVariable getTestGlobalVariable() {
         return preparingSourceCodeData.testGlobalVariable;
     }

@@ -130,9 +130,10 @@ public class ExecSourceCodeFunction implements InternalFunction {
 
         ExecContextData.RootAndParent rootAndParent = new ExecContextData.RootAndParent(rootExecContextId, simpleExecContext.execContextId);
 
+        ExecContextData.UserExecContext context = new ExecContextData.UserExecContext(simpleExecContext.accountId, simpleExecContext.companyId);
         ExecContextCreatorService.ExecContextCreationResult execContextResultRest =
                 execContextCreatorTopLevelService.createExecContextAndStart(
-                        subSc.id, simpleExecContext.companyId, false, rootAndParent);
+                        subSc.id, context, false, rootAndParent);
 
         if (execContextResultRest.isErrorMessages()) {
             throw new InternalFunctionException(exec_context_creation_error,

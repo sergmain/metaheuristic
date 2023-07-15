@@ -78,7 +78,7 @@ public class ExperimentRestController {
     @PostMapping("/experiment-add-commit")
     public OperationStatusRest addFormCommit(String sourceCodeUid, String name, String code, String description, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return experimentTopLevelService.addExperimentCommit(sourceCodeUid, name, code, description, context);
+        return experimentTopLevelService.addExperimentCommit(sourceCodeUid, name, code, description, context.asUserExecContext());
     }
 
     @PostMapping("/experiment-edit-commit")
@@ -95,7 +95,7 @@ public class ExperimentRestController {
     @PostMapping("/experiment-clone-commit")
     public OperationStatusRest experimentCloneCommit(Long id, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return experimentTopLevelService.experimentCloneCommit(id, context);
+        return experimentTopLevelService.experimentCloneCommit(id, context.asUserExecContext());
     }
 
     @PostMapping("/experiment-target-state/{state}/{experimentId}")

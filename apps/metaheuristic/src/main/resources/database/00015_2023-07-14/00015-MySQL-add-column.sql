@@ -16,6 +16,7 @@
 
 -- !!!!! names of tables must be in lower case !!!!!!
 
-alter table mh_account
-    add PARAMS          MEDIUMTEXT null;
+alter table mh_account add PARAMS MEDIUMTEXT null;
+
+alter table mh_exec_context add ACCOUNT_ID INT UNSIGNED;
 

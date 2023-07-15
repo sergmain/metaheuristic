@@ -59,6 +59,10 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name = "COMPANY_ID")
     public Long companyId;
 
+    @Nullable
+    @Column(name = "ACCOUNT_ID")
+    public Long accountId;
+
     @Column(name="CREATED_ON")
     public long createdOn;
 
@@ -121,6 +125,6 @@ public class ExecContextImpl implements Serializable, ExecContext {
     public ExecContextData.SimpleExecContext asSimple() {
         return new ExecContextData.SimpleExecContext(
                 sourceCodeId, id, execContextGraphId, execContextTaskStateId,
-                execContextVariableStateId, companyId, getExecContextParamsYaml());
+                execContextVariableStateId, companyId, accountId, getExecContextParamsYaml());
     }
 }

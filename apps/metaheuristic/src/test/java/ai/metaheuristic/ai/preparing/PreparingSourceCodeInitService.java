@@ -18,9 +18,12 @@ package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.account.AccountTopLevelService;
+import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService;
+import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
@@ -47,6 +50,7 @@ import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 import static ai.metaheuristic.ai.preparing.PreparingConsts.GLOBAL_TEST_VARIABLE;
 import static org.junit.jupiter.api.Assertions.*;
@@ -65,6 +69,7 @@ public class PreparingSourceCodeInitService {
     private final Globals globals;
     private final PreparingSourceCodeService preparingSourceCodeService;
     private final CompanyTopLevelService companyTopLevelService;
+    private final AccountTopLevelService accountTopLevelService;
     private final GlobalVariableService globalVariableService;
     private final GlobalVariableEntityManagerTxService globalVariableEntityManagerTxService;
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
@@ -79,6 +84,7 @@ public class PreparingSourceCodeInitService {
     private final ExecContextGraphRepository execContextGraphRepository;
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final TaskRepositoryForTest taskRepositoryForTest;
+    private final AccountRepository accountRepository;
 
     public PreparingData.PreparingSourceCodeData beforePreparingSourceCode(String params) {
         assertTrue(globals.testing);
@@ -95,6 +101,22 @@ public class PreparingSourceCodeInitService {
         data.company.name = "Test company #2";
         companyTopLevelService.addCompany(data.company);
         data.company = Objects.requireNonNull(companyTopLevelService.getCompanyByUniqueId(data.company.uniqueId));
+
+        AccountData.NewAccount account = new AccountData.NewAccount();
+        account.username = "test-"+ UUID.randomUUID();
+        // 123
+        account.password = "$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu";
+        account.password2 = account.password;
+        account.publicName = data.account.username;
+        accountTopLevelService.addAccount(account, data.company.uniqueId);
+
+        data.account = accountRepository.findByUsername(account.username);
+        assertNotNull(data.account);
+
+
+        data.company = Objects.requireNonNull(companyTopLevelService.getCompanyByUniqueId(data.company.uniqueId));
+
+
 
         assertNotNull(data.company.id);
         assertNotNull(data.company.uniqueId);

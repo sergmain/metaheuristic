@@ -110,6 +110,20 @@ public class ExecContextSyncService {
         }
     }
 
+    // ForCreation means that the presence of TX won't be checked
+    public static void getWithSyncVoidForCreation(Long execContextId, Runnable runnable) {
+        TxUtils.checkTxNotExists();
+        checkWriteLockNotPresent(execContextId);
+
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextId);
+        try {
+            lock.lock();
+            runnable.run();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public static <T> T getWithSyncReadOnly(ExecContextImpl execContext, Supplier<T> supplier) {
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(execContext.id);

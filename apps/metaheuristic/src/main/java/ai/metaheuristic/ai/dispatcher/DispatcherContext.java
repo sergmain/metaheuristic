@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher;
 
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
@@ -48,5 +49,9 @@ public class DispatcherContext {
     }
     public Long getCompanyId() {
         return company.uniqueId;
+    }
+
+    public ExecContextData.UserExecContext asUserExecContext() {
+        return new ExecContextData.UserExecContext(getAccountId(), getCompanyId());
     }
 }

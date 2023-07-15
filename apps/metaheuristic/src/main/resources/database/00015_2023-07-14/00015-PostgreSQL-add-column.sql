@@ -15,6 +15,9 @@
 
 
 -- !!!!! DO NOT CHANGE THE TYPE OF ID FIELD. IT MUST BE NUMERIC(10, 0) !!!!!!!
-alter table mh_account
-    add PARAMS          MEDIUMTEXT null;
+alter table mh_account add PARAMS          MEDIUMTEXT null;
+
+alter table mh_exec_context add ACCOUNT_ID        NUMERIC(10, 0);
+
+
 

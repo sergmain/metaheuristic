@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.graph;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
@@ -71,8 +72,8 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
     @Test
     public void test() {
-
-        ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(getSourceCode(), getCompany().getUniqueId());
+        ExecContextData.UserExecContext context = new ExecContextData.UserExecContext(getAccount().id, getCompany().getUniqueId());
+        ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(getSourceCode(), context);
         setExecContextForTest(result.execContext);
         assertNotNull(getExecContextForTest());
 
