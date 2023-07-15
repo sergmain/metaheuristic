@@ -1,0 +1,22 @@
+databaseChangeLog:
+  -  changeSet:
+       id:  '00015-add-column-to-account'
+       author:  sergmain
+       validCheckSum: any
+       changes:
+         -  sqlFile:
+              dbms:  'h2'
+              path:  00015-H2-add-column.sql
+              stripComments:  true
+              relativeToChangelogFile: true
+         -  sqlFile:
+              dbms:  'mysql'
+              path:  00015-MySQL-Initial-revision.sql
+              stripComments:  true
+              relativeToChangelogFile: true
+         -  sqlFile:
+              dbms:  'postgresql'
+              path:  00015-PostgreSQL-Initial-revision.sql
+              stripComments:  true
+              relativeToChangelogFile: true
+

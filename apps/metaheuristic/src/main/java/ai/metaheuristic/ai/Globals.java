@@ -58,6 +58,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static ai.metaheuristic.ai.Enums.TokenSourceDefinedBy.none;
+
 @ConfigurationProperties("mh")
 @Getter
 @Setter
@@ -472,6 +474,7 @@ public class Globals {
     public static class Mhbp {
         public final Max max = new Max();
         public Kb[] kb;
+        public Enums.TokenSourceDefinedBy tokenSource = none;
     }
 
     public static class ThreadNumber {
