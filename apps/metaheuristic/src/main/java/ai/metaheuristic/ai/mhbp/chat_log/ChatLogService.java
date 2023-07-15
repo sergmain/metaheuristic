@@ -60,7 +60,7 @@ public class ChatLogService {
     @EventListener
     public void saveToChatLog(StoreChatLogEvent event) {
         try {
-            chatLogTxService.save(event.params(), event.companyId(), event.accountId());
+            chatLogTxService.save(event.params(), event.userExecContext().companyId(), event.userExecContext().accountId());
         }
         catch (Throwable th) {
             log.error("Error", th);

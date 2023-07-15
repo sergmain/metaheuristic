@@ -62,6 +62,10 @@ public class ExecContextData {
         public final Long companyId;
         public final Long accountId;
         public final ExecContextParamsYaml paramsYaml;
+
+        public ExecContextData.UserExecContext asUserExecContext() {
+            return new ExecContextData.UserExecContext(getAccountId(), getCompanyId());
+        }
     }
 
     @Data

@@ -157,7 +157,7 @@ public class ChatService {
             chatTxService.storePrompt(chatId, result);
             eventPublisher.publishEvent(new StoreChatLogEvent(
                     ChatLogService.toChatLogParams(chatInfo.chat.id, null, chatInfo.api, result, context),
-                    context.getCompanyId(), context.getAccountId()));
+                    context.asUserExecContext()));
 
             r.update(result);
             return r;

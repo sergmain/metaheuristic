@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.mhbp.provider;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
@@ -32,7 +33,7 @@ import java.util.List;
  */
 public class ProviderData {
 
-    public record QueriedData(String queryText, @Nullable DispatcherContext context){}
+    public record QueriedData(String queryText, ExecContextData.UserExecContext userExecContext){}
 
     public record QuestionAndAnswer(@Nullable String q, @Nullable ApiData.QueryResult a, EnumsApi.OperationStatus status, @Nullable String error) {
         public QuestionAndAnswer(EnumsApi.OperationStatus status, String error) {

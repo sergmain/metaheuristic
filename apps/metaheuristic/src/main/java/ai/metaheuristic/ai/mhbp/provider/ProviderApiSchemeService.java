@@ -78,13 +78,14 @@ public class ProviderApiSchemeService {
         this.globals = globals;
     }
 
-    public ApiData.SchemeAndParamResult queryProviders(Api api, NluData.QueriedPrompt info) {
+    public ApiData.SchemeAndParamResult queryProviders(Api api, ProviderData.QueriedData queriedData, NluData.QueriedPrompt info) {
         ApiScheme scheme = api.getApiScheme();
         List<Auth> auths = authRepository.findAllByCompanyUniqueId(api.companyId);
         Auth auth = auths.stream().filter(o->o.getAuthParams().auth.code.equals(scheme.scheme.auth.code)).findFirst().orElse(null);
         if (auth==null) {
             throw new RuntimeException("Auth wasn't found for code " + scheme.scheme.auth.code);
         }
+
         ApiData.SchemeAndParams schemeAndParams = new ApiData.SchemeAndParams(scheme, auth.getAuthParams(), ()-> TokenProvider.getActualToken(auth.getAuthParams().auth));
 
         ApiData.SchemeAndParamResult result = queryProviderApi(schemeAndParams, info);

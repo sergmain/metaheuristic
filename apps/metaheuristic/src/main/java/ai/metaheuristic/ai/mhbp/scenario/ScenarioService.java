@@ -412,7 +412,7 @@ public class ScenarioService {
                 chatService.evaluationAsApiCall(chatResult, se, Objects.requireNonNull(api));
                 eventPublisher.publishEvent(new StoreChatLogEvent(
                         ChatLogService.toChatLogParams(null, scenarioId, api, chatResult, context),
-                        context.getCompanyId(), context.getAccountId()));
+                        context.asUserExecContext()));
             }
             else {
                 if (Consts.MH_ENHANCE_TEXT_FUNCTION.equals(step.function.code)) {

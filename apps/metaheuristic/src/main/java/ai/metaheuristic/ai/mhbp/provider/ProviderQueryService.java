@@ -221,7 +221,7 @@ public class ProviderQueryService {
                 queryResult = new ApiData.QueryResult(null, false, queriedInfoWithError.error);
             }
             else if (queriedInfoWithError.queriedInfo!=null) {
-                ApiData.SchemeAndParamResult r = providerService.queryProviders(api, queriedInfoWithError.queriedInfo);
+                ApiData.SchemeAndParamResult r = providerService.queryProviders(api, queriedData, queriedInfoWithError.queriedInfo);
 
                 ApiScheme.Response response = api.getApiScheme().scheme.response;
                 if (response==null) {

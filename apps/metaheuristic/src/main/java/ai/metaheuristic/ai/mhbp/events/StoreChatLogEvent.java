@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.mhbp.events;
 
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.mhbp.yaml.chat_log.ChatLogParams;
 
 /**
@@ -23,4 +24,4 @@ import ai.metaheuristic.ai.mhbp.yaml.chat_log.ChatLogParams;
  * Date: 7/5/2023
  * Time: 3:03 AM
  */
-public record StoreChatLogEvent(ChatLogParams params, long companyId, long accountId) {}
+public record StoreChatLogEvent(ChatLogParams params, ExecContextData.UserExecContext userExecContext) {}

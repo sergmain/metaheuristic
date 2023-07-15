@@ -98,7 +98,7 @@ public class ApiCallService {
             prompt = StringUtils.replaceEach(prompt, new String[]{"[[" + variable + "]]", "{{" + variable + "}}"}, new String[]{value, value});
         }
         log.info("513.240 task #{}, prompt: {}", taskId, prompt);
-        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, null);
+        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, simpleExecContext.asUserExecContext());
         ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
         if (answer.status()!=OK) {
             throw new InternalFunctionException(data_not_found, "513.280 API call error: "+answer.error()+", prompt: " + prompt);
