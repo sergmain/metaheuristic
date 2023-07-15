@@ -14,14 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.mhbp.provider;
+@ParametersAreNonnullByDefault
+package ai.metaheuristic.ai.yaml.account;
 
-/**
- * @author Sergio Lissner
- * Date: 4/19/2023
- * Time: 2:21 AM
- */
-public class ProviderApiSchemeServiceTest {
-
-
-}
+import javax.annotation.ParametersAreNonnullByDefault;

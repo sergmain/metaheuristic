@@ -14,14 +14,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.mhbp.provider;
+package ai.metaheuristic.ai.yaml.account;
+
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+
+import java.util.Map;
 
 /**
  * @author Sergio Lissner
- * Date: 4/19/2023
- * Time: 2:21 AM
+ * Date: 7/15/2023
+ * Time: 12:01 AM
  */
-public class ProviderApiSchemeServiceTest {
+public class AccountParamsYamlUtils {
 
+    private static final AccountParamsYamlUtilsV1 YAML_UTILS_V_1 = new AccountParamsYamlUtilsV1();
+    private static final AccountParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
+    public static final BaseYamlUtils<AccountParamsYaml> UTILS = new BaseYamlUtils<>(
+            Map.of(
+                    1, YAML_UTILS_V_1
+            ),
+            DEFAULT_UTILS
+    );
 }

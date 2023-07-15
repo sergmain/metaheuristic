@@ -14,14 +14,39 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.mhbp.provider;
+package ai.metaheuristic.ai.yaml.account;
+
+import ai.metaheuristic.api.data.BaseParams;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Sergio Lissner
- * Date: 4/19/2023
- * Time: 2:21 AM
+ * Date: 7/15/2023
+ * Time: 12:01 AM
  */
-public class ProviderApiSchemeServiceTest {
+@SuppressWarnings("FieldMayBeStatic")
+@Data
+public class AccountParamsYaml implements BaseParams {
 
+    public final int version=1;
 
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Token {
+        public String name;
+        public String value;
+    }
+
+    public final List<Token> tokens = new ArrayList<>();
 }

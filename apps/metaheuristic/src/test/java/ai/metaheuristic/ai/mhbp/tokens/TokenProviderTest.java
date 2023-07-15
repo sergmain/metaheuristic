@@ -14,14 +14,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.mhbp.provider;
+package ai.metaheuristic.ai.mhbp.tokens;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Sergio Lissner
- * Date: 4/19/2023
- * Time: 2:21 AM
+ * Date: 7/15/2023
+ * Time: 12:38 AM
  */
-public class ProviderApiSchemeServiceTest {
+public class TokenProviderTest {
 
-
+    @Test
+    public void test_getEnvParamName() {
+        assertEquals("A", TokenProvider.getEnvParamName("A"));
+        assertEquals("A", TokenProvider.getEnvParamName("%A"));
+        assertEquals("A", TokenProvider.getEnvParamName("%A%"));
+        assertEquals("A", TokenProvider.getEnvParamName("$A"));
+        assertEquals("A", TokenProvider.getEnvParamName("$A$"));
+    }
 }

@@ -17,7 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
+import ai.metaheuristic.ai.yaml.account.AccountParamsYaml;
+import ai.metaheuristic.ai.yaml.account.AccountParamsYamlUtils;
 import ai.metaheuristic.commons.account.AccountRoles;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -88,7 +91,6 @@ public class Account implements UserDetails, Serializable, Cloneable {
     @Column(name="PHONE")
     public String phone;
 
-    //TODO add checks on max length
     @Nullable
     private String phoneAsStr;
 
@@ -116,6 +118,38 @@ public class Account implements UserDetails, Serializable, Cloneable {
         return accountRoles.getAuthorities().stream()
                 .map(o->new AccountData.SerializableGrantedAuthority(o.authority))
                 .collect(Collectors.toList());
+    }
+
+    @Column(name = "PARAMS")
+    private String params;
+
+    public String getParams() {
+        return params;
+    }
+
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
+
+    @Transient
+    @JsonIgnore
+    private final ThreadUtils.CommonThreadLocker<AccountParamsYaml> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private AccountParamsYaml parseParams() {
+        AccountParamsYaml temp = AccountParamsYamlUtils.UTILS.to(params);
+        AccountParamsYaml ecpy = temp==null ? new AccountParamsYaml() : temp;
+        return ecpy;
+    }
+
+    @JsonIgnore
+    public AccountParamsYaml getAccountParamsYaml() {
+        return paramsLocked.get();
+    }
+
+    @JsonIgnore
+    public void updateParams(AccountParamsYaml tpy) {
+        setParams(AccountParamsYamlUtils.UTILS.toString(tpy));
     }
 
 }

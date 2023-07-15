@@ -475,6 +475,8 @@ public class Globals {
         public final Max max = new Max();
         public Kb[] kb;
         public Enums.TokenSourceDefinedBy tokenSource = none;
+        @Nullable
+        public String[] envTokens;
     }
 
     public static class ThreadNumber {
