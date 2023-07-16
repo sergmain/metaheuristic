@@ -90,7 +90,6 @@ public class Globals {
     @Component
     @ConfigurationPropertiesBinding
     public static class PublicKeyConverter implements Converter<String, PublicKey> {
-        @Nullable
         @Override
         public PublicKey convert(String from) {
             if (S.b(from)) {
