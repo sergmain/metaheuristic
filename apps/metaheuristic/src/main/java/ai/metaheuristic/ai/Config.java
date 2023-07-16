@@ -18,15 +18,14 @@ package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.repositories.RefToDispatcherRepositories;
 import ai.metaheuristic.ai.mhbp.repositories.RefToMhbpRepositories;
+import ai.metaheuristic.ai.utils.SpringHelpersUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInterceptor;
-import ai.metaheuristic.commons.S;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -47,7 +46,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -114,13 +112,6 @@ public class Config {
     @RequiredArgsConstructor
     public static class SpringChecker {
 
-        private static final List<String> POSSIBLE_PROFILES = List.of(
-                // Spring's profiles
-                "dispatcher", "processor", "quickstart", "standalone",
-
-                // db's profiles
-                "mysql", "postgresql", "h2", "generic", "custom");
-
         private final ApplicationContext appCtx;
 
         @Value("${server.address:#{null}}")
@@ -144,14 +135,11 @@ public class Config {
         }
 
         private void checkProfiles() {
-            List<String> profiles = Arrays.stream(StringUtils.split(activeProfiles, ", "))
-                    .filter(o -> !POSSIBLE_PROFILES.contains(o))
-                    .peek(o -> log.error(S.f("\n!!! Unknown profile: %s\n", o)))
-                    .toList();
+            List<String> profiles = SpringHelpersUtils.getProfiles(activeProfiles);
 
             if (!profiles.isEmpty()) {
                 log.error("\nUnknown profile(s) was encountered in property spring.profiles.active.\nNeed to be fixed.\n" +
-                        "Allowed profiles are: " + POSSIBLE_PROFILES);
+                        "Allowed profiles are: " + SpringHelpersUtils.POSSIBLE_PROFILES);
                 System.exit(SpringApplication.exit(appCtx, () -> -500));
             }
         }

@@ -86,7 +86,7 @@ public class ProviderApiSchemeService {
             throw new RuntimeException("Auth wasn't found for code " + scheme.scheme.auth.code);
         }
 
-        ApiData.SchemeAndParams schemeAndParams = new ApiData.SchemeAndParams(scheme, auth.getAuthParams(), ()-> TokenProvider.getActualToken(auth.getAuthParams().auth));
+        ApiData.SchemeAndParams schemeAndParams = new ApiData.SchemeAndParams(scheme, auth.getAuthParams(), ()-> tokenProvider.getActualToken(auth.getAuthParams().auth, queriedData));
 
         ApiData.SchemeAndParamResult result = queryProviderApi(schemeAndParams, info);
         return result;

@@ -29,6 +29,7 @@ import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
@@ -508,6 +509,9 @@ public class Globals {
             this.event = event;
         }
     }
+
+    @Value("${spring.profiles.active}")
+    public String activeProfiles;
 
     public final Dispatcher dispatcher = new Dispatcher();
     public final Processor processor = new Processor();
