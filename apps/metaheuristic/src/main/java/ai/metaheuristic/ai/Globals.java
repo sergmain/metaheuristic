@@ -58,6 +58,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static ai.metaheuristic.ai.Enums.TokenSourceDefinedBy.none;
 
@@ -90,6 +91,7 @@ public class Globals {
     @Component
     @ConfigurationPropertiesBinding
     public static class PublicKeyConverter implements Converter<String, PublicKey> {
+        @Nullable
         @Override
         public PublicKey convert(String from) {
             if (S.b(from)) {
@@ -610,7 +612,7 @@ public class Globals {
             }
 
             // at this point result.systemExecResult must be not null, it can be null only if result.ok==false, but see above
-            if (result.systemExecResult.exitCode!=0) {
+            if (Objects.requireNonNull(result.systemExecResult).exitCode!=0) {
                 log.info("ulimit wasn't found");
                 return;
             }
