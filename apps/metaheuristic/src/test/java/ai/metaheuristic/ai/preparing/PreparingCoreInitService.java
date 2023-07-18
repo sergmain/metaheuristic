@@ -25,8 +25,8 @@ import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTxService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
@@ -63,8 +63,8 @@ public class PreparingCoreInitService {
     private final FunctionTxService functionTxService;
     private final FunctionRepository functionRepository;
     private final ExperimentCache experimentCache;
-    private final ProcessorTopLevelService processorTopLevelService;
-    private final ProcessorTransactionService processorTransactionService;
+    private final ProcessorService processorTopLevelService;
+    private final ProcessorTxService processorTransactionService;
     private final TxSupportForTestingService txSupportForTestingService;
     private final ProcessorCoreService processorCoreService;
 

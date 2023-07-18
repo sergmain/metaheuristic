@@ -35,6 +35,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -57,8 +58,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Profile("dispatcher")
 @Service
-@RequiredArgsConstructor
-public class ProcessorTransactionService {
+@RequiredArgsConstructor(onConstructor_={@Autowired})
+public class ProcessorTxService {
 
     private final ProcessorRepository processorRepository;
     private final ProcessorCoreRepository processorCoreRepository;
@@ -301,7 +302,7 @@ public class ProcessorTransactionService {
 
     @Transactional
     public DispatcherApiData.ProcessorSessionId reassignProcessorId(@Nullable String remoteAddress, @Nullable String description) {
-        String sessionId = ProcessorTransactionService.createNewSessionId();
+        String sessionId = ProcessorTxService.createNewSessionId();
         ProcessorStatusYaml psy = new ProcessorStatusYaml(new TreeMap<>(), null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),

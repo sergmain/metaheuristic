@@ -32,7 +32,7 @@ import org.springframework.stereotype.Service;
 @Profile("dispatcher")
 @Service
 @RequiredArgsConstructor
-public class AccountTopLevelService {
+public class AccountService {
 
     private final AccountTxService accountService;
     private final Globals globals;

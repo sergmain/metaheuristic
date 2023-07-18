@@ -18,8 +18,7 @@ package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.account.AccountTopLevelService;
-import ai.metaheuristic.ai.dispatcher.beans.Account;
+import ai.metaheuristic.ai.dispatcher.account.AccountService;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService;
@@ -69,7 +68,7 @@ public class PreparingSourceCodeInitService {
     private final Globals globals;
     private final PreparingSourceCodeService preparingSourceCodeService;
     private final CompanyTopLevelService companyTopLevelService;
-    private final AccountTopLevelService accountTopLevelService;
+    private final AccountService accountTopLevelService;
     private final GlobalVariableService globalVariableService;
     private final GlobalVariableEntityManagerTxService globalVariableEntityManagerTxService;
     private final SourceCodeTopLevelService sourceCodeTopLevelService;

@@ -43,10 +43,12 @@ public class AccountParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Token {
+    public static class ApiKey {
         public String name;
         public String value;
     }
 
-    public final List<Token> tokens = new ArrayList<>();
+    public final List<ApiKey> apiKeys = new ArrayList<>();
+
+    public String openaiKey;
 }

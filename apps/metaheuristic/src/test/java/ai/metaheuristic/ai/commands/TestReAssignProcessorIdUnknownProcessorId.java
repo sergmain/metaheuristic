@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.commands;
 
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
@@ -55,10 +55,10 @@ public class TestReAssignProcessorIdUnknownProcessorId {
     public ProcessorCache processorCache;
 
     @Autowired
-    public ProcessorTransactionService processorTransactionService;
+    public ProcessorTxService processorTransactionService;
 
     @Autowired
-    public ProcessorTopLevelService processorTopLevelService;
+    public ProcessorService processorTopLevelService;
 
     private Long processorIdBefore;
     private String sessionIdBefore;

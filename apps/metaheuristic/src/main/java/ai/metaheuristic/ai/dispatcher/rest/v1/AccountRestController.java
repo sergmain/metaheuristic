@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.account.AccountTopLevelService;
+import ai.metaheuristic.ai.dispatcher.account.AccountService;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -40,7 +40,7 @@ import org.springframework.web.bind.annotation.*;
 @PreAuthorize("hasAnyRole('ADMIN')")
 public class AccountRestController {
 
-    private final AccountTopLevelService accountTopLevelService;
+    private final AccountService accountTopLevelService;
     private final UserContextService userContextService;
 
     @GetMapping("/accounts")

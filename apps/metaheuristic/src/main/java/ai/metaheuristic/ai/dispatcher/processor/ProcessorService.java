@@ -37,6 +37,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -54,10 +55,10 @@ import static ai.metaheuristic.ai.dispatcher.processor.ProcessorUtils.isProcesso
 @Slf4j
 @Profile("dispatcher")
 @Service
-@RequiredArgsConstructor
-public class ProcessorTopLevelService {
+@RequiredArgsConstructor(onConstructor_={@Autowired})
+public class ProcessorService {
 
-    private final ProcessorTransactionService processorTransactionService;
+    private final ProcessorTxService processorTransactionService;
     private final TaskRepository taskRepository;
     private final Globals globals;
     private final ProcessorRepository processorRepository;

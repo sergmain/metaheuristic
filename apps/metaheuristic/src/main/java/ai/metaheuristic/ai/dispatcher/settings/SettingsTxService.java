@@ -14,37 +14,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.account;
+package ai.metaheuristic.ai.dispatcher.settings;
 
-import ai.metaheuristic.api.data.BaseParams;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.ArrayList;
-import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 
 /**
  * @author Sergio Lissner
- * Date: 7/15/2023
- * Time: 12:01 AM
+ * Date: 7/17/2023
+ * Time: 11:17 PM
  */
-@SuppressWarnings("FieldMayBeStatic")
-@Data
-public class AccountParamsYamlV1 implements BaseParams {
-
-    public final int version=1;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ApiKeyV1 {
-        public String name;
-        public String value;
-    }
-
-    public final List<ApiKeyV1> apiKeys = new ArrayList<>();
-
-    public String openaiKey;
-
+@Service
+@Slf4j
+@Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
+public class SettingsTxService {
 }

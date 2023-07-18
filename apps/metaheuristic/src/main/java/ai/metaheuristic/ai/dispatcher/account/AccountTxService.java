@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
 import ai.metaheuristic.ai.sec.SecConsts;
+import ai.metaheuristic.ai.yaml.account.AccountParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.account.SimpleAccount;
@@ -167,6 +168,23 @@ public class AccountTxService {
 
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The password was changed successfully", "");
     }
+
+    @Transactional
+    public OperationStatusRest saveOpenaiKey(Long accountId, Long companyUniqueId, String openaiKey) {
+        Account account = accountRepository.findByIdForUpdate(accountId);
+        if (account == null || !Objects.equals(account.companyId, companyUniqueId)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.103 account wasn't found, accountId: " + accountId);
+        }
+        AccountParamsYaml params = account.getAccountParamsYaml();
+        params.openaiKey = openaiKey;
+        account.updateParams(params);
+        account.updatedOn = System.currentTimeMillis();
+        accountCache.save(account);
+
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The OPEN_API_KEY was saved successfully", "");
+    }
+
+
 
     // this method is using with angular's rest
     @Transactional

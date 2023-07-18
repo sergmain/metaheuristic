@@ -26,8 +26,8 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorSyncService;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreService;
 import ai.metaheuristic.ai.utils.JsonUtils;
@@ -52,11 +52,11 @@ import org.springframework.stereotype.Service;
 public class KeepAliveTopLevelService {
 
     private final Globals globals;
-    private final ProcessorTopLevelService processorTopLevelService;
+    private final ProcessorService processorTopLevelService;
     private final FunctionTopLevelService functionTopLevelService;
     private final ProcessorCache processorCache;
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
-    private final ProcessorTransactionService processorTransactionService;
+    private final ProcessorTxService processorTransactionService;
     private final ProcessorCoreService processorCoreService;
     private final ProcessorCoreCache processorCoreCache;
     private final ExecContextStatusService execContextStatusService;
@@ -118,7 +118,7 @@ public class KeepAliveTopLevelService {
             return processorSessionId.processorId;
         }
 
-        Enums.ProcessorAndSessionStatus processorAndSessionStatus = ProcessorTopLevelService.checkProcessorAndSessionStatus(processor, processorRequest.processorCommContext.sessionId);
+        Enums.ProcessorAndSessionStatus processorAndSessionStatus = ProcessorService.checkProcessorAndSessionStatus(processor, processorRequest.processorCommContext.sessionId);
         if (processorAndSessionStatus != Enums.ProcessorAndSessionStatus.ok) {
             DispatcherApiData.ProcessorSessionId processorSessionId = ProcessorSyncService.getWithSync(processor.id,
                     ()-> processorTransactionService.checkProcessorId(processorAndSessionStatus, processor.id, remoteAddress));

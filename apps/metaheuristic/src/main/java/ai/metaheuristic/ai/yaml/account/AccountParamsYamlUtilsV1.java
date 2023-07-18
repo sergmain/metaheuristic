@@ -47,14 +47,15 @@ public class AccountParamsYamlUtilsV1
     public AccountParamsYaml upgradeTo(@NonNull AccountParamsYamlV1 v1) {
         v1.checkIntegrity();
         AccountParamsYaml t = new AccountParamsYaml();
-        v1.tokens.stream().map(AccountParamsYamlUtilsV1::to).collect(Collectors.toCollection(()->t.tokens));
+        v1.apiKeys.stream().map(AccountParamsYamlUtilsV1::to).collect(Collectors.toCollection(()->t.apiKeys));
+        t.openaiKey = v1.openaiKey;
 
         t.checkIntegrity();
         return t;
     }
 
-    public static AccountParamsYaml.Token to(AccountParamsYamlV1.TokenV1 v1) {
-        return new AccountParamsYaml.Token(v1.name, v1.value);
+    public static AccountParamsYaml.ApiKey to(AccountParamsYamlV1.ApiKeyV1 v1) {
+        return new AccountParamsYaml.ApiKey(v1.name, v1.value);
     }
 
     @NonNull
