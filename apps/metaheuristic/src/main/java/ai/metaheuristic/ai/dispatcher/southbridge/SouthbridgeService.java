@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.TaskCommunicationEvent;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
 import ai.metaheuristic.ai.dispatcher.keep_alive.KeepAliveTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueSyncStaticService;
@@ -290,7 +290,7 @@ public class SouthbridgeService {
             return;
         }
 
-        Enums.ProcessorAndSessionStatus processorAndSessionStatus = ProcessorService.checkProcessorAndSessionStatus(processor, request.processorCommContext.sessionId);
+        Enums.ProcessorAndSessionStatus processorAndSessionStatus = ProcessorTopLevelService.checkProcessorAndSessionStatus(processor, request.processorCommContext.sessionId);
         if (processorAndSessionStatus == Enums.ProcessorAndSessionStatus.reassignProcessor || processorAndSessionStatus == Enums.ProcessorAndSessionStatus.newSession) {
             // do nothing because sessionId will be initialized via KeepAlive call
             log.info("#444.220 do nothing: (processorAndSessionStatus==Enums.ProcessorAndSessionStatus.reassignProcessor || processorAndSessionStatus== Enums.ProcessorAndSessionStatus.newSession)");

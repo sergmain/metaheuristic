@@ -64,8 +64,8 @@ public class TokenProvider {
 
             String evnParam = getEnvParamName(auth.token.env);
 
-            return params.tokens.stream().filter(o->o.getName().equals(evnParam))
-                    .map(AccountParamsYaml.Token::getValue)
+            return params.apiKeys.stream().filter(o->o.getName().equals(evnParam))
+                    .map(AccountParamsYaml.ApiKey::getValue)
                     .findFirst().orElse(null);
         }
         else {

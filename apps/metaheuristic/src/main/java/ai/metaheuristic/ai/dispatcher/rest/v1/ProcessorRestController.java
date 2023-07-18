@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.*;
 @PreAuthorize("hasAnyRole('ADMIN')")
 public class ProcessorRestController {
 
-    private final ProcessorService processorTopLevelService;
+    private final ProcessorTopLevelService processorTopLevelService;
 
     @GetMapping("/processors")
     public ProcessorData.ProcessorsResult init(@PageableDefault(size = 50) Pageable pageable) {

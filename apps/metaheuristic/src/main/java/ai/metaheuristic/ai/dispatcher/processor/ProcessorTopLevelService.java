@@ -56,7 +56,8 @@ import static ai.metaheuristic.ai.dispatcher.processor.ProcessorUtils.isProcesso
 @Profile("dispatcher")
 @Service
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class ProcessorService {
+// !!!  DO NOT RENAME to ProcessorService
+public class ProcessorTopLevelService {
 
     private final ProcessorTxService processorTransactionService;
     private final TaskRepository taskRepository;

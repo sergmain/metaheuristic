@@ -137,7 +137,7 @@ public class Account implements UserDetails, Serializable, Cloneable {
             new ThreadUtils.CommonThreadLocker<>(this::parseParams);
 
     private AccountParamsYaml parseParams() {
-        AccountParamsYaml temp = AccountParamsYamlUtils.UTILS.to(params);
+        AccountParamsYaml temp = params!=null ? AccountParamsYamlUtils.UTILS.to(params) : null;
         AccountParamsYaml ecpy = temp==null ? new AccountParamsYaml() : temp;
         return ecpy;
     }

@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.commands;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
@@ -65,7 +65,7 @@ public class TestReAssignProcessorIdTimeoutSessionId {
     public ProcessorRepository processorRepository;
 
     @Autowired
-    public ProcessorService processorTopLevelService;
+    public ProcessorTopLevelService processorTopLevelService;
 
     @Autowired
     public ProcessorTxService processorTransactionService;
