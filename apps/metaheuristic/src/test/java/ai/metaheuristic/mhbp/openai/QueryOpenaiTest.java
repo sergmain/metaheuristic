@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.mhbp.openai;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.utils.RestUtils;
 import lombok.AllArgsConstructor;
 import org.apache.commons.io.IOUtils;
@@ -117,7 +118,7 @@ public class QueryOpenaiTest {
 //    }
     @Test
     public void test_query() throws URISyntaxException, IOException {
-        String key = System.getenv("OPENAI_API_KEY");
+        String key = System.getenv(Consts.OPENAI_API_KEY);
 
         Cfg cfg = json5;
 
@@ -149,7 +150,7 @@ public class QueryOpenaiTest {
     @Test
     public void test_models() throws URISyntaxException, IOException {
 
-        String key = System.getenv("OPENAI_API_KEY");
+        String key = System.getenv(Consts.OPENAI_API_KEY);
         final URI uri = new URIBuilder("https://api.openai.com/v1/models")
                 .setCharset(StandardCharsets.UTF_8)
                 .build();

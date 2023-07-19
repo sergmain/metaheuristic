@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.ai.mhbp.data.CommunicationData;
 import ai.metaheuristic.ai.mhbp.data.NluData;
 import ai.metaheuristic.ai.mhbp.repositories.AuthRepository;
-import ai.metaheuristic.ai.mhbp.tokens.TokenProvider;
+import ai.metaheuristic.ai.mhbp.api_keys.ApiKeysProvider;
 import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.commons.S;
@@ -66,12 +66,12 @@ import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
 public class ProviderApiSchemeService {
 
     private final AuthRepository authRepository;
-    private final TokenProvider tokenProvider;
+    private final ApiKeysProvider tokenProvider;
     private final Globals globals;
 
     public ProviderApiSchemeService(
             @Autowired AuthRepository authRepository,
-            @Autowired TokenProvider tokenProvider,
+            @Autowired ApiKeysProvider tokenProvider,
             @Autowired Globals globals) {
         this.authRepository = authRepository;
         this.tokenProvider = tokenProvider;

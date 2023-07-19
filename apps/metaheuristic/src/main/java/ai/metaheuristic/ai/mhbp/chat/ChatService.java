@@ -33,6 +33,7 @@ import ai.metaheuristic.ai.mhbp.yaml.chat.ChatParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +59,7 @@ import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
 @Service
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ChatService {
 
     private final ChatRepository chatRepository;
@@ -66,20 +68,6 @@ public class ChatService {
     private final ApiRepository apiRepository;
     private final ProviderQueryService providerQueryService;
     private final ApplicationEventPublisher eventPublisher;
-
-    public ChatService(@Autowired ChatRepository chatRepository,
-                       @Autowired ProviderQueryService providerQueryService,
-                       @Autowired ChatTxService chatTxService,
-                       @Autowired ApiService apiService,
-                       @Autowired ApiRepository apiRepository,
-                       @Autowired ApplicationEventPublisher eventPublisher) {
-        this.chatRepository = chatRepository;
-        this.chatTxService = chatTxService;
-        this.apiService = apiService;
-        this.apiRepository = apiRepository;
-        this.providerQueryService = providerQueryService;
-        this.eventPublisher = eventPublisher;
-    }
 
     public ChatData.Chats getChats(Pageable pageable, DispatcherContext context) {
         try {
@@ -96,7 +84,8 @@ public class ChatService {
     private ChatData.SimpleChat to(Long id) {
         Chat chat = chatRepository.findById(id).orElseThrow();
         ChatParams params = chat.getChatParams();
-        return new ChatData.SimpleChat(chat.id, chat.name, chat.createdOn, new ApiData.ApiUid(params.api.apiId, params.api.code));
+        Api api = apiRepository.findByApiCode(params.api.code);
+        return new ChatData.SimpleChat(chat.id, chat.name, chat.createdOn, new ApiData.ApiUid(params.api.apiId, params.api.code, api!=null ? api.name : "<Ref to API is broken>"));
     }
 
     public record ChatInfo(Chat chat, @Nullable Api api, @Nullable String error) {}
@@ -115,7 +104,7 @@ public class ChatService {
             throw new IllegalStateException("(chatInfo.api==null)");
         }
 
-        fullChat.apiUid = new ApiData.ApiUid(chatInfo.api.id, chatInfo.api.code);
+        fullChat.apiUid = new ApiData.ApiUid(chatInfo.api.id, chatInfo.api.code, chatInfo.api.name);
         fullChat.prompts = params.prompts.stream().map(ChatService::to).toList();
         fullChat.chatId = chatId;
 
@@ -173,7 +162,7 @@ public class ChatService {
         ChatData.ApiForCompany r = new ChatData.ApiForCompany();
 
         r.apis = apiService.getApisAllowedForCompany(context).stream()
-                .map(o->new ApiData.ApiUid(o.id, o.code))
+                .map(o->new ApiData.ApiUid(o.id, o.code, o.name))
                 .toList();
         return r;
     }

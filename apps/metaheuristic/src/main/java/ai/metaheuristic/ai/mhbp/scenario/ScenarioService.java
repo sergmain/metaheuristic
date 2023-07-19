@@ -57,6 +57,7 @@ import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -84,11 +85,11 @@ import static ai.metaheuristic.ai.utils.CollectionUtils.TreeUtils;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 @Profile("dispatcher")
 public class ScenarioService {
 
-    private static final ApiData.ApiUid BROKEN_API = new ApiData.ApiUid(0L, "<broken API Id>");
+    private static final ApiData.ApiUid BROKEN_API = new ApiData.ApiUid(0L, "<broken API Id>", "Broken API");
 
     private final Globals globals;
     private final ApiService apiService;
@@ -132,7 +133,7 @@ public class ScenarioService {
     public ScenarioData.ScenarioUidsForAccount getScenarioUidsForAccount(DispatcherContext context) {
         ScenarioData.ScenarioUidsForAccount r = new ScenarioData.ScenarioUidsForAccount();
         r.apis = apiService.getApisAllowedForCompany(context).stream()
-                .map(o ->new ApiData.ApiUid(o.id, o.code))
+                .map(o ->new ApiData.ApiUid(o.id, o.code, o.name))
                 .toList();
         r.functions = internalFunctionRegisterService.getScenarioCompatibleFunctions();
         r.aggregateTypes = Stream.of(AggregateFunction.AggregateType.values()).filter(o->o.supported).map(Enum::toString).toList();
@@ -154,7 +155,7 @@ public class ScenarioService {
                     if (o.api!=null) {
                         apiUid = apis.computeIfAbsent(o.api.code,
                                 (apiCode) -> apiRepository.findByApiCodeOptional(apiCode)
-                                        .map(api -> new ApiData.ApiUid(api.id, api.code))
+                                        .map(api -> new ApiData.ApiUid(api.id, api.code, api.name))
                                         .orElse(BROKEN_API));
                     }
                     else {

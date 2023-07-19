@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mhbp.tokens;
+package ai.metaheuristic.ai.mhbp.api_keys;
 
 import org.junit.jupiter.api.Test;
 
@@ -29,10 +29,10 @@ public class TokenProviderTest {
 
     @Test
     public void test_getEnvParamName() {
-        assertEquals("A", TokenProvider.getEnvParamName("A"));
-        assertEquals("A", TokenProvider.getEnvParamName("%A"));
-        assertEquals("A", TokenProvider.getEnvParamName("%A%"));
-        assertEquals("A", TokenProvider.getEnvParamName("$A"));
-        assertEquals("A", TokenProvider.getEnvParamName("$A$"));
+        assertEquals("A", ApiKeysProvider.getEnvParamName("A"));
+        assertEquals("A", ApiKeysProvider.getEnvParamName("%A"));
+        assertEquals("A", ApiKeysProvider.getEnvParamName("%A%"));
+        assertEquals("A", ApiKeysProvider.getEnvParamName("$A"));
+        assertEquals("A", ApiKeysProvider.getEnvParamName("$A$"));
     }
 }

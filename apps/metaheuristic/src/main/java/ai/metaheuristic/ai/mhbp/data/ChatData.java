@@ -101,6 +101,7 @@ public class ChatData {
     public static class FullChat extends BaseDataClass {
         public String sessionId;
         public Long chatId;
+        public String chatName;
         public ApiData.ApiUid apiUid;
         public List<ChatPrompt> prompts;
 

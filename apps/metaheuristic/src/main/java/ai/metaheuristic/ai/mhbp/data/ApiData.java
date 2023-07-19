@@ -44,6 +44,8 @@ public class ApiData {
         public Long id;
         // actually, it's a 'code'
         public String uid;
+
+        public String apiName;
     }
 
     @Data
