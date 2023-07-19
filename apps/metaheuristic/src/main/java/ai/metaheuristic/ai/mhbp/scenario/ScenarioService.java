@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunc
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
+import ai.metaheuristic.ai.mhbp.api.ApiUtils;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.beans.ScenarioGroup;
@@ -133,7 +134,7 @@ public class ScenarioService {
     public ScenarioData.ScenarioUidsForAccount getScenarioUidsForAccount(DispatcherContext context) {
         ScenarioData.ScenarioUidsForAccount r = new ScenarioData.ScenarioUidsForAccount();
         r.apis = apiService.getApisAllowedForCompany(context).stream()
-                .map(o ->new ApiData.ApiUid(o.id, o.code, o.name))
+                .map(ApiUtils::to)
                 .toList();
         r.functions = internalFunctionRegisterService.getScenarioCompatibleFunctions();
         r.aggregateTypes = Stream.of(AggregateFunction.AggregateType.values()).filter(o->o.supported).map(Enum::toString).toList();
@@ -155,7 +156,7 @@ public class ScenarioService {
                     if (o.api!=null) {
                         apiUid = apis.computeIfAbsent(o.api.code,
                                 (apiCode) -> apiRepository.findByApiCodeOptional(apiCode)
-                                        .map(api -> new ApiData.ApiUid(api.id, api.code, api.name))
+                                        .map(ApiUtils::to)
                                         .orElse(BROKEN_API));
                     }
                     else {

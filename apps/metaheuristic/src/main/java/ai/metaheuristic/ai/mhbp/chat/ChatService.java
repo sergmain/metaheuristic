@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.mhbp.chat;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
+import ai.metaheuristic.ai.mhbp.api.ApiUtils;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Chat;
 import ai.metaheuristic.ai.mhbp.chat_log.ChatLogService;
@@ -107,6 +108,7 @@ public class ChatService {
         fullChat.apiUid = new ApiData.ApiUid(chatInfo.api.id, chatInfo.api.code, chatInfo.api.name);
         fullChat.prompts = params.prompts.stream().map(ChatService::to).toList();
         fullChat.chatId = chatId;
+        fullChat.chatName = chatInfo.chat.name;
 
         //fullChat.sessionId = null;
 
@@ -162,7 +164,7 @@ public class ChatService {
         ChatData.ApiForCompany r = new ChatData.ApiForCompany();
 
         r.apis = apiService.getApisAllowedForCompany(context).stream()
-                .map(o->new ApiData.ApiUid(o.id, o.code, o.name))
+                .map(ApiUtils::to)
                 .toList();
         return r;
     }

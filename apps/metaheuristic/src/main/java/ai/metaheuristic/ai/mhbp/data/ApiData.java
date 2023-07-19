@@ -46,6 +46,7 @@ public class ApiData {
         public String uid;
 
         public String apiName;
+
     }
 
     @Data

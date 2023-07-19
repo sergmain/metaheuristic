@@ -19,13 +19,12 @@ package ai.metaheuristic.ai.mhbp.evaluation;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
+import ai.metaheuristic.ai.mhbp.api.ApiUtils;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Chapter;
 import ai.metaheuristic.ai.mhbp.beans.Evaluation;
 import ai.metaheuristic.ai.mhbp.chapter.ChapterService;
-import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.ai.mhbp.data.EvaluationData;
-import ai.metaheuristic.ai.mhbp.data.ScenarioData;
 import ai.metaheuristic.ai.mhbp.events.EvaluateProviderEvent;
 import ai.metaheuristic.ai.mhbp.kb.KbService;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
@@ -37,6 +36,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 @Profile("dispatcher")
 public class EvaluationService {
 
@@ -82,7 +82,7 @@ public class EvaluationService {
         EvaluationData.EvaluationUidsForCompany r = new EvaluationData.EvaluationUidsForCompany();
 
         r.apis = apiService.getApisAllowedForCompany(context).stream()
-                .map(o->new ApiData.ApiUid(o.id, o.code))
+                .map(ApiUtils::to)
                 .toList();
         r.chapters = chapterService.getChaptersAllowedForCompany(context);
         return r;
