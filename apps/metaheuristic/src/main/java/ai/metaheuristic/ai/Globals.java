@@ -60,7 +60,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import static ai.metaheuristic.ai.Enums.TokenSourceDefinedBy.none;
+import static ai.metaheuristic.ai.Enums.ApiKeySourceDefinedBy.none;
 
 @ConfigurationProperties("mh")
 @Getter
@@ -91,9 +91,9 @@ public class Globals {
     @Component
     @ConfigurationPropertiesBinding
     public static class PublicKeyConverter implements Converter<String, PublicKey> {
-        @Nullable
+
         @Override
-        public PublicKey convert(String from) {
+        public @Nullable PublicKey convert(String from) {
             if (S.b(from)) {
                 return null;
             }
@@ -476,7 +476,7 @@ public class Globals {
     public static class Mhbp {
         public final Max max = new Max();
         public Kb[] kb;
-        public Enums.TokenSourceDefinedBy tokenSource = none;
+        public Enums.ApiKeySourceDefinedBy apiKeySource = none;
         @Nullable
         public String[] envTokens;
     }

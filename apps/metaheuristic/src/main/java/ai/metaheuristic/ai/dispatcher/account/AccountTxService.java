@@ -185,7 +185,6 @@ public class AccountTxService {
     }
 
 
-
     // this method is using with angular's rest
     @Transactional
     public OperationStatusRest roleFormCommit(Long accountId, String roles, Long companyUniqueId) {

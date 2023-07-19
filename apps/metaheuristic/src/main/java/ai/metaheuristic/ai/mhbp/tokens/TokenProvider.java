@@ -57,6 +57,16 @@ public class TokenProvider {
             throw new IllegalStateException("(auth.token==null)");
         }
 
+        Account account = accountRepository.findById(queriedData.userExecContext().accountId()).orElseThrow();
+        AccountParamsYaml params = account.getAccountParamsYaml();
+
+        String evnParam = getEnvParamName(auth.token.env);
+
+        return params.apiKeys.stream().filter(o->o.getName().equals(evnParam))
+                .map(AccountParamsYaml.ApiKey::getValue)
+                .findFirst().orElse(null);
+
+/*
         if (Arrays.stream(StringUtils.split(globals.activeProfiles, ", "))
                 .anyMatch(o->o.contains(Consts.STANDALONE_PROFILE))) {
             Account account = accountRepository.findById(queriedData.userExecContext().accountId()).orElseThrow();
@@ -80,6 +90,7 @@ public class TokenProvider {
             return value;
 
         }
+*/
     }
 
     public static String getEnvParamName(String env) {

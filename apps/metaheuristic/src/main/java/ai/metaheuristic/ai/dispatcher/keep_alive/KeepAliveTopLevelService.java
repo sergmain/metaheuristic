@@ -40,6 +40,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.regex.Matcher;
+
 /**
  * @author Serge
  * Date: 11/22/2020
@@ -120,8 +122,17 @@ public class KeepAliveTopLevelService {
 
         Enums.ProcessorAndSessionStatus processorAndSessionStatus = ProcessorTopLevelService.checkProcessorAndSessionStatus(processor, processorRequest.processorCommContext.sessionId);
         if (processorAndSessionStatus != Enums.ProcessorAndSessionStatus.ok) {
-            DispatcherApiData.ProcessorSessionId processorSessionId = ProcessorSyncService.getWithSync(processor.id,
-                    ()-> processorTransactionService.checkProcessorId(processorAndSessionStatus, processor.id, remoteAddress));
+
+            DispatcherApiData.ProcessorSessionId processorSessionId = null;
+            if (processorAndSessionStatus==Enums.ProcessorAndSessionStatus.updateSession) {
+                Thread t = new Thread(()-> ProcessorSyncService.getWithSync(processor.id,
+                        () -> processorTransactionService.checkProcessorId(processorAndSessionStatus, processor.id, remoteAddress)));
+                t.start();
+            }
+            else {
+                processorSessionId = ProcessorSyncService.getWithSync(processor.id,
+                        () -> processorTransactionService.checkProcessorId(processorAndSessionStatus, processor.id, remoteAddress));
+            }
 
             if (processorSessionId != null) {
                 dispatcherResponse.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);

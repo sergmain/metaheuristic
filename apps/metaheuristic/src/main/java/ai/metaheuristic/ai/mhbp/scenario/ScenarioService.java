@@ -409,7 +409,7 @@ public class ScenarioService {
 
             ChatData.ChatPrompt  chatResult = new ChatData.ChatPrompt ();
             if (step.function==null) {
-                chatService.evaluationAsApiCall(chatResult, se, Objects.requireNonNull(api));
+                chatService.evaluationAsApiCall(chatResult, se, Objects.requireNonNull(api), context);
                 eventPublisher.publishEvent(new StoreChatLogEvent(
                         ChatLogService.toChatLogParams(null, scenarioId, api, chatResult, context),
                         context.asUserExecContext()));

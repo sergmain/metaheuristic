@@ -17,7 +17,7 @@ package ai.metaheuristic.ai;
 
 public final class Enums {
 
-    public enum TokenSourceDefinedBy { none, server, user }
+    public enum ApiKeySourceDefinedBy { none, server, user }
 
     public enum ExecContextInitState {NONE, DELTA, FULL}
 

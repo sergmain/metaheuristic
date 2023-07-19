@@ -153,7 +153,7 @@ public class ChatService {
 
         try {
             ChatData.ChatPrompt result = new ChatData.ChatPrompt();
-            evaluationAsApiCall(result, new ChatData.PromptEvaluation("n/a", prompt, List.of()), chatInfo.api);
+            evaluationAsApiCall(result, new ChatData.PromptEvaluation("n/a", prompt, List.of()), chatInfo.api, context);
             chatTxService.storePrompt(chatId, result);
             eventPublisher.publishEvent(new StoreChatLogEvent(
                     ChatLogService.toChatLogParams(chatInfo.chat.id, null, chatInfo.api, result, context),
@@ -195,7 +195,7 @@ public class ChatService {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    public ChatData.ChatPrompt evaluationAsApiCall(ChatData.ChatPrompt r, ChatData.PromptEvaluation se, Api api) {
+    public ChatData.ChatPrompt evaluationAsApiCall(ChatData.ChatPrompt r, ChatData.PromptEvaluation se, Api api, DispatcherContext context) {
         String prompt = se.prompt;
         for (ScenarioData.StepVariable variable : se.variables) {
             String varName = getNameForVariable(variable.name);
@@ -208,7 +208,7 @@ public class ChatService {
         }
         r.prompt = prompt;
         log.info("373.240 prompt: {}", prompt);
-        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, null);
+        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, context.asUserExecContext());
         ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
         if (answer.status()!=OK) {
             r.error = "373.280 API call error: " + answer.error() + ", prompt: " + prompt;
