@@ -16,13 +16,12 @@
 
 package ai.metaheuristic.ai.mhbp.evaluation;
 
-import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.beans.Evaluation;
-import ai.metaheuristic.ai.mhbp.kb.KbService;
 import ai.metaheuristic.ai.mhbp.repositories.EvaluationRepository;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,13 +35,11 @@ import java.util.List;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class EvaluationTxService {
 
-    public final ApiService apiService;
-    public final KbService kbService;
-    public final EvaluationRepository evaluationRepository;
+    private final EvaluationRepository evaluationRepository;
 
 
     @Transactional

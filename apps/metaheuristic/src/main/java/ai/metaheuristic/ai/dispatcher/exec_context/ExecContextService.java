@@ -23,8 +23,8 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
-import ai.metaheuristic.ai.dispatcher.event.events.DeleteExecContextInListTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
+import ai.metaheuristic.ai.dispatcher.event.events.DeleteExecContextInListTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.ProcessDeletedExecContextTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskQueueCleanByExecContextIdTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
@@ -47,6 +47,7 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Pageable;
@@ -66,7 +67,7 @@ import static ai.metaheuristic.api.EnumsApi.OperationStatus;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 @SuppressWarnings("UnusedReturnValue")
 public class ExecContextService {
 

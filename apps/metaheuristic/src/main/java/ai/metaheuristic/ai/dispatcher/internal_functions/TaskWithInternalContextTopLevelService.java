@@ -34,6 +34,7 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.SystemUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -51,8 +52,8 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskWithInternalContextTopLevelService {
 
     private final InternalFunctionVariableService internalFunctionVariableService;

@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamY
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -39,7 +40,7 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 @Slf4j
 @Service
 @Profile("processor")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ProcessorKeepAliveProcessor {
 
     private final ProcessorEnvironment processorEnvironment;

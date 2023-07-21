@@ -19,17 +19,20 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.api.EnumsApi;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import java.util.*;
-
-import static ai.metaheuristic.ai.dispatcher.data.ExecContextData.*;
+import static ai.metaheuristic.ai.dispatcher.data.ExecContextData.ExecContextStates;
 
 /**
  * @author Serge
@@ -39,7 +42,7 @@ import static ai.metaheuristic.ai.dispatcher.data.ExecContextData.*;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextStatusService {
 
     private final ExecContextRepository execContextRepository;

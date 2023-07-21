@@ -37,10 +37,9 @@ import ai.metaheuristic.api.data.DispatcherApiData;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import java.util.regex.Matcher;
 
 /**
  * @author Serge
@@ -50,7 +49,7 @@ import java.util.regex.Matcher;
 @Slf4j
 @Service
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class KeepAliveTopLevelService {
 
     private final Globals globals;

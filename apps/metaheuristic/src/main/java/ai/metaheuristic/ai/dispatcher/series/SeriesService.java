@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.series;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExperimentResult;
 import ai.metaheuristic.ai.dispatcher.beans.Series;
-import ai.metaheuristic.ai.dispatcher.data.SeriesData;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SeriesRepository;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsJsonUtils;
@@ -30,9 +29,9 @@ import ai.metaheuristic.api.data.experiment_result.ExperimentResultParams;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
@@ -48,7 +47,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class SeriesService {
 
     private final SeriesRepository seriesRepository;

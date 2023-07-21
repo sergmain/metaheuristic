@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYa
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,7 +37,7 @@ import java.util.List;
 @Slf4j
 @Profile("dispatcher")
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ProcessorCoreService {
 
     private final ProcessorCoreCache coreCache;

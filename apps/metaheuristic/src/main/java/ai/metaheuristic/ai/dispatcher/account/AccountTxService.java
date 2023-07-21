@@ -29,6 +29,7 @@ import ai.metaheuristic.api.data.account.SimpleAccount;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
@@ -48,7 +49,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class AccountTxService {
 
     private final Globals globals;

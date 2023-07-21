@@ -34,6 +34,7 @@ import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -48,7 +49,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ArtifactCleanerAtDispatcher {
 
     private final Globals globals;

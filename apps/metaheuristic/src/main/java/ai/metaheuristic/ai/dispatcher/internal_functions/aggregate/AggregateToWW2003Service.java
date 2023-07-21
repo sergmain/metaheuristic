@@ -31,6 +31,7 @@ import ai.metaheuristic.ww2003.image.ImageConverterUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -47,7 +48,7 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.data_not_foun
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class AggregateToWW2003Service {
 
     private final VariableTxService variableTxService;

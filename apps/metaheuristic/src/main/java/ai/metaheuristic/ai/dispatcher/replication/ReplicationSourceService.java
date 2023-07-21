@@ -16,17 +16,14 @@
 
 package ai.metaheuristic.ai.dispatcher.replication;
 
-import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.account.AccountCache;
-import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -36,20 +33,16 @@ import org.springframework.stereotype.Service;
  * Time: 12:16 AM
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ReplicationSourceService {
 
-    public final Globals globals;
-    public final CompanyRepository companyRepository;
-    public final AccountRepository accountRepository;
-    public final SourceCodeRepository sourceCodeRepository;
-    public final FunctionRepository functionRepository;
-    public final SourceCodeCache sourceCodeCache;
-    public final AccountCache accountCache;
-    public final CompanyCache companyCache;
-    public final ReplicationSourceHelperService replicationSourceHelperService;
+    private final CompanyRepository companyRepository;
+    private final AccountRepository accountRepository;
+    private final SourceCodeRepository sourceCodeRepository;
+    private final FunctionRepository functionRepository;
+    private final ReplicationSourceHelperService replicationSourceHelperService;
 
     public ReplicationData.AssetStateResponse currentAssets() {
         return replicationSourceHelperService.currentAssets();

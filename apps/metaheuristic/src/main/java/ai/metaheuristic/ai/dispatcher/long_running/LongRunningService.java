@@ -16,20 +16,15 @@
 
 package ai.metaheuristic.ai.dispatcher.long_running;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-
 /**
  * @author Serge
  * Date: 6/16/2021
  * Time: 1:45 AM
  */
-@Service
-@Slf4j
-@Profile("dispatcher")
-@RequiredArgsConstructor
+//@Service
+//@Slf4j
+//@Profile("dispatcher")
+//@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class LongRunningService {
 
 

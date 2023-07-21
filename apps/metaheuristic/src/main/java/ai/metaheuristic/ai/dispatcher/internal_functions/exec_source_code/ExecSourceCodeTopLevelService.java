@@ -18,13 +18,13 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.exec_source_code;
 
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTxService;
-import ai.metaheuristic.ai.dispatcher.task.TaskStateTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -36,12 +36,11 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecSourceCodeTopLevelService {
 
     private final TaskFinishingTxService taskFinishingTxService;
-    public final TaskStateTxService taskStateTxService;
-    public final TaskWithInternalContextTopLevelService taskWithInternalContextTopLevelService;
+    private final TaskWithInternalContextTopLevelService taskWithInternalContextTopLevelService;
 
     public void finishLongRunningTask(DispatcherParamsYaml.LongRunningExecContext longRunningExecContext, EnumsApi.ExecContextState state) {
         TaskSyncService.getWithSyncNullable(longRunningExecContext.taskId,

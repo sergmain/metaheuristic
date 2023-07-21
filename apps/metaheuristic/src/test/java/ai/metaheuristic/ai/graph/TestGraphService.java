@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.api.EnumsApi;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -42,7 +41,6 @@ import java.util.Set;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
 public class TestGraphService {
 
     @Autowired private ExecContextGraphCache execContextGraphCache;

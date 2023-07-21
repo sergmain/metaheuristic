@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskQueueSyncStaticService;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +36,7 @@ import java.util.List;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextSchedulerService {
 
     private final ExecContextRepository execContextRepository;

@@ -25,6 +25,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -39,7 +40,7 @@ import org.springframework.stereotype.Service;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextUtilsService {
 
     private final ExecContextVariableStateTxService execContextVariableStateCache;

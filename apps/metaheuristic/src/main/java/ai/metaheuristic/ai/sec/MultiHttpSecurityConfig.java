@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.sec;
 
 import ai.metaheuristic.ai.Globals;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -43,10 +44,10 @@ import static org.springframework.http.HttpMethod.OPTIONS;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class MultiHttpSecurityConfig {
 
-    public final Globals globals;
+    private final Globals globals;
 
     @Bean
     public PasswordEncoder getPasswordEncoder() {

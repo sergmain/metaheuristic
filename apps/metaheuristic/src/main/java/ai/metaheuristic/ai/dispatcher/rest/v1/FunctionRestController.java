@@ -17,9 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/rest/v1/dispatcher/function")
 @Profile("dispatcher")
 @CrossOrigin
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class FunctionRestController {
 
     private final FunctionTopLevelService functionTopLevelService;

@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Service;
@@ -43,8 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @EnableScheduling
 @Slf4j
 @Profile("processor")
-@RequiredArgsConstructor
-//@DependsOn({"DispatcherLookupExtendedService"})
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ProcessorEventBusService {
 
     private final DispatcherRequestorHolderService dispatcherRequestorHolderService;

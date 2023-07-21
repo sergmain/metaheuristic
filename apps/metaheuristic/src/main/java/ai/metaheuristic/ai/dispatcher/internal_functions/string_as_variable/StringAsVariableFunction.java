@@ -34,6 +34,7 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
@@ -51,7 +52,7 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class StringAsVariableFunction implements InternalFunction {
 
     private static final String MAPPING = "mapping";

@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.string_as_variable.Stri
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -36,7 +37,7 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 @Deprecated
 public class InlineAsVariableFunction implements InternalFunction {
 

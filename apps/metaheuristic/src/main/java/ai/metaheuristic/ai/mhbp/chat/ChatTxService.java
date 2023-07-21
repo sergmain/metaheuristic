@@ -25,12 +25,10 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Sergio Lissner
@@ -39,11 +37,11 @@ import java.util.List;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ChatTxService {
 
-    public final ChatRepository chatRepository;
+    private final ChatRepository chatRepository;
 
     @Transactional
     public OperationStatusRest deleteChatById(Long chatId, DispatcherContext context) {

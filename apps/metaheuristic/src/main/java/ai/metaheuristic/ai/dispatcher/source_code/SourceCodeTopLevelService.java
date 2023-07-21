@@ -52,6 +52,7 @@ import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -81,7 +82,7 @@ import static ai.metaheuristic.ai.Consts.YML_EXT;
 @Slf4j
 @Profile("dispatcher")
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class SourceCodeTopLevelService {
 
     private final SourceCodeTxService sourceCodeTxService;

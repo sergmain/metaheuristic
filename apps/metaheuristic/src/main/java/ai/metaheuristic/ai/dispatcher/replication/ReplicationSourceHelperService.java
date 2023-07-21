@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.replication;
 
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.account.AccountCache;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
@@ -32,6 +31,7 @@ import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -45,19 +45,18 @@ import java.util.stream.Collectors;
  * Time: 3:59 PM
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ReplicationSourceHelperService {
 
-    public final Globals globals;
-    public final CompanyRepository companyRepository;
-    public final AccountRepository accountRepository;
-    public final SourceCodeRepository sourceCodeRepository;
-    public final FunctionRepository functionRepository;
-    public final SourceCodeCache sourceCodeCache;
-    public final AccountCache accountCache;
-    public final CompanyCache companyCache;
+    private final CompanyRepository companyRepository;
+    private final AccountRepository accountRepository;
+    private final SourceCodeRepository sourceCodeRepository;
+    private final FunctionRepository functionRepository;
+    private final SourceCodeCache sourceCodeCache;
+    private final AccountCache accountCache;
+    private final CompanyCache companyCache;
 
     private ReplicationData.AssetStateResponse currentAssets = null;
     private long mills = 0L;

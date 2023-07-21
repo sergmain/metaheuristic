@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Account;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -37,7 +38,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class CustomUserDetails implements UserDetailsService {
 
     private final Globals globals;

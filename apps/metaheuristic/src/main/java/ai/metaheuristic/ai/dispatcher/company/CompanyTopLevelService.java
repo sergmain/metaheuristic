@@ -30,6 +30,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
@@ -39,7 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Profile("dispatcher")
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class CompanyTopLevelService {
 
     public static final int ROWS_IN_TABLE = 50;

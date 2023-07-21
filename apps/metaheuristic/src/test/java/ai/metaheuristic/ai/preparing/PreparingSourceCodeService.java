@@ -51,6 +51,7 @@ import ai.metaheuristic.api.dispatcher.SourceCode;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -72,7 +73,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class PreparingSourceCodeService {
 
     private final SourceCodeRepository sourceCodeRepository;

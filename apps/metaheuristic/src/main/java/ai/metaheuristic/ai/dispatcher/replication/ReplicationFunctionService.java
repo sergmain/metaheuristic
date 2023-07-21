@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,14 +33,14 @@ import org.springframework.transaction.annotation.Transactional;
  * Time: 7:10 PM
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ReplicationFunctionService {
 
-    public final ReplicationCoreService replicationCoreService;
-    public final FunctionRepository functionRepository;
-    public final FunctionCache functionCache;
+    private final ReplicationCoreService replicationCoreService;
+    private final FunctionRepository functionRepository;
+    private final FunctionCache functionCache;
 
     @Transactional
     public void createFunction(ReplicationData.FunctionAsset functionAsset) {

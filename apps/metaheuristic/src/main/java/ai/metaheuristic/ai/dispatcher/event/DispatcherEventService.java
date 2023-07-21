@@ -32,6 +32,7 @@ import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -62,8 +63,8 @@ import static ai.metaheuristic.commons.CommonConsts.EVENT_DATE_TIME_FORMATTER;
 @SuppressWarnings("DuplicatedCode")
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class DispatcherEventService {
 
     private static final int PAGE_SIZE = 1000;

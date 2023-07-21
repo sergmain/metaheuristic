@@ -29,6 +29,7 @@ import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -46,11 +47,12 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExperimentReduceVariablesFunction implements InternalFunction {
 
     private final VariableTxService variableTxService;
     private final GlobalVariableService globalVariableService;
+
     @Override
     public String getCode() {
         return Consts.MH_EXPERIMENT_REDUCE_VARIABLES;

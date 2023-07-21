@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +36,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Profile("dispatcher")
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class InternalFunctionProcessor {
 
     private final InternalFunctionRegisterService internalFunctionRegisterService;

@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -36,8 +37,8 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @Profile("dispatcher")
 @CrossOrigin
-@RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN')")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class AccountRestController {
 
     private final AccountService accountTopLevelService;

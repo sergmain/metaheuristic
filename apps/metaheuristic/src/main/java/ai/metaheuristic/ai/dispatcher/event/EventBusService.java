@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTopLevelService;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -44,15 +45,15 @@ import java.nio.file.Path;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class EventBusService {
 
-    public final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
-    public final TaskWithInternalContextEventService taskWithInternalContextEventService;
-    public final TaskFinishingTopLevelService taskFinishingTopLevelService;
-    public final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
-    public final ExecContextTopLevelService execContextTopLevelService;
-    public final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
+    private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
+    private final TaskWithInternalContextEventService taskWithInternalContextEventService;
+    private final TaskFinishingTopLevelService taskFinishingTopLevelService;
+    private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
+    private final ExecContextTopLevelService execContextTopLevelService;
+    private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
 
     @Async
     @EventListener

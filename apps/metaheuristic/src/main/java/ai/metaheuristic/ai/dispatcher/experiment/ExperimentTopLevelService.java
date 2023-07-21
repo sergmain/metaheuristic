@@ -40,6 +40,7 @@ import ai.metaheuristic.commons.utils.PageUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -57,7 +58,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExperimentTopLevelService {
 
     private final Globals globals;

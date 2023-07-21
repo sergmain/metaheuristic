@@ -18,27 +18,29 @@ package ai.metaheuristic.ai.mhbp.kb;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.mhbp.kb.reader.openai.OpenaiJsonReader;
-import ai.metaheuristic.ai.mhbp.repositories.KbRepository;
-import ai.metaheuristic.ai.utils.JsonUtils;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.mhbp.beans.Chapter;
 import ai.metaheuristic.ai.mhbp.beans.Kb;
 import ai.metaheuristic.ai.mhbp.data.KbData;
 import ai.metaheuristic.ai.mhbp.events.InitKbEvent;
+import ai.metaheuristic.ai.mhbp.kb.reader.openai.OpenaiJsonReader;
 import ai.metaheuristic.ai.mhbp.questions.QuestionData;
+import ai.metaheuristic.ai.mhbp.repositories.KbRepository;
 import ai.metaheuristic.ai.mhbp.services.LocalGitRepoService;
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParams;
 import ai.metaheuristic.ai.mhbp.yaml.part.PartParams;
 import ai.metaheuristic.ai.mhbp.yaml.part.PartParamsUtils;
+import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.utils.PageUtils;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -48,7 +50,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -62,8 +63,8 @@ import static ai.metaheuristic.ai.mhbp.questions.QuestionData.Chapters;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class KbService {
 
     private final Globals globals;

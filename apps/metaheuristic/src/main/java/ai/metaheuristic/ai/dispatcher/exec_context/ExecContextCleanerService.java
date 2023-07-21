@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskSta
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -37,7 +38,7 @@ import java.util.List;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextCleanerService {
 
     private final ExecContextGraphService execContextGraphService;

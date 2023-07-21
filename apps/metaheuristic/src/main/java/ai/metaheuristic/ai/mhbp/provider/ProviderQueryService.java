@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.mhbp.provider;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Chapter;
 import ai.metaheuristic.ai.mhbp.beans.Evaluation;
@@ -31,7 +30,6 @@ import ai.metaheuristic.ai.mhbp.questions.QuestionData;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ChapterRepository;
 import ai.metaheuristic.ai.mhbp.repositories.EvaluationRepository;
-import ai.metaheuristic.ai.mhbp.repositories.KbRepository;
 import ai.metaheuristic.ai.mhbp.session.SessionTxService;
 import ai.metaheuristic.ai.mhbp.yaml.answer.AnswerParams;
 import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
@@ -40,6 +38,7 @@ import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -63,21 +62,18 @@ import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
  * Time: 9:31 PM
  */
 @Slf4j
-@RequiredArgsConstructor
 @Service
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ProviderQueryService {
 
-    public final Globals globals;
-    public final ProviderApiSchemeService providerService;
-    public final UserContextService userContextService;
-    public final EvaluationRepository evaluationRepository;
-    public final ApiRepository apiRepository;
-    public final KbRepository kbRepository;
-    public final ChapterRepository chapterRepository;
-
-    public final QuestionAndAnswerService questionAndAnswerService;
-    public final SessionTxService sessionTxService;
+    private final Globals globals;
+    private final ProviderApiSchemeService providerService;
+    private final EvaluationRepository evaluationRepository;
+    private final ApiRepository apiRepository;
+    private final ChapterRepository chapterRepository;
+    private final QuestionAndAnswerService questionAndAnswerService;
+    private final SessionTxService sessionTxService;
 
     public void evaluateProvider(EvaluateProviderEvent event) {
         final AtomicReference<Session> s = new AtomicReference<>(null);

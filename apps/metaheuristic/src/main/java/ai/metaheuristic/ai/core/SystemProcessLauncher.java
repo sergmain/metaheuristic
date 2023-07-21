@@ -20,7 +20,6 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.commons.dispatcher_schedule.ExtendedTimePeriod;
 import ai.metaheuristic.commons.utils.DirUtils;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
@@ -39,7 +38,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 @Slf4j
-@RequiredArgsConstructor
 public class SystemProcessLauncher {
 
     private static final String TIMEOUT_MESSAGE = """

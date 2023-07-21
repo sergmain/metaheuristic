@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.exec_source_code.ExecSo
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -36,13 +37,12 @@ import static ai.metaheuristic.api.EnumsApi.ExecContextState;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class LongRunningTopLevelService {
 
-    public final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
-    public final ExecContextCache execContextCache;
-    public final LongRunningService longRunningService;
-    public final ExecSourceCodeTopLevelService execSourceCodeTopLevelService;
+    private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
+    private final ExecContextCache execContextCache;
+    private final ExecSourceCodeTopLevelService execSourceCodeTopLevelService;
 
     public void updateStateForLongRunning() {
 

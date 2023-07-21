@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.SubProcessesTxService;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +36,7 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class NopFunction implements InternalFunction {
 
     private final SubProcessesTxService subProcessesTxService;

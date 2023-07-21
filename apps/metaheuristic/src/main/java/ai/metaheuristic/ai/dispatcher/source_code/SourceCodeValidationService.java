@@ -40,6 +40,7 @@ import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -60,7 +61,7 @@ import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
 @Slf4j
 @Profile("dispatcher")
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class SourceCodeValidationService {
 
     private final FunctionTopLevelService functionTopLevelService;

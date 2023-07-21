@@ -19,13 +19,13 @@ package ai.metaheuristic.ai.mhbp.rest;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
-import ai.metaheuristic.ai.mhbp.data.ChatData;
 import ai.metaheuristic.ai.mhbp.data.ScenarioData;
 import ai.metaheuristic.ai.mhbp.scenario.ScenarioService;
 import ai.metaheuristic.ai.mhbp.scenario.ScenarioTxService;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
@@ -42,8 +42,8 @@ import java.util.Objects;
 @RestController
 @RequestMapping("/rest/v1/dispatcher/scenario")
 @Slf4j
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ScenarioRestController {
 
     private final ScenarioService scenarioService;

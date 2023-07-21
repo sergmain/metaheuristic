@@ -23,6 +23,7 @@ import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.ByteArrayResource;
@@ -51,8 +52,8 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 @RequestMapping("/rest/v1/provider/simple/stub")
 @Slf4j
 //@CrossOrigin
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class StubProviderRestController {
 
     public record SimpleStubAnswer(int topProb, String code, String txt) {}

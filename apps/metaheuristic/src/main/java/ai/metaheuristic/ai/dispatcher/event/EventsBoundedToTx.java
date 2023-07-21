@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.*;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class EventsBoundedToTx {
 
     private final ApplicationEventPublisher eventPublisher;

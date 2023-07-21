@@ -41,6 +41,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -58,7 +59,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskProviderUnassignedTaskTopLevelService {
 
     private final TaskProviderTransactionalService taskProviderTransactionalService;

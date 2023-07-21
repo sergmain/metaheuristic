@@ -43,6 +43,7 @@ import ai.metaheuristic.api.EnumsApi;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -170,7 +171,7 @@ public class Schedulers {
     @EnableScheduling
     @Slf4j
     @Profile("dispatcher")
-    @RequiredArgsConstructor
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
     public static class DispatcherSchedulers {
 
         private final Globals globals;
@@ -548,7 +549,7 @@ public class Schedulers {
     @EnableScheduling
     @Slf4j
     @Profile("processor")
-    @RequiredArgsConstructor
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
     public static class ProcessorSchedulers {
 
         private final Globals globals;

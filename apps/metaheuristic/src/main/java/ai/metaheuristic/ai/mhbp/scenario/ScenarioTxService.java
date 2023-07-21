@@ -16,12 +16,9 @@
 
 package ai.metaheuristic.ai.mhbp.scenario;
 
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.beans.ScenarioGroup;
-import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioGroupRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioRepository;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
@@ -30,6 +27,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,14 +41,12 @@ import java.util.List;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ScenarioTxService {
 
-    public final Globals globals;
-    public final ScenarioGroupRepository scenarioGroupRepository;
-    public final ScenarioRepository scenarioRepository;
-    public final ApiRepository apiRepository;
+    private final ScenarioGroupRepository scenarioGroupRepository;
+    private final ScenarioRepository scenarioRepository;
 
     @Transactional
     public OperationStatusRest createScenarioGroup(String name, String description, DispatcherContext context) {

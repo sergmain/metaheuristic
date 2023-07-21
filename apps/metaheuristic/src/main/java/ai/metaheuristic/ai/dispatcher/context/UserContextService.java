@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
 import ai.metaheuristic.ai.exceptions.BadExecutionContextException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -33,9 +34,9 @@ import org.springframework.stereotype.Service;
  * Time: 1:07 AM
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class UserContextService {
 
     private final CompanyCache companyCache;

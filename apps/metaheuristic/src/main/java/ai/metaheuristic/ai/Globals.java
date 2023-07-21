@@ -42,7 +42,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 import org.springframework.util.unit.DataUnit;
 
-//import java.io.File;
 import java.io.IOException;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
@@ -66,7 +65,6 @@ import static ai.metaheuristic.ai.Enums.ApiKeySourceDefinedBy.none;
 @Getter
 @Setter
 @Slf4j
-@RequiredArgsConstructor
 public class Globals {
     public static final Duration SECONDS_3 = Duration.ofSeconds(3);
     public static final Duration SECONDS_5 = Duration.ofSeconds(5);

@@ -16,35 +16,15 @@
 
 package ai.metaheuristic.ai.dispatcher.variable;
 
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Hibernate;
-import org.hibernate.engine.spi.SessionImplementor;
-import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import jakarta.persistence.EntityManager;
-import java.io.InputStream;
-import java.sql.Blob;
-import java.sql.Timestamp;
-
 /**
  * @author Sergio Lissner
  * Date: 5/26/2023
  * Time: 3:05 AM
  */
-@Service
-@Slf4j
-@Profile("dispatcher")
-@RequiredArgsConstructor
+//@Service
+//@Slf4j
+//@Profile("dispatcher")
+//@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class VariableEntityManagerService {
 
 }

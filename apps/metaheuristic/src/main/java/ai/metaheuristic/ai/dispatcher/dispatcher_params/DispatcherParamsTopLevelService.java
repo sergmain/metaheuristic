@@ -19,15 +19,15 @@ package ai.metaheuristic.ai.dispatcher.dispatcher_params;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.event.events.DispatcherCacheRemoveSourceCodeEvent;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -39,11 +39,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class DispatcherParamsTopLevelService {
 
-    public final DispatcherParamsService dispatcherParamsService;
-    public final ApplicationEventPublisher eventPublisher;
+    private final DispatcherParamsService dispatcherParamsService;
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();

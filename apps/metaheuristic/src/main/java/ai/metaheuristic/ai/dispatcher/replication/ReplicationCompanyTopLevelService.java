@@ -21,8 +21,6 @@ import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
-import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
-import ai.metaheuristic.commons.S;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.apache.hc.core5.util.Timeout;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -45,15 +44,15 @@ import java.util.Objects;
  * Time: 7:28 PM
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ReplicationCompanyTopLevelService {
 
-    public final ReplicationCoreService replicationCoreService;
-    public final ReplicationCompanyService replicationCompanyService;
-    public final CompanyRepository companyRepository;
-    public final CompanyCache companyCache;
+    private final ReplicationCoreService replicationCoreService;
+    private final ReplicationCompanyService replicationCompanyService;
+    private final CompanyRepository companyRepository;
+    private final CompanyCache companyCache;
 
     @Data
     @AllArgsConstructor

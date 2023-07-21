@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -41,11 +42,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextVariableStateTopLevelService {
 
-    public final ExecContextVariableStateService execContextVariableStateService;
-    public final ExecContextCache execContextCache;
+    private final ExecContextVariableStateService execContextVariableStateService;
+    private final ExecContextCache execContextCache;
 
     private static Map<Long, List<ExecContextApiData.VariableState>> taskCreatedEvents = new HashMap<>();
     private static Map<Long, List<VariableUploadedEvent>> variableUploadedEvents = new HashMap<>();

@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.SetVariableReceivedEvent;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -34,7 +35,7 @@ import org.springframework.stereotype.Service;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskVariableTopLevelService {
 
     public static final UploadResult OK_UPLOAD_RESULT = new UploadResult(Enums.UploadVariableStatus.OK);

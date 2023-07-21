@@ -16,26 +16,15 @@
 
 package ai.metaheuristic.ai.dispatcher;
 
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Service;
-
-import java.util.Map;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 /**
  * @author Sergio Lissner
  * Date: 7/13/2023
  * Time: 2:25 AM
  */
-@Slf4j
-@Service
-@Profile("dispatcher")
-@RequiredArgsConstructor
+//@Slf4j
+//@Service
+//@Profile("dispatcher")
+//@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class DispatcherApplicationContextService {
 
 }

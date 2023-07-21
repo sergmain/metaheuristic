@@ -32,6 +32,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -52,13 +53,13 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class DispatcherParamsService {
 
-    public final ApplicationEventPublisher eventPublisher;
-    public final DispatcherParamsRepository dispatcherParamsRepository;
-    public final SourceCodeRepository sourceCodeRepository;
-    public final SourceCodeCache sourceCodeCache;
+    private final ApplicationEventPublisher eventPublisher;
+    private final DispatcherParamsRepository dispatcherParamsRepository;
+    private final SourceCodeRepository sourceCodeRepository;
+    private final SourceCodeCache sourceCodeCache;
 
     @Nullable
     private Dispatcher dispatcherCacheValue = null;

@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -30,17 +31,17 @@ import org.springframework.stereotype.Service;
  * Time: 12:16 AM
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ReplicationService {
 
-    public final Globals globals;
-    public final ReplicationCoreService replicationCoreService;
-    public final ReplicationCompanyTopLevelService replicationCompanyTopLevelService;
-    public final ReplicationAccountTopLevelService replicationAccountTopLevelService;
-    public final ReplicationFunctionTopLevelService replicationFunctionTopLevelService;
-    public final ReplicationSourceCodeTopLevelService replicationSourceCodeTopLevelService;
+    private final Globals globals;
+    private final ReplicationCoreService replicationCoreService;
+    private final ReplicationCompanyTopLevelService replicationCompanyTopLevelService;
+    private final ReplicationAccountTopLevelService replicationAccountTopLevelService;
+    private final ReplicationFunctionTopLevelService replicationFunctionTopLevelService;
+    private final ReplicationSourceCodeTopLevelService replicationSourceCodeTopLevelService;
 
     public void sync() {
         if (globals.dispatcher.asset.mode!= EnumsApi.DispatcherAssetMode.replicated) {

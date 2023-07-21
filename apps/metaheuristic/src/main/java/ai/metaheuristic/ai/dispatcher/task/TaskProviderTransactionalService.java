@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.QuotasData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
-import ai.metaheuristic.ai.dispatcher.event.*;
+import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.PostTaskAssigningRollbackTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.PostTaskAssigningTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.StartTaskProcessingTxEvent;
@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -47,7 +48,7 @@ import static ai.metaheuristic.ai.dispatcher.task.TaskQueueSyncStaticService.che
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskProviderTransactionalService {
 
     private final TaskRepository taskRepository;

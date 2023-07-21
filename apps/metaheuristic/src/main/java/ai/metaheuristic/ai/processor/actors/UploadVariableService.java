@@ -39,13 +39,17 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.apache.hc.client5.http.ConnectTimeoutException;
 import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.HttpResponseException;
-import org.apache.hc.client5.http.fluent.*;
-import org.apache.hc.client5.http.utils.URIUtils;
-import org.apache.hc.core5.http.*;
 import org.apache.hc.client5.http.entity.mime.HttpMultipartMode;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.client5.http.fluent.Executor;
+import org.apache.hc.client5.http.fluent.Form;
+import org.apache.hc.client5.http.fluent.Request;
+import org.apache.hc.client5.http.fluent.Response;
+import org.apache.hc.client5.http.utils.URIUtils;
+import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.net.URIBuilder;
 import org.apache.hc.core5.util.Timeout;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -63,7 +67,7 @@ import java.util.UUID;
 @Service
 @Slf4j
 @Profile("processor")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask> implements QueueProcessor {
 
     private static final ObjectMapper mapper;

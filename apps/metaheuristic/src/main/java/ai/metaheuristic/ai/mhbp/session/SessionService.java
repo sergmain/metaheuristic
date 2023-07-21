@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.mhbp.session;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Evaluation;
 import ai.metaheuristic.ai.mhbp.beans.Session;
@@ -24,13 +25,13 @@ import ai.metaheuristic.ai.mhbp.data.ErrorData;
 import ai.metaheuristic.ai.mhbp.data.SessionData;
 import ai.metaheuristic.ai.mhbp.data.SimpleAnswerStats;
 import ai.metaheuristic.ai.mhbp.repositories.*;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -49,17 +50,16 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class SessionService {
 
-    public final SessionTxService sessionTxService;
-    public final SessionRepository sessionRepository;
-    public final AnswerRepository answerRepository;
-    public final EvaluationRepository evaluationRepository;
-    public final ApiRepository apiRepository;
-    public final KbRepository kbRepository;
-    public final ChapterRepository chapterRepository;
+    private final SessionTxService sessionTxService;
+    private final SessionRepository sessionRepository;
+    private final AnswerRepository answerRepository;
+    private final EvaluationRepository evaluationRepository;
+    private final ApiRepository apiRepository;
+    private final ChapterRepository chapterRepository;
 
     @AllArgsConstructor
     @NoArgsConstructor

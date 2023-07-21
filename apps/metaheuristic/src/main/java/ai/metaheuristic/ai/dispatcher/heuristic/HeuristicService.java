@@ -16,23 +16,17 @@
 
 package ai.metaheuristic.ai.dispatcher.heuristic;
 
-import ai.metaheuristic.ai.dispatcher.repositories.HeuristicRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-
 /**
  * @author Serge
  * Date: 5/3/2021
  * Time: 11:47 PM
  */
-@Service
-@Slf4j
-@Profile("dispatcher")
-@RequiredArgsConstructor
+//@Service
+//@Slf4j
+//@Profile("dispatcher")
+//@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class HeuristicService {
 
-    public final HeuristicRepository heuristicRepository;
+//    public final HeuristicRepository heuristicRepository;
 
 }

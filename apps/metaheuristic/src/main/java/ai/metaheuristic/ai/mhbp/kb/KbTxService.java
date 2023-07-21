@@ -19,20 +19,20 @@ package ai.metaheuristic.ai.mhbp.kb;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.mhbp.repositories.ChapterRepository;
-import ai.metaheuristic.ai.mhbp.repositories.KbRepository;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.ai.mhbp.beans.Chapter;
 import ai.metaheuristic.ai.mhbp.beans.Kb;
 import ai.metaheuristic.ai.mhbp.beans.Part;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.mhbp.questions.QuestionData;
+import ai.metaheuristic.ai.mhbp.repositories.ChapterRepository;
+import ai.metaheuristic.ai.mhbp.repositories.KbRepository;
 import ai.metaheuristic.ai.mhbp.yaml.chapter.ChapterParams;
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParams;
 import ai.metaheuristic.ai.mhbp.yaml.part.PartParams;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,12 +48,11 @@ import static org.springframework.transaction.annotation.Propagation.SUPPORTS;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class KbTxService {
 
-    public final Globals globals;
-    public final KbRepository kbRepository;
+    private final KbRepository kbRepository;
     private final ChapterRepository chapterRepository;
 
 /*

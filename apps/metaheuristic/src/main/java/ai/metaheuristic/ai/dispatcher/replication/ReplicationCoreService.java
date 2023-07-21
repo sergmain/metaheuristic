@@ -33,6 +33,7 @@ import org.apache.hc.client5.http.utils.URIUtils;
 import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.net.URIBuilder;
 import org.apache.hc.core5.util.Timeout;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -51,12 +52,12 @@ import java.util.function.Function;
  */
 @SuppressWarnings("rawtypes")
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ReplicationCoreService {
 
-    public final Globals globals;
+    private final Globals globals;
 
     public ReplicationData.AssetStateResponse getAssetStates() {
         ReplicationData.ReplicationAsset data = getData(

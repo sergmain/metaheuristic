@@ -44,6 +44,7 @@ import org.jgrapht.nio.dot.DOTImporter;
 import org.jgrapht.traverse.BreadthFirstIterator;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 import org.jgrapht.util.SupplierUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -66,7 +67,7 @@ import java.util.stream.Collectors;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 @SuppressWarnings("WeakerAccess")
 public class ExecContextGraphService {
 

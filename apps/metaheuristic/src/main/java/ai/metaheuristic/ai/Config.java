@@ -27,6 +27,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -58,9 +59,9 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 @EnableCaching
 @Configuration
-@RequiredArgsConstructor
 @Slf4j
 @EnableConfigurationProperties(Globals.class)
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class Config {
 
     private final Globals globals;
@@ -109,7 +110,7 @@ public class Config {
     }
 
     @Component
-    @RequiredArgsConstructor
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
     public static class SpringChecker {
 
         private final ApplicationContext appCtx;
@@ -158,8 +159,8 @@ public class Config {
     @Configuration
     @ComponentScan("ai.metaheuristic.ai.dispatcher")
     @EnableAsync
-    @RequiredArgsConstructor
     @Slf4j
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
     public static class SpringAsyncConfig implements AsyncConfigurer {
 
         private final Globals globals;

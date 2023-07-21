@@ -17,10 +17,10 @@
 package ai.metaheuristic.ai.processor.variable_providers;
 
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
-import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.processor.actors.DownloadVariableService;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
+import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
 import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
@@ -37,6 +37,7 @@ import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -54,7 +55,7 @@ import static ai.metaheuristic.api.EnumsApi.DataType;
 @Service
 @Slf4j
 @Profile("processor")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class DispatcherVariableProvider implements VariableProvider {
 
     private final DownloadVariableService downloadVariableService;

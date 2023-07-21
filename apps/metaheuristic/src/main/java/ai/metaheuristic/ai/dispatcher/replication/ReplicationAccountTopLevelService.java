@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.apache.hc.core5.util.Timeout;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -42,15 +43,15 @@ import java.util.Objects;
  * Time: 6:57 PM
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ReplicationAccountTopLevelService {
 
-    public final ReplicationCoreService replicationCoreService;
-    public final ReplicationAccountService replicationAccountService;
-    public final AccountRepository accountRepository;
-    public final AccountCache accountCache;
+    private final ReplicationCoreService replicationCoreService;
+    private final ReplicationAccountService replicationAccountService;
+    private final AccountRepository accountRepository;
+    private final AccountCache accountCache;
 
     @Data
     @AllArgsConstructor

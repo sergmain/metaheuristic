@@ -34,6 +34,7 @@ import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
@@ -52,9 +53,9 @@ import static ai.metaheuristic.ai.Consts.YML_EXT;
  * Time: 10:40 PM
  */
 @Service
-@RequiredArgsConstructor
 @Profile("dispatcher")
 @Slf4j
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class MhbpSettingsService {
 
     private final ApiRepository apiRepository;

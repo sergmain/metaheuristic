@@ -17,10 +17,11 @@
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -32,8 +33,8 @@ import org.springframework.web.bind.annotation.*;
 @Profile("dispatcher")
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
-@RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN')")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ProcessorRestController {
 
     private final ProcessorTopLevelService processorTopLevelService;

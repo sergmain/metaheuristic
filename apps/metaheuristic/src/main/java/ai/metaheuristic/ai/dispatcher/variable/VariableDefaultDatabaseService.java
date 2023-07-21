@@ -27,6 +27,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -46,7 +47,7 @@ import java.nio.file.Path;
 @Service
 @Slf4j
 @Profile({"dispatcher & !mysql & !postgresql"})
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class VariableDefaultDatabaseService implements VariableDatabaseSpecificService {
 
     private final Globals globals;
