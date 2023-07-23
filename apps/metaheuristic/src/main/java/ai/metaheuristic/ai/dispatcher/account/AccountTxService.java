@@ -242,6 +242,7 @@ public class AccountTxService {
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Role "+role+" was changed successfully", "");
     }
 
+    @Transactional
     public OperationStatusRest changePasswordCommit(String oldPassword, String newPassword, DispatcherContext context) {
         if (StringUtils.isBlank(oldPassword) || StringUtils.isBlank(newPassword)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.300 oldPassword and newPassword must not be null");
@@ -252,8 +253,7 @@ public class AccountTxService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.310 account wasn't found, accountId: " + context.getAccountId());
         }
 
-        String oldEncoded = passwordEncoder.encode(oldPassword);
-        if (!oldEncoded.equals(a.getPassword())) {
+        if (!passwordEncoder.matches(oldPassword, a.getPassword())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.090 Old password is wrong");
         }
 
