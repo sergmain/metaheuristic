@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.account;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
@@ -241,5 +242,25 @@ public class AccountTxService {
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Role "+role+" was changed successfully", "");
     }
 
+    public OperationStatusRest changePasswordCommit(String oldPassword, String newPassword, DispatcherContext context) {
+        if (StringUtils.isBlank(oldPassword) || StringUtils.isBlank(newPassword)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.300 oldPassword and newPassword must not be null");
+        }
+
+        Account a = accountRepository.findByIdForUpdate(context.getAccountId());
+        if (a == null || !Objects.equals(a.companyId, context.getCompanyId())) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.310 account wasn't found, accountId: " + context.getAccountId());
+        }
+
+        String oldEncoded = passwordEncoder.encode(oldPassword);
+        if (!oldEncoded.equals(a.getPassword())) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.090 Old password is wrong");
+        }
+
+        a.setPassword(passwordEncoder.encode(newPassword));
+        a.updatedOn = System.currentTimeMillis();
+        accountCache.save(a);
+
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The password was changed successfully", "");    }
 }
 

@@ -59,5 +59,11 @@ public class SettingsRestController {
         return settingsService.saveOpenaiKey(openaiKey, context);
     }
 
+    @PostMapping("/change-password-commit")
+    public OperationStatusRest changePasswordCommit(@RequestParam String oldPassword, @RequestParam String newPassword, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        return settingsService.changePasswordCommit(oldPassword, newPassword, context);
+    }
+
 
 }

@@ -57,4 +57,8 @@ public class SettingsService {
     public OperationStatusRest saveOpenaiKey(String openaiKey, DispatcherContext context) {
         return accountTxService.saveOpenaiKey(context.getAccountId(), context.getCompanyId(), openaiKey);
     }
+
+    public OperationStatusRest changePasswordCommit(String oldPassword, String newPassword, DispatcherContext context) {
+        return accountTxService.changePasswordCommit(oldPassword, newPassword, context);
+    }
 }
