@@ -106,5 +106,6 @@ public class AccountData {
         public Collection<GrantedAuthority> authorities;
         // this field contains value from ai.metaheuristic.ai.dispatcher.beans.Account.companyId
         public Long companyId;
+        public String[] profiles;
     }
 }

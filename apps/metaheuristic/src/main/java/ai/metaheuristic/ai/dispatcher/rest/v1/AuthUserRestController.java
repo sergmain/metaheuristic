@@ -16,8 +16,11 @@
 
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -32,8 +35,10 @@ import java.util.Collection;
 @RequestMapping("/rest/v1")
 @Profile("dispatcher")
 @CrossOrigin
-//@CrossOrigin(origins="*", maxAge=3600)
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class AuthUserRestController {
+
+    private final Globals globals;
 
     // this end-point is used by angular's part only
     @RequestMapping("/user")
@@ -41,7 +46,7 @@ public class AuthUserRestController {
         UsernamePasswordAuthenticationToken passwordAuthenticationToken = (UsernamePasswordAuthenticationToken) user;
         Account acc = (Account) passwordAuthenticationToken.getPrincipal();
         Collection<GrantedAuthority> authorities = passwordAuthenticationToken.getAuthorities();
-        return new AccountData.UserData(acc.username, acc.getPublicName(), authorities, acc.companyId);
+        return new AccountData.UserData(acc.username, acc.getPublicName(), authorities, acc.companyId, globals.activeProfiles);
     }
 
 

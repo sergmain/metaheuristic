@@ -510,7 +510,7 @@ public class Globals {
     }
 
     @Value("${spring.profiles.active}")
-    public String activeProfiles;
+    public String[] activeProfiles;
 
     public final Dispatcher dispatcher = new Dispatcher();
     public final Processor processor = new Processor();
