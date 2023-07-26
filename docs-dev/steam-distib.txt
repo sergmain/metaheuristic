@@ -1,0 +1,26 @@
+1. create fat-jar for metaheuristic in repository metaheuristic
+!!! default repo for 1.x. command is metaheuristic
+
+1.1. copy ./apps/metaheuristic/target/metaheuristic.jar to ./distrib/jpackage/jar
+1.2. delete everything in ./distrib/jpackage/output
+1.3. run ./distrib/jpackage/jpackage-metaheuristic.bat
+
+
+2. rebuild angular in repository metaheuristic-angular
+!!! default repo for 2.x. command is metaheuristic-angular
+
+2.1. run command "build4.2 ng build --aot --configuration production-standalone"
+2.2. delete dir ./appdirectory/metaheuristic
+2.3. delete dir ./appdirectory/mh-angular
+!!! do not delete files in ./appdirectory
+
+2.4. copy dir ./dist/mh-angular to ./appdirectory
+!!! as a result there must be a dir ./appdirectory/mh-angular
+
+2.5. copy dir ./distrib/jpackage/output/metaheuristic (in repository metaheuristic ) to ./appdirectory
+!!! as a result there must be a dir ./appdirectory/metaheuristic
+
+2.6. delete everything in ./release-builds
+2.7. run command "electron-packager"
+
+result of packaging will be in ./release-builds/metaheuristic-win32-x64
