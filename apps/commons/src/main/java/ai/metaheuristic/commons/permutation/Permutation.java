@@ -58,7 +58,7 @@ public class Permutation<T> {
     /**
      *
      * @param collection
-     * @param r размер искомого массива, должен быть меньше чем n
+     * @param r size of desired array, must be lesser than n
      * @param acceptor
      * @return
      */

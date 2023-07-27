@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.standalone.rest;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -38,19 +39,11 @@ import java.time.LocalDateTime;
 @Slf4j
 @Profile("standalone")
 @CrossOrigin
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class StandaloneAnonRestController {
 
     public static final String SHUTDOWN_IN_PROGRESS = "Shutdown of Metaheuristic was started at ";
     private final ApplicationContext appCtx;
-
-    public StandaloneAnonRestController(@Autowired ApplicationContext appCtx) {
-        this.appCtx = appCtx;
-    }
-
-    @GetMapping("/ping")
-    public String ping() {
-        return "Metaheuristic";
-    }
 
     @GetMapping("/shutdown")
     public String shutdown() {

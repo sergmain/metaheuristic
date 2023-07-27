@@ -35,7 +35,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/rest/v1/dispatcher/global-variable")
 @Profile("dispatcher")
 @CrossOrigin
-//@CrossOrigin(origins="*", maxAge=3600)
 @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class GlobalVariableRestController {
