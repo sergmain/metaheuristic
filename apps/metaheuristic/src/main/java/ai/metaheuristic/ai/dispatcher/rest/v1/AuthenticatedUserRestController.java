@@ -16,7 +16,14 @@
 
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.settings.SettingsService;
+import ai.metaheuristic.api.data.OperationStatusRest;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,17 +31,23 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @author Sergio Lissner
- * Date: 7/27/2023
- * Time: 2:50 AM
+ * Date: 7/28/2023
+ * Time: 11:29 PM
  */
 @RestController
-@RequestMapping("/rest/v1/dispatcher/anon")
+@RequestMapping("/rest/v1/dispatcher/auth")
 @Profile("dispatcher")
 @CrossOrigin
-public class AnonymousRestController {
+@RequiredArgsConstructor(onConstructor_={@Autowired})
+public class AuthenticatedUserRestController {
 
-    @GetMapping("/ping")
-    public String ping() {
-        return "Metaheuristic";
+    private final SettingsService settingsService;
+    private final UserContextService userContextService;
+
+    @GetMapping("/reset-language")
+    public OperationStatusRest resetLanguage(Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        OperationStatusRest operationStatusRest = settingsService.restLanguage(context);
+        return operationStatusRest;
     }
 }

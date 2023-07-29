@@ -14,38 +14,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.account;
+package ai.metaheuristic.ai.dispatcher.rest.v1;
 
-import ai.metaheuristic.api.data.BaseParams;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.springframework.context.annotation.Profile;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @author Sergio Lissner
- * Date: 7/15/2023
- * Time: 12:01 AM
+ * Date: 7/27/2023
+ * Time: 2:50 AM
  */
-@SuppressWarnings("FieldMayBeStatic")
-@Data
-public class AccountParamsYamlV1 implements BaseParams {
+@RestController
+@RequestMapping("/rest/v1/dispatcher/anon")
+@Profile("dispatcher")
+@CrossOrigin
+public class AnonymousUserRestController {
 
-    public final int version=1;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ApiKeyV1 {
-        public String name;
-        public String value;
+    @GetMapping("/ping")
+    public String ping() {
+        return "Metaheuristic";
     }
-
-    public final List<ApiKeyV1> apiKeys = new ArrayList<>();
-
-    public String openaiKey;
-    public String language = "en";
-
 }

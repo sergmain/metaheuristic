@@ -41,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -171,22 +172,6 @@ public class AccountTxService {
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The password was changed successfully", "");
     }
 
-    @Transactional
-    public OperationStatusRest saveOpenaiKey(Long accountId, Long companyUniqueId, String openaiKey) {
-        Account account = accountRepository.findByIdForUpdate(accountId);
-        if (account == null || !Objects.equals(account.companyId, companyUniqueId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.103 account wasn't found, accountId: " + accountId);
-        }
-        AccountParamsYaml params = account.getAccountParamsYaml();
-        params.openaiKey = openaiKey;
-        account.updateParams(params);
-        account.updatedOn = System.currentTimeMillis();
-        accountCache.save(account);
-
-        return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The OPEN_API_KEY was saved successfully", "");
-    }
-
-
     // this method is using with angular's rest
     @Transactional
     public OperationStatusRest roleFormCommit(Long accountId, String roles, Long companyUniqueId) {
@@ -244,23 +229,50 @@ public class AccountTxService {
 
     @Transactional
     public OperationStatusRest changePasswordCommit(String oldPassword, String newPassword, DispatcherContext context) {
-        if (StringUtils.isBlank(oldPassword) || StringUtils.isBlank(newPassword)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.300 oldPassword and newPassword must not be null");
-        }
-
         Account a = accountRepository.findByIdForUpdate(context.getAccountId());
         if (a == null || !Objects.equals(a.companyId, context.getCompanyId())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.310 account wasn't found, accountId: " + context.getAccountId());
         }
 
         if (!passwordEncoder.matches(oldPassword, a.getPassword())) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.090 Old password is wrong");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.330 Old password is wrong");
         }
 
         a.setPassword(passwordEncoder.encode(newPassword));
         a.updatedOn = System.currentTimeMillis();
         accountCache.save(a);
 
-        return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The password was changed successfully", "");    }
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The password was changed successfully", "");
+    }
+
+    @Transactional
+    public OperationStatusRest saveOpenaiKey(Long accountId, Long companyId, String openaiKey) {
+        return updateAccountParams(accountId, companyId, p -> p.openaiKey=openaiKey, "The OPEN_API_KEY was saved successfully");
+    }
+
+    @Transactional
+    public OperationStatusRest setLanguage(Long accountId, Long companyId, String lang) {
+        return updateAccountParams(accountId, companyId, p -> p.language=lang, "Language was changed");
+    }
+
+    @Transactional
+    public OperationStatusRest resetLanguage(Long accountId, Long companyId) {
+        return updateAccountParams(accountId, companyId, p -> p.language="en", "Language was reset to 'en'");
+    }
+
+    private OperationStatusRest updateAccountParams(Long accountId, Long companyId, Consumer<AccountParamsYaml> updateFunc, String okMessage) {
+
+        Account account = accountRepository.findByIdForUpdate(accountId);
+        if (account == null || !Objects.equals(account.companyId, companyId)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.360 account wasn't found, accountId: " + accountId);
+        }
+        AccountParamsYaml params = account.getAccountParamsYaml();
+        updateFunc.accept(params);
+        account.updateParams(params);
+        account.updatedOn = System.currentTimeMillis();
+        accountCache.save(account);
+
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK,okMessage, "");
+    }
 }
 

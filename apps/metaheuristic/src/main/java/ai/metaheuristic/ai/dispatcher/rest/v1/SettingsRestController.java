@@ -65,5 +65,10 @@ public class SettingsRestController {
         return settingsService.changePasswordCommit(oldPassword, newPassword, context);
     }
 
+    @PostMapping("/set-language")
+    public OperationStatusRest setLanguage(@RequestParam String lang, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        return settingsService.setLanguage(lang, context);
+    }
 
 }

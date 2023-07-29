@@ -49,6 +49,7 @@ public class AccountParamsYamlUtilsV1
         AccountParamsYaml t = new AccountParamsYaml();
         v1.apiKeys.stream().map(AccountParamsYamlUtilsV1::to).collect(Collectors.toCollection(()->t.apiKeys));
         t.openaiKey = v1.openaiKey;
+        t.language = v1.language;
 
         t.checkIntegrity();
         return t;
