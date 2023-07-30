@@ -96,6 +96,7 @@ public class ThreadUtils {
                 writeLock.lock();
                 if (holder == null) {
                     holder = supplier.get();
+                    log.info("Parameter field of class {} was parsed.", holder.getClass().getSimpleName());
                 }
             } finally {
                 writeLock.unlock();

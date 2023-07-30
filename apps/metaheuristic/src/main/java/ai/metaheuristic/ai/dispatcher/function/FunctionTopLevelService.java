@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.function;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
+import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInGraphEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.api.EnumsApi;
@@ -31,6 +32,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.*;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadedPool;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
@@ -175,8 +177,36 @@ public class FunctionTopLevelService {
         return functionInfosCache;
     }
 
+    private final LinkedHashMap<Long, Pair<EnumsApi.FunctionSourcing, String>> sourcingInfoCache = new LinkedHashMap<>(150) {
+        protected boolean removeEldestEntry(Map.Entry<Long, Pair<EnumsApi.FunctionSourcing, String>> entry) {
+            return this.size()>100;
+        }
+    };
+
     public List<Pair<EnumsApi.FunctionSourcing, String>> collectInfoAboutFunction() {
         final List<Long> allIds = functionRepository.findAllIds();
+
+        List<Pair<EnumsApi.FunctionSourcing, String>> result = new ArrayList<>(allIds.size());
+        for (Long id : allIds) {
+            Pair<EnumsApi.FunctionSourcing, String> pair = sourcingInfoCache.get(id);
+            if (pair==null) {
+                final Function f = functionRepository.findByIdNullable(id);
+                if (f!=null) {
+                    FunctionConfigYaml fcy = f.getFunctionConfigYaml();
+                    pair = Pair.of(fcy.sourcing, f.code);
+                    sourcingInfoCache.put(id, pair);
+                }
+            }
+            if (pair!=null) {
+                result.add(pair);
+            }
+        }
+        if (allIds.size()!=result.size()) {
+            throw new IllegalStateException("(allIds.size()!=result.size())");
+        }
+        return result;
+
+/*
 
         final List<Pair<EnumsApi.FunctionSourcing, String>> result = allIds.stream()
                 .map(id -> functionRepository.findById(id).orElse(null))
@@ -187,6 +217,7 @@ public class FunctionTopLevelService {
                 })
                 .collect(Collectors.toList());
         return result;
+*/
     }
 
     @SuppressWarnings("unused")
