@@ -51,7 +51,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.*;
 import org.springframework.http.*;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -691,7 +690,6 @@ public class ExperimentResultTopLevelService {
         return result;
     }
 
-    @NonNull
     private static MetricsResult getMetricsResult(ExperimentFeature feature, List<ExperimentTaskFeature> taskFeatures, Map<Long, Integer> taskToTaskType) {
         final MetricsResult metricsResult = new MetricsResult();
 

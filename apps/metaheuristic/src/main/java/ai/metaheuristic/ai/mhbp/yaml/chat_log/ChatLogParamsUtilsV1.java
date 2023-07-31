@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.mhbp.yaml.chat_log;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 public class ChatLogParamsUtilsV1 extends
@@ -29,15 +28,13 @@ public class ChatLogParamsUtilsV1 extends
         return 1;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(ChatLogParamsV1.class);
     }
 
-    @NonNull
     @Override
-    public ChatLogParams upgradeTo(@NonNull ChatLogParamsV1 v1) {
+    public ChatLogParams upgradeTo(ChatLogParamsV1 v1) {
         v1.checkIntegrity();
 
         ChatLogParams t = new ChatLogParams();
@@ -56,9 +53,8 @@ public class ChatLogParamsUtilsV1 extends
         return f;
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
@@ -73,15 +69,14 @@ public class ChatLogParamsUtilsV1 extends
     }
 
     @Override
-    public String toString(@NonNull ChatLogParamsV1 yaml) {
+    public String toString(ChatLogParamsV1 yaml) {
         yaml.checkIntegrity();
 
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public ChatLogParamsV1 to(@NonNull String s) {
+    public ChatLogParamsV1 to(String s) {
         final ChatLogParamsV1 p = getYaml().load(s);
         return p;
     }

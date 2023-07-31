@@ -25,7 +25,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.junit.jupiter.api.Test;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.util.*;
@@ -61,7 +60,7 @@ public class TestJsonMarshaling {
             this.errorMessages.add(errorMessage);
         }
 
-        public void addErrorMessages(@NonNull List<String> errorMessages) {
+        public void addErrorMessages(List<String> errorMessages) {
             if (this.errorMessages==null) {
                 this.errorMessages = new ArrayList<>();
             }
@@ -76,7 +75,7 @@ public class TestJsonMarshaling {
         }
 
         @JsonIgnore
-        public @NonNull String getErrorMessagesAsStr() {
+        public String getErrorMessagesAsStr() {
             if (!isNotEmpty(errorMessages)) {
                 return "";
             }
@@ -87,12 +86,12 @@ public class TestJsonMarshaling {
         }
 
         @JsonIgnore
-        public @NonNull List<String> getErrorMessagesAsList() {
+        public List<String> getErrorMessagesAsList() {
             return isNotEmpty(errorMessages) ? errorMessages : List.of();
         }
 
         @JsonIgnore
-        public @NonNull List<String> getInfoMessagesAsList() {
+        public List<String> getInfoMessagesAsList() {
             return isNotEmpty(infoMessages) ? infoMessages : List.of();
         }
 

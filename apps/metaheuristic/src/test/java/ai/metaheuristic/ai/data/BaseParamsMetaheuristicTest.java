@@ -38,7 +38,6 @@ import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYamlUti
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsJsonUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultTaskParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYaml;
 import ai.metaheuristic.ai.yaml.metadata.FunctionDownloadStatusYamlUtils;
@@ -55,41 +54,21 @@ import ai.metaheuristic.ai.yaml.series.SeriesParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.api.data.event.DispatcherEventYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultParams;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParams;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
-import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
-import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYamlUtils;
-import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
-import ai.metaheuristic.commons.yaml.env.EnvParamsYamlUtils;
-import ai.metaheuristic.commons.yaml.event.DispatcherEventYamlUtils;
-import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
-import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
-import ai.metaheuristic.commons.yaml.ml.fitting.FittingYaml;
-import ai.metaheuristic.commons.yaml.ml.fitting.FittingYamlUtils;
-import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
-import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
-import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
-import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
-import org.springframework.lang.NonNull;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Sergio Lissner
@@ -150,7 +129,6 @@ public class BaseParamsMetaheuristicTest {
         }
     }
 
-    @NonNull
     private static Constructor getConstructor(Class entityCl) {
         Constructor[] entityConstructors = entityCl.getConstructors();
         final Constructor constructor = Arrays.stream(entityConstructors).filter(o -> o.getParameterTypes().length == 0).findFirst().orElseThrow();

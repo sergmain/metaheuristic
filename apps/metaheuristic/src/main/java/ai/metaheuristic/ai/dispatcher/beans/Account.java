@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-public class Account implements UserDetails, Serializable, Cloneable {
+public class Account implements UserDetails, Serializable {
     @Serial
     private static final long serialVersionUID = 708692073045562337L;
 

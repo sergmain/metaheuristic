@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
-import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreService;
+import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
@@ -74,7 +74,7 @@ public class ArtifactCleanerAtDispatcher {
     private final DispatcherEventRepository dispatcherEventRepository;
     private final FunctionDataRepository functionDataRepository;
     private final ProcessorRepository processorRepository;
-    private final ProcessorCoreService processorCoreService;
+    private final ProcessorCoreTxService processorCoreService;
     private final ProcessorCoreRepository processorCoreRepository;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
 

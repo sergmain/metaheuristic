@@ -15,6 +15,6 @@
  */
 
 @ParametersAreNonnullByDefault
-package ai.metaheuristic.ai.mhbp.kb.reader;
+package ai.metaheuristic.commons.utils.threads;
 
 import javax.annotation.ParametersAreNonnullByDefault;

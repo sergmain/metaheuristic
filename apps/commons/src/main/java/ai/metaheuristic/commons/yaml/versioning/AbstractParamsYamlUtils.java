@@ -33,11 +33,11 @@ import org.yaml.snakeyaml.Yaml;
 abstract public class AbstractParamsYamlUtils
         <CurrT extends BaseParams, NextT extends BaseParams, NextU, PrevT, PrevU, CurrForDownT> {
 
-    public abstract @Nonnull Yaml getYaml();
+    public abstract Yaml getYaml();
 
-    public abstract @Nonnull NextT upgradeTo(@Nonnull CurrT yaml);
+    public abstract NextT upgradeTo(CurrT yaml);
 
-    public abstract @Nonnull PrevT downgradeTo(@Nonnull CurrForDownT yaml);
+    public abstract PrevT downgradeTo(CurrForDownT yaml);
 
     public abstract @Nullable NextU nextUtil();
 
@@ -45,7 +45,7 @@ abstract public class AbstractParamsYamlUtils
 
     public abstract String toString(CurrT yaml);
 
-    public abstract @Nonnull CurrT to(String s);
+    public abstract CurrT to(String s);
 
     public abstract int getVersion();
 }

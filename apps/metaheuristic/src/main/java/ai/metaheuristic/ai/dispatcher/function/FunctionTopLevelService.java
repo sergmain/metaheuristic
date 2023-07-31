@@ -177,9 +177,9 @@ public class FunctionTopLevelService {
         return functionInfosCache;
     }
 
-    private final LinkedHashMap<Long, Pair<EnumsApi.FunctionSourcing, String>> sourcingInfoCache = new LinkedHashMap<>(150) {
+    private final LinkedHashMap<Long, Pair<EnumsApi.FunctionSourcing, String>> sourcingInfoCache = new LinkedHashMap<>(1000) {
         protected boolean removeEldestEntry(Map.Entry<Long, Pair<EnumsApi.FunctionSourcing, String>> entry) {
-            return this.size()>100;
+            return this.size()>700;
         }
     };
 
@@ -206,6 +206,7 @@ public class FunctionTopLevelService {
         }
         return result;
 
+        // TODO p3 2023-07-30 for deleting
 /*
 
         final List<Pair<EnumsApi.FunctionSourcing, String>> result = allIds.stream()

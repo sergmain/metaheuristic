@@ -25,7 +25,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.io.Serial;
@@ -64,11 +63,9 @@ public class Variable implements Serializable {
     @Column(name = "NAME")
     public String name;
 
-    @NonNull
     @Column(name = "EXEC_CONTEXT_ID")
     public Long execContextId;
 
-    @NonNull
     @Column(name = "TASK_CONTEXT_ID")
     public String taskContextId;
 

@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.mhbp.yaml.scenario;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
@@ -32,15 +31,13 @@ public class ScenarioParamsUtilsV1 extends
         return 1;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(ScenarioParamsV1.class);
     }
 
-    @NonNull
     @Override
-    public ScenarioParams upgradeTo(@NonNull ScenarioParamsV1 v1) {
+    public ScenarioParams upgradeTo(ScenarioParamsV1 v1) {
         v1.checkIntegrity();
 
         ScenarioParams t = new ScenarioParams();
@@ -74,9 +71,8 @@ public class ScenarioParamsUtilsV1 extends
         return new ScenarioParams.Api(v1.apiId, v1.code);
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
@@ -91,15 +87,14 @@ public class ScenarioParamsUtilsV1 extends
     }
 
     @Override
-    public String toString(@NonNull ScenarioParamsV1 yaml) {
+    public String toString(ScenarioParamsV1 yaml) {
         yaml.checkIntegrity();
 
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public ScenarioParamsV1 to(@NonNull String s) {
+    public ScenarioParamsV1 to(String s) {
         final ScenarioParamsV1 p = getYaml().load(s);
         return p;
     }

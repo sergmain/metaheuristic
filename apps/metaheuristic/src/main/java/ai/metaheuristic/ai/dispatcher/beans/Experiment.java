@@ -27,7 +27,6 @@ import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.lang.NonNull;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -56,7 +55,6 @@ public class Experiment implements Serializable, Cloneable {
     public Integer version;
 
     // 1-1 relation with ExecContext
-    @NonNull
     @Column(name = "EXEC_CONTEXT_ID")
     public Long execContextId;
 

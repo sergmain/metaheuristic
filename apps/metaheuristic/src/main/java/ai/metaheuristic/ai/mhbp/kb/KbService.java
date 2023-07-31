@@ -46,7 +46,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -98,7 +97,7 @@ public class KbService {
         int i=0;
     }
 
-    public static KbParams toKbParams(@NonNull Globals.Kb v1) {
+    public static KbParams toKbParams(Globals.Kb v1) {
         KbParams t = new KbParams();
         t.disabled = v1.disabled;
         t.kb.code = v1.code;

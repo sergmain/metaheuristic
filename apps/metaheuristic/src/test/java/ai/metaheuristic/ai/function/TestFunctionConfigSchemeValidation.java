@@ -23,7 +23,6 @@ import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
-import org.springframework.lang.NonNull;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -75,7 +74,6 @@ public class TestFunctionConfigSchemeValidation {
         assertNull(result, result);
     }
 
-    @NonNull
     private static String createYaml() {
         FunctionConfigListYaml cfgList = new FunctionConfigListYaml();
         FunctionConfigListYaml.FunctionConfig cfg = new FunctionConfigListYaml.FunctionConfig();

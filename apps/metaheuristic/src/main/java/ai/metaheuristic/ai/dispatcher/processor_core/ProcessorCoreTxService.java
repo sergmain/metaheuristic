@@ -38,7 +38,7 @@ import java.util.List;
 @Profile("dispatcher")
 @Service
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class ProcessorCoreService {
+public class ProcessorCoreTxService {
 
     private final ProcessorCoreCache coreCache;
     private final ProcessorCoreRepository processorCoreRepository;

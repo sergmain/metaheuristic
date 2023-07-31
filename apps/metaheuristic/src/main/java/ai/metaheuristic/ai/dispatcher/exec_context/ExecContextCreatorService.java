@@ -155,7 +155,7 @@ public class ExecContextCreatorService {
     /**
      *
      * @param sourceCode SourceCodeImpl
-     * @param companyId Long companyId can be different from sourceCode.companyId
+     * @param context user's context - accountId+companyId. companyId can be different from sourceCode.companyId
      * @return ExecContextCreationResult
      */
     public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, ExecContextData.UserExecContext context, @Nullable ExecContextData.RootAndParent rootAndParent) {

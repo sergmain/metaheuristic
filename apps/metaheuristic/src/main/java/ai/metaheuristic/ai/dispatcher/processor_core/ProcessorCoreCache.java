@@ -23,7 +23,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -41,13 +40,13 @@ public class ProcessorCoreCache {
 
     private final ProcessorCoreRepository processorCoreRepository;
 
-    public ProcessorCore save(@NonNull ProcessorCore core) {
+    public ProcessorCore save(ProcessorCore core) {
         TxUtils.checkTxExists();
         log.debug("#457.010 save core, id: #{}, core: {}", core.id, core);
         return processorCoreRepository.save(core);
     }
 
-    public void delete(@NonNull ProcessorCore processor) {
+    public void delete(ProcessorCore processor) {
         TxUtils.checkTxExists();
         try {
             processorCoreRepository.delete(processor);

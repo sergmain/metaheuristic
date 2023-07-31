@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.yaml.communication.dispatcher;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
@@ -37,15 +36,13 @@ public class DispatcherCommParamsYamlUtilsV2 extends
         return 2;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(DispatcherCommParamsYamlV2.class);
     }
 
-    @NonNull
     @Override
-    public DispatcherCommParamsYaml upgradeTo(@NonNull DispatcherCommParamsYamlV2 v2) {
+    public DispatcherCommParamsYaml upgradeTo(DispatcherCommParamsYamlV2 v2) {
         v2.checkIntegrity();
 
         DispatcherCommParamsYaml t = new DispatcherCommParamsYaml();
@@ -102,9 +99,8 @@ public class DispatcherCommParamsYamlUtilsV2 extends
         return trg;
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
@@ -119,15 +115,14 @@ public class DispatcherCommParamsYamlUtilsV2 extends
     }
 
     @Override
-    public String toString(@NonNull DispatcherCommParamsYamlV2 yaml) {
+    public String toString(DispatcherCommParamsYamlV2 yaml) {
         yaml.checkIntegrity();
 
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public DispatcherCommParamsYamlV2 to(@NonNull String s) {
+    public DispatcherCommParamsYamlV2 to(String s) {
         final DispatcherCommParamsYamlV2 p = getYaml().load(s);
         return p;
     }

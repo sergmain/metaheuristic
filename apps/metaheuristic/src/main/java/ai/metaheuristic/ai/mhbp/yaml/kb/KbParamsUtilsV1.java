@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.mhbp.yaml.kb;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
@@ -33,15 +32,13 @@ public class KbParamsUtilsV1 extends
         return 1;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(KbParamsV1.class);
     }
 
-    @NonNull
     @Override
-    public KbParams upgradeTo(@NonNull KbParamsV1 v1) {
+    public KbParams upgradeTo(KbParamsV1 v1) {
         v1.checkIntegrity();
 
         KbParams t = new KbParams();
@@ -89,9 +86,8 @@ public class KbParamsUtilsV1 extends
         return v1.stream().map(o->new KbParams.Inline(o.p, o.a)).toList();
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
@@ -106,15 +102,14 @@ public class KbParamsUtilsV1 extends
     }
 
     @Override
-    public String toString(@NonNull KbParamsV1 yaml) {
+    public String toString(KbParamsV1 yaml) {
         yaml.checkIntegrity();
 
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public KbParamsV1 to(@NonNull String s) {
+    public KbParamsV1 to(String s) {
         final KbParamsV1 p = getYaml().load(s);
         return p;
     }

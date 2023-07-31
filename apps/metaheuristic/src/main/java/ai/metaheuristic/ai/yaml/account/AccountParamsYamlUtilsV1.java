@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.yaml.account;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;
@@ -36,15 +35,13 @@ public class AccountParamsYamlUtilsV1
         return 1;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(AccountParamsYamlV1.class);
     }
 
-    @NonNull
     @Override
-    public AccountParamsYaml upgradeTo(@NonNull AccountParamsYamlV1 v1) {
+    public AccountParamsYaml upgradeTo(AccountParamsYamlV1 v1) {
         v1.checkIntegrity();
         AccountParamsYaml t = new AccountParamsYaml();
         v1.apiKeys.stream().map(AccountParamsYamlUtilsV1::to).collect(Collectors.toCollection(()->t.apiKeys));
@@ -59,9 +56,8 @@ public class AccountParamsYamlUtilsV1
         return new AccountParamsYaml.ApiKey(v1.name, v1.value);
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         // not supported
         return null;
     }
@@ -78,13 +74,12 @@ public class AccountParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(@NonNull AccountParamsYamlV1 yaml) {
+    public String toString(AccountParamsYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public AccountParamsYamlV1 to(@NonNull String s) {
+    public AccountParamsYamlV1 to(String s) {
         final AccountParamsYamlV1 p = getYaml().load(s);
         return p;
     }

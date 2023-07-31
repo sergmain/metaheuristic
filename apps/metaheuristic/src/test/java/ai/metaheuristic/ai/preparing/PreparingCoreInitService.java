@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionTxService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
-import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreService;
+import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
@@ -67,7 +67,7 @@ public class PreparingCoreInitService {
     private final ProcessorTopLevelService processorTopLevelService;
     private final ProcessorTxService processorTransactionService;
     private final TxSupportForTestingService txSupportForTestingService;
-    private final ProcessorCoreService processorCoreService;
+    private final ProcessorCoreTxService processorCoreService;
 
     public PreparingData.PreparingCodeData beforePreparingCore() {
         PreparingData.PreparingCodeData data = new PreparingData.PreparingCodeData();

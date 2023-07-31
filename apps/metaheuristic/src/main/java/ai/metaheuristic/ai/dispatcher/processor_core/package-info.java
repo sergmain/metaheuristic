@@ -14,12 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+@ParametersAreNonnullByDefault
 package ai.metaheuristic.ai.dispatcher.processor_core;
 
-/**
- * @author Serge
- * Date: 4/30/2022
- * Time: 11:57 PM
- */
-public class ProcessorCoreTopLevelService {
-}
+import javax.annotation.ParametersAreNonnullByDefault;

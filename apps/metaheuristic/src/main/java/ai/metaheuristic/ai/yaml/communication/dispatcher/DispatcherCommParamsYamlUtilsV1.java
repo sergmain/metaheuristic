@@ -16,16 +16,10 @@
 
 package ai.metaheuristic.ai.yaml.communication.dispatcher;
 
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtilsV2;
 import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
-
-import java.util.ArrayList;
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -40,21 +34,18 @@ public class DispatcherCommParamsYamlUtilsV1 extends
         return 1;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(DispatcherCommParamsYamlV1.class);
     }
 
-    @NonNull
     @Override
-    public DispatcherCommParamsYamlV2 upgradeTo(@NonNull DispatcherCommParamsYamlV1 v1) {
+    public DispatcherCommParamsYamlV2 upgradeTo(DispatcherCommParamsYamlV1 v1) {
         throw new UpgradeNotSupportedException();
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
@@ -69,15 +60,14 @@ public class DispatcherCommParamsYamlUtilsV1 extends
     }
 
     @Override
-    public String toString(@NonNull DispatcherCommParamsYamlV1 yaml) {
+    public String toString(DispatcherCommParamsYamlV1 yaml) {
         yaml.checkIntegrity();
 
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public DispatcherCommParamsYamlV1 to(@NonNull String s) {
+    public DispatcherCommParamsYamlV1 to(String s) {
         final DispatcherCommParamsYamlV1 p = getYaml().load(s);
         return p;
     }

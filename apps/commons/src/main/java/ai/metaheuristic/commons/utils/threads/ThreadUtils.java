@@ -21,6 +21,7 @@ import ai.metaheuristic.commons.exceptions.CustomInterruptedException;
 import com.google.errorprone.annotations.MustBeClosed;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+
 import javax.annotation.Nullable;
 
 import java.time.Duration;
@@ -29,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.StampedLock;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -58,13 +60,65 @@ public class ThreadUtils {
 //    }
 
     public static class CommonThreadLocker<T> {
+        private final StampedLock lock = new StampedLock();
+        private final Supplier<T> supplier;
+
+        public CommonThreadLocker(Supplier<T> supplier) {
+            this.supplier = supplier;
+        }
+
+        @Nullable
+        private T holder = null;
+
+        public void reset(Runnable run) {
+            long stamp = lock.writeLock();
+            try {
+                run.run();
+                this.holder = null;
+            } finally {
+                lock.unlockWrite(stamp);
+            }
+        }
+
+        @SuppressWarnings("DataFlowIssue")
+        public T get() {
+            long stamp = lock.tryOptimisticRead();
+            T tempHolder = this.holder;
+
+            if (tempHolder != null && lock.validate(stamp)) {
+                return tempHolder;
+            } else {
+                stamp = lock.readLock();
+                try {
+                    tempHolder = this.holder;
+                    if (tempHolder != null) {
+                        return tempHolder;
+                    }
+                } finally {
+                    lock.unlock(stamp);
+                }
+            }
+            stamp = lock.writeLock();
+            try {
+                if (holder == null) {
+                    holder = supplier.get();
+                    //log.info("Parameter field of class {} was parsed.", holder.getClass().getSimpleName());
+                }
+            } finally {
+                lock.unlock(stamp);
+            }
+            return holder;
+        }
+    }
+
+    public static class CommonThreadLockerReadWriteBased<T> {
         private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
         private final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
         private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
         private final Supplier<T> supplier;
 
-        public CommonThreadLocker(Supplier<T> supplier) {
+        public CommonThreadLockerReadWriteBased(Supplier<T> supplier) {
             this.supplier = supplier;
         }
 
@@ -96,7 +150,7 @@ public class ThreadUtils {
                 writeLock.lock();
                 if (holder == null) {
                     holder = supplier.get();
-                    log.info("Parameter field of class {} was parsed.", holder.getClass().getSimpleName());
+                    //log.info("Parameter field of class {} was parsed.", holder.getClass().getSimpleName());
                 }
             } finally {
                 writeLock.unlock();

@@ -29,7 +29,6 @@ import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.util.List;
@@ -75,7 +74,6 @@ public class VariableUtils {
         return vapy;
     }
 
-    @NonNull
     public static String getNameForVariableInArray() {
         return S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
     }

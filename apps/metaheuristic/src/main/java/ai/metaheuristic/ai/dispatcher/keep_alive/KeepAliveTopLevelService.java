@@ -29,7 +29,7 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorSyncService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
-import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreService;
+import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreTxService;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
@@ -58,7 +58,7 @@ public class KeepAliveTopLevelService {
     private final ProcessorCache processorCache;
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
     private final ProcessorTxService processorTransactionService;
-    private final ProcessorCoreService processorCoreService;
+    private final ProcessorCoreTxService processorCoreService;
     private final ProcessorCoreCache processorCoreCache;
     private final ExecContextStatusService execContextStatusService;
 

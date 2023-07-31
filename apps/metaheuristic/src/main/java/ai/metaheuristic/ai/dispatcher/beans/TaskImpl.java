@@ -26,7 +26,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.io.Serial;
@@ -87,7 +86,6 @@ public class TaskImpl implements Serializable, Task {
     @Column(name = "FUNCTION_EXEC_RESULTS")
     public String functionExecResults;
 
-    @NonNull
     @Column(name = "EXEC_CONTEXT_ID")
     public Long execContextId;
 

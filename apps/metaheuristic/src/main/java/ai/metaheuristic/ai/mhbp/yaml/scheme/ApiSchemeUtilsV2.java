@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.mhbp.yaml.scheme;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 @SuppressWarnings("ConstantValue")
@@ -30,15 +29,13 @@ public class ApiSchemeUtilsV2 extends
         return 2;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(ApiSchemeV2.class);
     }
 
-    @NonNull
     @Override
-    public ApiScheme upgradeTo(@NonNull ApiSchemeV2 v2) {
+    public ApiScheme upgradeTo(ApiSchemeV2 v2) {
         v2.checkIntegrity();
 
         ApiScheme t = new ApiScheme();
@@ -84,9 +81,8 @@ public class ApiSchemeUtilsV2 extends
         return r;
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
@@ -101,15 +97,14 @@ public class ApiSchemeUtilsV2 extends
     }
 
     @Override
-    public String toString(@NonNull ApiSchemeV2 yaml) {
+    public String toString(ApiSchemeV2 yaml) {
         yaml.checkIntegrity();
 
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public ApiSchemeV2 to(@NonNull String s) {
+    public ApiSchemeV2 to(String s) {
         final ApiSchemeV2 p = getYaml().load(s);
         return p;
     }

@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
@@ -49,11 +48,11 @@ public class ExperimentCache {
         return experimentRepository.findById(id).orElse(null);
     }
 
-    public void delete(@NonNull Experiment experiment) {
+    public void delete(Experiment experiment) {
         experimentRepository.deleteById(experiment.id);
     }
 
-    public void deleteById(@NonNull Long id) {
+    public void deleteById(Long id) {
         TxUtils.checkTxExists();
         try {
             experimentRepository.deleteById(id);
