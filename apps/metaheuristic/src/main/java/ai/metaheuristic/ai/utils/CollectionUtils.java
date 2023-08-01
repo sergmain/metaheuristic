@@ -62,8 +62,8 @@ public class CollectionUtils {
             Set<TreeItem<T>> items = toPlainList(nodes);
             for (TreeItem<T> item : items) {
 
-                // для верхних едементов, у которых нет предков (в данном случае topId==null)
-                // возвращается пустой список
+                // for top-level elements, which don't have ancestors (topId==null),
+                // empty list will be returned
                 if (item.getTopId()==null) {
                     List<TreeItem<T>> list = map.get(item.getId());
                     if (list==null ) {
