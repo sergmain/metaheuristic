@@ -31,7 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.sql.Blob;
 import java.util.Optional;
 
 /**

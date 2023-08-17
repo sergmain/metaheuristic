@@ -157,7 +157,7 @@ public class TaskCheckCachingTxService {
                         VariableSyncService.getWithSyncVoidForCreation(output.id, () -> variableService.setVariableAsNull(output.id));
                     }
                     else {
-                        dispatcherBlobStorage.copyData(storedVariable, output);
+                        dispatcherBlobStorage.copyVariableData(storedVariable, output);
                     }
                     eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, output.id, storedVariable.nullified));
 

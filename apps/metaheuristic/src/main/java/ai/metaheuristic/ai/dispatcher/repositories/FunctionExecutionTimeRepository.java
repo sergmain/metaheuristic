@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.FunctionExecutionTime;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.repository.CrudRepository;
 
 /**
@@ -24,6 +25,7 @@ import org.springframework.data.repository.CrudRepository;
  * Date: 11/1/2022
  * Time: 10:34 PM
  */
+@Profile("dispatcher")
 public interface FunctionExecutionTimeRepository extends CrudRepository<FunctionExecutionTime, Long> {
 
 }

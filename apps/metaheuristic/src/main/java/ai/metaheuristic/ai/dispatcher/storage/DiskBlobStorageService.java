@@ -23,7 +23,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.sql.SQLException;
 import java.util.function.Consumer;
 
 /**
@@ -42,12 +44,32 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
     }
 
     @Override
+    public InputStream getVariableDataAsStreamById(Long variableBlobId) {
+        return null;
+    }
+
+    @Override
     public void storeVariableData(Long variableBlobId, InputStream is, long size) {
 
     }
 
     @Override
-    public void copyData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) {
+    public void copyVariableData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) {
+
+    }
+
+    @Override
+    public InputStream getGlobalVariableDataAsStreamById(Long globalVariableId) {
+        return null;
+    }
+
+    @Override
+    public void accessGlobalVariableData(Long globalVariableId, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException {
+
+    }
+
+    @Override
+    public void storeGlobalVariableData(Long globalVariableId, InputStream is, long size) {
 
     }
 }

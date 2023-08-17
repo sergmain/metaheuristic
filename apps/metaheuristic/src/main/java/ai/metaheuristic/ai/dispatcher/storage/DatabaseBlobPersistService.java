@@ -41,7 +41,7 @@ import java.sql.Blob;
 @Service
 @Profile({"dispatcher & !disk-storage"})
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class DatabaseBlobStoreService {
+public class DatabaseBlobPersistService {
 
     private final VariableBlobRepository variableBlobRepository;
     private final EntityManager em;

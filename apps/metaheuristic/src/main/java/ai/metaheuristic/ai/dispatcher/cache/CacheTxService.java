@@ -22,7 +22,8 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.event.events.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
+import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -59,13 +60,12 @@ public class CacheTxService {
     private final Globals globals;
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheVariableService cacheVariableService;
-    private final VariableTopLevelService variableTopLevelService;
+    private final VariableService variableTopLevelService;
     private final VariableTxService variableTxService;
     private final VariableRepository variableRepository;
-    private final VariableBlobRepository variableBlobRepository;
-    private final GlobalVariableRepository globalVariableRepository;
     private final CacheVariableRepository cacheVariableRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final DispatcherBlobStorage dispatcherBlobStorage;
 
     @Transactional
     public void deleteCacheVariable(Long cacheProcessId) {
@@ -150,7 +150,10 @@ public class CacheTxService {
 
 //    @Transactional(readOnly = true)
     public CacheData.FullKey getKey(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
-        return CacheUtils.getKey(tpy, function, variableTopLevelService::variableBlobIdRef, variableTxService::getVariableBlobDataAsString, variableBlobRepository::getDataAsStreamById, globalVariableRepository::getDataAsStreamById);
+        return CacheUtils.getKey(tpy, function.params, variableTopLevelService::variableBlobIdRef,
+                variableTxService::getVariableBlobDataAsString,
+                dispatcherBlobStorage::getVariableDataAsStreamById,
+                dispatcherBlobStorage::getGlobalVariableDataAsStreamById);
     }
 
 }

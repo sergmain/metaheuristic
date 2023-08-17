@@ -40,12 +40,11 @@ import java.sql.Blob;
  */
 @Service
 @Slf4j
-@Profile("dispatcher")
+@Profile({"dispatcher & !disk-storage"})
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class VariableBlobTxService {
 
     private final VariableBlobRepository variableBlobRepository;
-
     private final EntityManager em;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

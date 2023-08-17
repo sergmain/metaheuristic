@@ -61,10 +61,6 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
             "where b.name=:name")
     SimpleGlobalVariable findIdByName(String name);
 
-    @Transactional(readOnly = true)
-    @Query(value="select b.filename from GlobalVariable b where b.name=:var")
-    List<String> findFilenamesByVar(String var);
-
 //    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select b from GlobalVariable b where b.id=:id")

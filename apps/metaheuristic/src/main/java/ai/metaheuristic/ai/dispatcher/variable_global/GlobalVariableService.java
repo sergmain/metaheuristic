@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.variable_global;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
+import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
@@ -37,10 +38,10 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.sql.Blob;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Optional;
@@ -53,6 +54,7 @@ public class GlobalVariableService {
 
     private final GlobalVariableRepository globalVariableRepository;
     private final Globals globals;
+    private final DispatcherBlobStorage dispatcherBlobStorage;
 
     @Nullable
     @Transactional(readOnly = true)
@@ -93,6 +95,18 @@ public class GlobalVariableService {
     @Nullable
     private String getVariableDataAsString(Long variableId, boolean nullable) {
         try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            dispatcherBlobStorage.accessGlobalVariableData(variableId, (is)-> {
+                try {
+                    IOUtils.copy(is, baos);
+                } catch (IOException e) {
+                    String es = "171.550 "+e.getMessage();
+                    log.error(es, e);
+                    throw new VariableCommonException(es, variableId);
+                }
+            });
+            return baos.toString(StandardCharsets.UTF_8);
+/*
             Blob blob = globalVariableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
                 if (nullable) {
@@ -109,6 +123,7 @@ public class GlobalVariableService {
                 String s = IOUtils.toString(is, StandardCharsets.UTF_8);
                 return s;
             }
+*/
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Throwable th) {
@@ -124,6 +139,8 @@ public class GlobalVariableService {
 
     public void storeToFile(Long variableId, Path trgFile) {
         try {
+            dispatcherBlobStorage.accessGlobalVariableData(variableId, (is)-> DirUtils.copy(is, trgFile));
+/*
             Blob blob = globalVariableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
                 log.warn("#089.030 Binary data for variableId {} wasn't found", variableId);
@@ -132,6 +149,7 @@ public class GlobalVariableService {
             try (InputStream is = blob.getBinaryStream()) {
                 DirUtils.copy(is, trgFile);
             }
+*/
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Exception e) {

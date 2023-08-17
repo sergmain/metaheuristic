@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -57,7 +57,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class PermuteVariablesService {
 
-    private final VariableTopLevelService variableTopLevelService;
+    private final VariableService variableTopLevelService;
     private final ExecContextGraphService execContextGraphService;
     private final TaskProducingService taskProducingService;
 

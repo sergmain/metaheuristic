@@ -38,7 +38,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -92,7 +92,7 @@ public class TaskWithInternalContextEventService {
     private final VariableRepository variableRepository;
     private final TaskFinishingTxService taskFinishingTxService;
     private final ApplicationEventPublisher eventPublisher;
-    private final VariableTopLevelService variableTopLevelService;
+    private final VariableService variableTopLevelService;
     private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     private final InternalFunctionProcessor internalFunctionProcessor;
 

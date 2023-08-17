@@ -51,7 +51,7 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class VariableTopLevelService {
+public class VariableService {
 
     private final VariableTxService variableTxService;
     private final VariableRepository variableRepository;

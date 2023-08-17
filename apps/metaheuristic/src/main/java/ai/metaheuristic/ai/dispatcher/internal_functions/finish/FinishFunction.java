@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -44,7 +44,7 @@ import org.springframework.stereotype.Service;
 public class FinishFunction implements InternalFunction {
 
     private final ExecContextFSM execContextFSM;
-    private final VariableTopLevelService variableTopLevelService;
+    private final VariableService variableTopLevelService;
 
     @Override
     public String getCode() {

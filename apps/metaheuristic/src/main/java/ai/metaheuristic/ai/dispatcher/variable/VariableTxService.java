@@ -28,9 +28,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.SetVariableReceivedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskCreatedTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
@@ -63,23 +61,23 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Blob;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 
-@SuppressWarnings("unused")
 @Service
 @Slf4j
 @Profile("dispatcher")
@@ -92,10 +90,8 @@ public class VariableTxService {
     private final GlobalVariableRepository globalVariableRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final EventPublisherService eventPublisherService;
-    private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextCache execContextCache;
     private final VariableBlobTxService variableBlobTxService;
-    private final VariableBlobRepository variableBlobRepository;
     private final DispatcherBlobStorage dispatcherBlobStorage;
 
     private Variable createInitialized(
@@ -576,6 +572,19 @@ public class VariableTxService {
         }
 
         try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            dispatcherBlobStorage.accessVariableData(variableBlobId, (is)-> {
+                try {
+                    IOUtils.copy(is, baos);
+                } catch (IOException e) {
+                    String es = "171.550 "+e.getMessage();
+                    log.error(es, e);
+                    throw new VariableCommonException(es, variableBlobId);
+                }
+            });
+            String s = baos.toString(StandardCharsets.UTF_8);
+            return s;
+/*
             Blob blob = variableBlobRepository.getDataAsStreamById(variableBlobId);
             if (blob==null) {
                 if (nullable) {
@@ -590,6 +599,7 @@ public class VariableTxService {
                 String s = IOUtils.toString(bis, StandardCharsets.UTF_8);
                 return s;
             }
+*/
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Throwable th) {
@@ -637,11 +647,13 @@ public class VariableTxService {
     }
 
     public void storeToFile(Long variableId, Path trgFile) {
-        TxUtils.checkTxExists();
+        ///TxUtils.checkTxExists();
 
         final Long variableBlobId = getVariableBlobIdNotNull(variableId);
 
         try {
+            dispatcherBlobStorage.accessVariableData(variableBlobId, (is)-> DirUtils.copy(is, trgFile));
+/*
             Blob blob = variableBlobRepository.getDataAsStreamById(Objects.requireNonNull(variableBlobId));
             if (blob==null) {
                 String es = "171.540 VariableBlob #"+ variableBlobId +" wasn't found";
@@ -651,6 +663,7 @@ public class VariableTxService {
             try (InputStream is = blob.getBinaryStream()) {
                 DirUtils.copy(is, trgFile);
             }
+*/
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Exception e) {
@@ -665,12 +678,12 @@ public class VariableTxService {
         final Long variableBlobId = getVariableBlobIdNotNull(variableId);
 
         try {
-            Blob blob = variableBlobRepository.getDataAsStreamById(Objects.requireNonNull(variableBlobId));
-            if (blob==null) {
-                String es = "171.540 Variable #"+ variableBlobId +" wasn't found";
-                log.warn(es);
-                throw new VariableDataNotFoundException(variableBlobId, EnumsApi.VariableContext.local, es);
-            }
+//            Blob blob = variableBlobRepository.getDataAsStreamById(Objects.requireNonNull(variableBlobId));
+//            if (blob==null) {
+//                String es = "171.540 Variable #"+ variableBlobId +" wasn't found";
+//                log.warn(es);
+//                throw new VariableDataNotFoundException(variableBlobId, EnumsApi.VariableContext.local, es);
+//            }
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             dispatcherBlobStorage.accessVariableData(variableBlobId, (is)-> {
                 try {

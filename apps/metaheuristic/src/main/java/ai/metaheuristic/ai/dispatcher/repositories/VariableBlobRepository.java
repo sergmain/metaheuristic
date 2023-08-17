@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
@@ -30,6 +31,7 @@ import java.sql.Blob;
  * Date: 6/7/2023
  * Time: 2:31 PM
  */
+@Profile("dispatcher")
 public interface VariableBlobRepository extends CrudRepository<VariableBlob, Long> {
 
     @Nullable

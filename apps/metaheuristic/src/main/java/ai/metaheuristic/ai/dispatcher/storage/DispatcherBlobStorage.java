@@ -33,9 +33,18 @@ public interface DispatcherBlobStorage {
 
     void accessVariableData(final Long variableBlobId, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException;
 
+    InputStream getVariableDataAsStreamById(Long variableBlobId);
+
     void storeVariableData(Long variableBlobId, InputStream is, long size);
 
-    void copyData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable);
+    void copyVariableData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable);
+
+    InputStream getGlobalVariableDataAsStreamById(Long globalVariableId);
+
+    void accessGlobalVariableData(final Long globalVariableId, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException;
+
+    void storeGlobalVariableData(Long globalVariableId, InputStream is, long size);
+
 }
 
 
