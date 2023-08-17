@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -67,13 +67,13 @@ public class EvaluateExpressionLanguage {
         public final String taskContextId;
         public final Long execContextId;
         public final InternalFunctionVariableService internalFunctionVariableService;
-        public final GlobalVariableService globalVariableService;
+        public final GlobalVariableTxService globalVariableService;
         public final VariableTxService variableTxService;
         public final VariableRepository variableRepository;
         public final Consumer<Variable> setAsNullFunction;
 
         public MhEvalContext(String taskContextId, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
-                             GlobalVariableService globalVariableService, VariableTxService variableTxService,
+                             GlobalVariableTxService globalVariableService, VariableTxService variableTxService,
                              VariableRepository variableRepository,
                              Consumer<Variable> setAsNullFunction
                              ) {
@@ -427,7 +427,7 @@ public class EvaluateExpressionLanguage {
     @Nullable
     public static Object evaluate(
             String taskContextId, String expression, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
-            GlobalVariableService globalVariableService, VariableTxService variableService,
+            GlobalVariableTxService globalVariableService, VariableTxService variableService,
             VariableRepository variableRepository, Consumer<Variable> setAsNullFunction
     ) {
 

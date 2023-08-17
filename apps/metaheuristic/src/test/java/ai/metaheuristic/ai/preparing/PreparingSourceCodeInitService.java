@@ -31,7 +31,7 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableEntityManagerTxService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -70,7 +70,7 @@ public class PreparingSourceCodeInitService {
     private final PreparingSourceCodeService preparingSourceCodeService;
     private final CompanyTopLevelService companyTopLevelService;
     private final AccountService accountTopLevelService;
-    private final GlobalVariableService globalVariableService;
+    private final GlobalVariableTxService globalVariableService;
     private final GlobalVariableEntityManagerTxService globalVariableEntityManagerTxService;
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final SourceCodeCache sourceCodeCache;

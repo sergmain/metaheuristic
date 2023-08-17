@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -57,7 +57,7 @@ public class EvaluationFunction implements InternalFunction {
 
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final SourceCodeCache sourceCodeCache;
-    private final GlobalVariableService globalVariableService;
+    private final GlobalVariableTxService globalVariableService;
     private final VariableTxService variableTxService;
     private final VariableRepository variableRepository;
 

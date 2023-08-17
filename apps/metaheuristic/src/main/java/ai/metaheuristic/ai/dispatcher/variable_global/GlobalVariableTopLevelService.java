@@ -45,7 +45,7 @@ import java.io.InputStream;
 public class GlobalVariableTopLevelService {
 
     private final Globals globals;
-    private final GlobalVariableService globalVariableService;
+    private final GlobalVariableTxService globalVariableService;
     private final GlobalVariableEntityManagerTxService globalVariableEntityManagerTxService;
 
     public GlobalVariableData.GlobalVariablesResult getGlobalVariables(Pageable pageable) {

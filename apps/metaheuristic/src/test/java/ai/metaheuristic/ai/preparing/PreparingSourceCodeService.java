@@ -35,7 +35,7 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtils;
@@ -81,7 +81,7 @@ public class PreparingSourceCodeService {
     private final ExecContextRepository execContextRepository;
     private final TaskRepositoryForTest taskRepositoryForTest;
     private final SourceCodeTxService sourceCodeTxService;
-    private final GlobalVariableService globalVariableService;
+    private final GlobalVariableTxService globalVariableService;
     private final TxSupportForTestingService txSupportForTestingService;
     private final SouthbridgeService serverService;
     private final ExecContextStatusService execContextStatusService;

@@ -30,7 +30,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.ExecContextCommonException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -69,7 +69,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
     private final SourceCodeCache sourceCodeCache;
     private final SourceCodeRepository sourceCodeRepository;
     private final VariableTxService variableTxService;
-    private final GlobalVariableService globalVariableService;
+    private final GlobalVariableTxService globalVariableService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final ExecContextCreatorService execContextCreatorService;

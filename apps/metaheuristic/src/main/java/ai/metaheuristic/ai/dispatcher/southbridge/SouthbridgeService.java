@@ -33,7 +33,7 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueSyncStaticService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
@@ -84,7 +84,7 @@ public class SouthbridgeService {
 
     private final Globals globals;
     private final VariableTxService variableService;
-    private final GlobalVariableService globalVariableService;
+    private final GlobalVariableTxService globalVariableService;
     private final FunctionDataService functionDataService;
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
     private final KeepAliveTopLevelService keepAliveTopLevelService;

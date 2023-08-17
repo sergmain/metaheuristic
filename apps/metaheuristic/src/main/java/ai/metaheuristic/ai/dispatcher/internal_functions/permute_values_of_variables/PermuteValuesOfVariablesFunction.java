@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -64,7 +64,7 @@ public class PermuteValuesOfVariablesFunction implements InternalFunction {
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final InternalFunctionService internalFunctionService;
     private final VariableTxService variableService;
-    private final GlobalVariableService globalVariableService;
+    private final GlobalVariableTxService globalVariableService;
 
     @Override
     public String getCode() {

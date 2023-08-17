@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +49,7 @@ public class InternalFunctionVariableService {
 
     private final VariableTxService variableService;
     private final GlobalVariableRepository globalVariableRepository;
-    private final GlobalVariableService globalVariableService;
+    private final GlobalVariableTxService globalVariableService;
 
     public void storeToFile(VariableUtils.VariableHolder holder, Path file) {
         if (holder.variable!=null) {

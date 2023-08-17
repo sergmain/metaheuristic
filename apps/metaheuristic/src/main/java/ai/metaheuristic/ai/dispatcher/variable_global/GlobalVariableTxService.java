@@ -50,7 +50,7 @@ import java.util.Optional;
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class GlobalVariableService {
+public class GlobalVariableTxService {
 
     private final GlobalVariableRepository globalVariableRepository;
     private final Globals globals;

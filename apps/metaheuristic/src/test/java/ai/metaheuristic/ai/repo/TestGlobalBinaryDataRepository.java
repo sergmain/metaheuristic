@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.repo;
 
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableEntityManagerTxService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestGlobalBinaryDataRepository {
 
     @Autowired
-    private GlobalVariableService globalVariableService;
+    private GlobalVariableTxService globalVariableService;
     @Autowired
     private GlobalVariableEntityManagerTxService globalVariableEntityManagerTxService;
 
