@@ -14,32 +14,40 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.variable;
+package ai.metaheuristic.ai.dispatcher.storage;
 
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobMysqlRepository;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
+import java.util.function.Consumer;
+
 /**
- * @author Serge
- * Date: 12/22/2021
- * Time: 10:36 PM
+ * @author Sergio Lissner
+ * Date: 8/17/2023
+ * Time: 11:52 AM
  */
 @Service
-@Slf4j
-@Profile({"dispatcher & mysql"})
+@Profile({"dispatcher & disk-storage"})
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class VariableMysqlService implements VariableDatabaseSpecificService {
+public class DiskBlobStorageService implements DispatcherBlobStorage {
 
-    private final VariableDatabaseSpecificCommonService variableDatabaseSpecificCommonService;
-    private final VariableBlobMysqlRepository variableMysqlRepository;
+    @Override
+    public void accessVariableData(Long variableBlobId, Consumer<InputStream> processBlobDataFunc) {
 
-    public void copyData(VariableData.StoredVariable storedVariable, TaskParamsYaml.OutputVariable targetVariable) {
-        variableDatabaseSpecificCommonService.copyData(storedVariable, targetVariable, variableMysqlRepository::copyData);
+    }
+
+    @Override
+    public void storeVariableData(Long variableBlobId, InputStream is, long size) {
+
+    }
+
+    @Override
+    public void copyData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) {
+
     }
 }

@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.ResourceCloseTxEvent;
@@ -34,6 +33,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
+import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -96,7 +96,7 @@ public class VariableTxService {
     private final ExecContextCache execContextCache;
     private final VariableBlobTxService variableBlobTxService;
     private final VariableBlobRepository variableBlobRepository;
-
+    private final DispatcherBlobStorage dispatcherBlobStorage;
 
     private Variable createInitialized(
             InputStream is, long size, String variable, @Nullable String filename,
@@ -119,10 +119,8 @@ public class VariableTxService {
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
         data.setTaskContextId(taskContextId);
 
-        VariableBlob variableBlob = variableBlobTxService.createWithInputStream(is,size);
-        data.variableBlobId = variableBlob.id;
-//        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
-//        data.setData(blob);
+        data.variableBlobId = variableBlobTxService.createEmpty();;
+        dispatcherBlobStorage.storeVariableData(data.variableBlobId, is, size);
 
         variableRepository.save(data);
 
@@ -138,11 +136,8 @@ public class VariableTxService {
         }
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        VariableBlob variableBlob = variableBlobTxService.createOrUpdateWithInputStream(data.variableBlobId, is, size);
-        data.variableBlobId = variableBlob.id;
-
-//        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
-//        data.setData(blob);
+        data.variableBlobId = variableBlobTxService.createIfNotExist(data.variableBlobId);
+        dispatcherBlobStorage.storeVariableData(data.variableBlobId, is, size);
 
         data.inited = true;
         data.nullified = false;
@@ -164,10 +159,8 @@ public class VariableTxService {
         data.filename = filename;
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        VariableBlob variableBlob = variableBlobTxService.createOrUpdateWithInputStream(data.variableBlobId, is, size);
-        data.variableBlobId = variableBlob.id;
-//        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
-//        data.setData(blob);
+        data.variableBlobId = variableBlobTxService.createIfNotExist(data.variableBlobId);
+        dispatcherBlobStorage.storeVariableData(data.variableBlobId, is, size);
 
         data.inited = true;
         data.nullified = false;
@@ -646,14 +639,14 @@ public class VariableTxService {
     public void storeToFile(Long variableId, Path trgFile) {
         TxUtils.checkTxExists();
 
-        Variable v = getVariableNotNullAndHasVariableBlobId(variableId);
+        final Long variableBlobId = getVariableBlobIdNotNull(variableId);
 
         try {
-            Blob blob = variableBlobRepository.getDataAsStreamById(Objects.requireNonNull(v.variableBlobId));
+            Blob blob = variableBlobRepository.getDataAsStreamById(Objects.requireNonNull(variableBlobId));
             if (blob==null) {
-                String es = "171.540 VariableBlob #"+v.variableBlobId+" wasn't found";
+                String es = "171.540 VariableBlob #"+ variableBlobId +" wasn't found";
                 log.warn(es);
-                throw new VariableDataNotFoundException(v.variableBlobId, EnumsApi.VariableContext.local, es);
+                throw new VariableDataNotFoundException(variableBlobId, EnumsApi.VariableContext.local, es);
             }
             try (InputStream is = blob.getBinaryStream()) {
                 DirUtils.copy(is, trgFile);
@@ -669,37 +662,43 @@ public class VariableTxService {
 
     @Transactional(readOnly = true)
     public byte[] getVariableAsBytes(Long variableId) {
-        Variable v = getVariableNotNullAndHasVariableBlobId(variableId);
+        final Long variableBlobId = getVariableBlobIdNotNull(variableId);
 
         try {
-            Blob blob = variableBlobRepository.getDataAsStreamById(Objects.requireNonNull(v.variableBlobId));
+            Blob blob = variableBlobRepository.getDataAsStreamById(Objects.requireNonNull(variableBlobId));
             if (blob==null) {
-                String es = "#171.540 Variable #"+v.variableBlobId+" wasn't found";
+                String es = "171.540 Variable #"+ variableBlobId +" wasn't found";
                 log.warn(es);
-                throw new VariableDataNotFoundException(v.variableBlobId, EnumsApi.VariableContext.local, es);
+                throw new VariableDataNotFoundException(variableBlobId, EnumsApi.VariableContext.local, es);
             }
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is)) {
-                IOUtils.copy(bis, baos);
-            }
+            dispatcherBlobStorage.accessVariableData(variableBlobId, (is)-> {
+                try {
+                    IOUtils.copy(is, baos);
+                } catch (IOException e) {
+                    String es = "171.550 "+e.getMessage();
+                    log.error(es, e);
+                    throw new VariableCommonException(es, variableId);
+                }
+            });
             return baos.toByteArray();
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Exception e) {
-            String es = "#171.570 Error while storing data to file";
+            String es = "171.570 Error while storing data to file";
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
     }
 
-    private Variable getVariableNotNullAndHasVariableBlobId(Long variableId) {
-        Variable v = variableRepository.findById(variableId).orElse(null);
+    private Long getVariableBlobIdNotNull(Long variableId) {
+        Variable v = variableRepository.findByIdReadOnly(variableId);
         if (v==null || v.variableBlobId==null) {
             String es = "171.540 Variable #" + variableId + " wasn't found";
             log.warn(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }
-        return v;
+        return v.variableBlobId;
     }
 
     public List<Variable> getVariablesInExecContext(Long execContextId, String ... variables) {

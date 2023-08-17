@@ -16,10 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.variable;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -31,7 +29,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
 import java.sql.Timestamp;
 import java.util.function.BiConsumer;
 
@@ -64,16 +61,21 @@ public class VariableDatabaseSpecificCommonService {
             return;
         }
 
+        trg.variableBlobId = variableBlobTxService.createIfNotExist(trg.variableBlobId);
+/*
         if (trg.variableBlobId==null) {
-            ByteArrayInputStream bais = new ByteArrayInputStream(Consts.STUB_BYTES);
-            VariableBlob variableBlob = variableBlobTxService.createOrUpdateWithInputStream(null, bais, Consts.STUB_BYTES.length);
-            trg.variableBlobId = variableBlob.id;
+            trg.variableBlobId = variableBlobTxService.createIfNotExist(null);
             if (trg.variableBlobId==null) {
                 throw new IllegalStateException("(trg.variableBlobId==null)");
             }
-        }
 
-        // that's right - targetVariable.filename
+            // TODO p5 2023-08-17 delete after Oct 1, 2023 if Ok
+//            ByteArrayInputStream bais = new ByteArrayInputStream(Consts.STUB_BYTES);
+//            dispatcherBlobStorage.storeVariableData(trg.variableBlobId, bais, Consts.STUB_BYTES.length);
+        }
+*/
+
+        // that's correct - targetVariable.filename
         trg.filename = targetVariable.filename;
         trg.uploadTs = new Timestamp(System.currentTimeMillis());
         trg.inited = true;

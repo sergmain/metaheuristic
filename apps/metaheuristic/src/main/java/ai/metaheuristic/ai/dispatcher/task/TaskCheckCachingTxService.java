@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.variable.VariableDatabaseSpecificService;
+import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
@@ -65,8 +65,8 @@ public class TaskCheckCachingTxService {
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheVariableRepository cacheVariableRepository;
     private final VariableTxService variableService;
-    private final VariableDatabaseSpecificService variableDatabaseSpecificService;
     private final EventPublisherService eventPublisherService;
+    private final DispatcherBlobStorage dispatcherBlobStorage;
 
     @Transactional
     public void invalidateCacheItemAndSetTaskToNone(Long execContextId, Long taskId, Long cacheProcessId) {
@@ -157,7 +157,7 @@ public class TaskCheckCachingTxService {
                         VariableSyncService.getWithSyncVoidForCreation(output.id, () -> variableService.setVariableAsNull(output.id));
                     }
                     else {
-                        variableDatabaseSpecificService.copyData(storedVariable, output);
+                        dispatcherBlobStorage.copyData(storedVariable, output);
                     }
                     eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, output.id, storedVariable.nullified));
 

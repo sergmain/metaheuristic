@@ -14,64 +14,51 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.variable;
+package ai.metaheuristic.ai.dispatcher.storage;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
+import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.sql.Blob;
 
 /**
  * @author Sergio Lissner
- * Date: 6/7/2023
- * Time: 3:01 PM
+ * Date: 8/17/2023
+ * Time: 12:24 PM
  */
-@Service
 @Slf4j
-@Profile("dispatcher")
+@Service
+@Profile({"dispatcher & !disk-storage"})
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class VariableBlobTxService {
+public class DatabaseBlobStoreService {
 
     private final VariableBlobRepository variableBlobRepository;
-
     private final EntityManager em;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Long createEmpty() {
-        VariableBlob data = new VariableBlob();
-        ByteArrayInputStream bais = new ByteArrayInputStream(Consts.STUB_BYTES);
-        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(bais, Consts.STUB_BYTES.length);
-        data.setData(blob);
-        VariableBlob r = variableBlobRepository.save(data);
-        return r.id;
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Long createIfNotExist(@Nullable Long variableBlobId) {
+    public void storeData(Long variableBlobId, InputStream is, long size ) {
         VariableBlob variableBlob = null;
         if (variableBlobId!=null) {
             variableBlob = variableBlobRepository.findById(variableBlobId).orElse(null);
         }
 
         if (variableBlob==null) {
-            return createEmpty();
+            throw new VariableCommonException("174.040 variableBlob not found", variableBlobId);
         }
 
-        return variableBlob.id;
+        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
+        variableBlob.setData(blob);
+        VariableBlob result = variableBlobRepository.save(variableBlob);
     }
-
-
-
 }

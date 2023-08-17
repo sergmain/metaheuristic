@@ -136,7 +136,7 @@ public class SourceCodeRestController {
 
     // TODO p0 2023-05-20 создание архива с заготовками для задачи. т.е. кнопка Dev
     @GetMapping(value= "/source-code-dev-generate/{sourceCodeId}/{processCode}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public HttpEntity<AbstractResource> downloadVariable(
+    public HttpEntity<AbstractResource> sourceCodeDevGenerate(
             HttpServletRequest request, @PathVariable("sourceCodeId") Long sourceCodeId, @PathVariable("processCode") String processCode,
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
