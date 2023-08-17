@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.storage.VariableBlobTxService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -61,10 +62,10 @@ public class VariableDatabaseSpecificCommonService {
             return;
         }
 
-        trg.variableBlobId = variableBlobTxService.createIfNotExist(trg.variableBlobId);
+        trg.variableBlobId = variableBlobTxService.createVariableIfNotExist(trg.variableBlobId);
 /*
         if (trg.variableBlobId==null) {
-            trg.variableBlobId = variableBlobTxService.createIfNotExist(null);
+            trg.variableBlobId = variableBlobTxService.createVariableIfNotExist(null);
             if (trg.variableBlobId==null) {
                 throw new IllegalStateException("(trg.variableBlobId==null)");
             }

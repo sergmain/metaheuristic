@@ -56,31 +56,6 @@ public class GlobalVariableTxService {
     private final Globals globals;
     private final DispatcherBlobStorage dispatcherBlobStorage;
 
-    @Nullable
-    @Transactional(readOnly = true)
-    public GlobalVariable getBinaryData(Long id) {
-        if (!globals.testing) {
-            throw new IllegalStateException("#089.010 this method intended to be only for test cases");
-        }
-        return getBinaryData(id, true);
-    }
-
-    @Nullable
-    private GlobalVariable getBinaryData(Long id, @SuppressWarnings("SameParameterValue") boolean isInitBytes) {
-        try {
-            GlobalVariable data = globalVariableRepository.findById(id).orElse(null);
-            if (data==null) {
-                return null;
-            }
-            if (isInitBytes) {
-                data.bytes = data.getData().getBytes(1, (int) data.getData().length());
-            }
-            return data;
-        } catch (SQLException e) {
-            throw new IllegalStateException("#089.020 SQL error", e);
-        }
-    }
-
     @Transactional(readOnly = true)
     public String getVariableDataAsString(Long variableId) {
         final String data = getVariableDataAsString(variableId, false);

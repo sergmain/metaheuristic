@@ -17,9 +17,11 @@
 package ai.metaheuristic.ai.dispatcher.storage;
 
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
+import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableDatabaseSpecificService;
+import ai.metaheuristic.ai.exceptions.FunctionDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -55,6 +57,7 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
     private final VariableBlobRepository variableBlobRepository;
     private final DatabaseBlobPersistService databaseBlobStoreService;
     private final GlobalVariableRepository globalVariableRepository;
+    private final FunctionDataRepository functionDataRepository;
 
     @Override
     public void accessVariableData(Long variableBlobId, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException {
@@ -85,7 +88,7 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
     }
 
     public void storeVariableData(Long variableBlobId, InputStream is, long size ) {
-        databaseBlobStoreService.storeData(variableBlobId, is, size);
+        databaseBlobStoreService.storeVariable(variableBlobId, is, size);
     }
 
     @Override
@@ -123,6 +126,27 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
 
     @Override
     public void storeGlobalVariableData(Long globalVariableId, InputStream is, long size) {
+        databaseBlobStoreService.storeGlobalVariable(globalVariableId, is, size);
+
+    }
+
+    @Override
+    public void accessFunctionData(String functionCode, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException {
+        TxUtils.checkTxExists();
+        Blob blob = functionDataRepository.getDataAsStreamByCode(functionCode);
+        if (blob==null) {
+            String es = "174.040 FunctionData #"+ functionCode +" wasn't found";
+            log.warn(es);
+            throw new FunctionDataNotFoundException(functionCode, es);
+        }
+        try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is)) {
+            processBlobDataFunc.accept(bis);
+        }
+    }
+
+    @Override
+    public void storeFunctionData(Long functionDataId, InputStream is, long size) {
+        databaseBlobStoreService.storeFunctionData(functionDataId, is, size);
 
     }
 }

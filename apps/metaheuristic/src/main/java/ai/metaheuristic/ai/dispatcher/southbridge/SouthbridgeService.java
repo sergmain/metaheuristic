@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskCommunicationEvent;
-import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionDataTxService;
 import ai.metaheuristic.ai.dispatcher.keep_alive.KeepAliveTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
@@ -85,7 +85,7 @@ public class SouthbridgeService {
     private final Globals globals;
     private final VariableTxService variableService;
     private final GlobalVariableTxService globalVariableService;
-    private final FunctionDataService functionDataService;
+    private final FunctionDataTxService functionDataService;
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
     private final KeepAliveTopLevelService keepAliveTopLevelService;
     private final ApplicationEventPublisher eventPublisher;

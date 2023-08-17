@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.function;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
-import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionDataTxService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTxService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
@@ -72,7 +72,7 @@ public class TestFunctionService {
     private FunctionRepository functionRepository;
 
     @Autowired
-    private FunctionDataService functionDataService;
+    private FunctionDataTxService functionDataService;
 
     @Autowired
     private Globals globals;

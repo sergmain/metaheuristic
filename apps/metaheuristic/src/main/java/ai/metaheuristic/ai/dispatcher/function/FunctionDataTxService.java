@@ -18,9 +18,9 @@ package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.dispatcher.beans.FunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
+import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.FunctionDataErrorException;
-import ai.metaheuristic.ai.exceptions.FunctionDataNotFoundException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -42,13 +41,16 @@ import java.util.Optional;
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class FunctionDataService {
+public class FunctionDataTxService {
 
     private final FunctionDataRepository functionDataRepository;
+    private final DispatcherBlobStorage dispatcherBlobStorage;
 
     @Transactional(readOnly = true)
     public void storeToFile(String code, Path trgFile) {
         try {
+            dispatcherBlobStorage.accessFunctionData(code, (is)-> DirUtils.copy(is, trgFile));
+/*
             Blob blob = functionDataRepository.getDataAsStreamByCode(code);
             if (blob==null) {
                 log.warn("#088.010 Binary data for code {} wasn't found", code);
@@ -57,6 +59,7 @@ public class FunctionDataService {
             try (InputStream is = blob.getBinaryStream()) {
                 DirUtils.copy(is, trgFile);
             }
+*/
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Throwable th) {

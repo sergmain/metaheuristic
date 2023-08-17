@@ -29,8 +29,9 @@ import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
+import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableEntityManagerTxService;
+import ai.metaheuristic.ai.dispatcher.storage.VariableBlobTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
@@ -40,6 +41,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -47,6 +49,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
@@ -71,7 +74,7 @@ public class PreparingSourceCodeInitService {
     private final CompanyTopLevelService companyTopLevelService;
     private final AccountService accountTopLevelService;
     private final GlobalVariableTxService globalVariableService;
-    private final GlobalVariableEntityManagerTxService globalVariableEntityManagerTxService;
+    private final VariableBlobTxService variableBlobTxService;
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final SourceCodeCache sourceCodeCache;
     private final FunctionRepository functionRepository;
@@ -85,7 +88,10 @@ public class PreparingSourceCodeInitService {
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final TaskRepositoryForTest taskRepositoryForTest;
     private final AccountRepository accountRepository;
+    private final DispatcherBlobStorage dispatcherBlobStorage;
+    private final GlobalVariableRepository globalVariableRepository;
 
+    @SneakyThrows
     public PreparingData.PreparingSourceCodeData beforePreparingSourceCode(String params) {
         assertTrue(globals.testing);
         assertNotSame(globals.dispatcher.asset.mode, EnumsApi.DispatcherAssetMode.replicated);
@@ -110,6 +116,7 @@ public class PreparingSourceCodeInitService {
         account.publicName = data.account.username;
         accountTopLevelService.addAccount(account, data.company.uniqueId);
 
+        //noinspection DataFlowIssue
         data.account = accountRepository.findByUsername(account.username);
         assertNotNull(data.account);
 
@@ -141,7 +148,11 @@ public class PreparingSourceCodeInitService {
             log.error("error preparing variables", th);
         }
 
-        data.testGlobalVariable = globalVariableEntityManagerTxService.save(new ByteArrayInputStream(bytes), bytes.length, GLOBAL_TEST_VARIABLE,"file-01.txt");
+        Long globalVariableId = variableBlobTxService.createEmptyGlobalVariable(GLOBAL_TEST_VARIABLE, "file-01.txt");
+        try (InputStream is = new ByteArrayInputStream(bytes)) {
+            dispatcherBlobStorage.storeGlobalVariableData(globalVariableId, is, bytes.length);
+        }
+        data.testGlobalVariable = globalVariableRepository.findById(globalVariableId).orElseThrow();
 
         data.execContextYaml = new ExecContextParamsYaml();
         data.execContextYaml.variables.globals = new ArrayList<>();

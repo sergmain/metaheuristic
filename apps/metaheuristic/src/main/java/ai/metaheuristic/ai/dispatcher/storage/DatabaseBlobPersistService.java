@@ -16,8 +16,13 @@
 
 package ai.metaheuristic.ai.dispatcher.storage;
 
+import ai.metaheuristic.ai.dispatcher.beans.FunctionData;
+import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
+import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
+import ai.metaheuristic.ai.exceptions.FunctionDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.InputStream;
 import java.sql.Blob;
+import java.sql.Timestamp;
 
 /**
  * @author Sergio Lissner
@@ -44,10 +50,12 @@ import java.sql.Blob;
 public class DatabaseBlobPersistService {
 
     private final VariableBlobRepository variableBlobRepository;
+    private final GlobalVariableRepository globalVariableRepository;
+    private final FunctionDataRepository functionDataRepository;
     private final EntityManager em;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void storeData(Long variableBlobId, InputStream is, long size ) {
+    public void storeVariable(Long variableBlobId, InputStream is, long size ) {
         VariableBlob variableBlob = null;
         if (variableBlobId!=null) {
             variableBlob = variableBlobRepository.findById(variableBlobId).orElse(null);
@@ -61,4 +69,39 @@ public class DatabaseBlobPersistService {
         variableBlob.setData(blob);
         VariableBlob result = variableBlobRepository.save(variableBlob);
     }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void storeGlobalVariable(Long globalVariableId, InputStream is, long size) {
+        GlobalVariable globalVariable = null;
+        if (globalVariableId!=null) {
+            globalVariable = globalVariableRepository.findById(globalVariableId).orElse(null);
+        }
+
+        if (globalVariable==null) {
+            throw new VariableCommonException("174.080 globalVariable not found", globalVariableId);
+        }
+
+        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
+        globalVariable.setData(blob);
+        GlobalVariable result = globalVariableRepository.save(globalVariable);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void storeFunctionData(Long functionDataId, InputStream is, long size) {
+        FunctionData function = null;
+        if (functionDataId!=null) {
+            function = functionDataRepository.findById(functionDataId).orElse(null);
+        }
+
+        if (function==null) {
+            throw new FunctionDataNotFoundException("id#"+functionDataId, "174.120 function data not found");
+        }
+
+        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
+        function.setData(blob);
+        function.setUploadTs(new Timestamp(System.currentTimeMillis()));
+
+        FunctionData result = functionDataRepository.save(function);
+    }
+
 }

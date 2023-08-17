@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.dispatcher.beans.FunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
+import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
 import ai.metaheuristic.ai.exceptions.FunctionDataErrorException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
@@ -49,19 +50,16 @@ import java.sql.Timestamp;
 public class FunctionDataWithEntityManagerService {
     private final EntityManager em;
     private final FunctionDataRepository functionDataRepository;
+    private final DispatcherBlobStorage dispatcherBlobStorage;
 
     public void update(InputStream is, long size, FunctionData data) {
-        TxUtils.checkTxExists();
-        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-
-        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
-        data.setData(blob);
-
-        functionDataRepository.save(data);
+        dispatcherBlobStorage.storeFunctionData(data.id, is, size);
     }
 
     public FunctionData save(InputStream is, long size, String functionCode) {
         TxUtils.checkTxExists();
+        dispatcherBlobStorage.storeFunctionData(data.id, is, size);
+
         try {
             FunctionData data = functionDataRepository.findByCodeForUpdate(functionCode);
             if (data == null) {

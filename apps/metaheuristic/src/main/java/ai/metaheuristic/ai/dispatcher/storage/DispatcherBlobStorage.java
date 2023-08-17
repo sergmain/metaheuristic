@@ -45,6 +45,9 @@ public interface DispatcherBlobStorage {
 
     void storeGlobalVariableData(Long globalVariableId, InputStream is, long size);
 
+    void accessFunctionData(String functionCode, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException;
+
+    void storeFunctionData(Long functionDataId, InputStream is, long size);
 }
 
 

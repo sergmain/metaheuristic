@@ -72,4 +72,9 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
     public void storeGlobalVariableData(Long globalVariableId, InputStream is, long size) {
 
     }
+
+    @Override
+    public void storeFunctionData(Long functionDataId, InputStream is, long size) {
+
+    }
 }

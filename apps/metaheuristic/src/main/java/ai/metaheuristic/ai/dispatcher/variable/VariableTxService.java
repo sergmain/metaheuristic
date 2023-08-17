@@ -32,6 +32,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
+import ai.metaheuristic.ai.dispatcher.storage.VariableBlobTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -115,7 +116,7 @@ public class VariableTxService {
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
         data.setTaskContextId(taskContextId);
 
-        data.variableBlobId = variableBlobTxService.createEmpty();;
+        data.variableBlobId = variableBlobTxService.createEmptyVariable();;
         dispatcherBlobStorage.storeVariableData(data.variableBlobId, is, size);
 
         variableRepository.save(data);
@@ -132,7 +133,7 @@ public class VariableTxService {
         }
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        data.variableBlobId = variableBlobTxService.createIfNotExist(data.variableBlobId);
+        data.variableBlobId = variableBlobTxService.createVariableIfNotExist(data.variableBlobId);
         dispatcherBlobStorage.storeVariableData(data.variableBlobId, is, size);
 
         data.inited = true;
@@ -155,7 +156,7 @@ public class VariableTxService {
         data.filename = filename;
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        data.variableBlobId = variableBlobTxService.createIfNotExist(data.variableBlobId);
+        data.variableBlobId = variableBlobTxService.createVariableIfNotExist(data.variableBlobId);
         dispatcherBlobStorage.storeVariableData(data.variableBlobId, is, size);
 
         data.inited = true;

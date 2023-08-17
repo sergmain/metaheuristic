@@ -41,7 +41,7 @@ public class FunctionTxService {
 
     private final FunctionCache functionCache;
     private final FunctionRepository functionRepository;
-    private final FunctionDataService functionDataService;
+    private final FunctionDataTxService functionDataService;
     private final FunctionDataWithEntityManagerService functionDataWithEntityManagerService;
 
     @Transactional

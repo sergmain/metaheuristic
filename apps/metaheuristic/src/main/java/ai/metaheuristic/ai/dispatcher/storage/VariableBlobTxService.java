@@ -14,10 +14,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.variable;
+package ai.metaheuristic.ai.dispatcher.storage;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.beans.FunctionData;
+import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
+import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
 import java.sql.Blob;
+import java.sql.Timestamp;
 
 /**
  * @author Sergio Lissner
@@ -45,10 +50,12 @@ import java.sql.Blob;
 public class VariableBlobTxService {
 
     private final VariableBlobRepository variableBlobRepository;
+    private final GlobalVariableRepository globalVariableRepository;
+    private final FunctionDataRepository functionDataRepository;
     private final EntityManager em;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Long createEmpty() {
+    public Long createEmptyVariable() {
         VariableBlob data = new VariableBlob();
         ByteArrayInputStream bais = new ByteArrayInputStream(Consts.STUB_BYTES);
         Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(bais, Consts.STUB_BYTES.length);
@@ -58,19 +65,46 @@ public class VariableBlobTxService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Long createIfNotExist(@Nullable Long variableBlobId) {
+    public Long createVariableIfNotExist(@Nullable Long variableBlobId) {
         VariableBlob variableBlob = null;
         if (variableBlobId!=null) {
             variableBlob = variableBlobRepository.findById(variableBlobId).orElse(null);
         }
 
         if (variableBlob==null) {
-            return createEmpty();
+            return createEmptyVariable();
         }
 
         return variableBlob.id;
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Long createEmptyGlobalVariable(String variable, @Nullable String filename) {
+        GlobalVariable data = new GlobalVariable();
+        data.name = variable;
+        data.filename = filename;
+        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
+
+        ByteArrayInputStream bais = new ByteArrayInputStream(Consts.STUB_BYTES);
+        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(bais, Consts.STUB_BYTES.length);
+        data.setData(blob);
+        GlobalVariable r = globalVariableRepository.save(data);
+        return r.id;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Long createEmptyFunctionData(String functionCode) {
+        FunctionData data = new FunctionData();
+        data.functionCode = functionCode;
+        data.uploadTs = new Timestamp(System.currentTimeMillis());
+
+        ByteArrayInputStream bais = new ByteArrayInputStream(Consts.STUB_BYTES);
+        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(bais, Consts.STUB_BYTES.length);
+        data.setData(blob);
+
+        FunctionData r = functionDataRepository.save(data);
+        return r.id;
+    }
 
 
 }

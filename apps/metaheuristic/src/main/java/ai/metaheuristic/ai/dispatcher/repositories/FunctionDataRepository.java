@@ -43,6 +43,11 @@ public interface FunctionDataRepository extends CrudRepository<FunctionData, Lon
     @Query(value="select b.functionCode from FunctionData b ")
     List<String> findAllFunctionCodes();
 
+    @Nullable
+    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
+    @Query(value="select b.data from FunctionData b where b.id=:id")
+    Blob getDataAsStreamById(Long id);
+
     @Override
     @Modifying
     @Query(value="delete from FunctionData t where t.id=:id")
