@@ -54,7 +54,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-//@ActiveProfiles("dispatcher")
+////@ActiveProfiles("dispatcher")
 @Slf4j
 @AutoConfigureCache
 public class TestBinaryDataSaveAndLoad {
