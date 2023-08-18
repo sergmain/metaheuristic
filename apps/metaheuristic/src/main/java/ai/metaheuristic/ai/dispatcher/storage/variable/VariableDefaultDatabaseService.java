@@ -95,7 +95,8 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
             throw new IllegalStateException(es, e);
         }
         eventPublisher.publishEvent(new ResourceCloseTxEvent(is, tempFile));
-        storeData(is, Files.size(tempFile), targetVariable.id, targetVariable.filename);
+        final long size = Files.size(tempFile);
+        VariableSyncService.getWithSyncVoidForCreation(targetVariable.id, () -> storeData(is, size, targetVariable.id, targetVariable.filename));
     }
 
     private void storeData(InputStream is, long size, Long variableId, @Nullable String filename) {

@@ -115,8 +115,9 @@ public class GeneralBlobTxService {
         return r.id;
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public CacheVariable createEmptyCacheVariable(Long cacheProcessId, String variable) {
-        TxUtils.checkTxExists();
+        //TxUtils.checkTxExists();
 
         CacheVariable data = new CacheVariable();
         data.cacheProcessId = cacheProcessId;

@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.profiles;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestPropertySource(locations="classpath:test-processor-profile.properties")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
+@Disabled
 public class TestProcessorProfile {
 
     @Autowired

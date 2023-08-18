@@ -24,15 +24,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.sql.Timestamp;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -57,6 +58,7 @@ public class TestLogDataRepository {
         logData.setLogData("This is log data");
         logData.setType(Enums.LogType.ASSEMBLING);
         logData.setRefId(42L);
+        logData.setUpdateTs(new Timestamp(System.currentTimeMillis()));
         logData = logDataRepository.save(logData);
         assertNotNull(logData);
 
