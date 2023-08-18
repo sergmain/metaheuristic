@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.utils;
 
-import ai.metaheuristic.ai.Config;
 import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -34,7 +33,7 @@ public class SpringHelpersUtils {
 
     public static final List<String> POSSIBLE_PROFILES = List.of(
             // Spring's profiles
-            "dispatcher", "processor", "quickstart", "standalone", "disk-storage",
+            "dispatcher", "processor", "quickstart", "standalone", "disk-storage", "test",
 
             // db's profiles
             "mysql", "postgresql", "h2", "generic", "custom");
