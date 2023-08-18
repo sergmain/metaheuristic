@@ -57,7 +57,7 @@ import java.sql.Timestamp;
 @SuppressWarnings("DuplicatedCode")
 @Service
 @Slf4j
-@Profile({"dispatcher & !mysql & !postgresql"})
+@Profile({"dispatcher & !mysql & !postgresql & !disk-storage"})
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class VariableDefaultDatabaseService implements VariableDatabaseSpecificService {
 

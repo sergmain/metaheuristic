@@ -73,7 +73,7 @@ public class Consts {
     public static final String PROCESSOR_DIR = "processor";
     public static final String STORAGE_DIR = "storage";
     public static final String VARIABLES_DIR = "variables";
-    public static final String GLOBAL_VARIABLES_DIR = "variables";
+    public static final String GLOBAL_VARIABLES_DIR = "global-variables";
     public static final String FUNCTIONS_DIR = "functions";
     public static final String CACHE_VARIABLES_DIR = "cache-variables";
 

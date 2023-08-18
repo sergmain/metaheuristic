@@ -400,7 +400,7 @@ public class FunctionTopLevelService {
                     continue;
                 }
                 String sum=null;
-                Path file = null;
+                Path file = S.b(functionConfig.file) ? null : srcDir.resolve(functionConfig.file);
                 if (globals.dispatcher.functionSignatureRequired) {
                     // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing right noww
                     final EnumsApi.HashAlgo hashAlgo = EnumsApi.HashAlgo.SHA256WithSignature;
