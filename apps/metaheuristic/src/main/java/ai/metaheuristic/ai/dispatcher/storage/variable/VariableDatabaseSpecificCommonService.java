@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.variable;
+package ai.metaheuristic.ai.dispatcher.storage.variable;
 
 import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;

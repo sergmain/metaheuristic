@@ -17,11 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.storage;
 
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
-import ai.metaheuristic.ai.dispatcher.variable.VariableDatabaseSpecificService;
+import ai.metaheuristic.ai.dispatcher.storage.variable.VariableDatabaseSpecificService;
 import ai.metaheuristic.ai.exceptions.FunctionDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -59,7 +58,7 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
     private final DatabaseBlobPersistService databaseBlobStoreService;
     private final GlobalVariableRepository globalVariableRepository;
     private final FunctionDataRepository functionDataRepository;
-    private final CacheVariableRepository cacheVariableRepository;
+    private final CacheVariableDatabaseStorageService cacheVariableDatabaseStorageService;
 
     @Override
     public void accessVariableData(Long variableBlobId, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException {
@@ -159,14 +158,6 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
 
     @Override
     public void accessCacheVariableData(Long cacheVariableId, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException {
-        Blob blob = cacheVariableRepository.getDataAsStreamById(Objects.requireNonNull(cacheVariableId));
-        if (blob==null) {
-            String es = "174.420 Variable #"+ cacheVariableId +" wasn't found";
-            log.warn(es);
-            throw new VariableDataNotFoundException(cacheVariableId, EnumsApi.VariableContext.local, es);
-        }
-        try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is)) {
-            processBlobDataFunc.accept(bis);
-        }
+        cacheVariableDatabaseStorageService.accessCacheVariableData(cacheVariableId, processBlobDataFunc);
     }
 }

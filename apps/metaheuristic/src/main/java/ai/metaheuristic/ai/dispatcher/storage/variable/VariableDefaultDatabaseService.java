@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.variable;
+package ai.metaheuristic.ai.dispatcher.storage.variable;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
@@ -22,9 +22,10 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.events.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.storage.CacheVariableDatabaseStorageService;
 import ai.metaheuristic.ai.dispatcher.storage.DatabaseBlobPersistService;
-import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
 import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
@@ -66,7 +67,7 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
     private final ApplicationEventPublisher eventPublisher;
     private final DatabaseBlobPersistService databaseBlobPersistService;
     private final VariableRepository variableRepository;
-    private final DispatcherBlobStorage dispatcherBlobStorage;
+    private final CacheVariableDatabaseStorageService cacheVariableDatabaseStorageService;
 
     @SneakyThrows
     public void copyData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) {
@@ -82,7 +83,7 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
         InputStream is;
         try {
             // TODO 2021-10-14 right now, an array variable isn't supported
-            dispatcherBlobStorage.accessCacheVariableData(srcVariable.id, (inputStream)-> DirUtils.copy(inputStream, tempFile));
+            cacheVariableDatabaseStorageService.accessCacheVariableData(srcVariable.id, (inputStream)-> DirUtils.copy(inputStream, tempFile));
             is = Files.newInputStream(tempFile);
         } catch (CommonErrorWithDataException e) {
             eventPublisher.publishEvent(new ResourceCloseTxEvent(tempFile));
