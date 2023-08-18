@@ -60,11 +60,7 @@ public class DatabaseBlobPersistService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void storeVariable(Long variableBlobId, InputStream is, long size ) {
-        VariableBlob variableBlob = null;
-        if (variableBlobId!=null) {
-            variableBlob = variableBlobRepository.findById(variableBlobId).orElse(null);
-        }
-
+        VariableBlob variableBlob = variableBlobRepository.findById(variableBlobId).orElse(null);
         if (variableBlob==null) {
             throw new VariableCommonException("174.040 variableBlob not found", variableBlobId);
         }
@@ -76,14 +72,12 @@ public class DatabaseBlobPersistService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void storeGlobalVariable(Long globalVariableId, InputStream is, long size) {
-        GlobalVariable globalVariable = null;
-        if (globalVariableId!=null) {
-            globalVariable = globalVariableRepository.findById(globalVariableId).orElse(null);
-        }
+        GlobalVariable globalVariable = globalVariableRepository.findById(globalVariableId).orElse(null);
 
         if (globalVariable==null) {
             throw new VariableCommonException("174.080 globalVariable not found", globalVariableId);
         }
+        globalVariable.uploadTs = new Timestamp(System.currentTimeMillis());
 
         Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
         globalVariable.setData(blob);

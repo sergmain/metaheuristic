@@ -17,12 +17,18 @@
 package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.cache.CacheVariableService;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.events.ResourceCloseTxEvent;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.storage.DatabaseBlobPersistService;
+import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
+import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -30,12 +36,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Timestamp;
 
 /**
  * @author Serge
@@ -44,6 +52,7 @@ import java.nio.file.Path;
  */
 
 // https://stackoverflow.com/questions/35252262/spring-boot-configuration-skip-registration-on-multiple-profile/59631429#59631429
+@SuppressWarnings("DuplicatedCode")
 @Service
 @Slf4j
 @Profile({"dispatcher & !mysql & !postgresql"})
@@ -51,9 +60,11 @@ import java.nio.file.Path;
 public class VariableDefaultDatabaseService implements VariableDatabaseSpecificService {
 
     private final Globals globals;
-    private final VariableTxService variableTxService;
+    private final GeneralBlobTxService generalBlobTxService;
     private final CacheVariableService cacheVariableService;
     private final ApplicationEventPublisher eventPublisher;
+    private final DatabaseBlobPersistService databaseBlobPersistService;
+    private final VariableRepository variableRepository;
 
     @SneakyThrows
     public void copyData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) {
@@ -81,7 +92,38 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
             throw new IllegalStateException(es, e);
         }
         eventPublisher.publishEvent(new ResourceCloseTxEvent(is, tempFile));
-        variableTxService.storeData(is, Files.size(tempFile), targetVariable.id, targetVariable.filename);
+        storeData(is, Files.size(tempFile), targetVariable.id, targetVariable.filename);
     }
 
+    private void storeData(InputStream is, long size, Long variableId, @Nullable String filename) {
+        VariableSyncService.checkWriteLockPresent(variableId);
+
+        if (size==0) {
+            throw new IllegalStateException("171.720 Variable can't be with zero length");
+        }
+        TxUtils.checkTxExists();
+
+        Variable data = getVariableNotNull(variableId);
+
+        data.filename = filename;
+        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
+
+        data.variableBlobId = generalBlobTxService.createVariableIfNotExist(data.variableBlobId);
+        databaseBlobPersistService.storeVariable(data.variableBlobId, is, size);
+
+        data.inited = true;
+        data.nullified = false;
+
+        variableRepository.save(data);
+    }
+
+    private Variable getVariableNotNull(Long variableId) {
+        Variable v = variableRepository.findByIdAsSimple(variableId);
+        if (v==null) {
+            String es = "171.535 Variable #" + variableId + " wasn't found";
+            log.warn(es);
+            throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
+        }
+        return v;
+    }
 }

@@ -112,7 +112,7 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
 
     @Override
     public void accessGlobalVariableData(Long globalVariableId, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException {
-        TxUtils.checkTxExists();
+        //TxUtils.checkTxExists();
         Blob blob = globalVariableRepository.getDataAsStreamById(Objects.requireNonNull(globalVariableId));
         if (blob==null) {
             String es = "174.340 Variable #"+ globalVariableId +" wasn't found";
