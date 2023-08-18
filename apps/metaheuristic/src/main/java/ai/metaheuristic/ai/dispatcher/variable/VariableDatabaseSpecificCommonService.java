@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.storage.VariableBlobTxService;
+import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +45,7 @@ import java.util.function.BiConsumer;
 public class VariableDatabaseSpecificCommonService {
 
     private final VariableRepository variableRepository;
-    private final VariableBlobTxService variableBlobTxService;
+    private final GeneralBlobTxService generalBlobTxService;
     private final CacheVariableRepository cacheVariableRepository;
 
     public void copyData(VariableData.StoredVariable storedVariable, TaskParamsYaml.OutputVariable targetVariable, BiConsumer<Long, Long> copyDataFunc) {
@@ -62,7 +62,7 @@ public class VariableDatabaseSpecificCommonService {
             return;
         }
 
-        trg.variableBlobId = variableBlobTxService.createVariableIfNotExist(trg.variableBlobId);
+        trg.variableBlobId = generalBlobTxService.createVariableIfNotExist(trg.variableBlobId);
 /*
         if (trg.variableBlobId==null) {
             trg.variableBlobId = variableBlobTxService.createVariableIfNotExist(null);

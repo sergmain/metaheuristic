@@ -74,6 +74,11 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
     }
 
     @Override
+    public void accessFunctionData(String functionCode, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException {
+
+    }
+
+    @Override
     public void storeFunctionData(Long functionDataId, InputStream is, long size) {
 
     }

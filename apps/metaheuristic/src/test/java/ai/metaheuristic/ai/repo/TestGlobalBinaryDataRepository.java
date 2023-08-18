@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.repo;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
-import ai.metaheuristic.ai.dispatcher.storage.VariableBlobTxService;
+import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -50,7 +50,7 @@ public class TestGlobalBinaryDataRepository {
     @Autowired
     private GlobalVariableTxService globalVariableService;
     @Autowired
-    private VariableBlobTxService variableBlobTxService;
+    private GeneralBlobTxService variableBlobTxService;
     @Autowired
     private DispatcherBlobStorage dispatcherBlobStorage;
     @Autowired

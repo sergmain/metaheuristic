@@ -23,6 +23,9 @@ import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
+import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +50,7 @@ import java.sql.Timestamp;
 @Slf4j
 @Profile({"dispatcher & !disk-storage"})
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class VariableBlobTxService {
+public class GeneralBlobTxService {
 
     private final VariableBlobRepository variableBlobRepository;
     private final GlobalVariableRepository globalVariableRepository;
@@ -83,6 +86,7 @@ public class VariableBlobTxService {
         GlobalVariable data = new GlobalVariable();
         data.name = variable;
         data.filename = filename;
+        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher, variable)));
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
         ByteArrayInputStream bais = new ByteArrayInputStream(Consts.STUB_BYTES);
@@ -97,6 +101,7 @@ public class VariableBlobTxService {
         FunctionData data = new FunctionData();
         data.functionCode = functionCode;
         data.uploadTs = new Timestamp(System.currentTimeMillis());
+        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher, functionCode)));
 
         ByteArrayInputStream bais = new ByteArrayInputStream(Consts.STUB_BYTES);
         Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(bais, Consts.STUB_BYTES.length);

@@ -31,7 +31,7 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
-import ai.metaheuristic.ai.dispatcher.storage.VariableBlobTxService;
+import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
@@ -50,10 +50,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 import static ai.metaheuristic.ai.preparing.PreparingConsts.GLOBAL_TEST_VARIABLE;
 import static org.junit.jupiter.api.Assertions.*;
@@ -74,7 +71,7 @@ public class PreparingSourceCodeInitService {
     private final CompanyTopLevelService companyTopLevelService;
     private final AccountService accountTopLevelService;
     private final GlobalVariableTxService globalVariableService;
-    private final VariableBlobTxService variableBlobTxService;
+    private final GeneralBlobTxService variableBlobTxService;
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final SourceCodeCache sourceCodeCache;
     private final FunctionRepository functionRepository;
@@ -90,6 +87,8 @@ public class PreparingSourceCodeInitService {
     private final AccountRepository accountRepository;
     private final DispatcherBlobStorage dispatcherBlobStorage;
     private final GlobalVariableRepository globalVariableRepository;
+
+    static Random r = new Random();
 
     @SneakyThrows
     public PreparingData.PreparingSourceCodeData beforePreparingSourceCode(String params) {
@@ -109,11 +108,11 @@ public class PreparingSourceCodeInitService {
         data.company = Objects.requireNonNull(companyTopLevelService.getCompanyByUniqueId(data.company.uniqueId));
 
         AccountData.NewAccount account = new AccountData.NewAccount();
-        account.username = "test-"+ UUID.randomUUID();
+        account.username = "test-"+ System.currentTimeMillis()+r.nextInt(1000);
         // 123
         account.password = "$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu";
         account.password2 = account.password;
-        account.publicName = data.account.username;
+        account.publicName = account.username;
         accountTopLevelService.addAccount(account, data.company.uniqueId);
 
         //noinspection DataFlowIssue

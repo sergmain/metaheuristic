@@ -22,8 +22,12 @@ import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
+import ai.metaheuristic.ai.exceptions.FunctionDataErrorException;
 import ai.metaheuristic.ai.exceptions.FunctionDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
+import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -88,13 +92,14 @@ public class DatabaseBlobPersistService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void storeFunctionData(Long functionDataId, InputStream is, long size) {
-        FunctionData function = null;
-        if (functionDataId!=null) {
-            function = functionDataRepository.findById(functionDataId).orElse(null);
-        }
-
+        FunctionData function = functionDataRepository.findById(functionDataId).orElse(null);
         if (function==null) {
             throw new FunctionDataNotFoundException("id#"+functionDataId, "174.120 function data not found");
+        }
+        DataStorageParams dataStorageParams = DataStorageParamsUtils.to(function.params);
+        if (dataStorageParams.sourcing!= EnumsApi.DataSourcing.dispatcher) {
+            // this is an exception for the case when two resources have the same names but different pool codes
+            throw new FunctionDataErrorException("FunctionData#"+ functionDataId, "174.160 Sourcing must be dispatcher, value in db: " + dataStorageParams.sourcing);
         }
 
         Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);

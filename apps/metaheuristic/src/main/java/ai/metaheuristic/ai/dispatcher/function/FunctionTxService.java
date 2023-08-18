@@ -17,6 +17,8 @@ package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
+import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
+import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +44,8 @@ public class FunctionTxService {
     private final FunctionCache functionCache;
     private final FunctionRepository functionRepository;
     private final FunctionDataTxService functionDataService;
-    private final FunctionDataWithEntityManagerService functionDataWithEntityManagerService;
+    private final GeneralBlobTxService generalBlobTxService;
+    private final DispatcherBlobStorage dispatcherBlobStorage;
 
     @Transactional
     public void deleteFunction(Long functionId, String functionCode) {
@@ -60,7 +63,8 @@ public class FunctionTxService {
         String functionCode = function.getCode();
         function = functionCache.save(function);
         if (inputStream!=null) {
-            functionDataWithEntityManagerService.save(inputStream, size, functionCode);
+            Long functionDataId = generalBlobTxService.createEmptyFunctionData(functionCode);
+            dispatcherBlobStorage.storeFunctionData(functionDataId, inputStream, size);
         }
         return function;
     }

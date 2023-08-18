@@ -32,7 +32,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
-import ai.metaheuristic.ai.dispatcher.storage.VariableBlobTxService;
+import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -92,7 +92,7 @@ public class VariableTxService {
     private final ApplicationEventPublisher eventPublisher;
     private final EventPublisherService eventPublisherService;
     private final ExecContextCache execContextCache;
-    private final VariableBlobTxService variableBlobTxService;
+    private final GeneralBlobTxService generalBlobTxService;
     private final DispatcherBlobStorage dispatcherBlobStorage;
 
     private Variable createInitialized(
@@ -116,7 +116,7 @@ public class VariableTxService {
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
         data.setTaskContextId(taskContextId);
 
-        data.variableBlobId = variableBlobTxService.createEmptyVariable();;
+        data.variableBlobId = generalBlobTxService.createEmptyVariable();;
         dispatcherBlobStorage.storeVariableData(data.variableBlobId, is, size);
 
         variableRepository.save(data);
@@ -133,7 +133,7 @@ public class VariableTxService {
         }
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        data.variableBlobId = variableBlobTxService.createVariableIfNotExist(data.variableBlobId);
+        data.variableBlobId = generalBlobTxService.createVariableIfNotExist(data.variableBlobId);
         dispatcherBlobStorage.storeVariableData(data.variableBlobId, is, size);
 
         data.inited = true;
@@ -156,7 +156,7 @@ public class VariableTxService {
         data.filename = filename;
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        data.variableBlobId = variableBlobTxService.createVariableIfNotExist(data.variableBlobId);
+        data.variableBlobId = generalBlobTxService.createVariableIfNotExist(data.variableBlobId);
         dispatcherBlobStorage.storeVariableData(data.variableBlobId, is, size);
 
         data.inited = true;
