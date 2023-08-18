@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.el;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
@@ -201,7 +202,7 @@ public class EvaluateExpressionLanguage {
                 if (tempDir == null) {
                     throw new InternalFunctionException(system_error, "#509.050 can't create a temporary file");
                 }
-                Path tempFile = Files.createTempFile(tempDir, "input-", ".bin");
+                Path tempFile = Files.createTempFile(tempDir, "input-", Consts.BIN_EXT);
                 if (variableHolderInput.globalVariable!=null) {
                     globalVariableService.storeToFileWithTx(variableHolderInput.globalVariable.id, tempFile);
                 } else if (variableHolderInput.variable!=null) {

@@ -109,7 +109,7 @@ public class YamlUtils {
     }
 
     public static Object to(Path file, Yaml yaml) {
-        try (InputStream is = Files.newInputStream(file); BufferedInputStream bis = new BufferedInputStream(is, 0x1000);) {
+        try (InputStream is = Files.newInputStream(file); BufferedInputStream bis = new BufferedInputStream(is, 0x1000)) {
             return yaml.load(bis);
         } catch (IOException e) {
             log.error("Error", e);

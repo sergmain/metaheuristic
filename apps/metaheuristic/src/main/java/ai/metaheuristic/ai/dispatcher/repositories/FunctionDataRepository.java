@@ -63,6 +63,10 @@ public interface FunctionDataRepository extends CrudRepository<FunctionData, Lon
     @Query(value="select b from FunctionData b where b.functionCode=:functionCode")
     FunctionData findByCodeForUpdate(String functionCode);
 
+    @Nullable
+    @Query(value="select b.id from FunctionData b where b.functionCode=:functionCode")
+    Long findIdByCode(String functionCode);
+
     @Modifying
     void deleteByFunctionCode(String functionCode);
 }

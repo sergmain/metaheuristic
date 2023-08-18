@@ -16,13 +16,14 @@
 
 package ai.metaheuristic.ai.dispatcher.variable;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.cache.CacheVariableService;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.events.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.storage.DatabaseBlobPersistService;
+import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
 import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
@@ -30,6 +31,7 @@ import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -61,10 +63,10 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
 
     private final Globals globals;
     private final GeneralBlobTxService generalBlobTxService;
-    private final CacheVariableService cacheVariableService;
     private final ApplicationEventPublisher eventPublisher;
     private final DatabaseBlobPersistService databaseBlobPersistService;
     private final VariableRepository variableRepository;
+    private final DispatcherBlobStorage dispatcherBlobStorage;
 
     @SneakyThrows
     public void copyData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) {
@@ -72,7 +74,7 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
 
         final Path tempFile;
         try {
-            tempFile = Files.createTempFile(globals.dispatcherTempPath, "var-" + srcVariable.id + "-", ".bin");
+            tempFile = Files.createTempFile(globals.dispatcherTempPath, "var-" + srcVariable.id + "-", Consts.BIN_EXT);
         }
         catch (IOException e) {
             throw new BreakFromLambdaException(e.getMessage());
@@ -80,7 +82,7 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
         InputStream is;
         try {
             // TODO 2021-10-14 right now, an array variable isn't supported
-            cacheVariableService.storeToFile(srcVariable.id, tempFile);
+            dispatcherBlobStorage.accessCacheVariableData(srcVariable.id, (inputStream)-> DirUtils.copy(inputStream, tempFile));
             is = Files.newInputStream(tempFile);
         } catch (CommonErrorWithDataException e) {
             eventPublisher.publishEvent(new ResourceCloseTxEvent(tempFile));

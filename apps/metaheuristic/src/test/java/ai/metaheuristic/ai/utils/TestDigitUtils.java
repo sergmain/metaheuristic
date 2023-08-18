@@ -16,12 +16,13 @@
 
 package ai.metaheuristic.ai.utils;
 
+import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.commons.utils.DigitUtils;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +32,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Random;
 import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -102,7 +102,7 @@ public class TestDigitUtils {
 
     private void fillTrgFiles(Path temp, String prefix, Path[] files) throws IOException {
         for (int i = 0; i < files.length; i++) {
-            files[i] = temp.resolve(prefix+i+".bin");
+            files[i] = temp.resolve(prefix+i+ Consts.BIN_EXT);
             Files.write(files[i], createRandomContent(FILE_SIZE));
         }
     }

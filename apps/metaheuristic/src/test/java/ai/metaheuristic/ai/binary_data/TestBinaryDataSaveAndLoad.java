@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.binary_data;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.internal_functions.batch_result_processor.BatchResultProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -91,7 +92,7 @@ public class TestBinaryDataSaveAndLoad {
 
     @Test
     public void testSaveAndLoadToTempFile(@TempDir Path tempDir) throws IOException {
-        storeAndVerify(tempDir, Files.createTempFile(tempDir, "variable-", ".bin"));
+        storeAndVerify(tempDir, Files.createTempFile(tempDir, "variable-", Consts.BIN_EXT));
     }
 
     @Test

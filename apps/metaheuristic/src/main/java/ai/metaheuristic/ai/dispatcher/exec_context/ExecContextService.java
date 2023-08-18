@@ -277,11 +277,11 @@ public class ExecContextService {
                 return resource;
             }
 
-            String ext = execContextUtilsServices.getExtensionForVariable(execContext.execContextVariableStateId, variableId, ".bin");
+            String ext = execContextUtilsServices.getExtensionForVariable(execContext.execContextVariableStateId, variableId, Consts.BIN_EXT);
 
             String filename = S.f("variable-%s-%s%s", variableId, v.name, ext);
 
-            Path varFile = resultDir.resolve("variable-"+variableId+".bin");
+            Path varFile = resultDir.resolve("variable-"+variableId+ Consts.BIN_EXT);
             variableService.storeToFileWithTx(v.id, varFile);
 
             HttpHeaders httpHeaders = new HttpHeaders();

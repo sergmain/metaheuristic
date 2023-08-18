@@ -167,7 +167,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
                     variableTxService.initInputVariableWithNull(execContextResultRest.execContext.id, execContextParamsYaml, i);
                 }
                 else {
-                    Path tempFile = Files.createTempFile(tempDir, "input-", ".bin");
+                    Path tempFile = Files.createTempFile(tempDir, "input-", Consts.BIN_EXT);
                     switch (input.context) {
                         case global:
                             globalVariableService.storeToFileWithTx(input.id, tempFile);

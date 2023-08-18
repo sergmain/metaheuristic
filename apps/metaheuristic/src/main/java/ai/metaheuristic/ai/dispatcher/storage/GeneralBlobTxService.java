@@ -17,12 +17,15 @@
 package ai.metaheuristic.ai.dispatcher.storage;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
 import ai.metaheuristic.ai.dispatcher.beans.FunctionData;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
+import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -48,13 +51,14 @@ import java.sql.Timestamp;
  */
 @Service
 @Slf4j
-@Profile({"dispatcher & !disk-storage"})
+@Profile({"dispatcher"})
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class GeneralBlobTxService {
 
     private final VariableBlobRepository variableBlobRepository;
     private final GlobalVariableRepository globalVariableRepository;
     private final FunctionDataRepository functionDataRepository;
+    private final CacheVariableRepository cacheVariableRepository;
     private final EntityManager em;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -109,6 +113,21 @@ public class GeneralBlobTxService {
 
         FunctionData r = functionDataRepository.save(data);
         return r.id;
+    }
+
+    public CacheVariable createEmptyCacheVariable(Long cacheProcessId, String variable) {
+        TxUtils.checkTxExists();
+
+        CacheVariable data = new CacheVariable();
+        data.cacheProcessId = cacheProcessId;
+        data.variableName = variable;
+        data.createdOn = System.currentTimeMillis();
+        data.data = null;
+        data.nullified = true;
+
+        data = cacheVariableRepository.save(data);
+
+        return data;
     }
 
 

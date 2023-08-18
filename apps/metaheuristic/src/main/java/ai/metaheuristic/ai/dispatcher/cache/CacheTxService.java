@@ -16,13 +16,18 @@
 
 package ai.metaheuristic.ai.dispatcher.cache;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
+import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.event.events.ResourceCloseTxEvent;
-import ai.metaheuristic.ai.dispatcher.repositories.*;
+import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
+import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
@@ -59,13 +64,13 @@ public class CacheTxService {
 
     private final Globals globals;
     private final CacheProcessRepository cacheProcessRepository;
-    private final CacheVariableService cacheVariableService;
     private final VariableService variableTopLevelService;
     private final VariableTxService variableTxService;
     private final VariableRepository variableRepository;
     private final CacheVariableRepository cacheVariableRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final DispatcherBlobStorage dispatcherBlobStorage;
+    private final GeneralBlobTxService generalBlobTxService;
 
     @Transactional
     public void deleteCacheVariable(Long cacheProcessId) {
@@ -113,37 +118,39 @@ public class CacheTxService {
                 throw new VariableCommonException("#611.040 ExecContext is broken, variable #"+output.id+" wasn't found", output.id);
             }
             if (v.nullified) {
-                cacheVariableService.createAsNull(cacheProcess.id, output.name);
+                generalBlobTxService.createEmptyCacheVariable(cacheProcess.id, output.name);
+                return;
             }
-            else {
-                try {
-                    tempFile = Files.createTempFile(globals.dispatcherTempPath, "var-" + output.id + "-", ".bin");
-                } catch (IOException e) {
-                    String es = "#611.060 Error: " + e.getMessage();
-                    log.error(es, e);
-                    throw new VariableCommonException(es, output.id);
-                }
-                variableTxService.storeToFile(output.id, tempFile);
 
-                InputStream is;
-                BufferedInputStream bis;
-                try {
-                    is = Files.newInputStream(tempFile); bis = new BufferedInputStream(is, 0x8000);
-                } catch (IOException e) {
-                    String es = "#611.080 Error: " + e.getMessage();
-                    log.error(es, e);
-                    eventPublisher.publishEvent(new ResourceCloseTxEvent(tempFile));
-                    throw new VariableCommonException(es, output.id);
-                }
-                eventPublisher.publishEvent(new ResourceCloseTxEvent(List.of(bis, is), tempFile));
-                final long size;
-                try {
-                    size = Files.size(tempFile);
-                }
-                catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                cacheVariableService.createInitialized(cacheProcess.id, is, size, output.name);
+
+            try {
+                tempFile = Files.createTempFile(globals.dispatcherTempPath, "var-" + output.id + "-", Consts.BIN_EXT);
+            } catch (IOException e) {
+                String es = "#611.060 Error: " + e.getMessage();
+                log.error(es, e);
+                throw new VariableCommonException(es, output.id);
+            }
+            variableTxService.storeToFile(output.id, tempFile);
+
+            InputStream is;
+            BufferedInputStream bis;
+            try {
+                is = Files.newInputStream(tempFile); bis = new BufferedInputStream(is, 0x8000);
+            } catch (IOException e) {
+                String es = "#611.080 Error: " + e.getMessage();
+                log.error(es, e);
+                eventPublisher.publishEvent(new ResourceCloseTxEvent(tempFile));
+                throw new VariableCommonException(es, output.id);
+            }
+            eventPublisher.publishEvent(new ResourceCloseTxEvent(List.of(bis, is), tempFile));
+            final long size;
+            try {
+                size = Files.size(tempFile);
+                CacheVariable cacheVariable = generalBlobTxService.createEmptyCacheVariable(cacheProcess.id, output.name);
+                dispatcherBlobStorage.storeCacheVariableData(cacheVariable.id, is, size);
+            }
+            catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
     }

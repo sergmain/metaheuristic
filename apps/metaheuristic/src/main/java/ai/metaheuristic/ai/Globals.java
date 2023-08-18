@@ -25,7 +25,6 @@ import ai.metaheuristic.commons.utils.SecUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -285,7 +284,7 @@ public class Globals {
         @Nullable
         public PublicKey publicKey;
 
-        public String defaultResultFileExtension = ".bin";
+        public String defaultResultFileExtension = Consts.BIN_EXT;
 
         public int maxTriesAfterError = 3;
 
@@ -543,6 +542,12 @@ public class Globals {
     public Path dispatcherTempPath;
     public Path dispatcherResourcesPath;
     public Path dispatcherPath;
+    public Path dispatcherStoragePath;
+    public Path dispatcherStorageVariablesPath;
+    public Path dispatcherStorageGlobalVariablesPath;
+    public Path dispatcherStorageFunctionsPath;
+    public Path dispatcherStorageCacheVariablessPath;
+
     public Path processorPath;
 
     public EnumsApi.OS os = EnumsApi.OS.unknown;
@@ -583,10 +588,25 @@ public class Globals {
 
         if (dispatcher.enabled) {
             dispatcherTempPath = dispatcherPath.resolve("temp");
-            PathUtils.createParentDirectories(dispatcherTempPath);
+            Files.createDirectories(dispatcherTempPath);
 
             dispatcherResourcesPath = dispatcherPath.resolve(Consts.RESOURCES_DIR);
             Files.createDirectories(dispatcherResourcesPath);
+
+            dispatcherStoragePath = dispatcherPath.resolve(Consts.STORAGE_DIR);
+            Files.createDirectories(dispatcherStoragePath);
+
+            dispatcherStorageVariablesPath = dispatcherStoragePath.resolve(Consts.VARIABLES_DIR);
+            Files.createDirectories(dispatcherStorageVariablesPath);
+
+            dispatcherStorageGlobalVariablesPath = dispatcherStoragePath.resolve(Consts.GLOBAL_VARIABLES_DIR);
+            Files.createDirectories(dispatcherStorageGlobalVariablesPath);
+
+            dispatcherStorageFunctionsPath = dispatcherStoragePath.resolve(Consts.FUNCTIONS_DIR);
+            Files.createDirectories(dispatcherStorageFunctionsPath);
+
+            dispatcherStorageCacheVariablessPath = dispatcherStoragePath.resolve(Consts.CACHE_VARIABLES_DIR);
+            Files.createDirectories(dispatcherStorageCacheVariablessPath);
         }
         initOperationSystem();
 

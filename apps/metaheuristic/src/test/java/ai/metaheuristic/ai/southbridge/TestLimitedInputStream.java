@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.southbridge;
 
+import ai.metaheuristic.ai.Consts;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BoundedInputStream;
@@ -43,7 +44,7 @@ public class TestLimitedInputStream {
 
     @BeforeEach
     public void before() throws IOException {
-        testFile = File.createTempFile("test-limited-input-stream", ".bin");
+        testFile = File.createTempFile("test-limited-input-stream", Consts.BIN_EXT);
     }
 
     @AfterEach

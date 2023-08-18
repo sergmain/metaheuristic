@@ -288,7 +288,7 @@ public class BatchTopLevelService {
             // doesn't work with abstract InputStream
             Path tempFile;
             try {
-                tempFile = Files.createTempFile(tempDir, "mh-temp-file-for-processing-", ".bin");
+                tempFile = Files.createTempFile(tempDir, "mh-temp-file-for-processing-", Consts.BIN_EXT);
                 try (InputStream is = file.getInputStream()) {
                     DirUtils.copy(is, tempFile);
                 }

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.storage;
 
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
+import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
@@ -26,16 +27,20 @@ import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.util.Objects;
@@ -58,6 +63,7 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
     private final DatabaseBlobPersistService databaseBlobStoreService;
     private final GlobalVariableRepository globalVariableRepository;
     private final FunctionDataRepository functionDataRepository;
+    private final CacheVariableRepository cacheVariableRepository;
 
     @Override
     public void accessVariableData(Long variableBlobId, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException {
@@ -135,7 +141,7 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
         TxUtils.checkTxExists();
         Blob blob = functionDataRepository.getDataAsStreamByCode(functionCode);
         if (blob==null) {
-            String es = "174.040 FunctionData #"+ functionCode +" wasn't found";
+            String es = "174.380 FunctionData #"+ functionCode +" wasn't found";
             log.warn(es);
             throw new FunctionDataNotFoundException(functionCode, es);
         }
@@ -148,5 +154,23 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
     public void storeFunctionData(Long functionDataId, InputStream is, long size) {
         databaseBlobStoreService.storeFunctionData(functionDataId, is, size);
 
+    }
+
+    @Override
+    public void storeCacheVariableData(Long cacheVariableId, InputStream is, long size) {
+        databaseBlobStoreService.storeCacheVariableData(cacheVariableId, is, size);
+    }
+
+    @Override
+    public void accessCacheVariableData(Long cacheVariableId, Consumer<InputStream> processBlobDataFunc) throws SQLException, IOException {
+        Blob blob = cacheVariableRepository.getDataAsStreamById(Objects.requireNonNull(cacheVariableId));
+        if (blob==null) {
+            String es = "174.420 Variable #"+ cacheVariableId +" wasn't found";
+            log.warn(es);
+            throw new VariableDataNotFoundException(cacheVariableId, EnumsApi.VariableContext.local, es);
+        }
+        try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is)) {
+            processBlobDataFunc.accept(bis);
+        }
     }
 }

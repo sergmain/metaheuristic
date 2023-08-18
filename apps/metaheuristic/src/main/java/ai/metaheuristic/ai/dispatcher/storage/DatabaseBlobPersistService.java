@@ -16,9 +16,11 @@
 
 package ai.metaheuristic.ai.dispatcher.storage;
 
+import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
 import ai.metaheuristic.ai.dispatcher.beans.FunctionData;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
+import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
@@ -56,6 +58,7 @@ public class DatabaseBlobPersistService {
     private final VariableBlobRepository variableBlobRepository;
     private final GlobalVariableRepository globalVariableRepository;
     private final FunctionDataRepository functionDataRepository;
+    private final CacheVariableRepository cacheVariableRepository;
     private final EntityManager em;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -103,4 +106,17 @@ public class DatabaseBlobPersistService {
         FunctionData result = functionDataRepository.save(function);
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void storeCacheVariableData(Long cacheVariableId, InputStream is, long size) {
+        CacheVariable cacheVariable = cacheVariableRepository.findById(cacheVariableId).orElse(null);
+        if (cacheVariable==null) {
+            throw new FunctionDataNotFoundException("id#"+cacheVariableId, "174.200 cacheVariable not found");
+        }
+        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
+        cacheVariable.setData(blob);
+        cacheVariable.createdOn = System.currentTimeMillis();
+        cacheVariable.nullified = false;
+
+        CacheVariable result = cacheVariableRepository.save(cacheVariable);
+    }
 }

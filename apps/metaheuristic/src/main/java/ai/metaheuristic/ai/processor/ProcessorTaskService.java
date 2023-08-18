@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
-import ai.metaheuristic.ai.utils.DigitUtils;
+import ai.metaheuristic.commons.utils.DigitUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.yaml.processor_task.ProcessorTaskUtils;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.NonNull;
@@ -42,7 +43,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -526,7 +526,7 @@ public class ProcessorTaskService {
             Path processorTaskDir = processorDir.resolve(Consts.TASK_DIR);
 
             Path dispatcherDir = processorTaskDir.resolve(processorEnvironment.metadataService.processorStateByDispatcherUrl(core).dispatcherCode);
-            String path = getTaskPath(assignedTask.taskId);
+            String path = DirUtils.getPoweredPath(assignedTask.taskId);
             Path taskDir = dispatcherDir.resolve(path);
             try {
                 if (Files.exists(taskDir)) {
@@ -670,8 +670,7 @@ public class ProcessorTaskService {
             final Path processorTaskDir = processorDir.resolve(Consts.TASK_DIR);
             final Path dispatcherDir = processorTaskDir.resolve(processorState.dispatcherCode);
 
-            final String path = getTaskPath(taskId);
-            final Path taskDir = dispatcherDir.resolve(path);
+            final Path taskDir = DirUtils.getPoweredPath(dispatcherDir, taskId);
             try {
                 if (Files.exists(taskDir)) {
                     deleteDir(taskDir, "delete dir in ProcessorTaskService.delete()");
@@ -692,17 +691,12 @@ public class ProcessorTaskService {
         }
     }
 
-    private static String getTaskPath(long taskId) {
-        DigitUtils.Power power = DigitUtils.getPower(taskId);
-        return Long.toString(power.power7) + File.separatorChar + power.power4 + File.separatorChar;
-    }
-
     @SneakyThrows
     public Path prepareTaskDir(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
         final Path processorDir = processorPath.resolve(core.coreCode);
         final Path processorTaskDir = processorDir.resolve(Consts.TASK_DIR);
         final Path dispatcherDir = processorTaskDir.resolve(MetadataParams.asCode(core.dispatcherUrl));
-        Path taskDir = dispatcherDir.resolve(getTaskPath(taskId));
+        Path taskDir = DirUtils.getPoweredPath(dispatcherDir, taskId);
         if (Files.exists(taskDir)) {
             return taskDir;
         }

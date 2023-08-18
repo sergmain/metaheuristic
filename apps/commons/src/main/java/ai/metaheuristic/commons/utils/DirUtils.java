@@ -35,6 +35,17 @@ import java.util.List;
 @Slf4j
 public class DirUtils {
 
+    public static Path getPoweredPath(Path basePath, long taskId) {
+        final String path = getPoweredPath(taskId);
+        final Path poweredPath = basePath.resolve(path);
+        return poweredPath;
+    }
+
+    public static String getPoweredPath(long taskId) {
+        DigitUtils.Power power = DigitUtils.getPower(taskId);
+        return Long.toString(power.power7) + File.separatorChar + power.power4 + File.separatorChar;
+    }
+
     @SneakyThrows
     public static void copy(InputStream is, Path to) {
         final Path parent = to.getParent();

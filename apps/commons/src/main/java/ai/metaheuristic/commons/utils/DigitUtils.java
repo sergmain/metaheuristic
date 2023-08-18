@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.utils;
+package ai.metaheuristic.commons.utils;
 
 import lombok.AllArgsConstructor;
 
