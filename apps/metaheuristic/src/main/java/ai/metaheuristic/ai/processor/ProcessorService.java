@@ -133,7 +133,7 @@ public class ProcessorService {
             if (coreCode==null) {
                 continue;
             }
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataService.getCoreRef(coreCode, ref.dispatcherUrl);
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataParams.getCoreRef(coreCode, ref.dispatcherUrl);
             if (core==null) {
                 continue;
             }
@@ -163,7 +163,7 @@ public class ProcessorService {
             if (coreCode==null) {
                 continue;
             }
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataService.getCoreRef(coreCode, ref.dispatcherUrl);
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataParams.getCoreRef(coreCode, ref.dispatcherUrl);
             if (core==null) {
                 continue;
             }

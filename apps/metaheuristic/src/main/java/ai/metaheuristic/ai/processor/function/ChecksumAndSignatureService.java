@@ -64,7 +64,7 @@ public class ChecksumAndSignatureService {
                 "Asset url: "+ assetManagerUrl.url +", function: "+functionCode, is, ProcessorUtils.createPublicKey(asset),
                 checksumState.originChecksumWithSignature, checksumState.hashAlgo);
 
-        processorEnvironment.metadataService.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, status);
+        processorEnvironment.metadataParams.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, status);
         return status;
     }
 }

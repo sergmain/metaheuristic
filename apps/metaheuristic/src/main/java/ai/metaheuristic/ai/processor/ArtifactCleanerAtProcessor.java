@@ -54,7 +54,7 @@ public class ArtifactCleanerAtProcessor {
             return;
         }
 
-        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataService.getAllEnabledRefsForCores()) {
+        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataParams.getAllEnabledRefsForCores()) {
             if (currentExecState.getCurrentInitState(core.dispatcherUrl) != Enums.ExecContextInitState.FULL) {
                 // don't delete anything until the processor has received the full list of actual ExecContexts
                 continue;
@@ -62,7 +62,7 @@ public class ArtifactCleanerAtProcessor {
             Path coreDir = globals.processorPath.resolve(core.coreCode);
             Path coreTaskDir = coreDir.resolve(Consts.TASK_DIR);
 
-            MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.metadataService.processorStateByDispatcherUrl(core);
+            MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.metadataParams.processorStateByDispatcherUrl(core);
             final Path dispatcherDir = coreTaskDir.resolve(processorState.dispatcherCode);
             if (Files.notExists(dispatcherDir)) {
                 Files.createDirectories(dispatcherDir);

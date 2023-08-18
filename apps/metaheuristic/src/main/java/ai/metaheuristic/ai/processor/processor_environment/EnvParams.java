@@ -52,7 +52,7 @@ public class EnvParams {
         }
     }
 
-    public void initInternal(Path processorPath, @Nullable Path defaultEnvYamlFile, int taskConsoleOutputMaxLines) {
+    private void initInternal(Path processorPath, @Nullable Path defaultEnvYamlFile, int taskConsoleOutputMaxLines) {
         final Path envYamlFile = processorPath.resolve(Consts.ENV_YAML_FILE_NAME);
         if (Files.notExists(envYamlFile)) {
             if (defaultEnvYamlFile==null) {

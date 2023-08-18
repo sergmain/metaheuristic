@@ -40,7 +40,7 @@ public class ProcessorEnvironment {
 
     public final EnvParams envParams = new EnvParams();
     public DispatcherLookupExtendedParams dispatcherLookupExtendedService;
-    public MetadataParams metadataService;
+    public MetadataParams metadataParams;
 
     public ProcessorEnvironment(@Autowired Globals globals, @Autowired ApplicationContext appCtx) {
         if (!globals.processor.enabled) {
@@ -62,6 +62,6 @@ public class ProcessorEnvironment {
     public void init(Path processorPath, @Nullable Path defaultEnvYamlFile, @Nullable Path defaultDispatcherYamlFile, int taskConsoleOutputMaxLines) {
         envParams.init(processorPath, defaultEnvYamlFile, taskConsoleOutputMaxLines);
         dispatcherLookupExtendedService = new DispatcherLookupExtendedParams(processorPath, defaultDispatcherYamlFile);
-        metadataService = new MetadataParams(processorPath, envParams, dispatcherLookupExtendedService);
+        metadataParams = new MetadataParams(processorPath, envParams, dispatcherLookupExtendedService);
     }
 }

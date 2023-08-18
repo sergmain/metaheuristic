@@ -102,7 +102,7 @@ public class ProcessorKeepAliveRequestor {
             karpy.processor.status = processorService.produceReportProcessorStatus(dispatcher.schedule);
 
 
-            final MetadataParamsYaml.ProcessorSession processorSession = processorEnvironment.metadataService.getProcessorSession(dispatcherUrl);
+            final MetadataParamsYaml.ProcessorSession processorSession = processorEnvironment.metadataParams.getProcessorSession(dispatcherUrl);
             final Long processorId = processorSession.processorId;
             final String sessionId = processorSession.sessionId;
 
@@ -113,7 +113,7 @@ public class ProcessorKeepAliveRequestor {
                 karpy.processor.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
             }
 
-            Set<ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef> cores = processorEnvironment.metadataService.getAllCoresForDispatcherUrl(dispatcherUrl);
+            Set<ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef> cores = processorEnvironment.metadataParams.getAllCoresForDispatcherUrl(dispatcherUrl);
             for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : cores) {
                 String coreDir = globals.processorPath.resolve(core.coreCode).toString();
                 Long coreId = core.coreId;
@@ -127,7 +127,7 @@ public class ProcessorKeepAliveRequestor {
                     processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
             ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
-            karpy.functions.statuses.putAll(processorEnvironment.metadataService.getAsFunctionDownloadStatuses(assetManagerUrl));
+            karpy.functions.statuses.putAll(processorEnvironment.metadataParams.getAsFunctionDownloadStatuses(assetManagerUrl));
 
             final String url = dispatcherRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8);
             try {

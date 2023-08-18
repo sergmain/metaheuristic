@@ -20,12 +20,10 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.account.AccountTxService;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -43,41 +41,6 @@ public class CustomUserDetails implements UserDetailsService {
 
     private final Globals globals;
     private final AccountTxService accountService;
-
-    @Data
-    public static class ComplexUsername {
-        String username;
-
-        /**
-         * won't delete this field for backward compatibility
-         */
-        @SuppressWarnings("FieldMayBeStatic")
-        @Deprecated
-        final String token = "";
-
-        private ComplexUsername(String username) {
-            this.username = username;
-        }
-
-        @Nullable
-        public static ComplexUsername getInstance(String fullUsername) {
-            int idx = fullUsername.lastIndexOf('=');
-            final String username;
-            if (idx == -1) {
-                username = fullUsername;
-            }
-            else {
-                username = fullUsername.substring(0, idx);
-            }
-            ComplexUsername complexUsername = new ComplexUsername(username);
-
-            return complexUsername.isValid() ? complexUsername : null;
-        }
-
-        private boolean isValid() {
-            return username!=null && !username.isBlank();
-        }
-    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

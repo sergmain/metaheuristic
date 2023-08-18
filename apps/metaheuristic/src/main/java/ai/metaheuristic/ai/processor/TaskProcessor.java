@@ -151,7 +151,7 @@ public class TaskProcessor {
 
             processorTaskService.setLaunchOn(core, task.taskId);
 
-            final MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.metadataService.processorStateByDispatcherUrl(core);
+            final MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.metadataParams.processorStateByDispatcherUrl(core);
             if (processorState.processorId==null || S.b(processorState.sessionId)) {
                 log.warn("#100.010 processor {} with dispatcher {} isn't ready", core.coreCode, dispatcherUrl.url);
                 continue;
@@ -593,14 +593,14 @@ public class TaskProcessor {
 
         try {
             if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-                final Path baseResourceDir = processorEnvironment.metadataService.prepareBaseDir(assetManagerUrl);
+                final Path baseResourceDir = processorEnvironment.metadataParams.prepareBaseDir(assetManagerUrl);
                 functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
                 // is this function prepared?
                 if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
                     log.info("#100.460 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
                     functionPrepareResult.isLoaded = false;
 
-                    processorEnvironment.metadataService.setFunctionDownloadStatus(assetManagerUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, EnumsApi.FunctionState.none);
+                    processorEnvironment.metadataParams.setFunctionDownloadStatus(assetManagerUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, EnumsApi.FunctionState.none);
                 }
             }
             else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.git) {
@@ -612,7 +612,7 @@ public class TaskProcessor {
                     functionPrepareResult.isError = true;
                     return functionPrepareResult;
                 }
-                final Path resourceDir = processorEnvironment.metadataService.prepareBaseDir(assetManagerUrl);
+                final Path resourceDir = processorEnvironment.metadataParams.prepareBaseDir(assetManagerUrl);
                 log.info("Root dir for function: " + resourceDir);
                 SystemProcessLauncher.ExecResult result = gitSourcingService.prepareFunction(resourceDir, functionPrepareResult.function);
                 if (!result.ok) {

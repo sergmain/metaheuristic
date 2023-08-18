@@ -96,7 +96,7 @@ public class TaskAssetPreparer {
             return;
         }
 
-        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataService.getAllEnabledRefsForCores()) {
+        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataParams.getAllEnabledRefsForCores()) {
 
             // delete all orphan tasks
             processorTaskService.findAllForCore(core).forEach(task -> {
@@ -148,7 +148,7 @@ public class TaskAssetPreparer {
         final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
                 processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
 
-        final MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.metadataService.processorStateByDispatcherUrl(core);
+        final MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.metadataParams.processorStateByDispatcherUrl(core);
         if (processorState.processorId==null || S.b(processorState.sessionId)) {
             log.warn("#951.070 processor {} with dispatcher {} isn't ready", core.coreCode, core.dispatcherUrl.url);
             return null;
@@ -201,7 +201,7 @@ public class TaskAssetPreparer {
             TaskParamsYaml.FunctionConfig functionConfig, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, Long taskId) {
 
         if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-            final MetadataParamsYaml.Function functionDownloadStatuses = processorEnvironment.metadataService.getFunctionDownloadStatuses(assetManagerUrl, functionConfig.code);
+            final MetadataParamsYaml.Function functionDownloadStatuses = processorEnvironment.metadataParams.getFunctionDownloadStatuses(assetManagerUrl, functionConfig.code);
             if (functionDownloadStatuses==null) {
                 return false;
             }
@@ -214,7 +214,7 @@ public class TaskAssetPreparer {
                 if (functionState== EnumsApi.FunctionState.function_config_error || functionState== EnumsApi.FunctionState.download_error) {
                     log.error("#951.170 The function {} has a state as {}, start re-downloading", functionConfig.code, functionState);
 
-                    processorEnvironment.metadataService.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none);
+                    processorEnvironment.metadataParams.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none);
 
                     downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, assetManagerUrl));
                     return true;
