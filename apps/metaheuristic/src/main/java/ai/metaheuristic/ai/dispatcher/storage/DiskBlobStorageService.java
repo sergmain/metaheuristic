@@ -19,13 +19,16 @@ package ai.metaheuristic.ai.dispatcher.storage;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
+import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.exceptions.FunctionDataErrorException;
 import ai.metaheuristic.ai.exceptions.FunctionDataNotFoundException;
+import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -120,6 +123,7 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
     private final CacheVariableRepository cacheVariableRepository;
     private final VariableRepository variableRepository;
     private final GeneralBlobTxService generalBlobTxService;
+    private final GlobalVariableRepository globalVariableRepository;
 
     private DataStorage dataStorageVariable;
     private DataStorage dataStorageGlobalVariable;
@@ -195,7 +199,14 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
     }
 
     @Override
+    @Transactional
     public void storeGlobalVariableData(Long globalVariableId, InputStream is, long size) throws IOException {
+        GlobalVariable globalVariable = globalVariableRepository.findById(globalVariableId).orElse(null);
+        if (globalVariable==null) {
+            throw new VariableCommonException("174.080 globalVariable not found", globalVariableId);
+        }
+        globalVariable.uploadTs = new Timestamp(System.currentTimeMillis());
+        GlobalVariable result = globalVariableRepository.save(globalVariable);
         dataStorageGlobalVariable.storeData(globalVariableId, is, size);
     }
 
