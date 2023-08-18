@@ -85,6 +85,8 @@ public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
 
     @Test
     public void test() throws IOException {
+        Variable v;
+
         taskCheckCachingTopLevelService.disableCacheChecking = true;
 
         step_0_0_produceTasks();
@@ -125,17 +127,19 @@ public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
         cacheProcess = cacheProcessRepository.findByKeySha256LengthReadOnly(key.key());
         assertNotNull(cacheProcess);
 
-
+        v = variableTxService.getVariable(variableId);
         VariableSyncService.getWithSyncVoidForCreation(variableId,
                 ()-> variableTxService.resetVariableTx(getExecContextForTest().id, variableId));
 
-        Variable v = variableTxService.getVariable(variableId);
+        v = variableTxService.getVariable(variableId);
         assertNotNull(v);
         assertFalse(v.inited);
         assertTrue(v.nullified);
 
         TaskSyncService.getWithSyncVoid(taskId,
                 ()-> taskExecStateService.updateTaskExecStates(taskId, EnumsApi.TaskExecState.CHECK_CACHE));
+
+        v = variableTxService.getVariable(variableId);
 
         task = taskRepository.findByIdReadOnly(taskId);
         assertNotNull(task);
@@ -146,6 +150,7 @@ public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
         assertEquals(ok, prepareData.state);
         assertNotNull(prepareData.cacheProcess);
 
+        v = variableTxService.getVariable(variableId);
 
         TaskCheckCachingTxService.CheckCachingStatus status = taskCheckCachingTxService.checkCaching(getExecContextForTest().id, taskId, prepareData.cacheProcess);
         assertEquals(TaskCheckCachingTxService.CheckCachingStatus.copied_from_cache, status, "Actual: " + status);
@@ -154,6 +159,7 @@ public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
         assertNotNull(v);
         assertTrue(v.inited);
         assertFalse(v.nullified);
+        assertNotNull(v.variableBlobId);
 
         String s = variableTxService.getVariableDataAsString(variableId);
         assertEquals(textWithUUID, s);

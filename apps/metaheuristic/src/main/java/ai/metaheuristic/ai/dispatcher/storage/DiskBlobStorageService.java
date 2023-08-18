@@ -18,9 +18,14 @@ package ai.metaheuristic.ai.dispatcher.storage;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
+import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.exceptions.FunctionDataErrorException;
+import ai.metaheuristic.ai.exceptions.FunctionDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -34,10 +39,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Timestamp;
 import java.util.function.Consumer;
 
 /**
@@ -110,6 +117,9 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
 
     private final Globals globals;
     private final FunctionDataRepository functionDataRepository;
+    private final CacheVariableRepository cacheVariableRepository;
+    private final VariableRepository variableRepository;
+    private final GeneralBlobTxService generalBlobTxService;
 
     private DataStorage dataStorageVariable;
     private DataStorage dataStorageGlobalVariable;
@@ -145,13 +155,32 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
     @SneakyThrows
     @Override
     public void copyVariableData(VariableData.StoredVariable sourceVariable, TaskParamsYaml.OutputVariable targetVariable) {
-        dataStorageVariable.accessData(sourceVariable.id, (is)-> {
+        Variable trg = variableRepository.findById(targetVariable.id).orElse(null);
+        if (trg==null) {
+            log.warn("!!! trying to copy date to non-existed variable");
+            return;
+        }
+
+        trg.variableBlobId = generalBlobTxService.createVariableIfNotExist(trg.variableBlobId);
+        if (trg.variableBlobId==null) {
+            throw new IllegalStateException("(trg.variableBlobId==null)");
+        }
+
+        // that's correct - targetVariable.filename
+        trg.filename = targetVariable.filename;
+        trg.uploadTs = new Timestamp(System.currentTimeMillis());
+        trg.inited = true;
+        trg.nullified = false;
+        variableRepository.save(trg);
+
+        dataStorageCacheVariable.accessData(sourceVariable.id, (is)-> {
             try {
-                dataStorageVariable.storeData(targetVariable.id, is, -1);
+                dataStorageVariable.storeData(trg.variableBlobId, is, -1);
             } catch (IOException e) {
                 throw new RuntimeException("176.120 error", e);
             }
         });
+
     }
 
     @SneakyThrows
@@ -187,8 +216,16 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
 
     @SneakyThrows
     @Override
+    @Transactional
     public void storeCacheVariableData(Long cacheVariableId, InputStream is, long size) {
         dataStorageCacheVariable.storeData(cacheVariableId, is, size);
+        CacheVariable cacheVariable = cacheVariableRepository.findById(cacheVariableId).orElse(null);
+        if (cacheVariable==null) {
+            throw new FunctionDataNotFoundException("id#"+cacheVariableId, "174.200 cacheVariable not found");
+        }
+        cacheVariable.createdOn = System.currentTimeMillis();
+        cacheVariable.nullified = false;
+        CacheVariable result = cacheVariableRepository.save(cacheVariable);
     }
 
     @SneakyThrows

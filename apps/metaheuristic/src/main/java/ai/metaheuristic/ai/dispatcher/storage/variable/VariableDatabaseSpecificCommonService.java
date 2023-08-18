@@ -82,6 +82,8 @@ public class VariableDatabaseSpecificCommonService {
         trg.inited = true;
         trg.nullified = false;
 
+        variableRepository.save(trg);
+
         // TODO 2021-10-14 right now, an array variable isn't supported
         copyDataFunc.accept(storedVariable.id, trg.variableBlobId);
     }
