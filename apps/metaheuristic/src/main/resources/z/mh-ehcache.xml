@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.ehcache.org/v3"
+        xmlns:jsr107="http://www.ehcache.org/v3/jsr107"
+        xsi:noNamespaceSchemaLocation="classpath://ehcache-core-3.10.xsd"
+        xsi:schemaLocation="http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core-3.10.xsd http://www.ehcache.org/v3/jsr107 http://www.ehcache.org/schema/ehcache-107-ext-3.10.xsd"
+>
+
+<!--
+    <eh:config
+            xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+            xmlns:eh='http://www.ehcache.org/v3'
+            xmlns:jsr107='http://www.ehcache.org/v3/jsr107'
+            xsi:schemaLocation="
+        http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core-3.3.xsd
+        http://www.ehcache.org/v3/jsr107 http://www.ehcache.org/schema/ehcache-107-ext-3.3.xsd">
+    </eh:config>
+-->
+
+    <service>
+        <jsr107:defaults default-template="default-template" enable-statistics="false"/>
+    </service>
+
+    <cache-template name="default-template">
+        <expiry>
+            <ttl unit="hours">1</ttl>
+        </expiry>
+        <heap>100</heap>
+    </cache-template>
+</config>
