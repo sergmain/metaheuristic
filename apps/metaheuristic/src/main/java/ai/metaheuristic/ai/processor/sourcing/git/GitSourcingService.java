@@ -40,7 +40,6 @@ import java.util.List;
 @Service
 @Slf4j
 @Profile("processor")
-@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class GitSourcingService {
 
     private static final List<String> GIT_VERSION_CMD = List.of("git", "--version");
@@ -52,7 +51,7 @@ public class GitSourcingService {
 
     public final GitStatusInfo gitStatusInfo;
 
-    public GitSourcingService(ProcessorEnvironment processorEnvironment, Globals globals) {
+    public GitSourcingService(@Autowired ProcessorEnvironment processorEnvironment, @Autowired Globals globals) {
         this.processorEnvironment = processorEnvironment;
         this.globals = globals;
         this.gitStatusInfo = getGitStatus();
