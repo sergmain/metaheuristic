@@ -124,7 +124,7 @@ public class TestCommonSync {
 
 
             t1 = new Thread(() -> {
-                testSync.getWithSyncNullable(42L, () -> {
+                TestSync.getWithSyncNullable(42L, () -> {
                     isStarted.set(true);
                     try {
                         while (isRun.get()) {
@@ -145,9 +145,9 @@ public class TestCommonSync {
             AtomicBoolean insideSync2 = new AtomicBoolean();
             t2 = new Thread(() -> {
                 isStarted2.set(true);
-                testSync.getWithSyncNullable(42L, () -> {
-                    insideSync2.set(true);
+                TestSync.getWithSyncNullable(42L, () -> {
                     started2.set(System.currentTimeMillis());
+                    insideSync2.set(true);
                     try {
                         while (isRun2.get()) {
                             Thread.sleep(TimeUnit.MILLISECONDS.toMillis(DURATION));
@@ -165,9 +165,9 @@ public class TestCommonSync {
             AtomicBoolean insideSync3 = new AtomicBoolean();
             t3 = new Thread(() -> {
                 isStarted3.set(true);
-                testSync.getWithSyncNullable(42L, () -> {
-                    insideSync3.set(true);
+                TestSync.getWithSyncNullable(42L, () -> {
                     started3.set(System.currentTimeMillis());
+                    insideSync3.set(true);
                     try {
                         while (isRun3.get()) {
                             Thread.sleep(TimeUnit.MILLISECONDS.toMillis(DURATION));
