@@ -19,10 +19,10 @@ package ai.metaheuristic.ai.processor.variable_providers;
 import ai.metaheuristic.ai.exceptions.VariableProviderException;
 import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.ConstsApi;
@@ -31,7 +31,9 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -45,15 +47,11 @@ import java.util.Objects;
 @Service
 @Slf4j
 @Profile("processor")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class DiskVariableProvider implements VariableProvider {
 
     private final ProcessorEnvironment processorEnvironment;
     private final ProcessorTaskService processorTaskService;
-
-    public DiskVariableProvider(ProcessorEnvironment processorEnvironment, ProcessorTaskService processorTaskService) {
-        this.processorEnvironment = processorEnvironment;
-        this.processorTaskService = processorTaskService;
-    }
 
     @Nullable
     private static EnvParamsYaml.DiskStorage findDiskStorageByCode(List<EnvParamsYaml.DiskStorage> disk, String code) {

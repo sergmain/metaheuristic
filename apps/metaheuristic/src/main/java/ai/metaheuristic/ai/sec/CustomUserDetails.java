@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service;
  * Date: 12.08.13
  * Time: 23:17
  */
+@SuppressWarnings("FieldCanBeLocal")
 @Service
 @Profile("dispatcher")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
@@ -41,6 +42,7 @@ public class CustomUserDetails implements UserDetailsService {
 
     private final Globals globals;
     private final AccountTxService accountService;
+    private final AdditionalCustomUserDetails additionalCustomUserDetails;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -73,6 +75,10 @@ public class CustomUserDetails implements UserDetailsService {
 
             account.setRoles(SecConsts.ROLE_MAIN_ADMIN);
             return account;
+        }
+
+        if (Consts.REST_USER.equals(complexUsername.getUsername()) && globals.activeProfilesSet.contains(Consts.STANDALONE_PROFILE)) {
+            return additionalCustomUserDetails.restUserAccount;
         }
 
         Account account = accountService.findByUsername(complexUsername.getUsername());

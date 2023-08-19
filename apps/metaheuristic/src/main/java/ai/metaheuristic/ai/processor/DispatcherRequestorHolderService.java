@@ -17,11 +17,12 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Service;
@@ -51,11 +52,13 @@ public class DispatcherRequestorHolderService {
     public final Map<DispatcherUrl, Requesters> dispatcherRequestorMap = new HashMap<>();
 
     public DispatcherRequestorHolderService(
-            Globals globals,
-            ProcessorService processorService, ProcessorTaskService processorTaskService,
-            CurrentExecState currentExecState,
-            ProcessorCommandProcessor processorCommandProcessor,
-            ProcessorKeepAliveProcessor processorKeepAliveProcessor, ProcessorEnvironment processorEnvironment
+            @Autowired Globals globals,
+            @Autowired ProcessorService processorService,
+            @Autowired ProcessorTaskService processorTaskService,
+            @Autowired CurrentExecState currentExecState,
+            @Autowired ProcessorCommandProcessor processorCommandProcessor,
+            @Autowired ProcessorKeepAliveProcessor processorKeepAliveProcessor,
+            @Autowired ProcessorEnvironment processorEnvironment
     ) {
 
         for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedParams.DispatcherLookupExtended> entry : processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {

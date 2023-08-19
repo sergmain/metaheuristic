@@ -16,8 +16,11 @@
 
 package ai.metaheuristic.ai.processor.processor_environment;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.TerminateApplicationException;
+import ai.metaheuristic.ai.sec.AdditionalCustomUserDetails;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -38,11 +41,17 @@ import java.nio.file.Path;
 @Profile("processor")
 public class ProcessorEnvironment {
 
+    private final Globals globals;
+    private final AdditionalCustomUserDetails additionalCustomUserDetails;
+
     public final EnvParams envParams = new EnvParams();
     public DispatcherLookupExtendedParams dispatcherLookupExtendedService;
     public MetadataParams metadataParams;
 
-    public ProcessorEnvironment(@Autowired Globals globals, @Autowired ApplicationContext appCtx) {
+    public ProcessorEnvironment(@Autowired Globals globals, @Autowired ApplicationContext appCtx, @Autowired AdditionalCustomUserDetails additionalCustomUserDetails) {
+        this.additionalCustomUserDetails = additionalCustomUserDetails;
+        this.globals = globals;
+
         if (!globals.processor.enabled) {
             return;
         }
@@ -61,7 +70,9 @@ public class ProcessorEnvironment {
 
     public void init(Path processorPath, @Nullable Path defaultEnvYamlFile, @Nullable Path defaultDispatcherYamlFile, int taskConsoleOutputMaxLines) {
         envParams.init(processorPath, defaultEnvYamlFile, taskConsoleOutputMaxLines);
-        dispatcherLookupExtendedService = new DispatcherLookupExtendedParams(processorPath, defaultDispatcherYamlFile);
+        dispatcherLookupExtendedService = globals.activeProfilesSet.contains(Consts.STANDALONE_PROFILE)
+                ? new StandaloneDispatcherLookupExtendedParams(additionalCustomUserDetails.restUserPassword)
+                : new FileDispatcherLookupExtendedParams(processorPath, defaultDispatcherYamlFile);
         metadataParams = new MetadataParams(processorPath, envParams, dispatcherLookupExtendedService);
     }
 }

@@ -23,8 +23,9 @@ import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -41,7 +42,7 @@ import java.nio.file.Path;
 @Slf4j
 @Service
 @Profile("processor")
-@AllArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ChecksumAndSignatureService {
 
     private final ProcessorEnvironment processorEnvironment;

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eh:config
+        xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+        xmlns:eh='http://www.ehcache.org/v3'
+        xmlns:jsr107='http://www.ehcache.org/v3/jsr107'
+        xsi:schemaLocation="
+        http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core-3.3.xsd
+        http://www.ehcache.org/v3/jsr107 http://www.ehcache.org/schema/ehcache-107-ext-3.3.xsd">
+
+    <eh:service>
+        <jsr107:defaults enable-statistics="false"/>
+    </eh:service>
+<!--
+    <service>
+        <jsr107:defaults default-template="default-template" enable-statistics="false">
+        </jsr107:defaults>
+    </service>
+-->
+
+    <eh:cache-template name="default-template">
+        <eh:expiry>
+            <eh:ttl unit="hours">1</eh:ttl>
+        </eh:expiry>
+        <eh:heap>100</eh:heap>
+    </eh:cache-template>
+
+    <eh:cache-template name="template-1000-1-day">
+        <eh:expiry>
+            <eh:ttl unit="days">1</eh:ttl>
+        </eh:expiry>
+        <eh:heap>1000</eh:heap>
+    </eh:cache-template>
+
+    <eh:cache-template name="template-100-1-day">
+        <eh:expiry>
+            <eh:ttl unit="days">1</eh:ttl>
+        </eh:expiry>
+        <eh:heap>100</eh:heap>
+    </eh:cache-template>
+
+    <eh:cache-template name="template-100-10-minute">
+        <eh:expiry>
+            <eh:ttl unit="minutes">10</eh:ttl>
+        </eh:expiry>
+        <eh:heap>100</eh:heap>
+    </eh:cache-template>
+
+    <eh:cache-template name="template-5000-60-minute">
+        <eh:expiry>
+            <eh:ttl unit="minutes">60</eh:ttl>
+        </eh:expiry>
+        <eh:heap>5000</eh:heap>
+    </eh:cache-template>
+
+    <eh:cache-template name="template-1000-5-minute">
+        <eh:expiry>
+            <eh:ttl unit="minutes">5</eh:ttl>
+        </eh:expiry>
+        <eh:heap>1000</eh:heap>
+    </eh:cache-template>
+
+    <eh:cache alias="ai.metaheuristic.ai.dispatcher.beans.Account" uses-template="template-1000-1-day">
+    </eh:cache>
+
+    <eh:cache alias="ai.metaheuristic.ai.dispatcher.beans.Company" uses-template="template-1000-1-day">
+    </eh:cache>
+
+    <eh:cache alias="ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState" uses-template="template-1000-1-day">
+    </eh:cache>
+
+    <eh:cache alias="ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState" uses-template="template-100-1-day">
+    </eh:cache>
+
+    <eh:cache alias="ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl" uses-template="template-1000-1-day">
+    </eh:cache>
+
+    <eh:cache alias="ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph" uses-template="template-1000-1-day">
+    </eh:cache>
+
+    <eh:cache alias="ai.metaheuristic.ai.dispatcher.beans.Function" uses-template="template-1000-1-day">
+    </eh:cache>
+
+    <eh:cache alias="ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl" uses-template="template-1000-1-day">
+    </eh:cache>
+
+    <eh:cache alias="ai.metaheuristic.ai.dispatcher.beans.Processor" uses-template="template-1000-1-day">
+    </eh:cache>
+
+    <eh:cache alias="ai.metaheuristic.ai.dispatcher.beans.Dispatcher" uses-template="template-100-1-day">
+    </eh:cache>
+
+    <eh:cache alias="ai.metaheuristic.ai.dispatcher.beans.Experiment" uses-template="template-100-1-day">
+    </eh:cache>
+
+    <eh:cache alias="ai.metaheuristic.ai.dispatcher.beans.DispatcherEvent" uses-template="template-1000-5-minute">
+    </eh:cache>
+
+    <eh:cache alias="ai.metaheuristic.ai.dispatcher.beans.TaskImpl" uses-template="template-5000-60-minute">
+    </eh:cache>
+
+    <eh:cache alias="ai.metaheuristic.ai.dispatcher.beans.ExperimentResult" uses-template="template-100-10-minute">
+    </eh:cache>
+
+    <eh:cache alias="ai.metaheuristic.ai.dispatcher.beans.ExperimentTask" uses-template="template-100-10-minute">
+    </eh:cache>
+
+    <eh:cache alias="ai.metaheuristic.ai.dispatcher.beans.Variable" uses-template="template-1000-1-day">
+    </eh:cache>
+
+    <eh:cache alias="ai.metaheuristic.ai.dispatcher.beans.Batch" uses-template="default-template">
+    </eh:cache>
+    <eh:cache alias="ai.metaheuristic.ai.dispatcher.beans.Series" uses-template="default-template">
+    </eh:cache>
+
+</eh:config>

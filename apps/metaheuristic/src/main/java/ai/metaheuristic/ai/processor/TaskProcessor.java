@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.processor_environment.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProvider;
@@ -30,6 +29,7 @@ import ai.metaheuristic.ai.utils.ArtifactUtils;
 import ai.metaheuristic.ai.utils.EnvServiceUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.ConstsApi;
@@ -329,8 +329,7 @@ public class TaskProcessor {
         List<FunctionApiData.SystemExecResult> postSystemExecResult = new ArrayList<>();
         boolean isOk = true;
         int idx = 0;
-        DispatcherSchedule schedule = dispatcher.schedule!=null && dispatcher.schedule.policy== ExtendedTimePeriod.SchedulePolicy.strict
-                ? dispatcher.schedule : null;
+        DispatcherSchedule schedule = dispatcher.schedule.policy == ExtendedTimePeriod.SchedulePolicy.strict ? dispatcher.schedule : null;
         for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.task.preFunctions) {
             FunctionPrepareResult result = results[idx++];
             FunctionApiData.SystemExecResult execResult;
@@ -532,7 +531,7 @@ public class TaskProcessor {
         return systemExecResult;
     }
 
-    private static FunctionApiData.SystemExecResult verifyChecksumAndSignature(boolean signatureRequired, PublicKey publicKey, TaskParamsYaml.FunctionConfig function) {
+    private static FunctionApiData.SystemExecResult verifyChecksumAndSignature(boolean signatureRequired, @Nullable PublicKey publicKey, TaskParamsYaml.FunctionConfig function) {
         if (!signatureRequired) {
             return new FunctionApiData.SystemExecResult(function.code, true, 0, "");
         }

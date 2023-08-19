@@ -53,10 +53,7 @@ import java.security.PublicKey;
 import java.time.Duration;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static ai.metaheuristic.ai.Enums.ApiKeySourceDefinedBy.none;
 
@@ -510,6 +507,9 @@ public class Globals {
 
     @Value("${spring.profiles.active}")
     public String[] activeProfiles;
+
+    @Value("${spring.profiles.active}")
+    public Set<String> activeProfilesSet;
 
     public final Dispatcher dispatcher = new Dispatcher();
     public final Processor processor = new Processor();

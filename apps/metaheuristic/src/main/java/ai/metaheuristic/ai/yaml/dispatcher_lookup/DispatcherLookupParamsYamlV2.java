@@ -63,7 +63,9 @@ public class DispatcherLookupParamsYamlV2 implements BaseParams {
         public boolean disabled;
         public String url;
         public boolean signatureRequired;
+        @Nullable
         public String publicKey;
+        @Nullable
         public Enums.DispatcherLookupType lookupType;
         public Enums.AuthType authType;
 
