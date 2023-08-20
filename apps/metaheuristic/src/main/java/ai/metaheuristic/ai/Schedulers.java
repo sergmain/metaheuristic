@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,8 +17,8 @@ package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.batch.BatchTxService;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
-import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueEvent;
-import ai.metaheuristic.ai.dispatcher.event.StartProcessReadinessEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.StartProcessReadinessEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingTopLevelService;
@@ -38,10 +38,12 @@ import ai.metaheuristic.ai.processor.actors.UploadVariableService;
 import ai.metaheuristic.ai.processor.dispatcher_selection.ActiveDispatchers;
 import ai.metaheuristic.ai.processor.event.KeepAliveEvent;
 import ai.metaheuristic.ai.processor.event.ProcessorEventBusService;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.api.EnumsApi;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -169,7 +171,7 @@ public class Schedulers {
     @EnableScheduling
     @Slf4j
     @Profile("dispatcher")
-    @RequiredArgsConstructor
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
     public static class DispatcherSchedulers {
 
         private final Globals globals;
@@ -304,7 +306,7 @@ public class Schedulers {
             }
         }
 
-        @Scheduled(initialDelay = 15_000, fixedDelay = 5_000 )
+        @Scheduled(initialDelay = 15_000, fixedDelay = 1_000 )
         public void processUpdateTaskExecStatesInGraph() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
@@ -333,14 +335,14 @@ public class Schedulers {
         private final Globals globals;
         private ActiveDispatchers activeDispatchers;
         private final DispatcherRequestorHolderService dispatcherRequestorHolderService;
-        private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
+        private final ProcessorEnvironment processorEnvironment;
 
         @PostConstruct
         public void post() {
-            if (dispatcherLookupExtendedService.lookupExtendedMap==null) {
+            if (processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap==null) {
                 throw new IllegalStateException("dispatcher.yaml wasn't configured");
             }
-            this.activeDispatchers = new ActiveDispatchers(dispatcherLookupExtendedService.lookupExtendedMap, "ActiveDispatchers for scheduler", Enums.DispatcherSelectionStrategy.priority);
+            this.activeDispatchers = new ActiveDispatchers(processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap, "ActiveDispatchers for scheduler", Enums.DispatcherSelectionStrategy.priority);
         }
 
         @Override
@@ -547,7 +549,7 @@ public class Schedulers {
     @EnableScheduling
     @Slf4j
     @Profile("processor")
-    @RequiredArgsConstructor
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
     public static class ProcessorSchedulers {
 
         private final Globals globals;

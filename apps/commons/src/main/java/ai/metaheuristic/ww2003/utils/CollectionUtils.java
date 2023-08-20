@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ww2003.utils;
 
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;

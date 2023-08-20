@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.enhance_text;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
@@ -32,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -50,7 +51,7 @@ import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getVariables;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class EnhanceTextFunction implements InternalFunction {
 
     public static final String TEXT = "text";
@@ -82,12 +83,12 @@ public class EnhanceTextFunction implements InternalFunction {
         TxUtils.checkTxNotExists();
 
         if (taskParamsYaml.task.outputs.isEmpty()) {
-            throw new InternalFunctionException(variable_not_found, "#513.380 output variable not found for task #" + taskId);
+            throw new InternalFunctionException(variable_not_found, "515.040 output variable not found for task #" + taskId);
         }
 
         String text = MetaUtils.getValue(taskParamsYaml.task.metas, TEXT);
         if (S.b(text)) {
-            throw new InternalFunctionException(meta_not_found, "#513.300 meta '"+ TEXT +"' wasn't found or it's blank");
+            throw new InternalFunctionException(meta_not_found, "515.080 meta '"+ TEXT +"' wasn't found or it's blank");
         }
 
         final List<String> variables = getVariables(text, false);
@@ -95,7 +96,7 @@ public class EnhanceTextFunction implements InternalFunction {
             String varName = getNameForVariable(variable);
             String value = internalFunctionVariableService.getValueOfVariable(simpleExecContext.execContextId, taskContextId, varName);
             if (value==null) {
-                throw new InternalFunctionException(data_not_found, "#513.340 data wasn't found, variable: "+variable+", normalized: " + varName);
+                throw new InternalFunctionException(data_not_found, "515.120 data wasn't found, variable: "+variable+", normalized: " + varName);
             }
             text = StringUtils.replaceEach(text, new String[]{"[[" + variable + "]]", "{{" + variable + "}}"}, new String[]{value, value});
         }

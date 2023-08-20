@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,8 +17,8 @@
 package ai.metaheuristic.commons.json.versioning_json;
 
 import ai.metaheuristic.api.data.BaseParams;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * @author Serge
@@ -27,11 +27,11 @@ import org.springframework.lang.Nullable;
  */
 abstract public class AbstractParamsJsonUtils<CurrT extends BaseParams, NextT extends BaseParams, NextU, PrevT, PrevU, CurrForDownT> {
 
-    @NonNull
-    public abstract NextT upgradeTo(@NonNull CurrT baseParams);
+    @Nonnull
+    public abstract NextT upgradeTo(@Nonnull CurrT baseParams);
 
-    @NonNull
-    public abstract PrevT downgradeTo(@NonNull CurrForDownT baseParams);
+    @Nonnull
+    public abstract PrevT downgradeTo(@Nonnull CurrForDownT baseParams);
 
     @Nullable
     public abstract NextU nextUtil();
@@ -41,7 +41,7 @@ abstract public class AbstractParamsJsonUtils<CurrT extends BaseParams, NextT ex
 
     public abstract String toString(CurrT baseParams);
 
-    @NonNull
+    @Nonnull
     public abstract CurrT to(String s);
 
     public abstract int getVersion();

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,11 @@
 
 package ai.metaheuristic.ai.processor;
 
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 public class ProcessorSyncHolder {
 
-    public static final Object processorGlobalSync = new Object();
-
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    public static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+    public static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 }

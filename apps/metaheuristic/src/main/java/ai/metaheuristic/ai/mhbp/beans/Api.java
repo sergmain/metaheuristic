@@ -18,13 +18,13 @@ package ai.metaheuristic.ai.mhbp.beans;
 
 import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
 import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiSchemeUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils.CommonThreadLocker;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.lang.Nullable;
 
-import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -71,38 +71,27 @@ public class Api implements Serializable {
     @Column(name = "SCHEME")
     private String scheme;
 
-    public void setScheme(String scheme) {
-        synchronized (this) {
-            this.scheme = scheme;
-            this.apiScheme = null;
-        }
-    }
-
     public String getScheme() {
         return scheme;
     }
 
-    @Transient
-    @JsonIgnore
-    @Nullable
-    private ApiScheme apiScheme = null;
+    public void setScheme(String scheme) {
+        this.paramsLocked.reset(()->this.scheme = scheme);
+    }
 
     @Transient
     @JsonIgnore
-    private final Object syncSchemeObj = new Object();
+    private final CommonThreadLocker<ApiScheme> paramsLocked = new CommonThreadLocker<>(this::parseScheme);
+
+    private ApiScheme parseScheme() {
+        ApiScheme temp = ApiSchemeUtils.UTILS.to(scheme);
+        ApiScheme ecpy = temp==null ? new ApiScheme() : temp;
+        return ecpy;
+    }
 
     @JsonIgnore
     public ApiScheme getApiScheme() {
-        if (apiScheme==null) {
-            synchronized (syncSchemeObj) {
-                if (apiScheme==null) {
-                    //noinspection UnnecessaryLocalVariable
-                    ApiScheme temp = ApiSchemeUtils.UTILS.to(scheme);
-                    apiScheme = temp;
-                }
-            }
-        }
-        return apiScheme;
+        return paramsLocked.get();
     }
 
     @JsonIgnore

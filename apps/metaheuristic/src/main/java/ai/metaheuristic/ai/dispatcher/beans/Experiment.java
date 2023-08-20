@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,16 +18,16 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 
-import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -39,7 +39,7 @@ import java.io.Serializable;
 @Entity
 @Table(name = "MH_EXPERIMENT")
 @Data
-@ToString(exclude = {"epy"})
+@ToString
 @NoArgsConstructor
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
@@ -55,7 +55,6 @@ public class Experiment implements Serializable, Cloneable {
     public Integer version;
 
     // 1-1 relation with ExecContext
-    @NonNull
     @Column(name = "EXEC_CONTEXT_ID")
     public Long execContextId;
 
@@ -65,44 +64,38 @@ public class Experiment implements Serializable, Cloneable {
     @Column(name = "PARAMS")
     private String params;
 
-    public void setParams(String params) {
-        synchronized (this) {
-            this.params = params;
-            this.epy=null;
-        }
-    }
-
-    @NonNull
     public String getParams() {
         return params;
     }
 
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
+
     @Transient
     @JsonIgnore
-    @Nullable
-    private ExperimentParamsYaml epy = null;
+    private final ThreadUtils.CommonThreadLocker<ExperimentParamsYaml> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private ExperimentParamsYaml parseParams() {
+        ExperimentParamsYaml temp = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(params);
+        ExperimentParamsYaml ecpy = temp==null ? new ExperimentParamsYaml() : temp;
+        return ecpy;
+    }
+
+    @JsonIgnore
+    public ExperimentParamsYaml getExperimentParamsYaml() {
+        return paramsLocked.get();
+    }
+
+    @JsonIgnore
+    public void updateParams(ExperimentParamsYaml tpy) {
+        setParams(TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy));
+    }
 
     @SneakyThrows
     public Experiment clone() {
         return (Experiment) super.clone();
-    }
-
-    @JsonIgnore
-    public @NonNull ExperimentParamsYaml getExperimentParamsYaml() {
-        if (epy==null) {
-            synchronized (this) {
-                if (epy==null) {
-                    ExperimentParamsYaml temp = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(params);
-                    epy = temp==null ? new ExperimentParamsYaml() : temp;
-                }
-            }
-        }
-        return epy;
-    }
-
-    @JsonIgnore
-    public void updateParams(ExperimentParamsYaml epy) {
-        setParams(ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(epy));
     }
 
 

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,13 +21,13 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
-import ai.metaheuristic.ai.dispatcher.event.SetVariableReceivedTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.SetVariableReceivedTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.variable.VariableDatabaseSpecificService;
+import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
@@ -38,6 +38,7 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -55,17 +56,17 @@ import java.util.List;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskCheckCachingTxService {
 
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
-    private final TaskStateService taskStateService;
+    private final TaskStateTxService taskStateService;
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheVariableRepository cacheVariableRepository;
     private final VariableTxService variableService;
-    private final VariableDatabaseSpecificService variableDatabaseSpecificService;
     private final EventPublisherService eventPublisherService;
+    private final DispatcherBlobStorage dispatcherBlobStorage;
 
     @Transactional
     public void invalidateCacheItemAndSetTaskToNone(Long execContextId, Long taskId, Long cacheProcessId) {
@@ -79,26 +80,38 @@ public class TaskCheckCachingTxService {
             return;
         }
 
-        cacheVariableRepository.deleteByCacheProcessId(cacheProcessId);
-        cacheProcessRepository.deleteById(cacheProcessId);
+        invalidateCacheItemInternal(cacheProcessId);
         taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE);
     }
 
     @Transactional
-    public void checkCaching(Long execContextId, Long taskId, @Nullable CacheProcess cacheProcess) {
+    public void invalidateCacheItem(Long cacheProcessId) {
+        invalidateCacheItemInternal(cacheProcessId);
+    }
+
+    public void invalidateCacheItemInternal(Long cacheProcessId) {
+        cacheVariableRepository.deleteByCacheProcessId(cacheProcessId);
+        cacheProcessRepository.deleteById(cacheProcessId);
+    }
+
+    public enum CheckCachingStatus {task_not_found, isnt_check_cache_state, copied_from_cache, no_prev_cache}
+
+    @Transactional
+    public CheckCachingStatus checkCaching(Long execContextId, Long taskId, @Nullable CacheProcess cacheProcess) {
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             log.debug("#609.009 task #{} wasn't found", taskId);
-            return;
+            return CheckCachingStatus.task_not_found;
         }
         if (task.execState!=EnumsApi.TaskExecState.CHECK_CACHE.value) {
             log.info("#609.010 task #{} was already checked for cached variables", taskId);
-            return;
+            return CheckCachingStatus.isnt_check_cache_state;
         }
 
         TaskParamsYaml tpy = task.getTaskParamsYaml();
 
+        CheckCachingStatus status;
         if (cacheProcess!=null) {
             log.info("609.060 cached data was found for task #{}, variables will be copied and will task be set as OK", taskId);
             // finish task with cached data
@@ -144,7 +157,7 @@ public class TaskCheckCachingTxService {
                         VariableSyncService.getWithSyncVoidForCreation(output.id, () -> variableService.setVariableAsNull(output.id));
                     }
                     else {
-                        variableDatabaseSpecificService.copyData(storedVariable, output);
+                        dispatcherBlobStorage.copyVariableData(storedVariable, output);
                     }
                     eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, output.id, storedVariable.nullified));
 
@@ -171,13 +184,15 @@ public class TaskCheckCachingTxService {
             task.setCompletedOn(System.currentTimeMillis());
 
             taskRepository.save(task);
-
-            eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
+            status = CheckCachingStatus.copied_from_cache;
         }
         else {
             log.info("#609.080 cached data wasn't found for task #{}", taskId);
             taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE);
+            status = CheckCachingStatus.no_prev_cache;
         }
+        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
+        return status;
     }
 
 }

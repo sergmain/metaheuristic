@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,19 +18,18 @@ package ai.metaheuristic.ai.processor.variable_providers;
 
 import ai.metaheuristic.ai.exceptions.VariableProviderException;
 import ai.metaheuristic.api.EnumsApi;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.DependsOn;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
 
 @Service
 @Profile("processor")
-@RequiredArgsConstructor
-//@DependsOn({"DiskVariableProvider", "DispatcherVariableProvider"})
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class VariableProviderFactory {
 
     private final DiskVariableProvider diskVariableProvider;

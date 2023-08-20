@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@ package ai.metaheuristic.commons.dispatcher_schedule;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Path;
 
 public class ExtendedTimePeriodUtils {
 
@@ -40,7 +40,7 @@ public class ExtendedTimePeriodUtils {
         return (ExtendedTimePeriod) YamlUtils.to(is, getYaml());
     }
 
-    public static ExtendedTimePeriod to(File file) {
+    public static ExtendedTimePeriod to(Path file) {
         return (ExtendedTimePeriod) YamlUtils.to(file, getYaml());
     }
 

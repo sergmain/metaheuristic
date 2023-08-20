@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
+import javax.annotation.Nonnull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;
@@ -38,15 +38,15 @@ public class EnvParamsYamlUtilsV4
         return 4;
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(EnvParamsYamlV4.class);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public EnvParamsYamlV5 upgradeTo(@NonNull EnvParamsYamlV4 src) {
+    public EnvParamsYamlV5 upgradeTo(@Nonnull EnvParamsYamlV4 src) {
         src.checkIntegrity();
         EnvParamsYamlV5 trg = new EnvParamsYamlV5();
 
@@ -78,9 +78,9 @@ public class EnvParamsYamlUtilsV4
         return env;
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(@Nonnull Void yaml) {
         return null;
     }
 
@@ -95,13 +95,13 @@ public class EnvParamsYamlUtilsV4
     }
 
     @Override
-    public String toString(@NonNull EnvParamsYamlV4 yaml) {
+    public String toString(@Nonnull EnvParamsYamlV4 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public EnvParamsYamlV4 to(@NonNull String yaml) {
+    public EnvParamsYamlV4 to(@Nonnull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

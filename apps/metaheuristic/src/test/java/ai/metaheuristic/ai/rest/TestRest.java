@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,11 +35,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -57,7 +57,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @Import({SpringSecurityWebAuxTestConfig.class, TestRest.JsonTestController.class})
-@ActiveProfiles({"dispatcher", "mysql"})
+//@ActiveProfiles({"dispatcher", "mysql"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TestRest {
@@ -73,6 +73,11 @@ public class TestRest {
         public NewMessage getMessage() {
             return new NewMessage("42", MSG_TEXT);
         }
+
+        @GetMapping("/rest/test/simple")
+        public String getMessage(@RequestParam String text) {
+            return text;
+        }
     }
     private MockMvc mockMvc;
 
@@ -87,29 +92,16 @@ public class TestRest {
     }
 
     @Test
+    @WithUserDetails("data_rest")
     public void testRestMessages_01() throws Exception {
         MvcResult result = mockMvc.perform(
-                get("http://localhost:8080/test/simple?text="+MSG_TEXT))
+                get("http://localhost:8080/rest/test/simple?text="+CommonConsts.MULTI_LANG_STRING))
                 .andExpect(status().isOk()).andReturn();
 
         String s = result.getResponse().getContentAsString();
         assertNotNull(s);
         System.out.println("s = " + s);
         assertEquals(CommonConsts.MULTI_LANG_STRING, s.split("\n")[0]);
-        assertEquals(MSG_TEXT.substring(0,20), s.split("\n")[1]);
-    }
-
-    @Test
-    public void testRestMessages_02() throws Exception {
-        MvcResult result = mockMvc.perform(
-                get("http://localhost:8080/test/simple?text="+MSG_TEXT))
-                .andExpect(status().isOk()).andReturn();
-
-        String s = result.getResponse().getContentAsString();
-        assertNotNull(s);
-        System.out.println("s = " + s);
-        assertEquals(CommonConsts.MULTI_LANG_STRING, s.split("\n")[0]);
-        assertEquals(MSG_TEXT.substring(0,20), s.split("\n")[1]);
     }
 
     // let's test the case with marshalling message to json

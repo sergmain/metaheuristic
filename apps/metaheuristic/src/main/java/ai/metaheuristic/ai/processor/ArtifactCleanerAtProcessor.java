@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,12 +19,14 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -36,13 +38,13 @@ import java.util.Map;
 @Service
 @Slf4j
 @Profile("processor")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ArtifactCleanerAtProcessor {
 
     private final ProcessorTaskService processorTaskService;
     private final CurrentExecState currentExecState;
     private final Globals globals;
-    private final MetadataService metadataService;
+    private final ProcessorEnvironment processorEnvironment;
 
     @SneakyThrows
     public void fixedDelay() {
@@ -52,7 +54,7 @@ public class ArtifactCleanerAtProcessor {
             return;
         }
 
-        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : metadataService.getAllEnabledRefsForCores()) {
+        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataParams.getAllEnabledRefsForCores()) {
             if (currentExecState.getCurrentInitState(core.dispatcherUrl) != Enums.ExecContextInitState.FULL) {
                 // don't delete anything until the processor has received the full list of actual ExecContexts
                 continue;
@@ -60,7 +62,7 @@ public class ArtifactCleanerAtProcessor {
             Path coreDir = globals.processorPath.resolve(core.coreCode);
             Path coreTaskDir = coreDir.resolve(Consts.TASK_DIR);
 
-            MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(core);
+            MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.metadataParams.processorStateByDispatcherUrl(core);
             final Path dispatcherDir = coreTaskDir.resolve(processorState.dispatcherCode);
             if (Files.notExists(dispatcherDir)) {
                 Files.createDirectories(dispatcherDir);

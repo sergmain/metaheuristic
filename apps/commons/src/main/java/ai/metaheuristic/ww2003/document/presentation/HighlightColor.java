@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ww2003.document.presentation;
 
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 public enum HighlightColor {
 

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.commands;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
@@ -45,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @Slf4j
-@ActiveProfiles({"dispatcher", "mysql"})
+//@ActiveProfiles({"dispatcher", "mysql"})
 public class TestReAssignProcessorIdUnknownProcessorId {
 
     @Autowired
@@ -55,7 +55,7 @@ public class TestReAssignProcessorIdUnknownProcessorId {
     public ProcessorCache processorCache;
 
     @Autowired
-    public ProcessorTransactionService processorTransactionService;
+    public ProcessorTxService processorTransactionService;
 
     @Autowired
     public ProcessorTopLevelService processorTopLevelService;

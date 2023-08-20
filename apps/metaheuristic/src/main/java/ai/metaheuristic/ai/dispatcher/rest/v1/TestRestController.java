@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.commons.CommonConsts;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
@@ -35,7 +34,6 @@ import java.util.List;
 @Profile("dispatcher")
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
-@RequiredArgsConstructor
 public class TestRestController {
 
     private static final List<String> FUNCTIONS = List.of("f-1", "f-2");

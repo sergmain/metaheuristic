@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2022, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher_events;
 
-import ai.metaheuristic.ai.dispatcher.event.DispatcherApplicationEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.DispatcherApplicationEvent;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.event.DispatcherEventYaml;
@@ -32,7 +32,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -44,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@ActiveProfiles("dispatcher")
+//@ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class DispatcherEventServiceTest {

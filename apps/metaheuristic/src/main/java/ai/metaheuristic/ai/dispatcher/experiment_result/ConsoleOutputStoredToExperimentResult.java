@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Collections;
 
 @Data
@@ -40,9 +40,9 @@ public class ConsoleOutputStoredToExperimentResult extends BaseDataClass {
         this.errorMessages = Collections.singletonList(errorMessage);
     }
 
-    public ConsoleOutputStoredToExperimentResult(File dumpOfConsoleOutputs) {
+    public ConsoleOutputStoredToExperimentResult(Path dumpOfConsoleOutputs) {
         this.dumpOfConsoleOutputs = dumpOfConsoleOutputs;
     }
 
-    public File dumpOfConsoleOutputs;
+    public Path dumpOfConsoleOutputs;
 }

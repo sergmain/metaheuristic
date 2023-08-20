@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.env.EnvService;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProvider;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProviderFactory;
@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.utils.ArtifactUtils;
 import ai.metaheuristic.ai.utils.EnvServiceUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.ConstsApi;
@@ -53,12 +54,12 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.lang.Nullable;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.PublicKey;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -84,22 +85,23 @@ public class TaskProcessor {
     private final Globals globals;
     private final ProcessorTaskService processorTaskService;
     private final CurrentExecState currentExecState;
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
-    private final MetadataService metadataService;
-    private final EnvService envService;
+    private final ProcessorEnvironment processorEnvironment;
     private final ProcessorService processorService;
     private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
 
-    public final AtomicBoolean processing = new AtomicBoolean();
+    private boolean processing = false;
 
-    public TaskProcessor(Globals globals, ProcessorTaskService processorTaskService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService, MetadataService metadataService, EnvService envService, ProcessorService processorService, VariableProviderFactory resourceProviderFactory, GitSourcingService gitSourcingService) {
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+
+    public TaskProcessor(Globals globals, ProcessorTaskService processorTaskService, CurrentExecState currentExecState,
+                         ProcessorEnvironment processorEnvironment, ProcessorService processorService,
+                         VariableProviderFactory resourceProviderFactory, GitSourcingService gitSourcingService) {
         this.globals = globals;
         this.processorTaskService = processorTaskService;
         this.currentExecState = currentExecState;
-        this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
-        this.metadataService = metadataService;
-        this.envService = envService;
+        this.processorEnvironment = processorEnvironment;
         this.processorService = processorService;
         this.resourceProviderFactory = resourceProviderFactory;
         this.gitSourcingService = gitSourcingService;
@@ -109,22 +111,23 @@ public class TaskProcessor {
         if (!globals.processor.enabled) {
             return;
         }
-        if (processing.get()) {
+        if (processing) {
             return;
         }
-        synchronized (processing) {
-            if (processing.get()) {
+        writeLock.lock();
+        try {
+            if (processing) {
                 return;
             }
-            processing.set(true);
-        }
-        try {
-            processInternal(core);
-        }
-        finally {
-            synchronized (processing) {
-                processing.set(false);
+            processing = true;
+            try {
+                processInternal(core);
             }
+            finally {
+                processing = false;
+            }
+        } finally {
+            writeLock.unlock();
         }
     }
 
@@ -148,13 +151,13 @@ public class TaskProcessor {
 
             processorTaskService.setLaunchOn(core, task.taskId);
 
-            final MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(core);
+            final MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.metadataParams.processorStateByDispatcherUrl(core);
             if (processorState.processorId==null || S.b(processorState.sessionId)) {
                 log.warn("#100.010 processor {} with dispatcher {} isn't ready", core.coreCode, dispatcherUrl.url);
                 continue;
             }
 
-            DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+            DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher = processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
             if (dispatcher==null) {
                 final String es = "#100.020 Broken task #"+task.taskId+". dispatcher wasn't found for url " + dispatcherUrl;
                 processorTaskService.markAsFinishedWithError(core, task.taskId, es);
@@ -185,7 +188,7 @@ public class TaskProcessor {
             }
 
             log.info("Start processing task {}", task);
-            File taskDir = processorTaskService.prepareTaskDir(core, task.taskId);
+            Path taskDir = processorTaskService.prepareTaskDir(core, task.taskId);
 
             final TaskParamsYaml taskParamYaml;
             try {
@@ -209,19 +212,19 @@ public class TaskProcessor {
                 continue;
             }
 
-            File artifactDir = ProcessorTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
+            Path artifactDir = ProcessorTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
             if (artifactDir == null) {
                 processorTaskService.markAsFinishedWithError(core, task.taskId, "#100.090 Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
                 continue;
             }
 
-            File systemDir = ProcessorTaskService.prepareTaskSubDir(taskDir, Consts.SYSTEM_DIR);
+            Path systemDir = ProcessorTaskService.prepareTaskSubDir(taskDir, Consts.SYSTEM_DIR);
             if (systemDir == null) {
                 processorTaskService.markAsFinishedWithError(core, task.taskId, "#100.100 Error of configuring of environment. 'system' directory wasn't created, task can't be processed.");
                 continue;
             }
 
-            String status = EnvServiceUtils.prepareEnvironment(artifactDir, new EnvServiceUtils.EnvYamlShort(envService.getEnvParamsYaml()));
+            String status = EnvServiceUtils.prepareEnvironment(artifactDir, new EnvServiceUtils.EnvYamlShort(processorEnvironment.envParams.getEnvParamsYaml()));
             if (status!=null) {
                 processorTaskService.markAsFinishedWithError(core, task.taskId, status);
             }
@@ -319,15 +322,14 @@ public class TaskProcessor {
 
     private void execAllFunctions(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core,
                                   ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
-                                  DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
-                                  File taskDir, TaskParamsYaml taskParamYaml, File artifactDir,
-                                  File systemDir, FunctionPrepareResult[] results) {
+                                  DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
+                                  Path taskDir, TaskParamsYaml taskParamYaml, Path artifactDir,
+                                  Path systemDir, FunctionPrepareResult[] results) {
         List<FunctionApiData.SystemExecResult> preSystemExecResult = new ArrayList<>();
         List<FunctionApiData.SystemExecResult> postSystemExecResult = new ArrayList<>();
         boolean isOk = true;
         int idx = 0;
-        DispatcherSchedule schedule = dispatcher.schedule!=null && dispatcher.schedule.policy== ExtendedTimePeriod.SchedulePolicy.strict
-                ? dispatcher.schedule : null;
+        DispatcherSchedule schedule = dispatcher.schedule.policy == ExtendedTimePeriod.SchedulePolicy.strict ? dispatcher.schedule : null;
         for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.task.preFunctions) {
             FunctionPrepareResult result = results[idx++];
             FunctionApiData.SystemExecResult execResult;
@@ -402,9 +404,9 @@ public class TaskProcessor {
                 new FunctionApiData.FunctionExec(systemExecResult, preSystemExecResult, postSystemExecResult, generalExec));
     }
 
-    private static boolean prepareParamsFileForTask(File taskDir, TaskParamsYaml taskParamYaml, FunctionPrepareResult[] results) {
+    private static boolean prepareParamsFileForTask(Path taskDir, TaskParamsYaml taskParamYaml, FunctionPrepareResult[] results) {
 
-        File artifactDir = ProcessorTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
+        Path artifactDir = ProcessorTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
         if (artifactDir == null) {
             return false;
         }
@@ -413,7 +415,7 @@ public class TaskProcessor {
                 .map(o-> FunctionCoreUtils.getTaskParamsVersion(o.function.metas))
                 .collect(Collectors.toSet());
 
-        return ArtifactUtils.prepareParamsFileForTask(artifactDir, taskDir.getAbsolutePath(), taskParamYaml, versions);
+        return ArtifactUtils.prepareParamsFileForTask(artifactDir, taskDir.toAbsolutePath().toString(), taskParamYaml, versions);
     }
 
     private static int totalCountOfFunctions(TaskParamsYaml.TaskYaml taskYaml) {
@@ -427,18 +429,17 @@ public class TaskProcessor {
     @SuppressWarnings({"WeakerAccess"})
     // TODO 2019.05.02 implement unit-test for this method
     public FunctionApiData.SystemExecResult execFunction(
-            ProcessorCoreTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, FunctionPrepareResult functionPrepareResult,
+            ProcessorCoreTask task, Path taskDir, TaskParamsYaml taskParamYaml, Path systemDir, FunctionPrepareResult functionPrepareResult,
             @Nullable DispatcherSchedule schedule) {
 
-        File paramFile = new File(
-                taskDir,
-                ConstsApi.ARTIFACTS_DIR + File.separatorChar +
-                        String.format(Consts.PARAMS_YAML_MASK, FunctionCoreUtils.getTaskParamsVersion(functionPrepareResult.function.metas)));
+        Path paramFile = taskDir
+                .resolve(ConstsApi.ARTIFACTS_DIR)
+                .resolve(String.format(Consts.PARAMS_YAML_MASK, FunctionCoreUtils.getTaskParamsVersion(functionPrepareResult.function.metas)));
 
         List<String> cmd;
         Interpreter interpreter=null;
         if (StringUtils.isNotBlank(functionPrepareResult.function.env)) {
-            final String exec = envService.getEnvParamsYaml().getEnvs().stream().filter(o -> o.code.equals(functionPrepareResult.function.env)).findFirst().map(o -> o.exec).orElse(null);
+            final String exec = processorEnvironment.envParams.getEnvParamsYaml().getEnvs().stream().filter(o -> o.code.equals(functionPrepareResult.function.env)).findFirst().map(o -> o.exec).orElse(null);
             interpreter = new Interpreter(exec);
             if (interpreter.list == null) {
                 String es = "#100.290 Can't process the task, the interpreter wasn't found for env: " + functionPrepareResult.function.env;
@@ -464,7 +465,7 @@ public class TaskProcessor {
                     if (functionPrepareResult.functionAssetFile ==null) {
                         throw new IllegalStateException("#100.310 functionAssetFile is null");
                     }
-                    cmd.add(functionPrepareResult.functionAssetFile.file.getAbsolutePath());
+                    cmd.add(functionPrepareResult.functionAssetFile.file.toAbsolutePath().toString());
                     break;
                 case processor:
                     if (!S.b(functionPrepareResult.function.file)) {
@@ -479,10 +480,10 @@ public class TaskProcessor {
                             ext = "." + ext;
                         }
 
-                        File execFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + toFilename(functionPrepareResult.function.code) + ext);
+                        Path execFile = taskDir.resolve(ConstsApi.ARTIFACTS_DIR).resolve(toFilename(functionPrepareResult.function.code) + ext);
                         FileSystemUtils.writeStringToFileWithSync(execFile, functionPrepareResult.function.content, StandardCharsets.UTF_8 );
 
-                        cmd.add(execFile.getAbsolutePath());
+                        cmd.add(execFile.toAbsolutePath().toString());
                     }
                     else {
                         log.warn("#100.325 How?");
@@ -497,10 +498,10 @@ public class TaskProcessor {
                     List<String> list = Arrays.stream(StringUtils.split(functionPrepareResult.function.params)).filter(o->!S.b(o)).collect(Collectors.toList());
                     cmd.addAll(list);
                 }
-                cmd.add(paramFile.getAbsolutePath());
+                cmd.add(paramFile.toAbsolutePath().toString());
             }
 
-            File consoleLogFile = new File(systemDir, Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
+            Path consoleLogFile = systemDir.resolve(Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
 
             final Supplier<Boolean> execContextDeletionCheck =
                     () -> currentExecState.isState(new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl), task.execContextId,
@@ -509,7 +510,7 @@ public class TaskProcessor {
 
             // Exec function
             systemExecResult = SystemProcessLauncher.execCommand(
-                    cmd, taskDir, consoleLogFile.toPath(), taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
+                    cmd, taskDir, consoleLogFile, taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
                     globals.processor.taskConsoleOutputMaxLines, List.of(execContextDeletionCheck));
 
         }
@@ -521,7 +522,7 @@ public class TaskProcessor {
                     "\tenv: " + functionPrepareResult.function.env +"\n" +
                     "\tinterpreter: " + interpreter+"\n" +
                     "\tfile: " + (functionPrepareResult.functionAssetFile !=null && functionPrepareResult.functionAssetFile.file!=null
-                    ? functionPrepareResult.functionAssetFile.file.getAbsolutePath()
+                    ? functionPrepareResult.functionAssetFile.file.toAbsolutePath()
                     : functionPrepareResult.function.file) +"\n" +
                     "\tparams", th);
             systemExecResult = new FunctionApiData.SystemExecResult(
@@ -530,7 +531,7 @@ public class TaskProcessor {
         return systemExecResult;
     }
 
-    private static FunctionApiData.SystemExecResult verifyChecksumAndSignature(boolean signatureRequired, PublicKey publicKey, TaskParamsYaml.FunctionConfig function) {
+    private static FunctionApiData.SystemExecResult verifyChecksumAndSignature(boolean signatureRequired, @Nullable PublicKey publicKey, TaskParamsYaml.FunctionConfig function) {
         if (!signatureRequired) {
             return new FunctionApiData.SystemExecResult(function.code, true, 0, "");
         }
@@ -585,20 +586,20 @@ public class TaskProcessor {
 
     @SuppressWarnings({"WeakerAccess", "StatementWithEmptyBody"})
     // TODO 2019.05.02 implement unit-test for this method
-    public FunctionPrepareResult prepareFunction(DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, MetadataParamsYaml.ProcessorSession processorState, TaskParamsYaml.FunctionConfig function) {
+    public FunctionPrepareResult prepareFunction(DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, MetadataParamsYaml.ProcessorSession processorState, TaskParamsYaml.FunctionConfig function) {
         FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
         functionPrepareResult.function = function;
 
         try {
             if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-                final Path baseResourceDir = metadataService.prepareBaseDir(assetManagerUrl);
+                final Path baseResourceDir = processorEnvironment.metadataParams.prepareBaseDir(assetManagerUrl);
                 functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
                 // is this function prepared?
                 if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
                     log.info("#100.460 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
                     functionPrepareResult.isLoaded = false;
 
-                    metadataService.setFunctionDownloadStatus(assetManagerUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, EnumsApi.FunctionState.none);
+                    processorEnvironment.metadataParams.setFunctionDownloadStatus(assetManagerUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, EnumsApi.FunctionState.none);
                 }
             }
             else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.git) {
@@ -610,7 +611,7 @@ public class TaskProcessor {
                     functionPrepareResult.isError = true;
                     return functionPrepareResult;
                 }
-                final Path resourceDir = metadataService.prepareBaseDir(assetManagerUrl);
+                final Path resourceDir = processorEnvironment.metadataParams.prepareBaseDir(assetManagerUrl);
                 log.info("Root dir for function: " + resourceDir);
                 SystemProcessLauncher.ExecResult result = gitSourcingService.prepareFunction(resourceDir, functionPrepareResult.function);
                 if (!result.ok) {
@@ -621,8 +622,8 @@ public class TaskProcessor {
                     return functionPrepareResult;
                 }
                 functionPrepareResult.functionAssetFile = new AssetFile();
-                functionPrepareResult.functionAssetFile.file = new File(result.functionDir, Objects.requireNonNull(functionPrepareResult.function.file));
-                log.info("Function asset file: {}, exist: {}", functionPrepareResult.functionAssetFile.file.getAbsolutePath(), functionPrepareResult.functionAssetFile.file.exists() );
+                functionPrepareResult.functionAssetFile.file = result.functionDir.resolve(Objects.requireNonNull(functionPrepareResult.function.file));
+                log.info("Function asset file: {}, exist: {}", functionPrepareResult.functionAssetFile.file.toAbsolutePath(), Files.exists(functionPrepareResult.functionAssetFile.file));
             }
             else if (functionPrepareResult.function.sourcing== EnumsApi.FunctionSourcing.processor) {
 

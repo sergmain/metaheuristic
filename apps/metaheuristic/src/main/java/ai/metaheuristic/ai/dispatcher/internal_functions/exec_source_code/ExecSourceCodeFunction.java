@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.ExecContextCommonException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -45,6 +45,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -62,13 +63,13 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecSourceCodeFunction implements InternalFunction {
 
     private final SourceCodeCache sourceCodeCache;
     private final SourceCodeRepository sourceCodeRepository;
     private final VariableTxService variableTxService;
-    private final GlobalVariableService globalVariableService;
+    private final GlobalVariableTxService globalVariableService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final ExecContextCreatorService execContextCreatorService;
@@ -130,9 +131,10 @@ public class ExecSourceCodeFunction implements InternalFunction {
 
         ExecContextData.RootAndParent rootAndParent = new ExecContextData.RootAndParent(rootExecContextId, simpleExecContext.execContextId);
 
+        ExecContextData.UserExecContext context = new ExecContextData.UserExecContext(simpleExecContext.accountId, simpleExecContext.companyId);
         ExecContextCreatorService.ExecContextCreationResult execContextResultRest =
                 execContextCreatorTopLevelService.createExecContextAndStart(
-                        subSc.id, simpleExecContext.companyId, false, rootAndParent);
+                        subSc.id, context, false, rootAndParent);
 
         if (execContextResultRest.isErrorMessages()) {
             throw new InternalFunctionException(exec_context_creation_error,
@@ -165,7 +167,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
                     variableTxService.initInputVariableWithNull(execContextResultRest.execContext.id, execContextParamsYaml, i);
                 }
                 else {
-                    Path tempFile = Files.createTempFile(tempDir, "input-", ".bin");
+                    Path tempFile = Files.createTempFile(tempDir, "input-", Consts.BIN_EXT);
                     switch (input.context) {
                         case global:
                             globalVariableService.storeToFileWithTx(input.id, tempFile);

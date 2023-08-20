@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,22 +16,24 @@
 
 package ai.metaheuristic.ai.processor.function;
 
-import ai.metaheuristic.ai.processor.MetadataService;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.utils.ProcessorUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.PublicKey;
 
 /**
  * @author Serge
@@ -41,16 +43,16 @@ import java.io.InputStream;
 @Slf4j
 @Service
 @Profile("processor")
-@AllArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ChecksumAndSignatureService {
 
-    private final MetadataService metadataService;
+    private final ProcessorEnvironment processorEnvironment;
 
     public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
             ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager asset,
-            String functionCode, ChecksumAndSignatureData.ChecksumWithSignatureInfo checksumState, File functionFile) throws IOException {
+            String functionCode, ChecksumAndSignatureData.ChecksumWithSignatureInfo checksumState, Path functionFile) throws IOException {
 
-        try (FileInputStream fis = new FileInputStream(functionFile)) {
+        try (InputStream fis = Files.newInputStream(functionFile)) {
             return getCheckSumAndSignatureStatus(assetManagerUrl, asset, functionCode, checksumState, fis);
         }
     }
@@ -60,11 +62,12 @@ public class ChecksumAndSignatureService {
             String functionCode, ChecksumAndSignatureData.ChecksumWithSignatureInfo checksumState, InputStream is) {
 
         CheckSumAndSignatureStatus status;
+        final PublicKey publicKey = asset.publicKey!=null ? ProcessorUtils.createPublicKey(asset) : null;
         status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(
-                "Asset url: "+ assetManagerUrl.url +", function: "+functionCode, is, ProcessorUtils.createPublicKey(asset),
+                "Asset url: "+ assetManagerUrl.url +", function: "+functionCode, is, publicKey,
                 checksumState.originChecksumWithSignature, checksumState.hashAlgo);
 
-        metadataService.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, status);
+        processorEnvironment.metadataParams.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, status);
         return status;
     }
 }

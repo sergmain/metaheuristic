@@ -24,7 +24,7 @@ import ai.metaheuristic.ww2003.document.tags.Property;
 import ai.metaheuristic.ww2003.document.tags.PropertyElement;
 import ai.metaheuristic.ww2003.document.tags.xml.XmlTag;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 @NoArgsConstructor
 public class TRow extends Composite implements XmlTag, HasProperty, Indentation {

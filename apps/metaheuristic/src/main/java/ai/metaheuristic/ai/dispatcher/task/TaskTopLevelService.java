@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.event.*;
+import ai.metaheuristic.ai.dispatcher.event.events.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
@@ -29,6 +29,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -43,6 +44,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Serge
@@ -52,30 +54,35 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskTopLevelService {
 
     private final ExecContextCache execContextCache;
-    private final TaskTxService taskService;
+    private final TaskTxService taskTxService;
     private final TaskRepository taskRepository;
     private final VariableTxService variableService;
     private final TaskVariableTopLevelService taskVariableTopLevelService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    @Async
-    @EventListener
-    public void handleTaskCommunicationEvent(TaskCommunicationEvent event) {
-        taskService.updateAccessByProcessorOn(event.taskId);
-    }
-
-    public final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
-    private final LinkedList<CheckForLostTaskEvent> queue = new LinkedList<>();
     private final Map<Long, AtomicLong> lastCheckOn = new HashMap<>();
-
     private static final int MILLS_TO_HOLD_CHECK = 30_000;
 
+    private final LinkedList<CheckForLostTaskEvent> queue = new LinkedList<>();
+    public final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+
+    @Async
+    @EventListener
+    public void handleCheckForLostTaskEvent(final CheckForLostTaskEvent event) {
+        putToQueue(event);
+        processCheckForLostTaskEvent();
+    }
+
     private void putToQueue(final CheckForLostTaskEvent event) {
-        synchronized (queue) {
+        writeLock.lock();
+        try {
             final long completedTaskCount = executor.getCompletedTaskCount();
             final long taskCount = executor.getTaskCount();
             if ((taskCount - completedTaskCount)>20) {
@@ -96,21 +103,22 @@ public class TaskTopLevelService {
                     lastCheck.set(System.currentTimeMillis());
                 }
             }
+        } finally {
+            writeLock.unlock();
         }
     }
 
     @Nullable
     private CheckForLostTaskEvent pullFromQueue() {
-        synchronized (queue) {
+        writeLock.lock();
+        try {
             return queue.pollFirst();
+        } finally {
+            writeLock.unlock();
         }
     }
 
-    @Async
-    @EventListener
-    public void handleCheckForLostTaskEvent(final CheckForLostTaskEvent event) {
-        putToQueue(event);
-
+    public void processCheckForLostTaskEvent() {
         executor.submit(() -> {
             CheckForLostTaskEvent currEvent;
             while ((currEvent = pullFromQueue()) != null) {
@@ -150,6 +158,12 @@ public class TaskTopLevelService {
                 applicationEventPublisher.publishEvent(new ResetTaskEvent(task.execContextId, actualTaskId));
             }
         }
+    }
+
+    @Async
+    @EventListener
+    public void handleTaskCommunicationEvent(TaskCommunicationEvent event) {
+        taskTxService.updateAccessByProcessorOn(event.taskId);
     }
 
     public void processResendTaskOutputResourceResult(@Nullable Long processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {

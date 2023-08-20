@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class ExecContextData {
 
+    public record UserExecContext(Long accountId, Long companyId) {}
+
     @Data
     @NoArgsConstructor
     public static class ExecContextStates {
@@ -58,7 +60,12 @@ public class ExecContextData {
         public final Long execContextTaskStateId;
         public final Long execContextVariableStateId;
         public final Long companyId;
+        public final Long accountId;
         public final ExecContextParamsYaml paramsYaml;
+
+        public ExecContextData.UserExecContext asUserExecContext() {
+            return new ExecContextData.UserExecContext(getAccountId(), getCompanyId());
+        }
     }
 
     @Data

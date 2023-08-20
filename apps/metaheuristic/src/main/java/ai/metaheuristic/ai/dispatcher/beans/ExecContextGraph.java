@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,15 +18,16 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYamlUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+//import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -39,7 +40,7 @@ import java.io.Serializable;
 @Table(name = "MH_EXEC_CONTEXT_GRAPH")
 @Data
 @NoArgsConstructor
-@ToString(exclude = {"ecgpy"})
+@ToString
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class ExecContextGraph implements Serializable {
@@ -61,41 +62,37 @@ public class ExecContextGraph implements Serializable {
     @Column(name="CREATED_ON")
     public Long createdOn;
 
-    @NotBlank
+//    @NotBlank
     @Column(name = "PARAMS")
     private String params;
-
-    public void setParams(String params) {
-        synchronized (this) {
-            this.params = params;
-            this.ecgpy =null;
-        }
-    }
 
     public String getParams() {
         return params;
     }
 
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
+
     @Transient
     @JsonIgnore
-    @Nullable
-    private ExecContextGraphParamsYaml ecgpy = null;
+    private final ThreadUtils.CommonThreadLocker<ExecContextGraphParamsYaml> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private ExecContextGraphParamsYaml parseParams() {
+        ExecContextGraphParamsYaml temp = ExecContextGraphParamsYamlUtils.BASE_YAML_UTILS.to(params);
+        ExecContextGraphParamsYaml ecpy = temp==null ? new ExecContextGraphParamsYaml() : temp;
+        return ecpy;
+    }
 
     @JsonIgnore
     public ExecContextGraphParamsYaml getExecContextGraphParamsYaml() {
-        if (ecgpy ==null) {
-            synchronized (this) {
-                if (ecgpy ==null) {
-                    ExecContextGraphParamsYaml temp = ExecContextGraphParamsYamlUtils.BASE_YAML_UTILS.to(params);
-                    ecgpy = temp==null ? new ExecContextGraphParamsYaml() : temp;
-                }
-            }
-        }
-        return ecgpy;
+        return paramsLocked.get();
     }
 
     @JsonIgnore
     public void updateParams(ExecContextGraphParamsYaml wpy) {
         setParams(ExecContextGraphParamsYamlUtils.BASE_YAML_UTILS.toString(wpy));
     }
+
 }

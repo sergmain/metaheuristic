@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.mhbp.yaml.backup;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 public class BackupParamsUtilsV1 extends
@@ -29,15 +28,13 @@ public class BackupParamsUtilsV1 extends
         return 1;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(BackupParamsV1.class);
     }
 
-    @NonNull
     @Override
-    public BackupParams upgradeTo(@NonNull BackupParamsV1 v1) {
+    public BackupParams upgradeTo(BackupParamsV1 v1) {
         v1.checkIntegrity();
 
         BackupParams t = new BackupParams();
@@ -84,9 +81,8 @@ public class BackupParamsUtilsV1 extends
         return a;
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
@@ -101,15 +97,14 @@ public class BackupParamsUtilsV1 extends
     }
 
     @Override
-    public String toString(@NonNull BackupParamsV1 yaml) {
+    public String toString(BackupParamsV1 yaml) {
         yaml.checkIntegrity();
 
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public BackupParamsV1 to(@NonNull String s) {
+    public BackupParamsV1 to(String s) {
         final BackupParamsV1 p = getYaml().load(s);
         return p;
     }

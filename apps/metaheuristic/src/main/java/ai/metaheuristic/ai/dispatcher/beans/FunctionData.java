@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ import java.sql.Timestamp;
 @Table(name = "MH_FUNCTION_DATA")
 @Data
 @EqualsAndHashCode(of = {"functionCode"})
-@ToString(exclude={"data", "bytes"})
+@ToString(exclude={"data"})
 @NoArgsConstructor
 public class FunctionData implements Serializable {
     @Serial
@@ -45,17 +45,14 @@ public class FunctionData implements Serializable {
     private Integer version;
 
     @Column(name = "FUNCTION_CODE")
-    private String functionCode;
+    public String functionCode;
 
     @Column(name = "UPLOAD_TS")
-    private Timestamp uploadTs;
+    public Timestamp uploadTs;
 
     @Column(name = "DATA")
     @Lob
-    private Blob data;
-
-    @Transient
-    public byte[] bytes;
+    public Blob data;
 
     @Column(name = "PARAMS")
     public String params;

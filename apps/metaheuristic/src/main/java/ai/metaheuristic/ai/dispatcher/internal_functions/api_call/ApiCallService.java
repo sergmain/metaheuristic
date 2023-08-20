@@ -33,8 +33,8 @@ import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -53,7 +53,7 @@ import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ApiCallService {
 
     public static final String PROMPT = "prompt";
@@ -65,7 +65,6 @@ public class ApiCallService {
     private final ProviderQueryService providerQueryService;
     private final ApiRepository apiRepository;
 
-    @NonNull
     public ProviderData.QuestionAndAnswer callApi(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId, TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
 
@@ -98,7 +97,7 @@ public class ApiCallService {
             prompt = StringUtils.replaceEach(prompt, new String[]{"[[" + variable + "]]", "{{" + variable + "}}"}, new String[]{value, value});
         }
         log.info("513.240 task #{}, prompt: {}", taskId, prompt);
-        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, null);
+        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, simpleExecContext.asUserExecContext());
         ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
         if (answer.status()!=OK) {
             throw new InternalFunctionException(data_not_found, "513.280 API call error: "+answer.error()+", prompt: " + prompt);

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -42,8 +43,8 @@ import java.util.List;
 @Profile("dispatcher")
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
-@RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExperimentRestController {
 
     private final ExperimentTopLevelService experimentTopLevelService;
@@ -78,7 +79,7 @@ public class ExperimentRestController {
     @PostMapping("/experiment-add-commit")
     public OperationStatusRest addFormCommit(String sourceCodeUid, String name, String code, String description, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return experimentTopLevelService.addExperimentCommit(sourceCodeUid, name, code, description, context);
+        return experimentTopLevelService.addExperimentCommit(sourceCodeUid, name, code, description, context.asUserExecContext());
     }
 
     @PostMapping("/experiment-edit-commit")
@@ -95,7 +96,7 @@ public class ExperimentRestController {
     @PostMapping("/experiment-clone-commit")
     public OperationStatusRest experimentCloneCommit(Long id, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return experimentTopLevelService.experimentCloneCommit(id, context);
+        return experimentTopLevelService.experimentCloneCommit(id, context.asUserExecContext());
     }
 
     @PostMapping("/experiment-target-state/{state}/{experimentId}")

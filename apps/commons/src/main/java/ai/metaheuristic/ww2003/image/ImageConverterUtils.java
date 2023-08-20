@@ -18,7 +18,7 @@ package ai.metaheuristic.ww2003.image;
 
 import ai.metaheuristic.ww2003.document.tags.xml.*;
 import lombok.Data;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -29,8 +29,8 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.File;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -114,7 +114,7 @@ public class ImageConverterUtils {
     @Data
     public static class ConvertImageResult {
         public final String base64;
-        public final File resultImageFile;
+        public final Path resultImageFile;
     }
 
     public static Para getParaForImage(String base64, int binaryIndex) {

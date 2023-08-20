@@ -45,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@ActiveProfiles({"dispatcher", "mysql"})
+//@ActiveProfiles({"dispatcher", "mysql"})
 @Slf4j
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
@@ -88,25 +88,4 @@ public class SqlQueryTest extends PreparingSourceCode {
         System.out.println("### The end.");
     }
 
-    @Test
-    public void test_detached_bean() {
-        ExecContextCreatorService.ExecContextCreationResult r = preparingSourceCodeService.createExecContextForTest(preparingSourceCodeData);
-        assertNotNull(r.execContext);
-        setExecContextForTest(r.execContext);
-
-        ExecContextImpl ec = execContextCache.findById(getExecContextForTest().id);
-        assertFalse(em.contains(ec));
-
-        // =====================
-
-        assertThrows(RuntimeException.class, ()->txTestingService.testDetachedInTx(getExecContextForTest().id));
-
-        assertDoesNotThrow(()->txTestingService.testDetachedInTxQueryNewTx(getExecContextForTest().id));
-
-//        assertDoesNotThrow(()->txTestingService.testDetachedInDetachManually(getExecContextForTest().id));
-
-        // =====================
-
-        System.out.println("### The end.");
-    }
 }

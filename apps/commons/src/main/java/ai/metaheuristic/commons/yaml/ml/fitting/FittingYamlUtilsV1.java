@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
+import javax.annotation.Nonnull;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -36,15 +36,15 @@ public class FittingYamlUtilsV1
         return 1;
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(FittingYamlV1.class);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public FittingYaml upgradeTo(@NonNull FittingYamlV1 src) {
+    public FittingYaml upgradeTo(@Nonnull FittingYamlV1 src) {
         src.checkIntegrity();
         FittingYaml trg = new FittingYaml();
         trg.fitting = src.fitting;
@@ -52,9 +52,9 @@ public class FittingYamlUtilsV1
         return trg;
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(@Nonnull Void yaml) {
         return null;
     }
 
@@ -69,13 +69,13 @@ public class FittingYamlUtilsV1
     }
 
     @Override
-    public String toString(@NonNull FittingYamlV1 yaml) {
+    public String toString(@Nonnull FittingYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public FittingYamlV1 to(@NonNull String yaml) {
+    public FittingYamlV1 to(@Nonnull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

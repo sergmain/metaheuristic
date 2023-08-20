@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,12 +16,17 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
+import ai.metaheuristic.api.data.event.DispatcherEventYaml;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
+import ai.metaheuristic.commons.yaml.event.DispatcherEventYamlUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 
-import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -67,6 +72,35 @@ public class DispatcherEvent implements Serializable {
     public String event;
 
     @Column(name = "PARAMS")
-    public String params;
+    private String params;
+
+    public String getParams() {
+        return params;
+    }
+
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
+
+    @Transient
+    @JsonIgnore
+    private final ThreadUtils.CommonThreadLocker<DispatcherEventYaml> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private DispatcherEventYaml parseParams() {
+        DispatcherEventYaml temp = DispatcherEventYamlUtils.BASE_YAML_UTILS.to(params);
+        DispatcherEventYaml ecpy = temp==null ? new DispatcherEventYaml() : temp;
+        return ecpy;
+    }
+
+    @JsonIgnore
+    public DispatcherEventYaml getDispatcherEventYaml() {
+        return paramsLocked.get();
+    }
+
+    @JsonIgnore
+    public void updateParams(DispatcherEventYaml tpy) {
+        setParams(DispatcherEventYamlUtils.BASE_YAML_UTILS.toString(tpy));
+    }
 
 }

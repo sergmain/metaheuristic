@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
-import org.springframework.lang.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,13 +84,13 @@ public class ProcessorData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class ProcessorResult extends BaseDataClass {
-        public @NonNull Processor processor;
+        public Processor processor;
 
         public ProcessorResult(String errorMessage) {
             addErrorMessage(errorMessage);
         }
 
-        public ProcessorResult(@NonNull Processor processor) {
+        public ProcessorResult(Processor processor) {
             this.processor = processor;
         }
     }

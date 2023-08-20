@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -106,6 +106,10 @@ public abstract class PreparingSourceCode extends PreparingCore {
         return preparingSourceCodeData.company;
     }
 
+    public Account getAccount() {
+        return preparingSourceCodeData.account;
+    }
+
     public GlobalVariable getTestGlobalVariable() {
         return preparingSourceCodeData.testGlobalVariable;
     }
@@ -140,23 +144,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
     }
 
     public void step_0_0_produce_tasks_and_start() {
-        System.out.println("start produceTasksForTest()");
-        preparingSourceCodeService.produceTasksForTest(getSourceCodeYamlAsString(), preparingSourceCodeData);
-
-        List<Object[]> tasks = taskRepositoryForTest.findByExecContextId(getExecContextForTest().getId());
-
-        assertNotNull(getExecContextForTest());
-        assertNotNull(tasks);
-        assertFalse(tasks.isEmpty());
-
-        System.out.println("start verifyGraphIntegrity()");
-        verifyGraphIntegrity();
-
-        System.out.println("start taskProviderService.findTask()");
-        DispatcherCommParamsYaml.AssignedTask simpleTask0 =
-                taskProviderTopLevelService.findTask(getCore1().getId(), false);
-
-        assertNull(simpleTask0);
+        step_0_0_produceTasks();
 
         ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
 
@@ -177,6 +165,26 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
         assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(getExecContextForTest().getState()));
+    }
+
+    public void step_0_0_produceTasks() {
+        System.out.println("start produceTasksForTest()");
+        preparingSourceCodeService.produceTasksForTest(getSourceCodeYamlAsString(), preparingSourceCodeData);
+
+        List<Object[]> tasks = taskRepositoryForTest.findByExecContextId(getExecContextForTest().getId());
+
+        assertNotNull(getExecContextForTest());
+        assertNotNull(tasks);
+        assertFalse(tasks.isEmpty());
+
+        System.out.println("start verifyGraphIntegrity()");
+        verifyGraphIntegrity();
+
+        System.out.println("start taskProviderService.findTask()");
+        DispatcherCommParamsYaml.AssignedTask simpleTask0 =
+                taskProviderTopLevelService.findTask(getCore1().getId(), false);
+
+        assertNull(simpleTask0);
     }
 
     public void finalAssertions(int expectedNumberOfTasks) {

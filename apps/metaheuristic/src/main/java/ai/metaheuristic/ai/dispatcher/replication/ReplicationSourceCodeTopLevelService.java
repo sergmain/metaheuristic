@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.apache.hc.core5.util.Timeout;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -43,16 +43,15 @@ import java.util.Objects;
  * Time: 8:06 PM
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ReplicationSourceCodeTopLevelService {
 
-    public final ReplicationCoreService replicationCoreService;
-    public final ReplicationSourceCodeService replicationSourceCodeService;
-    public final SourceCodeRepository sourceCodeRepository;
-    public final SourceCodeService sourceCodeService;
-    public final SourceCodeCache sourceCodeCache;
+    private final ReplicationCoreService replicationCoreService;
+    private final ReplicationSourceCodeService replicationSourceCodeService;
+    private final SourceCodeRepository sourceCodeRepository;
+    private final SourceCodeTxService sourceCodeTxService;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
 
     @Data
@@ -72,7 +71,7 @@ public class ReplicationSourceCodeTopLevelService {
                 .map(sourceCodeRepository::findByUid)
                 .filter(Objects::nonNull)
                 .forEach(s-> {
-                    sourceCodeService.deleteSourceCodeById(s.id, false);
+                    sourceCodeTxService.deleteSourceCodeById(s.id, false);
                     dispatcherParamsTopLevelService.unregisterSourceCode(s.uid);
                 });
 

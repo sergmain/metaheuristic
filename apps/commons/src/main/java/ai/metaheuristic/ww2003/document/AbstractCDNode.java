@@ -19,9 +19,10 @@ package ai.metaheuristic.ww2003.document;
 import ai.metaheuristic.ww2003.Enums;
 import ai.metaheuristic.ww2003.document.exceptions.DocumentProcessingException;
 import ai.metaheuristic.ww2003.document.tags.xml.Attr;
-import lombok.NonNull;
 import lombok.SneakyThrows;
-import org.springframework.lang.Nullable;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -119,7 +120,7 @@ public abstract class AbstractCDNode implements CDNode {
     }
 
     @Override
-    public Optional<Attr> findAttributeByName(@NonNull String name) {
+    public Optional<Attr> findAttributeByName(@Nonnull String name) {
         if (attributes == null || attributes.isEmpty()) {
             return Optional.empty();
         }
@@ -127,7 +128,7 @@ public abstract class AbstractCDNode implements CDNode {
     }
 
     @Override
-    public void addAttribute(@NonNull Attr attr) {
+    public void addAttribute(@Nonnull Attr attr) {
         if (attributes == null) {
             attributes = new ArrayList<>();
         }

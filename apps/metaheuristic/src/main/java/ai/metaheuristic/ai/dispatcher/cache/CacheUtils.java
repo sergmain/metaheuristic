@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.cache;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
-import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -31,14 +30,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.CountingInputStream;
 import org.springframework.lang.Nullable;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.sql.Blob;
 import java.util.Map;
 import java.util.function.Function;
+
+import static ai.metaheuristic.api.EnumsApi.VariableContext.global;
 
 /**
  * @author Sergio Lissner
@@ -46,27 +45,63 @@ import java.util.function.Function;
  * Time: 1:14 AM
  */
 @Slf4j
-// TODO 2023-06-07 P3 add unit-tests
+// TODO 2023-06-07 P0 add unit-tests
 public class CacheUtils {
 
     public static CacheData.FullKey getKey(
             TaskParamsYaml tpy,
-            ExecContextParamsYaml.FunctionDefinition function,
+            @Nullable String functionParams,
             Function<Long, Long> variableBlobIdRefFunc,
             Function<Long, String> variableAsStringFunc,
-            Function<Long, Blob> variableAsStreamFunc,
-            Function<Long, Blob> globalVariableAsStreamFunc) {
+            Function<Long, InputStream> variableAsStreamFunc,
+            Function<Long, InputStream> globalVariableAsStreamFunc) {
 
-        String params = S.b(tpy.task.function.params) ? "" : tpy.task.function.params;
-        if (!S.b(function.params)) {
-            params = params + " " + function.params;
-        }
+        String params = initParas(tpy, functionParams);
+
         CacheData.FullKey fullKey = new CacheData.FullKey(tpy.task.function.code, params);
-        if (tpy.task.inline!=null) {
-            if (tpy.task.cache == null || !tpy.task.cache.omitInline) {
-                fullKey.inline.putAll(tpy.task.inline);
+
+        collectInlines(tpy, fullKey);
+        addMetasIfNeeded(tpy, fullKey);
+        collectChecksums(tpy, variableBlobIdRefFunc, variableAsStringFunc, variableAsStreamFunc, globalVariableAsStreamFunc, fullKey);
+
+        fullKey.inputs.sort(CacheData.SHA_256_PLUS_LENGTH_COMPARATOR);
+        fullKey.metas.sort(CacheData.SHA_256_PLUS_LENGTH_COMPARATOR);
+        return fullKey;
+    }
+
+    private static void collectChecksums(TaskParamsYaml tpy, Function<Long, Long> variableBlobIdRefFunc, Function<Long, String> variableAsStringFunc, Function<Long, InputStream> variableAsStreamFunc, Function<Long, InputStream> globalVariableAsStreamFunc, CacheData.FullKey fullKey) {
+        for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
+            if (input.context==global) {
+                fullKey.inputs.add(getSha256Length(input.id, globalVariableAsStreamFunc));
+                continue;
+            }
+
+            Long variableBlobId = variableBlobIdRefFunc.apply(input.id);
+            if (variableBlobId==null) {
+                throw new IllegalStateException("(variableBlobId==null)");
+            }
+
+            switch (input.context) {
+                case array -> {
+                    String data = variableAsStringFunc.apply(variableBlobId);
+                    VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(data);
+                    for (VariableArrayParamsYaml.Variable variable : vapy.array) {
+                        long variableId = Long.parseLong(variable.id);
+                        if (variable.dataType==EnumsApi.DataType.variable) {
+                            fullKey.inputs.add(getSha256Length(variableId, variableAsStreamFunc));
+                        }
+                        else {
+                            fullKey.inputs.add(getSha256Length(variableId, globalVariableAsStreamFunc));
+                        }
+                    }
+                }
+                case local -> fullKey.inputs.add(getSha256Length(variableBlobId, variableAsStreamFunc));
+                default -> throw new IllegalStateException("input.context " + input.context);
             }
         }
+    }
+
+    private static void addMetasIfNeeded(TaskParamsYaml tpy, CacheData.FullKey fullKey) {
         if (tpy.task.cache!=null && tpy.task.cache.cacheMeta) {
             for (Map<String, String> meta : tpy.task.metas) {
                 if (meta.size()!=1) {
@@ -76,39 +111,31 @@ public class CacheUtils {
                 fullKey.metas.add(getSha256PlusLength(new ByteArrayInputStream((entry.getKey()+"###"+entry.getValue()).getBytes(StandardCharsets.UTF_8))));
             }
         }
-        for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
-            Long variableBlobId = variableBlobIdRefFunc.apply(input.id);
-            if (variableBlobId==null) {
-                throw new IllegalStateException("(variableBlobId==null)");
-            }
-            switch (input.context) {
-                case array -> {
-                    String data = variableAsStringFunc.apply(variableBlobId);
-                    VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(data);
-                    for (VariableArrayParamsYaml.Variable variable : vapy.array) {
-                        if (variable.dataType==EnumsApi.DataType.variable) {
-                            long variableId = Long.parseLong(variable.id);
-                            fullKey.inputs.add(getSha256Length(variableId, variableAsStreamFunc));
-                        }
-                        else {
-                            fullKey.inputs.add(getSha256Length(variableBlobId, globalVariableAsStreamFunc));
-                        }
-                    }
-                }
-                case local -> fullKey.inputs.add(getSha256Length(variableBlobId, variableAsStreamFunc));
-                case global -> fullKey.inputs.add(getSha256Length(variableBlobId, globalVariableAsStreamFunc));
-                default -> throw new IllegalStateException("input.context " + input.context);
-            }
-
-        }
-        fullKey.inputs.sort(CacheData.SHA_256_PLUS_LENGTH_COMPARATOR);
-        fullKey.metas.sort(CacheData.SHA_256_PLUS_LENGTH_COMPARATOR);
-        return fullKey;
     }
 
-    private static CacheData.Sha256PlusLength getSha256Length(Long variableId, Function<Long, Blob> function) {
+    private static void collectInlines(TaskParamsYaml tpy, CacheData.FullKey fullKey) {
+        if (tpy.task.inline!=null) {
+            if (tpy.task.cache == null || !tpy.task.cache.omitInline) {
+                fullKey.inline.putAll(tpy.task.inline);
+            }
+        }
+    }
+
+    private static String initParas(TaskParamsYaml tpy, @Nullable String functionParams) {
+        String params = S.b(tpy.task.function.params) ? "" : tpy.task.function.params;
+        if (!S.b(functionParams)) {
+            params = params + " " + functionParams;
+        }
+        return params;
+    }
+
+    private static CacheData.Sha256PlusLength getSha256Length(Long variableId, Function<Long, InputStream> streamFunction) {
         try {
-            Blob blob = function.apply(variableId);
+            try (InputStream is = streamFunction.apply(variableId)) {
+                return getSha256PlusLength(is);
+            }
+/*
+            Blob blob = streamFunction.apply(variableId);
             if (blob==null) {
                 String es = S.f("#611.320 Data for variableId #%d wasn't found", variableId);
                 log.warn(es);
@@ -117,6 +144,7 @@ public class CacheUtils {
             try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
                 return getSha256PlusLength(bis);
             }
+*/
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Throwable e) {

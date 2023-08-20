@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,9 +18,32 @@ package ai.metaheuristic.ai.some;
 
 import org.junit.jupiter.api.Test;
 
+import java.text.NumberFormat;
+import java.util.Calendar;
+import java.util.Locale;
+
+import static java.text.NumberFormat.*;
+import static java.util.Calendar.LONG;
+import static java.util.Calendar.SHORT;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class TestBreak {
+
+    @Test
+    public void test_() {
+        double d = 12324.134;
+        System.out.println(getCurrencyInstance(Locale.US).format(d));
+        System.out.println(getCurrencyInstance(new Locale("hi", "IN")).format(d));
+        System.out.println(getCurrencyInstance(Locale.CHINA).format(d));
+        System.out.println(getCurrencyInstance(Locale.FRANCE).format(d));
+    }
+
+    @Test
+    public void test_week() {
+        Calendar c = Calendar.getInstance();
+        System.out.println(c.getDisplayName(Calendar.DAY_OF_WEEK, LONG, Locale.US));
+    }
+
 
     @Test
     public void testBreak() {

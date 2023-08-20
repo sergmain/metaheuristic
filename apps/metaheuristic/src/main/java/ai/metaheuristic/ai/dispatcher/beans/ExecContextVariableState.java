@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,10 +19,10 @@ package ai.metaheuristic.ai.dispatcher.beans;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextUtils;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
-import ai.metaheuristic.commons.utils.ThreadUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
+//import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
@@ -64,7 +64,7 @@ public class ExecContextVariableState implements Serializable {
     @Column(name="CREATED_ON")
     public Long createdOn;
 
-    @NotBlank
+//    @NotBlank
     @Column(name = "PARAMS")
     private String params;
 

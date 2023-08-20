@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -72,6 +71,12 @@ public class Consts {
     public static final String TASK_DIR = "task";
     public static final String DISPATCHER_DIR = "dispatcher";
     public static final String PROCESSOR_DIR = "processor";
+    public static final String STORAGE_DIR = "storage";
+    public static final String VARIABLES_DIR = "variables";
+    public static final String GLOBAL_VARIABLES_DIR = "global-variables";
+    public static final String FUNCTIONS_DIR = "functions";
+    public static final String CACHE_VARIABLES_DIR = "cache-variables";
+
 
     public static final String METADATA_YAML_FILE_NAME = "metadata.yaml";
     public static final String METADATA_YAML_BAK_FILE_NAME = "metadata.yaml.bak";
@@ -111,6 +116,7 @@ public class Consts {
     public static final String ZIP_EXT = ".zip";
     public static final String XML_EXT = ".xml";
     public static final String RAR_EXT = ".rar";
+    public static final String BIN_EXT = ".bin";
 
     public static final String HEADER_MH_IS_LAST_CHUNK = "mh-is-last-chunk";
     public static final String HEADER_MH_CHUNK_SIZE = "mh-chunk-size";
@@ -159,11 +165,13 @@ public class Consts {
 
     public static final Duration DURATION_5_SECONDS = Duration.ofSeconds(5);
     public static final Duration DURATION_20_SECONDS = Duration.ofSeconds(20);
+    public static final Duration DURATION_1_HOUR = Duration.ofHours(1);
 
     public static final Duration DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS = DURATION_20_SECONDS;
     public static final long DISPATCHER_SOCKET_TIMEOUT_MILLISECONDS = DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS.toMillis();
 
-    public static final Duration DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS = DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS.minus(DURATION_5_SECONDS);
+//    public static final Duration DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS = DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS.minus(DURATION_5_SECONDS);
+    public static final Duration DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS = DURATION_1_HOUR;
     public static final long DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS = DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS.toMillis();
 
     public static final String GIT_PATH = "git";
@@ -176,4 +184,9 @@ public class Consts {
 
     public static final String EXPECTED = "expected";
     public static final byte[] STUB_BYTES = "1".getBytes();
+    public static final String STANDALONE_PROFILE = "standalone";
+    public static final String OPENAI_API_KEY = "OPENAI_API_KEY";
+    public static final String REST_USER = "rest_user";
+
+    public static final int STANDALONE_PORT_NUMBER = 64967;
 }

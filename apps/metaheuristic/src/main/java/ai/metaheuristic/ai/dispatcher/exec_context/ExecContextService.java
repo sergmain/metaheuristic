@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,10 +23,10 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
-import ai.metaheuristic.ai.dispatcher.event.DeleteExecContextInListTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
-import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.DeleteExecContextInListTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.ProcessDeletedExecContextTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.TaskQueueCleanByExecContextIdTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
@@ -47,6 +47,7 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Pageable;
@@ -66,7 +67,7 @@ import static ai.metaheuristic.api.EnumsApi.OperationStatus;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 @SuppressWarnings("UnusedReturnValue")
 public class ExecContextService {
 
@@ -276,11 +277,11 @@ public class ExecContextService {
                 return resource;
             }
 
-            String ext = execContextUtilsServices.getExtensionForVariable(execContext.execContextVariableStateId, variableId, ".bin");
+            String ext = execContextUtilsServices.getExtensionForVariable(execContext.execContextVariableStateId, variableId, Consts.BIN_EXT);
 
             String filename = S.f("variable-%s-%s%s", variableId, v.name, ext);
 
-            Path varFile = resultDir.resolve("variable-"+variableId+".bin");
+            Path varFile = resultDir.resolve("variable-"+variableId+ Consts.BIN_EXT);
             variableService.storeToFileWithTx(v.id, varFile);
 
             HttpHeaders httpHeaders = new HttpHeaders();

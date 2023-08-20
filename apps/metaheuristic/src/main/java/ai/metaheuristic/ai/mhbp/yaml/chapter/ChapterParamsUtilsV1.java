@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.mhbp.yaml.chapter;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
@@ -32,15 +31,13 @@ public class ChapterParamsUtilsV1 extends
         return 1;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(ChapterParamsV1.class);
     }
 
-    @NonNull
     @Override
-    public ChapterParams upgradeTo(@NonNull ChapterParamsV1 v1) {
+    public ChapterParams upgradeTo(ChapterParamsV1 v1) {
         v1.checkIntegrity();
 
         ChapterParams t = new ChapterParams();
@@ -55,9 +52,8 @@ public class ChapterParamsUtilsV1 extends
         return f;
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
@@ -72,15 +68,14 @@ public class ChapterParamsUtilsV1 extends
     }
 
     @Override
-    public String toString(@NonNull ChapterParamsV1 yaml) {
+    public String toString(ChapterParamsV1 yaml) {
         yaml.checkIntegrity();
 
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public ChapterParamsV1 to(@NonNull String s) {
+    public ChapterParamsV1 to(String s) {
         final ChapterParamsV1 p = getYaml().load(s);
         return p;
     }

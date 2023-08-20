@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.preparing;
 
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
@@ -77,12 +78,13 @@ public abstract class FeatureMethods extends PreparingExperiment {
         SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(getSourceCode());
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status.status, status.error);
 
-        ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(getSourceCode(), getCompany().getUniqueId());
+        DispatcherContext context = new DispatcherContext(getAccount(), getCompany());
+        ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(getSourceCode(), context.asUserExecContext());
         setExecContextForTest(result.execContext);
         assertFalse(result.isErrorMessages());
         assertNotNull(getExecContextForTest());
         assertEquals(EnumsApi.ExecContextState.NONE.code, getExecContextForTest().getState());
-        ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
+        ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, () -> {
             EnumsApi.TaskProducingStatus producingStatus = txSupportForTestingService.toProducing(getExecContextForTest().id);
             setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
             assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
@@ -96,15 +98,12 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
             long mills = System.currentTimeMillis();
             ExecContextParamsYaml execContextParamsYaml = result.execContext.getExecContextParamsYaml();
-            ExecContextGraphSyncService.getWithSync(getExecContextForTest().execContextGraphId, ()->
-                    ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId, ()-> {
+            ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().execContextGraphId, ()->
+                    ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().execContextTaskStateId, ()-> {
                         txSupportForTestingService.produceAndStartAllTasks(getSourceCode(), result.execContext.id);
-                        return null;
                     }));
 
             log.info("Tasks were produced for " + (System.currentTimeMillis() - mills) + " ms.");
-
-            return null;
         });
         // statuses of ExecContext are being refreshing from Scheduler which is disabled while testing
         execContextStatusService.resetStatus();

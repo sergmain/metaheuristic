@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,18 +21,13 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.el.EvaluateExpressionLanguage;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
-import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -40,6 +35,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -54,21 +50,16 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.source_code_n
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class EvaluationFunction implements InternalFunction {
 
     private static final String EXPRESSION = "expression";
 
-    public final InternalFunctionVariableService internalFunctionVariableService;
-    public final SourceCodeCache sourceCodeCache;
-    public final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
-    public final SourceCodeRepository sourceCodeRepository;
-    public final GlobalVariableService globalVariableService;
-    public final VariableTxService variableTxService;
-    public final VariableRepository variableRepository;
-    public final ExecContextCache execContextCache;
-    public final VariableTopLevelService variableTopLevelService;
-    public final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
+    private final InternalFunctionVariableService internalFunctionVariableService;
+    private final SourceCodeCache sourceCodeCache;
+    private final GlobalVariableTxService globalVariableService;
+    private final VariableTxService variableTxService;
+    private final VariableRepository variableRepository;
 
     @Override
     public String getCode() {

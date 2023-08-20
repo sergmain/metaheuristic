@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,14 +17,19 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
-import ai.metaheuristic.ai.dispatcher.event.DeleteExecContextEvent;
-import ai.metaheuristic.ai.dispatcher.event.DeleteExecContextInListEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.DeleteExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.DeleteExecContextInListEvent;
+import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -34,6 +39,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
@@ -56,7 +62,7 @@ import java.util.List;
 @Slf4j
 @Profile("dispatcher")
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextTopLevelService {
 
     private final ExecContextService execContextService;
@@ -66,6 +72,9 @@ public class ExecContextTopLevelService {
     private final TaskRepository taskRepository;
     private final ExecContextReconciliationTopLevelService execContextReconciliationTopLevelService;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
+    private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
+    private final CacheProcessRepository cacheProcessRepository;
+    private final TaskCheckCachingTxService taskCheckCachingTxService;
 
     private static boolean isManagerRole(String role) {
         return switch (role) {
@@ -142,7 +151,7 @@ public class ExecContextTopLevelService {
         if (!result.sourceCode.getId().equals(result.execContext.getSourceCodeId())) {
             ExecContextSyncService.getWithSyncVoid(execContextId,
                     () -> execContextService.changeValidStatus(execContextId, false));
-            return new SourceCodeApiData.ExecContextResult("#210.030 sourceCodeId doesn't match to execContext.sourceCodeId, " +
+            return new SourceCodeApiData.ExecContextResult("210.030 sourceCodeId doesn't match to execContext.sourceCodeId, " +
                     "sourceCodeId: " + result.execContext.getSourceCodeId() + ", execContext.sourceCodeId: " + result.execContext.getSourceCodeId());
         }
         return result;
@@ -151,14 +160,14 @@ public class ExecContextTopLevelService {
     public OperationStatusRest changeExecContextState(String state, Long execContextId, DispatcherContext context) {
         EnumsApi.ExecContextState execState = EnumsApi.ExecContextState.from(state.toUpperCase());
         if (execState == EnumsApi.ExecContextState.UNKNOWN) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#210.060 Unknown exec state, state: " + state);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "210.060 Unknown exec state, state: " + state);
         }
         if (execState!= EnumsApi.ExecContextState.STARTED && execState!= EnumsApi.ExecContextState.STOPPED) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#210.090 execCpntext state can be only STARTED or STOPPED, requested state: " + state);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "210.090 execContext state can be only STARTED or STOPPED, requested state: " + state);
         }
         ExecContextImpl ec = execContextCache.findById(execContextId, true);
         if (ec==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#210.120 ExecContext #" + execContextId +" wasn't found");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "210.120 ExecContext #" + execContextId +" wasn't found");
         }
         List<Long> execContextIds = execContextRepository.findAllRelatedExecContextIds(execContextId);
         execContextIds.add(execContextId);
@@ -200,13 +209,13 @@ public class ExecContextTopLevelService {
     private Long storeExecResult(ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result) {
         TaskImpl task = taskRepository.findByIdReadOnly(result.taskId);
         if (task == null) {
-            log.warn("#210.150 Reporting about non-existed task #{}", result.taskId);
+            log.warn("210.150 Reporting about non-existed task #{}", result.taskId);
             return null;
         }
 
         ExecContextImpl execContext = execContextCache.findById(task.execContextId, true);
         if (execContext == null) {
-            log.warn("#210.180 Reporting about non-existed execContext #{}", task.execContextId);
+            log.warn("210.180 Reporting about non-existed execContext #{}", task.execContextId);
             return null;
         }
         if (task.execState == EnumsApi.TaskExecState.ERROR.value ||
@@ -216,13 +225,13 @@ public class ExecContextTopLevelService {
         }
         // TODO 2021-11-22 it's not clear - do we have to check TaskExecState.SKIPPED state as well
         if (task.execState == EnumsApi.TaskExecState.SKIPPED.value) {
-            log.warn("#210.210 storeExecResult() was called, taskId: #{}, taskExecState: SKIPPED", task.id);
+            log.warn("210.210 storeExecResult() was called, taskId: #{}, taskExecState: SKIPPED", task.id);
         }
 
         try {
             TaskSyncService.getWithSyncVoid(task.id, () -> storeExecResultInternal(result));
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("#210.240 ObjectOptimisticLockingFailureException as caught, let try to store exec result one more time");
+            log.warn("210.240 ObjectOptimisticLockingFailureException as caught, let try to store exec result one more time");
             TaskSyncService.getWithSyncVoid(task.id, () -> storeExecResultInternal(result));
         }
         return task.id;
@@ -236,12 +245,12 @@ public class ExecContextTopLevelService {
 
     public void deleteOrphanExecContexts(Collection<Long> execContextIds) {
         for (Long execContextId : execContextIds) {
-            log.info("#210.270 Found orphan execContext #{}", execContextId);
+            log.info("210.270 Found orphan execContext #{}", execContextId);
             try {
                 ExecContextSyncService.getWithSyncVoid(execContextId, ()-> execContextService.deleteExecContext(execContextId));
             }
             catch (Throwable th) {
-                log.error("#210.300 execContextService.deleteExecContext("+execContextId+")", th);
+                log.error("210.300 execContextService.deleteExecContext("+execContextId+")", th);
             }
         }
     }
@@ -268,7 +277,7 @@ public class ExecContextTopLevelService {
 
         ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext == null) {
-            log.warn("#210.330 Reporting about non-existed execContext #{}", execContextId);
+            log.warn("210.330 Reporting about non-existed execContext #{}", execContextId);
             return new ExecContextApiData.TaskExecInfo(sourceCodeId, execContextId, taskId, EnumsApi.TaskExecState.ERROR, S.f("ExecContext #%s wasn't found", execContextId));
         }
 
@@ -278,10 +287,39 @@ public class ExecContextTopLevelService {
             return new ExecContextApiData.TaskExecInfo(sourceCodeId, execContextId, taskId, EnumsApi.TaskExecState.ERROR, S.f("Task #%s wasn't found", taskId));
         }
         if (!execContextId.equals(task.execContextId)) {
-            log.warn("#210.390 Reporting about non-existed task #{}", taskId);
+            log.warn("210.390 Reporting about non-existed task #{}", taskId);
             return new ExecContextApiData.TaskExecInfo(sourceCodeId, execContextId, taskId, EnumsApi.TaskExecState.ERROR, S.f("Task #%s doesn't belong to execContext #%s", taskId, execContextId));
         }
         return new ExecContextApiData.TaskExecInfo(sourceCodeId, execContextId, taskId, EnumsApi.TaskExecState.from(task.execState),
                 S.b(task.functionExecResults) ? S.f("Task #%s doesn't have functionExecResults", taskId) : task.functionExecResults);
+    }
+
+    public OperationStatusRest resetCache(Long taskId, DispatcherContext context) {
+        TaskImpl task = taskRepository.findByIdReadOnly(taskId);
+        if (task == null) {
+            String es = S.f("210.420 Task #%s wasn't found", taskId);
+            log.warn(es);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+        }
+        ExecContextImpl execContext = execContextCache.findById(task.execContextId, true);
+        if (execContext == null) {
+            String es = S.f("210.440 Task #%s has broken ExecContext #%s", taskId, task.execContextId);
+            log.warn(es);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+        }
+
+        CacheData.SimpleKey key = taskCheckCachingTopLevelService.getSimpleKey(execContext.getExecContextParamsYaml(), task);
+        if (key==null) {
+            String es = S.f("210.440 For Task #%s, cache key wasn't created, ExecContext #%s", taskId, task.execContextId);
+            log.warn(es);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+        }
+
+        CacheProcess cacheProcess = cacheProcessRepository.findByKeySha256LengthReadOnly(key.key());
+        if (cacheProcess!=null) {
+            taskCheckCachingTxService.invalidateCacheItem(cacheProcess.id);
+        }
+
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 }

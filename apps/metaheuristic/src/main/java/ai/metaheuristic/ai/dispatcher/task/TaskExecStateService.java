@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.SetTaskExecStateTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -27,9 +28,11 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import static ai.metaheuristic.api.EnumsApi.TaskExecState.NONE;
 
@@ -41,14 +44,16 @@ import static ai.metaheuristic.api.EnumsApi.TaskExecState.NONE;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskExecStateService {
 
     private final TaskRepository taskRepository;
     private final EventPublisherService eventPublisherService;
     private final ApplicationEventPublisher eventPublisher;
 
-    public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState) {
+    @Transactional
+    public void updateTaskExecStates(Long taskId, EnumsApi.TaskExecState execState) {
+        TaskImpl task = taskRepository.findById(taskId).orElseThrow();
         updateTaskExecStates(task, execState, false);
     }
 

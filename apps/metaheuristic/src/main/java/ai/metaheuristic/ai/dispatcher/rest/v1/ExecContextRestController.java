@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,10 +28,12 @@ import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.data.domain.Pageable;
@@ -45,8 +47,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 /**
  * @author Serge
  * Date: 7/4/2019
@@ -59,7 +59,7 @@ import jakarta.servlet.http.HttpServletRequest;
 @RestController
 @Profile("dispatcher")
 @CrossOrigin
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextRestController {
 
     private final ExecContextTopLevelService execContextTopLevelService;
@@ -98,7 +98,7 @@ public class ExecContextRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SimpleExecContextAddingResult execContextAddCommit(String uid, @SuppressWarnings("unused") @Nullable String variable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(uid, context.getCompanyId());
+        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(uid, context.asUserExecContext());
         return new SimpleExecContextAddingResult(execContextResult.execContext.getId());
     }
 
@@ -109,7 +109,7 @@ public class ExecContextRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SourceCodeApiData.ExecContextResult execContextAddCommit(Long sourceCodeId, @SuppressWarnings("unused") @Nullable String variable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context.getCompanyId(), true);
+        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context.asUserExecContext(), true);
 
         SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(execContextResult.sourceCode, execContextResult.execContext);
         return result;
@@ -126,6 +126,13 @@ public class ExecContextRestController {
     public OperationStatusRest execContextDeleteCommit(Long sourceCodeId, Long execContextId, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         return execContextTopLevelService.deleteExecContextById(execContextId, context);
+    }
+
+    @PostMapping("/exec-context/task-reset-cache")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
+    public OperationStatusRest resetCache(Long taskId, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        return execContextTopLevelService.resetCache(taskId, context);
     }
 
     @GetMapping("/exec-context-target-state/{sourceCodeId}/{state}/{id}")

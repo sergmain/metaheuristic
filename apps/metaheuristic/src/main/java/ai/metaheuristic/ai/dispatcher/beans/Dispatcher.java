@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,15 +18,14 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYamlUtils;
-import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.lang.Nullable;
 
-import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -39,7 +38,7 @@ import java.io.Serializable;
 @Table(name = "MH_DISPATCHER")
 @Data
 @NoArgsConstructor
-@ToString(exclude = {"dpy"})
+@ToString
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Dispatcher implements Serializable {
@@ -53,46 +52,40 @@ public class Dispatcher implements Serializable {
     @Version
     public Integer version;
 
+    @Column(name = "CODE")
+    public String code;
+
     @Column(name = "PARAMS")
     private String params;
-
-    public void setParams(String params) {
-        synchronized (this) {
-            this.params = params;
-            this.dpy=null;
-        }
-    }
 
     public String getParams() {
         return params;
     }
 
-    @Column(name = "CODE")
-    public String code;
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
 
     @Transient
     @JsonIgnore
-    @Nullable
-    private DispatcherParamsYaml dpy = null;
+    private final ThreadUtils.CommonThreadLocker<DispatcherParamsYaml> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private DispatcherParamsYaml parseParams() {
+        DispatcherParamsYaml temp = DispatcherParamsYamlUtils.BASE_YAML_UTILS.to(params);
+        DispatcherParamsYaml ecpy = temp==null ? new DispatcherParamsYaml() : temp;
+        return ecpy;
+    }
 
     @JsonIgnore
     public DispatcherParamsYaml getDispatcherParamsYaml() {
-        if (dpy ==null) {
-            synchronized (this) {
-                if (dpy ==null) {
-                    // to create a valid structure of params
-                    String p = S.b(params) ? DispatcherParamsYamlUtils.BASE_YAML_UTILS.toString(new DispatcherParamsYaml()) : params;
-                    //noinspection UnnecessaryLocalVariable
-                    DispatcherParamsYaml temp = DispatcherParamsYamlUtils.BASE_YAML_UTILS.to(p);
-                    dpy = temp;
-                }
-            }
-        }
-        return dpy;
+        return paramsLocked.get();
     }
 
     @JsonIgnore
-    public void updateParams(DispatcherParamsYaml dpy) {
-        setParams(DispatcherParamsYamlUtils.BASE_YAML_UTILS.toString(dpy));
+    public void updateParams(DispatcherParamsYaml tpy) {
+        setParams(DispatcherParamsYamlUtils.BASE_YAML_UTILS.toString(tpy));
     }
+
+
 }

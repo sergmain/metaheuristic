@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,12 +19,13 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.env.EnvService;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import lombok.extern.slf4j.Slf4j;
@@ -61,32 +62,27 @@ public class ProcessorKeepAliveRequestor {
     private final Globals globals;
 
     private final ProcessorService processorService;
-    private final MetadataService metadataService;
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
     private final ProcessorKeepAliveProcessor processorKeepAliveProcessor;
-    private final EnvService envService;
+    private final ProcessorEnvironment processorEnvironment;
 
     private static final HttpComponentsClientHttpRequestFactory REQUEST_FACTORY = DispatcherUtils.getHttpRequestFactory();
 
     private final RestTemplate restTemplate;
-    private final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
+    private final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher;
     private final String dispatcherRestUrl;
 
     public ProcessorKeepAliveRequestor(
             DispatcherUrl dispatcherUrl, Globals globals,
-            ProcessorService processorService, MetadataService metadataService,
-            DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorKeepAliveProcessor processorKeepAliveProcessor, EnvService envService) {
+            ProcessorService processorService, ProcessorKeepAliveProcessor processorKeepAliveProcessor, ProcessorEnvironment processorEnvironment) {
         this.dispatcherUrl = dispatcherUrl;
         this.globals = globals;
         this.processorService = processorService;
-        this.metadataService = metadataService;
-        this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
         this.processorKeepAliveProcessor = processorKeepAliveProcessor;
-        this.envService = envService;
+        this.processorEnvironment = processorEnvironment;
 
         this.restTemplate = new RestTemplate(REQUEST_FACTORY);
         this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
-        this.dispatcher = this.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+        this.dispatcher = this.processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
         if (this.dispatcher == null) {
             throw new IllegalStateException("#776.010 Can't find dispatcher config for url " + dispatcherUrl);
         }
@@ -106,7 +102,7 @@ public class ProcessorKeepAliveRequestor {
             karpy.processor.status = processorService.produceReportProcessorStatus(dispatcher.schedule);
 
 
-            final MetadataParamsYaml.ProcessorSession processorSession = metadataService.getProcessorSession(dispatcherUrl);
+            final MetadataParamsYaml.ProcessorSession processorSession = processorEnvironment.metadataParams.getProcessorSession(dispatcherUrl);
             final Long processorId = processorSession.processorId;
             final String sessionId = processorSession.sessionId;
 
@@ -117,21 +113,21 @@ public class ProcessorKeepAliveRequestor {
                 karpy.processor.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
             }
 
-            Set<ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef> cores = metadataService.getAllCoresForDispatcherUrl(dispatcherUrl);
+            Set<ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef> cores = processorEnvironment.metadataParams.getAllCoresForDispatcherUrl(dispatcherUrl);
             for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : cores) {
                 String coreDir = globals.processorPath.resolve(core.coreCode).toString();
                 Long coreId = core.coreId;
                 String coreCode = core.coreCode;
-                String tags = envService.getTags(core.coreCode);
+                String tags = processorEnvironment.envParams.getTags(core.coreCode);
 
                 karpy.cores.add(new KeepAliveRequestParamYaml.Core(coreDir, coreId, coreCode, tags));
             }
 
-            final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
-                    dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+            final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
+                    processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
             ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
-            karpy.functions.statuses.putAll(metadataService.getAsFunctionDownloadStatuses(assetManagerUrl));
+            karpy.functions.statuses.putAll(processorEnvironment.metadataParams.getAsFunctionDownloadStatuses(assetManagerUrl));
 
             final String url = dispatcherRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8);
             try {

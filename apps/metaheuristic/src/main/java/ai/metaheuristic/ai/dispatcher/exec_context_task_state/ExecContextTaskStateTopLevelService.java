@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.event.TransferStateFromTaskQueueToExecContextEvent;
-import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.TransferStateFromTaskQueueToExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInGraphEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -28,9 +28,10 @@ import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.utils.ThreadUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadedPool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
@@ -38,10 +39,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @author Serge
@@ -51,49 +49,28 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextTaskStateTopLevelService {
 
     private final ExecContextTaskStateService execContextTaskStateService;
     private final TaskRepository taskRepository;
     private final ExecContextCache execContextCache;
 
-    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
-
-    private final LinkedList<UpdateTaskExecStatesInGraphEvent> queue = new LinkedList<>();
+    private final LinkedHashMap<Long, ThreadedPool<UpdateTaskExecStatesInGraphEvent>> updateTaskExecStatesInGraphEventThreadedPool = new LinkedHashMap<>(100) {
+        protected boolean removeEldestEntry(Map.Entry<Long, ThreadedPool<UpdateTaskExecStatesInGraphEvent>> entry) {
+            return this.size()>50 && entry.getValue().getQueueSize()==0 && entry.getValue().getActiveCount()==0;
+        }
+    };
 
     @Async
     @EventListener
-    public void handleUpdateTaskExecStatesInGraphEvent(UpdateTaskExecStatesInGraphEvent event) {
-        putToQueue(event);
-    }
-
-    public void putToQueue(final UpdateTaskExecStatesInGraphEvent event) {
-        synchronized (queue) {
-            if (queue.contains(event)) {
-                return;
-            }
-            queue.add(event);
-        }
-    }
-
-    @Nullable
-    private UpdateTaskExecStatesInGraphEvent pullFromQueue() {
-        synchronized (queue) {
-            return queue.pollFirst();
-        }
+    public void handleEvent(UpdateTaskExecStatesInGraphEvent event) {
+        updateTaskExecStatesInGraphEventThreadedPool.computeIfAbsent(event.execContextId,
+                (id)-> new ThreadedPool<>(1, 0, false, false, this::updateTaskExecStatesInGraph)).putToQueue(event);
     }
 
     public void processUpdateTaskExecStatesInGraph() {
-        if (executor.getActiveCount()>0) {
-            return;
-        }
-        executor.submit(() -> {
-            UpdateTaskExecStatesInGraphEvent event;
-            while ((event = pullFromQueue())!=null) {
-                updateTaskExecStatesInGraph(event);
-            }
-        });
+        updateTaskExecStatesInGraphEventThreadedPool.entrySet().stream().parallel().forEach(e->e.getValue().processEvent());
     }
 
     public void updateTaskExecStatesInGraph(UpdateTaskExecStatesInGraphEvent event) {
@@ -125,8 +102,8 @@ public class ExecContextTaskStateTopLevelService {
         return execContextTaskStateService.updateTaskExecStatesInGraph(execContextGraphId, execContextTaskStateId, taskId, state, taskContextId);
     }
 
-    private final LinkedHashMap<Long, ThreadUtils.ThreadedPool<TransferStateFromTaskQueueToExecContextEvent>> threadedPoolMap = new LinkedHashMap<>(100) {
-        protected boolean removeEldestEntry(Map.Entry<Long, ThreadUtils.ThreadedPool<TransferStateFromTaskQueueToExecContextEvent>> entry) {
+    private final LinkedHashMap<Long, ThreadedPool<TransferStateFromTaskQueueToExecContextEvent>> threadedPoolMap = new LinkedHashMap<>(100) {
+        protected boolean removeEldestEntry(Map.Entry<Long, ThreadedPool<TransferStateFromTaskQueueToExecContextEvent>> entry) {
             return this.size()>50 && entry.getValue().getQueueSize()==0 && entry.getValue().getActiveCount()==0;
         }
     };
@@ -134,7 +111,7 @@ public class ExecContextTaskStateTopLevelService {
     @Async
     @EventListener
     public void handleEvent(TransferStateFromTaskQueueToExecContextEvent event) {
-        threadedPoolMap.computeIfAbsent(event.execContextId, (id)-> new ThreadUtils.ThreadedPool<>(2, this::transferStateFromTaskQueueToExecContext)).putToQueue(event);
+        threadedPoolMap.computeIfAbsent(event.execContextId, (id)-> new ThreadedPool<>(2, this::transferStateFromTaskQueueToExecContext)).putToQueue(event);
     }
 
     public void transferStateFromTaskQueueToExecContext(TransferStateFromTaskQueueToExecContextEvent event) {

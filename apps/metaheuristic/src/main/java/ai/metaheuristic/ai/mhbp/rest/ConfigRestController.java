@@ -16,10 +16,11 @@
 
 package ai.metaheuristic.ai.mhbp.rest;
 
-import ai.metaheuristic.ai.mhbp.services.LocalGitRepoService;
+import ai.metaheuristic.ai.dispatcher.data.GitData;
 import ai.metaheuristic.ai.mhbp.services.LocalGitSourcingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,17 +37,16 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 //@Profile("!stub-data")
 //@CrossOrigin
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ConfigRestController {
 
-    public final LocalGitSourcingService gitSourcingService;
-    public final LocalGitRepoService gitRepoService;
+    private final LocalGitSourcingService gitSourcingService;
 
     @PreAuthorize("hasAnyRole('MAIN_ADMIN', 'MAIN_OPERATOR', 'MAIN_SUPPORT', 'MANAGER')")
     @GetMapping("/info")
-    public String info() {
-        return ""+gitSourcingService.getGitStatus();
+    public GitData.GitStatusInfo info() {
+        return gitSourcingService.getGitStatus();
     }
 
 }

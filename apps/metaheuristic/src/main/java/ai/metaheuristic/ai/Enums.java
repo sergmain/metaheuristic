@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,8 @@
 package ai.metaheuristic.ai;
 
 public final class Enums {
+
+    public enum ApiKeySourceDefinedBy { none, server, user }
 
     public enum ExecContextInitState {NONE, DELTA, FULL}
 
@@ -51,7 +53,7 @@ public final class Enums {
 
     public enum AssetType { company, account, function, source}
 
-    public enum GitStatus {unknown, installed, not_found, error }
+    public enum GitStatus {unknown, processing, installed, not_found, error }
 
     public enum StoringStatus {OK, CANT_BE_STORED}
 
@@ -181,10 +183,15 @@ public final class Enums {
 
     public enum TokenPlace { param, header }
     public enum PromptPlace { uri, text }
-    public enum PromptResponseType { json(false), text(false), image(true);
+    public enum PromptResponseType {
+        json(false, false), text(false, false), image(true, false),
+        image_base64(true, true);
+
         public final boolean binary;
-        PromptResponseType(boolean binary) {
+        public final boolean base64;
+        PromptResponseType(boolean binary, boolean base64) {
             this.binary = binary;
+            this.base64 = base64;
         }
     }
     public enum HttpMethodType { get, post }

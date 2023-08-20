@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,15 +18,15 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYamlUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -39,7 +39,7 @@ import java.io.Serializable;
 @Table(name = "MH_EXEC_CONTEXT_TASK_STATE")
 @Data
 @NoArgsConstructor
-@ToString(exclude = {"ecpy"})
+@ToString
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class ExecContextTaskState implements Serializable {
@@ -61,41 +61,37 @@ public class ExecContextTaskState implements Serializable {
     @Column(name="CREATED_ON")
     public Long createdOn;
 
-    @NotBlank
+//    @NotBlank
     @Column(name = "PARAMS")
     private String params;
-
-    public void setParams(String params) {
-        synchronized (this) {
-            this.params = params;
-            this.ecpy =null;
-        }
-    }
 
     public String getParams() {
         return params;
     }
 
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
+
     @Transient
     @JsonIgnore
-    @Nullable
-    private ExecContextTaskStateParamsYaml ecpy = null;
+    private final ThreadUtils.CommonThreadLocker<ExecContextTaskStateParamsYaml> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private ExecContextTaskStateParamsYaml parseParams() {
+        ExecContextTaskStateParamsYaml temp = ExecContextTaskStateParamsYamlUtils.BASE_YAML_UTILS.to(params);
+        ExecContextTaskStateParamsYaml ecpy = temp==null ? new ExecContextTaskStateParamsYaml() : temp;
+        return ecpy;
+    }
 
     @JsonIgnore
     public ExecContextTaskStateParamsYaml getExecContextTaskStateParamsYaml() {
-        if (ecpy ==null) {
-            synchronized (this) {
-                if (ecpy ==null) {
-                    ExecContextTaskStateParamsYaml temp = ExecContextTaskStateParamsYamlUtils.BASE_YAML_UTILS.to(params);
-                    ecpy = temp==null ? new ExecContextTaskStateParamsYaml() : temp;
-                }
-            }
-        }
-        return ecpy;
+        return paramsLocked.get();
     }
 
     @JsonIgnore
     public void updateParams(ExecContextTaskStateParamsYaml wpy) {
         setParams(ExecContextTaskStateParamsYamlUtils.BASE_YAML_UTILS.toString(wpy));
     }
+
 }

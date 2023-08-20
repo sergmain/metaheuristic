@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.mhbp.repositories.ChapterRepository;
 import ai.metaheuristic.ai.mhbp.yaml.answer.AnswerParams;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,11 +41,11 @@ import java.util.stream.Stream;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class QuestionAndAnswerTxService {
 
-    public final AnswerRepository answerRepository;
+    private final AnswerRepository answerRepository;
     private final ChapterRepository chapterRepository;
 
     @Transactional(readOnly = true)

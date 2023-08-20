@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ class DownloadUtils {
     public static void combineParts(AssetFile assetFile, File tempFile, int idx) throws IOException {
         try (FileOutputStream fos = new FileOutputStream(tempFile)) {
             for (int i = 0; i <= idx; i++) {
-                final File input = new File(assetFile.file.getAbsolutePath() + "." + i + ".tmp");
+                final File input = new File(assetFile.file.toAbsolutePath() + "." + i + ".tmp");
                 if (input.length()==0) {
                     continue;
                 }

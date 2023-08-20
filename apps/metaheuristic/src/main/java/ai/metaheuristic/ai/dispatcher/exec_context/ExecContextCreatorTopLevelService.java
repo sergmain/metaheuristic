@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
@@ -26,6 +25,7 @@ import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -38,41 +38,37 @@ import org.springframework.stereotype.Service;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextCreatorTopLevelService {
 
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextCreatorService execContextCreatorService;
 
-    public ExecContextCreatorService.ExecContextCreationResult createExecContext(Long sourceCodeId, DispatcherContext context) {
-        return createExecContextAndStart(sourceCodeId, context.getCompanyId(), false);
-    }
-
-    public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(String sourceCodeUid, Long companyUniqueId) {
-        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeByUid(sourceCodeUid, companyUniqueId);
+    public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(String sourceCodeUid, ExecContextData.UserExecContext context) {
+        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeByUid(sourceCodeUid, context.companyId());
         if (sourceCodesForCompany.isErrorMessages()) {
             return new ExecContextCreatorService.ExecContextCreationResult("#563.020 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
-                    "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + companyUniqueId);
+                    "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + context.companyId());
         }
         SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
         if (sourceCode==null) {
             return new ExecContextCreatorService.ExecContextCreationResult("#563.040 Error creating execContext: " +
-                    "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + companyUniqueId);
+                    "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + context.companyId());
         }
-        return createExecContextAndStart(sourceCode.id, companyUniqueId, true);
+        return createExecContextAndStart(sourceCode.id, context, true);
     }
 
-    public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, Long companyUniqueId, boolean isStart) {
-        return createExecContextAndStart(sourceCodeId, companyUniqueId, isStart, null);
+    public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, ExecContextData.UserExecContext context, boolean isStart) {
+        return createExecContextAndStart(sourceCodeId, context, isStart, null);
     }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(
-            Long sourceCodeId, Long companyUniqueId, boolean isStart, @Nullable ExecContextData.RootAndParent rootAndParent) {
+            Long sourceCodeId, ExecContextData.UserExecContext context, boolean isStart, @Nullable ExecContextData.RootAndParent rootAndParent) {
         return SourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
                 () -> {
                     try {
                         ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContextAndStart(
-                                sourceCodeId, companyUniqueId, isStart, rootAndParent);
+                                sourceCodeId, context, isStart, rootAndParent);
                         return result;
                     }
                     catch (ExecContextTooManyInstancesException e) {

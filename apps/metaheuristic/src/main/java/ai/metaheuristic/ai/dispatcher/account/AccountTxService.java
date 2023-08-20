@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,16 +18,19 @@ package ai.metaheuristic.ai.dispatcher.account;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
 import ai.metaheuristic.ai.sec.SecConsts;
+import ai.metaheuristic.ai.yaml.account.AccountParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.account.SimpleAccount;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
@@ -38,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -47,7 +51,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class AccountTxService {
 
     private final Globals globals;
@@ -223,5 +227,52 @@ public class AccountTxService {
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Role "+role+" was changed successfully", "");
     }
 
+    @Transactional
+    public OperationStatusRest changePasswordCommit(String oldPassword, String newPassword, DispatcherContext context) {
+        Account a = accountRepository.findByIdForUpdate(context.getAccountId());
+        if (a == null || !Objects.equals(a.companyId, context.getCompanyId())) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.310 account wasn't found, accountId: " + context.getAccountId());
+        }
+
+        if (!passwordEncoder.matches(oldPassword, a.getPassword())) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.330 Old password is wrong");
+        }
+
+        a.setPassword(passwordEncoder.encode(newPassword));
+        a.updatedOn = System.currentTimeMillis();
+        accountCache.save(a);
+
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The password was changed successfully", "");
+    }
+
+    @Transactional
+    public OperationStatusRest saveOpenaiKey(Long accountId, Long companyId, String openaiKey) {
+        return updateAccountParams(accountId, companyId, p -> p.openaiKey=openaiKey, "The OPEN_API_KEY was saved successfully");
+    }
+
+    @Transactional
+    public OperationStatusRest setLanguage(Long accountId, Long companyId, String lang) {
+        return updateAccountParams(accountId, companyId, p -> p.language=lang, "Language was changed");
+    }
+
+    @Transactional
+    public OperationStatusRest resetLanguage(Long accountId, Long companyId) {
+        return updateAccountParams(accountId, companyId, p -> p.language="en", "Language was reset to 'en'");
+    }
+
+    private OperationStatusRest updateAccountParams(Long accountId, Long companyId, Consumer<AccountParamsYaml> updateFunc, String okMessage) {
+
+        Account account = accountRepository.findByIdForUpdate(accountId);
+        if (account == null || !Objects.equals(account.companyId, companyId)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.360 account wasn't found, accountId: " + accountId);
+        }
+        AccountParamsYaml params = account.getAccountParamsYaml();
+        updateFunc.accept(params);
+        account.updateParams(params);
+        account.updatedOn = System.currentTimeMillis();
+        accountCache.save(account);
+
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK,okMessage, "");
+    }
 }
 

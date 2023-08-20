@@ -1,0 +1,8 @@
+databaseChangeLog:
+  - include:
+      file: 00010_2023-07-07/00010.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 00015_2023-07-14/00015.yaml
+      relativeToChangelogFile: true
+

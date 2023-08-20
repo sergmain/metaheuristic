@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -63,7 +63,9 @@ public class DispatcherLookupParamsYamlV2 implements BaseParams {
         public boolean disabled;
         public String url;
         public boolean signatureRequired;
+        @Nullable
         public String publicKey;
+        @Nullable
         public Enums.DispatcherLookupType lookupType;
         public Enums.AuthType authType;
 

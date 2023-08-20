@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.event.*;
+import ai.metaheuristic.ai.dispatcher.event.events.*;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
@@ -29,6 +29,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -54,7 +55,7 @@ import java.util.stream.Collectors;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextTaskAssigningTopLevelService {
 
     private final ExecContextCache execContextCache;
@@ -64,6 +65,7 @@ public class ExecContextTaskAssigningTopLevelService {
     private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
     private final TaskFinishingTxService taskFinishingTxService;
     private final ExecContextRepository execContextRepository;
+    private final ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
 
     public static class UnassignedTasksStat {
@@ -185,7 +187,7 @@ public class ExecContextTaskAssigningTopLevelService {
         log.debug("#703.140 found {} tasks for registering, execContextId: #{}", vertices.size(), execContextId);
 
         if (vertices.isEmpty()) {
-            ExecContextTaskResettingTopLevelService.putToQueue(new ResetTasksWithErrorEvent(execContextId));
+            execContextTaskResettingTopLevelService.handleEvaluateProviderEvent(new ResetTasksWithErrorEvent(execContextId));
             return stat;
         }
 

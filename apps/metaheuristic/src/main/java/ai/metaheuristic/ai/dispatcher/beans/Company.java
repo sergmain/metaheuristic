@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,12 +16,16 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 
-import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -50,13 +54,46 @@ public class Company implements Serializable {
     @Column(name = "UNIQUE_ID")
     public Long uniqueId;
 
-    @Nullable
-    @Column(name = "PARAMS")
-    public String params;
-
     public String name;
 
     public Company(String companyName) {
         this.name = companyName;
     }
+
+    @Column(name = "PARAMS")
+    private String params;
+
+    @Nullable
+    public String getParams() {
+        return params;
+    }
+
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
+
+    @Transient
+    @JsonIgnore
+    private final ThreadUtils.CommonThreadLocker<CompanyParamsYaml> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private CompanyParamsYaml parseParams() {
+        if (params==null) {
+            return new CompanyParamsYaml();
+        }
+        CompanyParamsYaml temp = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(params);
+        CompanyParamsYaml ecpy = temp==null ? new CompanyParamsYaml() : temp;
+        return ecpy;
+    }
+
+    @JsonIgnore
+    public CompanyParamsYaml getCompanyParamsYaml() {
+        return paramsLocked.get();
+    }
+
+    @JsonIgnore
+    public void updateParams(CompanyParamsYaml tpy) {
+        setParams(CompanyParamsYamlUtils.BASE_YAML_UTILS.toString(tpy));
+    }
+
 }

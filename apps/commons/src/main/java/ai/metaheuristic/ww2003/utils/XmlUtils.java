@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 

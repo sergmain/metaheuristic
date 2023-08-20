@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,17 +16,23 @@
 
 package ai.metaheuristic.api.data;
 
+import ai.metaheuristic.api.EnumsApi;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
+
+/**
+ * !!! To include fields from this class constructor must be annotated with @JsonCreator
+ * @see OperationStatusRest#OperationStatusRest(EnumsApi.OperationStatus, List, List)
+ */
 @Data
 public abstract class BaseDataClass {
 
@@ -43,7 +49,7 @@ public abstract class BaseDataClass {
         this.errorMessages.add(errorMessage);
     }
 
-    public void addErrorMessages(@NonNull List<String> errorMessages) {
+    public void addErrorMessages(@Nonnull List<String> errorMessages) {
         if (this.errorMessages==null) {
             this.errorMessages = new ArrayList<>();
         }
@@ -57,7 +63,7 @@ public abstract class BaseDataClass {
         this.infoMessages.add(infoMessage);
     }
 
-    public void addInfoMessages(@NonNull List<String> infoMessages) {
+    public void addInfoMessages(@Nonnull List<String> infoMessages) {
         if (this.infoMessages==null) {
             this.infoMessages = new ArrayList<>();
         }

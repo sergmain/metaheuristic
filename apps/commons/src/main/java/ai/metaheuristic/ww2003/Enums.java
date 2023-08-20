@@ -17,7 +17,7 @@
 package ai.metaheuristic.ww2003;
 
 import ai.metaheuristic.ww2003.document.exceptions.DocumentProcessingException;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 /**
  * @author Serge

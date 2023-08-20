@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2022, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@ import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -35,18 +35,18 @@ import org.springframework.stereotype.Service;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ProcessorCoreCache {
 
     private final ProcessorCoreRepository processorCoreRepository;
 
-    public ProcessorCore save(@NonNull ProcessorCore core) {
+    public ProcessorCore save(ProcessorCore core) {
         TxUtils.checkTxExists();
         log.debug("#457.010 save core, id: #{}, core: {}", core.id, core);
         return processorCoreRepository.save(core);
     }
 
-    public void delete(@NonNull ProcessorCore processor) {
+    public void delete(ProcessorCore processor) {
         TxUtils.checkTxExists();
         try {
             processorCoreRepository.delete(processor);

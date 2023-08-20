@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@ import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.net.URIBuilder;
 import org.apache.hc.core5.util.Timeout;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -47,12 +48,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.UUID;
 
 @Service
 @Slf4j
 @Profile("processor")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableTask> implements QueueProcessor {
 
     private final Globals globals;
@@ -129,11 +131,13 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
         log.debug("Start processing the download task {}", task);
         try {
             final String uri = task.dispatcher.url + "/rest/v1/payload/resource/"+type+'/'+task.taskId+'/'+
-                    UUID.randomUUID().toString().substring(0, 8) + '-' +task.core.processorId + '-' + task.taskId + '-' + URLEncoder.encode(task.variableId, StandardCharsets.UTF_8.toString());
+                    UUID.randomUUID().toString().substring(0, 8) + '-' +task.core.processorId + '-' + task.taskId + '-' + URLEncoder.encode(task.variableId, StandardCharsets.UTF_8);
 
-            File parentDir = assetFile.file.getParentFile();
+
+            // TODO 2023-06-26 re-write with nio
+            File parentDir = assetFile.file.toFile().getParentFile();
             if (parentDir==null) {
-                es = "#810.020 Can't get parent dir for asset file " + assetFile.file.getAbsolutePath();
+                es = "#810.020 Can't get parent dir for asset file " + assetFile.file.toAbsolutePath();
                 log.error(es);
                 processorTaskService.markAsFinishedWithError(task.core, task.taskId, es);
                 return;
@@ -148,8 +152,9 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 return;
             }
 
-            String mask = assetFile.file.getName() + ".%s.tmp";
-            File dir = assetFile.file.getParentFile();
+            String mask = assetFile.file.getFileName().toString() + ".%s.tmp";
+            // TODO 2023-06-26 re-write with nio
+            File dir = assetFile.file.toFile().getParentFile();
             Enums.VariableState resourceState = Enums.VariableState.none;
             int idx = 0;
             do {
@@ -209,7 +214,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                     }
                     final Header[] headers = httpResponse.getHeaders();
                     if (!DownloadUtils.isChunkConsistent(partFile, headers)) {
-                        log.error("#810.032 error while downloading chunk of resource {}, size is different", assetFile.file.getPath());
+                        log.error("#810.032 error while downloading chunk of resource {}, size is different", assetFile.file.toAbsolutePath());
                         resourceState = Enums.VariableState.transmitting_error;
                         break;
                     }
@@ -278,8 +283,11 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
 
             DownloadUtils.combineParts(assetFile, tempFile, idx);
 
-            if (!tempFile.renameTo(assetFile.file)) {
-                log.warn("#810.060 Can't rename file {} to file {}", tempFile.getPath(), assetFile.file.getPath());
+            try {
+                Files.move(tempFile.toPath(), assetFile.file);
+            }
+            catch (IOException e) {
+                log.warn("#810.060 Can't rename file {} to file {}", tempFile.getPath(), assetFile.file);
                 return;
             }
             log.info("Variable #{} was loaded", task.variableId);

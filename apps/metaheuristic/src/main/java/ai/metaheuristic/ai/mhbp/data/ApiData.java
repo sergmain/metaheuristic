@@ -27,6 +27,8 @@ import org.springframework.data.domain.Slice;
 import org.springframework.lang.Nullable;
 
 import java.util.Collections;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author Sergio Lissner
@@ -34,6 +36,18 @@ import java.util.Collections;
  * Time: 9:12 PM
  */
 public class ApiData {
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ApiUid {
+        public Long id;
+        // actually, it's a 'code'
+        public String uid;
+
+        public String apiName;
+
+    }
 
     @Data
     @NoArgsConstructor
@@ -125,6 +139,8 @@ public class ApiData {
     public static class SchemeAndParams {
         public ApiScheme scheme;
         public ApiAuth auth;
+
+        public Supplier<String> tokenProviderFunc;
     }
 
     @Data

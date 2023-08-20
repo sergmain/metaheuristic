@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -34,6 +34,7 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.SystemUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -51,8 +52,8 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskWithInternalContextTopLevelService {
 
     private final InternalFunctionVariableService internalFunctionVariableService;
@@ -122,7 +123,7 @@ public class TaskWithInternalContextTopLevelService {
                             ()->variableTxService.setVariableAsNull(output.id));
                 }
                 else {
-                    Path tempFile = Files.createTempFile(tempDir, "output-", ".bin");
+                    Path tempFile = Files.createTempFile(tempDir, "output-", Consts.BIN_EXT);
                     variableTxService.storeToFileWithTx(variableHolder.variable.id, tempFile);
                     VariableSyncService.getWithSyncVoidForCreation(output.id,
                             ()-> variableTxService.storeDataInVariable(output, tempFile));

@@ -22,7 +22,7 @@ import ai.metaheuristic.ww2003.document.Composite;
 import ai.metaheuristic.ww2003.document.tags.HasProperty;
 import ai.metaheuristic.ww2003.document.tags.Indentation;
 import ai.metaheuristic.ww2003.document.tags.Shadowed;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 public class Para
         extends Composite

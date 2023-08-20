@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,6 +43,7 @@ import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -56,13 +57,16 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskProducingService {
 
+    private final VariableTxService variableTxService;
     private final ExecContextGraphService execContextGraphService;
     private final FunctionTopLevelService functionTopLevelService;
     private final TaskTxService taskTxService;
     private final Globals globals;
+    private final ExecContextGraphCache execContextGraphCache;
+    private final ExecContextCache execContextCache;
     private final ApplicationEventPublisher eventPublisher;
 
     public TaskData.ProduceTaskResult produceTaskForProcess(
@@ -227,7 +231,7 @@ public class TaskProducingService {
         if (allParentTaskContextIds!=null) {
             TaskImpl t = variableTxService.prepareVariables(execContextParamsYaml, task, allParentTaskContextIds);
             if (t!=null) {
-                task = taskTxService.save(t);
+                task = TaskSyncService.getWithSyncForCreation(t.id, ()-> taskTxService.save(t));
             }
         }
 */

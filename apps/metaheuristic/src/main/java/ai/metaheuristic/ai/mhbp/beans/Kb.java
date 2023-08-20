@@ -18,13 +18,13 @@ package ai.metaheuristic.ai.mhbp.beans;
 
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParams;
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParamsUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.lang.Nullable;
 
-import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -65,43 +65,33 @@ public class Kb implements Serializable {
     @Column(name="DISABLED")
     public boolean disabled;
 
-    @Column(name = "PARAMS")
-    private String params;
-
     public int status;
 
-    public void setParams(String params) {
-        synchronized (this) {
-            this.params = params;
-            this.kbParams = null;
-        }
-    }
+    @Column(name = "PARAMS")
+    private String params;
 
     public String getParams() {
         return params;
     }
 
-    @Transient
-    @JsonIgnore
-    @Nullable
-    private KbParams kbParams = null;
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
 
     @Transient
     @JsonIgnore
-    private final Object syncParamsObj = new Object();
+    private final ThreadUtils.CommonThreadLocker<KbParams> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private KbParams parseParams() {
+        KbParams temp = KbParamsUtils.UTILS.to(params);
+        KbParams ecpy = temp==null ? new KbParams() : temp;
+        return ecpy;
+    }
 
     @JsonIgnore
     public KbParams getKbParams() {
-        if (kbParams==null) {
-            synchronized (syncParamsObj) {
-                if (kbParams==null) {
-                    //noinspection UnnecessaryLocalVariable
-                    KbParams temp = KbParamsUtils.UTILS.to(params);
-                    kbParams = temp;
-                }
-            }
-        }
-        return kbParams;
+        return paramsLocked.get();
     }
 
     @JsonIgnore

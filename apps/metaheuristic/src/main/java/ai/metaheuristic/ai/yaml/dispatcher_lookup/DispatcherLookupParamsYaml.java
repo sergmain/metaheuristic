@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,12 +20,14 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("FieldMayBeStatic")
 @Data
 @NoArgsConstructor
 public class DispatcherLookupParamsYaml implements BaseParams {
@@ -35,10 +37,13 @@ public class DispatcherLookupParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    @EqualsAndHashCode(onlyExplicitlyIncluded = true)
     public static class AssetManager {
+        @EqualsAndHashCode.Include
         public String url;
         public String username;
         public String password;
+        @Nullable
         public String publicKey;
         public boolean disabled;
     }
@@ -56,6 +61,7 @@ public class DispatcherLookupParamsYaml implements BaseParams {
         public boolean disabled;
         public String url;
         public boolean signatureRequired;
+        @Nullable
         public String publicKey;
         @Nullable
         public Enums.DispatcherLookupType lookupType;

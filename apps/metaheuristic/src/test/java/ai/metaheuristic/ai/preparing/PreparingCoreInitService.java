@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2022, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@ import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTxService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
-import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
+import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
@@ -40,6 +40,7 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -56,17 +57,17 @@ import java.util.UUID;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class PreparingCoreInitService {
 
     private final ExperimentRepository experimentRepository;
-    private final FunctionTxService functionService;
+    private final FunctionTxService functionTxService;
     private final FunctionRepository functionRepository;
     private final ExperimentCache experimentCache;
     private final ProcessorTopLevelService processorTopLevelService;
-    private final ProcessorTransactionService processorTransactionService;
+    private final ProcessorTxService processorTransactionService;
     private final TxSupportForTestingService txSupportForTestingService;
-    private final ProcessorCoreService processorCoreService;
+    private final ProcessorCoreTxService processorCoreService;
 
     public PreparingData.PreparingCodeData beforePreparingCore() {
         PreparingData.PreparingCodeData data = new PreparingData.PreparingCodeData();
@@ -139,7 +140,7 @@ public class PreparingCoreInitService {
 
             mills = System.currentTimeMillis();
             log.info("Start functionRepository.save() #1");
-            function = functionService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
+            function = functionTxService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
             log.info("functionRepository.save() #1 was finished for {} milliseconds", System.currentTimeMillis() - mills);
         }
         data.fitFunction = function;
@@ -160,7 +161,7 @@ public class PreparingCoreInitService {
 
             mills = System.currentTimeMillis();
             log.info("Start functionRepository.save() #2");
-            functionService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
+            functionTxService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
             log.info("processorRepository.save() #2 was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
         }

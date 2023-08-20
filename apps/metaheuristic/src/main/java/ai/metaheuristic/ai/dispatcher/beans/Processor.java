@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,15 +17,15 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
-import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 
-import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -76,36 +76,28 @@ public class Processor implements Serializable {
     @Column(name = "STATUS")
     private String status;
 
-    public void setStatus(String status) {
-        synchronized (this) {
-            this.status = status;
-            this.psy =null;
-        }
-    }
-
     public String getStatus() {
         return status;
     }
 
+    public void setStatus(String status) {
+        this.paramsLocked.reset(()->this.status = status);
+    }
+
     @Transient
     @JsonIgnore
-    @Nullable
-    private ProcessorStatusYaml psy = null;
+    private final ThreadUtils.CommonThreadLocker<ProcessorStatusYaml> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private ProcessorStatusYaml parseParams() {
+        ProcessorStatusYaml temp = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(status);
+        ProcessorStatusYaml ecpy = temp==null ? new ProcessorStatusYaml() : temp;
+        return ecpy;
+    }
 
     @JsonIgnore
     public ProcessorStatusYaml getProcessorStatusYaml() {
-        if (psy ==null) {
-            synchronized (this) {
-                if (psy ==null) {
-                    // to create a valid structure of params
-                    String p = S.b(status) ? ProcessorStatusYamlUtils.BASE_YAML_UTILS.toString(new ProcessorStatusYaml()) : status;
-                    //noinspection UnnecessaryLocalVariable
-                    ProcessorStatusYaml temp = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(p);
-                    psy = temp;
-                }
-            }
-        }
-        return psy;
+        return paramsLocked.get();
     }
 
     @JsonIgnore

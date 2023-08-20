@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.event;
 
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
+import ai.metaheuristic.ai.dispatcher.event.events.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
@@ -25,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTopLevelService;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -43,22 +45,22 @@ import java.nio.file.Path;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class EventBusService {
 
-    public final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
-    public final TaskWithInternalContextEventService taskWithInternalContextEventService;
-    public final TaskFinishingTopLevelService taskFinishingTopLevelService;
-    public final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
-    public final ExecContextTopLevelService execContextTopLevelService;
-    public final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
+    private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
+    private final TaskWithInternalContextEventService taskWithInternalContextEventService;
+    private final TaskFinishingTopLevelService taskFinishingTopLevelService;
+    private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
+    private final ExecContextTopLevelService execContextTopLevelService;
+    private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
 
     @Async
     @EventListener
     public void registerVariableState(VariableUploadedEvent event) {
         try {
             log.debug("call EventBusService.registerVariableStates(execContextId:#{}, taskId:#{}, variableId:#{}, nullified:{})", event.execContextId, event.taskId, event.variableId, event.nullified);
-            ExecContextVariableStateTopLevelService.registerVariableState(event);
+            execContextVariableStateTopLevelService.registerVariableState(event);
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }
@@ -68,7 +70,7 @@ public class EventBusService {
     @EventListener
     public void registerCreatedTask(TaskCreatedEvent event) {
         try {
-            ExecContextVariableStateTopLevelService.registerCreatedTask(event);
+            execContextVariableStateTopLevelService.registerCreatedTask(event);
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.commons;
 
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -29,11 +29,11 @@ import java.util.Objects;
  */
 public final class S {
 
-    public static @NonNull String f(@NonNull String format, @Nullable Object... args) {
+    public static @Nonnull String f(@Nonnull String format, @Nullable Object... args) {
         return Objects.requireNonNull(String.format(format, args));
     }
 
-    public static @NonNull String f(@NonNull Locale l, @NonNull String format, Object... args) {
+    public static @Nonnull String f(@Nonnull Locale l, @Nonnull String format, Object... args) {
         return String.format(l, format, args);
     }
 

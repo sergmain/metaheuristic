@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.apache.hc.core5.util.Timeout;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -38,16 +39,16 @@ import java.util.Objects;
  * Time: 6:39 PM
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ReplicationFunctionTopLevelService {
 
-    public final ReplicationCoreService replicationCoreService;
-    public final ReplicationFunctionService replicationFunctionService;
-    public final FunctionRepository functionRepository;
-    public final FunctionCache functionCache;
-    public final FunctionTopLevelService functionTopLevelService;
+    private final ReplicationCoreService replicationCoreService;
+    private final ReplicationFunctionService replicationFunctionService;
+    private final FunctionRepository functionRepository;
+    private final FunctionCache functionCache;
+    private final FunctionTopLevelService functionTopLevelService;
 
     public void syncFunctions(List<String> actualFunctions) {
         functionRepository.findAllFunctionCodes().stream()

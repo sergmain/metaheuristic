@@ -44,6 +44,10 @@ public interface ScenarioGroupRepository extends CrudRepository<ScenarioGroup, L
     Page<ScenarioGroup> findAllByAccountId(Pageable pageable, Long accountId);
 
     @Transactional(readOnly = true)
+    @Query(value= "select a from ScenarioGroup a where a.accountId=:accountId")
+    List<ScenarioGroup> findAllByAccountId(Long accountId);
+
+    @Transactional(readOnly = true)
     @Query(value= "select a from ScenarioGroup a")
     List<ScenarioGroup> findAllAsList();
 

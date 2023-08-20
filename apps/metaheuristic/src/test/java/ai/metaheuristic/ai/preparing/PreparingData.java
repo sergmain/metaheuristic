@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2022, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,6 +52,7 @@ public class PreparingData {
     public static class PreparingSourceCodeData {
         public SourceCodeImpl sourceCode = null;
         public Company company;
+        public Account account;
         public Function f1 = null;
         public Function f2 = null;
         public Function f3 = null;

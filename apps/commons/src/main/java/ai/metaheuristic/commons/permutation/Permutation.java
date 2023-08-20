@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ public class Permutation<T> {
     /**
      *
      * @param collection
-     * @param r размер искомого массива, должен быть меньше чем n
+     * @param r size of desired array, must be lesser than n
      * @param acceptor
      * @return
      */

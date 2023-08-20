@@ -26,7 +26,7 @@ import ai.metaheuristic.ww2003.document.tags.HasProperty;
 import ai.metaheuristic.ww2003.document.tags.Property;
 import ai.metaheuristic.ww2003.document.tags.PropertyElement;
 import ai.metaheuristic.ww2003.document.tags.xml.*;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import java.util.Comparator;
 import java.util.List;

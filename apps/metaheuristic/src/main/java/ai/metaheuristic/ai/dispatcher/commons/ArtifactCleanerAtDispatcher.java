@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
-import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreService;
+import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
@@ -34,6 +34,7 @@ import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -48,7 +49,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ArtifactCleanerAtDispatcher {
 
     private final Globals globals;
@@ -73,8 +74,9 @@ public class ArtifactCleanerAtDispatcher {
     private final DispatcherEventRepository dispatcherEventRepository;
     private final FunctionDataRepository functionDataRepository;
     private final ProcessorRepository processorRepository;
-    private final ProcessorCoreService processorCoreService;
+    private final ProcessorCoreTxService processorCoreService;
     private final ProcessorCoreRepository processorCoreRepository;
+    private final InternalFunctionRegisterService internalFunctionRegisterService;
 
     private static final AtomicInteger busy = new AtomicInteger(0);
     private static long mills = 0L;
@@ -171,7 +173,7 @@ public class ArtifactCleanerAtDispatcher {
                     functionDataRepository.deleteByFunctionCode(functionCode);
                 }
                 catch (Throwable th) {
-                    log.warn("#510.120 error while deleting obsolete funcion " + functionCode);
+                    log.warn("#510.120 error while deleting obsolete function " + functionCode);
                 }
             }
         }
@@ -457,7 +459,7 @@ public class ArtifactCleanerAtDispatcher {
     private void deleteOrphanCacheData() {
         log.info("510.840 start deleteOrphanCacheData()");
         List<String> funcCodes = functionRepository.findAllFunctionCodes();
-        funcCodes.addAll(InternalFunctionRegisterService.getCachableFunctions());
+        funcCodes.addAll(internalFunctionRegisterService.getCachableFunctions());
 
         Set<String> currFuncCodes = cacheProcessRepository.findAllFunctionCodes();
 

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.io.File;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -41,20 +41,20 @@ public class TestEnvProperty {
     private int envProperty;
 
     @Value("#{ T(ai.metaheuristic.ai.core.TestEnvProperty).getFile(environment.getProperty('mh.processor.download-dataset-task.timeout'), \"aaa.xml\" )}")
-    private File file1;
+    private Path file1;
 
     @Value("#{ T(ai.metaheuristic.ai.core.TestEnvProperty).getFile(environment.getProperty('mh.processor.download-dataset-task.timeout'), \"pom.xml\" )}")
-    private File file2;
+    private Path file2;
 
-    public static File getFile( String filename, String defFilename) {
-        return new File(defFilename);
+    public static Path getFile( String filename, String defFilename) {
+        return Path.of(defFilename);
     }
 
     @Test
     public void testProp() {
         assertEquals(5, envProperty);
-        assertEquals(new File("aaa.xml"), file1);
-        assertEquals(new File("pom.xml"), file2);
+        assertEquals(Path.of("aaa.xml"), file1);
+        assertEquals(Path.of("pom.xml"), file2);
 
 
         assertEquals(4, EnvProperty.minMax("4", 1, 5, 3));

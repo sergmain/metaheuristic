@@ -1,18 +1,17 @@
 /*
- *    Copyright 2023, Sergio Lissner, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
  *
- *        http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 package ai.metaheuristic.mhbp.kb.reader.openai;
@@ -20,15 +19,15 @@ package ai.metaheuristic.mhbp.kb.reader.openai;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
+import ai.metaheuristic.ai.dispatcher.data.GitData;
 import ai.metaheuristic.ai.mhbp.kb.reader.openai.OpenaiInput;
 import ai.metaheuristic.ai.mhbp.kb.reader.openai.OpenaiJsonReader;
-import ai.metaheuristic.ai.processor.MetadataService;
+import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.mhbp.data.KbData;
 import ai.metaheuristic.ai.mhbp.questions.QuestionData;
 import ai.metaheuristic.ai.mhbp.services.LocalGitRepoService;
-import ai.metaheuristic.ai.mhbp.services.LocalGitSourcingService;
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParams;
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParamsUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -38,7 +37,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -96,7 +94,7 @@ public class OpenaiJsonReaderTest {
         Path mhbpHome = Path.of(mhbpHomeEnv);
         Path gitPath = mhbpHome.resolve(Consts.GIT_PATH);
 
-        String code = MetadataService.asCode(kbParams.kb.git.repo);
+        String code = MetadataParams.asCode(kbParams.kb.git.repo);
 
         Path p = gitPath.resolve(code);
         assertFalse(Files.notExists(p));
@@ -246,24 +244,24 @@ public class OpenaiJsonReaderTest {
         KbParams kbParams = KbParamsUtils.UTILS.to(yaml);
         assertNotNull(kbParams.kb.git);
 
-        LocalGitSourcingService.GitStatusInfo statusInfo = getGitStatus(new LocalGitSourcingService.GitContext(30L, 100));
+        GitData.GitStatusInfo statusInfo = getGitStatus(new GitData.GitContext(30L, 100));
         assertEquals(Enums.GitStatus.installed, statusInfo.status);
 
         KbData.KbGit git = new KbParams.Git(kbParams.kb.git.repo, kbParams.kb.git.branch, kbParams.kb.git.commit);
         Path gitPath = temp.resolve("git");
-        LocalGitSourcingService.GitContext gitContext = new LocalGitSourcingService.GitContext(60L, 100);
+        GitData.GitContext gitContext = new GitData.GitContext(60L, 100);
 
         SystemProcessLauncher.ExecResult result = LocalGitRepoService.initGitRepo(git, gitPath, gitContext);
         assertNotNull(result.systemExecResult);
         assertTrue(result.systemExecResult.isOk);
         assertNotNull(result.functionDir);
-        assertTrue(result.functionDir.exists());
+        assertTrue(Files.exists(result.functionDir));
 
-        File f = new File(result.functionDir, "pom.xml");
-        assertTrue(f.exists());
-        assertTrue(f.isFile());
+        Path f = result.functionDir.resolve("pom.xml");
+        assertTrue(Files.exists(f));
+        assertTrue(Files.isRegularFile(f));
 
-        QuestionData.Chapters chapters = OpenaiJsonReader.read(10L, result.functionDir.toPath(), kbParams.kb.git);
+        QuestionData.Chapters chapters = OpenaiJsonReader.read(10L, result.functionDir, kbParams.kb.git);
 
         assertEquals(1, chapters.chapters.size());
         assertEquals("math/simple-math.jsonl", chapters.chapters.get(0).chapterCode());

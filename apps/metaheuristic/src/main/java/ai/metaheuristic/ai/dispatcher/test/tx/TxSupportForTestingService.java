@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,10 +19,11 @@ package ai.metaheuristic.ai.dispatcher.test.tx;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
 import ai.metaheuristic.ai.dispatcher.beans.*;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
-import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionDataTxService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
@@ -34,6 +35,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -50,7 +52,7 @@ import java.util.List;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TxSupportForTestingService {
 
     private final Globals globals;
@@ -59,19 +61,19 @@ public class TxSupportForTestingService {
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final ExecContextGraphService execContextGraphService;
     private final FunctionCache functionCache;
-    private final FunctionDataService functionDataService;
+    private final FunctionDataTxService functionDataService;
     private final ProcessorCache processorCache;
     private final ExecContextCreatorService execContextCreatorService;
     private final BatchCache batchCache;
     private final ExecContextCache execContextCache;
 
     @Transactional
-    public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
+    public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, ExecContextData.UserExecContext context) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         return SourceCodeSyncService.getWithSyncForCreation(sourceCode.id,
-                () -> execContextCreatorService.createExecContext(sourceCode, companyId, null));
+                () -> execContextCreatorService.createExecContext(sourceCode, context, null));
     }
 
     @Transactional

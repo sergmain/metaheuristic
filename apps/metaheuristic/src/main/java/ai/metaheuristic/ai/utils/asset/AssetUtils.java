@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -37,29 +36,30 @@ public class AssetUtils {
      * @param variableFilename String
      * @return AssetFile
      */
-    public static AssetFile prepareFileForVariable(File rootDir, String dataId, @Nullable String variableFilename, EnumsApi.DataType binaryType) {
+    public static AssetFile prepareFileForVariable(Path rootDir, String dataId, @Nullable String variableFilename, EnumsApi.DataType binaryType) {
         return prepareAssetFile(rootDir, dataId, variableFilename, binaryType.toString());
     }
 
-    public static AssetFile prepareOutputAssetFile(File rootDir, String dataId) {
+    public static AssetFile prepareOutputAssetFile(Path rootDir, String dataId) {
         return prepareAssetFile(rootDir, dataId, null, ConstsApi.ARTIFACTS_DIR);
     }
 
-    public static AssetFile fromFile(File file) {
+    @SneakyThrows
+    public static AssetFile fromFile(Path file) {
         final AssetFile assetFile = new AssetFile();
         assetFile.file = file;
-        if (file.isDirectory()) {
-            String es = S.f("#025.020 path {} is dir", file.getAbsolutePath());
+        if (Files.isDirectory(file)) {
+            String es = S.f("#025.020 path {} is dir", file.toAbsolutePath());
             log.error(es);
             assetFile.error = es;
             assetFile.isError = true;
         }
-        assetFile.isExist = assetFile.file.exists();
+        assetFile.isExist = Files.exists(assetFile.file);
 
         if (assetFile.isExist) {
-            assetFile.fileLength = assetFile.file.length();
+            assetFile.fileLength = Files.size(assetFile.file);
             if (assetFile.fileLength == 0) {
-                assetFile.file.delete();
+                Files.deleteIfExists(assetFile.file);
                 assetFile.isExist = false;
             }
             else {
@@ -70,35 +70,36 @@ public class AssetUtils {
     }
 
     // dataId must be String because for Function it's a code of function
-    private static AssetFile prepareAssetFile(File rootDir, String dataId, @Nullable String filename, String assetDirname ) {
-        final File assetDir = new File(rootDir, assetDirname);
+    private static AssetFile prepareAssetFile(Path rootDir, String dataId, @Nullable String filename, String assetDirname ) {
+        final Path assetDir = rootDir.resolve(assetDirname);
         return prepareAssetFile(assetDir, dataId, filename);
     }
 
-    public static AssetFile prepareAssetFile(File assetDir, @Nullable String dataId, @Nullable String filename) {
+    @SneakyThrows
+    public static AssetFile prepareAssetFile(Path assetDir, @Nullable String dataId, @Nullable String filename) {
         final AssetFile assetFile = new AssetFile();
-        assetDir.mkdirs();
-        if (!assetDir.exists()) {
+        Files.createDirectories(assetDir);
+        if (Files.notExists(assetDir)) {
             assetFile.isError = true;
-            log.error("#025.040 Can't create a variable dir for task: {}", assetDir.getAbsolutePath());
+            log.error("#025.040 Can't create a variable dir for task: {}", assetDir.toAbsolutePath());
             return assetFile;
         }
         if (StringUtils.isNotBlank(filename)) {
-            assetFile.file = new File(assetDir, filename);
+            assetFile.file = assetDir.resolve(filename);
         }
         else if (!S.b(dataId)) {
             final String resId = dataId.replace(':', '_');
-            assetFile.file = new File(assetDir, "" + resId);
+            assetFile.file = assetDir.resolve(resId);
         }
         else {
             throw new IllegalArgumentException("#025.050 filename==null && S.b(dataId)");
         }
-        assetFile.isExist = assetFile.file.exists();
+        assetFile.isExist = Files.exists(assetFile.file);
 
         if (assetFile.isExist) {
-            assetFile.fileLength = assetFile.file.length();
+            assetFile.fileLength = Files.size(assetFile.file);
             if (assetFile.fileLength == 0) {
-                assetFile.file.delete();
+                Files.deleteIfExists(assetFile.file);
                 assetFile.isExist = false;
             }
             else {
@@ -123,13 +124,13 @@ public class AssetUtils {
             log.error("#025.080 Can't create a concrete function dir: {}", resDir.toAbsolutePath());
             return assetFile;
         }
-        assetFile.file = (!S.b(resourceFilename) ? resDir.resolve(resourceFilename) : resDir.resolve(resId)).toFile();
+        assetFile.file = (!S.b(resourceFilename) ? resDir.resolve(resourceFilename) : resDir.resolve(resId));
 
-        assetFile.isExist = assetFile.file.exists();
+        assetFile.isExist = Files.exists(assetFile.file);
 
         if (assetFile.isExist) {
-            if (assetFile.file.length() == 0) {
-                assetFile.file.delete();
+            if (Files.size(assetFile.file) == 0) {
+                Files.deleteIfExists(assetFile.file);
                 assetFile.isExist = false;
             }
             else {

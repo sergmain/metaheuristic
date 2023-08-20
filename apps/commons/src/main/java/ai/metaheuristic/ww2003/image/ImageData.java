@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import org.w3c.dom.Node;
 
+import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -86,7 +87,7 @@ public class ImageData {
         public final String base64;
         public final byte[] bytes;
 
-        public ImageBinaryData(boolean gzip, @NonNull String base64, @NonNull byte[] bytes) {
+        public ImageBinaryData(boolean gzip, @Nonnull String base64, @Nonnull byte[] bytes) {
             this.gzip = gzip;
             this.base64 = base64;
             this.bytes = bytes;

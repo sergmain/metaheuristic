@@ -18,13 +18,13 @@ package ai.metaheuristic.ai.mhbp.beans;
 
 import ai.metaheuristic.ai.mhbp.yaml.part.PartParams;
 import ai.metaheuristic.ai.mhbp.yaml.part.PartParamsUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.lang.Nullable;
 
-import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -56,38 +56,28 @@ public class Part implements Serializable {
     @Column(name = "PARAMS")
     private String params;
 
-    public void setParams(String params) {
-        synchronized (this) {
-            this.params = params;
-            this.partParams = null;
-        }
-    }
-
     public String getParams() {
         return params;
     }
 
-    @Transient
-    @JsonIgnore
-    @Nullable
-    private PartParams partParams = null;
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
 
     @Transient
     @JsonIgnore
-    private final Object syncParamsObj = new Object();
+    private final ThreadUtils.CommonThreadLocker<PartParams> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private PartParams parseParams() {
+        PartParams temp = PartParamsUtils.UTILS.to(params);
+        PartParams ecpy = temp==null ? new PartParams() : temp;
+        return ecpy;
+    }
 
     @JsonIgnore
     public PartParams getPartParams() {
-        if (partParams==null) {
-            synchronized (syncParamsObj) {
-                if (partParams==null) {
-                    //noinspection UnnecessaryLocalVariable
-                    PartParams temp = PartParamsUtils.UTILS.to(params);
-                    partParams = temp;
-                }
-            }
-        }
-        return partParams;
+        return paramsLocked.get();
     }
 
     @JsonIgnore

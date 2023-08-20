@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,9 +26,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,15 +62,18 @@ public class EnvServiceUtils {
     }
 
     @Nullable
-    public static String prepareEnvironment(File artifactDir, EnvYamlShort envYaml) {
-        if (!artifactDir.exists()) {
-            if (!artifactDir.mkdirs()) {
-                return "#712.020 An error while creating a path "+ artifactDir.getAbsolutePath();
+    public static String prepareEnvironment(Path artifactDir, EnvYamlShort envYaml) {
+        if (Files.notExists(artifactDir)) {
+            try {
+                Files.createDirectories(artifactDir);
+            }
+            catch (IOException e) {
+                return "#712.020 An error while creating a path "+ artifactDir.toAbsolutePath();
             }
         }
-        File envFile = new File(artifactDir, ConstsApi.MH_ENV_FILE);
-        if (envFile.isDirectory()) {
-            return "#712.040 A path "+ artifactDir.getAbsolutePath()+" is dir, can't continue processing";
+        Path envFile = artifactDir.resolve(ConstsApi.MH_ENV_FILE);
+        if (Files.isDirectory(envFile)) {
+            return "#712.040 A path "+ artifactDir.toAbsolutePath()+" is dir, can't continue processing";
         }
         final String newEnv = envYamlShortToString(envYaml);
 

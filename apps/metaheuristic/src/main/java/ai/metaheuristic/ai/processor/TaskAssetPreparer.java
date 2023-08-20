@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,8 +20,10 @@ import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.event.AssetPreparingForProcessorTaskEvent;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.EnumsApi;
@@ -30,6 +32,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -37,7 +40,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -47,15 +50,14 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @Profile("processor")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskAssetPreparer {
 
     private final Globals globals;
     private final DownloadFunctionService downloadFunctionActor;
     private final CurrentExecState currentExecState;
     private final ProcessorTaskService processorTaskService;
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
-    private final MetadataService metadataService;
+    private final ProcessorEnvironment processorEnvironment;
     private final ProcessorService processorService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -94,7 +96,7 @@ public class TaskAssetPreparer {
             return;
         }
 
-        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : metadataService.getAllEnabledRefsForCores()) {
+        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataParams.getAllEnabledRefsForCores()) {
 
             // delete all orphan tasks
             processorTaskService.findAllForCore(core).forEach(task -> {
@@ -143,10 +145,10 @@ public class TaskAssetPreparer {
             return null;
         }
 
-        final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
-                dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
+        final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
+                processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
 
-        final MetadataParamsYaml.ProcessorSession processorState = metadataService.processorStateByDispatcherUrl(core);
+        final MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.metadataParams.processorStateByDispatcherUrl(core);
         if (processorState.processorId==null || S.b(processorState.sessionId)) {
             log.warn("#951.070 processor {} with dispatcher {} isn't ready", core.coreCode, core.dispatcherUrl.url);
             return null;
@@ -162,7 +164,7 @@ public class TaskAssetPreparer {
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 
         // Start preparing data for function
-        File taskDir = processorTaskService.prepareTaskDir(core, task.taskId);
+        Path taskDir = processorTaskService.prepareTaskDir(core, task.taskId);
         ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingVariables(core, task, processorState, taskParamYaml, dispatcher, taskDir);
         if (resultOfChecking.isError) {
             return null;
@@ -199,22 +201,25 @@ public class TaskAssetPreparer {
             TaskParamsYaml.FunctionConfig functionConfig, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, Long taskId) {
 
         if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-            final MetadataParamsYaml.Function functionDownloadStatuses = metadataService.getFunctionDownloadStatuses(assetManagerUrl, functionConfig.code);
+            final MetadataParamsYaml.Function functionDownloadStatuses = processorEnvironment.metadataParams.getFunctionDownloadStatuses(assetManagerUrl, functionConfig.code);
             if (functionDownloadStatuses==null) {
                 return false;
             }
+            final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
+                    processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
+
             final EnumsApi.FunctionState functionState = functionDownloadStatuses.state;
             if (functionState == EnumsApi.FunctionState.none) {
-                downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, assetManagerUrl));
+                downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired));
                 return false;
             }
             else {
                 if (functionState== EnumsApi.FunctionState.function_config_error || functionState== EnumsApi.FunctionState.download_error) {
                     log.error("#951.170 The function {} has a state as {}, start re-downloading", functionConfig.code, functionState);
 
-                    metadataService.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none);
+                    processorEnvironment.metadataParams.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none);
 
-                    downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, assetManagerUrl));
+                    downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired));
                     return true;
                 }
                 else if (functionState== EnumsApi.FunctionState.dispatcher_config_error) {

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.lang.NonNull;
+import javax.annotation.Nonnull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;
@@ -41,15 +41,15 @@ public class TaskFileParamsYamlUtilsV1
         return 1;
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(TaskFileParamsYamlV1.class);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public TaskFileParamsYamlV2 upgradeTo(@NonNull TaskFileParamsYamlV1 v1) {
+    public TaskFileParamsYamlV2 upgradeTo(@Nonnull TaskFileParamsYamlV1 v1) {
         v1.checkIntegrity();
         TaskFileParamsYamlV2 t = new TaskFileParamsYamlV2();
         t.task = new TaskFileParamsYamlV2.TaskV2();
@@ -93,9 +93,9 @@ public class TaskFileParamsYamlUtilsV1
         return v;
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(@Nonnull Void yaml) {
         return null;
     }
 
@@ -110,13 +110,13 @@ public class TaskFileParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(@NonNull TaskFileParamsYamlV1 params) {
+    public String toString(@Nonnull TaskFileParamsYamlV1 params) {
         return getYaml().dump(params);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public TaskFileParamsYamlV1 to(@NonNull String yaml) {
+    public TaskFileParamsYamlV1 to(@Nonnull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

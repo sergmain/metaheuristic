@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.function;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
+import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInGraphEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.api.EnumsApi;
@@ -31,6 +32,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.*;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadedPool;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
@@ -44,6 +46,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -69,7 +72,7 @@ import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Scheme;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class FunctionTopLevelService {
 
     private static final String SEE_MORE_INFO = "See https://docs.metaheuristic.ai/p/function#configuration.\n";
@@ -140,26 +143,31 @@ public class FunctionTopLevelService {
     }
 
     public List<Pair<EnumsApi.FunctionSourcing, String>> getFunctionInfos() {
-        rwl.readLock().lock();
+        final ReentrantReadWriteLock.ReadLock readLock = rwl.readLock();
+        final ReentrantReadWriteLock.WriteLock writeLock = rwl.writeLock();
+
+        readLock.lock();
         try {
-            if (functionInfosCache == null) {
-                rwl.readLock().unlock();
-                rwl.writeLock().lock();
-                try {
-                    if (functionInfosCache == null) {
-                        functionInfosCache = collectInfoAboutFunction();
-//                        functionInfosCache = functionTxService.collectInfoAboutFunction();
-                        mills = System.currentTimeMillis();
-                    }
-                    rwl.readLock().lock();
+            if (functionInfosCache != null) {
+                if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {
+                    eventPublisher.publishEvent(new RefreshInfoAboutFunctionsEvent());
                 }
-                finally {
-                    rwl.writeLock().unlock();
-                }
+                return functionInfosCache;
             }
         }
         finally {
-            rwl.readLock().unlock();
+            readLock.unlock();
+        }
+
+        writeLock.lock();
+        try {
+            if (functionInfosCache == null) {
+                functionInfosCache = collectInfoAboutFunction();
+                mills = System.currentTimeMillis();
+            }
+        }
+        finally {
+            writeLock.unlock();
         }
 
         if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {
@@ -169,8 +177,37 @@ public class FunctionTopLevelService {
         return functionInfosCache;
     }
 
+    private final LinkedHashMap<Long, Pair<EnumsApi.FunctionSourcing, String>> sourcingInfoCache = new LinkedHashMap<>(1000) {
+        protected boolean removeEldestEntry(Map.Entry<Long, Pair<EnumsApi.FunctionSourcing, String>> entry) {
+            return this.size()>700;
+        }
+    };
+
     public List<Pair<EnumsApi.FunctionSourcing, String>> collectInfoAboutFunction() {
         final List<Long> allIds = functionRepository.findAllIds();
+
+        List<Pair<EnumsApi.FunctionSourcing, String>> result = new ArrayList<>(allIds.size());
+        for (Long id : allIds) {
+            Pair<EnumsApi.FunctionSourcing, String> pair = sourcingInfoCache.get(id);
+            if (pair==null) {
+                final Function f = functionRepository.findByIdNullable(id);
+                if (f!=null) {
+                    FunctionConfigYaml fcy = f.getFunctionConfigYaml();
+                    pair = Pair.of(fcy.sourcing, f.code);
+                    sourcingInfoCache.put(id, pair);
+                }
+            }
+            if (pair!=null) {
+                result.add(pair);
+            }
+        }
+        if (allIds.size()!=result.size()) {
+            throw new IllegalStateException("(allIds.size()!=result.size())");
+        }
+        return result;
+
+        // TODO p3 2023-07-30 for deleting
+/*
 
         final List<Pair<EnumsApi.FunctionSourcing, String>> result = allIds.stream()
                 .map(id -> functionRepository.findById(id).orElse(null))
@@ -181,6 +218,7 @@ public class FunctionTopLevelService {
                 })
                 .collect(Collectors.toList());
         return result;
+*/
     }
 
     @SuppressWarnings("unused")
@@ -190,7 +228,7 @@ public class FunctionTopLevelService {
         rwl.writeLock().lock();
         try {
             if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {
-                functionInfosCache = functionTxService.collectInfoAboutFunction();
+                functionInfosCache = collectInfoAboutFunction();
                 mills = System.currentTimeMillis();
             }
         }
@@ -362,7 +400,7 @@ public class FunctionTopLevelService {
                     continue;
                 }
                 String sum=null;
-                Path file = null;
+                Path file = S.b(functionConfig.file) ? null : srcDir.resolve(functionConfig.file);
                 if (globals.dispatcher.functionSignatureRequired) {
                     // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing right noww
                     final EnumsApi.HashAlgo hashAlgo = EnumsApi.HashAlgo.SHA256WithSignature;
@@ -511,32 +549,40 @@ public class FunctionTopLevelService {
     private final Map<String, FunctionSimpleCache> mappingCodeToId = new HashMap<>();
     private static final long FUNCTION_SIMPLE_CACHE_TTL = TimeUnit.MINUTES.toMillis(15);
 
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+
     @Nullable
-    public synchronized Function findByCode(String functionCode) {
-        FunctionSimpleCache cache = mappingCodeToId.get(functionCode);
-        if (cache!=null) {
-            if (System.currentTimeMillis() - cache.mills > FUNCTION_SIMPLE_CACHE_TTL) {
-                cache.id = functionRepository.findIdByCode(functionCode);
+    public Function findByCode(String functionCode) {
+        writeLock.lock();
+        try {
+            FunctionSimpleCache cache = mappingCodeToId.get(functionCode);
+            if (cache!=null) {
+                if (System.currentTimeMillis() - cache.mills > FUNCTION_SIMPLE_CACHE_TTL) {
+                    cache.id = functionRepository.findIdByCode(functionCode);
+                    cache.mills = System.currentTimeMillis();
+                }
+            }
+            else {
+                cache = new FunctionSimpleCache(functionRepository.findIdByCode(functionCode), System.currentTimeMillis());
+                mappingCodeToId.put(functionCode, cache);
+            }
+            if (mappingCodeToId.size()>1000) {
+                mappingCodeToId.clear();
+            }
+
+            if (cache.id==null) {
+                return null;
+            }
+            Function function = functionCache.findById(cache.id);
+            if (function == null) {
+                cache.id = null;
                 cache.mills = System.currentTimeMillis();
             }
+            return function;
+        } finally {
+            writeLock.unlock();
         }
-        else {
-            cache = new FunctionSimpleCache(functionRepository.findIdByCode(functionCode), System.currentTimeMillis());
-            mappingCodeToId.put(functionCode, cache);
-        }
-        if (mappingCodeToId.size()>1000) {
-            mappingCodeToId.clear();
-        }
-
-        if (cache.id==null) {
-            return null;
-        }
-        Function function = functionCache.findById(cache.id);
-        if (function == null) {
-            cache.id = null;
-            cache.mills = System.currentTimeMillis();
-        }
-        return function;
     }
 
     public ReplicationApiData.FunctionConfigsReplication getFunctionConfigs() {

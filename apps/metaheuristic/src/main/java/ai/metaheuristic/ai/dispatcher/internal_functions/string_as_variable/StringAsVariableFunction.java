@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
@@ -51,7 +52,7 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class StringAsVariableFunction implements InternalFunction {
 
     private static final String MAPPING = "mapping";
@@ -92,10 +93,20 @@ public class StringAsVariableFunction implements InternalFunction {
         for (StringVariableData.StringAsVar inlineAsVar : mapping.mapping) {
 
             // DO NOT remove inlineAsVar.group
-            //noinspection deprecation
-            String keyName = inlineAsVar.key != null ? inlineAsVar.key : inlineAsVar.group;
+            String keyName;
+            if (inlineAsVar.key!=null) {
+                keyName = inlineAsVar.key;
+            }
+            else {
+                //noinspection deprecation
+                if (inlineAsVar.group!=null) {
+                    log.warn("513.335 ai.metaheuristic.ai.dispatcher.data.StringVariableData.StringAsVar.group is deprecated, use key instead");
+                }
+                //noinspection deprecation
+                keyName = inlineAsVar.group;
+            }
             if (keyName==null) {
-                throw new InternalFunctionException(source_code_is_broken, "#513.340 mapping must have a field key or group, "+ inlineAsVar);
+                throw new InternalFunctionException(source_code_is_broken, "513.340 mapping must have a field key or group, "+ inlineAsVar);
             }
             final Map<String, String> map;
             Enums.StringAsVariableSource source = inlineAsVar.source==null ? Enums.StringAsVariableSource.inline : inlineAsVar.source;

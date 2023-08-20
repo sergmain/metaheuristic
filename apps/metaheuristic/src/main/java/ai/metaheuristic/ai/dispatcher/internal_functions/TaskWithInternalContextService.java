@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,8 +23,8 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskStateTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
-import ai.metaheuristic.ai.dispatcher.task.TaskStateService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -36,6 +36,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,12 +48,12 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskWithInternalContextService {
 
     private final TaskTxService taskTxService;
-    private final TaskStateService taskStateService;
+    private final TaskStateTxService taskStateTxService;
     private final VariableTxService variableTxService;
     private final TaskRepository taskRepository;
     private final ExecContextFSM execContextFSM;
@@ -76,7 +77,7 @@ public class TaskWithInternalContextService {
             return;
         }
         // TODO 2021-10-15 investigate the possibility to mark as completed such tasks
-        taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.SKIPPED);
+        taskStateTxService.updateTaskExecStates(task, EnumsApi.TaskExecState.SKIPPED);
     }
 
     @Transactional
@@ -136,7 +137,7 @@ public class TaskWithInternalContextService {
         task.setResultResourceScheduledOn(0);
         task = taskTxService.save(task);
 
-        taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.IN_PROGRESS);
+        taskStateTxService.updateTaskExecStates(task, EnumsApi.TaskExecState.IN_PROGRESS);
 
         TaskParamsYaml taskParamsYaml = task.getTaskParamsYaml();
         ExecContextParamsYaml.Process p = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
