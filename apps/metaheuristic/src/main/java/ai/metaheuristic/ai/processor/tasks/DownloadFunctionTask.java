@@ -26,4 +26,5 @@ import lombok.EqualsAndHashCode;
 public class DownloadFunctionTask extends ProcessorRestTask {
     public final String functionCode;
     public final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl;
+    public final boolean signatureRequired;
 }

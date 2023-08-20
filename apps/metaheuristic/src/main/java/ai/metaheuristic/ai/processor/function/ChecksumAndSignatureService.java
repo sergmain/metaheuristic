@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.PublicKey;
 
 /**
  * @author Serge
@@ -61,8 +62,9 @@ public class ChecksumAndSignatureService {
             String functionCode, ChecksumAndSignatureData.ChecksumWithSignatureInfo checksumState, InputStream is) {
 
         CheckSumAndSignatureStatus status;
+        final PublicKey publicKey = asset.publicKey!=null ? ProcessorUtils.createPublicKey(asset) : null;
         status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(
-                "Asset url: "+ assetManagerUrl.url +", function: "+functionCode, is, ProcessorUtils.createPublicKey(asset),
+                "Asset url: "+ assetManagerUrl.url +", function: "+functionCode, is, publicKey,
                 checksumState.originChecksumWithSignature, checksumState.hashAlgo);
 
         processorEnvironment.metadataParams.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, status);

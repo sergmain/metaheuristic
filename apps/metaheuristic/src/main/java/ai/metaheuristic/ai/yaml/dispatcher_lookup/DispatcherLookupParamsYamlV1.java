@@ -26,6 +26,7 @@ import org.springframework.lang.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("FieldMayBeStatic")
 @Data
 @NoArgsConstructor
 public class DispatcherLookupParamsYamlV1 implements BaseParams {
@@ -39,6 +40,7 @@ public class DispatcherLookupParamsYamlV1 implements BaseParams {
         public String url;
         public String username;
         public String password;
+        @Nullable
         public String publicKey;
     }
 

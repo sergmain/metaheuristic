@@ -49,7 +49,10 @@ public class FunctionDataTxService {
     @Transactional(readOnly = true)
     public void storeToFile(String code, Path trgFile) {
         try {
-            dispatcherBlobStorage.accessFunctionData(code, (is)-> DirUtils.copy(is, trgFile));
+            dispatcherBlobStorage.accessFunctionData(code, (is)-> {
+                DirUtils.copy(is, trgFile);
+                int k=0;
+            });
 /*
             Blob blob = functionDataRepository.getDataAsStreamByCode(code);
             if (blob==null) {

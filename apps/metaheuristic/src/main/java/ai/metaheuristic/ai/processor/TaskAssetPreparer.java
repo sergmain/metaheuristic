@@ -205,9 +205,12 @@ public class TaskAssetPreparer {
             if (functionDownloadStatuses==null) {
                 return false;
             }
+            final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
+                    processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
+
             final EnumsApi.FunctionState functionState = functionDownloadStatuses.state;
             if (functionState == EnumsApi.FunctionState.none) {
-                downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, assetManagerUrl));
+                downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired));
                 return false;
             }
             else {
@@ -216,7 +219,7 @@ public class TaskAssetPreparer {
 
                     processorEnvironment.metadataParams.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none);
 
-                    downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, assetManagerUrl));
+                    downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired));
                     return true;
                 }
                 else if (functionState== EnumsApi.FunctionState.dispatcher_config_error) {

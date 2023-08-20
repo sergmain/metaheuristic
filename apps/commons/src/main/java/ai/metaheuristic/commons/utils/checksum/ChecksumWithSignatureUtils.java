@@ -51,13 +51,13 @@ public class ChecksumWithSignatureUtils {
         return status;
     }
 
-    public static CheckSumAndSignatureStatus verifyChecksumAndSignature(String infoPrefix, InputStream fis, PublicKey publicKey, String value, EnumsApi.HashAlgo hashAlgo) {
+    public static CheckSumAndSignatureStatus verifyChecksumAndSignature(String infoPrefix, InputStream fis, @Nullable PublicKey publicKey, String value, EnumsApi.HashAlgo hashAlgo) {
         CheckSumAndSignatureStatus status = verifyChecksumAndSignatureInternal(infoPrefix, fis, publicKey, value, hashAlgo);
         log.info("{}, signature is {}", infoPrefix, status.signature);
         return status;
     }
 
-    private static CheckSumAndSignatureStatus verifyChecksumAndSignatureInternal(String infoPrefix, InputStream fis, PublicKey publicKey, String value, EnumsApi.HashAlgo hashAlgo) {
+    private static CheckSumAndSignatureStatus verifyChecksumAndSignatureInternal(String infoPrefix, InputStream fis, @Nullable PublicKey publicKey, String value, EnumsApi.HashAlgo hashAlgo) {
         ChecksumWithSignature checksumWithSignature = parse(value);
         // there isn't a signature without a checksum
         if (checksumWithSignature.checksum==null) {
@@ -95,7 +95,10 @@ public class ChecksumWithSignatureUtils {
         return checksumWithSignature;
     }
 
-    public static EnumsApi.SignatureState isValid(String signatureAlgo, byte[] data, String signatureAsBase64, PublicKey publicKey) {
+    public static EnumsApi.SignatureState isValid(String signatureAlgo, byte[] data, String signatureAsBase64, @Nullable PublicKey publicKey) {
+        if (publicKey==null) {
+            return EnumsApi.SignatureState.correct;
+        }
         try {
             Signature signature = Signature.getInstance(signatureAlgo);
             signature.initVerify(publicKey);

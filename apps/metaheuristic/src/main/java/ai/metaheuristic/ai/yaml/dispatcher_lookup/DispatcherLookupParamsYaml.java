@@ -43,6 +43,7 @@ public class DispatcherLookupParamsYaml implements BaseParams {
         public String url;
         public String username;
         public String password;
+        @Nullable
         public String publicKey;
         public boolean disabled;
     }

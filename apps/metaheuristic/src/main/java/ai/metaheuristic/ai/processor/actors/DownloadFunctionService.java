@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
 import ai.metaheuristic.ai.processor.tasks.GetDispatcherContextInfoTask;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -358,7 +359,13 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 log.info("Create new DownloadFunctionTask for downloading function {} from {}, chunk size: {}",
                         o.code, o.assetManagerUrl, contextInfo.chunkSize);
 
-                DownloadFunctionTask functionTask = new DownloadFunctionTask(o.code, assetManagerUrl);
+                ProcessorAndCoreData.DispatcherUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherUrl(o.assetManagerUrl);
+                final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
+                        processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+
+                boolean signatureRequired = dispatcher==null ? (asset.publicKey != null) : dispatcher.dispatcherLookup.signatureRequired;
+
+                DownloadFunctionTask functionTask = new DownloadFunctionTask(o.code, assetManagerUrl, signatureRequired);
                 add(functionTask);
             }
             else if (o.sourcing== EnumsApi.FunctionSourcing.processor) {
