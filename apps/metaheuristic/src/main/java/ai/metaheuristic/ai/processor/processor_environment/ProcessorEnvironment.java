@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -58,18 +59,31 @@ public class ProcessorEnvironment {
 
         try {
             final Path processorPath = globals.processorPath;
+            final Path defaultDispatcherYamlFile = globals.processor.defaultDispatcherYamlFile;
             final Path defaultEnvYamlFile = globals.processor.defaultEnvYamlFile;
             final int taskConsoleOutputMaxLines = globals.processor.taskConsoleOutputMaxLines;
-            final Path defaultDispatcherYamlFile = globals.processor.defaultDispatcherYamlFile;
-            init(processorPath, defaultEnvYamlFile, defaultDispatcherYamlFile, taskConsoleOutputMaxLines);
+
+            if (defaultEnvYamlFile!=null && Files.notExists(defaultEnvYamlFile)) {
+                log.warn("#747.030 Processor's default yaml.yaml file doesn't exist: {}", defaultEnvYamlFile.toAbsolutePath());
+                throw new IllegalStateException("#747.014 Processor isn't configured, env.yaml is empty or doesn't exist");
+            }
+            EnvYamlProvider envYamlProvider = null;
+            if (globals.activeProfilesSet.contains(Consts.STANDALONE_PROFILE)) {
+                envYamlProvider = new StandaloneEnvYamlProvider();
+            }
+            else if (defaultEnvYamlFile!=null) {
+                envYamlProvider = new FileEnvYamlProvider(defaultEnvYamlFile);
+            }
+            init(processorPath, envYamlProvider, defaultDispatcherYamlFile, taskConsoleOutputMaxLines);
+
         }
         catch (TerminateApplicationException e) {
             System.exit(SpringApplication.exit(appCtx, () -> -500));
         }
     }
 
-    public void init(Path processorPath, @Nullable Path defaultEnvYamlFile, @Nullable Path defaultDispatcherYamlFile, int taskConsoleOutputMaxLines) {
-        envParams.init(processorPath, defaultEnvYamlFile, taskConsoleOutputMaxLines);
+    public void init(Path processorPath, @Nullable EnvYamlProvider envYamlProvider, @Nullable Path defaultDispatcherYamlFile, int taskConsoleOutputMaxLines) {
+        envParams.init(processorPath, envYamlProvider, taskConsoleOutputMaxLines);
         dispatcherLookupExtendedService = globals.activeProfilesSet.contains(Consts.STANDALONE_PROFILE)
                 ? new StandaloneDispatcherLookupExtendedParams(additionalCustomUserDetails.restUserPassword)
                 : new FileDispatcherLookupExtendedParams(processorPath, defaultDispatcherYamlFile);

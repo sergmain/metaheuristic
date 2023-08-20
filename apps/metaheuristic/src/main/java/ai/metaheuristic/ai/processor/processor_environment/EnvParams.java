@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,32 +44,28 @@ public class EnvParams {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
-    public void init(Path processorPath, @Nullable Path defaultEnvYamlFile, int taskConsoleOutputMaxLines) {
+    public void init(Path processorPath,@Nullable EnvYamlProvider envYamlProvider, int taskConsoleOutputMaxLines) {
         writeLock.lock();
         try {
-            initInternal(processorPath, defaultEnvYamlFile, taskConsoleOutputMaxLines);
+            initInternal(processorPath, envYamlProvider, taskConsoleOutputMaxLines);
         } finally {
             writeLock.unlock();
         }
     }
 
-    private void initInternal(Path processorPath, @Nullable Path defaultEnvYamlFile, int taskConsoleOutputMaxLines) {
+    private void initInternal(Path processorPath, @Nullable EnvYamlProvider envYamlProvider, int taskConsoleOutputMaxLines) {
         final Path envYamlFile = processorPath.resolve(Consts.ENV_YAML_FILE_NAME);
         if (Files.notExists(envYamlFile)) {
-            if (defaultEnvYamlFile==null) {
+            if (envYamlProvider==null) {
                 log.warn("#747.020 Processor's env.yaml config file doesn't exist: {}", envYamlFile.toAbsolutePath());
                 throw new IllegalStateException("#747.012 Processor isn't configured, env.yaml is empty or doesn't exist");
             }
-            if (Files.notExists(defaultEnvYamlFile)) {
-                log.warn("#747.030 Processor's default yaml.yaml file doesn't exist: {}", defaultEnvYamlFile.toAbsolutePath());
-                throw new IllegalStateException("#747.014 Processor isn't configured, env.yaml is empty or doesn't exist");
-            }
-            try {
-                Files.copy(defaultEnvYamlFile, envYamlFile);
+            try (InputStream is = envYamlProvider.provide()) {
+                Files.copy(is, envYamlFile);
             } catch (IOException e) {
                 log.error("#747.035 Error", e);
-                throw new IllegalStateException("#747.040 Error while copying " + defaultEnvYamlFile.toAbsolutePath() +
-                                                " to " + envYamlFile.toAbsolutePath(), e);
+                throw new IllegalStateException("#747.040 Error while creating env.yaml with " + envYamlProvider.getClass().getName() +
+                                                " provider and target path as " + envYamlFile.toAbsolutePath(), e);
             }
         }
 

@@ -39,7 +39,7 @@ public class ProcessorAndCoreData {
 
         public AssetManagerUrl(String url) {
             if (S.b(url)) {
-                throw new IllegalStateException("#819.020 assetManagerUrl is null");
+                throw new IllegalStateException("819.020 assetManagerUrl is null");
             }
             this.url = url;
         }

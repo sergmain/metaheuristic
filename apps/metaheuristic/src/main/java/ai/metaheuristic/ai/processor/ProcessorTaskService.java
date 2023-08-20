@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
-import ai.metaheuristic.commons.utils.DigitUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -30,11 +29,11 @@ import ai.metaheuristic.ai.yaml.processor_task.ProcessorTaskUtils;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.DigitUtils;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,27 +60,42 @@ import static java.nio.file.StandardOpenOption.*;
 @Service
 @Slf4j
 @Profile("processor")
-@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ProcessorTaskService {
 
     private final Globals globals;
     private final CurrentExecState currentExecState;
     private final ProcessorEnvironment processorEnvironment;
 
-    /**key - code of core
+    /**
+     * key - code of core
      * value:
-     *      Map of:
-     *      key - DispatcherUrl
-     *      value:
-     *             Map.of:
-     *             key - ProcessorCoreTask.taskId,
-     *             Value - ProcessorCoreTask
+     * Map of:
+     * key - DispatcherUrl
+     * value:
+     * Map.of:
+     * key - ProcessorCoreTask.taskId,
+     * Value - ProcessorCoreTask
      */
     private final ConcurrentHashMap<String, Map<DispatcherUrl, Map<Long, ProcessorCoreTask>>> map = new ConcurrentHashMap<>();
 
     public Path processorPath;
 
-    @PostConstruct
+    @Autowired
+    public ProcessorTaskService(Globals globals, CurrentExecState currentExecState, ProcessorEnvironment processorEnvironment) {
+        this.globals = globals;
+        this.currentExecState = currentExecState;
+        this.processorEnvironment = processorEnvironment;
+        if (globals.testing) {
+            return;
+        }
+        if (!globals.processor.enabled) {
+            return;
+        }
+        this.processorPath = globals.processorPath;
+        init(processorPath);
+    }
+
+ /*   @PostConstruct
     public void postConstruct() {
         if (globals.testing) {
             return;
@@ -89,9 +103,9 @@ public class ProcessorTaskService {
         this.processorPath = globals.processorPath;
         init(processorPath);
         //noinspection unused
-        int i=0;
+        int i = 0;
     }
-
+*/
     @SneakyThrows
     public void init(Path processorPath) {
         for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataParams.getAllEnabledRefsForCores()) {
@@ -126,7 +140,7 @@ public class ProcessorTaskService {
                                     log.info("Found dir of task with id: {}, {}, {}, {}", taskId, groupDirName, name, dispatcherUrl.url);
                                     Path taskYamlFile = currDir.resolve(Consts.TASK_YAML);
                                     try {
-                                        if (Files.notExists(taskYamlFile) || Files.size(taskYamlFile)==0L) {
+                                        if (Files.notExists(taskYamlFile) || Files.size(taskYamlFile) == 0L) {
                                             deleteDir(currDir, "Delete not valid dir of task " + s + ", exist: " + Files.exists(taskYamlFile) + ", length: " + Files.size(taskYamlFile));
                                             return;
                                         }
@@ -142,27 +156,24 @@ public class ProcessorTaskService {
 
                                             // fix state of task
                                             FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.getFunctionExecResult());
-                                            if (functionExec!=null &&
-                                                ((functionExec.generalExec!=null && !functionExec.exec.isOk) ||
-                                                 (functionExec.generalExec!=null && !functionExec.generalExec.isOk))) {
+                                            if (functionExec != null &&
+                                                    ((functionExec.generalExec != null && !functionExec.exec.isOk) ||
+                                                            (functionExec.generalExec != null && !functionExec.generalExec.isOk))) {
                                                 markAsFinished(core, taskId, functionExec);
                                             }
                                         }
-                                    }
-                                    catch (IOException e) {
+                                    } catch (IOException e) {
                                         String es = "#713.010 Error";
                                         log.error(es, e);
                                         throw new RuntimeException(es, e);
-                                    }
-                                    catch (YAMLException e) {
+                                    } catch (YAMLException e) {
                                         String es = "#713.020 yaml Error: " + e.getMessage();
                                         log.warn(es, e);
                                         deleteDir(currDir, "Delete not valid dir of task " + s);
                                     }
                                 });
                             }
-                        }
-                        catch (IOException e) {
+                        } catch (IOException e) {
                             String es = "#713.030 Error";
                             log.error(es, e);
                             throw new RuntimeException(es, e);
@@ -178,7 +189,7 @@ public class ProcessorTaskService {
     }
 
     public static void deleteDir(@NonNull Path f, @NonNull String info) {
-        log.warn(info+", file: " + f.toAbsolutePath());
+        log.warn(info + ", file: " + f.toAbsolutePath());
         try {
             Files.deleteIfExists(f);
         } catch (IOException e) {
@@ -213,10 +224,9 @@ public class ProcessorTaskService {
                 return;
             }
             final ProcessorCoreTask.EmptyStateOfInput input = task.empty.empties.stream().filter(o -> o.variableId.equals(variableId)).findFirst().orElse(null);
-            if (input==null) {
+            if (input == null) {
                 task.empty.empties.add(new ProcessorCoreTask.EmptyStateOfInput(variableId, true));
-            }
-            else {
+            } else {
                 input.empty = true;
             }
 
@@ -240,7 +250,7 @@ public class ProcessorTaskService {
                 log.error("#713.090 ProcessorCoreTask wasn't found for Id {}", taskId);
                 return;
             }
-            if (!task.isReported() ) {
+            if (!task.isReported()) {
                 log.warn("#713.095 This state need to be investigated, task wasn't reported to dispatcher");
             }
             if (task.delivered) {
@@ -253,10 +263,9 @@ public class ProcessorTaskService {
             // because we've already marked this task as completed
             if (!task.isCompleted()) {
                 FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.getFunctionExecResult());
-                if (functionExec!=null && !functionExec.allFunctionsAreOk()) {
+                if (functionExec != null && !functionExec.allFunctionsAreOk()) {
                     task.setCompleted(true);
-                }
-                else {
+                } else {
                     task.setCompleted(task.output.allUploaded());
                 }
             }
@@ -276,7 +285,7 @@ public class ProcessorTaskService {
                 return;
             }
             task.output.outputStatuses.stream().filter(o -> o.variableId.equals(outputVariableId)).findFirst().ifPresent(status -> status.uploaded = true);
-            task.setCompleted( task.isDelivered() );
+            task.setCompleted(task.isDelivered());
             save(core, task);
         } finally {
             ProcessorSyncHolder.writeLock.unlock();
@@ -306,8 +315,8 @@ public class ProcessorTaskService {
             Stream<ProcessorCoreTask> stream = findAllByFinishedOnIsNotNull(core);
             List<ProcessorCoreTask> result = stream
                     .filter(processorTask -> !processorTask.isReported() ||
-                                             (!processorTask.isDelivered() &&
-                                              (processorTask.getReportedOn() == null || (System.currentTimeMillis() - processorTask.getReportedOn()) > 60_000)))
+                            (!processorTask.isDelivered() &&
+                                    (processorTask.getReportedOn() == null || (System.currentTimeMillis() - processorTask.getReportedOn()) > 60_000)))
                     .collect(Collectors.toList());
             return result;
         } finally {
@@ -324,13 +333,13 @@ public class ProcessorTaskService {
         log.info("Number of tasks for reporting: " + list.size());
         final ProcessorCommParamsYaml.ReportTaskProcessingResult processingResult = new ProcessorCommParamsYaml.ReportTaskProcessingResult();
         for (ProcessorCoreTask task : list) {
-            if (task.isDelivered() && !task.isReported() ) {
+            if (task.isDelivered() && !task.isReported()) {
                 log.warn("#713.105 This state need to be investigated: (task.isDelivered() && !task.isReported())==true");
             }
             // TODO 2019-07-12 do we need to check against task.isReported()? isn't task.isDelivered() just enough?
             //  2020-09-26 until #713.105 (task.isDelivered() && !task.isReported() ) will be fixed, this check is correct
             //  2020-11-23 looks like #713.105 can occur in case when a task was finished with status ERROR
-            if (task.isDelivered() && task.isReported() ) {
+            if (task.isDelivered() && task.isReported()) {
                 continue;
             }
             final ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result =
@@ -363,7 +372,7 @@ public class ProcessorTaskService {
             if (task == null) {
                 log.error("#713.110 ProcessorCoreTask wasn't found for Id #" + taskId);
             } else {
-                if (task.getLaunchedOn()==null) {
+                if (task.getLaunchedOn() == null) {
                     final TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
                     log.info("#713.113 task #{}, function '{}', doesn't have the launchedOn as inited", taskId, tpy.task.function.code);
                     final String es = "#713.114 stacktrace";
@@ -377,8 +386,7 @@ public class ProcessorTaskService {
                 if (!functionExec.allFunctionsAreOk()) {
                     log.info("#713.115 task #{} was finished with an error, set completed to true", taskId);
                     task.setCompleted(true);
-                }
-                else {
+                } else {
                     task.setCompleted(false);
                 }
                 task.setFinishedOn(System.currentTimeMillis());
@@ -428,11 +436,10 @@ public class ProcessorTaskService {
             List<ProcessorCoreTask> list = new ArrayList<>();
             for (ProcessorCoreTask task : getTasksForProcessorCore(core).values()) {
                 if (!task.completed) {
-                    if (task.finishedOn!=null && task.reported && task.delivered && task.output.outputStatuses.stream().allMatch(o->o.uploaded)) {
+                    if (task.finishedOn != null && task.reported && task.delivered && task.output.outputStatuses.stream().allMatch(o -> o.uploaded)) {
                         task.completed = true;
                         save(core, task);
-                    }
-                    else {
+                    } else {
                         list.add(task);
                     }
                 }
@@ -449,7 +456,7 @@ public class ProcessorTaskService {
         for (Map<DispatcherUrl, Map<Long, ProcessorCoreTask>> value : map.values()) {
             for (Map.Entry<DispatcherUrl, Map<Long, ProcessorCoreTask>> entry : value.entrySet()) {
                 if (entry.getKey().equals(dispatcherUrl)) {
-                    result.putAll( entry.getValue());
+                    result.putAll(entry.getValue());
                 }
             }
         }
@@ -457,7 +464,7 @@ public class ProcessorTaskService {
     }
 
     private Map<Long, ProcessorCoreTask> getTasksForProcessorCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
-        return map.computeIfAbsent(core.coreCode, k->new HashMap<>()).computeIfAbsent(core.dispatcherUrl, m -> new HashMap<>());
+        return map.computeIfAbsent(core.coreCode, k -> new HashMap<>()).computeIfAbsent(core.dispatcherUrl, m -> new HashMap<>());
     }
 
     public List<ProcessorCoreTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, boolean assetsPreparedStatus) {
@@ -471,11 +478,11 @@ public class ProcessorTaskService {
                 if (S.b(task.dispatcherUrl)) {
                     forDeletion.add(task.taskId);
                 }
-                if (!task.completed && task.finishedOn == null && task.assetsPrepared==assetsPreparedStatus) {
+                if (!task.completed && task.finishedOn == null && task.assetsPrepared == assetsPreparedStatus) {
                     list.add(task);
                 }
             }
-            forDeletion.forEach(id-> {
+            forDeletion.forEach(id -> {
                 log.warn("#713.147 task #{} from dispatcher {} was deleted from global map with tasks", id, core.dispatcherUrl.url);
                 mapForDispatcherUrl.remove(id);
             });
@@ -486,7 +493,7 @@ public class ProcessorTaskService {
     }
 
     private Stream<ProcessorCoreTask> findAllByFinishedOnIsNotNull(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
-        return getTasksForProcessorCore(core).values().stream().filter(o -> o.finishedOn!=null);
+        return getTasksForProcessorCore(core).values().stream().filter(o -> o.finishedOn != null);
     }
 
     @SneakyThrows
@@ -516,8 +523,8 @@ public class ProcessorTaskService {
             task.completed = false;
             task.quotas.quota = assignedTask.quota;
             taskParamYaml.task.outputs.stream()
-                    .map(o->new ProcessorCoreTask.OutputStatus(o.id, false) )
-                    .collect(Collectors.toCollection(()->task.output.outputStatuses));
+                    .map(o -> new ProcessorCoreTask.OutputStatus(o.id, false))
+                    .collect(Collectors.toCollection(() -> task.output.outputStatuses));
 
             Path processorDir = processorPath.resolve(core.coreCode);
             if (Files.notExists(processorDir)) {
@@ -532,8 +539,7 @@ public class ProcessorTaskService {
                 if (Files.exists(taskDir)) {
                     try {
                         Files.deleteIfExists(taskDir);
-                    }
-                    catch (IOException e) {
+                    } catch (IOException e) {
                         String es = "#713.140 Error while deleting a task dir: " + taskDir.toAbsolutePath();
                         log.error(es, e);
                         throw new RuntimeException(es, e);
@@ -679,11 +685,9 @@ public class ProcessorTaskService {
                 log.debug("Does task present in map before deleting: {}", mapTask.containsKey(taskId));
                 mapTask.remove(taskId);
                 log.debug("Does task present in map after deleting: {}", mapTask.containsKey(taskId));
-            }
-            catch (java.lang.NoClassDefFoundError th) {
+            } catch (java.lang.NoClassDefFoundError th) {
                 log.error("#713.205 Error deleting task {}, {}", taskId, th.getMessage());
-            }
-            catch (Throwable th) {
+            } catch (Throwable th) {
                 log.error("#713.210 Error deleting task " + taskId, th);
             }
         } finally {

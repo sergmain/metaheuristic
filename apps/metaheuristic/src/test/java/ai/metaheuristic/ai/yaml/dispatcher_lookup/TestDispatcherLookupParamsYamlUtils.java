@@ -14,40 +14,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.processor.processor_environment;
+package ai.metaheuristic.ai.yaml.dispatcher_lookup;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlV1;
-import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Test;
 
 import static ai.metaheuristic.ai.Consts.STANDALONE_PORT_NUMBER;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@Slf4j
-public class StandaloneDispatcherLookupExtendedParams extends DispatcherLookupExtendedParams {
+/**
+ * @author Sergio Lissner
+ * Date: 8/19/2023
+ * Time: 9:20 PM
+ */
+public class TestDispatcherLookupParamsYamlUtils {
 
-    public StandaloneDispatcherLookupExtendedParams(String restPassword) {
-        super(getDispatcherLookupExtendedParams(restPassword));
-    }
-
-    private static DispatcherLookupParamsYaml getDispatcherLookupExtendedParams(String restPassword) {
-    /*
-      - signatureRequired: true
-        url: http://localhost:8080
-        lookupType: direct
-        authType: basic
-        restUsername: rest_user
-        restPassword: 123
-        taskProcessingTime: |
-          workingDay: 0:00-23:59
-          weekend: 0:00-23:59
-        publicKey: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAiEOUe8E8p9Xin0ikGzwFYc7NJK25n8K6LcLivIjs+CPBkgcOMsyncIDKmBqw8GYyhUl4I6KhE7TQSdedgul9a0B9/rfgX49b+nS0U7ObIK2sdJDzHh32ne7moX34L3zCPPciJ8M7GYQuCjrTKaRB8RUaG5nKYk9wHnzSm53Pq5nsmIvGsHBsx901OXpdDpkB2VB2Hsgu8vMxNvtprAD4x9z+QR01jG94z7JIN1zROZ0xS6uFF9IjxzsXNudRaELobRMfhqfyYMB8c3VNqsJ/vjlG6m7uMrinHnqvSjBPffueAay19J06P6IpEJ1LqeQdF8fygL5SnspjusnY60QzZwIDAQAB
-        disabled: false
-        priority: 1
-    */
+    @Test
+    public void test_DispatcherLookupParamsYamlUtils() {
         DispatcherLookupParamsYamlV1.DispatcherLookupV1 lookup = new DispatcherLookupParamsYamlV1.DispatcherLookupV1();
         DispatcherLookupParamsYamlV1 dispatcherLookupConfig = new DispatcherLookupParamsYamlV1();
         dispatcherLookupConfig.dispatchers.add(lookup);
@@ -60,7 +44,7 @@ public class StandaloneDispatcherLookupExtendedParams extends DispatcherLookupEx
         lookup.lookupType = Enums.DispatcherLookupType.direct;
         lookup.authType = Enums.AuthType.basic;
         lookup.restUsername = Consts.REST_USER;
-        lookup.restPassword = restPassword;
+        lookup.restPassword = "123";
         lookup.taskProcessingTime = "";
         lookup.publicKey = null;
         lookup.priority = 1;
@@ -68,7 +52,6 @@ public class StandaloneDispatcherLookupExtendedParams extends DispatcherLookupEx
         final String s = DispatcherLookupParamsYamlUtils.BASE_YAML_UTILS.toString(dispatcherLookupConfig);
         DispatcherLookupParamsYaml finalConfig  = DispatcherLookupParamsYamlUtils.BASE_YAML_UTILS.to(s);
 
-        return finalConfig;
+        assertEquals(1, finalConfig.assetManagers.size());
     }
-
 }

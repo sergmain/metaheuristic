@@ -52,7 +52,6 @@ public class DispatcherLookupParamsYamlUtilsV2
         DispatcherLookupParamsYaml trg = new DispatcherLookupParamsYaml();
 
         src.dispatchers.stream().map(DispatcherLookupParamsYamlUtilsV2::toDispatcher).collect(Collectors.toCollection(() -> trg.dispatchers));
-        src.assetManagers.stream().map(DispatcherLookupParamsYamlUtilsV2::toAsset).collect(Collectors.toCollection(() -> trg.assetManagers));
 
         Set<DispatcherLookupParamsYaml.AssetManager> assets = src.assetManagers.stream().map(DispatcherLookupParamsYamlUtilsV2::toAsset).collect(Collectors.toSet());
         trg.assetManagers.addAll(assets);

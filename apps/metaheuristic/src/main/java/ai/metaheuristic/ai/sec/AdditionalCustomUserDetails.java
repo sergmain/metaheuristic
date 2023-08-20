@@ -26,6 +26,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+import static ai.metaheuristic.ai.sec.SecConsts.ROLE_ASSET_REST_ACCESS;
+
 /**
  * @author Sergio Lissner
  * Date: 8/18/2023
@@ -55,6 +57,6 @@ public class AdditionalCustomUserDetails {
         restUserAccount.setCredentialsNonExpired(true);
         restUserAccount.setEnabled(true);
         restUserAccount.setPassword(restUserPasswordEncoded);
-        restUserAccount.setRoles(SecConsts.ROLE_SERVER_REST_ACCESS);
+        restUserAccount.setRoles(SecConsts.ROLE_SERVER_REST_ACCESS+", " + ROLE_ASSET_REST_ACCESS);
     }
 }

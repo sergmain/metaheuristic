@@ -165,11 +165,13 @@ public class Consts {
 
     public static final Duration DURATION_5_SECONDS = Duration.ofSeconds(5);
     public static final Duration DURATION_20_SECONDS = Duration.ofSeconds(20);
+    public static final Duration DURATION_1_HOUR = Duration.ofHours(1);
 
     public static final Duration DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS = DURATION_20_SECONDS;
     public static final long DISPATCHER_SOCKET_TIMEOUT_MILLISECONDS = DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS.toMillis();
 
-    public static final Duration DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS = DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS.minus(DURATION_5_SECONDS);
+//    public static final Duration DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS = DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS.minus(DURATION_5_SECONDS);
+    public static final Duration DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS = DURATION_1_HOUR;
     public static final long DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS = DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS.toMillis();
 
     public static final String GIT_PATH = "git";
@@ -185,4 +187,6 @@ public class Consts {
     public static final String STANDALONE_PROFILE = "standalone";
     public static final String OPENAI_API_KEY = "OPENAI_API_KEY";
     public static final String REST_USER = "rest_user";
+
+    public static final int STANDALONE_PORT_NUMBER = 64967;
 }
