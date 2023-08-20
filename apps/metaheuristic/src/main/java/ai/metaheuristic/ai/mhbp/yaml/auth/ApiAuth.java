@@ -54,6 +54,8 @@ public class ApiAuth implements BaseParams {
     @AllArgsConstructor
     public static class TokenAuth {
         public Enums.TokenPlace place;
+        // this is a just anon token. it will be used in uri,
+        // i.e. https://api.weatherapi.com/v1/current.json?key=xxx&q=94103
         public String token;
         public String param;
         public String env;

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.graph;
 
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
@@ -30,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
+
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -49,14 +50,13 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@ActiveProfiles("dispatcher")
+//@ActiveProfiles({"dispatcher", "mysql"})
 @Slf4j
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class TestGraphEdges extends PreparingSourceCode {
 
     @Autowired private ExecContextCache execContextCache;
     @Autowired private TxSupportForTestingService txSupportForTestingService;
-    @Autowired private ExecContextService execContextService;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
     @Autowired private TestGraphService testGraphService;
     @Autowired private ExecContextGraphTopLevelService execContextGraphTopLevelService;
@@ -68,14 +68,15 @@ public class TestGraphEdges extends PreparingSourceCode {
 
     @Test
     public void test() {
+        DispatcherContext context = new DispatcherContext(getAccount(), getCompany());
 
-        ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(getSourceCode(), getCompany().getUniqueId());
+        ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(getSourceCode(), context.asUserExecContext());
         setExecContextForTest(result.execContext);
 
         assertNotNull(getExecContextForTest());
-        ExecContextSyncService.getWithSync(getExecContextForTest().id, ()->
-                ExecContextGraphSyncService.getWithSync(getExecContextForTest().execContextGraphId, ()->
-                        ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId, ()-> {
+        ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, ()->
+                ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().execContextGraphId, ()->
+                        ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().execContextTaskStateId, ()-> {
                             OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(),
                                     List.of(new TaskApiData.TaskWithContext(1L, "123###1")));
 
@@ -116,7 +117,6 @@ public class TestGraphEdges extends PreparingSourceCode {
 
             leafs = testGraphService.findLeafs(getExecContextForTest());
             assertEquals(5, leafs.size());
-            return null;
         })));
     }
 }

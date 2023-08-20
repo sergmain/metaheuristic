@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
+import ai.metaheuristic.api.EnumsApi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,12 +41,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@ActiveProfiles("dispatcher")
+//@ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@AutoConfigureCache
 public class TestBinaryDataRepository {
 
     @Autowired
-    private VariableTxService variableService;
+    private VariableTxService variableTxService;
 
     @Autowired
     private TxSupportForTestingService txSupportForTestingService;
@@ -53,11 +55,11 @@ public class TestBinaryDataRepository {
     @Autowired
     private VariableRepository variableRepository;
 
-    private Variable d1 = null;
+    private Variable var1 = null;
     @AfterEach
     public void after() {
-        if (d1!=null) {
-            variableRepository.deleteById(d1.id);
+        if (var1!=null) {
+            variableRepository.deleteById(var1.id);
         }
     }
 
@@ -67,15 +69,15 @@ public class TestBinaryDataRepository {
 
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
-        d1 = ExecContextSyncService.getWithSync(10L,
-                ()-> txSupportForTestingService.createInitializedWithTx(inputStream, bytes.length, "test-01","test-file.bin", 10L, Consts.TOP_LEVEL_CONTEXT_ID));
+        var1 = variableTxService.createInitializedTx(
+                        inputStream, bytes.length, "test-01", "test-file.bin", 10L, Consts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.binary);
 
-        Timestamp ts = d1.getUploadTs();
+        Timestamp ts = var1.getUploadTs();
 
-        final Variable d2 = txSupportForTestingService.getVariableWithData(d1.getId());
-        assertNotNull(d2);
-        assertEquals(d1, d2);
-        assertArrayEquals(bytes, d2.bytes);
+        final Variable var2 = variableTxService.getVariable(var1.getId());
+        assertNotNull(var2);
+        final byte[] bytesVar2 = variableTxService.getVariableAsBytes(var1.getId());
+        assertArrayEquals(bytes, bytesVar2);
 
         // to check timestamp
         Thread.sleep(1100);
@@ -83,13 +85,14 @@ public class TestBinaryDataRepository {
         final byte[] bytes2 = "another one very short data".getBytes();
         final ByteArrayInputStream inputStream2 = new ByteArrayInputStream(bytes2);
         ExecContextSyncService.getWithSyncVoid(10L,
-                ()-> VariableSyncService.getWithSyncVoidForCreation(d2.id,
-                        ()->variableService.updateWithTx(inputStream2, bytes2.length, d2.id)));
+                ()-> VariableSyncService.getWithSyncVoidForCreation(var2.id,
+                        ()-> variableTxService.updateWithTx(inputStream2, bytes2.length, var2.id)));
 
-        final Variable d3 = txSupportForTestingService.getVariableWithData(d2.getId());
+        final Variable var3 = variableRepository.findById(var2.getId()).orElse(null);
+        assertNotNull(var3);
+        assertNotEquals(ts, var3.getUploadTs());
 
-        assertNotNull(d3);
-        assertNotEquals(ts, d3.getUploadTs());
-        assertArrayEquals(bytes2, d3.bytes);
+        final byte[] bytesVar3 = variableTxService.getVariableAsBytes(var1.getId());
+        assertArrayEquals(bytes2, bytesVar3);
     }
 }

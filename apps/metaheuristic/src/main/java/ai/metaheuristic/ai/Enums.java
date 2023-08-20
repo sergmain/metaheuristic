@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,8 @@
 package ai.metaheuristic.ai;
 
 public final class Enums {
+
+    public enum ApiKeySourceDefinedBy { none, server, user }
 
     public enum ExecContextInitState {NONE, DELTA, FULL}
 
@@ -38,7 +40,7 @@ public final class Enums {
         process_not_found,
         sub_process_not_found,
         task_not_found,
-        output_variable_not_defined, inline_not_found,
+        output_variable_not_defined, output_variable_not_found, inline_not_found,
         number_of_metas_is_incorrect,
         meta_not_found, name_of_variable_in_meta_is_broken,
         broken_graph_error,
@@ -51,7 +53,7 @@ public final class Enums {
 
     public enum AssetType { company, account, function, source}
 
-    public enum GitStatus {unknown, installed, not_found, error }
+    public enum GitStatus {unknown, processing, installed, not_found, error }
 
     public enum StoringStatus {OK, CANT_BE_STORED}
 
@@ -70,17 +72,6 @@ public final class Enums {
 
     public enum ResendTaskOutputResourceStatus {
         SEND_SCHEDULED, VARIABLE_NOT_FOUND, TASK_IS_BROKEN, TASK_NOT_FOUND, TASK_PARAM_FILE_NOT_FOUND, OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE
-    }
-
-    @SuppressWarnings("unused")
-    public enum FEATURE_STATUS {
-        NONE(0), OK(1), ERROR(2), OBSOLETE(3);
-
-        public final int value;
-
-        FEATURE_STATUS(int value) {
-            this.value = value;
-        }
     }
 
     public enum FeatureExecStatus {
@@ -192,7 +183,17 @@ public final class Enums {
 
     public enum TokenPlace { param, header }
     public enum PromptPlace { uri, text }
-    public enum PromptResponseType { json, text, image }
+    public enum PromptResponseType {
+        json(false, false), text(false, false), image(true, false),
+        image_base64(true, true);
+
+        public final boolean binary;
+        public final boolean base64;
+        PromptResponseType(boolean binary, boolean base64) {
+            this.binary = binary;
+            this.base64 = base64;
+        }
+    }
     public enum HttpMethodType { get, post }
 
     public enum QueryResultErrorType { cant_understand, common, server_error, query_too_long }

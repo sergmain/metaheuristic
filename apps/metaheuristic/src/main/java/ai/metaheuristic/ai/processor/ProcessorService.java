@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.VariableProviderException;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.env.EnvService;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProvider;
@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -42,14 +43,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -57,22 +60,20 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @Profile("processor")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ProcessorService {
 
     private final Globals globals;
     private final ProcessorTaskService processorTaskService;
     private final UploadVariableService uploadResourceActor;
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
-    private final EnvService envService;
+    private final ProcessorEnvironment processorEnvironment;
     private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
     private final CurrentExecState currentExecState;
-    private final MetadataService metadataService;
 
 //    @Value("${logging.file.name:#{null}}")
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('logging.file.name' )) }")
-    public File logFile;
+    public Path logFile;
 
     KeepAliveRequestParamYaml.ProcessorStatus produceReportProcessorStatus(DispatcherSchedule schedule) {
 
@@ -81,11 +82,11 @@ public class ProcessorService {
         // TODO 2020-11-14 or it's about using TimeZoned value?
 
         KeepAliveRequestParamYaml.ProcessorStatus status = new KeepAliveRequestParamYaml.ProcessorStatus(
-                to(envService.getEnvParamsYaml()),
+                to(processorEnvironment.envParams.getEnvParamsYaml()),
                 gitSourcingService.gitStatusInfo,
                 schedule.asString,
                 "[unknown]", "[unknown]",
-                logFile!=null && logFile.exists(),
+                logFile!=null && Files.exists(logFile),
                 TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(),
                 globals.os, globals.processorPath.toAbsolutePath().toString(), null);
 
@@ -132,7 +133,7 @@ public class ProcessorService {
             if (coreCode==null) {
                 continue;
             }
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = metadataService.getCoreRef(coreCode, ref.dispatcherUrl);
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataParams.getCoreRef(coreCode, ref.dispatcherUrl);
             if (core==null) {
                 continue;
             }
@@ -141,9 +142,12 @@ public class ProcessorService {
     }
 
     public void assignTasks(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherCommParamsYaml.AssignedTask task) {
-        synchronized (ProcessorSyncHolder.processorGlobalSync) {
+        try {
+            ProcessorSyncHolder.writeLock.lock();
             currentExecState.registerDelta(core.dispatcherUrl, task.execContextId, task.state);
             processorTaskService.createTask(core, task);
+        } finally {
+            ProcessorSyncHolder.writeLock.unlock();
         }
     }
 
@@ -159,7 +163,7 @@ public class ProcessorService {
             if (coreCode==null) {
                 continue;
             }
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = metadataService.getCoreRef(coreCode, ref.dispatcherUrl);
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataParams.getCoreRef(coreCode, ref.dispatcherUrl);
             if (core==null) {
                 continue;
             }
@@ -175,7 +179,7 @@ public class ProcessorService {
             return Enums.ResendTaskOutputResourceStatus.TASK_NOT_FOUND;
         }
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-        File taskDir = processorTaskService.prepareTaskDir(core, taskId);
+        Path taskDir = processorTaskService.prepareTaskDir(core, taskId);
 
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
             if (!outputVariable.id.equals(variableId)) {
@@ -191,8 +195,6 @@ public class ProcessorService {
                 case inline:
                 default:
                     throw new NotImplementedException("need to set 'uploaded' in params for this variableId");
-//                    status = Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
-//                    break;
             }
             if (status!=Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED) {
                 return status;
@@ -201,7 +203,7 @@ public class ProcessorService {
         return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
     }
 
-    private Enums.ResendTaskOutputResourceStatus scheduleSendingToDispatcher(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, File taskDir, TaskParamsYaml.OutputVariable outputVariable) {
+    private Enums.ResendTaskOutputResourceStatus scheduleSendingToDispatcher(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, Path taskDir, TaskParamsYaml.OutputVariable outputVariable) {
         final AssetFile assetFile = AssetUtils.prepareOutputAssetFile(taskDir, outputVariable.id.toString());
 
         // is this variable prepared?
@@ -214,8 +216,8 @@ public class ProcessorService {
             return Enums.ResendTaskOutputResourceStatus.VARIABLE_NOT_FOUND;
         }
 
-        final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher =
-                dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
+        final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
+                processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
 
         UploadVariableTask uploadResourceTask = new UploadVariableTask(taskId, assetFile.file, outputVariable.id, core, dispatcher.dispatcherLookup);
         uploadResourceActor.add(uploadResourceTask);
@@ -232,7 +234,7 @@ public class ProcessorService {
 
     public ProcessorService.ResultOfChecking checkForPreparingVariables(
             ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
-            TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
+            TaskParamsYaml taskParamYaml, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, Path taskDir) {
         ProcessorService.ResultOfChecking result = new ProcessorService.ResultOfChecking();
         if (!core.dispatcherUrl.url.equals(task.dispatcherUrl)) {
             throw new IllegalStateException("(!core.dispatcherUrl.url.equals(task.dispatcherUrl))");
@@ -282,13 +284,13 @@ public class ProcessorService {
         return result;
     }
 
-    public boolean checkOutputResourceFile(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher, File taskDir) {
+    public boolean checkOutputResourceFile(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task, TaskParamsYaml taskParamYaml, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, Path taskDir) {
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {
             try {
                 VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(outputVariable.sourcing);
 
                 //noinspection unused
-                File outputResourceFile = resourceProvider.getOutputVariableFromFile(core, taskDir, dispatcher, task, outputVariable);
+                Path outputResourceFile = resourceProvider.getOutputVariableFromFile(core, taskDir, dispatcher, task, outputVariable);
             } catch (VariableProviderException e) {
                 final String msg = "#749.080 Error: " + e.getMessage();
                 log.error(msg, e);

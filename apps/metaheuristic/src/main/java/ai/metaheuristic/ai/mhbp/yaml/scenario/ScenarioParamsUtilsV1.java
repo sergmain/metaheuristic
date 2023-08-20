@@ -1,25 +1,23 @@
 /*
- *    Copyright 2023, Sergio Lissner, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
  *
- *        http://www.apache.org/licenses/LICENSE-2.0
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 package ai.metaheuristic.ai.mhbp.yaml.scenario;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
@@ -33,15 +31,13 @@ public class ScenarioParamsUtilsV1 extends
         return 1;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(ScenarioParamsV1.class);
     }
 
-    @NonNull
     @Override
-    public ScenarioParams upgradeTo(@NonNull ScenarioParamsV1 v1) {
+    public ScenarioParams upgradeTo(ScenarioParamsV1 v1) {
         v1.checkIntegrity();
 
         ScenarioParams t = new ScenarioParams();
@@ -54,7 +50,8 @@ public class ScenarioParamsUtilsV1 extends
     private static ScenarioParams.Step toPrompt(ScenarioParamsV1.StepV1 v1) {
         ScenarioParams.Step f = new ScenarioParams.Step(
                 v1.uuid, v1.parentUuid, v1.name, v1.p, v1.r, v1.resultCode,
-                v1.expected, toApi(v1.api), toFunction(v1.function), v1.aggregateType);
+                v1.expected, toApi(v1.api), toFunction(v1.function), v1.aggregateType,
+                v1.isCachable);
         return f;
     }
 
@@ -74,9 +71,8 @@ public class ScenarioParamsUtilsV1 extends
         return new ScenarioParams.Api(v1.apiId, v1.code);
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
@@ -91,15 +87,14 @@ public class ScenarioParamsUtilsV1 extends
     }
 
     @Override
-    public String toString(@NonNull ScenarioParamsV1 yaml) {
+    public String toString(ScenarioParamsV1 yaml) {
         yaml.checkIntegrity();
 
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public ScenarioParamsV1 to(@NonNull String s) {
+    public ScenarioParamsV1 to(String s) {
         final ScenarioParamsV1 p = getYaml().load(s);
         return p;
     }

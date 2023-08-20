@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,15 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
+import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultTaskParamsYamlUtils;
+import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParams;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import javax.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -52,9 +56,36 @@ public class ExperimentTask implements Serializable {
     @Column(name = "TASK_ID")
     public Long taskId;
 
-    /**
-     * .map(o-> ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.to(o.params))
-     */
     @Column(name = "PARAMS")
-    public String params;
+    private String params;
+
+    public String getParams() {
+        return params;
+    }
+
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
+
+    @Transient
+    @JsonIgnore
+    private final ThreadUtils.CommonThreadLocker<ExperimentResultTaskParams> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private ExperimentResultTaskParams parseParams() {
+        ExperimentResultTaskParams temp = ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.to(params);
+        ExperimentResultTaskParams ecpy = temp==null ? new ExperimentResultTaskParams() : temp;
+        return ecpy;
+    }
+
+    @JsonIgnore
+    public ExperimentResultTaskParams getExperimentResultTaskParams() {
+        return paramsLocked.get();
+    }
+
+    @JsonIgnore
+    public void updateParams(ExperimentResultTaskParams tpy) {
+        setParams(ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy));
+    }
+
 }

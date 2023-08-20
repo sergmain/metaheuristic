@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -94,12 +94,12 @@ public class ExecContextUtils {
             r.lines[i].context = sortedContexts.get(i);
         }
 
-        for (ExecContextApiData.VariableState taskInfo : raw.infos) {
+        for (ExecContextApiData.VariableState variableState : raw.infos) {
             for (int i = 0; i < r.lines.length; i++) {
                 ExecContextApiData.VariableState simpleTaskInfo = null;
                 List<ExecContextApiData.VariableState> tasksInContext = map.get(r.lines[i].context);
                 for (ExecContextApiData.VariableState contextTaskInfo : tasksInContext) {
-                    if (contextTaskInfo.taskId.equals(taskInfo.taskId)) {
+                    if (contextTaskInfo.taskId.equals(variableState.taskId)) {
                         simpleTaskInfo = contextTaskInfo;
                         break;
                     }
@@ -112,6 +112,7 @@ public class ExecContextUtils {
                 TaskApiData.TaskState state = raw.states.get(simpleTaskInfo.taskId);
                 String stateAsStr;
                 List<ExecContextApiData.VariableInfo> outputs = null;
+                boolean fromCache = false;
                 if (state==null) {
                     stateAsStr = "<ILLEGAL STATE>";
                 }
@@ -122,8 +123,10 @@ public class ExecContextUtils {
                     if (managerRole && (taskExecState==EnumsApi.TaskExecState.OK || taskExecState== EnumsApi.TaskExecState.ERROR)) {
                         outputs = simpleTaskInfo.outputs;
                     }
+                    fromCache = state.fromCache;
                 }
-                r.lines[i].cells[j] = new ExecContextApiData.StateCell(simpleTaskInfo.taskId, stateAsStr, simpleTaskInfo.taskContextId, outputs);
+                // TODO 2023-06-07 p5 add input variables' states here
+                r.lines[i].cells[j] = new ExecContextApiData.StateCell(simpleTaskInfo.taskId, stateAsStr, simpleTaskInfo.taskContextId, fromCache, outputs);
             }
         }
         for (ExecContextApiData.ColumnHeader ch : r.header) {

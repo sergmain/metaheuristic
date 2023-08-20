@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,10 +20,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Blob;
@@ -33,7 +32,7 @@ import java.sql.Timestamp;
 @Table(name = "MH_VARIABLE_GLOBAL")
 @Data
 @EqualsAndHashCode(of = {"id", "version"})
-@ToString(exclude={"data", "bytes"})
+@ToString(exclude={"data"})
 @NoArgsConstructor
 public class GlobalVariable implements Serializable {
     @Serial
@@ -59,9 +58,6 @@ public class GlobalVariable implements Serializable {
     @Nullable
     @Column(name = "FILENAME")
     public String filename;
-
-    @Transient
-    public byte[] bytes;
 
     @Column(name = "PARAMS")
     public String params;

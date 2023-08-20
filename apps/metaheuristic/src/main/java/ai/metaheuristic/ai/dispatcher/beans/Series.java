@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,15 +18,14 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.yaml.series.SeriesParamsYaml;
 import ai.metaheuristic.ai.yaml.series.SeriesParamsYamlUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 
-import javax.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -38,7 +37,7 @@ import java.io.Serializable;
 @Entity
 @Table(name = "MH_SERIES")
 @Data
-@ToString(exclude = {"spy"})
+@ToString
 @NoArgsConstructor
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
@@ -59,41 +58,32 @@ public class Series  implements Serializable, Cloneable {
     @Column(name = "PARAMS")
     private String params;
 
-    public void setParams(String params) {
-        synchronized (this) {
-            this.params = params;
-            this.spy =null;
-        }
-    }
-
-    @NonNull
     public String getParams() {
         return params;
     }
 
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
+
     @Transient
     @JsonIgnore
-    @Nullable
-    private SeriesParamsYaml spy = null;
+    private final ThreadUtils.CommonThreadLocker<SeriesParamsYaml> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
 
-    @NonNull
+    private SeriesParamsYaml parseParams() {
+        SeriesParamsYaml temp = SeriesParamsYamlUtils.BASE_YAML_UTILS.to(params);
+        SeriesParamsYaml ecpy = temp==null ? new SeriesParamsYaml() : temp;
+        return ecpy;
+    }
+
     @JsonIgnore
     public SeriesParamsYaml getSeriesParamsYaml() {
-        if (spy ==null) {
-            synchronized (this) {
-                if (spy ==null) {
-                    SeriesParamsYaml temp = SeriesParamsYamlUtils.BASE_YAML_UTILS.to(params);
-                    spy = temp==null ? new SeriesParamsYaml() : temp;
-                }
-            }
-        }
-        return spy;
+        return paramsLocked.get();
     }
 
     @JsonIgnore
     public void updateParams(SeriesParamsYaml epy) {
         setParams(SeriesParamsYamlUtils.BASE_YAML_UTILS.toString(epy));
     }
-
-
 }

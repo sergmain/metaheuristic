@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @Slf4j
-@ActiveProfiles("dispatcher")
+//@ActiveProfiles({"dispatcher", "mysql"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class TestTaskRequest extends FeatureMethods {
 
@@ -90,8 +90,8 @@ public class TestTaskRequest extends FeatureMethods {
     }
 
     private void step_2(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
-        //preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+//        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         // get a task for processing
         DispatcherCommParamsYaml.AssignedTask t = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
@@ -153,8 +153,8 @@ public class TestTaskRequest extends FeatureMethods {
     }
 
     private void step_3(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
-        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+//        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
         ProcessorCommParamsYaml.ProcessorRequest req0 = processorComm0.request;

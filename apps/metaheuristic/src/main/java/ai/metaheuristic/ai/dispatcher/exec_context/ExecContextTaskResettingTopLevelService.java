@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,26 +20,27 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
-import ai.metaheuristic.ai.dispatcher.event.*;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
+import ai.metaheuristic.ai.dispatcher.event.events.ResetTaskEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.ResetTaskShortEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.ResetTasksWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadedPool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
-import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Serge
@@ -49,50 +50,33 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextTaskResettingTopLevelService {
 
     private final TaskRepository taskRepository;
     private final ExecContextTaskResettingService execContextTaskResettingService;
-    private final ExecContextTaskStateCache execContextTaskStateCache;
+    private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextCache execContextCache;
 
-    private static final LinkedList<ResetTasksWithErrorEvent> QUEUE = new LinkedList<>();
-    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+    private final ThreadedPool<ResetTasksWithErrorEvent> resetTasksWithErrorEventThreadedPool =
+            new ThreadedPool<>(1, 0, false, false, this::resetTasksWithErrorForRecovery);
 
-    public static void putToQueue(final ResetTasksWithErrorEvent event) {
-        synchronized (QUEUE) {
-            if (QUEUE.contains(event)) {
-                return;
-            }
-            QUEUE.add(event);
-        }
-    }
-
-    @Nullable
-    private static ResetTasksWithErrorEvent pullFromQueue() {
-        synchronized (QUEUE) {
-            return QUEUE.pollFirst();
-        }
+    @Async
+    @EventListener
+    public void handleEvaluateProviderEvent(ResetTasksWithErrorEvent event) {
+        resetTasksWithErrorEventThreadedPool.putToQueue(event);
     }
 
     public void resetTasksWithErrorForRecovery() {
+/*
         final int activeCount = executor.getActiveCount();
         if (log.isDebugEnabled()) {
             final long completedTaskCount = executor.getCompletedTaskCount();
             final long taskCount = executor.getTaskCount();
             log.debug("resetTasksInQueue, active task in executor: {}, awaiting tasks: {}", activeCount, taskCount - completedTaskCount);
         }
-
-        if (activeCount>0) {
-            return;
-        }
-        executor.submit(() -> {
-            ResetTasksWithErrorEvent event;
-            while ((event = pullFromQueue())!=null) {
-                resetTasksWithErrorForRecovery(event.execContextId);
-            }
-        });
+*/
+        resetTasksWithErrorEventThreadedPool.processEvent();
     }
 
     @Async
@@ -104,7 +88,7 @@ public class ExecContextTaskResettingTopLevelService {
     @Async
     @EventListener
     public void resetTaskShort(ResetTaskShortEvent event) {
-        TaskImpl task = taskRepository.findById(event.taskId).orElse(null);
+        TaskImpl task = taskRepository.findByIdReadOnly(event.taskId);
         if (task==null || EnumsApi.TaskExecState.isFinishedState(task.execState)) {
             return;
         }
@@ -114,33 +98,33 @@ public class ExecContextTaskResettingTopLevelService {
         ExecContextSyncService.getWithSyncVoid(task.execContextId, () -> execContextTaskResettingService.resetTaskWithTx(task.execContextId, event.taskId));
     }
 
-    public void resetTasksWithErrorForRecovery(Long execContextId) {
+    public void resetTasksWithErrorForRecovery(ResetTasksWithErrorEvent event) {
         TxUtils.checkTxNotExists();
 
-        List<Long> taskIds = taskRepository.findTaskForErrorWithRecoveryState(execContextId);
+        List<Long> taskIds = taskRepository.findTaskForErrorWithRecoveryState(event.execContextId);
         if (taskIds.isEmpty()) {
             return;
         }
 
-        ExecContextImpl ec = execContextCache.findById(execContextId, true);
+        ExecContextImpl ec = execContextCache.findById(event.execContextId, true);
         if (ec==null) {
             return;
         }
 
-        ExecContextTaskState execContextTaskState = execContextTaskStateCache.findById(ec.execContextTaskStateId);
+        ExecContextTaskState execContextTaskState = execContextTaskStateRepository.findById(ec.execContextTaskStateId).orElse(null);
         if (execContextTaskState==null) {
-            log.error("#155.030 ExecContextTaskState wasn't found for execContext #{}", execContextId);
+            log.error("#155.030 ExecContextTaskState wasn't found for execContext #{}", event.execContextId);
             return;
         }
         ExecContextTaskStateParamsYaml ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
 
         final List<TaskData.TaskWithRecoveryStatus> statuses = new ArrayList<>(taskIds.size()+1);
         for (Long taskId : taskIds) {
-            TaskImpl task = taskRepository.findById(taskId).orElse(null);
+            TaskImpl task = taskRepository.findByIdReadOnly(taskId);
             if (task==null) {
                 continue;
             }
-            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            TaskParamsYaml tpy = task.getTaskParamsYaml();
             Integer ai = ectspy.triesWasMade.get(taskId);
             int triesWasMade = ai == null ? 0 : ai;
             int maxTries = tpy.task.triesAfterError == null ? 0 : tpy.task.triesAfterError;
@@ -148,9 +132,9 @@ public class ExecContextTaskResettingTopLevelService {
             final EnumsApi.TaskExecState targetState = maxTries > triesWasMade ? EnumsApi.TaskExecState.NONE : EnumsApi.TaskExecState.ERROR;
             statuses.add(new TaskData.TaskWithRecoveryStatus(taskId, triesWasMade+1, targetState));
         }
-        ExecContextSyncService.getWithSyncVoid(execContextId, ()->
+        ExecContextSyncService.getWithSyncVoid(event.execContextId, ()->
                 ExecContextTaskStateSyncService.getWithSyncVoid(ec.execContextTaskStateId,
-                        () -> execContextTaskResettingService.resetTasksWithErrorForRecovery(execContextId, statuses)));
+                        () -> execContextTaskResettingService.resetTasksWithErrorForRecovery(event.execContextId, statuses)));
         int i=0;
     }
 

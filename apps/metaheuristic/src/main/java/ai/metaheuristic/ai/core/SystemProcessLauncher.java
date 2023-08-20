@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,12 +20,12 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.commons.dispatcher_schedule.ExtendedTimePeriod;
 import ai.metaheuristic.commons.utils.DirUtils;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 @Slf4j
-@RequiredArgsConstructor
 public class SystemProcessLauncher {
 
     private static final String TIMEOUT_MESSAGE = """
@@ -50,7 +49,7 @@ public class SystemProcessLauncher {
     @ToString
     public static class ExecResult {
         @Nullable
-        public final File functionDir;
+        public final Path functionDir;
         @Nullable
         public final FunctionApiData.SystemExecResult systemExecResult;
         public final boolean ok;
@@ -60,7 +59,7 @@ public class SystemProcessLauncher {
             this(null, systemExecResult, ok, error);
         }
 
-        public ExecResult(@Nullable File functionDir, @Nullable FunctionApiData.SystemExecResult systemExecResult, boolean ok, String error) {
+        public ExecResult(@Nullable Path functionDir, @Nullable FunctionApiData.SystemExecResult systemExecResult, boolean ok, String error) {
             this.functionDir = functionDir;
             this.systemExecResult = systemExecResult;
             this.ok = ok;
@@ -77,7 +76,7 @@ public class SystemProcessLauncher {
         try {
             consoleLogFile = Files.createTempFile(gitTemp, "console-", ".log");
             FunctionApiData.SystemExecResult systemExecResult = execCommand(
-                    commands, new File("."), consoleLogFile, timeout, "command-exec", null,
+                    commands, Path.of("."), consoleLogFile, timeout, "command-exec", null,
                     taskConsoleOutputMaxLines);
             log.info("systemExecResult: {}" , systemExecResult);
             return new ExecResult(systemExecResult, systemExecResult.isOk, systemExecResult.console);
@@ -95,19 +94,19 @@ public class SystemProcessLauncher {
     }
 
     public static FunctionApiData.SystemExecResult execCommand(
-            List<String> cmd, File execDir, Path consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
+            List<String> cmd, Path execDir, Path consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
             @Nullable final DispatcherSchedule schedule, int taskConsoleOutputMaxLines) throws IOException, InterruptedException {
         return execCommand(cmd, execDir, consoleLogFile, timeoutBeforeTerminate, functionCode, schedule, taskConsoleOutputMaxLines, List.of());
     }
 
     @SuppressWarnings({"WeakerAccess", "BusyWait"})
     public static FunctionApiData.SystemExecResult execCommand(
-            List<String> cmd, File execDir, Path consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
+            List<String> cmd, Path execDir, Path consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
             @Nullable final DispatcherSchedule schedule, int taskConsoleOutputMaxLines, List<Supplier<Boolean>> outerInterrupters) throws IOException, InterruptedException {
         log.info("Exec info:");
         log.info("\tcmd: {}", cmd);
-        log.info("\ttaskDir: {}", execDir.getPath());
-        log.info("\ttaskDir abs: {}", execDir.getAbsolutePath());
+        log.info("\ttaskDir: {}", execDir.toAbsolutePath());
+        log.info("\ttaskDir abs: {}", execDir.toAbsolutePath());
         log.info("\tconsoleLogFile abs: {}", consoleLogFile.normalize());
         log.info("\tfunctionCode: {}", functionCode);
         log.info("\ttimeoutBeforeTerminate (seconds): {}", timeoutBeforeTerminate);
@@ -122,7 +121,7 @@ public class SystemProcessLauncher {
 
         ProcessBuilder pb = new ProcessBuilder();
         pb.command(cmd);
-        pb.directory(execDir);
+        pb.directory(execDir.toFile());
         pb.redirectErrorStream(true);
         final Process process = pb.start();
 
@@ -138,7 +137,7 @@ public class SystemProcessLauncher {
             final AtomicBoolean isDone = new AtomicBoolean(false);
             final Thread reader = new Thread(() -> {
                 try {
-                    log.info("thread #" + Thread.currentThread().getId() + ", start receiving stream from external process");
+                    log.info("thread #{}, start receiving stream from external process", Thread.currentThread().getId());
                     streamHolder.is = process.getInputStream();
                     int c;
                     isRun.set(true);
@@ -175,10 +174,10 @@ public class SystemProcessLauncher {
                 timeoutThread = new Thread(() -> {
                     try {
                         while (!isRun.get()) {
-                            log.info("thread #" + Thread.currentThread().getId() + " is waiting for reader thread, time - " + new Date());
+                            log.info("thread #{} is waiting for reader thread, time - {}", Thread.currentThread().getId(), new Date());
                             Thread.sleep(TimeUnit.MILLISECONDS.toMillis(500));
                         }
-                        log.info("thread #" + Thread.currentThread().getId() + ", time before sleep - " + new Date());
+                        log.info("thread #{}, time before sleep - {}", Thread.currentThread().getId(), new Date());
                         while (true) {
                             Thread.sleep(TimeUnit.SECONDS.toMillis(2));
                             if (interrupters.stream().anyMatch(Supplier::get)) {
@@ -190,7 +189,7 @@ public class SystemProcessLauncher {
                                 return;
                             }
                         }
-                        log.info("thread #" + Thread.currentThread().getId() + ", time before destroy - " + new Date());
+                        log.info("thread #{}, time before destroy - {}", Thread.currentThread().getId(), new Date());
 
                         final LinkedList<ProcessHandle> handles = new LinkedList<>();
                         collectHandlers(handles, process.toHandle());
@@ -201,10 +200,10 @@ public class SystemProcessLauncher {
                         destroy(handles);
                         timeoutMessage.append(String.format(TIMEOUT_MESSAGE, timeoutBeforeTerminate));
                         isTerminated.set(true);
-                        log.info("thread #" + Thread.currentThread().getId() + ", time after destroy - " + new Date());
+                        log.info("thread #{}, time after destroy - {}",  Thread.currentThread().getId(), new Date());
                     } catch (InterruptedException e) {
                         // this is a normal operation so it'll be debug level
-                        log.debug("thread #" + Thread.currentThread().getId() + ", current thread was interrupted");
+                        log.debug("thread #{}, current thread was interrupted", Thread.currentThread().getId());
                     }
                 });
                 timeoutThread.start();
@@ -244,7 +243,7 @@ public class SystemProcessLauncher {
         log.debug("'\texitCode: {}", exitCode);
         log.debug("'\tdestroyed with timeout or for other reason: {}", isTerminated.get());
         log.debug("'\tcmd: {}", cmd);
-        log.debug("'\texecDir: {}", execDir.getAbsolutePath());
+        log.debug("'\texecDir: {}", execDir.toAbsolutePath());
         String console = readLastLines(taskConsoleOutputMaxLines, consoleLogFile) + '\n' + timeoutMessage;
 
         log.debug("'\tconsole output:\n{}", console);
@@ -267,7 +266,7 @@ public class SystemProcessLauncher {
                 boolean status = h.destroyForcibly();
                 log.info("\t\tstatus of destroying: {}",status);
             } catch (Throwable th) {
-                log.warn("Can't destroy process {}", h.toString());
+                log.warn("Can't destroy process {}, error: {}", h.pid(), th.getMessage());
             }
         }
     }
@@ -275,8 +274,9 @@ public class SystemProcessLauncher {
     private static String readLastLines(int maxSize, Path consoleLogFile) throws IOException {
         LinkedList<String> lines = new LinkedList<>();
         String inputLine;
-        try (BufferedReader in = Files.newBufferedReader(consoleLogFile)) {
-            while ((inputLine = in.readLine()) != null) {
+        try (InputStream is = Files.newInputStream(consoleLogFile); InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8);
+                BufferedReader br = new BufferedReader(isr)) {
+            while ((inputLine = br.readLine()) != null) {
                 inputLine = inputLine.trim();
                 if (lines.size()==maxSize) {
                     lines.removeFirst();

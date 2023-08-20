@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationSourceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -34,7 +35,7 @@ import org.springframework.web.bind.annotation.*;
 @Profile("dispatcher")
 @RequestMapping("/rest/v1/replication")
 @PreAuthorize("hasAnyRole('ASSET_REST_ACCESS')")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ReplicationController {
 
     private final ReplicationSourceService replicationSourceService;

@@ -60,7 +60,7 @@ public class InsertImageTest {
         byte[] bytes = IOUtils.resourceToByteArray("/image/orange.png");
         String base64 = Base64.encodeBase64String(bytes);
 
-        final Para para = ImageConverterUtils.getParaForImage(base64);
+        final Para para = ImageConverterUtils.getParaForImage(base64, 1);
         sect.add(para);
 
         Path path = Files.createTempFile(SystemUtils.getJavaIoTmpDir().toPath(), "ww2003-", ".xml");

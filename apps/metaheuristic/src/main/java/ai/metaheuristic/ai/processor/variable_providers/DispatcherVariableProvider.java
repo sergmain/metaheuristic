@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.processor.variable_providers;
 
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
-import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.actors.DownloadVariableService;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
@@ -25,6 +24,7 @@ import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
 import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
@@ -37,14 +37,15 @@ import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,7 +55,7 @@ import static ai.metaheuristic.api.EnumsApi.DataType;
 @Service
 @Slf4j
 @Profile("processor")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class DispatcherVariableProvider implements VariableProvider {
 
     private final DownloadVariableService downloadVariableService;
@@ -67,7 +68,7 @@ public class DispatcherVariableProvider implements VariableProvider {
 
     @Override
     public List<AssetFile> prepareForDownloadingVariable(
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.InputVariable variable) {
 
@@ -109,7 +110,7 @@ public class DispatcherVariableProvider implements VariableProvider {
 
     private void createDownloadTasksForArray(
             ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core,
-            Long variableId, Long taskId, File taskDir, DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup,
+            Long variableId, Long taskId, Path taskDir, DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup,
             boolean nullable) throws IOException {
         DownloadVariableTask task = new DownloadVariableTask(
                 core, variableId, EnumsApi.VariableContext.local, taskId, taskDir, dispatcherLookup, nullable);
@@ -128,7 +129,7 @@ public class DispatcherVariableProvider implements VariableProvider {
         }
     }
 
-    private static List<AssetFile> prepareArrayVariable(File taskDir, TaskParamsYaml.InputVariable variable) throws IOException {
+    private static List<AssetFile> prepareArrayVariable(Path taskDir, TaskParamsYaml.InputVariable variable) throws IOException {
         AssetFile assetFile = AssetUtils.prepareFileForVariable(taskDir, variable.id.toString(), null, DataType.variable);
         List<AssetFile> assetFiles = new ArrayList<>();
         assetFiles.add(assetFile);
@@ -144,7 +145,7 @@ public class DispatcherVariableProvider implements VariableProvider {
     private static List<VariableArrayParamsYaml.Variable> getVariablesForArray(AssetFile assetFile) throws IOException {
         List<VariableArrayParamsYaml.Variable> variables = new ArrayList<>();
         if (assetFile.isContent && !assetFile.isError) {
-            String data = FileUtils.readFileToString(assetFile.file, StandardCharsets.UTF_8);
+            String data = Files.readString(assetFile.file, StandardCharsets.UTF_8);
             VariableArrayParamsYaml vapy = VariableArrayParamsYamlUtils.BASE_YAML_UTILS.to(data);
             variables.addAll(vapy.array);
         }
@@ -154,12 +155,12 @@ public class DispatcherVariableProvider implements VariableProvider {
     @Override
     @Nullable
     public FunctionApiData.SystemExecResult processOutputVariable(
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.OutputVariable outputVariable, TaskParamsYaml.FunctionConfig functionConfig) {
-        File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariable.id);
-        if (outputVariableFile.exists()) {
-            log.info("Register task for uploading result data to server, resultDataFile: {}", outputVariableFile.getPath());
+        Path outputVariableFile = taskDir.resolve(ConstsApi.ARTIFACTS_DIR).resolve(outputVariable.id.toString());
+        if (Files.exists(outputVariableFile)) {
+            log.info("Register task for uploading result data to server, resultDataFile: {}", outputVariableFile.toAbsolutePath());
             UploadVariableTask uploadVariableTask = new UploadVariableTask(task.taskId, outputVariableFile, outputVariable.id, core, dispatcher.dispatcherLookup);
             uploadVariableService.add(uploadVariableTask);
             return null;
@@ -171,18 +172,18 @@ public class DispatcherVariableProvider implements VariableProvider {
             return null;
         }
         else {
-            String es = "Result data file doesn't exist, resultDataFile: " + outputVariableFile.getPath();
+            String es = "Result data file doesn't exist, resultDataFile: " + outputVariableFile.toAbsolutePath();
             log.error(es);
             return new FunctionApiData.SystemExecResult(functionConfig.code,false, -1, es);
         }
     }
 
     @Override
-    public File getOutputVariableFromFile(
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+    public Path getOutputVariableFromFile(
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, TaskParamsYaml.OutputVariable variable) {
 
-        File resultDataFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + variable.id);
+        Path resultDataFile = taskDir.resolve(ConstsApi.ARTIFACTS_DIR).resolve(variable.id.toString());
         return resultDataFile;
     }
 }

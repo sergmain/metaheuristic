@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.dispatcher.variable_global;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.data.GlobalVariableData;
+import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
+import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -27,6 +29,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
@@ -40,12 +43,13 @@ import java.io.InputStream;
 @Slf4j
 @Profile("dispatcher")
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class GlobalVariableTopLevelService {
 
     private final Globals globals;
-    private final GlobalVariableService globalVariableService;
-    private final GlobalVariableEntityManagerTxService globalVariableEntityManagerTxService;
+    private final GlobalVariableTxService globalVariableService;
+    private final GeneralBlobTxService generalBlobTxService;
+    private final DispatcherBlobStorage dispatcherBlobStorage;
 
     public GlobalVariableData.GlobalVariablesResult getGlobalVariables(Pageable pageable) {
         pageable = PageUtils.fixPageSize(globals.dispatcher.rowsLimit.globalVariableTable, pageable);
@@ -67,9 +71,15 @@ public class GlobalVariableTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.023 global variables with size as 0, isn't supported");
         }
         try {
+            Long globalVariableId = generalBlobTxService.createEmptyGlobalVariable(variable, originFilename);
+            try (InputStream is = file.getInputStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
+                dispatcherBlobStorage.storeGlobalVariableData(globalVariableId, bis, file.getSize());
+            }
+/*
             try (InputStream is = file.getInputStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
                 globalVariableEntityManagerTxService.save(bis, file.getSize(), variable, originFilename);
             }
+*/
         } catch (Throwable e) {
             String es = "#172.040 An error while saving data to file, " + e.getMessage();
             log.error(es, e);
@@ -90,9 +100,14 @@ public class GlobalVariableTopLevelService {
 
         try {
             byte[] bytes = value.getBytes();
+            Long globalVariableId = generalBlobTxService.createEmptyGlobalVariable(variable, null);
             try (InputStream is = new ByteArrayInputStream(bytes)) {
-                globalVariableEntityManagerTxService.save(is, bytes.length, variable, null);
+                dispatcherBlobStorage.storeGlobalVariableData(globalVariableId, is, bytes.length);
             }
+
+            //            try (InputStream is = new ByteArrayInputStream(bytes)) {
+//                globalVariableEntityManagerTxService.save(is, bytes.length, variable, null);
+//            }
         } catch (Throwable e) {
             String es = "#172.055 An error while saving data to file, " + e.getMessage();
             log.error(es, e);

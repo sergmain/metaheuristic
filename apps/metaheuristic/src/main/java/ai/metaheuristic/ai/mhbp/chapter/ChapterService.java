@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.mhbp.repositories.ChapterRepository;
 import ai.metaheuristic.ai.mhbp.repositories.KbRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -37,12 +38,12 @@ import java.util.List;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ChapterService {
 
-    public final KbRepository kbRepository;
-    public final ChapterRepository chapterRepository;
+    private final KbRepository kbRepository;
+    private final ChapterRepository chapterRepository;
 
     public List<Kb> getKbsAllowedForCompany(DispatcherContext context) {
         List<Kb> result = new ArrayList<>(50);

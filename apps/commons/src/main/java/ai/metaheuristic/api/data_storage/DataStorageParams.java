@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ import ai.metaheuristic.api.sourcing.GitInfo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 /**
  * @author Serge
@@ -40,11 +40,22 @@ public class DataStorageParams {
     public String name;
 
     public EnumsApi.DataSourcing sourcing;
-    public @Nullable GitInfo git;
-    public @Nullable DiskInfo disk;
+    @Nullable
+    public GitInfo git;
+    @Nullable
+    public DiskInfo disk;
+
+    @Nullable
+    public EnumsApi.VariableType type;
 
     public DataStorageParams(EnumsApi.DataSourcing sourcing, String name) {
         this.sourcing = sourcing;
         this.name = name;
+    }
+
+    public DataStorageParams(EnumsApi.DataSourcing sourcing, String name, EnumsApi.VariableType type) {
+        this.sourcing = sourcing;
+        this.name = name;
+        this.type = type;
     }
 }

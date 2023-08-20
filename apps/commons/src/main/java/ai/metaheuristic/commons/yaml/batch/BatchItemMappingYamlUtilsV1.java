@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
+import javax.annotation.Nonnull;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -36,15 +36,15 @@ public class BatchItemMappingYamlUtilsV1
         return 1;
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(BatchItemMappingYamlV1.class);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public BatchItemMappingYaml upgradeTo(@NonNull BatchItemMappingYamlV1 src) {
+    public BatchItemMappingYaml upgradeTo(@Nonnull BatchItemMappingYamlV1 src) {
         src.checkIntegrity();
         BatchItemMappingYaml trg = new BatchItemMappingYaml();
         trg.targetDir = src.targetDir;
@@ -54,9 +54,9 @@ public class BatchItemMappingYamlUtilsV1
         return trg;
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(@Nonnull Void yaml) {
         return null;
     }
 
@@ -71,13 +71,13 @@ public class BatchItemMappingYamlUtilsV1
     }
 
     @Override
-    public String toString(@NonNull BatchItemMappingYamlV1 yaml) {
+    public String toString(@Nonnull BatchItemMappingYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public BatchItemMappingYamlV1 to(@NonNull String yaml) {
+    public BatchItemMappingYamlV1 to(@Nonnull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

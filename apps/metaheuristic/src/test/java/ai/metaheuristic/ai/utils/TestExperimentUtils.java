@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,14 +16,10 @@
 
 package ai.metaheuristic.ai.utils;
 
-import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
-import ai.metaheuristic.ai.dispatcher.function.FunctionService;
-import ai.metaheuristic.commons.CommonConsts;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 

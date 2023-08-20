@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -54,10 +55,11 @@ import static ai.metaheuristic.ai.dispatcher.processor.ProcessorUtils.isProcesso
 @Slf4j
 @Profile("dispatcher")
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
+// !!!  DO NOT RENAME to ProcessorService
 public class ProcessorTopLevelService {
 
-    private final ProcessorTransactionService processorTransactionService;
+    private final ProcessorTxService processorTransactionService;
     private final TaskRepository taskRepository;
     private final Globals globals;
     private final ProcessorRepository processorRepository;

@@ -18,7 +18,7 @@ package ai.metaheuristic.ww2003.image;
 
 import ai.metaheuristic.ww2003.document.tags.xml.*;
 import lombok.Data;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -29,8 +29,8 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.File;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -114,10 +114,10 @@ public class ImageConverterUtils {
     @Data
     public static class ConvertImageResult {
         public final String base64;
-        public final File resultImageFile;
+        public final Path resultImageFile;
     }
 
-    public static Para getParaForImage(String base64) {
+    public static Para getParaForImage(String base64, int binaryIndex) {
     /*
     <w:pict>
         <v:shape id="_x0_0_0_0" style=";visibility:visible;mso-wrap-style:square">
@@ -138,15 +138,15 @@ public class ImageConverterUtils {
         </w:pict>
     */
         BinData binData = new BinData();
-        binData.addAttribute(Attr.get("w", "name", "wordml://Image1"));
+        binData.addAttribute(Attr.get("w", "name", "wordml://Image"+binaryIndex));
         binData.text.append(base64);
 
         ai.metaheuristic.ww2003.document.tags.xml.ImageData imageData = new ai.metaheuristic.ww2003.document.tags.xml.ImageData();
-        imageData.addAttribute(Attr.get(null, "src", "wordml://Image1"));
+        imageData.addAttribute(Attr.get(null, "src", "wordml://Image"+binaryIndex));
         Shape shape = new Shape(imageData);
 
         Pict pict = new Pict(shape, binData);
-        pict.addAttribute(Attr.get(null, "id", "Image 1"));
+        pict.addAttribute(Attr.get(null, "id", "Image "+binaryIndex));
         pict.addAttribute(Attr.get(null, "style", "visibility:visible;mso-wrap-style:square"));
 
         final Para para = new Para(new Run(pict));

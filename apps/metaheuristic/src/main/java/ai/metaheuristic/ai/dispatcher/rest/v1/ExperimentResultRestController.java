@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,8 +24,10 @@ import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultTopLevelService;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.data.domain.Pageable;
@@ -38,16 +40,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
-
 @SuppressWarnings("DuplicatedCode")
 @RestController
 @RequestMapping("/rest/v1/dispatcher/experiment-result")
 @Slf4j
 @Profile("dispatcher")
 @CrossOrigin
-@RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExperimentResultRestController {
 
     private final ExperimentResultService experimentResultService;

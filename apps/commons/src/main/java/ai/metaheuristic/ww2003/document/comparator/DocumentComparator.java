@@ -27,7 +27,7 @@ import ai.metaheuristic.ww2003.document.tags.xml.*;
 import ai.metaheuristic.ww2003.document.tags.xml.table.Bottom;
 import ai.metaheuristic.ww2003.document.tags.xml.table.TCellBorders;
 import ai.metaheuristic.ww2003.document.tags.xml.table.TblPropEx;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import java.util.Comparator;
 import java.util.List;

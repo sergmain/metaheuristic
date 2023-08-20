@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,11 +15,16 @@
  */
 package ai.metaheuristic.ai.dispatcher.beans;
 
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -28,6 +33,7 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @Cacheable
+@AllArgsConstructor
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Function implements Serializable {
     @Serial
@@ -47,6 +53,35 @@ public class Function implements Serializable {
     public String type;
 
     @Column(name = "PARAMS")
-    public String params;
+    private String params;
+
+    public String getParams() {
+        return params;
+    }
+
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
+
+    @Transient
+    @JsonIgnore
+    private final ThreadUtils.CommonThreadLocker<FunctionConfigYaml> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private FunctionConfigYaml parseParams() {
+        FunctionConfigYaml temp = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(params);
+        FunctionConfigYaml ecpy = temp==null ? new FunctionConfigYaml() : temp;
+        return ecpy;
+    }
+
+    @JsonIgnore
+    public FunctionConfigYaml getFunctionConfigYaml() {
+        return paramsLocked.get();
+    }
+
+    @JsonIgnore
+    public void updateParams(FunctionConfigYaml tpy) {
+        setParams(FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(tpy));
+    }
 
 }

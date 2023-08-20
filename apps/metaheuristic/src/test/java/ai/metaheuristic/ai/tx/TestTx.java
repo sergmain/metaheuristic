@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -45,9 +46,10 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@ActiveProfiles("dispatcher")
+//@ActiveProfiles({"dispatcher", "mysql"})
 @Slf4j
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@AutoConfigureCache
 public class TestTx extends PreparingSourceCode {
 
     @Autowired private TxTestingService txTestingService;
@@ -83,7 +85,8 @@ public class TestTx extends PreparingSourceCode {
         assertNotNull(task1.version);
         assertEquals("BBB", task1.getParams());
         assertTrue((int)task1.version>task.version);
-        TaskImpl t1 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        TaskImpl t1 = taskRepository.findByIdReadOnly(task.id);
+        assertNotNull(t1);
         assertEquals(t1, task1);
 
         ////

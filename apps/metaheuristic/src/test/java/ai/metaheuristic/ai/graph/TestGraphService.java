@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2022, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,10 +22,8 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
-import ai.metaheuristic.ai.preparing.PreparingCoreInitService;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.api.EnumsApi;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -43,11 +41,10 @@ import java.util.Set;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
 public class TestGraphService {
 
     @Autowired private ExecContextGraphCache execContextGraphCache;
-    @Autowired private ExecContextTaskStateCache execContextTaskStateCache;
+    @Autowired private ExecContextTaskStateRepository execContextTaskStateRepository;
 
     public List<ExecContextData.TaskVertex> findLeafs(ExecContextImpl execContext) {
         if (execContext.execContextGraphId==null) {
@@ -75,7 +72,7 @@ public class TestGraphService {
         if (execContext.execContextTaskStateId==null) {
             return Set.of();
         }
-        ExecContextTaskState ects = execContextTaskStateCache.findById(execContext.execContextTaskStateId);
+        ExecContextTaskState ects = execContextTaskStateRepository.findById(execContext.execContextTaskStateId).orElse(null);
         if (ects==null) {
             return Set.of();
         }

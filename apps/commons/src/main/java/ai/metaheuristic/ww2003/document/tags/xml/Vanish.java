@@ -19,7 +19,7 @@ package ai.metaheuristic.ww2003.document.tags.xml;
 import ai.metaheuristic.ww2003.document.Leaf;
 import ai.metaheuristic.ww2003.document.tags.PropertyElement;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 @NoArgsConstructor
 public class Vanish extends Leaf implements XmlTag, PropertyElement {

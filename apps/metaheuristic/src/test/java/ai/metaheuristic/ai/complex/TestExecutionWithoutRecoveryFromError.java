@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.complex;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.event.events.ResetTasksWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingTopLevelService;
@@ -30,7 +31,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
@@ -50,6 +50,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -63,8 +64,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@ActiveProfiles("dispatcher")
+//@ActiveProfiles({"dispatcher", "mysql"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@AutoConfigureCache
 public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
@@ -72,7 +74,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
     @Autowired private TaskRepository taskRepository;
     @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
     @Autowired private TaskFinishingTopLevelService taskFinishingTopLevelService;
-    @Autowired private TaskFinishingService taskFinishingService;
+    @Autowired private TaskFinishingTxService taskFinishingTxService;
     @Autowired private ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     @Autowired private TaskVariableTopLevelService taskVariableTopLevelService;
     @Autowired private VariableTxService variableService;
@@ -119,7 +121,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
         //preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #1");
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
         step_AssembledRaw(processorIdAndCoreIds, true, EnumsApi.TaskExecState.NONE);
         Thread.sleep(5_000);
         step_AssembledRaw(processorIdAndCoreIds, true, EnumsApi.TaskExecState.ERROR);
@@ -162,7 +164,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
 
     private void storeOutputVariable(String variableName, String variableData, String processCode) {
 
-        SimpleVariable v = variableService.getVariableAsSimple(
+        Variable v = variableService.getVariable(
                 variableName, processCode, getExecContextForTest());
 
         assertNotNull(v);
@@ -176,7 +178,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
 
 
 
-        v = variableService.getVariableAsSimple(v.variable, processCode, getExecContextForTest());
+        v = variableService.getVariable(v.name, processCode, getExecContextForTest());
         assertNotNull(v);
         assertTrue(v.inited);
 
@@ -236,13 +238,13 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
 
         if (error) {
             TaskSyncService.getWithSyncVoid(simpleTask.taskId,
-                    () -> taskFinishingService.finishWithErrorWithTx(simpleTask.taskId, "1st cycle of error"));
+                    () -> taskFinishingTxService.finishWithErrorWithTx(simpleTask.taskId, "1st cycle of error"));
 
             TaskImpl task1 = taskRepository.findById(simpleTask.taskId).orElse(null);
             assertNotNull(task1);
             assertEquals(EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value, task1.execState);
 
-            execContextTaskResettingTopLevelService.resetTasksWithErrorForRecovery(task1.execContextId);
+            execContextTaskResettingTopLevelService.resetTasksWithErrorForRecovery(new ResetTasksWithErrorEvent(task1.execContextId));
 
             TaskImpl task2 = taskRepository.findById(simpleTask.taskId).orElse(null);
             assertNotNull(task2);

@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.api_call;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
@@ -28,6 +28,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -40,7 +41,7 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ApiCallFunction implements InternalFunction {
 
     private final ApplicationEventPublisher eventPublisher;
@@ -60,6 +61,12 @@ public class ApiCallFunction implements InternalFunction {
     public boolean isCachable() {
         return true;
     }
+
+    // we don't specify this function as compatible with scenario
+    // because this function will be included in any way in dedicated UI
+//    public boolean isScenarioCompatible() {
+//        return true;
+//    }
 
     @SneakyThrows
     @Override

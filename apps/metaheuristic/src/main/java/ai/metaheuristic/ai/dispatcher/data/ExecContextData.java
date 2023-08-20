@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,11 +21,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.Nullable;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -36,6 +32,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @Slf4j
 public class ExecContextData {
+
+    public record UserExecContext(Long accountId, Long companyId) {}
 
     @Data
     @NoArgsConstructor
@@ -55,35 +53,6 @@ public class ExecContextData {
 
     @Data
     @AllArgsConstructor
-    @NoArgsConstructor
-    public static class VariableInitialize {
-        public InputStream is;
-        public long size;
-        public String originFilename;
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class VariableInitializeList implements Closeable {
-        public final List<VariableInitialize> vars = new ArrayList<>();
-        public Long execContextId;
-        public ExecContextParamsYaml execContextParamsYaml;
-
-        @Override
-        public void close() throws IOException {
-            for (VariableInitialize var : vars) {
-                try {
-                    var.is.close();
-                }
-                catch(Throwable th) {
-                    log.error("#439.020 error while closing an input stream", th);
-                }
-            }
-        }
-    }
-
-    @Data
-    @AllArgsConstructor
     public static class SimpleExecContext {
         public final Long sourceCodeId;
         public final Long execContextId;
@@ -91,7 +60,12 @@ public class ExecContextData {
         public final Long execContextTaskStateId;
         public final Long execContextVariableStateId;
         public final Long companyId;
+        public final Long accountId;
         public final ExecContextParamsYaml paramsYaml;
+
+        public ExecContextData.UserExecContext asUserExecContext() {
+            return new ExecContextData.UserExecContext(getAccountId(), getCompanyId());
+        }
     }
 
     @Data

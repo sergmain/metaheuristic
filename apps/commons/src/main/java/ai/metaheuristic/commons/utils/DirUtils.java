@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.SystemUtils;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -34,6 +34,17 @@ import java.util.List;
 
 @Slf4j
 public class DirUtils {
+
+    public static Path getPoweredPath(Path basePath, long taskId) {
+        final String path = getPoweredPath(taskId);
+        final Path poweredPath = basePath.resolve(path);
+        return poweredPath;
+    }
+
+    public static String getPoweredPath(long taskId) {
+        DigitUtils.Power power = DigitUtils.getPower(taskId);
+        return Long.toString(power.power7) + File.separatorChar + power.power4 + File.separatorChar;
+    }
 
     @SneakyThrows
     public static void copy(InputStream is, Path to) {

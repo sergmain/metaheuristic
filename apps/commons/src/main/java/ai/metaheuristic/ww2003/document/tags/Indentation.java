@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ww2003.document.tags;
 
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 /**
  * @author Serge

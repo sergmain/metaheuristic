@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.southbridge;
 
+import ai.metaheuristic.ai.Consts;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BoundedInputStream;
@@ -43,7 +44,7 @@ public class TestLimitedInputStream {
 
     @BeforeEach
     public void before() throws IOException {
-        testFile = File.createTempFile("test-limited-input-stream", ".bin");
+        testFile = File.createTempFile("test-limited-input-stream", Consts.BIN_EXT);
     }
 
     @AfterEach

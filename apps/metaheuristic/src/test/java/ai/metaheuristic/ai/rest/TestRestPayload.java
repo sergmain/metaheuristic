@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,13 @@
 
 package ai.metaheuristic.ai.rest;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -42,8 +44,9 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @Import({SpringSecurityWebAuxTestConfig.class})
-@ActiveProfiles("dispatcher")
+//@ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@AutoConfigureCache
 public class TestRestPayload {
 
     private MockMvc mockMvc;
@@ -74,7 +77,7 @@ public class TestRestPayload {
     public void testRestPayload_asUser() throws Exception {
         final String url = "/rest/v1/payload/resource/variable/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
         //noinspection ConstantConditions
-        assertTrue(url.endsWith(".bin"));
+        assertTrue(url.endsWith(Consts.BIN_EXT));
 
         mockMvc.perform(
                 get(url + "?processorId=15&id=42&chunkSize=10000000&chunkNum=0")

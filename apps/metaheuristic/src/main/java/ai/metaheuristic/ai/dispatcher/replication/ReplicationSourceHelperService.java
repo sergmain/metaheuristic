@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.replication;
 
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.account.AccountCache;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
@@ -29,15 +28,16 @@ import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
-import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 /**
@@ -46,42 +46,48 @@ import java.util.stream.Collectors;
  * Time: 3:59 PM
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ReplicationSourceHelperService {
 
-    public final Globals globals;
-    public final CompanyRepository companyRepository;
-    public final AccountRepository accountRepository;
-    public final SourceCodeRepository sourceCodeRepository;
-    public final FunctionRepository functionRepository;
-    public final SourceCodeCache sourceCodeCache;
-    public final AccountCache accountCache;
-    public final CompanyCache companyCache;
+    private final CompanyRepository companyRepository;
+    private final AccountRepository accountRepository;
+    private final SourceCodeRepository sourceCodeRepository;
+    private final FunctionRepository functionRepository;
+    private final SourceCodeCache sourceCodeCache;
+    private final AccountCache accountCache;
+    private final CompanyCache companyCache;
 
     private ReplicationData.AssetStateResponse currentAssets = null;
     private long mills = 0L;
 
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+
     public ReplicationData.AssetStateResponse currentAssets() {
-        if (currentAssets==null) {
-            synchronized (this) {
-                if (currentAssets==null) {
-                    currentAssets = currentAssetsInternal();
-                    mills = System.currentTimeMillis();
-                    return currentAssets;
-                }
+        writeLock.lock();
+        try {
+            if (currentAssets==null) {
+                currentAssets = currentAssetsInternal();
+                mills = System.currentTimeMillis();
+                return currentAssets;
             }
+        } finally {
+            writeLock.unlock();
         }
 
         long currMills = System.currentTimeMillis();
         if (currMills-mills > 10_000) {
-            synchronized (this) {
+            writeLock.lock();
+            try {
                 if (currMills-mills > 10_000) {
                     currentAssets = currentAssetsInternal();
                     mills = System.currentTimeMillis();
                     return currentAssets;
                 }
+            } finally {
+                writeLock.unlock();
             }
         }
         return currentAssets;
@@ -95,9 +101,12 @@ public class ReplicationSourceHelperService {
                     if (company==null) {
                         return null;
                     }
-//                    CompanyParamsYaml cpy = company.getCompanyParamsYaml();
-                    CompanyParamsYaml cpy = S.b(company.params) ? new CompanyParamsYaml() : CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.params);
-                    return new ReplicationData.CompanyShortAsset(company.uniqueId, cpy.updatedOn);
+                    long updatedOn = -1;
+                    if (!S.b(company.getParams())) {
+                        CompanyParamsYaml cpy = company.getCompanyParamsYaml();
+                        updatedOn = cpy.updatedOn;
+                    }
+                    return new ReplicationData.CompanyShortAsset(company.uniqueId, updatedOn);
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList()));

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,15 +18,20 @@ package ai.metaheuristic.ai.system;
 
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -38,45 +43,29 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 public class TestDestroyProcesses {
 
+    public static final String HELLO_WORLD_CMD_EXE = "HelloWorldCmd.exe";
+
     @Test
-    public void testDestroyProcesses() throws IOException, InterruptedException {
+    public void testDestroyProcesses(@TempDir Path path) throws IOException, InterruptedException {
 
         if (!StringUtils.startsWithIgnoreCase(System.getProperty("os.name"), "Windows")) {
             log.info("this test can't be run on non-window OS");
         }
-        File f = new File("config\\exe\\HelloWorldCmd.exe");
-        if (!f.exists()) {
-            log.info("this test can't run, exe file doesn't exist.");
+        Path p = path.resolve(HELLO_WORLD_CMD_EXE);
+        try (InputStream is = TestDestroyProcesses.class.getResourceAsStream("/exe/HelloWorldCmd.exe");
+             OutputStream os = Files.newOutputStream(p)) {
+            assertNotNull(is);
+            IOUtils.copy(is, os);
         }
+        assertTrue(Files.exists(p));
+        assertTrue(Files.isRegularFile(p));
+        File f = p.toFile();
 
         ProcessBuilder pb = new ProcessBuilder();
         pb.command(List.of(f.getPath()));
         pb.directory(new File("."));
         pb.redirectErrorStream(true);
         final Process process = pb.start();
-
-        final SystemProcessLauncher.StreamHolder streamHolder = new SystemProcessLauncher.StreamHolder();
-
-        final AtomicBoolean isRun = new AtomicBoolean(false);
-/*
-        final Thread reader = new Thread(() -> {
-            try {
-                log.info("thread #" + Thread.currentThread().getId() + ", start receiving stream from external process");
-                streamHolder.is = process.getInputStream();
-                int c;
-                isRun.set(true);
-                while ((c = streamHolder.is.read()) != -1) {
-                    bos.write(c);
-                }
-            } catch (IOException e) {
-                log.error("Error collect data from output stream", e);
-            }
-        });
-        reader.start();
-*/
-
-//        int exitCode = process.waitFor();
-//        reader.join();
 
         Thread.sleep(TimeUnit.SECONDS.toMillis(5));
         LinkedList<ProcessHandle> handles = new LinkedList<>();

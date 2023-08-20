@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,9 +27,9 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorSyncService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
-import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreService;
+import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreTxService;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
@@ -37,6 +37,7 @@ import ai.metaheuristic.api.data.DispatcherApiData;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -48,7 +49,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class KeepAliveTopLevelService {
 
     private final Globals globals;
@@ -56,8 +57,8 @@ public class KeepAliveTopLevelService {
     private final FunctionTopLevelService functionTopLevelService;
     private final ProcessorCache processorCache;
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
-    private final ProcessorTransactionService processorTransactionService;
-    private final ProcessorCoreService processorCoreService;
+    private final ProcessorTxService processorTransactionService;
+    private final ProcessorCoreTxService processorCoreService;
     private final ProcessorCoreCache processorCoreCache;
     private final ExecContextStatusService execContextStatusService;
 
@@ -120,8 +121,17 @@ public class KeepAliveTopLevelService {
 
         Enums.ProcessorAndSessionStatus processorAndSessionStatus = ProcessorTopLevelService.checkProcessorAndSessionStatus(processor, processorRequest.processorCommContext.sessionId);
         if (processorAndSessionStatus != Enums.ProcessorAndSessionStatus.ok) {
-            DispatcherApiData.ProcessorSessionId processorSessionId = ProcessorSyncService.getWithSync(processor.id,
-                    ()-> processorTransactionService.checkProcessorId(processorAndSessionStatus, processor.id, remoteAddress));
+
+            DispatcherApiData.ProcessorSessionId processorSessionId = null;
+            if (processorAndSessionStatus==Enums.ProcessorAndSessionStatus.updateSession) {
+                Thread t = new Thread(()-> ProcessorSyncService.getWithSync(processor.id,
+                        () -> processorTransactionService.checkProcessorId(processorAndSessionStatus, processor.id, remoteAddress)));
+                t.start();
+            }
+            else {
+                processorSessionId = ProcessorSyncService.getWithSync(processor.id,
+                        () -> processorTransactionService.checkProcessorId(processorAndSessionStatus, processor.id, remoteAddress));
+            }
 
             if (processorSessionId != null) {
                 dispatcherResponse.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);

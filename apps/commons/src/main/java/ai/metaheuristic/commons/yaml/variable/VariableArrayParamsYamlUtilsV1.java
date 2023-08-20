@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
+import javax.annotation.Nonnull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;
@@ -39,13 +39,13 @@ public class VariableArrayParamsYamlUtilsV1
         return 1;
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(VariableArrayParamsYamlV1.class);
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public VariableArrayParamsYaml upgradeTo(VariableArrayParamsYamlV1 v1) {
         v1.checkIntegrity();
@@ -67,9 +67,9 @@ public class VariableArrayParamsYamlUtilsV1
         return v;
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(@Nonnull Void yaml) {
         return null;
     }
 
@@ -84,13 +84,13 @@ public class VariableArrayParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(@NonNull VariableArrayParamsYamlV1 params) {
+    public String toString(@Nonnull VariableArrayParamsYamlV1 params) {
         return getYaml().dump(params);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public VariableArrayParamsYamlV1 to(@NonNull String yaml) {
+    public VariableArrayParamsYamlV1 to(@Nonnull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

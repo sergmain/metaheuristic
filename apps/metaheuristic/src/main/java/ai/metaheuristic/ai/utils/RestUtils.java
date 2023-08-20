@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.utils;
 
-import org.apache.http.client.fluent.Request;
+import org.apache.hc.client5.http.fluent.Request;
 import org.springframework.http.HttpHeaders;
 import org.springframework.lang.Nullable;
 

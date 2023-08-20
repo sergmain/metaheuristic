@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,17 +20,19 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
+import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.commons.CommonConsts;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.http.conn.ConnectTimeoutException;
+import org.apache.hc.client5.http.ConnectTimeoutException;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -43,10 +45,12 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
+import static org.springframework.http.HttpStatus.*;
 
 /**
  * User: Serg
@@ -62,17 +66,17 @@ public class DispatcherRequestor {
 
     private final ProcessorTaskService processorTaskService;
     private final ProcessorService processorService;
-    private final MetadataService metadataService;
+    private final MetadataParams metadataService;
     private final CurrentExecState currentExecState;
     private final ProcessorCommandProcessor processorCommandProcessor;
 
     private static final HttpComponentsClientHttpRequestFactory REQUEST_FACTORY = DispatcherUtils.getHttpRequestFactory();
 
     private final RestTemplate restTemplate;
-    private final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher;
+    private final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher;
     private final String serverRestUrl;
 
-    public DispatcherRequestor(DispatcherUrl dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService, ProcessorService processorService, MetadataService metadataService, CurrentExecState currentExecState, DispatcherLookupExtendedService dispatcherLookupExtendedService, ProcessorCommandProcessor processorCommandProcessor) {
+    public DispatcherRequestor(DispatcherUrl dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService, ProcessorService processorService, MetadataParams metadataService, CurrentExecState currentExecState, DispatcherLookupExtendedParams dispatcherLookupExtendedService, ProcessorCommandProcessor processorCommandProcessor) {
         this.dispatcherUrl = dispatcherUrl;
         this.globals = globals;
         this.processorTaskService = processorTaskService;
@@ -95,19 +99,15 @@ public class DispatcherRequestor {
     private long lastRequestForMissingResources = 0;
     private long lastCheckForResendTaskOutputResource = 0;
 
-    private static class DispatcherRequestorSync {}
-    private static final DispatcherRequestorSync syncObj = new DispatcherRequestorSync();
-
-    @SuppressWarnings("unused")
-    private static <T> T getWithSync(Supplier<T> function) {
-        synchronized (syncObj) {
-            return function.get();
-        }
-    }
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
     private static void withSync(Supplier<Void> function) {
-        synchronized (syncObj) {
+        writeLock.lock();
+        try {
             function.get();
+        } finally {
+            writeLock.unlock();
         }
     }
 
@@ -235,14 +235,12 @@ public class DispatcherRequestor {
                 processDispatcherCommParamsYaml(pcpy, dispatcherUrl, dispatcherYaml);
 
             } catch (HttpClientErrorException e) {
-                switch(e.getStatusCode()) {
-                    case UNAUTHORIZED:
-                    case FORBIDDEN:
-                    case NOT_FOUND:
-                        log.error("#775.070 Error {} accessing url {}", e.getStatusCode().value(), serverRestUrl);
-                        break;
-                    default:
-                        throw e;
+                int value = e.getStatusCode().value();
+                if (value==UNAUTHORIZED.value() || value==FORBIDDEN.value() || value==NOT_FOUND.value()) {
+                    log.error("#775.070 Error {} accessing url {}", e.getStatusCode().value(), serverRestUrl);
+                }
+                else {
+                    throw e;
                 }
             } catch (ResourceAccessException e) {
                 Throwable cause = e.getCause();
@@ -268,8 +266,8 @@ public class DispatcherRequestor {
                     log.error("#775.100 Error, url: " + url, e);
                 }
             } catch (RestClientException e) {
-                if (e instanceof HttpStatusCodeException && ((HttpStatusCodeException)e).getRawStatusCode()>=500 && ((HttpStatusCodeException)e).getRawStatusCode()<600 ) {
-                    int errorCode = ((HttpStatusCodeException)e).getRawStatusCode();
+                if (e instanceof HttpStatusCodeException httpStatusCodeException && httpStatusCodeException.getStatusCode().value()>=500 && httpStatusCodeException.getStatusCode().value()<600 ) {
+                    int errorCode = httpStatusCodeException.getStatusCode().value();
                     if (errorCode==503) {
                         log.warn("#775.110 Error accessing url: {}, error: 503 Service Unavailable", url);
                     }
@@ -286,7 +284,7 @@ public class DispatcherRequestor {
                 }
             }
         } catch (Throwable e) {
-            log.error("#775.130 Error in fixedDelay(), url: "+serverRestUrl+", error: {}", e);
+            log.error("#775.130 Error in fixedDelay(), url: {}, error: {}", serverRestUrl, e.getMessage());
         }
     }
 

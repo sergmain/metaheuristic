@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,6 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
@@ -50,7 +49,8 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
     void deleteById(Long id);
 
     @Nullable
-    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
+//    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
+    @Transactional(readOnly = true)
     @Query(value="select b.data from GlobalVariable b where b.id=:id")
     Blob getDataAsStreamById(Long id);
 
@@ -62,18 +62,13 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
             "where b.name=:name")
     SimpleGlobalVariable findIdByName(String name);
 
-    @Transactional(readOnly = true)
-    @Query(value="select b.filename from GlobalVariable b where b.name=:var")
-    List<String> findFilenamesByVar(String var);
-
 //    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select b from GlobalVariable b where b.id=:id")
     GlobalVariable findByIdForUpdate(Long id);
 
 //    @Transactional(readOnly = true)
-    @NonNull
-    Page<GlobalVariable> findAll(@NonNull Pageable pageable);
+    Page<GlobalVariable> findAll(Pageable pageable);
 
     void deleteByName(String variable);
 
@@ -92,7 +87,4 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
             "where b.id=:id")
     SimpleGlobalVariable getByIdAsSimpleGlobalVariable(Long id);
 
-//    @Transactional(readOnly = true)
-    @Query(value="select b.id from GlobalVariable b")
-    List<Long> getAllIds();
 }

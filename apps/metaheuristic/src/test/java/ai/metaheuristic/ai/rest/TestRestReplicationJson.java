@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -52,8 +53,9 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @Import({SpringSecurityWebAuxTestConfig.class})
-@ActiveProfiles("dispatcher")
+//@ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@AutoConfigureCache
 public class TestRestReplicationJson {
 
     @Autowired
@@ -98,7 +100,7 @@ public class TestRestReplicationJson {
         assets = JsonUtils.getMapper().readValue(content, ReplicationData.AssetStateResponse.class);
 
 
-        result = mockMvc.perform(get("/test/asset-with-error")
+        result = mockMvc.perform(get("/rest/v1/dispatcher/test/asset-with-error")
                 .contentType(Consts.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk()).andReturn();
 
@@ -110,7 +112,7 @@ public class TestRestReplicationJson {
         assertEquals(1, assets.errorMessages.size());
         assertEquals("asset-error", assets.errorMessages.get(0));
 
-        result = mockMvc.perform(get("/test/asset-with-info")
+        result = mockMvc.perform(get("/rest/v1/dispatcher/test/asset-with-info")
                 .contentType(Consts.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk()).andReturn();
 
@@ -122,7 +124,7 @@ public class TestRestReplicationJson {
         assertEquals(1, assets.infoMessages.size());
         assertEquals("asset-info", assets.infoMessages.get(0));
 
-        result = mockMvc.perform(get("/test/asset-with-info-and-error")
+        result = mockMvc.perform(get("/rest/v1/dispatcher/test/asset-with-info-and-error")
                 .contentType(Consts.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk()).andReturn();
 
@@ -136,7 +138,7 @@ public class TestRestReplicationJson {
         assertEquals("asset-info", assets.infoMessages.get(0));
         assertEquals("asset-error", assets.errorMessages.get(0));
 
-        result = mockMvc.perform(get("/test/asset-ok-info")
+        result = mockMvc.perform(get("/rest/v1/dispatcher/test/asset-ok-info")
                 .contentType(Consts.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk()).andReturn();
 

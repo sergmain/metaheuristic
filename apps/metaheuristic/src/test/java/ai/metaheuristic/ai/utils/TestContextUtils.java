@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,22 +34,39 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 public class TestContextUtils {
 
     @Test
-    public void testCreateContext() {
+    public void test_() {
+        String all = """
+            1
+            1,2#0
+            1,2#1
+            1,2,3,0#1
+            1,2,3,0#2
+            1,2,3,1#1
+            1,2,3,1#2
+            1,2,3,4,1#1
+            1,2,3,4,1#2
+            1,2,3,4,2#1
+            1,2,3,4,2#2
+            """;
+        List<String> ctxs = all.lines().sorted(ContextUtils::compareTaskContextIds).toList();
+
+        ctxs.forEach(System.out::println);
 
     }
 
+
     @Test
     public void testGetWithoutSubContext() {
-        assertEquals("123", ContextUtils.getWithoutSubContext("123"));
-        assertEquals("123", ContextUtils.getWithoutSubContext("123"+CONTEXT_SEPARATOR+"1"));
+        assertEquals("123", ContextUtils.getLevel("123"));
+        assertEquals("123", ContextUtils.getLevel("123" + CONTEXT_SEPARATOR + "1"));
     }
 
     @Test
     public void testGetSubContext() {
-        assertNull(ContextUtils.getSubContext(""));
-        assertNull(ContextUtils.getSubContext("123"));
-        assertEquals("1", ContextUtils.getSubContext("123"+CONTEXT_SEPARATOR+"1"));
-        assertEquals("2", ContextUtils.getSubContext("123"+CONTEXT_SEPARATOR+"2"));
+        assertNull(ContextUtils.getPath(""));
+        assertNull(ContextUtils.getPath("123"));
+        assertEquals("1", ContextUtils.getPath("123" + CONTEXT_SEPARATOR + "1"));
+        assertEquals("2", ContextUtils.getPath("123" + CONTEXT_SEPARATOR + "2"));
     }
 
     @Test

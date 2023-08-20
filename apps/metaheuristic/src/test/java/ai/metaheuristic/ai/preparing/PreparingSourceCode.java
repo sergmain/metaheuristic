@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,13 +19,15 @@ package ai.metaheuristic.ai.preparing;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.exec_context.*;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
@@ -54,7 +56,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
     @Autowired private PreparingSourceCodeInitService preparingSourceCodeInitService;
     @Autowired private Globals globals;
-    @Autowired private ExecContextTaskStateCache execContextTaskStateCache;
+    @Autowired private ExecContextTaskStateRepository execContextTaskStateRepository;
     @Autowired private ExecContextGraphTopLevelService execContextGraphTopLevelService;
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
     @Autowired private ExecContextCache execContextCache;
@@ -63,7 +65,6 @@ public abstract class PreparingSourceCode extends PreparingCore {
     @Autowired private ExecContextStatusService execContextStatusService;
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
     @Autowired private TxSupportForTestingService txSupportForTestingService;
-    @Autowired private SourceCodeValidationService sourceCodeValidationService;
 
     public SourceCodeImpl getSourceCode() {
         return preparingSourceCodeData.sourceCode;
@@ -105,6 +106,10 @@ public abstract class PreparingSourceCode extends PreparingCore {
         return preparingSourceCodeData.company;
     }
 
+    public Account getAccount() {
+        return preparingSourceCodeData.account;
+    }
+
     public GlobalVariable getTestGlobalVariable() {
         return preparingSourceCodeData.testGlobalVariable;
     }
@@ -139,23 +144,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
     }
 
     public void step_0_0_produce_tasks_and_start() {
-        System.out.println("start produceTasksForTest()");
-        preparingSourceCodeService.produceTasksForTest(getSourceCodeYamlAsString(), preparingSourceCodeData);
-
-        List<Object[]> tasks = taskRepositoryForTest.findByExecContextId(getExecContextForTest().getId());
-
-        assertNotNull(getExecContextForTest());
-        assertNotNull(tasks);
-        assertFalse(tasks.isEmpty());
-
-        System.out.println("start verifyGraphIntegrity()");
-        verifyGraphIntegrity();
-
-        System.out.println("start taskProviderService.findTask()");
-        DispatcherCommParamsYaml.AssignedTask simpleTask0 =
-                taskProviderTopLevelService.findTask(getCore1().getId(), false);
-
-        assertNull(simpleTask0);
+        step_0_0_produceTasks();
 
         ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
 
@@ -176,6 +165,26 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
         assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(getExecContextForTest().getState()));
+    }
+
+    public void step_0_0_produceTasks() {
+        System.out.println("start produceTasksForTest()");
+        preparingSourceCodeService.produceTasksForTest(getSourceCodeYamlAsString(), preparingSourceCodeData);
+
+        List<Object[]> tasks = taskRepositoryForTest.findByExecContextId(getExecContextForTest().getId());
+
+        assertNotNull(getExecContextForTest());
+        assertNotNull(tasks);
+        assertFalse(tasks.isEmpty());
+
+        System.out.println("start verifyGraphIntegrity()");
+        verifyGraphIntegrity();
+
+        System.out.println("start taskProviderService.findTask()");
+        DispatcherCommParamsYaml.AssignedTask simpleTask0 =
+                taskProviderTopLevelService.findTask(getCore1().getId(), false);
+
+        assertNull(simpleTask0);
     }
 
     public void finalAssertions(int expectedNumberOfTasks) {
@@ -225,7 +234,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         if (execContext.execContextTaskStateId==null) {
             return List.of();
         }
-        ExecContextTaskState ects = execContextTaskStateCache.findById(execContext.execContextTaskStateId);
+        ExecContextTaskState ects = execContextTaskStateRepository.findById(execContext.execContextTaskStateId).orElse(null);
         if (ects==null) {
             return List.of();
         }

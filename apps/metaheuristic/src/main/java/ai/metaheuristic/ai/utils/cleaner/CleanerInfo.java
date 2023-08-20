@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.http.ResponseEntity;
 
-import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;

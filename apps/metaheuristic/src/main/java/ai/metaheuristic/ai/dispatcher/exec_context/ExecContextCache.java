@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,12 +21,11 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Serge
@@ -37,7 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextCache {
 
     private final ExecContextRepository execContextRepository;
@@ -88,20 +87,9 @@ public class ExecContextCache {
     @Nullable
     public ExecContextImpl findById(Long id, boolean detached) {
         if (detached) {
-            return findByIdDetached(id);
+            final ExecContextImpl execContext = execContextRepository.findByIdNullable(id);
+            return execContext;
         }
-        return execContextRepository.findById(id).orElse(null);
-    }
-
-    @Nullable
-    public ExecContextImpl findByIdDetached(Long id) {
-        final ExecContextImpl execContext = execContextRepository.findByIdReadOnly(id).orElse(null);
-        return execContext;
-    }
-
-    @Nullable
-    @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
-    public ExecContextImpl findByIdWithNewTx(Long id) {
         return execContextRepository.findById(id).orElse(null);
     }
 }

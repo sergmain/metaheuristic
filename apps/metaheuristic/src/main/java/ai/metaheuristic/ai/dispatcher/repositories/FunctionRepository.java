@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,18 +20,25 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Repository
-@Transactional
 @Profile("dispatcher")
 public interface FunctionRepository extends CrudRepository<Function, Long> {
+
+    @Query(value="select b from Function b")
+    Stream<Function> findAllAsStream();
+
+    @Nullable
+    @Transactional(readOnly = true)
+    @Query(value="select b from Function b where b.id=:id")
+    Function findByIdNullable(Long id);
 
     @Override
     @Modifying
@@ -53,7 +60,6 @@ public interface FunctionRepository extends CrudRepository<Function, Long> {
     Long findIdByType(String funcType);
 
     @Transactional(readOnly = true)
-    @NonNull
     List<Function> findAll();
 
     @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)

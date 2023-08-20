@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +17,12 @@
 package ai.metaheuristic.ai.dispatcher.batch;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -36,10 +37,10 @@ import java.util.List;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class BatchHelperService {
 
-    private final VariableTxService variableService;
+    private final VariableService variableTopLevelService;
 
     public String findUploadedFilenameForBatchId(Long execContextId, ExecContextParamsYaml ecpy, @Nullable String defaultName) {
         String defName = S.b(defaultName) ? Consts.RESULT_ZIP : defaultName;
@@ -53,7 +54,7 @@ public class BatchHelperService {
         if (S.b(startInputVariableName)) {
             return defName;
         }
-        List<String> filenames = variableService.getFilenameByVariableAndExecContextId(execContextId, startInputVariableName);
+        List<String> filenames = variableTopLevelService.getFilenameByVariableAndExecContextId(execContextId, startInputVariableName);
         if (filenames.isEmpty()) {
             return defName;
         }

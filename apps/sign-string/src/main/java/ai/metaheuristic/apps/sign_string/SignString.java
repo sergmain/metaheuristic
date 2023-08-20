@@ -16,14 +16,14 @@
 package ai.metaheuristic.apps.sign_string;
 
 import ai.metaheuristic.commons.utils.SecUtils;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
 import java.util.List;
@@ -44,30 +44,30 @@ public class SignString implements CommandLineRunner {
             return;
         }
 
-        File srcFile = new File(args[0]);
-        if (!srcFile.exists()) {
-            System.out.println(String.format("Source file %s doesn't exist", srcFile.getPath()));
+        Path srcFile = Path.of(args[0]);
+        if (Files.notExists(srcFile)) {
+            System.out.println(String.format("Source file %s doesn't exist ", srcFile.getFileSystem()));
             return;
         }
 
-        File privateKeyFile = new File(args[1]);
-        if (!privateKeyFile.exists()) {
+        Path privateKeyFile = Path.of(args[1]);
+        if (Files.notExists(privateKeyFile)) {
             System.out.println("Private key file wasn't found. File: " + args[1]);
             return;
         }
-        String privateKeyStr = FileUtils.readFileToString(privateKeyFile, StandardCharsets.UTF_8);
+        String privateKeyStr = Files.readString(privateKeyFile, StandardCharsets.UTF_8);
         PrivateKey privateKey = SecUtils.getPrivateKey(privateKeyStr);
 
 
         // Process
-        List<String> strings = FileUtils.readLines(srcFile, StandardCharsets.UTF_8);
+        List<String> strings = Files.readAllLines(srcFile, StandardCharsets.UTF_8);
         if (strings.isEmpty()) {
-            System.out.println(String.format("File %s is empty", srcFile.getPath()));
+            System.out.println(String.format("File %s is empty", srcFile));
             return;
         }
         String strForSigning = StringUtils.trim(strings.get(0));
         if (StringUtils.isBlank(strForSigning)) {
-            System.out.println(String.format("First string in file %s is empty", srcFile.getPath()));
+            System.out.println(String.format("First string in file %s is empty", srcFile));
             return;
         }
         String signature = SecUtils.getSignature(strForSigning, privateKey, true);

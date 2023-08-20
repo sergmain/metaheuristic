@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.lang.NonNull;
+import javax.annotation.Nonnull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
@@ -45,15 +45,15 @@ public class FunctionConfigListYamlUtilsV2
         return 2;
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(FunctionConfigListYamlV2.class);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public BundleParamsYamlV3 upgradeTo(@NonNull FunctionConfigListYamlV2 src) {
+    public BundleParamsYamlV3 upgradeTo(@Nonnull FunctionConfigListYamlV2 src) {
         src.checkIntegrity();
         BundleParamsYamlV3 trg = new BundleParamsYamlV3();
         trg.functions = src.functions.stream().map(fnCfgSrc-> {
@@ -81,9 +81,9 @@ public class FunctionConfigListYamlUtilsV2
         return trg;
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(@Nonnull Void yaml) {
         return null;
     }
 
@@ -98,13 +98,13 @@ public class FunctionConfigListYamlUtilsV2
     }
 
     @Override
-    public String toString(@NonNull FunctionConfigListYamlV2 yaml) {
+    public String toString(@Nonnull FunctionConfigListYamlV2 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public FunctionConfigListYamlV2 to(@NonNull String yaml) {
+    public FunctionConfigListYamlV2 to(@Nonnull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.lang.NonNull;
+import javax.annotation.Nonnull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
@@ -40,15 +40,15 @@ public class FunctionConfigYamlUtilsV1
         return 1;
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(FunctionConfigYamlV1.class);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public FunctionConfigYaml upgradeTo(@NonNull FunctionConfigYamlV1 src) {
+    public FunctionConfigYaml upgradeTo(@Nonnull FunctionConfigYamlV1 src) {
         src.checkIntegrity();
         FunctionConfigYaml trg = new FunctionConfigYaml();
         BeanUtils.copyProperties(src, trg, "checksumMap", "metas");
@@ -65,9 +65,9 @@ public class FunctionConfigYamlUtilsV1
         return trg;
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(@Nonnull Void yaml) {
         return null;
     }
 
@@ -82,13 +82,13 @@ public class FunctionConfigYamlUtilsV1
     }
 
     @Override
-    public String toString(@NonNull FunctionConfigYamlV1 yaml) {
+    public String toString(@Nonnull FunctionConfigYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public FunctionConfigYamlV1 to(@NonNull String yaml) {
+    public FunctionConfigYamlV1 to(@Nonnull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

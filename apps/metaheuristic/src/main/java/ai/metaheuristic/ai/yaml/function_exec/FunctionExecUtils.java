@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Path;
 
 @Slf4j
 public class FunctionExecUtils {
@@ -44,7 +44,7 @@ public class FunctionExecUtils {
         return (FunctionApiData.FunctionExec) YamlUtils.to(is, getYaml());
     }
 
-    public static FunctionApiData.FunctionExec to(File file) {
+    public static FunctionApiData.FunctionExec to(Path file) {
         return (FunctionApiData.FunctionExec) YamlUtils.to(file, getYaml());
     }
 }

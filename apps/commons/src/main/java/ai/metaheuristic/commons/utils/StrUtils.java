@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,9 +18,9 @@ package ai.metaheuristic.commons.utils;
 import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Random;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -76,8 +76,8 @@ public class StrUtils {
         return idx!=-1 ? filename.substring(idx) : "";
     }
 
-    public static String getName(File file) {
-        return getName(file.getName());
+    public static String getName(Path file) {
+        return getName(file.getFileName().toString());
     }
 
     public static String getName(String filename) {

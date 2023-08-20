@@ -1,5 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+  ~ Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License as published by
@@ -13,10 +14,37 @@
   ~ You should have received a copy of the GNU General Public License
   ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   -->
+<!--        https://www.ehcache.org/documentation/3.0/xsds.html#core-->
+<!--<eh:config
+        xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+        xmlns:eh='http://www.ehcache.org/v3'
+        xmlns:jsr107='http://www.ehcache.org/v3/jsr107'
+        xsi:schemaLocation="
+        http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core-3.0.xsd
+        http://www.ehcache.org/v3/jsr107 http://www.ehcache.org/schema/ehcache-107-ext-3.0.xsd">
+</eh:config>-->
+
 <config
         xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
         xmlns='http://www.ehcache.org/v3'
-        xsi:noNamespaceSchemaLocation="classpath:/ehcache-core-3.8.xsd">
+        xmlns:jsr107='http://www.ehcache.org/v3/jsr107'
+        xsi:noNamespaceSchemaLocation="classpath:/ehcache-core-3.10.xsd"
+        xsi:schemaLocation="
+        http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core-3.10.xsd
+        http://www.ehcache.org/v3/jsr107 http://www.ehcache.org/schema/ehcache-107-ext-3.10.xsd"
+>
+
+
+
+    <service>
+        <jsr107:defaults enable-statistics="false"/>
+    </service>
+    <!--
+        <service>
+            <jsr107:defaults default-template="default-template" enable-statistics="false">
+            </jsr107:defaults>
+        </service>
+    -->
 
     <cache-template name="default-template">
         <expiry>
@@ -32,7 +60,7 @@
         <heap>1000</heap>
     </cache-template>
 
-    <cache-template name="template-10-30-day">
+    <cache-template name="template-100-1-day">
         <expiry>
             <ttl unit="days">1</ttl>
         </expiry>
@@ -69,7 +97,7 @@
     <cache alias="ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState" uses-template="template-1000-1-day">
     </cache>
 
-    <cache alias="ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState" uses-template="template-1000-1-day">
+    <cache alias="ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState" uses-template="template-100-1-day">
     </cache>
 
     <cache alias="ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl" uses-template="template-1000-1-day">
@@ -87,10 +115,10 @@
     <cache alias="ai.metaheuristic.ai.dispatcher.beans.Processor" uses-template="template-1000-1-day">
     </cache>
 
-    <cache alias="ai.metaheuristic.ai.dispatcher.beans.Dispatcher" uses-template="template-10-30-day">
+    <cache alias="ai.metaheuristic.ai.dispatcher.beans.Dispatcher" uses-template="template-100-1-day">
     </cache>
 
-    <cache alias="ai.metaheuristic.ai.dispatcher.beans.Experiment" uses-template="template-10-30-day">
+    <cache alias="ai.metaheuristic.ai.dispatcher.beans.Experiment" uses-template="template-100-1-day">
     </cache>
 
     <cache alias="ai.metaheuristic.ai.dispatcher.beans.DispatcherEvent" uses-template="template-1000-5-minute">
@@ -103,6 +131,9 @@
     </cache>
 
     <cache alias="ai.metaheuristic.ai.dispatcher.beans.ExperimentTask" uses-template="template-100-10-minute">
+    </cache>
+
+    <cache alias="ai.metaheuristic.ai.dispatcher.beans.Variable" uses-template="template-1000-1-day">
     </cache>
 
     <cache alias="ai.metaheuristic.ai.dispatcher.beans.Batch" uses-template="default-template">

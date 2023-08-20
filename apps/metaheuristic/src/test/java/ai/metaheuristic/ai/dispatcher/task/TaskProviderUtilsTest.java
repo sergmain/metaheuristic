@@ -16,8 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -25,8 +23,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
 

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
@@ -38,6 +38,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -61,7 +62,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class BatchLineSplitterTxService {
 
     private final VariableTxService variableService;
@@ -121,7 +122,7 @@ public class BatchLineSplitterTxService {
         final List<Long> lastIds = new ArrayList<>();
         AtomicInteger currTaskNumber = new AtomicInteger(0);
         String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
-                taskId, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
+                taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
         allLines.forEach( lines -> {
             if (lines.isEmpty()) {
@@ -129,7 +130,7 @@ public class BatchLineSplitterTxService {
                 return;
             }
             currTaskNumber.incrementAndGet();
-            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
+            String currTaskContextId = ContextUtils.buildTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
             String str = StringUtils.join(lines, '\n' );
             VariableData.VariableDataSource variableDataSource = new VariableData.VariableDataSource(str);
 

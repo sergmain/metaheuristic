@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,11 +22,13 @@ import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -47,7 +49,8 @@ public class ArtifactUtils {
      * @param versions
      * @return boolean - true if Ok
      */
-    public static boolean prepareParamsFileForTask(File artifactDir, String taskDir, TaskParamsYaml taskParamYaml, Set<Integer> versions) {
+    @SneakyThrows
+    public static boolean prepareParamsFileForTask(Path artifactDir, String taskDir, TaskParamsYaml taskParamYaml, Set<Integer> versions) {
         TaskFileParamsYaml taskFileParamYaml = toTaskFileParamsYaml(taskParamYaml);
         taskFileParamYaml.task.workingPath = taskDir;
         for (Integer version : versions) {
@@ -55,16 +58,15 @@ public class ArtifactUtils {
             final String params = TaskFileParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(taskFileParamYaml, version);
 
             // persist params.yaml file
-            File paramFile = new File(artifactDir, String.format(Consts.PARAMS_YAML_MASK, version));
-            if (paramFile.exists()) {
-                //noinspection ResultOfMethodCallIgnored
-                paramFile.delete();
+            Path paramFile = artifactDir.resolve(String.format(Consts.PARAMS_YAML_MASK, version));
+            if (Files.exists(paramFile)) {
+                Files.deleteIfExists(paramFile);
             }
 
             try {
                 FileSystemUtils.writeStringToFileWithSync(paramFile, params, StandardCharsets.UTF_8);
             } catch (IOException e) {
-                log.error("#103.020 Error with writing to " + paramFile.getAbsolutePath() + " file", e);
+                log.error("#103.020 Error with writing to " + paramFile.toAbsolutePath() + " file", e);
                 return false;
             }
         }

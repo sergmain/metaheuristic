@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.mhbp.yaml.auth;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
@@ -30,15 +29,13 @@ public class ApiAuthUtilsV1 extends
         return 1;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(ApiAuthV1.class);
     }
 
-    @NonNull
     @Override
-    public ApiAuth upgradeTo(@NonNull ApiAuthV1 v1) {
+    public ApiAuth upgradeTo(ApiAuthV1 v1) {
         v1.checkIntegrity();
 
         ApiAuth t = new ApiAuth();
@@ -69,9 +66,8 @@ public class ApiAuthUtilsV1 extends
         return ta;
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
@@ -86,15 +82,14 @@ public class ApiAuthUtilsV1 extends
     }
 
     @Override
-    public String toString(@NonNull ApiAuthV1 yaml) {
+    public String toString(ApiAuthV1 yaml) {
         yaml.checkIntegrity();
 
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public ApiAuthV1 to(@NonNull String s) {
+    public ApiAuthV1 to(String s) {
         final ApiAuthV1 p = getYaml().load(s);
         return p;
     }

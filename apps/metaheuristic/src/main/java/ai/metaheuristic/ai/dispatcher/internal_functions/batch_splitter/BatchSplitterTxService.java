@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
@@ -36,6 +36,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -63,7 +64,7 @@ import java.util.stream.Stream;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class BatchSplitterTxService {
 
     private final ExecContextGraphService execContextGraphService;
@@ -97,21 +98,20 @@ public class BatchSplitterTxService {
         final List<Long> lastIds = new ArrayList<>();
         AtomicInteger currTaskNumber = new AtomicInteger(0);
         String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
-                taskId, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
+                taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
         try {
             // do not remove try(Stream<Path>){}
             try (final Stream<Path> list = Files.list(srcDir)) {
                 list
                         .forEach(dataFilePath -> {
-                            File file = dataFilePath.toFile();
                             currTaskNumber.incrementAndGet();
                             try {
-                                VariableData.VariableDataSource variableDataSource = getVariableDataSource(mapping, dataFilePath, file);
+                                VariableData.VariableDataSource variableDataSource = getVariableDataSource(mapping, dataFilePath, dataFilePath);
                                 if (variableDataSource == null) {
                                     return;
                                 }
-                                String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
+                                String currTaskContextId = ContextUtils.buildTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
                                 variableService.createInputVariablesForSubProcess(
                                         variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, true);
 
@@ -139,28 +139,28 @@ public class BatchSplitterTxService {
     }
 
     @Nullable
-    private static VariableData.VariableDataSource getVariableDataSource(Map<String, String> mapping, Path dataFilePath, File file) throws IOException {
+    private static VariableData.VariableDataSource getVariableDataSource(Map<String, String> mapping, Path dataFilePath, Path file) throws IOException {
         VariableData.VariableDataSource variableDataSource;
-        if (file.isDirectory()) {
+        if (Files.isDirectory(file)) {
             final List<BatchTopLevelService.FileWithMapping> files;
             // do not remove try(Stream<Path>){}
             try (final Stream<Path> stream = Files.list(dataFilePath)) {
                 files = stream
                         .filter(o -> o.toFile().isFile())
                         .map(f -> {
-                            final String currFileName = file.getName() + File.separatorChar + f.toFile().getName();
+                            final String currFileName = file.getFileName().toString() + File.separatorChar + f.getFileName().toString();
                             final String actualFileName = mapping.get(currFileName);
-                            return new BatchTopLevelService.FileWithMapping(f.toFile(), actualFileName);
+                            return new BatchTopLevelService.FileWithMapping(f, actualFileName);
                         }).collect(Collectors.toList());
             }
             if (files.isEmpty()) {
-                log.error("#995.290 there isn't any files in dir {}", file.getAbsolutePath());
+                log.error("#995.290 there isn't any files in dir {}", file.toAbsolutePath());
                 return null;
             }
             variableDataSource = new VariableData.VariableDataSource(files);
         } else {
             variableDataSource = new VariableData.VariableDataSource(
-                    List.of(new BatchTopLevelService.FileWithMapping(file, mapping.get(file.getName()))));
+                    List.of(new BatchTopLevelService.FileWithMapping(file, mapping.get(file.getFileName().toString()))));
         }
         return variableDataSource;
     }

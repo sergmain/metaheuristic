@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.yaml.batch;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -34,15 +33,13 @@ public class BatchParamsYamlUtilsV1
         return 1;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(BatchParamsYamlV1.class);
     }
 
-    @NonNull
     @Override
-    public BatchParamsYaml upgradeTo(@NonNull BatchParamsYamlV1 v2) {
+    public BatchParamsYaml upgradeTo(BatchParamsYamlV1 v2) {
         v2.checkIntegrity();
         BatchParamsYaml t = new BatchParamsYaml();
         if( v2.batchStatus!=null ) {
@@ -56,9 +53,8 @@ public class BatchParamsYamlUtilsV1
         return t;
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         // not supported
         return null;
     }
@@ -75,13 +71,12 @@ public class BatchParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(@NonNull BatchParamsYamlV1 yaml) {
+    public String toString(BatchParamsYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public BatchParamsYamlV1 to(@NonNull String s) {
+    public BatchParamsYamlV1 to(String s) {
         final BatchParamsYamlV1 p = getYaml().load(s);
         return p;
     }

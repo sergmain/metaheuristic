@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.QuotasData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
-import ai.metaheuristic.ai.dispatcher.event.*;
+import ai.metaheuristic.ai.dispatcher.event.events.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
@@ -43,9 +43,9 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -67,7 +67,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskProviderTopLevelService {
 
     private final Globals globals;
@@ -87,14 +87,14 @@ public class TaskProviderTopLevelService {
             if (TaskQueueService.alreadyRegistered(taskId)) {
                 return;
             }
-            final TaskImpl task = taskRepository.findById(taskId).orElse(null);
+            final TaskImpl task = taskRepository.findByIdReadOnly(taskId);
             if (task == null) {
                 log.warn("#393.040 Can't register task #{}, task doesn't exist", taskId);
                 return;
             }
             final TaskParamsYaml taskParamYaml;
             try {
-                taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                taskParamYaml = task.getTaskParamsYaml();
             } catch (YAMLException e) {
                 String es = S.f("#393.080 Task #%s has broken params yaml and will be skipped, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
                 log.error(es, e.getMessage());
@@ -304,7 +304,7 @@ public class TaskProviderTopLevelService {
                         ()-> getTaskAndAssignToProcessor(core.id, psy, csy, isAcceptOnlySigned, quotas, taskIds));
 
         if (assignedTask!=null && log.isDebugEnabled()) {
-            TaskImpl task = taskRepository.findById(assignedTask.taskId).orElse(null);
+            TaskImpl task = taskRepository.findByIdReadOnly(assignedTask.taskId);
             if (task==null) {
                 log.debug("#393.480 findTask(), task #{} wasn't found", assignedTask.taskId);
             }
@@ -356,7 +356,7 @@ public class TaskProviderTopLevelService {
         }
         try {
             String params = TaskProviderUtils.initEmptiness(coreId, psy.taskParamsVersion, task.task.getParams(), task.task.id,
-                    variableService::getVariableAsSimple, eventPublisher::publishEvent);
+                    variableService::getVariable, eventPublisher::publishEvent);
             if (params==null) {
                 return null;
             }
@@ -407,7 +407,7 @@ public class TaskProviderTopLevelService {
 
                         final TaskParamsYaml taskParamYaml;
                         try {
-                            taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                            taskParamYaml = task.getTaskParamsYaml();
                         } catch (YAMLException e) {
                             String es = S.f("#393.780 Task #%s has broken params yaml and will be finished with error, error: %s, params:\n%s", task.getId(), e.toString(), task.getParams());
                             log.error(es, e.getMessage());
@@ -431,7 +431,7 @@ public class TaskProviderTopLevelService {
                             continue;
                         }
 
-                        quotas.allocated.add(new DispatcherData.AllocatedQuotas(task.id, p.tag, quota.amount));
+                        quotas.addQuotas(new DispatcherData.AllocatedQuotas(task.id, p.tag, quota.amount));
 
                         return new TaskData.AssignedTask(task, p.tag, quota.amount);
                     }

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -95,6 +95,20 @@ public class ExecContextGraphSyncService {
     }
 
     public static void getWithSyncVoid(Long execContextGraphId, Runnable runnable) {
+        TxUtils.checkTxNotExists();
+        checkWriteLockNotPresent(execContextGraphId);
+
+        final ReentrantReadWriteLock.WriteLock lock = getWriteLock(execContextGraphId);
+        try {
+            lock.lock();
+            runnable.run();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    // ForCreation means that the presence of TX won't be checked
+    public static void getWithSyncVoidForCreation(Long execContextGraphId, Runnable runnable) {
         TxUtils.checkTxNotExists();
         checkWriteLockNotPresent(execContextGraphId);
 

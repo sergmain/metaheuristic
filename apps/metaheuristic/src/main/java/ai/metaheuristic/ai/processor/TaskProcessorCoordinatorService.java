@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +17,12 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.env.EnvService;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProviderFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -31,15 +32,13 @@ import java.util.Map;
 @Service
 @Slf4j
 @Profile("processor")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskProcessorCoordinatorService {
 
     private final Globals globals;
     private final ProcessorTaskService processorTaskService;
     private final CurrentExecState currentExecState;
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
-    private final MetadataService metadataService;
-    private final EnvService envService;
+    private final ProcessorEnvironment processorEnvironment;
     private final ProcessorService processorService;
     private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
@@ -56,9 +55,9 @@ public class TaskProcessorCoordinatorService {
         }
         log.info("#415.020 Start processing task by cores. taskProcessors.size(): {}", taskProcessors.size());
 
-        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : metadataService.getAllEnabledRefsForCores()) {
+        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataParams.getAllEnabledRefsForCores()) {
             TaskProcessor taskProcessor = taskProcessors.computeIfAbsent( core.coreCode,
-                    o -> new TaskProcessor(globals, processorTaskService, currentExecState, dispatcherLookupExtendedService, metadataService, envService, processorService, resourceProviderFactory, gitSourcingService));
+                    o -> new TaskProcessor(globals, processorTaskService, currentExecState, processorEnvironment, processorService, resourceProviderFactory, gitSourcingService));
             new Thread(()-> taskProcessor.process(core), "task-processor-"+core.coreCode).start();
         }
     }

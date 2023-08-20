@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunc
 import ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter.BatchLineSplitterFunction;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
+import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
+import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiSchemeUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -30,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getUid;
 import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getVariables;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -47,7 +50,7 @@ public class ScenarioUtilsTest {
         s.version = 2;
         s.scenarioGroupId = 3L;
         s.name = "a".repeat(250);
-        String uid = ScenarioUtils.getUid(s);
+        String uid = getUid(s);
 
         String suffix = ScenarioUtils.getString(s);
         assertEquals("-3-1-2", suffix);
@@ -55,6 +58,8 @@ public class ScenarioUtilsTest {
         assertTrue(uid.endsWith(suffix));
         assertEquals(250, uid.length());
     }
+
+
 
     @Test
     public void test_to_1() throws IOException {
@@ -66,11 +71,10 @@ public class ScenarioUtilsTest {
         scenario.name = "Fruit production";
         scenario.setParams(yaml);
 
+        final ApiScheme apiScheme = ApiSchemeUtils.UTILS.to(IOUtils.resourceToString("/mhbp/api/simple-provider.yaml", StandardCharsets.UTF_8));
 
         // main function for testing
-        SourceCodeParamsYaml sc = ScenarioUtils.to(scenario);
-
-
+        SourceCodeParamsYaml sc = ScenarioUtils.to(getUid(scenario), scenario.getScenarioParams(), (code)-> apiScheme);
 
         String result = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(sc);
         System.out.println(result);

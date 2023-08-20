@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.api.data.replication.ReplicationApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.TaskParamsUtils;
-import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 
 /**
  * @author Serge
@@ -33,7 +32,7 @@ public class FunctionUtils {
 
         ReplicationApiData.FunctionShortConfig fsc = new ReplicationApiData.FunctionShortConfig();
 
-        TaskParamsYaml.FunctionConfig fc = TaskParamsUtils.toFunctionConfig(FunctionConfigYamlUtils.BASE_YAML_UTILS.to(f.params));
+        TaskParamsYaml.FunctionConfig fc = TaskParamsUtils.toFunctionConfig(f.getFunctionConfigYaml());
 
         fsc.code = fc.code;
         fsc.file = fc.file;

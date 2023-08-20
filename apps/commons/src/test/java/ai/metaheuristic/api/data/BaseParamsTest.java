@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2022, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
-import org.springframework.lang.NonNull;
+import javax.annotation.Nonnull;
 
 import java.lang.reflect.Constructor;
 import java.util.Arrays;

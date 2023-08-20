@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,22 +21,19 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
-import ai.metaheuristic.ai.dispatcher.data.StringVariableData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.data.StringVariableData;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentTaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsJsonUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWithCache;
-import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultTaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -52,13 +49,13 @@ import ai.metaheuristic.commons.utils.PageUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYaml;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYamlUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -76,7 +73,7 @@ import static ai.metaheuristic.api.data.experiment_result.ExperimentResultParams
 @Slf4j
 @Service
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExperimentResultService {
 
     private final Globals globals;
@@ -103,7 +100,7 @@ public class ExperimentResultService {
     @Data
     @AllArgsConstructor
     public static class VariableWithStatus {
-        public SimpleVariable variable;
+        public Variable variable;
         public OperationStatusRest status;
 
         public VariableWithStatus(OperationStatusRest status) {
@@ -189,7 +186,7 @@ public class ExperimentResultService {
 
         ExperimentResult a = new ExperimentResult();
         try {
-            a.params = ExperimentResultParamsJsonUtils.BASE_UTILS.toString(erpy);
+            a.updateParams(erpy);
         } catch (YAMLException e) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#604.200 General error while storing experiment, " + e.getMessage());
@@ -216,10 +213,10 @@ public class ExperimentResultService {
         final List<ExperimentFeature> features = new ArrayList<>();
         final List<ExperimentTaskFeature> taskFeatures = new ArrayList<>();
 
-        List<SimpleVariable> metricsVariables = variableService.getSimpleVariablesInExecContext(simpleExecContext.execContextId, metricsVariableName);
-        List<SimpleVariable> featureVariables = variableService.getSimpleVariablesInExecContext(simpleExecContext.execContextId, featureVariableName);
-        List<SimpleVariable> fittingVariables = variableService.getSimpleVariablesInExecContext(simpleExecContext.execContextId, fittingVariableName);
-        List<SimpleVariable> inlineVariables = variableService.getSimpleVariablesInExecContext(simpleExecContext.execContextId, inlineVariableName);
+        List<Variable> metricsVariables = variableService.getVariablesInExecContext(simpleExecContext.execContextId, metricsVariableName);
+        List<Variable> featureVariables = variableService.getVariablesInExecContext(simpleExecContext.execContextId, featureVariableName);
+        List<Variable> fittingVariables = variableService.getVariablesInExecContext(simpleExecContext.execContextId, fittingVariableName);
+        List<Variable> inlineVariables = variableService.getVariablesInExecContext(simpleExecContext.execContextId, inlineVariableName);
         Set<String> taskContextIds = inlineVariables.stream().map(v->v.taskContextId).collect(Collectors.toSet());
         featureVariables.stream().map(v->v.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
         fittingVariables.stream().map(v->v.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
@@ -231,11 +228,11 @@ public class ExperimentResultService {
 
         for (Long taskId : ids) {
 
-            TaskImpl t = taskRepository.findById(taskId).orElse(null);
+            TaskImpl t = taskRepository.findByIdReadOnly(taskId);
             if (t == null) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"Task #"+taskId+" wasn't found");
             }
-            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(t.getParams());
+            TaskParamsYaml tpy = t.getTaskParamsYaml();
             String taskContextId = tpy.task.taskContextId;
             if (!taskContextIds.contains(taskContextId)) {
                 log.info(S.f("Skip task %s with taskContextId #%s", t.id, taskContextId));
@@ -336,7 +333,7 @@ public class ExperimentResultService {
             ExperimentTask at = new ExperimentTask();
             at.experimentResultId = experimentResult.id;
             at.taskId = t.getId();
-            at.params = ExperimentResultTaskParamsYamlUtils.BASE_YAML_UTILS.toString(ertpy);
+            at.updateParams(ertpy);
             experimentTaskRepository.save(at);
         }
 
@@ -344,8 +341,8 @@ public class ExperimentResultService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    private static VariableWithStatus getVariableWithStatus(List<SimpleVariable> allVars, Long execContextId, String taskContextId, String varName) {
-        List<SimpleVariable> variables = allVars.stream().filter(v->v.taskContextId.equals(taskContextId)).collect(Collectors.toList());
+    private static VariableWithStatus getVariableWithStatus(List<Variable> allVars, Long execContextId, String taskContextId, String varName) {
+        List<Variable> variables = allVars.stream().filter(v->v.taskContextId.equals(taskContextId)).collect(Collectors.toList());
         if (variables.isEmpty()) {
 
             return new VariableWithStatus(new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -407,7 +404,7 @@ public class ExperimentResultService {
 
         updateMaxValueForExperimentResult(experimentResultParamsYaml);
 
-        experimentResult.params = ExperimentResultParamsJsonUtils.BASE_UTILS.toString(experimentResultParamsYaml);
+        experimentResult.updateParams(experimentResultParamsYaml);
         experimentResultRepository.save(experimentResult);
     }
 

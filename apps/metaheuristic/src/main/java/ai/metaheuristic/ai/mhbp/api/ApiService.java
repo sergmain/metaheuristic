@@ -17,18 +17,21 @@
 package ai.metaheuristic.ai.mhbp.api;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.mhbp.beans.Api;
+import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.ai.mhbp.beans.Api;
-import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.lang.Nullable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,8 +45,8 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ApiService {
 
     private final ApiRepository apiRepository;
@@ -94,14 +97,26 @@ public class ApiService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public ApiData.Api getApi(Long apiId, DispatcherContext context) {
-        if (apiId==null) {
+    public ApiData.Api getApiAsData(@Nullable Long apiId, DispatcherContext context) {
+        Api api = getApi(apiId, context);
+        if (api==null) {
             return new ApiData.Api("217.150 Not found");
+        }
+        return new ApiData.Api(new ApiData.SimpleApi(api));
+    }
+
+    @Nullable
+    public Api getApi(@Nullable Long apiId, DispatcherContext context) {
+        if (apiId==null) {
+            return null;
         }
         Api api = apiRepository.findById(apiId).orElse(null);
         if (api == null) {
-            return new ApiData.Api("217.200 Not found");
+            return null;
         }
-        return new ApiData.Api(new ApiData.SimpleApi(api));
+        if (api.getCompanyId()!=context.getCompanyId()) {
+            throw new AccessDeniedException("Access denied for apiId " + apiId);
+        }
+        return api;
     }
 }

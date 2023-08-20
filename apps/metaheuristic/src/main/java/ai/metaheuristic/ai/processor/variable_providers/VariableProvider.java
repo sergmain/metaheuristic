@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.processor.variable_providers;
 
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
-import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.EnumsApi;
@@ -26,26 +26,26 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import org.springframework.lang.Nullable;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 public interface VariableProvider {
     List<AssetFile> prepareForDownloadingVariable(
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.InputVariable variable);
 
     @Nullable
     FunctionApiData.SystemExecResult processOutputVariable(
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.OutputVariable outputVariable,
             TaskParamsYaml.FunctionConfig functionConfig
     );
 
-    File getOutputVariableFromFile(
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir,
-            DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+    Path getOutputVariableFromFile(
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir,
+            DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, TaskParamsYaml.OutputVariable variable);
 
     EnumsApi.DataSourcing getSourcing();

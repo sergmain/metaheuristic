@@ -23,6 +23,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
@@ -44,8 +45,8 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping("/rest/v1/dispatcher/mhbp-settings")
 @Slf4j
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class MhbpSettingsRestController {
 
     private final MhbpSettingsService mhbpSettingsService;

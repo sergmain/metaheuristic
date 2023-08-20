@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,26 +17,29 @@
 package ai.metaheuristic.ai.processor.variable_providers;
 
 import ai.metaheuristic.ai.exceptions.VariableProviderException;
-import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.processor.env.EnvService;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
-import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
-import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
+import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.sourcing.DiskInfo;
+import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -44,15 +47,11 @@ import java.util.Objects;
 @Service
 @Slf4j
 @Profile("processor")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class DiskVariableProvider implements VariableProvider {
 
-    private final EnvService envService;
+    private final ProcessorEnvironment processorEnvironment;
     private final ProcessorTaskService processorTaskService;
-
-    public DiskVariableProvider(EnvService envService, ProcessorTaskService processorTaskService) {
-        this.envService = envService;
-        this.processorTaskService = processorTaskService;
-    }
 
     @Nullable
     private static EnvParamsYaml.DiskStorage findDiskStorageByCode(List<EnvParamsYaml.DiskStorage> disk, String code) {
@@ -71,7 +70,7 @@ public class DiskVariableProvider implements VariableProvider {
 
     @Override
     public List<AssetFile> prepareForDownloadingVariable(
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.InputVariable variable) {
 
@@ -83,21 +82,21 @@ public class DiskVariableProvider implements VariableProvider {
         }
         DiskInfo diskInfo = variable.disk;
 
-        EnvParamsYaml env = envService.getEnvParamsYaml();
+        EnvParamsYaml env = processorEnvironment.envParams.getEnvParamsYaml();
         EnvParamsYaml.DiskStorage diskStorage = findDiskStorageByCode(env.disk, diskInfo.code);
         if (diskStorage==null) {
             throw new VariableProviderException("#015.020 The disk storage wasn't found for code: " + diskInfo.code);
         }
-        File path = new File(diskStorage.path);
-        if (!path.exists()) {
-            throw new VariableProviderException("#015.024 The path of disk storage doesn't exist: " + path.getAbsolutePath());
+        Path path = Path.of(diskStorage.path);
+        if (Files.notExists(path)) {
+            throw new VariableProviderException("#015.024 The path of disk storage doesn't exist: " + path.toAbsolutePath());
         }
 
         AssetFile assetFile;
         if (diskInfo.mask!=null && diskInfo.mask.equals("*")) {
             assetFile = new AssetFile();
             // TODO 2019.05.08 is this correct to declare file with '*' ?
-            assetFile.setFile( new File(path, "*") );
+            assetFile.setFile( path.resolve( "*") );
             assetFile.setProvided(true);
             assetFile.setContent(true);
             assetFile.setError(false);
@@ -121,13 +120,13 @@ public class DiskVariableProvider implements VariableProvider {
 
     @Override
     public FunctionApiData.SystemExecResult processOutputVariable(
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml.OutputVariable outputVariable, TaskParamsYaml.FunctionConfig functionConfig
     ) {
-        File outputVariableFile = new File(taskDir, ConstsApi.ARTIFACTS_DIR + File.separatorChar + outputVariable.id);
-        if (outputVariableFile.exists()) {
-            log.info("The result variable #{} was already written to file {}, no need to upload to dispatcher", outputVariable.id, outputVariableFile.getPath());
+        Path outputVariableFile = taskDir.resolve(ConstsApi.ARTIFACTS_DIR).resolve(outputVariable.id.toString());
+        if (Files.exists(outputVariableFile)) {
+            log.info("The result variable #{} was already written to file {}, no need to upload to dispatcher", outputVariable.id, outputVariableFile.toAbsolutePath());
             processorTaskService.setVariableUploadedAndCompleted(core, task.taskId, outputVariable.id);
         }
         else if (Boolean.TRUE.equals(outputVariable.getNullable())) {
@@ -136,7 +135,7 @@ public class DiskVariableProvider implements VariableProvider {
             return null;
         }
         else {
-            String es = "#015.030 Result data file wasn't found, resultDataFile: " + outputVariableFile.getPath();
+            String es = "#015.030 Result data file wasn't found, resultDataFile: " + outputVariableFile.toAbsolutePath();
             log.error(es);
             return new FunctionApiData.SystemExecResult(functionConfig.code, false, -1, es);
         }
@@ -144,11 +143,11 @@ public class DiskVariableProvider implements VariableProvider {
     }
 
     @Override
-    public File getOutputVariableFromFile(
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, File taskDir, DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher,
+    public Path getOutputVariableFromFile(
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
             ProcessorCoreTask task, TaskParamsYaml.OutputVariable variable) {
 
-        EnvParamsYaml env = envService.getEnvParamsYaml();
+        EnvParamsYaml env = processorEnvironment.envParams.getEnvParamsYaml();
         if (variable.disk==null) {
             throw new VariableProviderException("#015.036 The disk storage wasn't defined in variable: " + variable);
         }
@@ -156,12 +155,12 @@ public class DiskVariableProvider implements VariableProvider {
         if (diskStorage==null) {
             throw new VariableProviderException("#015.037 The disk storage wasn't found for code: " + variable.disk.code);
         }
-        File path = new File(diskStorage.path);
-        if (!path.exists()) {
-            throw new VariableProviderException("#015.042 The path of disk storage doesn't exist: " + path.getAbsolutePath());
+        Path path = Path.of(diskStorage.path);
+        if (Files.notExists(path)) {
+            throw new VariableProviderException("#015.042 The path of disk storage doesn't exist: " + path.toAbsolutePath());
         }
 
-        return new File(path, Long.toString(variable.id));
+        return path.resolve(Long.toString(variable.id));
     }
 
 }

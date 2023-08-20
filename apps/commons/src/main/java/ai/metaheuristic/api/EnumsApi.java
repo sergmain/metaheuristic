@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ package ai.metaheuristic.api;
 
 import ai.metaheuristic.commons.S;
 import lombok.ToString;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 public class EnumsApi {
 
@@ -420,4 +420,21 @@ public class EnumsApi {
             this.needDownload = needDownload;
         }
     }
+
+    public enum VariableType {
+        unknown(false, null), text(false, ".txt"), json(false, ".json"),
+        yaml(false, ".yaml"), image(true, ".png"), binary(true, ".json"),
+        html(false, ".html"), xml(false, ".xml"), zip(true, ".zip"),
+        pdf(true, ".pdf");
+
+        public final boolean isBinary;
+        public final String ext;
+
+        VariableType(boolean isBinary, @Nullable String ext) {
+            this.isBinary = isBinary;
+            this.ext = ext;
+        }
+    }
+
+
 }

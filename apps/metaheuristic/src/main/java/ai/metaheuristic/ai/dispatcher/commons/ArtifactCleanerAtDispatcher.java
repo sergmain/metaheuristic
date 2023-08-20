@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,17 +17,16 @@ package ai.metaheuristic.ai.dispatcher.commons;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.*;
-import ai.metaheuristic.ai.dispatcher.cache.CacheService;
+import ai.metaheuristic.ai.dispatcher.cache.CacheTxService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
-import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreService;
+import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
+import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
@@ -35,6 +34,7 @@ import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ArtifactCleanerAtDispatcher {
 
     private final Globals globals;
@@ -58,11 +58,10 @@ public class ArtifactCleanerAtDispatcher {
     private final ExecContextGraphRepository execContextGraphRepository;
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextVariableStateRepository execContextVariableStateRepository;
-    private final SourceCodeCache sourceCodeCache;
+    private final SourceCodeRepository sourceCodeRepository;
     private final BatchRepository batchRepository;
     private final CompanyRepository companyRepository;
     private final BatchTopLevelService batchTopLevelService;
-    private final BatchCache batchCache;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
     private final TaskTransactionalService taskTransactionalService;
@@ -70,13 +69,14 @@ public class ArtifactCleanerAtDispatcher {
     private final VariableRepository variableRepository;
     private final FunctionRepository functionRepository;
     private final CacheProcessRepository cacheProcessRepository;
-    private final CacheService cacheService;
+    private final CacheTxService cacheService;
     private final ExecContextService execContextService;
     private final DispatcherEventRepository dispatcherEventRepository;
     private final FunctionDataRepository functionDataRepository;
     private final ProcessorRepository processorRepository;
-    private final ProcessorCoreService processorCoreService;
+    private final ProcessorCoreTxService processorCoreService;
     private final ProcessorCoreRepository processorCoreRepository;
+    private final InternalFunctionRegisterService internalFunctionRegisterService;
 
     private static final AtomicInteger busy = new AtomicInteger(0);
     private static long mills = 0L;
@@ -124,6 +124,7 @@ public class ArtifactCleanerAtDispatcher {
     }
 
     private void deleteOrphanCores() {
+        log.info("510.030 start deleteOrphanCores()");
         List<Long> coresIds = processorCoreRepository.getAllProcessorIds();
         List<Long> processorIds = processorRepository.findAllIds();
 
@@ -152,7 +153,7 @@ public class ArtifactCleanerAtDispatcher {
                         processorCoreService.deleteOrphanProcessorCores(page);
                     }
                     catch (Throwable th) {
-                        log.error("variableService.deleteOrphanVariables("+processorId+")", th);
+                        log.error("510.060 variableService.deleteOrphanVariables("+processorId+")", th);
                     }
                 }
             }
@@ -160,6 +161,7 @@ public class ArtifactCleanerAtDispatcher {
     }
 
     private void deleteObsoleteFunctionData() {
+        log.info("510.090 start deleteObsoleteFunctionData()");
         List<String> functionCodesInData = functionDataRepository.findAllFunctionCodes();
         List<String> functionCodes = functionRepository.findAllFunctionCodes();
         for (String functionCode : functionCodesInData) {
@@ -171,16 +173,17 @@ public class ArtifactCleanerAtDispatcher {
                     functionDataRepository.deleteByFunctionCode(functionCode);
                 }
                 catch (Throwable th) {
-                    log.warn("#510.080 error while deleting obsolete funcion " + functionCode);
+                    log.warn("#510.120 error while deleting obsolete function " + functionCode);
                 }
             }
         }
     }
 
     private void deleteObsoleteEvents() {
+        log.info("510.150 start deleteObsoleteEvents()");
         final int keepPeriod = globals.dispatcher.getKeepEventsInDb().getDays();
         if (keepPeriod >100000) {
-            final String es = "#510.100 globals.dispatcher.keepEventsInDb greater than 100000 days, actual: " + keepPeriod;
+            final String es = "510.180 globals.dispatcher.keepEventsInDb greater than 100000 days, actual: " + keepPeriod;
             log.error(es);
             throw new RuntimeException(es);
         }
@@ -198,17 +201,18 @@ public class ArtifactCleanerAtDispatcher {
             if (page.isEmpty()) {
                 continue;
             }
-            log.info("#510.140 Found obsolete events #{}", page);
+            log.info("510.210 Found obsolete events #{}", page);
             try {
                 dispatcherEventRepository.deleteAllByIdIn(page);
             }
             catch (Throwable th) {
-                log.error("#510.200 dispatcherEventRepository.deleteAllByIdIn("+page+")", th);
+                log.error("510.240 dispatcherEventRepository.deleteAllByIdIn("+page+")", th);
             }
         }
     }
 
     private void deleteOrphanAndObsoletedBatches() {
+        log.info("510.270 start deleteOrphanAndObsoletedBatches()");
         List<Long> execContextIds = execContextRepository.findAllIds();
         List<Long> companyUniqueIds = companyRepository.findAllUniqueIds();
         Set<Long> forDeletion = new HashSet<>();
@@ -225,7 +229,7 @@ public class ArtifactCleanerAtDispatcher {
                 forDeletion.add(batchId);
             }
             else {
-                Batch b = batchCache.findById(batchId);
+                Batch b = batchRepository.findByIdWithNull(batchId);
                 if (b == null) {
                     continue;
                 }
@@ -238,7 +242,11 @@ public class ArtifactCleanerAtDispatcher {
     }
 
     private void deleteOrphanExecContexts() {
+        log.info("510.300 start deleteOrphanExecContexts()");
         List<Long> execContextIds = execContextRepository.findAllIds();
+        if (execContextIds.isEmpty()) {
+            return;
+        }
 
         // execContext mus be deleted without checking isBusy() because we need to terminate all running tasks
         // all running tasks at processor will be terminated only if a related ExecContext doesn't exist
@@ -273,40 +281,30 @@ public class ArtifactCleanerAtDispatcher {
                 taskRepository.updateTaskAsFinished(page);
             }
             catch (Throwable th) {
-                log.error("taskRepository.updateTaskAsFinished("+page+")", th);
+                log.error("510.330 taskRepository.updateTaskAsFinished("+page+")", th);
             }
         }
     }
 
     private void deleteOrphanExecContexts(List<Long> execContextIds) {
+        log.info("510.360 start deleteOrphanExecContexts(execContextIds)");
         Set<Long> forDeletion = new HashSet<>();
+        List<Long> sourceCodeIds = sourceCodeRepository.findAllAsIds();
         for (Long execContextId : execContextIds) {
-            ExecContextImpl ec = execContextCache.findById(execContextId, true);
+            ExecContextImpl ec = execContextRepository.findByIdNullable(execContextId);
             if (ec==null) {
                 continue;
             }
-            if (sourceCodeCache.findById(ec.sourceCodeId)==null ||
-                    (ec.rootExecContextId!=null && execContextCache.findById(ec.rootExecContextId, true)==null)) {
+            if ((ec.rootExecContextId!=null && !execContextIds.contains(ec.rootExecContextId)) || !sourceCodeIds.contains(ec.sourceCodeId)) {
                 forDeletion.add(execContextId);
             }
         }
-        try {
-            execContextTopLevelService.deleteOrphanExecContexts(forDeletion);
-        }
-        catch (Throwable th) {
-            log.warn("#510.235 error while deleting ExecContext " + forDeletion);
-        }
+        execContextTopLevelService.deleteOrphanExecContexts(forDeletion);
     }
 
     private void deleteOrphanExecContextGraph(List<Long> execContextIds) {
-        Set<Long> execContextGraphIds = new HashSet<>();
-        for (Long execContextId : execContextIds) {
-            ExecContextImpl ec = execContextCache.findById(execContextId, true);
-            if (ec==null) {
-                continue;
-            }
-            execContextGraphIds.add(ec.execContextGraphId);
-        }
+        log.info("510.420 start deleteOrphanExecContextGraph(execContextIds)");
+        Set<Long> execContextGraphIds = execContextRepository.findExecContextGraphIds(execContextIds);
         List<Long> allExecContextGraphIds = execContextGraphRepository.findAllIds();
         for (Long allExecContextGraphId : allExecContextGraphIds) {
             if (!execContextGraphIds.contains(allExecContextGraphId)) {
@@ -315,26 +313,21 @@ public class ArtifactCleanerAtDispatcher {
                         execContextGraph.createdOn==0 || (System.currentTimeMillis()-execContextGraph.createdOn) < 3_600_000 ) {
                     continue;
                 }
-                log.info("#510.240 Found orphan ExecContextGraph #{}", allExecContextGraphId);
+                log.info("510.450 Found orphan ExecContextGraph #{}", allExecContextGraphId);
                 try {
                     execContextService.deleteOrphanExecContextGraph(allExecContextGraphId);
                 }
                 catch (Throwable th) {
-                    log.warn("#510.245 error while deleting ExecContextGraph #" + allExecContextGraphId);
+                    log.warn("510.480 error while deleting ExecContextGraph #" + allExecContextGraphId);
                 }
             }
         }
     }
 
     private void deleteOrphanExecContextTaskState(List<Long> execContextIds) {
-        Set<Long> execContextTaskStateIds = new HashSet<>();
-        for (Long execContextId : execContextIds) {
-            ExecContextImpl ec = execContextCache.findById(execContextId, true);
-            if (ec==null) {
-                continue;
-            }
-            execContextTaskStateIds.add(ec.execContextTaskStateId);
-        }
+        log.info("510.510 start deleteOrphanExecContextTaskState(execContextIds)");
+        Set<Long> execContextTaskStateIds = execContextRepository.findExecContextTaskStateIds(execContextIds);
+
         List<Long> allExecContextTaskStateIds = execContextTaskStateRepository.findAllIds();
         for (Long allExecContextTaskStateId : allExecContextTaskStateIds) {
             if (!execContextTaskStateIds.contains(allExecContextTaskStateId)) {
@@ -343,26 +336,21 @@ public class ArtifactCleanerAtDispatcher {
                         execContextTaskState.createdOn==0 || (System.currentTimeMillis()-execContextTaskState.createdOn) < 18_000_000 ) {
                     continue;
                 }
-                log.info("#510.280 Found orphan ExecContextTaskState #{}", allExecContextTaskStateId);
+                log.info("510.540 Found orphan ExecContextTaskState #{}", allExecContextTaskStateId);
                 try {
                     execContextService.deleteOrphanExecContextTaskState(allExecContextTaskStateId);
                 }
                 catch (Throwable th) {
-                    log.warn("#510.285 error while deleting ExecContextTaskState #" + allExecContextTaskStateId);
+                    log.warn("510.570 error while deleting ExecContextTaskState #" + allExecContextTaskStateId);
                 }
             }
         }
     }
 
     private void deleteOrphanExecContextVariableState(List<Long> execContextIds) {
-        Set<Long> execContextVariableStateIds = new HashSet<>();
-        for (Long execContextId : execContextIds) {
-            ExecContextImpl ec = execContextCache.findById(execContextId, true);
-            if (ec==null) {
-                continue;
-            }
-            execContextVariableStateIds.add(ec.execContextVariableStateId);
-        }
+        log.info("510.600 start deleteOrphanExecContextVariableState(execContextIds)");
+        Set<Long> execContextVariableStateIds = execContextRepository.findExecContextVariableStateIds(execContextIds);
+
         List<Long> allExecContextVariableStateIds = execContextVariableStateRepository.findAllIds();
         for (Long allExecContextVariableStateId : allExecContextVariableStateIds) {
             if (!execContextVariableStateIds.contains(allExecContextVariableStateId)) {
@@ -371,12 +359,12 @@ public class ArtifactCleanerAtDispatcher {
                         execContextVariableState.createdOn==0 || (System.currentTimeMillis()-execContextVariableState.createdOn) < 3_600_000 ) {
                     continue;
                 }
-                log.info("#510.320 Found orphan ExecContextVariableState #{}", allExecContextVariableStateId);
+                log.info("510.630 Found orphan ExecContextVariableState #{}", allExecContextVariableStateId);
                 try {
                     execContextService.deleteOrphanExecContextVariableState(allExecContextVariableStateId);
                 }
                 catch (Throwable th) {
-                    log.warn("#510.325 error while deleting ExecContextVariableState " + allExecContextVariableStateId);
+                    log.warn("510.660 error while deleting ExecContextVariableState " + allExecContextVariableStateId);
                 }
             }
         }
@@ -384,6 +372,7 @@ public class ArtifactCleanerAtDispatcher {
 
     private void deleteOrphanTasks() {
         TxUtils.checkTxNotExists();
+        log.info("510.690 start deleteOrphanTasks()");
 
         List<Long> taskExecContextIds = taskRepository.getAllExecContextIds();
         List<Long> execContextIds = execContextRepository.findAllIds();
@@ -407,7 +396,7 @@ public class ArtifactCleanerAtDispatcher {
                     execContextService.deleteExecContextFromCache(execContextId);
                 }
                 catch (Throwable th) {
-                    log.error("execContextService.deleteExecContextFromCache("+execContextId+")", th);
+                    log.error("510.720 execContextService.deleteExecContextFromCache("+execContextId+")", th);
                 }
             }
 
@@ -423,7 +412,7 @@ public class ArtifactCleanerAtDispatcher {
                         taskTransactionalService.deleteOrphanTasks(page);
                     }
                     catch (Throwable th) {
-                        log.error("taskTransactionalService.deleteOrphanTasks("+execContextId+")", th);
+                        log.error("510.750 taskTransactionalService.deleteOrphanTasks("+execContextId+")", th);
                     }
                 }
             }
@@ -431,6 +420,7 @@ public class ArtifactCleanerAtDispatcher {
     }
 
     private void deleteOrphanVariables() {
+        log.info("510.780 start deleteOrphanVariables()");
         List<Long> variableExecContextIds = variableRepository.getAllExecContextIds();
         List<Long> execContextIds = execContextRepository.findAllIds();
 
@@ -459,7 +449,7 @@ public class ArtifactCleanerAtDispatcher {
                         variableService.deleteOrphanVariables(page);
                     }
                     catch (Throwable th) {
-                        log.error("variableService.deleteOrphanVariables("+execContextId+")", th);
+                        log.error("510.810 variableService.deleteOrphanVariables("+execContextId+")", th);
                     }
                 }
             }
@@ -467,7 +457,10 @@ public class ArtifactCleanerAtDispatcher {
     }
 
     private void deleteOrphanCacheData() {
+        log.info("510.840 start deleteOrphanCacheData()");
         List<String> funcCodes = functionRepository.findAllFunctionCodes();
+        funcCodes.addAll(internalFunctionRegisterService.getCachableFunctions());
+
         Set<String> currFuncCodes = cacheProcessRepository.findAllFunctionCodes();
 
         //noinspection SimplifyStreamApiCallChains
@@ -489,14 +482,14 @@ public class ArtifactCleanerAtDispatcher {
                         cacheService.deleteCacheProcesses(page);
                     }
                     catch (Throwable th) {
-                        log.error("cacheService.deleteCacheProcesses("+page+")", th);
+                        log.error("510.860 cacheService.deleteCacheProcesses("+page+")", th);
                     }
                     for (Long cacheProcessId : page) {
                         try {
                             cacheService.deleteCacheVariable(cacheProcessId);
                         }
                         catch (Throwable th) {
-                            log.error("cacheService.deleteCacheVariable("+page+")", th);
+                            log.error("510.880 cacheService.deleteCacheVariable("+page+")", th);
                         }
                     }
                 }

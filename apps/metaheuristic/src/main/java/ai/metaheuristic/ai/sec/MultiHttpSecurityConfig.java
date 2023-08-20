@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,9 +18,10 @@ package ai.metaheuristic.ai.sec;
 
 import ai.metaheuristic.ai.Globals;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -33,6 +34,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+import static org.springframework.http.HttpMethod.OPTIONS;
+
 /**
  * User: Serg
  * Date: 11.06.2017
@@ -40,11 +43,11 @@ import java.util.List;
  */
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
-@RequiredArgsConstructor
+@EnableMethodSecurity(prePostEnabled = true)
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class MultiHttpSecurityConfig {
 
-    public final Globals globals;
+    private final Globals globals;
 
     @Bean
     public PasswordEncoder getPasswordEncoder() {
@@ -76,15 +79,19 @@ public class MultiHttpSecurityConfig {
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .authorizeRequests()
-                .antMatchers("/","/index.html", "/*.js", "/*.css", "/favicon.ico", "/assets/**","/resources/**", "/rest/login").permitAll()
-                .antMatchers("/rest/**/**").authenticated()
-                .anyRequest().denyAll()
-                .and()
+                .authorizeHttpRequests((requests) -> requests
+                        .requestMatchers(OPTIONS).permitAll() // allow CORS option calls for Swagger UI
+                        .requestMatchers("/","/index.html", "/*.js", "/*.css", "/favicon.ico", "/assets/**","/resources/**", "/rest/login").permitAll()
+                        .requestMatchers("/rest/v1/standalone/anon/**", "/rest/v1/dispatcher/anon/**").permitAll()
+                        .requestMatchers("/rest/**").authenticated()
+                        .anyRequest().denyAll()
+                )
                 .csrf().disable().headers().cacheControl();
 
         if (globals.sslRequired) {
-            http.requiresChannel().antMatchers("/**").requiresSecure();
+            http.requiresChannel((requiresChannel) ->
+                    requiresChannel.anyRequest().requiresSecure()
+            );
         }
         return http.build();
     }

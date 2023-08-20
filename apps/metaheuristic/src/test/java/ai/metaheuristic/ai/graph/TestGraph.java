@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,10 +17,10 @@
 package ai.metaheuristic.ai.graph;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
@@ -34,7 +34,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -53,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@ActiveProfiles("dispatcher")
+//@ActiveProfiles({"dispatcher", "mysql"})
 @Slf4j
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class TestGraph extends PreparingSourceCode {
@@ -70,14 +69,14 @@ public class TestGraph extends PreparingSourceCode {
 
     @Test
     public void test() {
-
-        ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(getSourceCode(), getCompany().getUniqueId());
+        DispatcherContext context = new DispatcherContext(getAccount(), getCompany());
+        ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(getSourceCode(), context.asUserExecContext());
         setExecContextForTest(result.execContext);
         assertNotNull(getExecContextForTest());
 
-        ExecContextSyncService.getWithSync(getExecContextForTest().id, () ->
-                ExecContextGraphSyncService.getWithSync(getExecContextForTest().execContextGraphId, () ->
-                        ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId, () -> {
+        ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, () ->
+                ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().execContextGraphId, () ->
+                        ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().execContextTaskStateId, () -> {
                             OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(),
                                     List.of(new TaskApiData.TaskWithContext(1L, Consts.TOP_LEVEL_CONTEXT_ID)));
 
@@ -138,7 +137,6 @@ public class TestGraph extends PreparingSourceCode {
                             states = testGraphService.findTaskStates(getExecContextForTest());
                             assertEquals(1, states.size());
                             assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
-                            return null;
                         })));
     }
 

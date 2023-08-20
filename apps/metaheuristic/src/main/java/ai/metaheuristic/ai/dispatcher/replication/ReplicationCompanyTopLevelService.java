@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,14 +21,14 @@ import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
-import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
-import ai.metaheuristic.commons.S;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.message.BasicNameValuePair;
+import org.apache.hc.client5.http.fluent.Request;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.apache.hc.core5.util.Timeout;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -44,15 +44,15 @@ import java.util.Objects;
  * Time: 7:28 PM
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ReplicationCompanyTopLevelService {
 
-    public final ReplicationCoreService replicationCoreService;
-    public final ReplicationCompanyService replicationCompanyService;
-    public final CompanyRepository companyRepository;
-    public final CompanyCache companyCache;
+    private final ReplicationCoreService replicationCoreService;
+    private final ReplicationCompanyService replicationCompanyService;
+    private final CompanyRepository companyRepository;
+    private final CompanyCache companyCache;
 
     @Data
     @AllArgsConstructor
@@ -76,7 +76,7 @@ public class ReplicationCompanyTopLevelService {
             for (ReplicationData.CompanyShortAsset actualCompany : actualCompanies) {
                 if (actualCompany.uniqueId.equals(c.uniqueId)) {
                     isDeleted = false;
-                    CompanyParamsYaml cpy = S.b(c.params) ? new CompanyParamsYaml() : CompanyParamsYamlUtils.BASE_YAML_UTILS.to(c.params);
+                    CompanyParamsYaml cpy = c.getCompanyParamsYaml();
                     if (actualCompany.updateOn != cpy.updatedOn) {
                         CompanyLoopEntry companyLoopEntry = new CompanyLoopEntry(actualCompany, c);
                         forUpdating.add(companyLoopEntry);
@@ -119,9 +119,8 @@ public class ReplicationCompanyTopLevelService {
     private ReplicationData.CompanyAsset requestCompanyAsset(Long uniqueId) {
         Object data = replicationCoreService.getData(
                 "/rest/v1/replication/company", ReplicationData.CompanyAsset.class, List.of(new BasicNameValuePair("uniqueId", uniqueId.toString())),
-                (uri) -> Request.Get(uri)
-                        .connectTimeout(5000)
-                        .socketTimeout(20000)
+                (uri) -> Request.get(uri).connectTimeout(Timeout.ofSeconds(5))
+//                        .socketTimeout(20000)
         );
         if (data instanceof ReplicationData.AssetAcquiringError) {
             return new ReplicationData.CompanyAsset(((ReplicationData.AssetAcquiringError) data).getErrorMessagesAsList());

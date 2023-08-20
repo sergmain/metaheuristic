@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,14 +20,16 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.data.domain.Pageable;
@@ -43,17 +45,15 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import javax.servlet.http.HttpServletRequest;
-
 @RestController
 @RequestMapping("/rest/v1/dispatcher/source-code")
 @Profile("dispatcher")
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class SourceCodeRestController {
 
-    private final SourceCodeService sourceCodeService;
+    private final SourceCodeTxService sourceCodeTxService;
     private final SourceCodeTopLevelService sourceCodeTopLevelService;
     private final UserContextService userContextService;
 
@@ -61,14 +61,14 @@ public class SourceCodeRestController {
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public SourceCodeApiData.SourceCodesResult sourceCodes(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeService.getSourceCodes(pageable, false, context);
+        return sourceCodeTxService.getSourceCodes(pageable, false, context);
     }
 
     @GetMapping("/source-codes-archived-only")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public SourceCodeApiData.SourceCodesResult sourceCodeArchivedOnly(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeService.getSourceCodes(pageable, true, context);
+        return sourceCodeTxService.getSourceCodes(pageable, true, context);
     }
 
     @GetMapping(value = "/source-code/{id}")
@@ -82,7 +82,7 @@ public class SourceCodeRestController {
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public SourceCodeApiData.SourceCodeResult validate(@PathVariable Long id, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeService.validateSourceCode(id, context);
+        return sourceCodeTxService.validateSourceCode(id, context);
     }
 
     @PostMapping("/source-code-add-commit")
@@ -102,14 +102,14 @@ public class SourceCodeRestController {
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest deleteCommit(Long id, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeService.deleteSourceCodeById(id, context);
+        return sourceCodeTxService.deleteSourceCodeById(id, context);
     }
 
     @PostMapping("/source-code-archive-commit")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest archiveCommit(Long id, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeService.archiveSourceCodeById(id, context);
+        return sourceCodeTxService.archiveSourceCodeById(id, context);
     }
 
     @PostMapping(value = "/source-code-upload-from-file")
@@ -136,7 +136,7 @@ public class SourceCodeRestController {
 
     // TODO p0 2023-05-20 создание архива с заготовками для задачи. т.е. кнопка Dev
     @GetMapping(value= "/source-code-dev-generate/{sourceCodeId}/{processCode}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public HttpEntity<AbstractResource> downloadVariable(
+    public HttpEntity<AbstractResource> sourceCodeDevGenerate(
             HttpServletRequest request, @PathVariable("sourceCodeId") Long sourceCodeId, @PathVariable("processCode") String processCode,
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);

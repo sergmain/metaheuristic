@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,22 +16,22 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
-import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInGraphEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
+import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -52,10 +52,10 @@ import static ai.metaheuristic.api.EnumsApi.TaskExecState;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextReconciliationTopLevelService {
 
-    private final ExecContextService execContextService;
+    private final TaskTxService taskTxService;
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -82,7 +82,7 @@ public class ExecContextReconciliationTopLevelService {
         final Set<ExecContextData.TaskWithState> vertices = execContextGraphService.findDescendantsWithState(
                 execContextGraphId, execContextTaskStateId, rootVertices.get(0).taskId);
 
-        final Map<Long, TaskApiData.TaskState> states = execContextService.getExecStateOfTasks(execContextId);
+        final Map<Long, TaskApiData.TaskState> states = taskTxService.getExecStateOfTasks(execContextId);
         final Map<Long, TaskQueue.AllocatedTask> allocatedTasks = TaskProviderTopLevelService.getTaskExecStates(execContextId);
 
         for (ExecContextData.TaskWithState tv : vertices) {
@@ -226,7 +226,7 @@ public class ExecContextReconciliationTopLevelService {
                 .filter(e-> TaskExecState.IN_PROGRESS.value==e.getValue().execState)
                 .forEach(e->{
                     Long taskId = e.getKey();
-                    TaskImpl task = taskRepository.findById(taskId).orElse(null);
+                    TaskImpl task = taskRepository.findByIdReadOnly(taskId);
                     if (task != null) {
                         TaskParamsYaml tpy = task.getTaskParamsYaml();
 

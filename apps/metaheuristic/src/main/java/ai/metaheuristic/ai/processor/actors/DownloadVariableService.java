@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,9 @@ package ai.metaheuristic.ai.processor.actors;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.data.DispatcherData;
-import ai.metaheuristic.ai.processor.*;
+import ai.metaheuristic.ai.processor.CurrentExecState;
+import ai.metaheuristic.ai.processor.DispatcherContextInfoHolder;
+import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
 import ai.metaheuristic.ai.utils.RestUtils;
@@ -26,30 +28,33 @@ import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.EnumsApi;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpResponseException;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.client.fluent.Response;
-import org.apache.http.client.utils.URIBuilder;
+import org.apache.hc.client5.http.HttpResponseException;
+import org.apache.hc.client5.http.fluent.Request;
+import org.apache.hc.client5.http.fluent.Response;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.net.URIBuilder;
+import org.apache.hc.core5.util.Timeout;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.UUID;
 
 @Service
 @Slf4j
 @Profile("processor")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableTask> implements QueueProcessor {
 
     private final Globals globals;
@@ -126,11 +131,13 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
         log.debug("Start processing the download task {}", task);
         try {
             final String uri = task.dispatcher.url + "/rest/v1/payload/resource/"+type+'/'+task.taskId+'/'+
-                    UUID.randomUUID().toString().substring(0, 8) + '-' +task.core.processorId + '-' + task.taskId + '-' + URLEncoder.encode(task.variableId, StandardCharsets.UTF_8.toString());
+                    UUID.randomUUID().toString().substring(0, 8) + '-' +task.core.processorId + '-' + task.taskId + '-' + URLEncoder.encode(task.variableId, StandardCharsets.UTF_8);
 
-            File parentDir = assetFile.file.getParentFile();
+
+            // TODO 2023-06-26 re-write with nio
+            File parentDir = assetFile.file.toFile().getParentFile();
             if (parentDir==null) {
-                es = "#810.020 Can't get parent dir for asset file " + assetFile.file.getAbsolutePath();
+                es = "#810.020 Can't get parent dir for asset file " + assetFile.file.toAbsolutePath();
                 log.error(es);
                 processorTaskService.markAsFinishedWithError(task.core, task.taskId, es);
                 return;
@@ -145,8 +152,9 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 return;
             }
 
-            String mask = assetFile.file.getName() + ".%s.tmp";
-            File dir = assetFile.file.getParentFile();
+            String mask = assetFile.file.getFileName().toString() + ".%s.tmp";
+            // TODO 2023-06-26 re-write with nio
+            File dir = assetFile.file.toFile().getParentFile();
             Enums.VariableState resourceState = Enums.VariableState.none;
             int idx = 0;
             do {
@@ -157,9 +165,9 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                             .addParameter("chunkNum", Integer.toString(idx));
 
                     final URI build = builder.build();
-                    final Request request = Request.Get(build)
-                            .connectTimeout(5000)
-                            .socketTimeout(20000);
+                    final Request request = Request.get(build)
+                            .connectTimeout(Timeout.ofSeconds(5));
+//                            .socketTimeout(20000);
 
                     RestUtils.addHeaders(request);
 
@@ -167,7 +175,10 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                             task.core.dispatcherUrl.url, task.dispatcher.restUsername, task.dispatcher.restPassword).execute(request);
                     File partFile = new File(dir, String.format(mask, idx));
                     final HttpResponse httpResponse = response.returnResponse();
-                    final int statusCode = httpResponse.getStatusLine().getStatusCode();
+                    if (!(httpResponse instanceof ClassicHttpResponse classicHttpResponse)) {
+                        throw new IllegalStateException("(!(httpResponse instanceof ClassicHttpResponse classicHttpResponse))");
+                    }
+                    final int statusCode = classicHttpResponse.getCode();
                     if (statusCode ==HttpServletResponse.SC_NO_CONTENT) {
                         if (task.nullable) {
                             processorTaskService.setInputAsEmpty(task.core, task.taskId, task.variableId);
@@ -193,23 +204,17 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                         return;
                     }
                     else if (statusCode != HttpServletResponse.SC_OK ) {
-                        es = "#810.030 An unexpected http status code: "+statusCode+",  #"+task.variableId+"";
+                        es = "#810.030 An unexpected http status code: "+statusCode+",  #"+task.variableId;
                         log.error(es);
                         return;
                     }
 
-                    try (final FileOutputStream out = new FileOutputStream(partFile)) {
-                        final HttpEntity entity = httpResponse.getEntity();
-                        if (entity != null) {
-                            entity.writeTo(out);
-                        }
-                        else {
-                            log.warn("#810.031 http entity is null");
-                        }
+                    try (FileOutputStream out = new FileOutputStream(partFile)) {
+                        classicHttpResponse.getEntity().writeTo(out);
                     }
-                    final Header[] headers = httpResponse.getAllHeaders();
+                    final Header[] headers = httpResponse.getHeaders();
                     if (!DownloadUtils.isChunkConsistent(partFile, headers)) {
-                        log.error("#810.032 error while downloading chunk of resource {}, size is different", assetFile.file.getPath());
+                        log.error("#810.032 error while downloading chunk of resource {}, size is different", assetFile.file.toAbsolutePath());
                         resourceState = Enums.VariableState.transmitting_error;
                         break;
                     }
@@ -278,8 +283,11 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
 
             DownloadUtils.combineParts(assetFile, tempFile, idx);
 
-            if (!tempFile.renameTo(assetFile.file)) {
-                log.warn("#810.060 Can't rename file {} to file {}", tempFile.getPath(), assetFile.file.getPath());
+            try {
+                Files.move(tempFile.toPath(), assetFile.file);
+            }
+            catch (IOException e) {
+                log.warn("#810.060 Can't rename file {} to file {}", tempFile.getPath(), assetFile.file);
                 return;
             }
             log.info("Variable #{} was loaded", task.variableId);

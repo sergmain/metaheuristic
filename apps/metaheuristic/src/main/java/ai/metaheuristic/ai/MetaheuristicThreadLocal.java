@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,17 +28,6 @@ import lombok.AllArgsConstructor;
 public class MetaheuristicThreadLocal {
 
     public static final ThreadLocal<Boolean> schedule = ThreadLocal.withInitial(()->false);
-
-    public static void setSchedule() {
-        schedule.set(true);
-    }
-
-    public static void checkScheduler() {
-        if (!schedule.get()) {
-            throw new IllegalStateException("THis method must be used only in scheduler");
-        }
-    }
-
     private static final ThreadLocal<ExecutionStat> executionStat =  ThreadLocal.withInitial(ExecutionStat::new);
 
     public static ExecutionStat getExecutionStat() {

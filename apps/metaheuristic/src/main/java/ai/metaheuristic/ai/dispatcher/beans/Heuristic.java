@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,16 +18,16 @@ package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+//import jakarta.validation.constraints.NotBlank;
+//import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.springframework.lang.Nullable;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -40,7 +40,7 @@ import java.io.Serializable;
 @Table(name = "MH_HEURISTIC")
 @Data
 @EqualsAndHashCode(of = {"id", "version"})
-@ToString(exclude={"ecpy"})
+@ToString
 @NoArgsConstructor
 public class Heuristic implements Serializable {
     @Serial
@@ -54,47 +54,46 @@ public class Heuristic implements Serializable {
     public Integer version;
 
     // This field contains a value from MH_COMPANY.UNIQUE_ID, !NOT! from ID field
-    @NotNull
+//    @NotNull
     @Column(name = "COMPANY_ID")
     public Long companyId;
 
     @Column(name="CREATED_ON")
     public long createdOn;
 
-    @NotBlank
-    @Column(name = "PARAMS")
-    private String params;
-
-    public void setParams(String params) {
-        synchronized (this) {
-            this.params = params;
-            this.ecpy = null;
-        }
-    }
-
     @Column(name = "IS_DELETED")
     public boolean deleted;
 
+//    @NotBlank
+    @Column(name = "PARAMS")
+    private String params;
+
+    public String getParams() {
+        return params;
+    }
+
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
+
     @Transient
     @JsonIgnore
-    @Nullable
-    private ExecContextParamsYaml ecpy = null;
+    private final ThreadUtils.CommonThreadLocker<ExecContextParamsYaml> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
 
-    @JsonIgnore
-    public ExecContextParamsYaml getExecContextParamsYaml() {
-        if (ecpy ==null) {
-            synchronized (this) {
-                if (ecpy ==null) {
-                    ExecContextParamsYaml temp = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(params);
-                    ecpy = temp==null ? new ExecContextParamsYaml() : temp;
-                }
-            }
-        }
+    private ExecContextParamsYaml parseParams() {
+        ExecContextParamsYaml temp = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(params);
+        ExecContextParamsYaml ecpy = temp==null ? new ExecContextParamsYaml() : temp;
         return ecpy;
     }
 
     @JsonIgnore
-    public void updateParams(ExecContextParamsYaml wpy) {
-        setParams(ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(wpy));
+    public ExecContextParamsYaml getExecContextParamsYaml() {
+        return paramsLocked.get();
+    }
+
+    @JsonIgnore
+    public void updateParams(ExecContextParamsYaml tpy) {
+        setParams(ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(tpy));
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,13 +20,9 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelServi
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
-import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
@@ -36,21 +32,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings("unused")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@ActiveProfiles("dispatcher")
+//@ActiveProfiles({"dispatcher", "mysql"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class TestEvaluationVariables extends PreparingSourceCode {
 
@@ -61,7 +53,6 @@ public class TestEvaluationVariables extends PreparingSourceCode {
     @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
     @Autowired private ExecContextGraphTopLevelService execContextGraphTopLevelService;
     @Autowired private ExecContextRepository execContextRepository;
-    @Autowired private ExecContextTaskStateCache execContextTaskStateCache;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
 
     @SneakyThrows

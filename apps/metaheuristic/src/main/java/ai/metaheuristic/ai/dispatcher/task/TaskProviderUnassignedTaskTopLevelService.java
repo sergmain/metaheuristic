@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.QuotasData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.RegisterTaskForCheckCachingEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -41,6 +41,7 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -58,7 +59,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskProviderUnassignedTaskTopLevelService {
 
     private final TaskProviderTransactionalService taskProviderTransactionalService;
@@ -92,6 +93,10 @@ public class TaskProviderUnassignedTaskTopLevelService {
      */
     private final Map<Long, AtomicLong> bannedSince = new HashMap<>();
 
+    public Map<Long, AtomicLong> getBannedSince() {
+        return bannedSince;
+    }
+
     @SuppressWarnings("TextBlockMigration")
     @Nullable
     private TaskData.AssignedTask findUnassignedTaskAndAssignInternal(
@@ -108,7 +113,7 @@ public class TaskProviderUnassignedTaskTopLevelService {
             return null;
         }
 
-        AtomicLong longHolder = bannedSince.computeIfAbsent(coreId, o -> new AtomicLong(0));
+        AtomicLong longHolder = getBannedSince().computeIfAbsent(coreId, o -> new AtomicLong(0));
         if (longHolder.get() != 0 && System.currentTimeMillis() - longHolder.get() < TimeUnit.MINUTES.toMillis(30)) {
             return null;
         }
@@ -238,7 +243,7 @@ public class TaskProviderUnassignedTaskTopLevelService {
                     ParamsVersion v = YamlForVersioning.getParamsVersion(queuedTask.task.getParams());
                     if (v.getActualVersion()!=psy.taskParamsVersion) {
                         log.info("#317.138 check downgrading is possible, actual version: {}, required version: {}", v.getActualVersion(), psy.taskParamsVersion);
-                        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(queuedTask.task.getParams());
+                        TaskParamsYaml tpy = queuedTask.task.getTaskParamsYaml();
                         //noinspection unused
                         String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
                     }

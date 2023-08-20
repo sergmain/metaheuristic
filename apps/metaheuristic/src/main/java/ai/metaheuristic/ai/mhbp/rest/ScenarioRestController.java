@@ -16,14 +16,16 @@
 
 package ai.metaheuristic.ai.mhbp.rest;
 
-import ai.metaheuristic.ai.mhbp.data.ScenarioData;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
+import ai.metaheuristic.ai.mhbp.data.ScenarioData;
 import ai.metaheuristic.ai.mhbp.scenario.ScenarioService;
 import ai.metaheuristic.ai.mhbp.scenario.ScenarioTxService;
-import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
@@ -40,8 +42,8 @@ import java.util.Objects;
 @RestController
 @RequestMapping("/rest/v1/dispatcher/scenario")
 @Slf4j
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ScenarioRestController {
 
     private final ScenarioService scenarioService;
@@ -52,6 +54,13 @@ public class ScenarioRestController {
     public ScenarioData.ScenarioGroupsResult scenarioGroups(Pageable pageable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         final ScenarioData.ScenarioGroupsResult result = scenarioService.getScenarioGroups(pageable, context);
+        return result;
+    }
+
+    @GetMapping("/scenario-groups-all")
+    public ScenarioData.ScenarioGroupsAllResult getScenarioGroupsAll(Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        final ScenarioData.ScenarioGroupsAllResult result = scenarioService.getScenarioGroupsAll(context);
         return result;
     }
 
@@ -84,6 +93,24 @@ public class ScenarioRestController {
         return result;
     }
 
+    @GetMapping(value = "/scenario-step-evaluation-prepare/{scenarioId}/{uuid}")
+    public ScenarioData.PreparedStep scenarioStepEvaluationPrepare(@PathVariable long scenarioId, @PathVariable String uuid, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        ScenarioData.PreparedStep result = scenarioService.scenarioStepEvaluationPrepare(scenarioId, uuid, context);
+        return result;
+    }
+
+    @PostMapping(value = "/scenario-step-evaluation-run/{scenarioId}/{uuid}")
+    public ScenarioData.StepEvaluationResult scenarioStepEvaluationRun(
+            @PathVariable long scenarioId,
+            @PathVariable String uuid,
+            @RequestParam(name = "stepEvaluation") String stepEvaluation,
+            Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        ScenarioData.StepEvaluationResult result = scenarioService.scenarioStepEvaluationRun(scenarioId, uuid, stepEvaluation, context);
+        return result;
+    }
+
     @PostMapping(value = "/scenario-step-rearrange")
     public OperationStatusRest scenarioStepRearrange(
             @RequestParam(name = "scenarioId") Long scenarioId,
@@ -98,6 +125,16 @@ public class ScenarioRestController {
         return result;
     }
 
+    @PostMapping(value = "/accept-new-prompt-for-step/{scenarioId}/{uuid}")
+    public OperationStatusRest acceptNewPromptForStep(
+            @PathVariable long scenarioId,
+            @PathVariable String uuid,
+            @RequestParam(name = "newPrompt") String newPrompt,
+            Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        OperationStatusRest result = scenarioTxService.acceptNewPromptForStep(scenarioId, uuid, newPrompt, context);
+        return result;
+    }
 
     @PostMapping("/scenario-group-add-commit")
 //    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
@@ -134,7 +171,7 @@ public class ScenarioRestController {
 
     @PostMapping("/scenario-step-add-change-commit")
 //    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
-    public OperationStatusRest addScenarioStepFormCommit(
+    public OperationStatusRest createOrChangeScenarioStep(
             @RequestParam(name = "scenarioGroupId") String scenarioGroupId,
             @RequestParam(name = "scenarioId") String scenarioId,
             @RequestParam(name = "uuid", required = false) String uuid,
@@ -146,9 +183,12 @@ public class ScenarioRestController {
             @RequestParam(name = "functionCode", required = false) String functionCode,
             @RequestParam(name = "expected", required = false) String expected,
             @RequestParam(name = "aggregateType", required = false) String aggregateType,
+            @RequestParam(name = "cachable", required = false, defaultValue = "false") boolean isCachable,
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return scenarioService.createOrChangeScenarioStep(scenarioGroupId, scenarioId, uuid, parentUuid, name, prompt, apiId, resultCode, expected, functionCode, aggregateType, context);
+        return scenarioService.createOrChangeScenarioStep(
+                scenarioGroupId, scenarioId, uuid, parentUuid, name, prompt, apiId,
+                resultCode, expected, functionCode, aggregateType, isCachable, context);
     }
 
     @PostMapping("/scenario-group-delete-commit")
@@ -185,7 +225,7 @@ public class ScenarioRestController {
 
     @PostMapping("/scenario-run")
 //    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
-    public OperationStatusRest runScenario(
+    public SourceCodeData.OperationStatusWithSourceCodeId runScenario(
             @RequestParam(name = "scenarioGroupId") long scenarioGroupId,
             @RequestParam(name = "scenarioId") long scenarioId,
             Authentication authentication) {
@@ -193,4 +233,23 @@ public class ScenarioRestController {
         return scenarioService.runScenario(scenarioGroupId, scenarioId, context);
     }
 
+    @Nullable
+    @GetMapping("/scenarios/{scenarioGroupId}/scenario/{scenarioId}/sourceCodeId")
+    public SourceCodeData.SimpleSourceCodeUid getSourceCodeId(@PathVariable long scenarioGroupId, @PathVariable long scenarioId, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        final SourceCodeData.SimpleSourceCodeUid result = scenarioService.getSourceCodeId(scenarioGroupId, scenarioId, context);
+        return result;
+    }
+
+    @Nullable
+    @PostMapping("/move-scenario-to-new-group/{scenarioGroupId}/{scenarioId}")
+    public OperationStatusRest moveScenarioToNewGroup(
+            @PathVariable long scenarioGroupId,
+            @PathVariable long scenarioId,
+            @RequestParam(name = "newScenarioGroupId") long newScenarioGroupId,
+            Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        final OperationStatusRest result = scenarioTxService.moveScenarioToNewGroup(scenarioGroupId, scenarioId, newScenarioGroupId, context);
+        return result;
+    }
 }

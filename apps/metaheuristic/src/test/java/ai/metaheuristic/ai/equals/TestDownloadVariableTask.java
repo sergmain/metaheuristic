@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -40,8 +40,8 @@ public class TestDownloadVariableTask {
         ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef ref = new ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef(
                 new ProcessorAndCoreData.DispatcherUrl("url"), "url", 17L, "core-code-1", 101L);
 
-        DownloadVariableTask o1 = new DownloadVariableTask(ref, "111", EnumsApi.VariableContext.local, 42L, new File("."), new DispatcherLookupParamsYaml.DispatcherLookup(), false);
-        DownloadVariableTask o2 = new DownloadVariableTask(ref, "111", EnumsApi.VariableContext.local, 42L, new File("."), new DispatcherLookupParamsYaml.DispatcherLookup(), true);
+        DownloadVariableTask o1 = new DownloadVariableTask(ref, "111", EnumsApi.VariableContext.local, 42L, Path.of("."), new DispatcherLookupParamsYaml.DispatcherLookup(), false);
+        DownloadVariableTask o2 = new DownloadVariableTask(ref, "111", EnumsApi.VariableContext.local, 42L, Path.of("."), new DispatcherLookupParamsYaml.DispatcherLookup(), true);
 
         assertEquals(o1, o2);
     }

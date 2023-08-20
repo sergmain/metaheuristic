@@ -27,6 +27,8 @@ import org.springframework.data.domain.Slice;
 import org.springframework.lang.Nullable;
 
 import java.util.Collections;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author Sergio Lissner
@@ -34,6 +36,18 @@ import java.util.Collections;
  * Time: 9:12 PM
  */
 public class ApiData {
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ApiUid {
+        public Long id;
+        // actually, it's a 'code'
+        public String uid;
+
+        public String apiName;
+
+    }
 
     @Data
     @NoArgsConstructor
@@ -72,22 +86,20 @@ public class ApiData {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class QueryResult {
-        public String answer;
+        public ApiData.ProcessedAnswerFromAPI processedAnswer;
         public boolean success;
 
         @Nullable
         @JsonInclude(value= JsonInclude.Include.NON_NULL)
         public Error error;
-        public String raw;
 
-        public QueryResult(String answer, boolean success, String raw) {
-            this.answer = answer;
+        public QueryResult(ApiData.ProcessedAnswerFromAPI processedAnswer, boolean success) {
+            this.processedAnswer = processedAnswer;
             this.success = success;
-            this.raw = raw;
         }
 
         public static QueryResult asError(String error, Enums.QueryResultErrorType errorType) {
-            return new QueryResult(null, false, new Error(error, errorType), null);
+            return new QueryResult(null, false, new Error(error, errorType));
         }
     }
 
@@ -111,11 +123,13 @@ public class ApiData {
         }
     }
 
-    public record ProcessedAnswer(Enums.PromptResponseType type, @Nullable String content, @Nullable byte[] bytes){
-        public ProcessedAnswer(Enums.PromptResponseType type, @Nullable String content) {
-            this(type, content, null);
+    public record ProcessedAnswerFromAPI(RawAnswerFromAPI rawAnswerFromAPI, @Nullable String answer) {}
+
+    public record RawAnswerFromAPI(Enums.PromptResponseType type, @Nullable String raw, @Nullable byte[] bytes){
+        public RawAnswerFromAPI(Enums.PromptResponseType type, String raw) {
+            this(type, raw, null);
         }
-        public ProcessedAnswer(Enums.PromptResponseType type, @Nullable byte[] bytes) {
+        public RawAnswerFromAPI(Enums.PromptResponseType type, byte[] bytes) {
             this(type, null, bytes);
         }
     }
@@ -125,15 +139,16 @@ public class ApiData {
     public static class SchemeAndParams {
         public ApiScheme scheme;
         public ApiAuth auth;
+
+        public Supplier<String> tokenProviderFunc;
     }
 
     @Data
     @AllArgsConstructor
     public static class SchemeAndParamResult {
         public SchemeAndParams schemeAndParams;
-        public String result;
         public EnumsApi.OperationStatus status;
-        public String raw;
+        public RawAnswerFromAPI rawAnswerFromAPI;
         public String errorText;
         public int httpCode;
 

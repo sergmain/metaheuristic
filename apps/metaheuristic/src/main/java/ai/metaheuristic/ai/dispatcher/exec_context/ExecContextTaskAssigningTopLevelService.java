@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.event.*;
+import ai.metaheuristic.ai.dispatcher.event.events.*;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
@@ -27,9 +27,9 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextTaskAssigningTopLevelService {
 
     private final ExecContextCache execContextCache;
@@ -63,8 +63,9 @@ public class ExecContextTaskAssigningTopLevelService {
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final TaskRepository taskRepository;
     private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
-    private final TaskFinishingService taskFinishingService;
+    private final TaskFinishingTxService taskFinishingTxService;
     private final ExecContextRepository execContextRepository;
+    private final ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
 
     public static class UnassignedTasksStat {
@@ -91,7 +92,7 @@ public class ExecContextTaskAssigningTopLevelService {
         putToQueue(event);
     }
 
-    private void putToQueue(final FindUnassignedTasksAndRegisterInQueueEvent event) {
+    public void putToQueue(final FindUnassignedTasksAndRegisterInQueueEvent event) {
         final int activeCount = executor.getActiveCount();
         if (log.isDebugEnabled()) {
             final long completedTaskCount = executor.getCompletedTaskCount();
@@ -146,7 +147,7 @@ public class ExecContextTaskAssigningTopLevelService {
             execContextIds.sort(Comparator.naturalOrder());
             UnassignedTasksStat statTotal = new UnassignedTasksStat();
             for (Long execContextId : execContextIds) {
-                UnassignedTasksStat stat = findUnassignedTasksAndRegisterInQueue(execContextId);
+                UnassignedTasksStat stat = findUnassignedTasksAndRegisterInQueueInternal(execContextId);
                 statTotal.add(stat);
             }
             if (log.isInfoEnabled()) {
@@ -161,18 +162,7 @@ public class ExecContextTaskAssigningTopLevelService {
         }
     }
 
-    public UnassignedTasksStat findUnassignedTasksAndRegisterInQueue(Long execContextId) {
-        writeLock.lock();
-        try {
-            return findUnassignedTasksAndRegisterInQueueInternal(execContextId);
-        }
-        finally {
-            writeLock.unlock();;
-        }
-    }
-
     private long mills = 0L;
-
     private UnassignedTasksStat findUnassignedTasksAndRegisterInQueueInternal(Long execContextId) {
 
         UnassignedTasksStat stat = new UnassignedTasksStat();
@@ -197,7 +187,7 @@ public class ExecContextTaskAssigningTopLevelService {
         log.debug("#703.140 found {} tasks for registering, execContextId: #{}", vertices.size(), execContextId);
 
         if (vertices.isEmpty()) {
-            ExecContextTaskResettingTopLevelService.putToQueue(new ResetTasksWithErrorEvent(execContextId));
+            execContextTaskResettingTopLevelService.handleEvaluateProviderEvent(new ResetTasksWithErrorEvent(execContextId));
             return stat;
         }
 
@@ -227,7 +217,7 @@ public class ExecContextTaskAssigningTopLevelService {
         while ((taskIds = execContextFSM.getAllByProcessorIdIsNullAndExecContextIdAndIdIn(execContextId, filteredVertices, page++)).size()>0) {
 
             for (Long taskId : taskIds) {
-                TaskImpl task = taskRepository.findById(taskId).orElse(null);
+                TaskImpl task = taskRepository.findByIdReadOnly(taskId);
                 if (task==null) {
                     if (log.isInfoEnabled()) stat.notAllocatedReasons.add("task #"+ taskId +" wasn't found");
                     continue;
@@ -271,12 +261,12 @@ public class ExecContextTaskAssigningTopLevelService {
                 if (task.execState == EnumsApi.TaskExecState.NONE.value) {
                     final TaskParamsYaml taskParamYaml;
                     try {
-                        taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                        taskParamYaml = task.getTaskParamsYaml();
                     }
                     catch (YAMLException e) {
                         log.error("#703.260 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.getMessage(), task.getParams());
                         final String es = S.f("#703.260 Task #%s has broken params yaml and will be skipped", task.id);
-                        taskFinishingService.finishWithErrorWithTx(task.id, es);
+                        taskFinishingTxService.finishWithErrorWithTx(task.id, es);
                         if (log.isInfoEnabled()) stat.notAllocatedReasons.add(es);
                         continue;
                     }
@@ -316,7 +306,7 @@ public class ExecContextTaskAssigningTopLevelService {
             return;
         }
         try {
-            TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            TaskParamsYaml taskParamYaml = task.getTaskParamsYaml();
             if (taskParamYaml.task.context != EnumsApi.FunctionExecContext.internal) {
                 log.warn("#703.520 task #{} with IN_PROGRESS is there? Function: {}", task.id, taskParamYaml.task.function.code);
             }

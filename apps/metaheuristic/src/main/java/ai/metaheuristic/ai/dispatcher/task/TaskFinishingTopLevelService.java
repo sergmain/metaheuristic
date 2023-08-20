@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +18,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.event.DeregisterTasksByExecContextIdEvent;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
+import ai.metaheuristic.ai.dispatcher.event.events.DeregisterTasksByExecContextIdEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -29,18 +28,15 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
-import java.util.function.BiFunction;
-
-import static com.fasterxml.jackson.databind.type.LogicalType.Collection;
+import java.util.function.BiConsumer;
 
 /**
  * @author Serge
@@ -50,12 +46,11 @@ import static com.fasterxml.jackson.databind.type.LogicalType.Collection;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskFinishingTopLevelService {
 
-    private final DispatcherEventService dispatcherEventService;
     private final TaskRepository taskRepository;
-    private final TaskFinishingService taskFinishingService;
+    private final TaskFinishingTxService taskFinishingTxService;
     private final ExecContextCache execContextCache;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -63,9 +58,9 @@ public class TaskFinishingTopLevelService {
         checkTaskCanBeFinishedInternal(taskId, this::finishAndStoreVariableInternal );
     }
 
-    private void checkTaskCanBeFinishedInternal(Long taskId, BiFunction<Long, ExecContextParamsYaml, Void> finishAndStoreVariableFunction) {
+    private void checkTaskCanBeFinishedInternal(Long taskId, BiConsumer<Long, ExecContextParamsYaml> finishAndStoreVariableFunction) {
         TxUtils.checkTxNotExists();
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        TaskImpl task = taskRepository.findByIdReadOnly(taskId);
         if (task == null) {
             log.warn("#318.010 Reporting about non-existed task #{}", taskId);
             return;
@@ -122,7 +117,7 @@ public class TaskFinishingTopLevelService {
             }
         }
 
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+        TaskParamsYaml tpy = task.getTaskParamsYaml();
         boolean allUploaded = tpy.task.outputs.isEmpty() || tpy.task.outputs.stream()
                 .filter(o->o.sourcing==EnumsApi.DataSourcing.dispatcher)
                 .allMatch(o->o.uploaded);
@@ -135,18 +130,18 @@ public class TaskFinishingTopLevelService {
                 return;
             }
 
-            TaskSyncService.getWithSyncNullable(task.id,
-                    () -> finishAndStoreVariableFunction.apply(taskId, execContext.getExecContextParamsYaml()));
+            TaskSyncService.getWithSyncVoid(task.id,
+                    () -> finishAndStoreVariableFunction.accept(taskId, execContext.getExecContextParamsYaml()));
         }
     }
 
     // this method is here because there was a problem with transactional method called from lambda
-    private Void finishAndStoreVariableInternal(Long taskId, ExecContextParamsYaml ecpy) {
-        return taskFinishingService.finishAsOkAndStoreVariable(taskId, ecpy);
+    private void finishAndStoreVariableInternal(Long taskId, ExecContextParamsYaml ecpy) {
+        taskFinishingTxService.finishAsOkAndStoreVariable(taskId, ecpy);
     }
 
     private void finishWithErrorWithInternal(Long taskId, String console) {
-        taskFinishingService.finishWithErrorWithTx(taskId, console);
+        taskFinishingTxService.finishWithErrorWithTx(taskId, console);
     }
 
 

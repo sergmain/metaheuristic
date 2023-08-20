@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,21 +18,17 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
-import ai.metaheuristic.ai.dispatcher.event.SetVariableReceivedTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.VariableUploadedTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.VariableUploadedTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
-import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
-import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,11 +41,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskVariableService {
 
     private final TaskRepository taskRepository;
-    private final TaskService taskService;
+    private final TaskTxService taskService;
     private final VariableRepository variableRepository;
     private final EventPublisherService eventPublisherService;
 

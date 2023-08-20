@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,6 +45,7 @@ public interface AccountRepository extends CrudRepository<Account, Long> {
     @Query(value="delete from Account t where t.id=:id")
     void deleteById(Long id);
 
+    // TODO p3 2023-08-17 Transaction is 'read-only' but method is 'ForUpdate'
     @Transactional(readOnly = true)
     @Nullable
     @Query(value="select a from Account a where a.id=:id")

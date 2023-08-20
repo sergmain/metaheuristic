@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,13 @@ import java.util.List;
 @Repository
 @Profile("dispatcher")
 public interface BatchRepository extends CrudRepository<Batch, Long> {
+
+
+    @Nullable
+    @Transactional(readOnly = true)
+    @Query(value="select b from Batch b where b.id=:id")
+    Batch findByIdWithNull(Long id);
+
 
     @Query(value="select b.id from Batch b")
     List<Long> findAllIds();

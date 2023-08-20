@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2022, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,25 +17,25 @@
 package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
+import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.ResetTasksWithErrorEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.TransferStateFromTaskQueueToExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.repositories.*;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtils;
@@ -45,18 +45,21 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.preparing.PreparingConsts.GLOBAL_TEST_VARIABLE;
@@ -70,22 +73,24 @@ import static org.junit.jupiter.api.Assertions.*;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class PreparingSourceCodeService {
 
     private final SourceCodeRepository sourceCodeRepository;
     private final CompanyRepository companyRepository;
     private final ExecContextRepository execContextRepository;
     private final TaskRepositoryForTest taskRepositoryForTest;
-    private final SourceCodeService sourceCodeService;
-    private final GlobalVariableService globalVariableService;
+    private final SourceCodeTxService sourceCodeTxService;
+    private final GlobalVariableTxService globalVariableService;
     private final TxSupportForTestingService txSupportForTestingService;
     private final SouthbridgeService serverService;
     private final ExecContextStatusService execContextStatusService;
     private final SourceCodeValidationService sourceCodeValidationService;
     private final ExecContextCache execContextCache;
-    private final ExecContextTaskStateCache execContextTaskStateCache;
+    private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextTaskAssigningTopLevelService execContextTaskAssigningTopLevelService;
+    private final ApplicationEventPublisher eventPublisher;
+    private final ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
 
     public void cleanUp(String sourceCodeUid) {
         SourceCode sc = sourceCodeRepository.findByUid(sourceCodeUid);
@@ -113,7 +118,7 @@ public class PreparingSourceCodeService {
                 }
             }
             try {
-                sourceCodeService.deleteSourceCodeById(sc.getId());
+                sourceCodeTxService.deleteSourceCodeById(sc.getId());
             } catch (Throwable th) {
                 log.error("Error while planCache.deleteById()", th);
             }
@@ -200,6 +205,7 @@ public class PreparingSourceCodeService {
         final KeepAliveRequestParamYaml.Env env = new KeepAliveRequestParamYaml.Env();
         env.envs.put("env-for-test-function", "/path/to/cmd");
         env.envs.put("python-3", "/path/to/python-3");
+        env.envs.put("java-17", "/path/to/java-17");
 
         pr.status = new KeepAliveRequestParamYaml.ProcessorStatus(
                 env,
@@ -222,23 +228,39 @@ public class PreparingSourceCodeService {
     }
 
     @SneakyThrows
-    public void findTaskForRegisteringInQueueAndWait(Long execContextId) {
-        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContextId);
+    public void findTaskForRegisteringInQueueAndWait(ExecContextImpl execContext) {
+        eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
+                execContext.id, execContext.execContextGraphId, execContext.execContextTaskStateId));
+        Thread.sleep(500);
 
+        execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
+        execContextTaskAssigningTopLevelService.procesEvent();
+        Thread.sleep(500);
+        eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
+                execContext.id, execContext.execContextGraphId, execContext.execContextTaskStateId));
+        Thread.sleep(500);
+//        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContext.id);
+
+        execContextTaskResettingTopLevelService.resetTasksWithErrorForRecovery(new ResetTasksWithErrorEvent(execContext.id));
+
+/*
         boolean isQueueEmpty = true;
         for (int i = 0; i < 30; i++) {
-            Thread.sleep(2_000);
-            isQueueEmpty = TaskProviderTopLevelService.allTaskGroupFinished(execContextId);
+            Thread.sleep(500);
+            isQueueEmpty = TaskProviderTopLevelService.allTaskGroupFinished(execContext.id);
             if (!isQueueEmpty) {
                 break;
             }
         }
         assertFalse(isQueueEmpty);
+*/
     }
 
     @SneakyThrows
     public void findInternalTaskForRegisteringInQueue(Long execContextId) {
-        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContextId);
+        execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
+        execContextTaskAssigningTopLevelService.procesEvent();
+//        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContextId);
 
         boolean isQueueEmpty = true;
         for (int i = 0; i < 30; i++) {
@@ -252,7 +274,8 @@ public class PreparingSourceCodeService {
     }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextForTest(PreparingData.PreparingSourceCodeData preparingSourceCodeData) {
-        return txSupportForTestingService.createExecContext(preparingSourceCodeData.getSourceCode(), preparingSourceCodeData.getCompany().getUniqueId());
+        DispatcherContext context = new DispatcherContext(preparingSourceCodeData.getAccount(), preparingSourceCodeData.getCompany());
+        return txSupportForTestingService.createExecContext(preparingSourceCodeData.getSourceCode(), context.asUserExecContext());
     }
 
     public void produceTasksForTest(String sourceCodeParams, PreparingData.PreparingSourceCodeData preparingSourceCodeData ) {
@@ -295,7 +318,7 @@ public class PreparingSourceCodeService {
         if (execContext.execContextTaskStateId==null) {
             return 0;
         }
-        ExecContextTaskState ects = execContextTaskStateCache.findById(execContext.execContextTaskStateId);
+        ExecContextTaskState ects = execContextTaskStateRepository.findById(execContext.execContextTaskStateId).orElse(null);
         if (ects==null) {
             return 0;
         }
@@ -307,7 +330,7 @@ public class PreparingSourceCodeService {
         if (execContext.execContextTaskStateId==null) {
             return EnumsApi.TaskExecState.NONE;
         }
-        ExecContextTaskState ects = execContextTaskStateCache.findById(execContext.execContextTaskStateId);
+        ExecContextTaskState ects = execContextTaskStateRepository.findById(execContext.execContextTaskStateId).orElse(null);
         if (ects==null) {
             return EnumsApi.TaskExecState.NONE;
         }

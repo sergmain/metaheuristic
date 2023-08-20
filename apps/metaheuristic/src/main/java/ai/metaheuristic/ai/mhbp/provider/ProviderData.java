@@ -16,9 +16,11 @@
 
 package ai.metaheuristic.ai.mhbp.provider;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.S;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
@@ -31,39 +33,19 @@ import java.util.List;
  */
 public class ProviderData {
 
-    public static class Provider {
-        public String code;
-        public String name;
-        public String url;
-        public String token;
-    }
+    public record QueriedData(String queryText, ExecContextData.UserExecContext userExecContext){}
 
-    public static class Providers {
-        public static final List<Provider> providers = new ArrayList<>();
-    }
-
-    public record QueriedData(String queryText, @Nullable DispatcherContext context){}
-
-    public record QuestionAndAnswer(@Nullable String q, @Nullable String a, EnumsApi.OperationStatus status, @Nullable String error,  @Nullable String raw) {
-        public QuestionAndAnswer(EnumsApi.OperationStatus status) {
-            this(null, null, status, null, null);
-        }
-
+    public record QuestionAndAnswer(@Nullable String q, @Nullable ApiData.QueryResult a, EnumsApi.OperationStatus status, @Nullable String error) {
         public QuestionAndAnswer(EnumsApi.OperationStatus status, String error) {
-            this(null, null, status, error, null);
+            this(null, null, status, error);
         }
 
-        public QuestionAndAnswer(@Nullable String q, @Nullable String a, EnumsApi.OperationStatus status, @Nullable String error, @Nullable String raw) {
-            if (status==EnumsApi.OperationStatus.OK) {
-                if (raw==null || q==null || a==null) {
-                    throw new IllegalStateException("(raw==null || q==null || a==null)");
-                }
+        public QuestionAndAnswer(@Nullable String q, @Nullable ApiData.QueryResult a) {
+            this(q, a, EnumsApi.OperationStatus.OK, null);
+            if (S.b(q)) {
+                throw new IllegalStateException("(S.b(q))");
             }
-            this.q = q;
-            this.a = a;
-            this.status = status;
-            this.error = error;
-            this.raw = raw;
         }
+
     }
 }

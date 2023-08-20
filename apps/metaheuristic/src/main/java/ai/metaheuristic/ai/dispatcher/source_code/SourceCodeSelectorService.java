@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,9 +24,7 @@ import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
-import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.source_code.SourceCodeStoredParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
@@ -34,6 +32,7 @@ import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,7 +53,7 @@ import java.util.stream.Stream;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class SourceCodeSelectorService {
 
     private final SourceCodeCache sourceCodeCache;
@@ -65,7 +64,7 @@ public class SourceCodeSelectorService {
     public List<SourceCodeData.SourceCodeUid> filterSourceCodes(DispatcherContext context, List<String> uids) {
         log.debug("#984.005 list for filtering: {}", uids);
         List<SourceCodeData.SourceCodeUid> codes = getAvailableSourceCodesForCompany(context).items.stream()
-                .peek(o->log.debug("\t#984.010 sourceCodeUid: {}", o.getUid()))
+//                .peek(o->log.debug("\t#984.010 sourceCodeUid: {}", o.getUid()))
                 .filter(o->uids.contains(o.getUid()))
                 .map(o->new SourceCodeData.SourceCodeUid(o.getId(), o.getUid()))
                 .collect(Collectors.toList());
@@ -106,7 +105,7 @@ public class SourceCodeSelectorService {
                 return false;
             }
             try {
-                SourceCodeStoredParamsYaml scspy = SourceCodeStoredParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
+                SourceCodeStoredParamsYaml scspy = o.getSourceCodeStoredParamsYaml();
                 return !scspy.internalParams.archived;
             } catch (YAMLException e) {
                 final String es = "#984.040 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #" + o.getId();
@@ -122,7 +121,7 @@ public class SourceCodeSelectorService {
         if (company!=null && !S.b(company.getParams())) {
             final Set<String> groups;
             try {
-                CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(company.getParams());
+                CompanyParamsYaml cpy = company.getCompanyParamsYaml();
                 if (cpy.ac!=null && !S.b(cpy.ac.groups)) {
                     groups = getGroups(cpy.ac.groups);
                 }

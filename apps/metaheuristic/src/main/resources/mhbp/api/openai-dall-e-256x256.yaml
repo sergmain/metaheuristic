@@ -1,0 +1,22 @@
+version: 2
+code: openai-dall-e-256x256
+scheme:
+  auth:
+    code: openai
+  request:
+    type: post
+    uri: https://api.openai.com/v1/images/generations
+    prompt:
+      place: text
+      replace: $prompt$
+      text: |+
+        {
+           "prompt": "$prompt$",
+           "n": 1,
+           "size": "256x256",
+           "response_format" : "b64_json"
+        }
+  response:
+    type: image_base64
+    path: $['data'][0]['b64_json']
+

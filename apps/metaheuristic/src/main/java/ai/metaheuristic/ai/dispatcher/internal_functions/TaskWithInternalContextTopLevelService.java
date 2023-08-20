@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,12 +19,11 @@ package ai.metaheuristic.ai.dispatcher.internal_functions;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.event.VariableUploadedEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -35,6 +34,7 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.SystemUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -52,27 +52,29 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskWithInternalContextTopLevelService {
 
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final TaskWithInternalContextService taskWithInternalContextService;
-    private final VariableTopLevelService variableTopLevelService;
-    private final VariableTxService variableService;
-    private final ExecContextVariableService execContextVariableService;
+    private final VariableTxService variableTxService;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
+    private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
 
     public void storeResult(Long taskId, Long subExecContextId) {
         TxUtils.checkTxNotExists();
-        TaskImpl task = taskRepository.findById(taskId).orElseThrow(
-                () -> new InternalFunctionException(task_not_found, "#992.020 Task not found #" + taskId));
+        TaskImpl task = taskRepository.findByIdReadOnly(taskId);
+
+        if (task==null) {
+            throw new InternalFunctionException(task_not_found, "#992.020 Task not found #" + taskId);
+        }
 
         TaskParamsYaml taskParamsYaml = task.getTaskParamsYaml();
 
         copyVariables(subExecContextId, task, taskParamsYaml);
-        taskWithInternalContextService.storeResult(taskId, taskParamsYaml);
+        taskWithInternalContextService.storeResult(taskId, taskParamsYaml.task.function.code);
     }
 
     private void copyVariables(Long subExecContextId, TaskImpl task, TaskParamsYaml taskParamsYaml) {
@@ -117,16 +119,18 @@ public class TaskWithInternalContextTopLevelService {
                             "#992.120 local variable name " + execContextOutput.name + " wasn't inited, variableId: #"+variableHolder.variable.id);
                 }
                 if (variableHolder.variable.nullified) {
-                    VariableUploadedEvent event = new VariableUploadedEvent(ec.id, task.id, output.id, true);
                     VariableSyncService.getWithSyncVoidForCreation(output.id,
-                            ()->variableTopLevelService.setAsNullFunction(output.id, event, ec.execContextVariableStateId));
+                            ()->variableTxService.setVariableAsNull(output.id));
                 }
                 else {
-                    Path tempFile = Files.createTempFile(tempDir, "output-", ".bin");
-                    variableService.storeToFileWithTx(variableHolder.variable.id, tempFile);
+                    Path tempFile = Files.createTempFile(tempDir, "output-", Consts.BIN_EXT);
+                    variableTxService.storeToFileWithTx(variableHolder.variable.id, tempFile);
                     VariableSyncService.getWithSyncVoidForCreation(output.id,
-                            ()->execContextVariableService.storeDataInVariable(output, tempFile));
+                            ()-> variableTxService.storeDataInVariable(output, tempFile));
                 }
+                // we don't need to use 'flushing' of state because this method is for copying variable from long-running process
+                VariableUploadedEvent event = new VariableUploadedEvent(ec.id, task.id, output.id, variableHolder.variable.nullified);
+                execContextVariableStateTopLevelService.registerVariableStateInternal(event.execContextId, List.of(event), ec.execContextVariableStateId);
             }
         }
         catch (IOException e) {

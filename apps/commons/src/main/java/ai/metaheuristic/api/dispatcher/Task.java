@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.api.dispatcher;
 
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 // We need an interface because of not putting an implementation (which is Entity bean) here
 public interface Task {

@@ -17,12 +17,13 @@
 package ai.metaheuristic.ai.mhbp.rest;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
@@ -37,8 +38,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/rest/v1/dispatcher/api")
 @Slf4j
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ApiRestController {
 
     private final ApiService apiService;
@@ -54,7 +55,7 @@ public class ApiRestController {
     @GetMapping("/api/{apiId}")
     public ApiData.Api apis(@PathVariable @Nullable Long apiId, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        final ApiData.Api api = apiService.getApi(apiId, context);
+        final ApiData.Api api = apiService.getApiAsData(apiId, context);
         return api;
     }
 

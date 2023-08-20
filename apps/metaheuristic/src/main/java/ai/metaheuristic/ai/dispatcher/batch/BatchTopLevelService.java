@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,12 +26,16 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.exec_context.*;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
@@ -51,6 +55,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -59,7 +64,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -84,7 +88,7 @@ import static ai.metaheuristic.ai.Consts.ZIP_EXT;
 @Slf4j
 @Profile("dispatcher")
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class BatchTopLevelService {
 
     private static final String SOURCE_CODE_NOT_FOUND = "Source code wasn't found";
@@ -93,13 +97,13 @@ public class BatchTopLevelService {
     private final SourceCodeCache sourceCodeCache;
     private final ExecContextCache execContextCache;
     private final BatchRepository batchRepository;
-    private final BatchTxService batchService;
+    private final BatchTxService batchTxService;
     private final BatchCache batchCache;
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final BatchHelperService batchHelperService;
-    private final ExecContextVariableService execContextVariableService;
+    private final VariableTxService variableTxService;
 
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_ENTRY_SIZE_FUNCTION = BatchTopLevelService::isZipEntitySizeOk;
@@ -112,7 +116,7 @@ public class BatchTopLevelService {
     public void deleteOrphanOrObsoletedBatches(Set<Long> batchIds) {
         for (Long batchId : batchIds) {
             try {
-                batchService.deleteBatch(batchId);
+                batchTxService.deleteBatch(batchId);
                 log.info("210.140 Orphan or obsoleted batch #{} was deleted", batchId);
             }
             catch (Throwable th) {
@@ -124,7 +128,7 @@ public class BatchTopLevelService {
     @Data
     @AllArgsConstructor
     public static class FileWithMapping {
-        public File file;
+        public Path file;
         public String originName;
     }
 
@@ -252,7 +256,7 @@ public class BatchTopLevelService {
             return new BatchData.UploadingStatus("#981.040 name of uploaded file is blank");
         }
         // fix for the case when browser sends a full path, ie Edge
-        final String originFilename = new File(tempFilename).getName();
+        final String originFilename = Path.of(tempFilename).getFileName().toString();
 
         String extTemp = StrUtils.getExtension(originFilename);
         if (extTemp==null) {
@@ -284,7 +288,7 @@ public class BatchTopLevelService {
             // doesn't work with abstract InputStream
             Path tempFile;
             try {
-                tempFile = Files.createTempFile(tempDir, "mh-temp-file-for-processing-", ".bin");
+                tempFile = Files.createTempFile(tempDir, "mh-temp-file-for-processing-", Consts.BIN_EXT);
                 try (InputStream is = file.getInputStream()) {
                     DirUtils.copy(is, tempFile);
                 }
@@ -310,19 +314,20 @@ public class BatchTopLevelService {
             if (sc==null) {
                 return new BatchData.UploadingStatus("#981.165 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
             }
-            ExecContextCreatorService.ExecContextCreationResult creationResult = execContextCreatorTopLevelService.createExecContext(sourceCodeId, dispatcherContext);
+            ExecContextCreatorService.ExecContextCreationResult creationResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, dispatcherContext.asUserExecContext(), false);
             if (creationResult.isErrorMessages()) {
                 throw new BatchResourceProcessingException("#981.180 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
             }
             final ExecContextParamsYaml execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();
+            ExecContextParamsYaml.Variable variable = execContextParamsYaml.variables.inputs.get(0);
             try(InputStream is = Files.newInputStream(tempFile)) {
-                execContextVariableService.initInputVariable(is, file.getSize(), originFilename, creationResult.execContext.id, execContextParamsYaml, 0);
+                variableTxService.createInitializedTx(is, file.getSize(), variable.name, originFilename, creationResult.execContext.id, Consts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.zip);
             }
             final BatchData.UploadingStatus uploadingStatus;
             uploadingStatus = ExecContextSyncService.getWithSync(creationResult.execContext.id, ()->
                     ExecContextGraphSyncService.getWithSync(creationResult.execContext.execContextGraphId, ()->
                             ExecContextTaskStateSyncService.getWithSync(creationResult.execContext.execContextTaskStateId, ()->
-                                    batchService.createBatchForFile(
+                                    batchTxService.createBatchForFile(
                                             sc, creationResult.execContext.id, dispatcherContext))));
             return uploadingStatus;
         }
@@ -371,10 +376,10 @@ public class BatchTopLevelService {
             if (batch.deleted) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batchId + " was deleted successfully.", null);
             }
-            return ExecContextSyncService.getWithSync(execContextId, ()->batchService.deleteBatchVirtually(execContextId, companyUniqueId, batchId));
+            return ExecContextSyncService.getWithSync(execContextId, ()-> batchTxService.deleteBatchVirtually(execContextId, companyUniqueId, batchId));
         }
         else {
-            return ExecContextSyncService.getWithSync(execContextId, ()->batchService.deleteBatch(execContextId, companyUniqueId, batchId));
+            return ExecContextSyncService.getWithSync(execContextId, ()-> batchTxService.deleteBatch(execContextId, companyUniqueId, batchId));
         }
     }
 
@@ -390,13 +395,13 @@ public class BatchTopLevelService {
     }
 
     public BatchData.Status getBatchProcessingStatus(Long batchId, Long companyUniqueId, boolean includeDeleted) {
-        return batchService.getBatchProcessingStatus(batchId, companyUniqueId, includeDeleted);
+        return batchTxService.getBatchProcessingStatus(batchId, companyUniqueId, includeDeleted);
     }
 
     @Nullable
     public CleanerInfo getBatchProcessingResultWitTx(Long batchId, Long companyUniqueId, boolean includeDeleted) {
         try {
-            return batchService.getBatchProcessingResultWitTx(batchId, companyUniqueId, includeDeleted);
+            return batchTxService.getBatchProcessingResultWitTx(batchId, companyUniqueId, includeDeleted);
         } catch (Throwable th) {
             String es = S.f("#981.400 Error while getting a result of processing for batch #%d, error: %s", batchId, th.getMessage());
             log.error(es, th);
@@ -404,9 +409,10 @@ public class BatchTopLevelService {
         }
     }
 
+    @Nullable
     public CleanerInfo getBatchOriginFile(Long batchId) {
         try {
-            return batchService.getBatchOriginFile(batchId);
+            return batchTxService.getBatchOriginFile(batchId);
         } catch (Throwable th) {
             String es = S.f("#981.420 Error while getting an original file for batch #%d, error: %s", batchId, th.getMessage());
             log.error(es, th);

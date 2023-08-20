@@ -17,32 +17,31 @@
 package ai.metaheuristic.ai.mhbp.provider;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.mhbp.yaml.auth.ApiAuth;
-import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Auth;
 import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.ai.mhbp.data.CommunicationData;
 import ai.metaheuristic.ai.mhbp.data.NluData;
 import ai.metaheuristic.ai.mhbp.repositories.AuthRepository;
+import ai.metaheuristic.ai.mhbp.api_keys.ApiKeysProvider;
+import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.commons.S;
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.fluent.Executor;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.client.fluent.Response;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.client.utils.URIUtils;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicNameValuePair;
+import org.apache.hc.client5.http.fluent.Executor;
+import org.apache.hc.client5.http.fluent.Request;
+import org.apache.hc.client5.http.fluent.Response;
+import org.apache.hc.client5.http.utils.URIUtils;
+import org.apache.hc.core5.http.*;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.apache.hc.core5.net.URIBuilder;
+import org.apache.hc.core5.util.Timeout;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -63,20 +62,31 @@ import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Profile("dispatcher")
 public class ProviderApiSchemeService {
 
     private final AuthRepository authRepository;
+    private final ApiKeysProvider tokenProvider;
+    private final Globals globals;
 
-    public ApiData.SchemeAndParamResult queryProviders(Api api, NluData.QueriedPrompt info) {
+    public ProviderApiSchemeService(
+            @Autowired AuthRepository authRepository,
+            @Autowired ApiKeysProvider tokenProvider,
+            @Autowired Globals globals) {
+        this.authRepository = authRepository;
+        this.tokenProvider = tokenProvider;
+        this.globals = globals;
+    }
+
+    public ApiData.SchemeAndParamResult queryProviders(Api api, ProviderData.QueriedData queriedData, NluData.QueriedPrompt info) {
         ApiScheme scheme = api.getApiScheme();
         List<Auth> auths = authRepository.findAllByCompanyUniqueId(api.companyId);
         Auth auth = auths.stream().filter(o->o.getAuthParams().auth.code.equals(scheme.scheme.auth.code)).findFirst().orElse(null);
         if (auth==null) {
             throw new RuntimeException("Auth wasn't found for code " + scheme.scheme.auth.code);
         }
-        ApiData.SchemeAndParams schemeAndParams = new ApiData.SchemeAndParams(scheme, auth.getAuthParams());
+
+        ApiData.SchemeAndParams schemeAndParams = new ApiData.SchemeAndParams(scheme, auth.getAuthParams(), ()-> tokenProvider.getActualToken(auth.getAuthParams().auth, queriedData));
 
         ApiData.SchemeAndParamResult result = queryProviderApi(schemeAndParams, info);
         return result;
@@ -124,7 +134,7 @@ public class ProviderApiSchemeService {
         final Request request;
         JsonStringEncoder encoder = JsonStringEncoder.getInstance();
         if (schemeAndParams.scheme.scheme.request.type==Enums.HttpMethodType.post) {
-            request = Request.Post(uri).connectTimeout(5000).socketTimeout(20000);
+            request = Request.post(uri).connectTimeout(Timeout.ofSeconds(5)); //.socketTimeout(20000);
             if (schemeAndParams.scheme.scheme.request.prompt.place==Enums.PromptPlace.text) {
                 String encoded = new String(encoder.quoteAsString(info.text));
                 String json = schemeAndParams.scheme.scheme.request.prompt.text.replace(schemeAndParams.scheme.scheme.request.prompt.replace, encoded);
@@ -133,7 +143,7 @@ public class ProviderApiSchemeService {
             }
         }
         else if (schemeAndParams.scheme.scheme.request.type==Enums.HttpMethodType.get) {
-            request = Request.Get(uri).connectTimeout(5000).socketTimeout(20000);
+            request = Request.get(uri).connectTimeout(Timeout.ofSeconds(5)); //.socketTimeout(20000);
         }
         else {
             return new ApiData.SchemeAndParamResult(schemeAndParams, "unknown type of request: " + schemeAndParams.scheme.scheme.request.type, 0);
@@ -145,7 +155,6 @@ public class ProviderApiSchemeService {
 
     @SneakyThrows
     public static ApiData.SchemeAndParamResult getData(ApiData.SchemeAndParams schemeAndParams, final Request request) {
-
         RestUtils.addHeaders(request);
         final Executor executor;
         if (schemeAndParams.auth.auth.type==Enums.AuthType.basic) {
@@ -159,7 +168,7 @@ public class ProviderApiSchemeService {
                 return new ApiData.SchemeAndParamResult(schemeAndParams, "(schemeAndParams.auth.auth.token==null)", 0);
             }
             if (schemeAndParams.auth.auth.token.place==Enums.TokenPlace.header) {
-                String token = getActualToken(schemeAndParams.auth.auth.token);
+                String token = schemeAndParams.tokenProviderFunc.get();
                 request.addHeader("Authorization", "Bearer " + token);
             }
             executor = Executor.newInstance();
@@ -169,46 +178,34 @@ public class ProviderApiSchemeService {
         Response response = executor.execute(request);
 
         final HttpResponse httpResponse = response.returnResponse();
-        final HttpEntity entity = httpResponse.getEntity();
-        final int statusCode = httpResponse.getStatusLine().getStatusCode();
+        if (!(httpResponse instanceof ClassicHttpResponse classicHttpResponse)) {
+            throw new IllegalStateException("(!(httpResponse instanceof ClassicHttpResponse classicHttpResponse))");
+        }
+        final HttpEntity entity = classicHttpResponse.getEntity();
+        final int statusCode = classicHttpResponse.getCode();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         if (entity != null) {
             entity.writeTo(baos);
         }
-        final String data = baos.toString();
+        byte[] bytes = baos.toByteArray();
         if (statusCode!=HttpStatus.OK.value()) {
-            final String msg = "HttpCode: "+statusCode+", Server response:\n'" + data +"'";
+            //noinspection
+            String d;
+            try {
+                d = StringUtils.substring(new String(bytes, StandardCharsets.UTF_8), 0, 512);
+            }
+            catch (Throwable e) {
+                d = "<response for API is binary>";
+            }
+            final String msg = "HttpCode: "+statusCode+", Server response:\n'" + d +"'";
             log.error(msg);
             return new ApiData.SchemeAndParamResult(schemeAndParams, msg, statusCode);
         }
-        return new ApiData.SchemeAndParamResult(schemeAndParams, data, OK, data, null, HttpStatus.OK.value());
-    }
-
-    public static String getActualToken(ApiAuth.TokenAuth tokenAuth) {
-        if (tokenAuth.token!=null) {
-            return tokenAuth.token;
-        }
-        String evnParam = getEnvParamName(tokenAuth.env);
-        final String value = System.getenv(evnParam);
-        if (S.b(value)) {
-            throw new RuntimeException("(S.b(value)) , evn param: " + evnParam);
-        }
-        return value;
-    }
-
-    public static String getEnvParamName(String env) {
-        if (S.b(env)) {
-            throw new IllegalStateException("(S.b(env))");
-        }
-        int start = 0;
-        int end = 0;
-        if (StringUtils.startsWithAny(env, "%", "$")) {
-            ++start;
-        }
-        if (StringUtils.endsWithAny(env, "%", "$")) {
-            ++end;
-        }
-        return env.substring(start, env.length()-end);
+        ApiData.RawAnswerFromAPI rawAnswerFromAPI =
+                schemeAndParams.scheme.scheme.response.type.binary
+                        ? new ApiData.RawAnswerFromAPI(schemeAndParams.scheme.scheme.response.type, bytes)
+                        : new ApiData.RawAnswerFromAPI(schemeAndParams.scheme.scheme.response.type, new String(bytes, StandardCharsets.UTF_8));
+        return new ApiData.SchemeAndParamResult(schemeAndParams, OK, rawAnswerFromAPI, null, HttpStatus.OK.value());
     }
 
     @SuppressWarnings("ConstantValue")
@@ -222,7 +219,7 @@ public class ProviderApiSchemeService {
         if (username == null || password == null) {
             throw new IllegalStateException("(username == null || password == null)");
         }
-        return Executor.newInstance().authPreemptive(httpHost).auth(httpHost, username, password);
+        return Executor.newInstance().authPreemptive(httpHost).auth(httpHost, username, password.toCharArray());
     }
 
 }

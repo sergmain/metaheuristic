@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.event.TransferStateFromTaskQueueToExecContextEvent;
-import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.TransferStateFromTaskQueueToExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInGraphEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -28,18 +28,18 @@ import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadedPool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.util.LinkedList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -49,61 +49,40 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextTaskStateTopLevelService {
 
     private final ExecContextTaskStateService execContextTaskStateService;
     private final TaskRepository taskRepository;
     private final ExecContextCache execContextCache;
 
-    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
-
-    private final LinkedList<UpdateTaskExecStatesInGraphEvent> queue = new LinkedList<>();
+    private final LinkedHashMap<Long, ThreadedPool<UpdateTaskExecStatesInGraphEvent>> updateTaskExecStatesInGraphEventThreadedPool = new LinkedHashMap<>(100) {
+        protected boolean removeEldestEntry(Map.Entry<Long, ThreadedPool<UpdateTaskExecStatesInGraphEvent>> entry) {
+            return this.size()>50 && entry.getValue().getQueueSize()==0 && entry.getValue().getActiveCount()==0;
+        }
+    };
 
     @Async
     @EventListener
-    public void handleUpdateTaskExecStatesInGraphEvent(UpdateTaskExecStatesInGraphEvent event) {
-        putToQueue(event);
-    }
-
-    public void putToQueue(final UpdateTaskExecStatesInGraphEvent event) {
-        synchronized (queue) {
-            if (queue.contains(event)) {
-                return;
-            }
-            queue.add(event);
-        }
-    }
-
-    @Nullable
-    private UpdateTaskExecStatesInGraphEvent pullFromQueue() {
-        synchronized (queue) {
-            return queue.pollFirst();
-        }
+    public void handleEvent(UpdateTaskExecStatesInGraphEvent event) {
+        updateTaskExecStatesInGraphEventThreadedPool.computeIfAbsent(event.execContextId,
+                (id)-> new ThreadedPool<>(1, 0, false, false, this::updateTaskExecStatesInGraph)).putToQueue(event);
     }
 
     public void processUpdateTaskExecStatesInGraph() {
-        if (executor.getActiveCount()>0) {
-            return;
-        }
-        executor.submit(() -> {
-            UpdateTaskExecStatesInGraphEvent event;
-            while ((event = pullFromQueue())!=null) {
-                updateTaskExecStatesInGraph(event);
-            }
-        });
+        updateTaskExecStatesInGraphEventThreadedPool.entrySet().stream().parallel().forEach(e->e.getValue().processEvent());
     }
 
     public void updateTaskExecStatesInGraph(UpdateTaskExecStatesInGraphEvent event) {
         try {
             log.debug("call ExecContextTaskStateTopLevelService.updateTaskExecStatesInGraph({}, {})", event.execContextId, event.taskId);
-            TaskImpl task = taskRepository.findById(event.taskId).orElse(null);
+            TaskImpl task = taskRepository.findByIdReadOnly(event.taskId);
             if (task==null) {
                 return;
             }
-            TaskParamsYaml taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            TaskParamsYaml taskParams = task.getTaskParamsYaml();
             if (!event.execContextId.equals(task.execContextId)) {
-                log.error("#417.020 (!execContextId.equals(task.execContextId))");
+                log.error("417.020 (!execContextId.equals(task.execContextId))");
                 return;
             }
             ExecContextImpl ec = execContextCache.findById(task.execContextId, true);
@@ -115,30 +94,44 @@ public class ExecContextTaskStateTopLevelService {
                             () -> updateTaskExecStatesInGraph(ec.execContextGraphId, ec.execContextTaskStateId, event.taskId, EnumsApi.TaskExecState.from(task.execState), taskParams.task.taskContextId)));
 
         } catch (Throwable th) {
-            log.error("#417.020 Error, need to investigate ", th);
+            log.error("417.020 Error, need to investigate ", th);
         }
     }
 
+    private OperationStatusRest updateTaskExecStatesInGraph(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState state, String taskContextId) {
+        return execContextTaskStateService.updateTaskExecStatesInGraph(execContextGraphId, execContextTaskStateId, taskId, state, taskContextId);
+    }
+
+    private final LinkedHashMap<Long, ThreadedPool<TransferStateFromTaskQueueToExecContextEvent>> threadedPoolMap = new LinkedHashMap<>(100) {
+        protected boolean removeEldestEntry(Map.Entry<Long, ThreadedPool<TransferStateFromTaskQueueToExecContextEvent>> entry) {
+            return this.size()>50 && entry.getValue().getQueueSize()==0 && entry.getValue().getActiveCount()==0;
+        }
+    };
+
     @Async
     @EventListener
+    public void handleEvent(TransferStateFromTaskQueueToExecContextEvent event) {
+        threadedPoolMap.computeIfAbsent(event.execContextId, (id)-> new ThreadedPool<>(2, this::transferStateFromTaskQueueToExecContext)).putToQueue(event);
+    }
+
     public void transferStateFromTaskQueueToExecContext(TransferStateFromTaskQueueToExecContextEvent event) {
         try {
             log.debug("call ExecContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext({})", event.execContextId);
             TaskQueue.TaskGroup taskGroup;
             int i = 1;
+            long mills = System.currentTimeMillis();
             while ((taskGroup =
                     ExecContextGraphSyncService.getWithSync(event.execContextGraphId, ()->
                             ExecContextTaskStateSyncService.getWithSync(event.execContextTaskStateId, ()->
                                     transferStateFromTaskQueueToExecContext(
                                             event.execContextId, event.execContextGraphId, event.execContextTaskStateId))))!=null) {
                 taskGroup.reset();
-                i++;
-                if (i>10_000) {
-                    log.error("#417.040 To many calls to transferStateFromTaskQueueToExecContext()");
+                if (System.currentTimeMillis() - mills > 1_000) {
                     break;
                 }
+                i++;
             }
-            log.info("#417.060 transferStateFromTaskQueueToExecContext() was completed in {} loops", i-1);
+            log.info("417.060 transferStateFromTaskQueueToExecContext() was completed in {} loops within {} milliseconds", i-1, System.currentTimeMillis() - mills);
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }
@@ -149,7 +142,4 @@ public class ExecContextTaskStateTopLevelService {
         return execContextTaskStateService.transferStateFromTaskQueueToExecContext(execContextId, execContextGraphId, execContextTaskStateId);
     }
 
-    private OperationStatusRest updateTaskExecStatesInGraph(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState state, String taskContextId) {
-        return execContextTaskStateService.updateTaskExecStatesInGraph(execContextGraphId, execContextTaskStateId, taskId, state, taskContextId);
-    }
 }

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,11 +40,14 @@ import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Function;
 
 import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
@@ -58,7 +61,7 @@ import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
 @Slf4j
 @Profile("dispatcher")
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class SourceCodeValidationService {
 
     private final FunctionTopLevelService functionTopLevelService;
@@ -66,7 +69,8 @@ public class SourceCodeValidationService {
     private final SourceCodeStateService sourceCodeStateService;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     private final SourceCodeRepository sourceCodeRepository;
-
+    private final InternalFunctionRegisterService internalFunctionRegisterService;
+//
     public SourceCodeApiData.SourceCodeValidationResult checkConsistencyOfSourceCode(SourceCodeImpl sourceCode) {
         List<String> checkedUids = new ArrayList<>();
         return checkConsistencyOfSourceCodeInternal(sourceCode, checkedUids);
@@ -177,7 +181,7 @@ public class SourceCodeValidationService {
         if (process.function !=null) {
             SourceCodeParamsYaml.FunctionDefForSourceCode snDef = process.function;
             if (snDef.context== EnumsApi.FunctionExecContext.internal) {
-                final InternalFunction internalFunction = InternalFunctionRegisterService.getInternalFunction(snDef.code);
+                final InternalFunction internalFunction = internalFunctionRegisterService.get(snDef.code);
                 if (internalFunction==null) {
                     return new SourceCodeApiData.SourceCodeValidationResult(
                             EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR,

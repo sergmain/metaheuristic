@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,8 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -46,19 +46,15 @@ public class Batch implements Serializable {
     private Integer version;
 
     // This field contains a value from MH_COMPANY.UNIQUE_ID, !NOT! from ID field
-    @NotNull
     @Column(name = "COMPANY_ID")
     public Long companyId;
 
-    @NotNull
     @Column(name = "ACCOUNT_ID")
     public Long accountId;
 
-    @NotNull
     @Column(name = "SOURCE_CODE_ID")
     public Long sourceCodeId;
 
-    @NotNull
     @Column(name = "EXEC_CONTEXT_ID")
     public Long execContextId;
 

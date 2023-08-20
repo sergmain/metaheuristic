@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.mhbp.yaml.part;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
@@ -32,15 +31,13 @@ public class PartParamsUtilsV1 extends
         return 1;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(PartParamsV1.class);
     }
 
-    @NonNull
     @Override
-    public PartParams upgradeTo(@NonNull PartParamsV1 v1) {
+    public PartParams upgradeTo(PartParamsV1 v1) {
         v1.checkIntegrity();
 
         PartParams t = new PartParams();
@@ -55,9 +52,8 @@ public class PartParamsUtilsV1 extends
         return f;
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
@@ -72,15 +68,14 @@ public class PartParamsUtilsV1 extends
     }
 
     @Override
-    public String toString(@NonNull PartParamsV1 yaml) {
+    public String toString(PartParamsV1 yaml) {
         yaml.checkIntegrity();
 
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public PartParamsV1 to(@NonNull String s) {
+    public PartParamsV1 to(String s) {
         final PartParamsV1 p = getYaml().load(s);
         return p;
     }

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.Map;
@@ -37,7 +37,7 @@ import java.util.Map;
  */
 public class BaseJsonUtils<T extends BaseParams> {
 
-    @NonNull
+    @Nonnull
     private final ParamsJsonUtilsFactory FACTORY;
 
     private static final ObjectMapper mapper;
@@ -53,7 +53,7 @@ public class BaseJsonUtils<T extends BaseParams> {
     }
 
 
-    public BaseJsonUtils(@NonNull Map<Integer, AbstractParamsJsonUtils> map, @NonNull AbstractParamsJsonUtils defJsonUtils) {
+    public BaseJsonUtils(@Nonnull Map<Integer, AbstractParamsJsonUtils> map, @Nonnull AbstractParamsJsonUtils defJsonUtils) {
         map.forEach((k,v)-> {
             if (k!=v.getVersion()) {
                 throw new IllegalStateException(S.f("Version is different, class: %s", v.getClass()));
@@ -67,19 +67,19 @@ public class BaseJsonUtils<T extends BaseParams> {
         return FACTORY.getForVersion(version);
     }
 
-    @NonNull
+    @Nonnull
     public AbstractParamsJsonUtils getDefault() {
         return FACTORY.getDefault();
     }
 
-    @NonNull
-    public String toString(@NonNull BaseParams baseParams) {
+    @Nonnull
+    public String toString(@Nonnull BaseParams baseParams) {
         baseParams.checkIntegrity();
         return toStringInternal(baseParams);
     }
 
-    @NonNull
-    public String toStringAsVersion(@NonNull BaseParams baseParams, int version) {
+    @Nonnull
+    public String toStringAsVersion(@Nonnull BaseParams baseParams, int version) {
         AbstractParamsJsonUtils utils = getForVersion(version);
         if (utils==null) {
             throw new IllegalStateException("Unsupported version: " + version);
@@ -115,7 +115,7 @@ public class BaseJsonUtils<T extends BaseParams> {
         }
     }
 
-    public T to(@NonNull String s) {
+    public T to(@Nonnull String s) {
         try {
             ParamsVersion v = JsonForVersioning.getParamsVersion(s);
             AbstractParamsJsonUtils jsonUtils = getForVersion(v.getActualVersion());

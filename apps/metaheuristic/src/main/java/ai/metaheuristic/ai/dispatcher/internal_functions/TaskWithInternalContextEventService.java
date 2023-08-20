@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,21 +24,23 @@ import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.el.EvaluateExpressionLanguage;
-import ai.metaheuristic.ai.dispatcher.event.TaskWithInternalContextEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context.*;
+import ai.metaheuristic.ai.dispatcher.event.events.TaskWithInternalContextEvent;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.task.TaskFinishingService;
-import ai.metaheuristic.ai.dispatcher.task.TaskService;
+import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
+import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTopLevelService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -47,6 +49,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -58,6 +61,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 /**
@@ -68,8 +72,8 @@ import java.util.function.Consumer;
 @SuppressWarnings("unused")
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskWithInternalContextEventService {
 
     private final TaskWithInternalContextService taskWithInternalContextService;
@@ -78,20 +82,19 @@ public class TaskWithInternalContextEventService {
     private final ExecContextFSM execContextFSM;
     private final TaskRepository taskRepository;
 
-    private final TaskService taskService;
-    private final ExecContextVariableService execContextVariableService;
-    private final VariableTxService variableService;
-    public final InternalFunctionVariableService internalFunctionVariableService;
-    public final SourceCodeCache sourceCodeCache;
-    public final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
-    public final SourceCodeRepository sourceCodeRepository;
-    public final GlobalVariableService globalVariableService;
-    public final VariableRepository variableRepository;
-    private final TaskFinishingService taskFinishingService;
+    private final TaskTxService taskService;
+    private final VariableTxService variableTxService;
+    private final InternalFunctionVariableService internalFunctionVariableService;
+    private final SourceCodeCache sourceCodeCache;
+    private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
+    private final SourceCodeRepository sourceCodeRepository;
+    private final GlobalVariableTxService globalVariableService;
+    private final VariableRepository variableRepository;
+    private final TaskFinishingTxService taskFinishingTxService;
     private final ApplicationEventPublisher eventPublisher;
-    private final VariableTopLevelService variableTopLevelService;
-    public final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
-    private final VariableEntityManagerService variableEntityManagerService;
+    private final VariableService variableTopLevelService;
+    private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
+    private final InternalFunctionProcessor internalFunctionProcessor;
 
     private static final int MAX_ACTIVE_THREAD = 1;
     // number of active executers with different execContextId
@@ -107,7 +110,14 @@ public class TaskWithInternalContextEventService {
     }
 
     public static final LinkedHashMap<Long, LinkedList<TaskWithInternalContextEvent>> QUEUE = new LinkedHashMap<>();
+    private static final ReentrantReadWriteLock queueLock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.ReadLock queueReadLock = queueLock.readLock();
+    private static final ReentrantReadWriteLock.WriteLock queueWriteLock = queueLock.writeLock();
+
     public static final ExecutorForExecContext[] POOL_OF_EXECUTORS = new ExecutorForExecContext[MAX_NUMBER_EXECUTORS];
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
     public void putToQueue(final TaskWithInternalContextEvent event) {
         putToQueueInternal(event);
@@ -115,17 +125,21 @@ public class TaskWithInternalContextEventService {
     }
 
     public static void clearQueue() {
-        synchronized (QUEUE) {
+        queueWriteLock.lock();
+        try {
             for (Map.Entry<Long, LinkedList<TaskWithInternalContextEvent>> entry : QUEUE.entrySet()) {
                 entry.getValue().clear();
             }
             QUEUE.clear();
+        } finally {
+            queueWriteLock.unlock();
         }
     }
 
     public static void shutdown() {
         clearQueue();
-        synchronized (POOL_OF_EXECUTORS) {
+        writeLock.lock();
+        try {
             for (int i = 0; i< POOL_OF_EXECUTORS.length; i++) {
                 if (POOL_OF_EXECUTORS[i] == null) {
                     continue;
@@ -133,11 +147,14 @@ public class TaskWithInternalContextEventService {
                 POOL_OF_EXECUTORS[i].executor.shutdownNow();
                 POOL_OF_EXECUTORS[i] = null;
             }
+        } finally {
+            writeLock.unlock();
         }
     }
 
     public static void processPoolOfExecutors(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
-        synchronized (POOL_OF_EXECUTORS) {
+        writeLock.lock();
+        try {
             for (int i = 0; i< POOL_OF_EXECUTORS.length; i++) {
                 if (POOL_OF_EXECUTORS[i] == null) {
                     continue;
@@ -148,14 +165,19 @@ public class TaskWithInternalContextEventService {
                 }
             }
             final LinkedHashSet<Long> execContextIds;
-            synchronized (QUEUE) {
+            queueWriteLock.lock();
+            try {
                 execContextIds = new LinkedHashSet<>(QUEUE.keySet());
+            } finally {
+                queueWriteLock.unlock();
             }
             for (Long id : execContextIds) {
                 if (pokeExecutor(id, taskProcessor)) {
                     break;
                 }
             }
+        } finally {
+            writeLock.unlock();
         }
     }
 
@@ -165,7 +187,8 @@ public class TaskWithInternalContextEventService {
      * @return boolean is POOL_OF_EXECUTORS already full and execContextId wasn't allocated
      */
     public static boolean pokeExecutor(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
-        synchronized (POOL_OF_EXECUTORS) {
+        writeLock.lock();
+        try {
             for (ExecutorForExecContext poolExecutor : POOL_OF_EXECUTORS) {
                 if (poolExecutor==null) {
                     continue;
@@ -184,6 +207,8 @@ public class TaskWithInternalContextEventService {
                 }
             }
             return true;
+        } finally {
+            writeLock.unlock();
         }
     }
 
@@ -195,19 +220,23 @@ public class TaskWithInternalContextEventService {
     }
 
     public static void putToQueueInternal(final TaskWithInternalContextEvent event) {
-        synchronized (QUEUE) {
+        queueWriteLock.lock();
+        try {
             LinkedList<TaskWithInternalContextEvent> q = QUEUE.computeIfAbsent(event.execContextId, (o)->new LinkedList<>());
 
             if (q.contains(event)) {
                 return;
             }
             q.add(event);
+        } finally {
+            queueWriteLock.unlock();
         }
     }
 
     @Nullable
     private static TaskWithInternalContextEvent pullFromQueue(Long execContextId) {
-        synchronized (QUEUE) {
+        queueWriteLock.lock();
+        try {
             final LinkedList<TaskWithInternalContextEvent> events = QUEUE.get(execContextId);
             if (events==null) {
                 return null;
@@ -217,6 +246,8 @@ public class TaskWithInternalContextEventService {
                 return null;
             }
             return events.pollFirst();
+        } finally {
+            queueWriteLock.unlock();
         }
     }
 
@@ -243,7 +274,7 @@ public class TaskWithInternalContextEventService {
                 final String console = "#706.130 Task #" + event.taskId + " was finished with status '" + e.result.processing + "', text of error: " + e.result.error;
                 ExecContextSyncService.getWithSyncVoid(event.execContextId,
                         () -> TaskSyncService.getWithSyncVoid(event.taskId,
-                                () -> taskFinishingService.finishWithErrorWithTx(event.taskId, console)));
+                                () -> taskFinishingTxService.finishWithErrorWithTx(event.taskId, console)));
             }
         }
         catch (Throwable th) {
@@ -253,7 +284,7 @@ public class TaskWithInternalContextEventService {
             log.error(es, th);
             ExecContextSyncService.getWithSyncVoid(event.execContextId,
                     () -> TaskSyncService.getWithSyncVoid(event.taskId,
-                            () -> taskFinishingService.finishWithErrorWithTx(event.taskId, es)));
+                            () -> taskFinishingTxService.finishWithErrorWithTx(event.taskId, es)));
         }
         finally {
             ArtifactCleanerAtDispatcher.notBusy();
@@ -264,7 +295,7 @@ public class TaskWithInternalContextEventService {
         TxUtils.checkTxNotExists();
         TaskLastProcessingHelper.lastTaskId = null;
         try {
-            TaskImpl task = taskRepository.findById(taskId).orElse(null);
+            TaskImpl task = taskRepository.findByIdReadOnly(taskId);
             if (task==null) {
                 log.warn("#706.180 Task #{} with internal context doesn't exist", taskId);
                 return;
@@ -296,10 +327,9 @@ public class TaskWithInternalContextEventService {
                 // because mh.evaluate doesn't have any output variables
                 Object obj = EvaluateExpressionLanguage.evaluate(
                         taskParamsYaml.task.taskContextId, p.condition, simpleExecContext.execContextId,
-                        internalFunctionVariableService, globalVariableService, variableService, this.execContextVariableService, variableRepository,
-                        variableEntityManagerService,
+                        internalFunctionVariableService, globalVariableService, variableTxService, variableRepository,
                         (v) -> VariableSyncService.getWithSyncVoidForCreation(v.id,
-                                ()->variableService.setVariableAsNull(v.id)));
+                                ()-> variableTxService.setVariableAsNull(v.id)));
                 if (obj!=null && !(obj instanceof Boolean)) {
                     final String es = "#706.300 condition '" + p.condition + " has returned not boolean value but " + obj.getClass().getSimpleName();
                     log.error(es);
@@ -309,9 +339,9 @@ public class TaskWithInternalContextEventService {
                 int i=0;
             }
             if (notSkip) {
-                boolean isLongRunning = InternalFunctionProcessor.process(simpleExecContext, taskId, taskParamsYaml.task.taskContextId, taskParamsYaml);
+                boolean isLongRunning = internalFunctionProcessor.process(simpleExecContext, taskId, taskParamsYaml.task.taskContextId, taskParamsYaml);
                 if (!isLongRunning) {
-                    taskWithInternalContextService.storeResult(taskId, taskParamsYaml);
+                    taskWithInternalContextService.storeResult(taskId, taskParamsYaml.task.function.code);
                 }
             }
             else {

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,6 +41,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -59,7 +60,7 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class PermuteVariablesFunction implements InternalFunction {
 
     private final PermuteVariablesService permuteVariablesAndInlinesTxService;
@@ -161,7 +162,7 @@ public class PermuteVariablesFunction implements InternalFunction {
             throw new InternalFunctionException(meta_not_found, "#987.160 Meta with key 'output-variable' wasn't found for process '"+process.processCode+"'");
         }
         final String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
-                taskId, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
+                taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
         ExecContextGraphSyncService.getWithSyncVoid(simpleExecContext.execContextGraphId, ()->
                 ExecContextTaskStateSyncService.getWithSyncVoid(simpleExecContext.execContextTaskStateId, ()->

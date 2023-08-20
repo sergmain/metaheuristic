@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.processor;
 
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.ai.processor.dispatcher_selection.RoundRobinDispatcherSelection;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
@@ -31,16 +32,16 @@ public class TestRoundRobinForDispatcher {
     @Test
     public void test() {
 
-        LinkedHashMap<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> lookupExtendedMap = new LinkedHashMap<>();
+        LinkedHashMap<DispatcherUrl, DispatcherLookupExtendedParams.DispatcherLookupExtended> lookupExtendedMap = new LinkedHashMap<>();
 
         DispatcherUrl url1 = new DispatcherUrl("url1");
-        DispatcherLookupExtendedService.DispatcherLookupExtended lle1 = new DispatcherLookupExtendedService.DispatcherLookupExtended(
+        DispatcherLookupExtendedParams.DispatcherLookupExtended lle1 = new DispatcherLookupExtendedParams.DispatcherLookupExtended(
                 url1, new DispatcherLookupParamsYaml.DispatcherLookup(), DispatcherSchedule.createDispatcherSchedule(null));
         lle1.dispatcherLookup.url = url1.url;
         lookupExtendedMap.put( url1, lle1);
 
         DispatcherUrl url2 = new DispatcherUrl("url2");
-        DispatcherLookupExtendedService.DispatcherLookupExtended lle2 = new DispatcherLookupExtendedService.DispatcherLookupExtended(
+        DispatcherLookupExtendedParams.DispatcherLookupExtended lle2 = new DispatcherLookupExtendedParams.DispatcherLookupExtended(
                 url2, new DispatcherLookupParamsYaml.DispatcherLookup(), DispatcherSchedule.createDispatcherSchedule(null));
         lle2.dispatcherLookup.url = url2.url;
         lookupExtendedMap.put( url2, lle2);

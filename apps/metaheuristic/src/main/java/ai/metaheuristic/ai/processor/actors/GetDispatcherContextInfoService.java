@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,24 +20,26 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.processor.DispatcherContextInfoHolder;
-import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.tasks.GetDispatcherContextInfoTask;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.commons.S;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.HttpResponseException;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.client.fluent.Response;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.conn.HttpHostConnectException;
+import org.apache.hc.client5.http.HttpHostConnectException;
+import org.apache.hc.client5.http.HttpResponseException;
+import org.apache.hc.client5.http.fluent.Request;
+import org.apache.hc.client5.http.fluent.Response;
+import org.apache.hc.core5.net.URIBuilder;
+import org.apache.hc.core5.util.Timeout;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
@@ -51,12 +53,13 @@ import java.util.UUID;
 @Service
 @Slf4j
 @Profile("processor")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispatcherContextInfoTask> implements QueueProcessor {
 
     private final Globals globals;
 
-    private final DispatcherLookupExtendedService dispatcherLookupExtendedService;
+    private final ProcessorEnvironment processorEnvironment;
+
     @Override
     public void process() {
         if (globals.testing) {
@@ -69,7 +72,7 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
         GetDispatcherContextInfoTask task;
         while ((task = poll()) != null) {
 
-            final DispatcherLookupParamsYaml.AssetManager assetManager = dispatcherLookupExtendedService.getAssetManager(task.assetManagerUrl);
+            final DispatcherLookupParamsYaml.AssetManager assetManager = processorEnvironment.dispatcherLookupExtendedService.getAssetManager(task.assetManagerUrl);
             if (assetManager==null) {
                 log.error("#806.020 assetManager server wasn't found for url {}", task.assetManagerUrl.url);
                 continue;
@@ -81,7 +84,8 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
 
                 final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8);
 
-                final Request request = Request.Get(builder.build()).connectTimeout(5000).socketTimeout(20000);
+                final Request request = Request.get(builder.build()).connectTimeout(Timeout.ofSeconds(5));
+                //.socketTimeout(20000);
 
                 RestUtils.addHeaders(request);
 

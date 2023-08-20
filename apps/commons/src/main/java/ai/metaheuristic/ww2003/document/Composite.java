@@ -28,7 +28,7 @@ import ai.metaheuristic.ww2003.document.tags.xml.*;
 import ai.metaheuristic.ww2003.document.tags.xml.table.TCellBorders;
 import ai.metaheuristic.ww2003.utils.ThreadUtils;
 import lombok.Getter;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;

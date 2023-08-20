@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.processor.actors;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import org.apache.commons.io.FileUtils;
-import org.apache.http.Header;
+import org.apache.hc.core5.http.Header;
 import org.springframework.lang.Nullable;
 
 import java.io.File;
@@ -59,7 +59,7 @@ class DownloadUtils {
     public static void combineParts(AssetFile assetFile, File tempFile, int idx) throws IOException {
         try (FileOutputStream fos = new FileOutputStream(tempFile)) {
             for (int i = 0; i <= idx; i++) {
-                final File input = new File(assetFile.file.getAbsolutePath() + "." + i + ".tmp");
+                final File input = new File(assetFile.file.toAbsolutePath() + "." + i + ".tmp");
                 if (input.length()==0) {
                     continue;
                 }

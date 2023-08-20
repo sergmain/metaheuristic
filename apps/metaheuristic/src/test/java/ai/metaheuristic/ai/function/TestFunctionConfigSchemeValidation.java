@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@ import ai.metaheuristic.commons.yaml.bundle.BundleParamsYaml;
 import ai.metaheuristic.commons.yaml.bundle.BundleParamsYamlUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
-import org.springframework.lang.NonNull;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -93,7 +92,6 @@ public class TestFunctionConfigSchemeValidation {
         assertNull(result, result);
     }
 
-    @NonNull
     private static String createYaml() {
         BundleParamsYaml cfgList = new BundleParamsYaml();
         BundleParamsYaml.FunctionConfig cfg = new BundleParamsYaml.FunctionConfig();

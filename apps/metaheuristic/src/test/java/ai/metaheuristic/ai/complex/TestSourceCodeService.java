@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
@@ -31,9 +32,8 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
@@ -56,7 +56,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.ByteArrayInputStream;
@@ -69,8 +68,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@ActiveProfiles("dispatcher")
+//@ActiveProfiles({"dispatcher", "mysql"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@AutoConfigureCache
 public class TestSourceCodeService extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
@@ -122,30 +122,30 @@ public class TestSourceCodeService extends PreparingSourceCode {
         System.out.println("start step_1_1_register_function_statuses()");
         preparingSourceCodeService.step_1_1_register_function_statuses(processorIdAndCoreIds, preparingSourceCodeData, preparingCodeData);
 
-        System.out.println("start findInternalTaskForRegisteringInQueue()");
-        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+//        System.out.println("start findInternalTaskForRegisteringInQueue()");
+        //preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #1");
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         System.out.println("start step_AssembledRaw()");
         step_AssembledRaw(processorIdAndCoreIds);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #2");
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         System.out.println("start step_DatasetProcessing()");
         step_DatasetProcessing(processorIdAndCoreIds);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #3");
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         //   processCode: feature-processing-1, function code: function-03:1.1
         System.out.println("start step_CommonProcessing(feature-output-1)");
         step_CommonProcessing(processorIdAndCoreIds, "feature-output-1");
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #4");
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         //   processCode: feature-processing-2, function code: function-04:1.1
         System.out.println("start step_CommonProcessing(feature-output-2)");
@@ -256,7 +256,11 @@ public class TestSourceCodeService extends PreparingSourceCode {
         // and 1 'mh.finish' task
         assertEquals(2, taskIds.size());
 
-        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(getExecContextForTest().id);
+
+        execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
+        execContextTaskAssigningTopLevelService.procesEvent();
+        //execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(getExecContextForTest().id);
+
         DispatcherCommParamsYaml.AssignedTask t =
                 taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         // null because current task is 'internal' and will be processed in async way
@@ -276,7 +280,10 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertEquals(1, taskIds.size());
         });
 
-        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(getExecContextForTest().id);
+        execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
+        execContextTaskAssigningTopLevelService.procesEvent();
+//        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(getExecContextForTest().id);
+
         t = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         // null because current task is 'internal' and will be processed in async way
         assertNull(t);
@@ -325,7 +332,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     }
 
     private void step_FitAndPredict(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         DispatcherCommParamsYaml.AssignedTask simpleTask32 =
                 taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
@@ -347,13 +354,13 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         if (fitTask) {
             txSupportForTestingService.storeOutputVariableWithTaskContextId(getExecContextForTest().id,
-                    "model", "model-data-result-"+taskParamsYaml.task.taskContextId, taskParamsYaml.task.taskContextId);
+                    "model", "model-data-result-"+taskParamsYaml.task.taskContextId, taskParamsYaml.task.taskContextId, task32.getId());
         }
         else {
             txSupportForTestingService.storeOutputVariableWithTaskContextId(getExecContextForTest().id,
-                    "metrics", "metrics-output-result-"+taskParamsYaml.task.taskContextId, taskParamsYaml.task.taskContextId);
+                    "metrics", "metrics-output-result-"+taskParamsYaml.task.taskContextId, taskParamsYaml.task.taskContextId, task32.getId());
             txSupportForTestingService.storeOutputVariableWithTaskContextId(getExecContextForTest().id,
-                    "predicted", "predicted-output-result-"+taskParamsYaml.task.taskContextId, taskParamsYaml.task.taskContextId);
+                    "predicted", "predicted-output-result-"+taskParamsYaml.task.taskContextId, taskParamsYaml.task.taskContextId, task32.getId());
         }
 
         storeExecResult(simpleTask32);
@@ -396,7 +403,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     private void storeOutputVariable(String variableName, String variableData, String processCode) {
 
-        SimpleVariable v = variableService.getVariableAsSimple(
+        Variable v = variableService.getVariable(
                 variableName, processCode, getExecContextForTest());
 
         assertNotNull(v);
@@ -410,7 +417,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
 
 
-        v = variableService.getVariableAsSimple(v.variable, processCode, getExecContextForTest());
+        v = variableService.getVariable(v.name, processCode, getExecContextForTest());
         assertNotNull(v);
         assertTrue(v.inited);
 

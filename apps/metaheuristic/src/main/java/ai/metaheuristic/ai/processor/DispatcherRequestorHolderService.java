@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,10 +17,12 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.processor.env.EnvService;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Service;
@@ -28,7 +30,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.Map;
 
-import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
+import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 
 /**
  * @author Serge
@@ -50,24 +52,23 @@ public class DispatcherRequestorHolderService {
     public final Map<DispatcherUrl, Requesters> dispatcherRequestorMap = new HashMap<>();
 
     public DispatcherRequestorHolderService(
-            Globals globals,
-            ProcessorService processorService, ProcessorTaskService processorTaskService, MetadataService metadataService,
-            CurrentExecState currentExecState,
-            DispatcherLookupExtendedService dispatcherLookupExtendedService,
-            ProcessorCommandProcessor processorCommandProcessor,
-            ProcessorKeepAliveProcessor processorKeepAliveProcessor, EnvService envService
+            @Autowired Globals globals,
+            @Autowired ProcessorService processorService,
+            @Autowired ProcessorTaskService processorTaskService,
+            @Autowired CurrentExecState currentExecState,
+            @Autowired ProcessorCommandProcessor processorCommandProcessor,
+            @Autowired ProcessorKeepAliveProcessor processorKeepAliveProcessor,
+            @Autowired ProcessorEnvironment processorEnvironment
     ) {
 
-        for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> entry : dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
-            final DispatcherLookupExtendedService.DispatcherLookupExtended dispatcher = entry.getValue();
+        for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedParams.DispatcherLookupExtended> entry : processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
+            final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher = entry.getValue();
             final DispatcherRequestor requestor = new DispatcherRequestor(dispatcher.getDispatcherUrl(), globals,
-                    processorTaskService, processorService, metadataService, currentExecState,
-                    dispatcherLookupExtendedService, processorCommandProcessor);
+                    processorTaskService, processorService, processorEnvironment.metadataParams, currentExecState,
+                    processorEnvironment.dispatcherLookupExtendedService, processorCommandProcessor);
 
             final ProcessorKeepAliveRequestor keepAliveRequestor = new ProcessorKeepAliveRequestor(
-                    dispatcher.dispatcherUrl, globals,
-                    processorService, metadataService, dispatcherLookupExtendedService,
-                    processorKeepAliveProcessor, envService);
+                    dispatcher.dispatcherUrl, globals, processorService, processorKeepAliveProcessor, processorEnvironment);
 
             dispatcherRequestorMap.put(dispatcher.dispatcherUrl, new Requesters(requestor, keepAliveRequestor));
         }

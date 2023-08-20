@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.function;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
-import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
-import ai.metaheuristic.ai.dispatcher.function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionDataTxService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionTxService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.api.EnumsApi;
@@ -33,6 +33,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.lang.Nullable;
@@ -52,16 +53,17 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@ActiveProfiles("dispatcher")
+//@ActiveProfiles("dispatcher")
 @Slf4j
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@AutoConfigureCache
 public class TestFunctionService {
 
     public static final String TEST_FUNCTION = "test.function:1.0";
     private static final String FUNCTION_PARAMS = "AAA";
 
     @Autowired
-    private FunctionService functionService;
+    private FunctionTxService functionTxService;
 
     @Autowired
     private FunctionTopLevelService functionTopLevelService;
@@ -70,7 +72,7 @@ public class TestFunctionService {
     private FunctionRepository functionRepository;
 
     @Autowired
-    private FunctionDataService functionDataService;
+    private FunctionDataTxService functionDataService;
 
     @Autowired
     private Globals globals;
@@ -124,7 +126,7 @@ public class TestFunctionService {
 
             mills = System.currentTimeMillis();
             log.info("Start functionRepository.save() #2");
-            f = functionService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
+            f = functionTxService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
 
             log.info("functionRepository.save() #2 was finished for {} milliseconds", System.currentTimeMillis() - mills);
         }
@@ -137,7 +139,7 @@ public class TestFunctionService {
         log.info("Start after()");
         if (function != null) {
             try {
-                functionService.deleteFunction(function.getId(), function.code);
+                functionTxService.deleteFunction(function.getId(), function.code);
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }

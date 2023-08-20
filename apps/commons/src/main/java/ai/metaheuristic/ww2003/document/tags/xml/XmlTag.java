@@ -18,7 +18,7 @@ package ai.metaheuristic.ww2003.document.tags.xml;
 
 import ai.metaheuristic.commons.S;
 
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 public interface XmlTag {
 

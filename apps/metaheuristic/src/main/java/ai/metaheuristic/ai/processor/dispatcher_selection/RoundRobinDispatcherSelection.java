@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.processor.dispatcher_selection;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
@@ -31,7 +31,7 @@ public class RoundRobinDispatcherSelection {
 
     private final ActiveDispatchers activeDispatchers;
 
-    public RoundRobinDispatcherSelection(Map<DispatcherUrl, DispatcherLookupExtendedService.DispatcherLookupExtended> dispatchers, String info) {
+    public RoundRobinDispatcherSelection(Map<DispatcherUrl, DispatcherLookupExtendedParams.DispatcherLookupExtended> dispatchers, String info) {
         activeDispatchers = new ActiveDispatchers(dispatchers, info, Enums.DispatcherSelectionStrategy.alphabet);
     }
 

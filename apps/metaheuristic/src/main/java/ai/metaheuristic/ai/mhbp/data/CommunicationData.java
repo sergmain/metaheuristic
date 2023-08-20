@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.mhbp.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.apache.http.NameValuePair;
+import org.apache.hc.core5.http.NameValuePair;
 
 import java.util.List;
 

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +16,13 @@
 
 package ai.metaheuristic.ai.binary_data;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.batch_result_processor.BatchResultProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -54,8 +55,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@ActiveProfiles("dispatcher")
+////@ActiveProfiles("dispatcher")
 @Slf4j
+@AutoConfigureCache
 public class TestBinaryDataSaveAndLoad {
 
     private static final String DATA_FILE_BIN = "data-file.bin";
@@ -72,6 +74,9 @@ public class TestBinaryDataSaveAndLoad {
     @Autowired
     private VariableRepository variableRepository;
 
+    @Autowired
+    private VariableTxService variableTxService;
+
     private static final int ARRAY_SIZE = 1_000_000;
     private static final Random r = new Random();
 
@@ -87,7 +92,7 @@ public class TestBinaryDataSaveAndLoad {
 
     @Test
     public void testSaveAndLoadToTempFile(@TempDir Path tempDir) throws IOException {
-        storeAndVerify(tempDir, Files.createTempFile(tempDir, "variable-", ".bin"));
+        storeAndVerify(tempDir, Files.createTempFile(tempDir, "variable-", Consts.BIN_EXT));
     }
 
     @Test
@@ -105,8 +110,7 @@ public class TestBinaryDataSaveAndLoad {
         Variable variable;
         try (InputStream is = Files.newInputStream(dataFile)) {
             final long size = Files.size(dataFile);
-            variable = ExecContextSyncService.getWithSync(1L,
-                    ()-> txSupportForTestingService.createInitializedWithTx(is, size, TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3"));
+            variable = variableTxService.createInitializedTx(is, size, TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3", EnumsApi.VariableType.binary);
         }
         assertNotNull(variable);
         assertNotNull(variable.id);
@@ -127,8 +131,7 @@ public class TestBinaryDataSaveAndLoad {
         Variable variable;
         try (InputStream is = Files.newInputStream(dataFile)) {
             final long size = Files.size(dataFile);
-            variable = ExecContextSyncService.getWithSync(1L,
-                    ()-> txSupportForTestingService.createInitializedWithTx(is, size, TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3"));
+            variable = variableTxService.createInitializedTx(is, size, TEST_VARIABLE, DATA_FILE_BIN, 1L, "1,2,3", EnumsApi.VariableType.binary);
         }
         assertNotNull(variable);
         assertNotNull(variable.id);
@@ -138,13 +141,13 @@ public class TestBinaryDataSaveAndLoad {
         bimy.targetPath = tempDir;
         bimy.filenames.put(variable.id.toString(), SYSTEM_PARAMS_V_2_YAML);
 
-        SimpleVariable sv = variableRepository.findByIdAsSimple(variable.id);
-        assertNotNull(sv);
+        Variable v = variableRepository.findByIdAsSimple(variable.id);
+        assertNotNull(v);
 
         final Path defaultPath = tempDir.resolve("default-path-for-variables");
-        Function<SimpleVariable, Path> mappingFunc = (simpleVariable) -> BatchResultProcessorTxService.resolvePathFromMapping(List.of(bimy), defaultPath, sv);
+        Function<Variable, Path> mappingFunc = (var) -> BatchResultProcessorTxService.resolvePathFromMapping(List.of(bimy), defaultPath, var);
 
-        variableService.storeVariableToFileWithTx(mappingFunc, List.of(sv));
+        variableService.storeVariableToFileWithTx(mappingFunc, List.of(v));
 
         Path trgFile = tempDir.resolve(SYSTEM_PARAMS_V_2_YAML);
         assertTrue(FileUtils.contentEquals(dataFile.toFile(), trgFile.toFile()));

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,13 +19,13 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.cache.CacheService;
+import ai.metaheuristic.ai.dispatcher.cache.CacheTxService;
 import ai.metaheuristic.ai.dispatcher.cache.CacheUtils;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.RegisterTaskForCheckCachingEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.RegisterTaskForCheckCachingEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.TaskFinishWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessStateService;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
@@ -39,6 +39,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
@@ -49,6 +50,7 @@ import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Serge
@@ -58,7 +60,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskCheckCachingTopLevelService {
 
     public enum PrepareDataState {ok, none}
@@ -82,7 +84,7 @@ public class TaskCheckCachingTopLevelService {
 
     private final TaskCheckCachingTxService taskCheckCachingTxService;
     private final ExecContextReadinessStateService execContextReadinessStateService;
-    private final CacheService cacheService;
+    private final CacheTxService cacheService;
     private final CacheProcessRepository cacheProcessRepository;
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
@@ -94,9 +96,17 @@ public class TaskCheckCachingTopLevelService {
     private final LinkedList<RegisterTaskForCheckCachingEvent> queue = new LinkedList<>();
 
     private long mills = 0L;
+    public boolean disableCacheChecking = false;
+
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
     public void putToQueue(final RegisterTaskForCheckCachingEvent event) {
-        synchronized (queue) {
+        if (disableCacheChecking) {
+            return;
+        }
+        writeLock.lock();
+        try {
             // re-create queueIds, there is a possibility that queueIds was unsyncronized with queue when a task was resetting
             if (System.currentTimeMillis() - mills > 60_000) {
                 queueIds.clear();
@@ -113,13 +123,16 @@ public class TaskCheckCachingTopLevelService {
             }
             queue.add(event);
             queueIds.add(event.taskId);
+        } finally {
+            writeLock.unlock();
         }
         checkCaching();
     }
 
     @Nullable
     private RegisterTaskForCheckCachingEvent pullFromQueue() {
-        synchronized (queue) {
+        writeLock.lock();
+        try {
             final RegisterTaskForCheckCachingEvent task = queue.pollFirst();
             if (task==null) {
                 if (!queueIds.isEmpty()) {
@@ -129,6 +142,8 @@ public class TaskCheckCachingTopLevelService {
             }
             queueIds.remove(task.taskId);
             return task;
+        } finally {
+            writeLock.unlock();
         }
     }
 
@@ -196,10 +211,10 @@ public class TaskCheckCachingTopLevelService {
         }
     }
 
-    private PrepareData getCacheProcess(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
+    public PrepareData getCacheProcess(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
         TxUtils.checkTxNotExists();
 
-        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        TaskImpl task = taskRepository.findByIdReadOnly(taskId);
         if (task==null) {
             log.debug("Task wasn't found, execContextId: {}, task: {}", simpleExecContext.execContextId, taskId);
             return PREPARE_DATA_NONE;
@@ -209,24 +224,8 @@ public class TaskCheckCachingTopLevelService {
             return PREPARE_DATA_NONE;
         }
 
-        TaskParamsYaml tpy = task.getTaskParamsYaml();
         ExecContextParamsYaml ecpy = simpleExecContext.getParamsYaml();
-        ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
-        if (p==null) {
-            log.warn("609.023 Process {} wasn't found", tpy.task.processCode);
-            return PREPARE_DATA_NONE;
-        }
-        CacheData.FullKey fullKey;
-        try {
-            log.debug("start cacheService.getKey(), execContextId: {}, task: {}", simpleExecContext.execContextId, taskId);
-            fullKey = cacheService.getKey(tpy, p.function);
-        } catch (VariableCommonException e) {
-            log.warn("609.025 ExecContext: #{}, VariableCommonException: {}", simpleExecContext.execContextId, e.getAdditionalInfo());
-            return PREPARE_DATA_NONE;
-        }
-        log.debug("done cacheService.getKey(), execContextId: {}, task: {}", simpleExecContext.execContextId, taskId);
-
-        CacheData.SimpleKey key = CacheUtils.fullKeyToSimpleKey(fullKey);
+        CacheData.SimpleKey key = getSimpleKey(ecpy, task);
         if (key==null) {
             return PREPARE_DATA_NONE;
         }
@@ -236,6 +235,28 @@ public class TaskCheckCachingTopLevelService {
 
         log.debug("execContextId: {}, task: {}, CacheProcess: {}", simpleExecContext.execContextId, taskId, cacheProcess);
         return new PrepareData(cacheProcess, PrepareDataState.ok);
+    }
+
+    @Nullable
+    public CacheData.SimpleKey getSimpleKey(ExecContextParamsYaml ecpy, TaskImpl task) {
+        TaskParamsYaml tpy = task.getTaskParamsYaml();
+        ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
+        if (p==null) {
+            log.warn("609.023 Process {} wasn't found", tpy.task.processCode);
+            return null;
+        }
+        CacheData.FullKey fullKey;
+        try {
+            log.debug("start cacheService.getKey(), execContextId: {}, task: {}", task.execContextId, task.id);
+            fullKey = cacheService.getKey(tpy, p.function);
+        } catch (VariableCommonException e) {
+            log.warn("609.025 ExecContext: #{}, VariableCommonException: {}", task.execContextId, e.getAdditionalInfo());
+            return null;
+        }
+        log.debug("done cacheService.getKey(), execContextId: {}, task: {}", task.execContextId, task.id);
+
+        CacheData.SimpleKey key = CacheUtils.fullKeyToSimpleKey(fullKey);
+        return key;
     }
 
 }

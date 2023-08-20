@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,29 +23,25 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
-import ai.metaheuristic.ai.dispatcher.function.FunctionDataService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionDataTxService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableEntityManagerService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
-import ai.metaheuristic.ai.exceptions.VariableCommonException;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.sql.Blob;
 import java.util.List;
 
 /**
@@ -56,29 +52,28 @@ import java.util.List;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TxSupportForTestingService {
 
     private final Globals globals;
     private final VariableRepository variableRepository;
-    private final VariableTxService variableService;
+    private final VariableTxService variableTxService;
     private final ExecContextTaskProducingService execContextTaskProducingService;
     private final ExecContextGraphService execContextGraphService;
     private final FunctionCache functionCache;
-    private final FunctionDataService functionDataService;
+    private final FunctionDataTxService functionDataService;
     private final ProcessorCache processorCache;
     private final ExecContextCreatorService execContextCreatorService;
     private final BatchCache batchCache;
     private final ExecContextCache execContextCache;
-    private final VariableEntityManagerService variableEntityManagerService;
 
     @Transactional
-    public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, Long companyId) {
+    public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, ExecContextData.UserExecContext context) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
         return SourceCodeSyncService.getWithSyncForCreation(sourceCode.id,
-                () -> execContextCreatorService.createExecContext(sourceCode, companyId, null));
+                () -> execContextCreatorService.createExecContext(sourceCode, context, null));
     }
 
     @Transactional
@@ -120,20 +115,17 @@ public class TxSupportForTestingService {
     }
 
     @Transactional
-    public void storeOutputVariableWithTaskContextId(Long execContextId, String variableName, String variableData, String taskContextId) {
+    public void storeOutputVariableWithTaskContextId(Long execContextId, String variableName, String variableData, String taskContextId, Long taskId) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        SimpleVariable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variableName, taskContextId, execContextId);
+        Variable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variableName, taskContextId, execContextId);
         if (v==null || v.inited) {
             throw new IllegalStateException("(v==null || v.inited)");
         }
-        Variable variable = variableRepository.findById(v.id).orElse(null);
-        if (variable==null) {
-            throw new IllegalStateException("(v==null || v.inited)");
-        }
         byte[] bytes = variableData.getBytes();
-        VariableSyncService.getWithSyncVoidForCreation(variable.id, ()-> variableEntityManagerService.update(new ByteArrayInputStream(bytes), bytes.length, variable));
+        Variable finalV = v;
+        VariableSyncService.getWithSyncVoidForCreation(v.id, ()-> variableTxService.storeVariable(new ByteArrayInputStream(bytes), bytes.length, execContextId, taskId, finalV.id));
 
         v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variableName, taskContextId, execContextId);
         if (v==null) {
@@ -185,21 +177,6 @@ public class TxSupportForTestingService {
         return null;
     }
 
-    @Transactional
-    public Variable createInitializedWithTx(InputStream is, long size, String variable, @Nullable String filename, Long execContextId, String taskContextId) {
-        if (!globals.testing) {
-            throw new IllegalStateException("Only for testing");
-        }
-        return variableEntityManagerService.createInitialized(is, size, variable, filename, execContextId, taskContextId);
-    }
-
-    @Transactional
-    public List<ExecContextData.TaskVertex> findAllForAssigningWithTx(Long execContextGraphId, Long execContextTaskStateId) {
-        if (!globals.testing) {
-            throw new IllegalStateException("Only for testing");
-        }
-        return execContextGraphService.findAllForAssigning(execContextGraphId, execContextTaskStateId, true);
-    }
 
     @Transactional
     public void produceAndStartAllTasks(SourceCodeImpl sourceCode, Long execContextId) {
@@ -231,26 +208,6 @@ public class TxSupportForTestingService {
         }
         execContext.setState(EnumsApi.ExecContextState.STARTED.code);
         execContextCache.save(execContext);
-    }
-
-    @Nullable
-    @Transactional(readOnly = true)
-    public Variable getVariableWithData(Long id) {
-        if (!globals.testing) {
-            throw new IllegalStateException("Only for testing");
-        }
-
-        try {
-            Variable v = variableRepository.findById(id).orElse(null);
-            if (v==null) {
-                return null;
-            }
-            Blob blob = v.getData();
-            v.bytes = blob==null ? new byte[0] : blob.getBytes(1, (int) blob.length());
-            return v;
-        } catch (Throwable th) {
-            throw new VariableCommonException("#087.020 Error: " + th.getMessage(), id);
-        }
     }
 
     @Transactional

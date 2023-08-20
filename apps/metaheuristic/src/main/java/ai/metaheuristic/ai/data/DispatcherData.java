@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Serge
@@ -65,10 +66,37 @@ public class DispatcherData {
     public static class TaskQuotas {
         public final int initial;
 
-        public final List<AllocatedQuotas> allocated = new ArrayList<>();
+        private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+        private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+        private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
-        public synchronized void addQuotas(DispatcherData.AllocatedQuotas quotas) {
-            allocated.add(quotas);
+        private final List<AllocatedQuotas> allocated = new ArrayList<>();
+
+        public static int getSumOfAllocated(TaskQuotas quotas) {
+            readLock.lock();
+            try {
+                return quotas.allocated.stream().mapToInt(o -> o.amount).sum();
+            } finally {
+                readLock.unlock();
+            }
+        }
+
+        public void addQuotas(DispatcherData.AllocatedQuotas quotas) {
+            writeLock.lock();
+            try {
+                allocated.add(quotas);
+            } finally {
+                writeLock.unlock();
+            }
+        }
+
+        public void addAllQuotas(List<AllocatedQuotas> list) {
+            writeLock.lock();
+            try {
+                allocated.addAll(list);
+            } finally {
+                writeLock.unlock();
+            }
         }
     }
 }

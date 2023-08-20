@@ -23,7 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.lang.Nullable;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;

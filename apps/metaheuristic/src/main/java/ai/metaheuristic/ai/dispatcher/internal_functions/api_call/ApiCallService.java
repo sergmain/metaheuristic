@@ -17,30 +17,30 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.api_call;
 
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.provider.ProviderData;
 import ai.metaheuristic.ai.mhbp.provider.ProviderQueryService;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
-import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.data_not_found;
 import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getNameForVariable;
 import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getVariables;
 import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
@@ -53,18 +53,18 @@ import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ApiCallService {
 
     public static final String PROMPT = "prompt";
     public static final String API_CODE = "apiCode";
+    public static final String RAW_OUTPUT = "rawOutput";
 
     private final InternalFunctionVariableService internalFunctionVariableService;
-    private final ExecContextVariableService execContextVariableService;
+    private final VariableTxService variableTxService;
     private final ProviderQueryService providerQueryService;
     private final ApiRepository apiRepository;
 
-    @NonNull
     public ProviderData.QuestionAndAnswer callApi(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId, TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
 
@@ -96,15 +96,63 @@ public class ApiCallService {
             }
             prompt = StringUtils.replaceEach(prompt, new String[]{"[[" + variable + "]]", "{{" + variable + "}}"}, new String[]{value, value});
         }
-        log.info("513.240 prompt: {}", prompt);
-        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, null);
+        log.info("513.240 task #{}, prompt: {}", taskId, prompt);
+        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, simpleExecContext.asUserExecContext());
         ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
-        if (answer.status()!=OK || S.b(answer.a())) {
-            throw new InternalFunctionException(data_not_found, "513.280 API call error: "+answer.error()+", prompt: " + prompt+", answer: " + answer.a());
+        if (answer.status()!=OK) {
+            throw new InternalFunctionException(data_not_found, "513.280 API call error: "+answer.error()+", prompt: " + prompt);
+        }
+        if (answer.a()==null) {
+            throw new InternalFunctionException(data_not_found, "513.320 answer.a() is null, error: "+answer.error()+", prompt: " + prompt);
         }
 
-        TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
-        VariableSyncService.getWithSyncVoid(outputVariable.id, ()->execContextVariableService.storeStringInVariable(outputVariable, answer.a()));
+        if (answer.a().processedAnswer.rawAnswerFromAPI().type().binary) {
+            if (answer.a().processedAnswer.rawAnswerFromAPI().bytes()==null) {
+                throw new InternalFunctionException(data_not_found, "513.340 processedAnswer.rawAnswerFromAPI().bytes() is null, error: "+answer.error()+", prompt: " + prompt);
+            }
+            TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
+            // right now, only image is supported
+//            final EnumsApi.VariableType variableType = v.getDataStorageParams().type;
+//            EnumsApi.VariableType type = variableType==null ? EnumsApi.VariableType.unknown : variableType;
+            EnumsApi.VariableType type = EnumsApi.VariableType.image;
+
+            VariableSyncService.getWithSyncVoid(outputVariable.id,
+                    ()-> variableTxService.storeBytesInVariable(outputVariable, answer.a().processedAnswer.rawAnswerFromAPI().bytes(), type));
+        }
+        else {
+            if (answer.a().processedAnswer.answer()==null) {
+                throw new InternalFunctionException(data_not_found, "513.360 processedAnswer.answer() is null, error: "+answer.error()+", prompt: " + prompt);
+            }
+            log.info("513.380 task #{}, raw answer: {}", taskId, answer.a().processedAnswer.rawAnswerFromAPI().raw());
+            log.info("513.385 task #{}, answer: {}", taskId, answer.a().processedAnswer.answer());
+
+            String rawOutputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, RAW_OUTPUT);
+            TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.stream().filter(o->!o.name.equals(rawOutputVariableName)).findFirst().orElse(null);
+            if (outputVariable==null) {
+                String names = taskParamsYaml.task.outputs.stream().map(TaskParamsYaml.OutputVariable::getName).collect(Collectors.joining(", "));
+                throw new InternalFunctionException(output_variable_not_found, "513.345 nn-raw output variable wasn't fount, all outputs: " + names);
+            }
+            VariableSyncService.getWithSyncVoid(outputVariable.id,
+                    () -> variableTxService.storeStringInVariable(outputVariable, answer.a().processedAnswer.answer()));
+
+
+            TaskParamsYaml.OutputVariable rawOutputVariable = taskParamsYaml.task.outputs.stream()
+                    .filter(o1->o1.name.equals(rawOutputVariableName))
+                    .findFirst()
+                    .orElse(null);
+
+            if (rawOutputVariable!=null) {
+                if (S.b(answer.a().processedAnswer.rawAnswerFromAPI().raw())) {
+                    VariableSyncService.getWithSyncVoid(rawOutputVariable.id,
+                            () -> variableTxService.setVariableAsNull(rawOutputVariable.id));
+                }
+                else {
+                    VariableSyncService.getWithSyncVoid(rawOutputVariable.id,
+                            () -> variableTxService.storeStringInVariable(rawOutputVariable, answer.a().processedAnswer.rawAnswerFromAPI().raw()));
+                }
+            }
+
+        }
         return answer;
     }
 

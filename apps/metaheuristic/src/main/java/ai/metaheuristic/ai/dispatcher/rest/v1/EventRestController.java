@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +17,13 @@
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
+import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.http.HttpStatus;
@@ -29,7 +31,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,8 +46,8 @@ import java.util.List;
 @Slf4j
 @Profile("dispatcher")
 @CrossOrigin
-@RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('BILLING')")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class EventRestController {
 
     private final DispatcherEventService dispatcherEventService;

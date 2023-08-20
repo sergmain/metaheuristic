@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -39,6 +39,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -56,14 +57,14 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class PermuteValuesOfVariablesFunction implements InternalFunction {
 
     private final PermuteValuesOfVariablesService permuteValuesOfVariablesService;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final InternalFunctionService internalFunctionService;
     private final VariableTxService variableService;
-    private final GlobalVariableService globalVariableService;
+    private final GlobalVariableTxService globalVariableService;
 
     @Override
     public String getCode() {
@@ -145,7 +146,7 @@ public class PermuteValuesOfVariablesFunction implements InternalFunction {
 
 
         final String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
-                taskId, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
+                taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
         ExecContextGraphSyncService.getWithSyncVoid(simpleExecContext.execContextGraphId, ()->
                 ExecContextTaskStateSyncService.getWithSyncVoid(simpleExecContext.execContextTaskStateId, ()->

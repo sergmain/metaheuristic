@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ import ai.metaheuristic.commons.utils.MetaUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,8 +51,8 @@ public class SourceCodeParamsYaml implements BaseParams {
         if (source == null || S.b(source.uid) || source.processes == null) {
             throw new CheckIntegrityFailedException("#608.020 (source == null || S.b(source.uid) || source.processes == null)");
         }
-        if (source.uid.length()>50) {
-            throw new CheckIntegrityFailedException("#608.040 uid is too long. max 50 chars");
+        if (source.uid.length()>250) {
+            throw new CheckIntegrityFailedException("#608.040 uid is too long. max 250 chars");
         }
         for (Process process : source.processes) {
             if (process.function ==null) {

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,20 +18,20 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.exec_source_code;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
+import ai.metaheuristic.ai.exceptions.ExecContextCommonException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -45,6 +45,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -62,14 +63,13 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecSourceCodeFunction implements InternalFunction {
 
     private final SourceCodeCache sourceCodeCache;
     private final SourceCodeRepository sourceCodeRepository;
-    private final VariableTxService variableService;
-    private final GlobalVariableService globalVariableService;
-    private final ExecContextVariableService execContextVariableService;
+    private final VariableTxService variableTxService;
+    private final GlobalVariableTxService globalVariableService;
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final ExecContextCreatorService execContextCreatorService;
@@ -131,9 +131,10 @@ public class ExecSourceCodeFunction implements InternalFunction {
 
         ExecContextData.RootAndParent rootAndParent = new ExecContextData.RootAndParent(rootExecContextId, simpleExecContext.execContextId);
 
+        ExecContextData.UserExecContext context = new ExecContextData.UserExecContext(simpleExecContext.accountId, simpleExecContext.companyId);
         ExecContextCreatorService.ExecContextCreationResult execContextResultRest =
                 execContextCreatorTopLevelService.createExecContextAndStart(
-                        subSc.id, simpleExecContext.companyId, false, rootAndParent);
+                        subSc.id, context, false, rootAndParent);
 
         if (execContextResultRest.isErrorMessages()) {
             throw new InternalFunctionException(exec_context_creation_error,
@@ -147,37 +148,44 @@ public class ExecSourceCodeFunction implements InternalFunction {
         try {
             tempDir = DirUtils.createMhTempPath("mh-exec-source-code-");
             if (tempDir == null) {
-                throw new InternalFunctionException(system_error, "#508.070 can't create a temporary file");
+                throw new InternalFunctionException(system_error, "508.070 can't create a temporary file");
             }
             for (int i = 0; i < taskParamsYaml.task.inputs.size(); i++) {
                 TaskParamsYaml.InputVariable input = taskParamsYaml.task.inputs.get(i);
-                SimpleVariable sv = variableRepository.findByIdAsSimple(input.id);
-                if (sv==null) {
+                Variable v = variableRepository.findByIdAsSimple(input.id);
+                if (v==null) {
                     throw new InternalFunctionException(variable_not_found, "#508.073 can't find a variable #"+input.id);
                 }
-                if (sv.nullified) {
-                    execContextVariableService.initInputVariableWithNull(execContextResultRest.execContext.id, execContextParamsYaml, i);
+                if (execContextParamsYaml.variables.inputs.size()<i+1) {
+                    throw new ExecContextCommonException(
+                            S.f("508.075 i is bigger than number of input variables. varIndex: %s, number: %s",
+                                    i, execContextParamsYaml.variables.inputs.size()));
+                }
+                ExecContextParamsYaml.Variable inputVariable = execContextParamsYaml.variables.inputs.get(i);
+
+                if (v.nullified) {
+                    variableTxService.initInputVariableWithNull(execContextResultRest.execContext.id, execContextParamsYaml, i);
                 }
                 else {
-                    Path tempFile = Files.createTempFile(tempDir, "input-", ".bin");
+                    Path tempFile = Files.createTempFile(tempDir, "input-", Consts.BIN_EXT);
                     switch (input.context) {
                         case global:
                             globalVariableService.storeToFileWithTx(input.id, tempFile);
                             break;
                         case local:
-                            variableService.storeToFileWithTx(input.id, tempFile);
+                            variableTxService.storeToFileWithTx(input.id, tempFile);
                             break;
                         case array:
                             throw new NotImplementedException("Not yet");
                     }
                     try (InputStream is = Files.newInputStream(tempFile)) {
-                        execContextVariableService.initInputVariable(
-                                is, Files.size(tempFile), "variable-" + input.name, execContextResultRest.execContext.id, execContextParamsYaml, i);
+                        variableTxService.createInitializedTx(
+                                is, Files.size(tempFile), inputVariable.name, "variable-" + input.name, execContextResultRest.execContext.id, Consts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.unknown);
                     }
                 }
             }
             for (ExecContextParamsYaml.Variable output : execContextParamsYaml.variables.outputs) {
-                execContextVariableService.initOutputVariable(execContextResultRest.execContext.id, output);
+                variableTxService.initOutputVariable(execContextResultRest.execContext.id, output);
             }
         }
         catch (InternalFunctionException e) {

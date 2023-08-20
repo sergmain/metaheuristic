@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,6 +57,8 @@ public class QuotasUtils {
             throw new IllegalStateException("(quota.quotaAllocation== Enums.QuotaAllocation.disabled)");
         }
 
-        return processorQuotas.limit >= (quota.amount + quotas.initial + quotas.allocated.stream().mapToInt(o -> o.amount).sum());
+        final int sum = DispatcherData.TaskQuotas.getSumOfAllocated(quotas);
+        return processorQuotas.limit >= (quota.amount + quotas.initial + sum);
     }
+
 }

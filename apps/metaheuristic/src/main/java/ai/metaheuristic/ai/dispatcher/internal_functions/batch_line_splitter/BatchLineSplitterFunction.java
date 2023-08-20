@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -34,6 +34,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -48,7 +49,7 @@ import java.util.List;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class BatchLineSplitterFunction implements InternalFunction {
 
     public static final String VARIABLE_FOR_SPLITTING = "variable-for-splitting";
@@ -56,7 +57,7 @@ public class BatchLineSplitterFunction implements InternalFunction {
     public static final String OUTPUT_VARIABLE = "output-variable";
     public static final String IS_ARRAY = "is-array";
     private final VariableTxService variableService;
-    private final GlobalVariableService globalVariableService;
+    private final GlobalVariableTxService globalVariableService;
     private final InternalFunctionVariableService internalFunctionVariableService;
     private final BatchLineSplitterTxService batchLineSplitterTxService;
 

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,10 +16,11 @@
 
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.dispatcher.data.GlobalVariableData;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTopLevelService;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -34,9 +35,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/rest/v1/dispatcher/global-variable")
 @Profile("dispatcher")
 @CrossOrigin
-//@CrossOrigin(origins="*", maxAge=3600)
-@RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class GlobalVariableRestController {
 
     private final GlobalVariableTopLevelService globalVariableTopLevelService;

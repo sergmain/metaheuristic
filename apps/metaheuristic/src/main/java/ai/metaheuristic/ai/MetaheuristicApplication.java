@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,18 +21,19 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.time.LocalDateTime;
+
 @SpringBootApplication
 @Slf4j
 public class MetaheuristicApplication {
 
     public static void main(String[] args) {
+        System.out.println("Metaheuristic was started at " + LocalDateTime.now());
         final String encoding = System.getProperty("file.encoding");
         if (!StringUtils.equalsAnyIgnoreCase(encoding, "utf8", "utf-8")) {
             System.out.println("Must be run with -Dfile.encoding=UTF-8, actual file.encoding: " + encoding);
             System.exit(-1);
         }
-//        System.setProperty("file.encoding", StandardCharsets.UTF_8.toString());
-//        System.setProperty("sun.jnu.encoding", StandardCharsets.UTF_8.toString());
         SpringApplication.run(MetaheuristicApplication.class, args);
     }
 }

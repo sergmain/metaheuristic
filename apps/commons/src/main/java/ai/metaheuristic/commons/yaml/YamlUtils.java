@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,9 @@ package ai.metaheuristic.commons.yaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -29,10 +30,9 @@ import org.yaml.snakeyaml.nodes.NodeTuple;
 import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @Slf4j
 public class YamlUtils {
@@ -51,7 +51,7 @@ public class YamlUtils {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
-        Representer representer = new Representer() {
+        Representer representer = new Representer(new DumperOptions()) {
 
             @Override
             @Nullable
@@ -71,7 +71,12 @@ public class YamlUtils {
             }
         }
 
-        Constructor constructor = new Constructor(clazz);
+        LoaderOptions loaderOptions = new LoaderOptions();
+        loaderOptions.setAllowDuplicateKeys(true);
+        loaderOptions.setMaxAliasesForCollections(10);
+        loaderOptions.setAllowRecursiveKeys(false);
+
+        Constructor constructor = new Constructor(clazz, loaderOptions);
         if (customTypeDescription!=null) {
             constructor.addTypeDescription(customTypeDescription);
         }
@@ -103,11 +108,11 @@ public class YamlUtils {
         return yaml.load(is);
     }
 
-    public static Object to(File file, Yaml yaml) {
-        try(FileInputStream fis =  new FileInputStream(file)) {
-            return yaml.load(fis);
+    public static Object to(Path file, Yaml yaml) {
+        try (InputStream is = Files.newInputStream(file); BufferedInputStream bis = new BufferedInputStream(is, 0x1000)) {
+            return yaml.load(bis);
         } catch (IOException e) {
             log.error("Error", e);
-            throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
+            throw new IllegalStateException("Error while loading file: " + file, e);
         }
     }}

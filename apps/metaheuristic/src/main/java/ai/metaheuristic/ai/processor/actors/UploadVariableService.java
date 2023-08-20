@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,24 +32,24 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
-import org.apache.http.NoHttpResponseException;
-import org.apache.http.client.HttpResponseException;
-import org.apache.http.client.fluent.Executor;
-import org.apache.http.client.fluent.Form;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.client.fluent.Response;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.client.utils.URIUtils;
-import org.apache.http.conn.HttpHostConnectException;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.client5.http.ConnectTimeoutException;
+import org.apache.hc.client5.http.HttpHostConnectException;
+import org.apache.hc.client5.http.HttpResponseException;
+import org.apache.hc.client5.http.entity.mime.HttpMultipartMode;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.client5.http.fluent.Executor;
+import org.apache.hc.client5.http.fluent.Form;
+import org.apache.hc.client5.http.fluent.Request;
+import org.apache.hc.client5.http.fluent.Response;
+import org.apache.hc.client5.http.utils.URIUtils;
+import org.apache.hc.core5.http.*;
+import org.apache.hc.core5.net.URIBuilder;
+import org.apache.hc.core5.util.Timeout;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -59,6 +59,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -66,7 +67,7 @@ import java.util.UUID;
 @Service
 @Slf4j
 @Profile("processor")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask> implements QueueProcessor {
 
     private static final ObjectMapper mapper;
@@ -89,6 +90,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
         }
     }
 
+    @SneakyThrows
     @SuppressWarnings("Duplicates")
     public void process() {
         if (globals.testing) {
@@ -135,8 +137,8 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             if (v.sourcing!= EnumsApi.DataSourcing.dispatcher) {
                 throw new NotImplementedException("#311.032 Need to implement");
             }
-            if (!task.nullified && (task.file==null || !task.file.exists())) {
-                log.error("#311.040 File {} doesn't exist", task.file.getPath());
+            if (!task.nullified && (task.file==null || Files.notExists(task.file))) {
+                log.error("#311.040 File {} doesn't exist", task.file.toAbsolutePath());
                 continue;
             }
             if (task.nullified) {
@@ -166,7 +168,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 final String uri = uploadRestUrl + randonPart;
 
                 final MultipartEntityBuilder builder = MultipartEntityBuilder.create()
-                        .setMode(HttpMultipartMode.RFC6532)
+                        .setMode(HttpMultipartMode.EXTENDED)
                         .setCharset(StandardCharsets.UTF_8)
                         .addTextBody("processorId", ""+task.core.processorId)
                         .addTextBody("taskId", Long.toString(task.taskId))
@@ -179,15 +181,17 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                         //  what is the problem with this state? Should we handle this state in more sophisticated way?
                         throw new IllegalStateException("#311.043 (task.file==null)");
                     }
-                    builder.addBinaryBody("file", task.file, ContentType.APPLICATION_OCTET_STREAM, task.file.getName());
+                    builder.addBinaryBody("file", task.file.toFile(), ContentType.APPLICATION_OCTET_STREAM, task.file.getFileName().toString());
                 }
                 HttpEntity entity = builder.build();
 
-                Request request = Request.Post(uri).connectTimeout(5000).socketTimeout(20000).body(entity);
+                Request request = Request.post(uri).connectTimeout(Timeout.ofSeconds(5))
+//                        .socketTimeout(20000)
+                        .body(entity);
 
                 log.info("Start uploading a variable to rest-server, {}", randonPart);
                 Response response = executor.execute(request);
-                String json = response.returnContent().asString();
+                String json = response.returnContent().asString(StandardCharsets.UTF_8);
                 UploadResult result = fromJson(json);
                 log.info("Server response: {}", result);
 
@@ -204,30 +208,30 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                     log.error("#311.056 Server error, code: 500, error: {}", e.getMessage());
                 }
                 else {
-                    log.error("#311.060 Error uploading variable to server, code: " + e.getStatusCode()+", " +
-                            "size: " + (task.file!=null ? Long.toString(task.file.length()) : "file is null"), e);
+                    log.error("311.060 Error uploading variable to server, code: " + e.getStatusCode()+", " +
+                            "size: " + (task.file!=null ? Long.toString(Files.size(task.file)) : "file is null"), e);
                 }
             }
-            catch (SocketTimeoutException e) {
-                log.error("#311.070 SocketTimeoutException, {}", e.toString());
-            }
             catch (ConnectException e) {
-                log.error("#311.073 ConnectException, {}", e.toString());
+                log.error("311.073 ConnectException, {}", e.toString());
             }
             catch (NoHttpResponseException e) {
-                log.error("#311.075 org.apache.http.NoHttpResponseException, {}", e.toString());
+                log.error("311.075 org.apache.http.NoHttpResponseException, {}", e.toString());
             }
-            catch (org.apache.http.conn.ConnectTimeoutException e) {
-                log.warn("#311.076 org.apache.http.conn.ConnectTimeoutException, {}", e.toString());
+            catch (ConnectTimeoutException e) {
+                log.warn("311.076 org.apache.http.conn.ConnectTimeoutException, {}", e.toString());
+            }
+            catch (SocketTimeoutException e) {
+                log.error("311.070 SocketTimeoutException, {}", e.toString());
             }
             catch (java.net.UnknownHostException e) {
-                log.warn("#311.077 java.net.UnknownHostException, {}", e.toString());
+                log.warn("311.077 java.net.UnknownHostException, {}", e.toString());
             }
             catch (IOException e) {
-                log.error("#311.080 IOException", e);
+                log.error("311.080 IOException", e);
             }
             catch (Throwable th) {
-                log.error("#311.090 Throwable", th);
+                log.error("311.090 Throwable", th);
             }
             if (status!=null) {
                 switch(status) {
@@ -270,26 +274,31 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
 
         try {
             final URI build = new URIBuilder(variableStatusRestUrl).setCharset(StandardCharsets.UTF_8).build();
-            final Request request = Request.Post(build)
-                    .bodyForm(Form.form().add("variableId", ""+variableId).build(), StandardCharsets.UTF_8)
-                    .connectTimeout(5000).socketTimeout(20000);
+            final Request request = Request.post(build)
+                    .bodyForm(Form.form().add("variableId", variableId.toString()).build(), StandardCharsets.UTF_8)
+                    .connectTimeout(Timeout.ofSeconds(5));
+                    //.socketTimeout(20000);
 
             RestUtils.addHeaders(request);
             Response response = executor.execute(request);
 
             final HttpResponse httpResponse = response.returnResponse();
-            if (httpResponse.getStatusLine().getStatusCode()!=200) {
+            if (!(httpResponse instanceof ClassicHttpResponse classicHttpResponse)) {
+                throw new IllegalStateException("(!(httpResponse instanceof ClassicHttpResponse classicHttpResponse))");
+            }
+            final int statusCode = classicHttpResponse.getCode();
+            if (statusCode!=200) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                final HttpEntity entity = httpResponse.getEntity();
+                final HttpEntity entity = classicHttpResponse.getEntity();
                 if (entity != null) {
                     entity.writeTo(baos);
                 }
 
-                log.error("Server response:\n" + baos.toString());
+                log.error("Server response:\n{}", baos.toString());
                 // let's try to upload variable anyway
                 return true;
             }
-            final HttpEntity entity = httpResponse.getEntity();
+            final HttpEntity entity = classicHttpResponse.getEntity();
             if (entity != null) {
                 String value;
                 try (final InputStream content = entity.getContent()) {
@@ -305,8 +314,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             }
             else {
                 return true;
-            }
-        }
+            }        }
         catch (UnknownHostException | HttpHostConnectException | SocketTimeoutException th) {
             log.error("Error: {}", th.getMessage());
             return true;
@@ -326,7 +334,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
         }
         return Executor.newInstance()
                 .authPreemptive(dispatcherHttpHostWithAuth)
-                .auth(dispatcherHttpHostWithAuth, restUsername, restPassword);
+                .auth(dispatcherHttpHostWithAuth, restUsername, restPassword.toCharArray());
     }
 
 }

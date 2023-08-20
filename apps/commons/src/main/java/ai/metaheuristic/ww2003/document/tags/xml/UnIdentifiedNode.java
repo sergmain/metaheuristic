@@ -17,7 +17,7 @@
 package ai.metaheuristic.ww2003.document.tags.xml;
 
 import ai.metaheuristic.ww2003.document.Composite;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;

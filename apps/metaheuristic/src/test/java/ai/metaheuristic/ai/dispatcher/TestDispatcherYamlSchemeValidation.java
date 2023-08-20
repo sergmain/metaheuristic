@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher;
 
-import ai.metaheuristic.ai.processor.DispatcherLookupExtendedService;
+import ai.metaheuristic.ai.processor.processor_environment.FileDispatcherLookupExtendedParams;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
@@ -38,7 +38,7 @@ public class TestDispatcherYamlSchemeValidation {
         String cfg = IOUtils.resourceToString("/yaml/dispatcher/dispatchers.yaml", StandardCharsets.UTF_8);
 
         YamlSchemeValidator<Boolean> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
-                DispatcherLookupExtendedService.SCHEMES,
+                FileDispatcherLookupExtendedParams.SCHEMES,
                 "url",
                 (es)-> false,
                 "see more"
@@ -53,7 +53,7 @@ public class TestDispatcherYamlSchemeValidation {
         String cfg = IOUtils.resourceToString("/yaml/dispatcher/dispatchers-1-v1.yaml", StandardCharsets.UTF_8);
 
         YamlSchemeValidator<Boolean> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
-                DispatcherLookupExtendedService.SCHEMES,
+                FileDispatcherLookupExtendedParams.SCHEMES,
                 "url",
                 (es)-> false,
                 "see more"
@@ -68,7 +68,7 @@ public class TestDispatcherYamlSchemeValidation {
         String cfg = IOUtils.resourceToString("/yaml/dispatcher/dispatchers-v2.yaml", StandardCharsets.UTF_8);
 
         YamlSchemeValidator<Boolean> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
-                DispatcherLookupExtendedService.SCHEMES,
+                FileDispatcherLookupExtendedParams.SCHEMES,
                 "url",
                 (es)-> false,
                 "see more"
@@ -83,7 +83,7 @@ public class TestDispatcherYamlSchemeValidation {
         String cfg = IOUtils.resourceToString("/yaml/dispatcher/dispatchers-with-error-v2.yaml", StandardCharsets.UTF_8);
 
         YamlSchemeValidator<Boolean> YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
-                DispatcherLookupExtendedService.SCHEMES,
+                FileDispatcherLookupExtendedParams.SCHEMES,
                 "url",
                 (es)-> true,
                 "see more"

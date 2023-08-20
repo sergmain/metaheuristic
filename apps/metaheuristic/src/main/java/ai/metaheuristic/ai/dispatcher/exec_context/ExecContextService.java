@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,14 +21,15 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
-import ai.metaheuristic.ai.dispatcher.event.DeleteExecContextInListTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
-import ai.metaheuristic.ai.dispatcher.event.ProcessDeletedExecContextTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskQueueCleanByExecContextIdTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.DeleteExecContextInListTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.ProcessDeletedExecContextTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.TaskQueueCleanByExecContextIdTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
+import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.RestUtils;
@@ -40,13 +41,13 @@ import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextsListItem;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Pageable;
@@ -59,16 +60,14 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static ai.metaheuristic.api.EnumsApi.OperationStatus;
 
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 @SuppressWarnings("UnusedReturnValue")
 public class ExecContextService {
 
@@ -77,7 +76,7 @@ public class ExecContextService {
     private final SourceCodeCache sourceCodeCache;
     private final ExecContextCache execContextCache;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
-    private final TaskRepository taskRepository;
+    private final TaskTxService taskTxService;
     private final VariableRepository variableRepository;
     private final VariableTxService variableService;
     private final EventPublisherService eventPublisherService;
@@ -125,7 +124,7 @@ public class ExecContextService {
 
         ExecContextImpl ec = execContextCache.findById(execContextId, true);
         if (ec == null) {
-            ExecContextApiData.RawExecContextStateResult resultWithError = new ExecContextApiData.RawExecContextStateResult("#705.220 Can't find execContext for Id " + execContextId);
+            ExecContextApiData.RawExecContextStateResult resultWithError = new ExecContextApiData.RawExecContextStateResult("705.220 Can't find execContext for Id " + execContextId);
             return resultWithError;
         }
         ExecContextApiData.ExecContextVariableStates info = execContextUtilsServices.getExecContextVariableStates(ec.execContextVariableStateId);
@@ -134,11 +133,13 @@ public class ExecContextService {
         List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ecpy);
         return new ExecContextApiData.RawExecContextStateResult(
                 sourceCodeId, info.states, processCodes, result.sourceCodeType, result.sourceCodeUid, result.sourceCodeValid,
-                getExecStateOfTasks(execContextId)
+                taskTxService.getExecStateOfTasks(execContextId)
         );
     }
 
-    public Map<Long, TaskApiData.TaskState> getExecStateOfTasks(Long execContextId) {
+
+/*
+    public Map<Long, TaskApiData.TaskState> getExecStateOfTasks_old(Long execContextId) {
         List<Object[]> list = taskRepository.findExecStateByExecContextId(execContextId);
 
         Map<Long, TaskApiData.TaskState> states = new HashMap<>(list.size()+1);
@@ -148,6 +149,7 @@ public class ExecContextService {
         }
         return states;
     }
+*/
 
     private void initInfoAboutSourceCode(Long sourceCodeId, ExecContextApiData.ExecContextsResult result) {
         SourceCodeImpl sc = sourceCodeCache.findById(sourceCodeId);
@@ -268,19 +270,19 @@ public class ExecContextService {
                 return resource;
             }
 
-            SimpleVariable variable = variableRepository.findByIdAsSimple(variableId);
-            if (variable==null) {
+            Variable v = variableRepository.findByIdAsSimple(variableId);
+            if (v==null) {
                 final String es = "#705.330 Can't find variable #"+variableId;
                 log.warn(es);
                 return resource;
             }
 
-            String ext = execContextUtilsServices.getExtensionForVariable(execContext.execContextVariableStateId, variableId, ".bin");
+            String ext = execContextUtilsServices.getExtensionForVariable(execContext.execContextVariableStateId, variableId, Consts.BIN_EXT);
 
-            String filename = S.f("variable-%s-%s%s", variableId, variable.variable, ext);
+            String filename = S.f("variable-%s-%s%s", variableId, v.name, ext);
 
-            Path varFile = resultDir.resolve("variable-"+variableId+".bin");
-            variableService.storeToFileWithTx(variable.id, varFile);
+            Path varFile = resultDir.resolve("variable-"+variableId+ Consts.BIN_EXT);
+            variableService.storeToFileWithTx(v.id, varFile);
 
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);

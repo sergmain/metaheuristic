@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +38,11 @@ import java.util.List;
 @Transactional
 @Profile("dispatcher")
 public interface ScenarioRepository extends CrudRepository<Scenario, Long> {
+
+    @Nullable
+    @Transactional(readOnly = true)
+    @Query(value= "select sg.id from ScenarioGroup sg where sg.id=:scenarioGroupId and sg.accountId=:accountId ")
+    Long findScenarioGroup(Long scenarioGroupId, long accountId);
 
     @Transactional(readOnly = true)
     @Query(value= "select new ai.metaheuristic.ai.mhbp.data.SimpleScenario(s.id, s.scenarioGroupId, s.createdOn, s.name, s.description) " +

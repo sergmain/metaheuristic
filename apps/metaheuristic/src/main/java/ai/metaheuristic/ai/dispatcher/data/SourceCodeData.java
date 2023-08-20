@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.api.data.BaseDataClass;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import lombok.AllArgsConstructor;
@@ -25,10 +26,13 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
 
 /**
  * @author Serge
@@ -38,12 +42,38 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class SourceCodeData {
 
+    public record OperationStatusWithSourceCodeId(OperationStatusRest status, @Nullable Long sourceCodeId) {
+        public OperationStatusWithSourceCodeId(OperationStatusRest status, @Nullable Long sourceCodeId) {
+            if (status.status==OK && sourceCodeId==null) {
+                throw new IllegalStateException("(status.status==OK && sourceCodeId==null)");
+            }
+            this.status = status;
+            this.sourceCodeId = null;
+        }
+    }
+
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
     public static class SourceCodeUid {
         public Long id;
         public String uid;
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SimpleSourceCodeUid extends BaseDataClass {
+        public SourceCodeUid simpleSourceCode;
+
+        public SimpleSourceCodeUid(List<String> errorMessage) {
+            this.errorMessages = errorMessage;
+        }
+
+        public SimpleSourceCodeUid(String errorMessage) {
+            this.errorMessages = Collections.singletonList(errorMessage);
+        }
     }
 
     @Data

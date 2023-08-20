@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,13 +18,12 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.ReduceVariablesData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYaml;
@@ -36,6 +35,7 @@ import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -53,12 +53,11 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.number_of_out
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ReduceVariablesFunction implements InternalFunction {
 
     private final VariableTxService variableService;
-    private final GlobalVariableService globalVariableService;
-    private final ExecContextVariableService execContextVariableService;
+    private final GlobalVariableTxService globalVariableService;
 
     @Override
     public String getCode() {
@@ -136,7 +135,7 @@ public class ReduceVariablesFunction implements InternalFunction {
         ReduceVariablesData.Request request = new ReduceVariablesData.Request();
 
         for (ReduceVariablesConfigParamsYaml.ByInstance byInstance : config.config.reduceByInstance) {
-            SimpleVariable sv = variableService.findVariableInAllInternalContexts(byInstance.inputIs, taskContextId, execContextId);
+            Variable sv = variableService.findVariableInAllInternalContexts(byInstance.inputIs, taskContextId, execContextId);
             if (sv==null) {
                 throw new InternalFunctionException(Enums.InternalFunctionProcessing.meta_not_found,
                                 "#961.200 Input variable "+byInstance.inputIs+" wasn't found");
@@ -146,7 +145,7 @@ public class ReduceVariablesFunction implements InternalFunction {
                 throw new InternalFunctionException(Enums.InternalFunctionProcessing.meta_not_found,
                         "#961.240 Input variable "+byInstance.inputIs+" is empty");
             }
-            request.nullifiedVars.put(sv.variable, Boolean.valueOf(content));
+            request.nullifiedVars.put(sv.name, Boolean.valueOf(content));
         }
 
         return request;

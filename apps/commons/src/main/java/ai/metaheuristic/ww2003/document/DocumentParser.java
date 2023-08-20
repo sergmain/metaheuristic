@@ -20,7 +20,7 @@ import ai.metaheuristic.ww2003.document.exceptions.DocumentParseException;
 import ai.metaheuristic.ww2003.document.exceptions.DocumentProcessingException;
 import ai.metaheuristic.ww2003.document.tags.xml.*;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventReader;

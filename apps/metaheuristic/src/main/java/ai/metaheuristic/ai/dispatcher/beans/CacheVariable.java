@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,9 +22,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.springframework.lang.Nullable;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 import java.sql.Blob;
@@ -51,15 +49,15 @@ public class CacheVariable implements Serializable {
     @Version
     private Integer version;
 
-    @NotNull
+//    @NotNull
     @Column(name = "CACHE_PROCESS_ID")
     public Long cacheProcessId;
 
     @Column(name="CREATED_ON")
     public long createdOn;
 
-    @NotNull
-    @NotEmpty
+//    @NotNull
+//    @NotEmpty
     @Column(name = "VARIABLE_NAME")
     public String variableName;
 

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,10 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.message.BasicNameValuePair;
+import org.apache.hc.client5.http.fluent.Request;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.apache.hc.core5.util.Timeout;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -37,16 +39,16 @@ import java.util.Objects;
  * Time: 6:39 PM
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ReplicationFunctionTopLevelService {
 
-    public final ReplicationCoreService replicationCoreService;
-    public final ReplicationFunctionService replicationFunctionService;
-    public final FunctionRepository functionRepository;
-    public final FunctionCache functionCache;
-    public final FunctionTopLevelService functionTopLevelService;
+    private final ReplicationCoreService replicationCoreService;
+    private final ReplicationFunctionService replicationFunctionService;
+    private final FunctionRepository functionRepository;
+    private final FunctionCache functionCache;
+    private final FunctionTopLevelService functionTopLevelService;
 
     public void syncFunctions(List<String> actualFunctions) {
         functionRepository.findAllFunctionCodes().stream()
@@ -76,9 +78,8 @@ public class ReplicationFunctionTopLevelService {
     private ReplicationData.FunctionAsset requestFunctionAsset(String functionCode) {
         ReplicationData.ReplicationAsset data = replicationCoreService.getData(
                 "/rest/v1/replication/function", ReplicationData.FunctionAsset.class, List.of(new BasicNameValuePair("functionCode", functionCode)),
-                (uri) -> Request.Get(uri)
-                        .connectTimeout(5000)
-                        .socketTimeout(20000)
+                (uri) -> Request.get(uri).connectTimeout(Timeout.ofSeconds(5))
+//                        .socketTimeout(20000)
         );
         if (data instanceof ReplicationData.AssetAcquiringError) {
             return new ReplicationData.FunctionAsset(((ReplicationData.AssetAcquiringError) data).getErrorMessagesAsList());

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,12 +15,14 @@
  */
 package ai.metaheuristic.ai.service;
 
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
@@ -45,9 +47,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@ActiveProfiles("dispatcher")
+//@ActiveProfiles({"dispatcher", "mysql"})
 @Slf4j
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@AutoConfigureCache
 public class TestFeatureWithSomeOk extends FeatureMethods {
 
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
@@ -55,6 +58,8 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
     @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
     @Autowired private ExecContextCache execContextCache;
+    @Autowired private TaskRepository taskRepository;
+    @Autowired private ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
 
     @Test
     public void testFeatureCompletionWithPartialError() {
@@ -78,7 +83,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         preparingSourceCodeService.step_1_1_register_function_statuses(processorIdAndCoreIds, preparingSourceCodeData, preparingCodeData);
 
         //preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
         TaskQueue.TaskGroup taskGroup =
                 ExecContextGraphSyncService.getWithSync(getExecContextForTest().execContextGraphId, ()->
                         ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId, ()->
@@ -96,7 +101,12 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
         storeConsoleResultAsError(processorIdAndCoreIds);
 
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+//        TaskImpl t2 = taskRepository.findByIdReadOnly(task.taskId);
+//        assertNotNull(t2);
+//        assertEquals(EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value, t2.execState);
+//
+
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         DispatcherCommParamsYaml.AssignedTask task1 = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
 

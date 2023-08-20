@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ import org.springframework.lang.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("FieldMayBeStatic")
 @Data
 @NoArgsConstructor
 public class DispatcherLookupParamsYamlV1 implements BaseParams {
@@ -39,6 +40,7 @@ public class DispatcherLookupParamsYamlV1 implements BaseParams {
         public String url;
         public String username;
         public String password;
+        @Nullable
         public String publicKey;
     }
 
@@ -54,7 +56,9 @@ public class DispatcherLookupParamsYamlV1 implements BaseParams {
         public boolean disabled;
         public String url;
         public boolean signatureRequired;
+        @Nullable
         public String publicKey;
+        @Nullable
         public Enums.DispatcherLookupType lookupType;
         public Enums.AuthType authType;
 

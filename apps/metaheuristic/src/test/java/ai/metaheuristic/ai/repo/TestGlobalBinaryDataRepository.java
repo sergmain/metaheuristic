@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,8 +17,11 @@
 package ai.metaheuristic.ai.repo;
 
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableEntityManagerTxService;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
+import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
+import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,54 +33,78 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.ByteArrayInputStream;
-import java.sql.Timestamp;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@ActiveProfiles("dispatcher")
+//@ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@AutoConfigureCache
 public class TestGlobalBinaryDataRepository {
 
     @Autowired
-    private GlobalVariableService globalVariableService;
+    private GlobalVariableTxService globalVariableService;
     @Autowired
-    private GlobalVariableEntityManagerTxService globalVariableEntityManagerTxService;
+    private GeneralBlobTxService variableBlobTxService;
+    @Autowired
+    private DispatcherBlobStorage dispatcherBlobStorage;
+    @Autowired
+    private GlobalVariableRepository globalVariableRepository;
 
-    private GlobalVariable d1 = null;
+    private Long globalVariableId = null;
+
     @AfterEach
     public void after() {
-        if (d1!=null) {
-            globalVariableService.deleteById(d1.id);
+        if (globalVariableId !=null) {
+            globalVariableService.deleteById(globalVariableId);
         }
     }
 
     @Test
-    public void test() throws InterruptedException {
-        byte[] bytes = "this is very short data".getBytes();
+    public void test() throws InterruptedException, SQLException, IOException {
+        final String s = "this is very short data";
+        byte[] bytes = s.getBytes();
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
-        d1 = globalVariableEntityManagerTxService.save(inputStream, bytes.length, "test-01","test-file.bin");
 
-        Timestamp ts = d1.getUploadTs();
+        globalVariableId = variableBlobTxService.createEmptyGlobalVariable("test-01", "test-file.bin");
+        dispatcherBlobStorage.storeGlobalVariableData(globalVariableId, inputStream, bytes.length);
+        GlobalVariable gv = globalVariableRepository.findById(globalVariableId).orElseThrow();
 
-        GlobalVariable d2 = globalVariableService.getBinaryData(d1.getId());
-        assertNotNull(d2);
-        assertEquals(d1, d2);
-        assertArrayEquals(bytes, d2.bytes);
+
+        dispatcherBlobStorage.accessGlobalVariableData(globalVariableId, (o)->{
+                    try {
+                        String actual = IOUtils.toString(o, StandardCharsets.UTF_8);
+                        assertEquals(s, actual);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
 
         // to check timestamp
         Thread.sleep(1100);
 
-        bytes = "another one very short data".getBytes();
+        final String s1 = "another one very short data";
+        bytes = s1.getBytes();
         inputStream = new ByteArrayInputStream(bytes);
-        globalVariableEntityManagerTxService.update(inputStream, bytes.length, d2);
+        dispatcherBlobStorage.storeGlobalVariableData(globalVariableId, inputStream, bytes.length);
 
-        d2 = globalVariableService.getBinaryData(d2.getId());
-        assertNotNull(d2);
-        assertNotEquals(ts, d2.getUploadTs());
-        assertArrayEquals(bytes, d2.bytes);
+        GlobalVariable gv1 = globalVariableRepository.findById(globalVariableId).orElseThrow();
+
+        assertNotEquals(gv.uploadTs, gv1.uploadTs);
+        dispatcherBlobStorage.accessGlobalVariableData(globalVariableId, (o)->{
+            try {
+                String actual = IOUtils.toString(o, StandardCharsets.UTF_8);
+                assertEquals(s1, actual);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 }

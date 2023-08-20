@@ -29,13 +29,13 @@ import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Serge
@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class SubProcessesTxService {
 
     private final InternalFunctionService internalFunctionService;
@@ -64,13 +64,12 @@ public class SubProcessesTxService {
         }
 
         final List<Long> lastIds = new ArrayList<>();
-        AtomicInteger currTaskNumber = new AtomicInteger(0);
         String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
-                taskId, taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
+                taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
+
+        String currTaskContextId = ContextUtils.buildTaskContextId(subProcessContextId, "0");
 
         try {
-            String currTaskContextId = ContextUtils.getTaskContextId(subProcessContextId, Integer.toString(currTaskNumber.get()));
-
             taskProducingService.createTasksForSubProcesses(
                     simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
 

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -385,7 +385,7 @@ public class TaskQueue {
         if (state== EnumsApi.TaskExecState.IN_PROGRESS || state== EnumsApi.TaskExecState.OK) {
             log.debug("#029.200 set task #{} as {}, execContextId: #{}", taskId, state, execContextId);
         }
-        boolean ok = false;
+        boolean changed = false;
         for (TaskGroup taskGroup : taskGroups) {
             if (!execContextId.equals(taskGroup.execContextId)) {
                 continue;
@@ -422,11 +422,11 @@ public class TaskQueue {
                 if (task.state== EnumsApi.TaskExecState.NONE) {
                     task.assigned = false;
                 }
-                ok = true;
+                changed = true;
                 break;
             }
-            log.debug("#029.300 task #{}, state {}, execContextId: #{}, changed: {}", taskId, state, execContextId, ok);
-            if (ok) {
+            log.debug("#029.300 task #{}, state {}, execContextId: #{}, changed: {}", taskId, state, execContextId, changed);
+            if (changed) {
                 return groupFinished(taskGroup);
             }
         }

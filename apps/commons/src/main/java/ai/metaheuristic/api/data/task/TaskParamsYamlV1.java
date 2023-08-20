@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -246,6 +246,9 @@ public class TaskParamsYamlV1 implements BaseParams {
 
         @Nullable
         public Integer triesAfterError;
+
+        // all output variables were initialized from cache
+        public boolean fromCache;
     }
 
     public TaskYamlV1 task = new TaskYamlV1();

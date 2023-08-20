@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,21 +16,16 @@
 
 package ai.metaheuristic.ai.dispatcher.heuristic;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-
 /**
  * @author Serge
  * Date: 5/3/2021
  * Time: 11:47 PM
  */
-@Service
-@Slf4j
-@Profile("dispatcher")
-@RequiredArgsConstructor
+//@Service
+//@Slf4j
+//@Profile("dispatcher")
+//@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class HeuristicTopLevelService {
 
-    public final HeuristicService heuristicService;
+//    public final HeuristicService heuristicService;
 }

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,13 +60,7 @@ public class TaskApiData {
         public Long taskId;
         public Integer execState;
         public long updatedOn;
-
-        public TaskState(Object[] o) {
-            this.taskId = (Long) o[0];
-            this.execState = (Integer) o[1];
-            Long longObj = (Long) o[2];
-            this.updatedOn = longObj!=null ? longObj : 0;
-        }
+        public boolean fromCache;
     }
 
 }

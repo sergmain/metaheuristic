@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +17,13 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.processor.data.ProcessorData;
+import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -37,14 +39,15 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 @Slf4j
 @Service
 @Profile("processor")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ProcessorCommandProcessor {
-    private final ProcessorService processorService;
-    private final MetadataService metadataService;
 
-    // this method is synchronized outside
+    private final ProcessorService processorService;
+    private final ProcessorEnvironment processorEnvironment;
+
+    // this method is synced outside
     public void processDispatcherCommParamsYaml(ProcessorCommParamsYaml pcpy, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
-        ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = metadataService.getRef(dispatcherUrl);
+        ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = processorEnvironment.metadataParams.getRef(dispatcherUrl);
         if(ref==null) {
             log.warn("ref is null for processorId: {}, dispatcherUrl: {}",
                     pcpy.request.processorCommContext!=null ? pcpy.request.processorCommContext.processorId : "<null>", dispatcherUrl);
@@ -91,7 +94,7 @@ public class ProcessorCommandProcessor {
             if (coreRequest.assignedTask==null) {
                 return;
             }
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = metadataService.getCoreRef(coreRequest.code, ref.dispatcherUrl);
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataParams.getCoreRef(coreRequest.code, ref.dispatcherUrl);
             if (core==null) {
                 return;
             }
@@ -104,7 +107,7 @@ public class ProcessorCommandProcessor {
             return;
         }
         log.info("storeProcessorId() new processor Id: {}", response.assignedProcessorId);
-        metadataService.setProcessorIdAndSessionId(dispatcherUrl, response.assignedProcessorId.assignedProcessorId, response.assignedProcessorId.assignedSessionId);
+        processorEnvironment.metadataParams.setProcessorIdAndSessionId(dispatcherUrl, response.assignedProcessorId.assignedProcessorId, response.assignedProcessorId.assignedSessionId);
     }
 
     // processing at processor side
@@ -113,7 +116,7 @@ public class ProcessorCommandProcessor {
             return;
         }
         Long newProcessorId = Long.parseLong(response.reAssignedProcessorId.reAssignedProcessorId);
-        final MetadataParamsYaml.ProcessorSession processorSession = metadataService.getProcessorSession(dispatcherUrl);
+        final MetadataParamsYaml.ProcessorSession processorSession = processorEnvironment.metadataParams.getProcessorSession(dispatcherUrl);
         final Long currProcessorId = processorSession.processorId;
         final String currSessionId = processorSession.sessionId;
         if (currProcessorId!=null && currSessionId!=null &&
@@ -129,7 +132,7 @@ public class ProcessorCommandProcessor {
                 currProcessorId, currSessionId,
                 response.reAssignedProcessorId.getReAssignedProcessorId(), response.reAssignedProcessorId.sessionId
         );
-        metadataService.setProcessorIdAndSessionId(dispatcherUrl, response.reAssignedProcessorId.getReAssignedProcessorId(), response.reAssignedProcessorId.sessionId);
+        processorEnvironment.metadataParams.setProcessorIdAndSessionId(dispatcherUrl, response.reAssignedProcessorId.getReAssignedProcessorId(), response.reAssignedProcessorId.sessionId);
     }
 
 }

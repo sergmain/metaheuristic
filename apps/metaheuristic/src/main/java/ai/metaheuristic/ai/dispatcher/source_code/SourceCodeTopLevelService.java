@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,6 +52,7 @@ import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -61,7 +62,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
@@ -82,10 +82,10 @@ import static ai.metaheuristic.ai.Consts.YML_EXT;
 @Slf4j
 @Profile("dispatcher")
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class SourceCodeTopLevelService {
 
-    private final SourceCodeService sourceCodeService;
+    private final SourceCodeTxService sourceCodeTxService;
     private final Globals globals;
     private final SourceCodeCache sourceCodeCache;
     private final SourceCodeRepository sourceCodeRepository;
@@ -119,7 +119,7 @@ public class SourceCodeTopLevelService {
             }
 
             try {
-                return sourceCodeService.createSourceCode(sourceCodeYamlAsStr, ppy, companyUniqueId);
+                return sourceCodeTxService.createSourceCode(sourceCodeYamlAsStr, ppy, companyUniqueId);
             } catch (DataIntegrityViolationException e) {
                 final String error = ErrorUtils.getAllMessages(e, 1);
                 final String es = "#560.155 data integrity error: " + error;
@@ -232,7 +232,7 @@ public class SourceCodeTopLevelService {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, sourceCodeResult.getErrorMessagesAsList(), sourceCodeResult.getInfoMessagesAsList());
             }
 
-            SourceCodeApiData.SourceCodeResult result = sourceCodeService.createSourceCode(sourceCodeYamlAsStr, ppy, context.getCompanyId());
+            SourceCodeApiData.SourceCodeResult result = sourceCodeTxService.createSourceCode(sourceCodeYamlAsStr, ppy, context.getCompanyId());
 
             if (result.isErrorMessages()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.getErrorMessagesAsList(), result.getInfoMessagesAsList());
@@ -371,15 +371,15 @@ public class SourceCodeTopLevelService {
     private static boolean createArtifactsDir(Path outputDir, TaskParamsYaml tpy) throws IOException {
         Path artifactsDir = outputDir.resolve(ConstsApi.ARTIFACTS_DIR);
         Files.createDirectory(artifactsDir);
-        if (createEnvParamsFile(artifactsDir.toFile())) {
+        if (createEnvParamsFile(artifactsDir)) {
             return true;
         }
 
-        return !ArtifactUtils.prepareParamsFileForTask(artifactsDir.toFile(), outputDir.getFileName().toString(), tpy,
+        return !ArtifactUtils.prepareParamsFileForTask(artifactsDir, outputDir.getFileName().toString(), tpy,
                 Set.of(TaskFileParamsYamlUtils.DEFAULT_UTILS.getVersion()));
     }
 
-    private static boolean createEnvParamsFile(File artefactsDir) {
+    private static boolean createEnvParamsFile(Path artefactsDir) {
         EnvParamsYaml epy = new EnvParamsYaml();
 
         epy.envs.addAll(List.of(

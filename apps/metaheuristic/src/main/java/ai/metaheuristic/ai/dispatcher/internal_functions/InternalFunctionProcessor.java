@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,11 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 
 /**
  * @author Serge
@@ -30,7 +34,12 @@ import lombok.extern.slf4j.Slf4j;
  * Time: 9:47 PM
  */
 @Slf4j
+@Profile("dispatcher")
+@Service
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class InternalFunctionProcessor {
+
+    private final InternalFunctionRegisterService internalFunctionRegisterService;
 
     /**
      *
@@ -41,9 +50,9 @@ public class InternalFunctionProcessor {
      *
      * @return boolean is that task a long-running task?
      */
-    public static boolean process(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String internalContextId, TaskParamsYaml taskParamsYaml) {
+    public boolean process(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String internalContextId, TaskParamsYaml taskParamsYaml) {
 
-        InternalFunction internalFunction = InternalFunctionRegisterService.get(taskParamsYaml.task.function.code);
+        InternalFunction internalFunction = internalFunctionRegisterService.get(taskParamsYaml.task.function.code);
         if (internalFunction==null) {
             throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.function_not_found));
         }

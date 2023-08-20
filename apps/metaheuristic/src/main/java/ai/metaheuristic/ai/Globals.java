@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,12 +22,13 @@ import ai.metaheuristic.ai.utils.EnvProperty;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.SecUtils;
+import jakarta.annotation.PostConstruct;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.boot.context.properties.DeprecatedConfigurationProperty;
@@ -35,14 +36,11 @@ import org.springframework.boot.convert.DataSizeUnit;
 import org.springframework.boot.convert.DurationUnit;
 import org.springframework.boot.convert.PeriodUnit;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.core.env.Environment;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 import org.springframework.util.unit.DataUnit;
 
-import javax.annotation.PostConstruct;
-import java.io.File;
 import java.io.IOException;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
@@ -55,15 +53,14 @@ import java.security.PublicKey;
 import java.time.Duration;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+
+import static ai.metaheuristic.ai.Enums.ApiKeySourceDefinedBy.none;
 
 @ConfigurationProperties("mh")
 @Getter
 @Setter
 @Slf4j
-@RequiredArgsConstructor
 public class Globals {
     public static final Duration SECONDS_3 = Duration.ofSeconds(3);
     public static final Duration SECONDS_5 = Duration.ofSeconds(5);
@@ -77,22 +74,20 @@ public class Globals {
     public static final Duration SECONDS_31 = Duration.ofSeconds(31);
     public static final Duration SECONDS_60 = Duration.ofSeconds(60);
     public static final Duration SECONDS_120 = Duration.ofSeconds(120);
+    public static final Duration SECONDS_300 = Duration.ofSeconds(300);
     public static final Duration SECONDS_3600 = Duration.ofSeconds(3600);
     public static final Duration DAYS_14 = Duration.ofDays(14);
     public static final Period DAYS_90 = Period.ofDays(90);
     public static final Period DAYS_IN_YEARS_3 = Period.ofDays(365*3);
-
-
-    private final Environment env;
 
     public static final String METAHEURISTIC_PROJECT = "Metaheuristic project";
 
     @Component
     @ConfigurationPropertiesBinding
     public static class PublicKeyConverter implements Converter<String, PublicKey> {
-        @Nullable
+
         @Override
-        public PublicKey convert(String from) {
+        public @Nullable PublicKey convert(String from) {
             if (S.b(from)) {
                 return null;
             }
@@ -178,6 +173,8 @@ public class Globals {
     @AllArgsConstructor
     public static class Max {
         public int consoleOutputLines = 1000;
+
+        // in unicode units. i.e. String.length()
         public int promptLength = 4096;
         public int errorsPerPart = 1;
         // has effect only with a local executor of requests
@@ -234,7 +231,7 @@ public class Globals {
         }
 
         public Duration getArtifactCleaner() {
-            return artifactCleaner.toSeconds() >= 60 && artifactCleaner.toSeconds() <=600 ? artifactCleaner : SECONDS_60;
+            return artifactCleaner.toSeconds() >= 60 && artifactCleaner.toSeconds() <=600 ? artifactCleaner : SECONDS_300;
         }
 
         public Duration getGc() {
@@ -284,7 +281,7 @@ public class Globals {
         @Nullable
         public PublicKey publicKey;
 
-        public String defaultResultFileExtension = ".bin";
+        public String defaultResultFileExtension = Consts.BIN_EXT;
 
         public int maxTriesAfterError = 3;
 
@@ -454,10 +451,10 @@ public class Globals {
         public boolean enabled = false;
 
         @Nullable
-        public File defaultDispatcherYamlFile = null;
+        public Path defaultDispatcherYamlFile = null;
 
         @Nullable
-        public File defaultEnvYamlFile = null;
+        public Path defaultEnvYamlFile = null;
 
         public int taskConsoleOutputMaxLines = 1000;
 
@@ -473,6 +470,9 @@ public class Globals {
     public static class Mhbp {
         public final Max max = new Max();
         public Kb[] kb;
+        public Enums.ApiKeySourceDefinedBy apiKeySource = none;
+        @Nullable
+        public String[] envTokens;
     }
 
     public static class ThreadNumber {
@@ -505,6 +505,12 @@ public class Globals {
         }
     }
 
+    @Value("${spring.profiles.active}")
+    public String[] activeProfiles;
+
+    @Value("${spring.profiles.active}")
+    public Set<String> activeProfilesSet;
+
     public final Dispatcher dispatcher = new Dispatcher();
     public final Processor processor = new Processor();
     public final ThreadNumber threadNumber = new ThreadNumber();
@@ -527,7 +533,7 @@ public class Globals {
 
     public Path getHome() {
         if (home==null) {
-            throw new IllegalArgumentException("mh.home isn't specified");
+            throw new IllegalArgumentException("property mh.home isn't specified");
         }
         return home;
     }
@@ -536,7 +542,12 @@ public class Globals {
     public Path dispatcherTempPath;
     public Path dispatcherResourcesPath;
     public Path dispatcherPath;
-    public Path processorResourcesPath;
+    public Path dispatcherStoragePath;
+    public Path dispatcherStorageVariablesPath;
+    public Path dispatcherStorageGlobalVariablesPath;
+    public Path dispatcherStorageFunctionsPath;
+    public Path dispatcherStorageCacheVariablessPath;
+
     public Path processorPath;
 
     public EnumsApi.OS os = EnumsApi.OS.unknown;
@@ -569,8 +580,6 @@ public class Globals {
         }
 
         if (processor.enabled) {
-            processorResourcesPath = processorPath.resolve(Consts.RESOURCES_DIR);
-            Files.createDirectories(processorResourcesPath);
 
             // TODO 2019.04.26 right now the change of ownership is disabled
             //  but maybe will be required in future
@@ -579,19 +588,32 @@ public class Globals {
 
         if (dispatcher.enabled) {
             dispatcherTempPath = dispatcherPath.resolve("temp");
-            PathUtils.createParentDirectories(dispatcherTempPath);
+            Files.createDirectories(dispatcherTempPath);
 
             dispatcherResourcesPath = dispatcherPath.resolve(Consts.RESOURCES_DIR);
             Files.createDirectories(dispatcherResourcesPath);
+
+            dispatcherStoragePath = dispatcherPath.resolve(Consts.STORAGE_DIR);
+            Files.createDirectories(dispatcherStoragePath);
+
+            dispatcherStorageVariablesPath = dispatcherStoragePath.resolve(Consts.VARIABLES_DIR);
+            Files.createDirectories(dispatcherStorageVariablesPath);
+
+            dispatcherStorageGlobalVariablesPath = dispatcherStoragePath.resolve(Consts.GLOBAL_VARIABLES_DIR);
+            Files.createDirectories(dispatcherStorageGlobalVariablesPath);
+
+            dispatcherStorageFunctionsPath = dispatcherStoragePath.resolve(Consts.FUNCTIONS_DIR);
+            Files.createDirectories(dispatcherStorageFunctionsPath);
+
+            dispatcherStorageCacheVariablessPath = dispatcherStoragePath.resolve(Consts.CACHE_VARIABLES_DIR);
+            Files.createDirectories(dispatcherStorageCacheVariablessPath);
         }
         initOperationSystem();
 
         logGlobals();
         logSystemEnvs();
         logGarbageCollectors();
-        logDeprecated();
-
-//        logUlimitSh();
+//        logDeprecated();
 
     }
 
@@ -602,13 +624,13 @@ public class Globals {
                 log.warn("Error of getting ulimit");
                 log.warn("\tresult.ok: {}",  result.ok);
                 log.warn("\tresult.error: {}",  result.error);
-                log.warn("\tresult.functionDir: {}",  result.functionDir !=null ? result.functionDir.getPath() : null);
+                log.warn("\tresult.functionDir: {}",  result.functionDir !=null ? result.functionDir : null);
                 log.warn("\tresult.systemExecResult: {}",  result.systemExecResult);
                 return;
             }
 
             // at this point result.systemExecResult must be not null, it can be null only if result.ok==false, but see above
-            if (result.systemExecResult.exitCode!=0) {
+            if (Objects.requireNonNull(result.systemExecResult).exitCode!=0) {
                 log.info("ulimit wasn't found");
                 return;
             }
@@ -663,19 +685,6 @@ public class Globals {
             Pair.of("MH_DISPATCHER_ASSET_SOURCE_URL", "MH_DISPATCHER_ASSET_SOURCEURL")
     );
 
-    private void logDeprecated() {
-        boolean isError = false;
-        for (Pair<String, String> checkEnv : checkEnvs) {
-            if (env.getProperty(checkEnv.getKey())!=null) {
-                isError = true;
-                log.warn("environment variable "+checkEnv.getKey()+" must be replaced with "+checkEnv.getValue());
-            }
-        }
-        if (isError) {
-            throw new GlobalConfigurationException("there is some error in configuration of environment variable. sse log above");
-        }
-    }
-
     private void initOperationSystem() {
         if (SystemUtils.IS_OS_WINDOWS) {
             os = EnumsApi.OS.windows;
@@ -691,14 +700,13 @@ public class Globals {
         }
     }
 
-    private static void checkOwnership(File file, @Nullable String systemOwner) {
+    private static void checkOwnership(Path path, @Nullable String systemOwner) {
         try {
-            Path path = file.toPath();
 
             FileSystem fileSystem = path.getFileSystem();
             UserPrincipalLookupService service = fileSystem.getUserPrincipalLookupService();
 
-            log.info("Check ownership of {}", file.getAbsolutePath());
+            log.info("Check ownership of {}", path.toAbsolutePath());
             log.info("File: " + path);
             log.info("Exists: " + Files.exists(path));
             log.info("-- owner before --");
@@ -725,7 +733,7 @@ public class Globals {
                 log.info("new system owner wasn't defined");
             }
         } catch (IOException e) {
-            log.error("An error while checking ownership of path " + file.getPath(), e);
+            log.error("An error while checking ownership of path " + path.toAbsolutePath(), e);
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,8 +25,11 @@ import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.replication.ReplicationApiData;
 import ai.metaheuristic.commons.S;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.http.HttpStatus;
@@ -36,8 +39,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Map;
 
@@ -51,7 +52,7 @@ import java.util.Map;
 @Profile("dispatcher")
 @RequestMapping("/rest/v1/asset")
 @PreAuthorize("hasAnyRole('ASSET_REST_ACCESS')")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class AssetController {
 
     private final Globals globals;

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -146,15 +146,18 @@ public class ExecContextApiData {
         public String state;
         // context of function
         public String context;
+        // content of all output variables were created from cache
+        public boolean fromCache;
 
         @Nullable
         public List<VariableInfo> outs;
 
-        public StateCell(Long taskId, String state, String context, @Nullable List<VariableInfo> outs) {
+        public StateCell(Long taskId, String state, String context, boolean fromCache, @Nullable List<VariableInfo> outs) {
             this.empty = false;
             this.taskId = taskId;
             this.state = state;
             this.context = context;
+            this.fromCache = fromCache;
             this.outs = outs;
         }
     }

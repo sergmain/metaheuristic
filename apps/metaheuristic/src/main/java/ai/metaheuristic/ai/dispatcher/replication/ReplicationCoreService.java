@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,24 +23,22 @@ import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.fluent.Executor;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.client.fluent.Response;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.client.utils.URIUtils;
-import org.apache.http.conn.ConnectTimeoutException;
-import org.apache.http.conn.HttpHostConnectException;
+import org.apache.commons.io.IOUtils;
+import org.apache.hc.client5.http.ConnectTimeoutException;
+import org.apache.hc.client5.http.HttpHostConnectException;
+import org.apache.hc.client5.http.fluent.Executor;
+import org.apache.hc.client5.http.fluent.Request;
+import org.apache.hc.client5.http.fluent.Response;
+import org.apache.hc.client5.http.utils.URIUtils;
+import org.apache.hc.core5.http.*;
+import org.apache.hc.core5.net.URIBuilder;
+import org.apache.hc.core5.util.Timeout;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -54,17 +52,18 @@ import java.util.function.Function;
  */
 @SuppressWarnings("rawtypes")
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ReplicationCoreService {
 
-    public final Globals globals;
+    private final Globals globals;
 
     public ReplicationData.AssetStateResponse getAssetStates() {
         ReplicationData.ReplicationAsset data = getData(
                 "/rest/v1/replication/current-assets", ReplicationData.AssetStateResponse.class, null,
-                (uri) -> Request.Get(uri).connectTimeout(5000).socketTimeout(20000)
+                (uri) -> Request.get(uri).connectTimeout(Timeout.ofSeconds(5))
+                //.socketTimeout(20000)
         );
         if (data instanceof ReplicationData.AssetAcquiringError) {
             return new ReplicationData.AssetStateResponse(((ReplicationData.AssetAcquiringError) data).getErrorMessagesAsList());
@@ -82,7 +81,7 @@ public class ReplicationCoreService {
         }
         return Executor.newInstance()
                 .authPreemptive(dispatcherHttpHostWithAuth)
-                .auth(dispatcherHttpHostWithAuth, restUsername, restPassword);
+                .auth(dispatcherHttpHostWithAuth, restUsername, restPassword.toCharArray());
     }
 
     public ReplicationData.ReplicationAsset getData(String uri, Class clazz, @Nullable List<NameValuePair> nvps, Function<URI, Request> requestFunc) {
@@ -106,18 +105,20 @@ public class ReplicationCoreService {
                     .execute(request);
 
             final HttpResponse httpResponse = response.returnResponse();
-            if (httpResponse.getStatusLine().getStatusCode()!=200) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                final HttpEntity entity = httpResponse.getEntity();
-                if (entity != null) {
-                    entity.writeTo(baos);
-                }
-
-                log.error("Server response:\n" + baos.toString());
-                return new ReplicationData.AssetAcquiringError( S.f("Error while accessing url %s, http status code: %d",
-                        globals.dispatcher.asset.sourceUrl, httpResponse.getStatusLine().getStatusCode()));
+            if (!(httpResponse instanceof ClassicHttpResponse classicHttpResponse)) {
+                throw new IllegalStateException("(!(httpResponse instanceof ClassicHttpResponse classicHttpResponse))");
             }
-            final HttpEntity entity = httpResponse.getEntity();
+            final int statusCode = classicHttpResponse.getCode();
+            if (statusCode!=200) {
+                String content;
+                try (final InputStream is = classicHttpResponse.getEntity().getContent()) {
+                    content = IOUtils.toString(is, StandardCharsets.UTF_8);
+                }
+                log.error("Server response:\n" + content);
+                return new ReplicationData.AssetAcquiringError( S.f("Error while accessing url %s, http status code: %d",
+                        globals.dispatcher.asset.sourceUrl, httpResponse.getCode()));
+            }
+            final HttpEntity entity = classicHttpResponse.getEntity();
             if (entity != null) {
                 try (final InputStream content = entity.getContent()) {
                     return getReplicationAsset(content, clazz);
@@ -128,7 +129,7 @@ public class ReplicationCoreService {
                         globals.dispatcher.asset.sourceUrl));
             }
         }
-        catch (ConnectTimeoutException | HttpHostConnectException | SocketTimeoutException th) {
+        catch (ConnectTimeoutException | HttpHostConnectException th) {
             log.error("Error: {}", th.getMessage());
             return new ReplicationData.AssetAcquiringError( S.f("Error while accessing url %s, error message: %s",
                     globals.dispatcher.asset.sourceUrl, th.getMessage()));

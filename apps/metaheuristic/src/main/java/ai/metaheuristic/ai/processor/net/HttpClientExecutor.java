@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
 
 package ai.metaheuristic.ai.processor.net;
 
-import org.apache.http.HttpHost;
-import org.apache.http.client.fluent.Executor;
-import org.apache.http.client.utils.URIUtils;
+import org.apache.hc.client5.http.utils.URIUtils;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.client5.http.fluent.Executor;
 
 import java.net.URL;
 
@@ -33,6 +33,6 @@ public class HttpClientExecutor {
         }
         return Executor.newInstance()
                 .authPreemptive(dispatcherHttpHostWithAuth)
-                .auth(dispatcherHttpHostWithAuth,restUsername, restPassword);
+                .auth(dispatcherHttpHostWithAuth,restUsername, restPassword.toCharArray());
     }
 }

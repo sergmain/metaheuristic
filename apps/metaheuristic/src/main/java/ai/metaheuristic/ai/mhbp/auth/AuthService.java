@@ -16,15 +16,16 @@
 
 package ai.metaheuristic.ai.mhbp.auth;
 
-import ai.metaheuristic.ai.mhbp.repositories.AuthRepository;
-import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.beans.Auth;
 import ai.metaheuristic.ai.mhbp.data.AuthData;
+import ai.metaheuristic.ai.mhbp.repositories.AuthRepository;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -44,8 +45,8 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class AuthService {
 
     private final AuthRepository authRepository;

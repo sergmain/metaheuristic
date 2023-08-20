@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.complex;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.event.events.ResetTasksWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingTopLevelService;
@@ -30,9 +31,8 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
@@ -64,8 +64,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@ActiveProfiles("dispatcher")
+//@ActiveProfiles({"dispatcher", "mysql"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@AutoConfigureCache
 public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
@@ -73,7 +74,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
     @Autowired private TaskRepository taskRepository;
     @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
     @Autowired private TaskFinishingTopLevelService taskFinishingTopLevelService;
-    @Autowired private TaskFinishingService taskFinishingService;
+    @Autowired private TaskFinishingTxService taskFinishingTxService;
     @Autowired private ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     @Autowired private TaskVariableTopLevelService taskVariableTopLevelService;
     @Autowired private VariableTxService variableService;
@@ -120,7 +121,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
         //preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #1");
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         System.out.println("start step_AssembledRaw()");
         step_AssembledRaw(processorIdAndCoreIds, true);
@@ -128,7 +129,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
         step_AssembledRaw(processorIdAndCoreIds, false);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #2");
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
         System.out.println("start step_DatasetProcessing()");
         step_DatasetProcessing(processorIdAndCoreIds);
 
@@ -183,7 +184,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
 
     private void storeOutputVariable(String variableName, String variableData, String processCode) {
 
-        SimpleVariable v = variableService.getVariableAsSimple(
+        Variable v = variableService.getVariable(
                 variableName, processCode, getExecContextForTest());
 
         assertNotNull(v);
@@ -197,7 +198,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
 
 
 
-        v = variableService.getVariableAsSimple(v.variable, processCode, getExecContextForTest());
+        v = variableService.getVariable(v.name, processCode, getExecContextForTest());
         assertNotNull(v);
         assertTrue(v.inited);
 
@@ -255,13 +256,13 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
 
         if (error) {
             TaskSyncService.getWithSyncVoid(simpleTask.taskId,
-                    () -> taskFinishingService.finishWithErrorWithTx(simpleTask.taskId, "1st cycle of error"));
+                    () -> taskFinishingTxService.finishWithErrorWithTx(simpleTask.taskId, "1st cycle of error"));
 
             TaskImpl task1 = taskRepository.findById(simpleTask.taskId).orElse(null);
             assertNotNull(task1);
             assertEquals(EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value, task1.execState);
 
-            execContextTaskResettingTopLevelService.resetTasksWithErrorForRecovery(task1.execContextId);
+            execContextTaskResettingTopLevelService.resetTasksWithErrorForRecovery(new ResetTasksWithErrorEvent(task1.execContextId));
 
             TaskImpl task2 = taskRepository.findById(simpleTask.taskId).orElse(null);
             assertNotNull(task2);

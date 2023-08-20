@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,11 +16,14 @@
 
 package ai.metaheuristic.ai.source_code;
 
+import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService;
+import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
-import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -28,6 +31,8 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,18 +57,39 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @Slf4j
-@ActiveProfiles("dispatcher")
+//@ActiveProfiles({"dispatcher", "mysql"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-public class TestExecSourceCode extends PreparingSourceCode {
+@AutoConfigureCache
+public class TestExecSourceCode {
 
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
     @Autowired private SourceCodeTopLevelService sourceCodeTopLevelService;
     @Autowired private SourceCodeCache sourceCodeCache;
-    @Autowired private SourceCodeService sourceCodeService;
+    @Autowired private SourceCodeTxService sourceCodeTxService;
+    @Autowired private CompanyTopLevelService companyTopLevelService;
+    @Autowired private CompanyRepository companyRepository;
 
-    @Override
-    public String getSourceCodeYamlAsString() {
-        return getSourceParamsYamlAsString_Simple();
+    private Company company = null;
+
+    @BeforeEach
+    public void init() {
+        company = new Company();
+        company.name = "Test company #2";
+        companyTopLevelService.addCompany(company);
+        company = Objects.requireNonNull(companyTopLevelService.getCompanyByUniqueId(company.uniqueId));
+
+        assertNotNull(company.id);
+        assertNotNull(company.uniqueId);
+
+        // id==1L must be assigned only to master company
+        assertNotEquals(Consts.ID_1, company.id);
+    }
+
+    @AfterEach
+    public void after() {
+        if (company!=null && company.id!=null) {
+            companyRepository.deleteById(company.id);
+        }
     }
 
     @Test
@@ -71,13 +97,13 @@ public class TestExecSourceCode extends PreparingSourceCode {
         SourceCodeApiData.SourceCodeResult scr = null;
         SourceCodeApiData.SourceCodeResult scrSub = null;
         try {
-            scrSub = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-correct-sub-source-code.yaml"), getCompany().uniqueId);
+            scrSub = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-correct-sub-source-code.yaml"), company.uniqueId);
             assertTrue(scrSub.isValid());
             assertFalse(scrSub.isErrorMessages());
             System.out.println(scrSub.getErrorMessagesAsStr());
             assertEquals(scrSub.validationResult.status, EnumsApi.SourceCodeValidateStatus.OK);
 
-            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-correct.yaml"), getCompany().uniqueId);
+            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-correct.yaml"), company.uniqueId);
             assertTrue(scr.isValid());
             assertFalse(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());
@@ -92,18 +118,8 @@ public class TestExecSourceCode extends PreparingSourceCode {
     public void testRecursionExecError() throws IOException {
         SourceCodeApiData.SourceCodeResult scr = null;
         try {
-            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-1.yaml"), getCompany().uniqueId);
+            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-1.yaml"), company.uniqueId);
             assertTrue(scr.isValid());
-/*
-            assertFalse(scr.isValid());
-            assertTrue(scr.isErrorMessages());
-            System.out.println(scr.getErrorMessagesAsStr());
-
-            assertNotEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR);
-            assertNotEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.META_NOT_FOUND_ERROR);
-            assertNotEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR);
-            assertEquals(scr.validationResult.status, EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_RECURSION_ERROR);
-*/
         } finally {
             finalize(scr);
         }
@@ -113,7 +129,7 @@ public class TestExecSourceCode extends PreparingSourceCode {
     public void testMetaNotFoundError() throws IOException {
         SourceCodeApiData.SourceCodeResult scr = null;
         try {
-            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-2.yaml"), getCompany().uniqueId);
+            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-2.yaml"), company.uniqueId);
             assertFalse(scr.isValid());
             assertTrue(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());
@@ -128,7 +144,7 @@ public class TestExecSourceCode extends PreparingSourceCode {
     public void testInputsCountMismatchError() throws IOException {
         SourceCodeApiData.SourceCodeResult scr = null;
         try {
-            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-3.yaml"), getCompany().uniqueId);
+            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-3.yaml"), company.uniqueId);
             assertFalse(scr.isValid());
             assertTrue(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());
@@ -143,7 +159,7 @@ public class TestExecSourceCode extends PreparingSourceCode {
     public void testOutputsCountMismatchError() throws IOException {
         SourceCodeApiData.SourceCodeResult scr = null;
         try {
-            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-4.yaml"), getCompany().uniqueId);
+            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-4.yaml"), company.uniqueId);
             assertFalse(scr.isValid());
             assertTrue(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());
@@ -158,7 +174,7 @@ public class TestExecSourceCode extends PreparingSourceCode {
         if (scr != null) {
             SourceCodeImpl sc = Objects.requireNonNull(sourceCodeCache.findById(scr.id));
             try {
-                sourceCodeService.deleteSourceCodeById(sc.id);
+                sourceCodeTxService.deleteSourceCodeById(sc.id);
             } catch (Throwable th) {
                 th.printStackTrace();
             }

@@ -22,14 +22,12 @@ import ai.metaheuristic.ww2003.document.tags.Property;
 import ai.metaheuristic.ww2003.document.tags.xml.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-@Service
 public class HighlightUtils {
 
     public static void noHighlight(CDNode cdNode) {

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,11 +28,30 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 @Repository
 @Profile("dispatcher")
 public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
+
+    @Override
+    @Transactional(readOnly = true)
+    Optional<TaskImpl> findById(Long id);
+
+    @Nullable
+    @Transactional(readOnly = true)
+    @Query("SELECT t FROM TaskImpl t where t.id=:id")
+    TaskImpl findByIdReadOnly(Long id);
+
+    @Transactional(readOnly = true)
+    @Query("SELECT t FROM TaskImpl t where t.execContextId=:execContextId")
+    List<TaskImpl> findByExecContextIdReadOnly(Long execContextId);
+
+    @Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+    @Query("SELECT t FROM TaskImpl t where t.id in :ids")
+    Stream<TaskImpl> findByIds(List<Long> ids);
 
     @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
     @Query("SELECT t.id FROM TaskImpl t where t.execContextId=:execContextId and t.execState=7")

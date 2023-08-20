@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.mhbp.data;
 
 import lombok.AllArgsConstructor;
 
-import javax.persistence.Column;
+import jakarta.persistence.Column;
 
 /**
  * @author Sergio Lissner

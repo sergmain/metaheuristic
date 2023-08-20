@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,29 +16,30 @@
 
 package ai.metaheuristic.ai.dispatcher.el;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.variable.*;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.expression.*;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,10 +53,7 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.system_error;
  * Date: 6/22/2021
  * Time: 10:17 PM
  */
-@Service
 @Slf4j
-@Profile("dispatcher")
-@RequiredArgsConstructor
 public class EvaluateExpressionLanguage {
 
     // https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#expressions
@@ -70,28 +68,23 @@ public class EvaluateExpressionLanguage {
         public final String taskContextId;
         public final Long execContextId;
         public final InternalFunctionVariableService internalFunctionVariableService;
-        public final GlobalVariableService globalVariableService;
+        public final GlobalVariableTxService globalVariableService;
         public final VariableTxService variableTxService;
-        public final VariableEntityManagerService variableEntityManagerService;
         public final VariableRepository variableRepository;
-        public final ExecContextVariableService execContextVariableService;
-        public final Consumer<SimpleVariable> setAsNullFunction;
+        public final Consumer<Variable> setAsNullFunction;
 
         public MhEvalContext(String taskContextId, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
-                             GlobalVariableService globalVariableService, VariableTxService variableTxService,
-                             ExecContextVariableService execContextVariableService, VariableRepository variableRepository,
-                             VariableEntityManagerService variableEntityManagerService,
-                             Consumer<SimpleVariable> setAsNullFunction
+                             GlobalVariableTxService globalVariableService, VariableTxService variableTxService,
+                             VariableRepository variableRepository,
+                             Consumer<Variable> setAsNullFunction
                              ) {
             this.taskContextId = taskContextId;
             this.execContextId = execContextId;
             this.internalFunctionVariableService = internalFunctionVariableService;
             this.globalVariableService = globalVariableService;
             this.variableTxService = variableTxService;
-            this.execContextVariableService = execContextVariableService;
             this.variableRepository = variableRepository;
             this.setAsNullFunction = setAsNullFunction;
-            this.variableEntityManagerService = variableEntityManagerService;
         }
 
         @Override
@@ -167,28 +160,7 @@ public class EvaluateExpressionLanguage {
                     }
                     try {
                         if (variableHolderInput!=null) {
-                            Path tempDir = null;
-                            try {
-                                tempDir = DirUtils.createMhTempPath("mh-evaluation-");
-                                if (tempDir == null) {
-                                    throw new InternalFunctionException(system_error, "#509.050 can't create a temporary file");
-                                }
-                                Path tempFile = Files.createTempFile(tempDir, "input-", ".bin");
-                                if (variableHolderInput.globalVariable != null) {
-                                    globalVariableService.storeToFileWithTx(variableHolderInput.globalVariable.id, tempFile);
-                                } else if (variableHolderInput.variable != null) {
-                                    variableTxService.storeToFileWithTx(variableHolderInput.variable.id, tempFile);
-                                } else {
-                                    throw new InternalFunctionException(system_error, "#509.052 both local and global variables are null");
-                                }
-                                try (InputStream is = Files.newInputStream(tempFile)) {
-                                    final long size = Files.size(tempFile);
-                                    VariableSyncService.getWithSyncVoid(variableHolderOutput.variable.id,
-                                            ()-> variableTxService.updateWithTx(is, size, variableHolderOutput.variable.id));
-                                }
-                            } finally {
-                                DirUtils.deletePathAsync(tempDir);
-                            }
+                            storeToFile(variableHolderOutput, variableHolderInput);
                             return;
                         }
 
@@ -205,7 +177,7 @@ public class EvaluateExpressionLanguage {
 
                         try (InputStream is = new ByteArrayInputStream(bytes)) {
                             VariableSyncService.getWithSyncVoid(variableHolderOutput.variable.id,
-                                    ()->variableEntityManagerService.storeData(is, bytes.length, variableHolderOutput.variable.id, null));
+                                    ()-> variableTxService.storeData(is, bytes.length, variableHolderOutput.variable.id, null));
                         }
                         variableHolderOutput.variable.inited = true;
                     }
@@ -221,6 +193,31 @@ public class EvaluateExpressionLanguage {
                 }
             };
             return List.of(pa);
+        }
+
+        private void storeToFile(VariableUtils.VariableHolder variableHolderOutput, VariableUtils.VariableHolder variableHolderInput) throws IOException {
+            Path tempDir = null;
+            try {
+                tempDir = DirUtils.createMhTempPath("mh-evaluation-");
+                if (tempDir == null) {
+                    throw new InternalFunctionException(system_error, "#509.050 can't create a temporary file");
+                }
+                Path tempFile = Files.createTempFile(tempDir, "input-", Consts.BIN_EXT);
+                if (variableHolderInput.globalVariable!=null) {
+                    globalVariableService.storeToFileWithTx(variableHolderInput.globalVariable.id, tempFile);
+                } else if (variableHolderInput.variable!=null) {
+                    variableTxService.storeToFileWithTx(variableHolderInput.variable.id, tempFile);
+                } else {
+                    throw new InternalFunctionException(system_error, "#509.052 both local and global variables are null");
+                }
+                try (InputStream is = Files.newInputStream(tempFile)) {
+                    final long size = Files.size(tempFile);
+                    VariableSyncService.getWithSyncVoid(variableHolderOutput.variable.id,
+                            ()-> variableTxService.updateWithTx(is, size, variableHolderOutput.variable.id));
+                }
+            } finally {
+                DirUtils.deletePathAsync(tempDir);
+            }
         }
 
         @Override
@@ -431,15 +428,15 @@ public class EvaluateExpressionLanguage {
     @Nullable
     public static Object evaluate(
             String taskContextId, String expression, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
-            GlobalVariableService globalVariableService, VariableTxService variableService, ExecContextVariableService execContextVariableService,
-            VariableRepository variableRepository, VariableEntityManagerService variableEntityManagerService, Consumer<SimpleVariable> setAsNullFunction
+            GlobalVariableTxService globalVariableService, VariableTxService variableService,
+            VariableRepository variableRepository, Consumer<Variable> setAsNullFunction
     ) {
 
         ExpressionParser parser = new SpelExpressionParser();
 
         EvaluateExpressionLanguage.MhEvalContext mhEvalContext = new EvaluateExpressionLanguage.MhEvalContext(
                 taskContextId, execContextId, internalFunctionVariableService, globalVariableService, variableService,
-                execContextVariableService, variableRepository, variableEntityManagerService, setAsNullFunction);
+                variableRepository, setAsNullFunction);
 
         Expression exp = parser.parseExpression(expression);
         try {

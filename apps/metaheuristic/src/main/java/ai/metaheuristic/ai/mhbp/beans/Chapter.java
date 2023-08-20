@@ -18,13 +18,13 @@ package ai.metaheuristic.ai.mhbp.beans;
 
 import ai.metaheuristic.ai.mhbp.yaml.chapter.ChapterParams;
 import ai.metaheuristic.ai.mhbp.yaml.chapter.ChapterParamsUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.lang.Nullable;
 
-import javax.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -70,9 +70,6 @@ public class Chapter implements Serializable {
     @Column(name="DISABLED")
     public boolean disabled;
 
-    @Column(name = "PARAMS")
-    private String params;
-
     public int status;
 
     @Column(name = "PROMPT_COUNT")
@@ -82,43 +79,35 @@ public class Chapter implements Serializable {
     @JoinColumn(name="CHAPTER_ID")
     private List<Part> parts = new ArrayList<>();
 
-    public void setParams(String params) {
-        synchronized (this) {
-            this.params = params;
-            this.chapterParams = null;
-        }
-    }
+    @Column(name = "PARAMS")
+    private String params;
 
     public String getParams() {
         return params;
     }
 
-    @Transient
-    @JsonIgnore
-    @Nullable
-    private ChapterParams chapterParams = null;
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
 
     @Transient
     @JsonIgnore
-    private final Object syncParamsObj = new Object();
+    private final ThreadUtils.CommonThreadLocker<ChapterParams> paramsLocked =
+            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private ChapterParams parseParams() {
+        ChapterParams temp = ChapterParamsUtils.UTILS.to(params);
+        ChapterParams ecpy = temp==null ? new ChapterParams() : temp;
+        return ecpy;
+    }
 
     @JsonIgnore
     public ChapterParams getChapterParams() {
-        if (chapterParams==null) {
-            synchronized (syncParamsObj) {
-                if (chapterParams==null) {
-                    //noinspection UnnecessaryLocalVariable
-                    ChapterParams temp = ChapterParamsUtils.UTILS.to(params);
-                    chapterParams = temp;
-                }
-            }
-        }
-        return chapterParams;
+        return paramsLocked.get();
     }
 
     @JsonIgnore
     public void updateParams(ChapterParams apy) {
         setParams(ChapterParamsUtils.UTILS.toString(apy));
     }
-
 }

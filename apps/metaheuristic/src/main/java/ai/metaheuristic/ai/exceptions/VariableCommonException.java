@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.exceptions;
 
+import org.springframework.lang.Nullable;
+
 /**
  * @author Serge
  * Date: 4/23/2020
@@ -23,9 +25,10 @@ package ai.metaheuristic.ai.exceptions;
  */
 public class VariableCommonException extends CommonErrorWithDataException {
 
+    @Nullable
     public Long variableId;
 
-    public VariableCommonException(String message, Long variableId) {
+    public VariableCommonException(String message, @Nullable Long variableId) {
         super(message);
         this.variableId = variableId;
     }

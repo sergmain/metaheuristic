@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.mhbp.yaml.answer.AnswerParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -46,12 +47,12 @@ import java.util.stream.Collectors;
  * Time: 2:51 AM
  */
 @Service
-@RequiredArgsConstructor
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class SessionTxService {
 
-    public final SessionRepository sessionRepository;
-    public final AnswerRepository answerRepository;
+    private final SessionRepository sessionRepository;
+    private final AnswerRepository answerRepository;
 
     @Transactional
     public Session create(Evaluation evaluation, Api api, Long accountId) {

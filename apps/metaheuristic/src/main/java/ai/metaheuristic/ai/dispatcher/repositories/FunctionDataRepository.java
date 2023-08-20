@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,6 +43,11 @@ public interface FunctionDataRepository extends CrudRepository<FunctionData, Lon
     @Query(value="select b.functionCode from FunctionData b ")
     List<String> findAllFunctionCodes();
 
+    @Nullable
+    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
+    @Query(value="select b.data from FunctionData b where b.id=:id")
+    Blob getDataAsStreamById(Long id);
+
     @Override
     @Modifying
     @Query(value="delete from FunctionData t where t.id=:id")
@@ -57,6 +62,10 @@ public interface FunctionDataRepository extends CrudRepository<FunctionData, Lon
     @Nullable
     @Query(value="select b from FunctionData b where b.functionCode=:functionCode")
     FunctionData findByCodeForUpdate(String functionCode);
+
+    @Nullable
+    @Query(value="select b.id from FunctionData b where b.functionCode=:functionCode")
+    Long findIdByCode(String functionCode);
 
     @Modifying
     void deleteByFunctionCode(String functionCode);

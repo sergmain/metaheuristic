@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,16 +17,17 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
-import ai.metaheuristic.ai.dispatcher.variable.SimpleVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
-import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -43,12 +44,12 @@ import java.util.Objects;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class InternalFunctionVariableService {
 
     private final VariableTxService variableService;
     private final GlobalVariableRepository globalVariableRepository;
-    private final GlobalVariableService globalVariableService;
+    private final GlobalVariableTxService globalVariableService;
 
     public void storeToFile(VariableUtils.VariableHolder holder, Path file) {
         if (holder.variable!=null) {
@@ -70,7 +71,7 @@ public class InternalFunctionVariableService {
     public List<VariableUtils.VariableHolder> discoverVariables(Long execContextId, String taskContextId, String[] names, boolean throwsException) {
         List<VariableUtils.VariableHolder> holders = new ArrayList<>();
         for (String name : names) {
-            SimpleVariable v = variableService.findVariableInAllInternalContexts(name, taskContextId, execContextId);
+            Variable v = variableService.findVariableInAllInternalContexts(name, taskContextId, execContextId);
             if (v!=null) {
                 holders.add(new VariableUtils.VariableHolder(v));
             }

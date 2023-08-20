@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
-import ai.metaheuristic.ai.dispatcher.processor.ProcessorTransactionService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
@@ -35,7 +35,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
+
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -51,7 +51,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @Slf4j
-@ActiveProfiles("dispatcher")
+//@ActiveProfiles({"dispatcher", "mysql"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class TestReAssignProcessorIdTimeoutSessionId {
 
@@ -68,7 +68,7 @@ public class TestReAssignProcessorIdTimeoutSessionId {
     public ProcessorTopLevelService processorTopLevelService;
 
     @Autowired
-    public ProcessorTransactionService processorTransactionService;
+    public ProcessorTxService processorTransactionService;
 
     private Long processorIdBefore;
     private String sessionIdBefore;

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,10 +20,10 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.StringVariableData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -34,6 +34,7 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
@@ -51,12 +52,12 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
 @Service
 @Slf4j
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class StringAsVariableFunction implements InternalFunction {
 
     private static final String MAPPING = "mapping";
 
-    private final ExecContextVariableService execContextVariableService;
+    private final VariableTxService variableTxService;
     private final InternalFunctionVariableService internalFunctionVariableService;
 
     @Override
@@ -92,10 +93,20 @@ public class StringAsVariableFunction implements InternalFunction {
         for (StringVariableData.StringAsVar inlineAsVar : mapping.mapping) {
 
             // DO NOT remove inlineAsVar.group
-            //noinspection deprecation
-            String keyName = inlineAsVar.key != null ? inlineAsVar.key : inlineAsVar.group;
+            String keyName;
+            if (inlineAsVar.key!=null) {
+                keyName = inlineAsVar.key;
+            }
+            else {
+                //noinspection deprecation
+                if (inlineAsVar.group!=null) {
+                    log.warn("513.335 ai.metaheuristic.ai.dispatcher.data.StringVariableData.StringAsVar.group is deprecated, use key instead");
+                }
+                //noinspection deprecation
+                keyName = inlineAsVar.group;
+            }
             if (keyName==null) {
-                throw new InternalFunctionException(source_code_is_broken, "#513.340 mapping must have a field key or group, "+ inlineAsVar);
+                throw new InternalFunctionException(source_code_is_broken, "513.340 mapping must have a field key or group, "+ inlineAsVar);
             }
             final Map<String, String> map;
             Enums.StringAsVariableSource source = inlineAsVar.source==null ? Enums.StringAsVariableSource.inline : inlineAsVar.source;
@@ -126,7 +137,7 @@ public class StringAsVariableFunction implements InternalFunction {
                     .findFirst()
                     .orElseThrow(()->new InternalFunctionException(variable_not_found, "#513.380 output variable not found '"+inlineAsVar.output+"'"));
 
-            VariableSyncService.getWithSyncVoid(outputVariable.id, ()->execContextVariableService.storeStringInVariable(outputVariable, value));
+            VariableSyncService.getWithSyncVoid(outputVariable.id, ()-> variableTxService.storeStringInVariable(outputVariable, value));
         }
 
         //noinspection unused

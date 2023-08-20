@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.variable;
 
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.utils.ContextUtils;
@@ -28,7 +29,6 @@ import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
 import java.util.List;
@@ -58,9 +58,9 @@ public class VariableUtils {
                 v.dataType = EnumsApi.DataType.global_variable;
             }
             else {
-                SimpleVariable variable = Objects.requireNonNull(pv.variable);
+                Variable variable = Objects.requireNonNull(pv.variable);
                 v.id = variable.id.toString();
-                v.name = variable.variable;
+                v.name = variable.name;
 
                 DataStorageParams dsp = variable.getDataStorageParams();
                 v.sourcing = dsp.sourcing;
@@ -74,7 +74,6 @@ public class VariableUtils {
         return vapy;
     }
 
-    @NonNull
     public static String getNameForVariableInArray() {
         return S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
     }
@@ -104,7 +103,7 @@ public class VariableUtils {
     @NoArgsConstructor
     public static class VariableHolder {
         @Nullable
-        public SimpleVariable variable;
+        public Variable variable;
 
         @Nullable
         public SimpleGlobalVariable globalVariable;
@@ -113,14 +112,15 @@ public class VariableUtils {
             this.globalVariable = globalVariable;
         }
 
-        public VariableHolder(SimpleVariable variable) {
+        public VariableHolder(Variable variable) {
             this.variable = variable;
         }
 
         public String getName() {
-            return globalVariable!=null ? globalVariable.variable : Objects.requireNonNull(variable).variable;
+            return globalVariable!=null ? globalVariable.variable : Objects.requireNonNull(variable).name;
         }
 
+        @Nullable
         public String getFilename() {
             return globalVariable!=null ? globalVariable.filename : Objects.requireNonNull(variable).filename;
         }
