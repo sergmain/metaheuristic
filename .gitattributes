@@ -1,6 +1,8 @@
 * -text
 
 *.css           text
+*.scss           text
+*.sass           text
 *.html          text
 *.java          text
 *.js            text
@@ -14,6 +16,7 @@
 *.yaml          text
 *.yml           text
 *.sql           text
+*.ts            text
 
 .gitignore      text
 .gitattributes  text
@@ -29,3 +32,4 @@ mvnw            text
 *.gif           binary
 *.jpg           binary
 *.png           binary
+*.ico           binary
