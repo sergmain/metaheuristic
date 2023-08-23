@@ -48,6 +48,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -60,6 +61,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
@@ -97,8 +99,22 @@ public class TaskWithInternalContextEventService {
     private final InternalFunctionProcessor internalFunctionProcessor;
 
     private static final int MAX_ACTIVE_THREAD = 1;
-    // number of active executers with different execContextId
+    // number of active executors with different execContextId
     private static final int MAX_NUMBER_EXECUTORS = 4;
+
+    static class SomeClass {
+        private Semaphore semaphore = new Semaphore(100);
+
+        @SneakyThrows
+        public void execute() {
+            semaphore.acquire();
+            try {
+                //
+            } finally {
+                semaphore.release();
+            }
+        }
+    }
 
     public static class ExecutorForExecContext {
         public Long execContextId;
