@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import ai.metaheuristic.ai.mhbp.data.ScenarioData;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.StampedLock;
 import java.util.stream.Collectors;
 
 /**
@@ -44,9 +46,7 @@ public class InternalFunctionRegisterService {
 
     private final ApplicationContext appCtx;
 
-    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
-    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+    private final StampedLock lock = new StampedLock();
 
     private Map<String, InternalFunction> internalFunctions = null;
 
@@ -74,22 +74,32 @@ public class InternalFunctionRegisterService {
     }
 
     private void initInternalFunctions() {
-        readLock.lock();
-        try {
-            if (this.internalFunctions!=null){
-                return;
+        long stamp = lock.tryOptimisticRead();
+        var tempHolder = this.internalFunctions;
+
+        if (tempHolder != null && lock.validate(stamp)) {
+            return;
+        } else {
+            stamp = lock.readLock();
+            try {
+                tempHolder = this.internalFunctions;
+                if (tempHolder != null) {
+                    return;
+                }
+            } finally {
+                lock.unlock(stamp);
             }
-        } finally {
-            readLock.unlock();
         }
-        writeLock.lock();
+        stamp = lock.writeLock();
         try {
             if (this.internalFunctions!=null){
                 return;
             }
-            this.internalFunctions = appCtx.getBeansOfType(InternalFunction.class);
+            Map<String, InternalFunction> map = appCtx.getBeansOfType(InternalFunction.class);
+            this.internalFunctions = map.values().stream()
+                .collect(Collectors.toUnmodifiableMap(InternalFunction::getCode, o -> o, (a, b) -> b));
         } finally {
-            writeLock.unlock();
+            lock.unlock(stamp);
         }
     }
 

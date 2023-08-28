@@ -77,7 +77,7 @@ public class ChatService {
             return new ChatData.Chats(new PageImpl<>(chats, pageable, chats.size()));
         }
         catch (Throwable th) {
-            log.error("Error:", th);
+            log.error("372.040 Error:", th);
             return new ChatData.Chats(new PageImpl<>(List.of(), pageable, 0), "Error: " + th.getMessage());
         }
     }
@@ -102,7 +102,7 @@ public class ChatService {
             return fullChat;
         }
         if (chatInfo.api==null) {
-            throw new IllegalStateException("(chatInfo.api==null)");
+            throw new IllegalStateException("372.080 (chatInfo.api==null)");
         }
 
         fullChat.apiUid = new ApiData.ApiUid(chatInfo.api.id, chatInfo.api.code, chatInfo.api.name);
@@ -120,7 +120,7 @@ public class ChatService {
         ChatParams params = chat.getChatParams();
 
         if (chat.getAccountId()!=context.getAccountId()) {
-            throw new AccessDeniedException("Access denied for chat #" + chatId);
+            throw new AccessDeniedException("372.120 Access denied for chat #" + chatId);
         }
         Api api = apiService.getApi(params.api.apiId, context);
         return new ChatInfo(chat, api, api==null ? "Api not found #" + params.api.apiId : null);
@@ -154,7 +154,7 @@ public class ChatService {
             return r;
         }
         catch (Throwable th) {
-            r.error = "373.380 error " + th.getMessage();
+            r.error = "372.160 error " + th.getMessage();
             log.error(r.error, th);
             return r;
         }
@@ -173,7 +173,7 @@ public class ChatService {
         try {
             Api api = apiRepository.findById(Long.parseLong(apiId)).orElse(null);
             if (api==null || api.companyId!=context.getCompanyId()) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.480 apiId is null");
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "372.200 apiId is null");
             }
             ChatParams.Api apiRef = new ChatParams.Api(api.id, api.code);
 
@@ -192,25 +192,25 @@ public class ChatService {
             String varName = getNameForVariable(variable.name);
             String value = variable.value;
             if (value==null) {
-                r.error = "373.200 data wasn't found, variable: " + variable.name + ", normalized: " + varName;
+                r.error = "372.240 data wasn't found, variable: " + variable.name + ", normalized: " + varName;
                 return r;
             }
             prompt = StringUtils.replaceEach(prompt, new String[]{"[[" + variable.name + "]]", "{{" + variable.name + "}}"}, new String[]{value, value});
         }
         r.prompt = prompt;
-        log.info("373.240 prompt: {}", prompt);
+        log.info("372.280 prompt: {}", prompt);
         ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, context.asUserExecContext());
         ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
         if (answer.status()!=OK) {
-            r.error = "373.280 API call error: " + answer.error() + ", prompt: " + prompt;
+            r.error = "372.320 API call error: " + answer.error() + ", prompt: " + prompt;
             return r;
         }
         if (answer.a()==null) {
-            r.error = "373.320 answer.a() is null, error: " + answer.error() + ", prompt: " + prompt;
+            r.error = "372.360 answer.a() is null, error: " + answer.error() + ", prompt: " + prompt;
             return r;
         }
         if (answer.a().processedAnswer.answer()==null) {
-            r.error = "373.360 processedAnswer.answer() is null, error: " + answer.error() + ", prompt: " + prompt;
+            r.error = "372.400 processedAnswer.answer() is null, error: " + answer.error() + ", prompt: " + prompt;
             return r;
         }
 

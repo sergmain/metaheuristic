@@ -20,14 +20,17 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunc
 import ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter.BatchLineSplitterFunction;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
+import ai.metaheuristic.ai.mhbp.data.ChatData;
 import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
 import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiSchemeUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.utils.MetaUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -35,13 +38,27 @@ import java.nio.charset.StandardCharsets;
 import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getUid;
 import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getVariables;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Sergio Lissner
  * Date: 5/14/2023
  * Time: 2:38 AM
  */
+@Execution(CONCURRENT)
 public class ScenarioUtilsTest {
+
+    @Test
+    public void test_toPromptEvaluation() throws JsonProcessingException {
+        String json = """
+            {"uuid":"0ae1019f-717a-4ab9-9afc-44a49718781e","prompt":"Make short description of fruit {{fruit}}","variables":[{"name":"fruit","value":"Orange"}]}""";
+        ChatData.PromptEvaluation r = ScenarioUtils.toPromptEvaluation(json);
+        assertEquals("0ae1019f-717a-4ab9-9afc-44a49718781e", r.uuid);
+        assertEquals("Make short description of fruit {{fruit}}", r.prompt);
+        assertEquals(1, r.variables.size());
+        assertEquals("fruit", r.variables.get(0).name);
+        assertEquals("Orange", r.variables.get(0).value);
+    }
 
     @Test
     public void test_getUid() {
