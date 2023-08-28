@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.dispatcher_selection.ActiveDispatchers;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,13 +54,26 @@ public class ProcessorEventBusService {
 
     private ThreadPoolExecutor executor;
 
+    private boolean shutdown = false;
+
     @PostConstruct
     public void post() {
         executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(Math.min(4, processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.size()));
         this.activeDispatchers = new ActiveDispatchers(processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap, "RoundRobin for KeepAlive", Enums.DispatcherSelectionStrategy.alphabet);
     }
 
+    @PreDestroy
+    public void onExit() {
+        shutdown = true;
+        executor.shutdownNow();
+        executor = null;
+    }
+
     public void keepAlive(KeepAliveEvent event) {
+        // TODO 2023-08-27 p3 need to optimize
+        if (shutdown) {
+            return;
+        }
         try {
             Map<ProcessorAndCoreData.DispatcherUrl, AtomicBoolean> dispatchers = activeDispatchers.getActiveDispatchers();
             if (dispatchers.isEmpty()) {

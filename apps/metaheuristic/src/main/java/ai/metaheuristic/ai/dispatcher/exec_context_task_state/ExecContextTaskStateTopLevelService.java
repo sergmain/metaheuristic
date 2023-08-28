@@ -29,6 +29,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.threads.ThreadedPool;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,11 +63,42 @@ public class ExecContextTaskStateTopLevelService {
         }
     };
 
+    private final LinkedHashMap<Long, ThreadedPool<TransferStateFromTaskQueueToExecContextEvent>> threadedPoolMap = new LinkedHashMap<>(100) {
+        protected boolean removeEldestEntry(Map.Entry<Long, ThreadedPool<TransferStateFromTaskQueueToExecContextEvent>> entry) {
+            return this.size()>50 && entry.getValue().getQueueSize()==0 && entry.getValue().getActiveCount()==0;
+        }
+    };
+
+    @PreDestroy
+    public void onExit() {
+        for (Map.Entry<Long, ThreadedPool<UpdateTaskExecStatesInGraphEvent>> en : updateTaskExecStatesInGraphEventThreadedPool.entrySet()) {
+            en.getValue().shutdown();
+        }
+        for (Map.Entry<Long, ThreadedPool<TransferStateFromTaskQueueToExecContextEvent>> en : threadedPoolMap.entrySet()) {
+            en.getValue().shutdown();
+        }
+    }
+
+    @Async
+    @EventListener
+    public void handleEvent(TransferStateFromTaskQueueToExecContextEvent event) {
+        final ThreadedPool<TransferStateFromTaskQueueToExecContextEvent> threadedPool = threadedPoolMap.computeIfAbsent(event.execContextId, (id) -> new ThreadedPool<>(2, this::transferStateFromTaskQueueToExecContext));
+        if (threadedPool.isShutdown()) {
+            return;
+        }
+        threadedPool.putToQueue(event);
+    }
+
     @Async
     @EventListener
     public void handleEvent(UpdateTaskExecStatesInGraphEvent event) {
-        updateTaskExecStatesInGraphEventThreadedPool.computeIfAbsent(event.execContextId,
-                (id)-> new ThreadedPool<>(1, 0, false, false, this::updateTaskExecStatesInGraph)).putToQueue(event);
+        final ThreadedPool<UpdateTaskExecStatesInGraphEvent> threadedPool = updateTaskExecStatesInGraphEventThreadedPool.computeIfAbsent(event.execContextId,
+            (id) -> new ThreadedPool<>(1, 0, false, false, this::updateTaskExecStatesInGraph));
+
+        if (threadedPool.isShutdown()) {
+            return;
+        }
+        threadedPool.putToQueue(event);
     }
 
     public void processUpdateTaskExecStatesInGraph() {
@@ -102,17 +134,6 @@ public class ExecContextTaskStateTopLevelService {
         return execContextTaskStateService.updateTaskExecStatesInGraph(execContextGraphId, execContextTaskStateId, taskId, state, taskContextId);
     }
 
-    private final LinkedHashMap<Long, ThreadedPool<TransferStateFromTaskQueueToExecContextEvent>> threadedPoolMap = new LinkedHashMap<>(100) {
-        protected boolean removeEldestEntry(Map.Entry<Long, ThreadedPool<TransferStateFromTaskQueueToExecContextEvent>> entry) {
-            return this.size()>50 && entry.getValue().getQueueSize()==0 && entry.getValue().getActiveCount()==0;
-        }
-    };
-
-    @Async
-    @EventListener
-    public void handleEvent(TransferStateFromTaskQueueToExecContextEvent event) {
-        threadedPoolMap.computeIfAbsent(event.execContextId, (id)-> new ThreadedPool<>(2, this::transferStateFromTaskQueueToExecContext)).putToQueue(event);
-    }
 
     public void transferStateFromTaskQueueToExecContext(TransferStateFromTaskQueueToExecContextEvent event) {
         try {

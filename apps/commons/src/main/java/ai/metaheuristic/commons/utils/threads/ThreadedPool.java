@@ -43,6 +43,8 @@ public class ThreadedPool<T> {
     private final ThreadPoolExecutor executor;
     private final LinkedList<T> queue = new LinkedList<>();
 
+    private boolean shutdown = false;
+
     private final ReentrantReadWriteLock queueReadWriteLock = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.ReadLock queueReadLock = queueReadWriteLock.readLock();
     private final ReentrantReadWriteLock.WriteLock queueWriteLock = queueReadWriteLock.writeLock();
@@ -74,6 +76,28 @@ public class ThreadedPool<T> {
         this.process = process;
     }
 
+    public boolean isShutdown() {
+        queueReadLock.lock();
+        try {
+            return shutdown;
+        }
+        finally {
+            queueReadLock.unlock();
+        }
+    }
+
+    public void shutdown() {
+        queueWriteLock.lock();
+        try {
+            shutdown = true;
+            queue.clear();
+        } finally {
+            queueWriteLock.unlock();
+        }
+        executor.shutdownNow();
+        //executor = null;
+    }
+
     public void putToQueue(final T event) {
         final int activeCount = executor.getActiveCount();
         if (log.isDebugEnabled()) {
@@ -89,6 +113,9 @@ public class ThreadedPool<T> {
         if (checkForDouble) {
             queueReadLock.lock();
             try {
+                if (shutdown) {
+                    return;
+                }
                 if (queue.contains(event)) {
                     return;
                 }
@@ -116,6 +143,9 @@ public class ThreadedPool<T> {
     private T pullFromQueue() {
         queueWriteLock.lock();
         try {
+            if (shutdown) {
+                return null;
+            }
             return queue.pollFirst();
         } finally {
             queueWriteLock.unlock();
@@ -131,6 +161,9 @@ public class ThreadedPool<T> {
     }
 
     public void processEvent() {
+        if (isShutdown()) {
+            return;
+        }
         if (executor.getActiveCount()>=maxThreadInPool) {
             return;
         }
@@ -139,7 +172,7 @@ public class ThreadedPool<T> {
 
     private void actualProcessing() {
         T event;
-        while ((event = pullFromQueue()) != null) {
+        while (!shutdown && (event = pullFromQueue()) != null) {
             try {
                 process.accept(event);
             }

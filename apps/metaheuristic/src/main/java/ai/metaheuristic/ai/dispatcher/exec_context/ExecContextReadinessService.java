@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.commons.utils.threads.ThreadedPool;
+import jakarta.annotation.PreDestroy;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,6 +87,11 @@ public class ExecContextReadinessService {
         for (Long notReadyExecContextId : ids) {
             startProcessReadinessEventThreadedPool.putToQueue(notReadyExecContextId);
         }
+    }
+
+    @PreDestroy
+    public void onExit() {
+        startProcessReadinessEventThreadedPool.shutdown();
     }
 
     // this method will be invoked only one time at startup

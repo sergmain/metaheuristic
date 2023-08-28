@@ -16,14 +16,19 @@
 
 package ai.metaheuristic.ai.mhbp.kb;
 
+import ai.metaheuristic.ai.dispatcher.event.events.TransferStateFromTaskQueueToExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInGraphEvent;
 import ai.metaheuristic.ai.mhbp.events.InitKbEvent;
 import ai.metaheuristic.commons.utils.threads.ThreadedPool;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 
 /**
  * @author Sergio Lissner
@@ -45,6 +50,11 @@ public class KbInitializingService {
                 new ThreadedPool<>(1, 0, true, false, kbService::processInitKbEvent);
     }
 
+    @PreDestroy
+    public void onExit() {
+        initKbEventThreadedPool.shutdown();
+    }
+
     @Async
     @EventListener
     public void handleEvaluateProviderEvent(InitKbEvent event) {
@@ -54,49 +64,5 @@ public class KbInitializingService {
     public void processEvent() {
         initKbEventThreadedPool.processEvent();
     }
-
-/*
-    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
-    private final LinkedList<InitKbEvent> queue = new LinkedList<>();
-
-    @Async
-    @EventListener
-    public void handleInitKbEvent(InitKbEvent event) {
-        putToQueue(event);
-    }
-
-    public void putToQueue(final InitKbEvent event) {
-        synchronized (queue) {
-            if (queue.contains(event)) {
-                return;
-            }
-            queue.add(event);
-        }
-    }
-
-    @Nullable
-    private InitKbEvent pullFromQueue() {
-        synchronized (queue) {
-            return queue.pollFirst();
-        }
-    }
-
-    public void processEvent() {
-        if (executor.getActiveCount()>0) {
-            return;
-        }
-        executor.submit(() -> {
-            InitKbEvent event;
-            while ((event = pullFromQueue())!=null) {
-                try {
-                    kbService.processInitKbEvent(event);
-                }
-                catch (Throwable th) {
-                    log.error("Error while initialization of KB #"+event.kbId());
-                }
-            }
-        });
-    }
-*/
 
 }

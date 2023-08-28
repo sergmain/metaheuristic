@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStatePara
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.threads.ThreadedPool;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +61,11 @@ public class ExecContextTaskResettingTopLevelService {
 
     private final ThreadedPool<ResetTasksWithErrorEvent> resetTasksWithErrorEventThreadedPool =
             new ThreadedPool<>(1, 0, false, false, this::resetTasksWithErrorForRecovery);
+
+    @PreDestroy
+    public void onExit() {
+        resetTasksWithErrorEventThreadedPool.shutdown();
+    }
 
     @Async
     @EventListener
