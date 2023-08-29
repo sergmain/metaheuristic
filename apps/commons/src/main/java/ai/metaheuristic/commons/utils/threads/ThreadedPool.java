@@ -95,7 +95,6 @@ public class ThreadedPool<T> {
             queueWriteLock.unlock();
         }
         executor.shutdownNow();
-        //executor = null;
     }
 
     public void putToQueue(final T event) {
