@@ -16,13 +16,13 @@
 
 package ai.metaheuristic.commons.utils.threads;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-
 import javax.annotation.Nullable;
+
 import java.util.LinkedList;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.locks.StampedLock;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 /**
@@ -40,54 +40,53 @@ public class ThreadedPool<T> {
     private final boolean checkForDouble;
     private final Consumer<T> process;
 
-//    private final ThreadPoolExecutor executor;
+    private final ThreadPoolExecutor executor;
     private final LinkedList<T> queue = new LinkedList<>();
-    private final Semaphore semaphore;
 
     private boolean shutdown = false;
-    private final StampedLock lock = new StampedLock();
 
-//    private final ReentrantReadWriteLock queueReadWriteLock = new ReentrantReadWriteLock();
-//    private final ReentrantReadWriteLock.ReadLock queueReadLock = queueReadWriteLock.readLock();
-//    private final ReentrantReadWriteLock.WriteLock queueWriteLock = queueReadWriteLock.writeLock();
+    private final ReentrantReadWriteLock queueReadWriteLock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.ReadLock queueReadLock = queueReadWriteLock.readLock();
+    private final ReentrantReadWriteLock.WriteLock queueWriteLock = queueReadWriteLock.writeLock();
+
+    public ThreadedPool(int maxQueueSize, Consumer<T> process) {
+        this.maxThreadInPool = 1;
+        this.immediateProcessing = true;
+        this.checkForDouble = false;
+        this.maxQueueSize = maxQueueSize;
+        this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxThreadInPool);
+        this.process = process;
+    }
+
+    public ThreadedPool(int maxThreadInPool, int maxQueueSize, Consumer<T> process) {
+        this.maxThreadInPool = maxThreadInPool;
+        this.maxQueueSize = maxQueueSize;
+        this.immediateProcessing = true;
+        this.checkForDouble = false;
+        this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxThreadInPool);
+        this.process = process;
+    }
 
     public ThreadedPool(int maxThreadInPool, int maxQueueSize, boolean immediateProcessing, boolean checkForDouble, Consumer<T> process) {
         this.maxThreadInPool = maxThreadInPool;
+        this.maxQueueSize = maxQueueSize;
         this.immediateProcessing = immediateProcessing;
         this.checkForDouble = checkForDouble;
-        this.maxQueueSize = maxQueueSize;
-        this.semaphore = new Semaphore(maxThreadInPool);
-//        this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxThreadInPool);
+        this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxThreadInPool);
         this.process = process;
     }
 
     public boolean isShutdown() {
-//        queueReadLock.lock();
-//        try {
-//            return shutdown;
-//        }
-//        finally {
-//            queueReadLock.unlock();
-//        }
-        long stamp = lock.tryOptimisticRead();
-        var tempHolder = this.shutdown;
-
-        if (lock.validate(stamp)) {
-            return tempHolder;
+        queueReadLock.lock();
+        try {
+            return shutdown;
         }
-        else {
-            stamp = lock.readLock();
-            try {
-                return this.shutdown;
-            } finally {
-                lock.unlock(stamp);
-            }
+        finally {
+            queueReadLock.unlock();
         }
-
     }
 
     public void shutdown() {
-/*
         queueWriteLock.lock();
         try {
             shutdown = true;
@@ -95,41 +94,23 @@ public class ThreadedPool<T> {
         } finally {
             queueWriteLock.unlock();
         }
-        semaphore.release();
-*/
-        //executor.shutdownNow();
-
-        long stamp = lock.writeLock();
-        try {
-            if (shutdown){
-                return;
-            }
-            shutdown = true;
-            queue.clear();
-        } finally {
-            lock.unlock(stamp);
-        }
-
+        executor.shutdownNow();
     }
 
     public void putToQueue(final T event) {
-//        final int activeCount = executor.getActiveCount();
-        final int activeCount = getActiveCount();
-        final boolean queuedThreads = semaphore.hasQueuedThreads();
+        final int activeCount = executor.getActiveCount();
         if (log.isDebugEnabled()) {
-//            final long completedTaskCount = executor.getCompletedTaskCount();
-//            final long taskCount = executor.getTaskCount();
-//            log.debug("putToQueue({}), active task in executor: {}, awaiting tasks: {}", event.getClass().getSimpleName(), activeCount, taskCount - completedTaskCount);
-            log.debug("putToQueue({}), active task in executor: {}", event.getClass().getSimpleName(), activeCount);
+            final long completedTaskCount = executor.getCompletedTaskCount();
+            final long taskCount = executor.getTaskCount();
+            log.debug("putToQueue({}), active task in executor: {}, awaiting tasks: {}", event.getClass().getSimpleName(), activeCount, taskCount - completedTaskCount);
         }
 
         if (maxQueueSize!=0 && (activeCount>0 || queue.size()>maxQueueSize)) {
             return;
         }
 
-        long stamp;
         if (checkForDouble) {
-            stamp = lock.readLock();
+            queueReadLock.lock();
             try {
                 if (shutdown) {
                     return;
@@ -137,21 +118,21 @@ public class ThreadedPool<T> {
                 if (queue.contains(event)) {
                     return;
                 }
-            } finally {
-                lock.unlock(stamp);
+            }
+            finally {
+                queueReadLock.unlock();
             }
         }
 
-        stamp = lock.writeLock();
+        queueWriteLock.lock();
         try {
             if (checkForDouble && queue.contains(event)) {
                 return;
             }
             queue.add(event);
         } finally {
-            lock.unlock(stamp);
+            queueWriteLock.unlock();
         }
-
         if (immediateProcessing) {
             processEvent();
         }
@@ -159,17 +140,6 @@ public class ThreadedPool<T> {
 
     @Nullable
     private T pullFromQueue() {
-        long stamp = lock.writeLock();
-        try {
-            if (shutdown) {
-                return null;
-            }
-            return queue.pollFirst();
-        } finally {
-            lock.unlock(stamp);
-        }
-
-/*
         queueWriteLock.lock();
         try {
             if (shutdown) {
@@ -179,39 +149,24 @@ public class ThreadedPool<T> {
         } finally {
             queueWriteLock.unlock();
         }
-*/
     }
 
     public int getActiveCount() {
-//        return executor.getActiveCount();
-        final int availablePermits = semaphore.availablePermits();
-        final int activeCount = maxThreadInPool - availablePermits;
-        return activeCount;
+        return executor.getActiveCount();
     }
 
     public int getQueueSize() {
         return queue.size();
     }
 
-    @SneakyThrows
     public void processEvent() {
         if (isShutdown()) {
             return;
         }
-//        if (getActiveCount()>=maxThreadInPool) {
-//            return;
-//        }
-        boolean acquired = semaphore.tryAcquire();
-        if (!acquired) {
+        if (executor.getActiveCount()>=maxThreadInPool) {
             return;
         }
-        try {
-            actualProcessing();
-            //
-        } finally {
-            semaphore.release();
-        }
-//        semaphore.submit(this::actualProcessing);
+        executor.submit(this::actualProcessing);
     }
 
     private void actualProcessing() {
