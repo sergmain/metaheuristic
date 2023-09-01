@@ -39,6 +39,7 @@ import ai.metaheuristic.ai.processor.dispatcher_selection.ActiveDispatchers;
 import ai.metaheuristic.ai.processor.event.KeepAliveEvent;
 import ai.metaheuristic.ai.processor.event.ProcessorEventBusService;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
+import ai.metaheuristic.ai.standalone.FrontendCheckerService;
 import ai.metaheuristic.api.EnumsApi;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -569,4 +570,20 @@ public class Schedulers {
             processorEventBusService.keepAlive(new KeepAliveEvent());
         }
     }
+
+    @Service
+    @EnableScheduling
+    @Slf4j
+    @Profile("standalone")
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
+    public static class StandaloneSchedulers {
+
+        private final FrontendCheckerService frontendCheckerService;
+
+        @Scheduled(initialDelay = 2_000, fixedDelay = 2_000 )
+        public void updateStateForLongRunning() {
+            frontendCheckerService.checkFrontend();
+        }
+    }
+
 }

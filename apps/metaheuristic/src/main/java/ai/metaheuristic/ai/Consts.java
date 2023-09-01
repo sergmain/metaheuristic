@@ -189,4 +189,9 @@ public class Consts {
     public static final String REST_USER = "rest_user";
 
     public static final int STANDALONE_PORT_NUMBER = 64967;
+    public static final int NODEJS_STANDALONE_PORT_NUMBER = 64968;
+
+    public static final String FRONTEND_URL = "http://localhost:"+Consts.NODEJS_STANDALONE_PORT_NUMBER;
+
+
 }
