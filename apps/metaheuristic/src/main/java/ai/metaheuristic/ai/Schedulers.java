@@ -26,7 +26,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskSta
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.long_running.LongRunningTopLevelService;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
-import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingService;
 import ai.metaheuristic.ai.dispatcher.thread.DeadLockDetector;
 import ai.metaheuristic.ai.mhbp.kb.KbInitializingService;
 import ai.metaheuristic.ai.mhbp.provider.ProcessSessionOfEvaluationService;
@@ -177,7 +177,7 @@ public class Schedulers {
         private final Globals globals;
         private final ExecContextSchedulerService execContextSchedulerService;
         private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
-        private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
+        private final TaskCheckCachingService taskCheckCachingTopLevelService;
         private final ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
         private final LongRunningTopLevelService longRunningTopLevelService;
         private final ApplicationEventPublisher eventPublisher;

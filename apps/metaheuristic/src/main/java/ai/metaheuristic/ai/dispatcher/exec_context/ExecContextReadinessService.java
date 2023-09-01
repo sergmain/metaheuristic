@@ -76,7 +76,7 @@ public class ExecContextReadinessService {
         this.dispatcherParamsService = dispatcherParamsService;
         this.taskTxService = taskTxService;
 
-        startProcessReadinessEventThreadedPool = new ThreadedPool<>(1, 0, false, false, (execContextId) -> {
+        startProcessReadinessEventThreadedPool = new ThreadedPool<>("ExecContextReadinessService-", 1, 0, false, false, (execContextId) -> {
             prepare(execContextId);
             execContextReadinessStateService.remove(execContextId);
         });

@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.el.EvaluateExpressionLanguage;
+import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
@@ -47,6 +48,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -224,7 +226,9 @@ public class TaskWithInternalContextEventService {
                     POOL_OF_EXECUTORS[i] = new ExecutorForExecContext(execContextId);
 
                     final int idx = i;
-                    POOL_OF_EXECUTORS[i].executor.submit(() -> processTask(execContextId, taskProcessor, POOL_OF_EXECUTORS[idx]));
+
+                    Thread t = new Thread(() -> processTask(execContextId, taskProcessor, POOL_OF_EXECUTORS[idx]), "TaskWithInternalContextEventService-" + ThreadUtils.nextThreadNum());
+                    POOL_OF_EXECUTORS[i].executor.submit(t);
                     return false;
                 }
             }

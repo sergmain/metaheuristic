@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +56,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class TaskTopLevelService {
+public class TaskService {
 
     private final ExecContextCache execContextCache;
     private final TaskTxService taskTxService;
@@ -119,12 +120,13 @@ public class TaskTopLevelService {
     }
 
     public void processCheckForLostTaskEvent() {
-        executor.submit(() -> {
+        Thread t = new Thread(() -> {
             CheckForLostTaskEvent currEvent;
             while ((currEvent = pullFromQueue()) != null) {
                 checkForLostTaskInternal(currEvent);
             }
-        });
+        }, "TaskService-" + ThreadUtils.nextThreadNum());
+        executor.submit(t);
     }
 
     private void checkForLostTaskInternal(final CheckForLostTaskEvent event) {

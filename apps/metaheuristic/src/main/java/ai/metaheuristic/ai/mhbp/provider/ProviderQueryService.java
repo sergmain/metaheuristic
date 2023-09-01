@@ -118,38 +118,8 @@ public class ProviderQueryService {
         ConcurrentHashMap<Long, ChapterWithResults> chapterCache = new ConcurrentHashMap<>();
         AtomicInteger currTotalErrors = new AtomicInteger();
         questions.forEach(question -> {
-            executor.submit(() -> {
-                if (currTotalErrors.get() >= globals.mhbp.max.errorsPerEvaluation) {
-                    return;
-                }
-                ChapterWithResults withResults = chapterCache.computeIfAbsent(question.chapterId(),
-                        (chapterId)->chapterRepository.findById(chapterId).map(ChapterWithResults::new).orElse(null));
-
-                if (withResults==null) {
-                    return;
-                }
-                if (withResults.currErrors.get() >= globals.mhbp.max.errorsPerPart) {
-                    return;
-                }
-
-                ProviderData.QueriedData queriedData = new ProviderData.QueriedData(question.prompt().q(), null);
-                ProviderData.QuestionAndAnswer answer = processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
-
-                Enums.AnswerStatus status;
-                if (answer.status()==OK) {
-                    status = answer.a()!=null && answer.a().processedAnswer.answer()!=null && question.prompt().a().equals(answer.a().processedAnswer.answer().strip())
-                            ? Enums.AnswerStatus.normal
-                            : Enums.AnswerStatus.fail;
-                }
-                else {
-                    status = Enums.AnswerStatus.error;
-                }
-                if (status!=Enums.AnswerStatus.error) {
-                    currTotalErrors.incrementAndGet();
-                    withResults.currErrors.incrementAndGet();
-                }
-                withResults.answers.add(new PromptWithAnswer(question.prompt(), answer, status));
-            });
+            Thread t = new Thread(() -> makeQuery(api, question, currTotalErrors, chapterCache), "ProviderQueryService-" + ThreadUtils.nextThreadNum());
+            executor.submit(t);
         });
 
         ThreadUtils.waitTaskCompleted(executor);
@@ -177,6 +147,39 @@ public class ProviderQueryService {
             }
             questionAndAnswerService.process(s.get(), withResults.c, ap);
         }
+    }
+
+    private void makeQuery(Api api, QuestionData.PromptWithAnswerWithChapterId question, AtomicInteger currTotalErrors, ConcurrentHashMap<Long, ChapterWithResults> chapterCache) {
+        if (currTotalErrors.get() >= globals.mhbp.max.errorsPerEvaluation) {
+            return;
+        }
+        ChapterWithResults withResults = chapterCache.computeIfAbsent(question.chapterId(),
+                (chapterId)->chapterRepository.findById(chapterId).map(ChapterWithResults::new).orElse(null));
+
+        if (withResults==null) {
+            return;
+        }
+        if (withResults.currErrors.get() >= globals.mhbp.max.errorsPerPart) {
+            return;
+        }
+
+        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(question.prompt().q(), null);
+        ProviderData.QuestionAndAnswer answer = processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
+
+        Enums.AnswerStatus status;
+        if (answer.status()==OK) {
+            status = answer.a()!=null && answer.a().processedAnswer.answer()!=null && question.prompt().a().equals(answer.a().processedAnswer.answer().strip())
+                    ? Enums.AnswerStatus.normal
+                    : Enums.AnswerStatus.fail;
+        }
+        else {
+            status = Enums.AnswerStatus.error;
+        }
+        if (status!=Enums.AnswerStatus.error) {
+            currTotalErrors.incrementAndGet();
+            withResults.currErrors.incrementAndGet();
+        }
+        withResults.answers.add(new PromptWithAnswer(question.prompt(), answer, status));
     }
 
 

@@ -27,6 +27,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +63,7 @@ public class ExecContextTaskAssigningTopLevelService {
     private final ExecContextFSM execContextFSM;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final TaskRepository taskRepository;
-    private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
+    private final TaskCheckCachingService taskCheckCachingTopLevelService;
     private final TaskFinishingTxService taskFinishingTxService;
     private final ExecContextRepository execContextRepository;
     private final ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
@@ -129,12 +130,13 @@ public class ExecContextTaskAssigningTopLevelService {
         if (executor.getActiveCount()>0) {
             return;
         }
-        executor.submit(() -> {
+        Thread t = new Thread(() -> {
             FindUnassignedTasksAndRegisterInQueueEvent event;
             while ((event = pullFromQueue())!=null) {
                 findUnassignedTasksAndRegisterInQueue();
             }
-        });
+        }, "ExecContextTaskAssigningTopLevelService-" + ThreadUtils.nextThreadNum());
+        executor.submit(t);
     }
 
     private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();

@@ -36,6 +36,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +62,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class TaskCheckCachingTopLevelService {
+public class TaskCheckCachingService {
 
     public enum PrepareDataState {ok, none}
 
@@ -158,7 +159,7 @@ public class TaskCheckCachingTopLevelService {
         if (activeCount>0) {
             return;
         }
-        executor.submit(() -> {
+        Thread t = new Thread(() -> {
             RegisterTaskForCheckCachingEvent event;
             while ((event = pullFromQueue())!=null) {
                 try {
@@ -173,7 +174,8 @@ public class TaskCheckCachingTopLevelService {
                     eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
                 }
             }
-        });
+        }, "TaskCheckCachingService-" + ThreadUtils.nextThreadNum());
+        executor.submit(t);
     }
 
     private void checkCachingInternal(RegisterTaskForCheckCachingEvent event) {

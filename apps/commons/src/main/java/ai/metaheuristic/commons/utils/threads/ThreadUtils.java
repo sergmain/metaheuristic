@@ -43,6 +43,14 @@ import java.util.regex.Pattern;
 @Slf4j
 public class ThreadUtils {
 
+    // TODO 2023-08-31 p0 check how this method is implemented in java 21
+    /* For autonumbering anonymous threads. */
+    private static int threadInitNumber;
+    public static synchronized int nextThreadNum() {
+        return threadInitNumber++;
+    }
+
+
     public static final class ResourceLock extends ReentrantLock implements AutoCloseable {
         @MustBeClosed
         public ResourceLock obtain() {

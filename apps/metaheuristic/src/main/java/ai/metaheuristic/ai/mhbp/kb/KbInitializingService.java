@@ -47,7 +47,7 @@ public class KbInitializingService {
     public KbInitializingService(@Autowired KbService kbService) {
         this.kbService = kbService;
         this.initKbEventThreadedPool =
-                new ThreadedPool<>(1, 0, true, false, kbService::processInitKbEvent);
+                new ThreadedPool<>("KbInitializingService-", 1, 0, true, false, kbService::processInitKbEvent);
     }
 
     @PreDestroy

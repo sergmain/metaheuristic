@@ -83,7 +83,7 @@ public class ExecContextTaskStateTopLevelService {
     @EventListener
     public void handleEvent(TransferStateFromTaskQueueToExecContextEvent event) {
         final ThreadedPool<TransferStateFromTaskQueueToExecContextEvent> threadedPool = threadedPoolMap.computeIfAbsent(event.execContextId,
-            (id) -> new ThreadedPool<>(1, 2, true, false, this::transferStateFromTaskQueueToExecContext));
+            (id) -> new ThreadedPool<>("TransferStateFromTaskQueueToExecContextEvent-", 1, 2, true, false, this::transferStateFromTaskQueueToExecContext));
 
         if (threadedPool.isShutdown()) {
             return;
@@ -95,7 +95,7 @@ public class ExecContextTaskStateTopLevelService {
     @EventListener
     public void handleEvent(UpdateTaskExecStatesInGraphEvent event) {
         final ThreadedPool<UpdateTaskExecStatesInGraphEvent> threadedPool = updateTaskExecStatesInGraphEventThreadedPool.computeIfAbsent(event.execContextId,
-            (id) -> new ThreadedPool<>(1, 0, false, false, this::updateTaskExecStatesInGraph));
+            (id) -> new ThreadedPool<>("UpdateTaskExecStatesInGraphEvent-", 1, 0, false, false, this::updateTaskExecStatesInGraph));
 
         if (threadedPool.isShutdown()) {
             return;

@@ -60,7 +60,7 @@ public class ExecContextTaskResettingTopLevelService {
     private final ExecContextCache execContextCache;
 
     private final ThreadedPool<ResetTasksWithErrorEvent> resetTasksWithErrorEventThreadedPool =
-            new ThreadedPool<>(1, 0, false, false, this::resetTasksWithErrorForRecovery);
+            new ThreadedPool<>("ExecContextTaskResettingTopLevelService-", 1, 0, false, false, this::resetTasksWithErrorForRecovery);
 
     @PreDestroy
     public void onExit() {

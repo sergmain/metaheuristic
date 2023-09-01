@@ -56,17 +56,18 @@ import java.util.concurrent.atomic.AtomicLong;
  * Date: 12/1/2021
  * Time: 12:35 AM
  */
+@SuppressWarnings("LombokGetterMayBeUsed")
 @Service
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class TaskProviderUnassignedTaskTopLevelService {
+public class TaskProviderUnassignedTaskService {
 
     private final TaskProviderTransactionalService taskProviderTransactionalService;
     private final DispatcherEventService dispatcherEventService;
     private final TaskRepository taskRepository;
     private final ExecContextStatusService execContextStatusService;
-    private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
+    private final TaskCheckCachingService taskCheckCachingTopLevelService;
 
     @Nullable
     public TaskData.AssignedTask findUnassignedTaskAndAssign(Long coreId, ProcessorStatusYaml psy, CoreStatusYaml csy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {

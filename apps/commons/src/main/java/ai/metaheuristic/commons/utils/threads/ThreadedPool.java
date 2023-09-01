@@ -17,8 +17,8 @@
 package ai.metaheuristic.commons.utils.threads;
 
 import lombok.extern.slf4j.Slf4j;
-import javax.annotation.Nullable;
 
+import javax.annotation.Nullable;
 import java.util.LinkedList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -39,6 +39,7 @@ public class ThreadedPool<T> {
     private final boolean immediateProcessing;
     private final boolean checkForDouble;
     private final Consumer<T> process;
+    private final String namePrefix;
 
     private final ThreadPoolExecutor executor;
     private final LinkedList<T> queue = new LinkedList<>();
@@ -49,31 +50,22 @@ public class ThreadedPool<T> {
     private final ReentrantReadWriteLock.ReadLock queueReadLock = queueReadWriteLock.readLock();
     private final ReentrantReadWriteLock.WriteLock queueWriteLock = queueReadWriteLock.writeLock();
 
-    public ThreadedPool(int maxQueueSize, Consumer<T> process) {
-        this.maxThreadInPool = 1;
-        this.immediateProcessing = true;
-        this.checkForDouble = false;
-        this.maxQueueSize = maxQueueSize;
-        this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxThreadInPool);
-        this.process = process;
+    public ThreadedPool(String namePrefix, int maxQueueSize, Consumer<T> process) {
+        this(namePrefix, 1, maxQueueSize, true, false, process);
     }
 
-    public ThreadedPool(int maxThreadInPool, int maxQueueSize, Consumer<T> process) {
-        this.maxThreadInPool = maxThreadInPool;
-        this.maxQueueSize = maxQueueSize;
-        this.immediateProcessing = true;
-        this.checkForDouble = false;
-        this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxThreadInPool);
-        this.process = process;
+    public ThreadedPool(String namePrefix, int maxThreadInPool, int maxQueueSize, Consumer<T> process) {
+        this(namePrefix, maxThreadInPool, maxQueueSize, true, false, process);
     }
 
-    public ThreadedPool(int maxThreadInPool, int maxQueueSize, boolean immediateProcessing, boolean checkForDouble, Consumer<T> process) {
+    public ThreadedPool(String namePrefix, int maxThreadInPool, int maxQueueSize, boolean immediateProcessing, boolean checkForDouble, Consumer<T> process) {
         this.maxThreadInPool = maxThreadInPool;
         this.maxQueueSize = maxQueueSize;
         this.immediateProcessing = immediateProcessing;
         this.checkForDouble = checkForDouble;
         this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxThreadInPool);
         this.process = process;
+        this.namePrefix = namePrefix;
     }
 
     public boolean isShutdown() {
@@ -166,7 +158,8 @@ public class ThreadedPool<T> {
         if (executor.getActiveCount()>=maxThreadInPool) {
             return;
         }
-        executor.submit(this::actualProcessing);
+        Thread t = new Thread(this::actualProcessing, namePrefix+ + ThreadUtils.nextThreadNum());
+        executor.submit(t);
     }
 
     private void actualProcessing() {

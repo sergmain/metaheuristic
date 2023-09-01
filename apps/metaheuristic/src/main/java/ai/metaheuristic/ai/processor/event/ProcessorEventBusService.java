@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.processor.DispatcherRequestorHolderService;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.dispatcher_selection.ActiveDispatchers;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -88,19 +89,18 @@ public class ProcessorEventBusService {
             // TODO 2021-11-10 actually, activeDispatchers.getActiveDispatchers() returns a map, which is unmodifiable LinkedHashMap
             //  so we don't need to sort this map.
             for (ProcessorAndCoreData.DispatcherUrl dispatcher : dispatchers.keySet()) {
-                executor.submit(() -> {
+                Thread t = new Thread(() -> {
                     log.info("Call processorKeepAliveRequestor, url: {}", dispatcher.url);
                     try {
                         dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).processorKeepAliveRequestor.proceedWithRequest();
                     } catch (Throwable th) {
                         log.error("ProcessorEventBusService.keepAlive()", th);
                     }
-                });
-
+                }, "ProcessorEventBusService-" + ThreadUtils.nextThreadNum());
+                executor.submit(t);
             }
         } catch (Throwable th) {
             log.error("Error, need to investigate ", th);
         }
     }
-
 }

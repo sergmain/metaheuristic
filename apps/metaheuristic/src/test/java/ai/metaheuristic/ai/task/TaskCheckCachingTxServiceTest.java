@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.cache.CacheTxService;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
@@ -43,7 +43,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
@@ -51,7 +50,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.UUID;
 
-import static ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService.PrepareDataState.ok;
+import static ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingService.PrepareDataState.ok;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -67,7 +66,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
 
-    @Autowired private TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
+    @Autowired private TaskCheckCachingService taskCheckCachingTopLevelService;
     @Autowired private TaskRepository taskRepository;
     @Autowired private VariableTxService variableTxService;
     @Autowired private CacheTxService cacheTxService;
@@ -146,7 +145,7 @@ public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
         assertEquals(EnumsApi.TaskExecState.CHECK_CACHE.value, task.execState);
 
 
-        TaskCheckCachingTopLevelService.PrepareData prepareData = taskCheckCachingTopLevelService.getCacheProcess(getExecContextForTest().asSimple(), taskId);
+        TaskCheckCachingService.PrepareData prepareData = taskCheckCachingTopLevelService.getCacheProcess(getExecContextForTest().asSimple(), taskId);
         assertEquals(ok, prepareData.state);
         assertNotNull(prepareData.cacheProcess);
 

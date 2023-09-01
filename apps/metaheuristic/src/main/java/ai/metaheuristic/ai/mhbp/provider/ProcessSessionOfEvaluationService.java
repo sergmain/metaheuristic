@@ -43,7 +43,7 @@ public class ProcessSessionOfEvaluationService {
     public ProcessSessionOfEvaluationService(@Autowired ProviderQueryService providerQueryService) {
         this.providerQueryService = providerQueryService;
         this.evaluateProviderEventThreadedPool =
-                new ThreadedPool<>(1, 0, false, true, providerQueryService::evaluateProvider);
+                new ThreadedPool<>("ProcessSessionOfEvaluationService-", 1, 0, false, true, providerQueryService::evaluateProvider);
     }
 
     @PreDestroy
