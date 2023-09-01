@@ -409,7 +409,7 @@ public class Schedulers {
         }
 
         public void taskProcessor() {
-            if (globals.testing || !globals.processor.enabled) {
+            if (globals.testing || !globals.processor.enabled || globals.shutdownInProgress) {
                 return;
             }
             log.info("Run taskProcessor.fixedDelay()");

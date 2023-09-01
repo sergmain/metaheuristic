@@ -120,10 +120,7 @@ public class DispatcherRequestor {
     }
 
     public void proceedWithRequest() {
-        if (globals.testing) {
-            return;
-        }
-        if (!globals.processor.enabled) {
+        if (globals.testing || !globals.processor.enabled || globals.shutdownInProgress) {
             return;
         }
         if (dispatcher.dispatcherLookup.disabled) {

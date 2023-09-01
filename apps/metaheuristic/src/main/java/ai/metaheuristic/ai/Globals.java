@@ -23,6 +23,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.SecUtils;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -526,6 +527,7 @@ public class Globals {
 
     public boolean testing = false;
     public boolean eventEnabled = false;
+    public boolean shutdownInProgress = false;
 
     public boolean sslRequired = true;
 
@@ -615,6 +617,11 @@ public class Globals {
         logGarbageCollectors();
 //        logDeprecated();
 
+    }
+
+    @PreDestroy
+    public void onExit() {
+        shutdownInProgress = true;
     }
 
     private void logUlimitSh() {
