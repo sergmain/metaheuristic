@@ -44,7 +44,7 @@ public class ChatTxService {
     private final ChatRepository chatRepository;
 
     @Transactional
-    public OperationStatusRest deleteChatById(Long chatId, DispatcherContext context) {
+    public OperationStatusRest deleteChatById(Long chatId) {
         Chat chat = chatRepository.findById(chatId).orElse(null);
         if (chat==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "134.040 Chat #"+chatId+" wasn't fount");
@@ -84,5 +84,15 @@ public class ChatTxService {
 
         chat.updateParams(params);
         chatRepository.save(chat);
+    }
+
+    public OperationStatusRest updateChatInfoFormCommit(Long chatId, String name) {
+        Chat chat = chatRepository.findById(chatId).orElse(null);
+        if (chat==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "(chat==null)");
+        }
+        chat.name = name;
+        chatRepository.save(chat);
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 }

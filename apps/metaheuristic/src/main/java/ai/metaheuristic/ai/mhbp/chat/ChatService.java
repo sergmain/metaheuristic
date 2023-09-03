@@ -89,6 +89,20 @@ public class ChatService {
         return new ChatData.SimpleChat(chat.id, chat.name, chat.createdOn, new ApiData.ApiUid(params.api.apiId, params.api.code, api!=null ? api.name : "<Ref to API is broken>"));
     }
 
+    public OperationStatusRest updateChatInfoFormCommit(Long chatId, String name, DispatcherContext context) {
+        ChatInfo chatInfo = getChatInfo(chatId, context);
+        if (chatInfo.error!=null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, chatInfo.error);
+        }
+
+        try {
+            return chatTxService.updateChatInfoFormCommit(chatId, name);
+        }
+        catch (Throwable th) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
+        }
+    }
+
     public record ChatInfo(Chat chat, @Nullable Api api, @Nullable String error) {}
 
     public ChatData.FullChat getChat(Long chatId, DispatcherContext context) {
@@ -169,10 +183,10 @@ public class ChatService {
         return r;
     }
 
-    public OperationStatusRest createChat(String name, String apiId, long companyId, long accountId, DispatcherContext context) {
+    public OperationStatusRest createChat(String name, String apiId, long companyId, long accountId) {
         try {
             Api api = apiRepository.findById(Long.parseLong(apiId)).orElse(null);
-            if (api==null || api.companyId!=context.getCompanyId()) {
+            if (api==null || api.companyId!=companyId) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "372.200 apiId is null");
             }
             ChatParams.Api apiRef = new ChatParams.Api(api.id, api.code);

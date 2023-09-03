@@ -72,7 +72,7 @@ public class ChatRestController {
     @PostMapping("/chat-delete-commit")
     public OperationStatusRest deleteCommit(Long chatId, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return chatTxService.deleteChatById(chatId, context);
+        return chatTxService.deleteChatById(chatId);
     }
 
     @GetMapping(value = "/chat-add")
@@ -88,6 +88,18 @@ public class ChatRestController {
             @RequestParam(name = "apiId") String apiId,
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return chatService.createChat(name, apiId, context.getCompanyId(), context.getAccountId(), context);
+        return chatService.createChat(name, apiId, context.getCompanyId(), context.getAccountId());
     }
+
+    @PostMapping("/update-chat-info-commit/{chatId}")
+    public OperationStatusRest updateChatInfoFormCommit(
+        @PathVariable Long chatId,
+        @RequestParam(name = "name") String name,
+        Authentication authentication) {
+
+        DispatcherContext context = userContextService.getContext(authentication);
+        return chatService.updateChatInfoFormCommit(chatId, name, context);
+    }
+
+
 }
