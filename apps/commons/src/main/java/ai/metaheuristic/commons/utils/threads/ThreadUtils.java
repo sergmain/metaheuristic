@@ -212,9 +212,10 @@ public class ThreadUtils {
         while ((executor.getTaskCount() - executor.getCompletedTaskCount()) > 0) {
             Thread.sleep(TimeUnit.SECONDS.toMillis(1));
             if (++i % numberOfPeriods == 0) {
-                System.out.print("total: " + executor.getTaskCount() + ", completed: " + executor.getCompletedTaskCount());
                 final Runtime rt = Runtime.getRuntime();
-                System.out.println(", free: " + rt.freeMemory() + ", max: " + rt.maxMemory() + ", total: " + rt.totalMemory());
+                log.debug("Threads total: {}, completed: {}. RAM free: {}, max: {}, total: {}",
+                    executor.getTaskCount(), executor.getCompletedTaskCount(),
+                    rt.freeMemory(), rt.maxMemory(), rt.totalMemory());
                 i = 0;
             }
         }
