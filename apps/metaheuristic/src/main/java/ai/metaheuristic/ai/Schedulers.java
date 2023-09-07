@@ -579,9 +579,13 @@ public class Schedulers {
     public static class StandaloneSchedulers {
 
         private final FrontendCheckerService frontendCheckerService;
+        private final Globals globals;
 
         @Scheduled(initialDelay = 2_000, fixedDelay = 2_000 )
         public void updateStateForLongRunning() {
+            if (globals.shutdownInProgress) {
+                return;
+            }
             frontendCheckerService.checkFrontend();
         }
     }
