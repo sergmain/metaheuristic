@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.processor.processor_environment;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
+import ai.metaheuristic.ai.exceptions.TerminateApplicationException;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYamlUtils;
@@ -57,14 +58,14 @@ public class EnvParams {
         final Path envYamlFile = processorPath.resolve(Consts.ENV_YAML_FILE_NAME);
         if (Files.notExists(envYamlFile)) {
             if (envYamlProvider==null) {
-                log.warn("#747.020 Processor's env.yaml config file doesn't exist: {}", envYamlFile.toAbsolutePath());
-                throw new IllegalStateException("#747.012 Processor isn't configured, env.yaml is empty or doesn't exist");
+                log.warn("747.020 Processor's env.yaml config file doesn't exist: {}", envYamlFile.toAbsolutePath());
+                throw new TerminateApplicationException("747.012 Processor isn't configured, env.yaml is empty or doesn't exist");
             }
             try (InputStream is = envYamlProvider.provide()) {
                 Files.copy(is, envYamlFile);
             } catch (IOException e) {
-                log.error("#747.035 Error", e);
-                throw new IllegalStateException("#747.040 Error while creating env.yaml with " + envYamlProvider.getClass().getName() +
+                log.error("747.035 Error", e);
+                throw new TerminateApplicationException("747.040 Error while creating env.yaml with " + envYamlProvider.getClass().getName() +
                                                 " provider and target path as " + envYamlFile.toAbsolutePath(), e);
             }
         }
@@ -73,15 +74,18 @@ public class EnvParams {
         try {
             env = Files.readString(envYamlFile, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            log.error("#747.045 Error", e);
-            throw new IllegalStateException("#747.050 Error while reading file: " + envYamlFile.toAbsolutePath(), e);
+            log.error("747.045 Error", e);
+            throw new TerminateApplicationException("747.050 Error while reading file: " + envYamlFile.toAbsolutePath(), e);
         }
 
         envYaml = EnvParamsYamlUtils.BASE_YAML_UTILS.to(env);
         if (envYaml==null) {
-            log.error("#747.060 env.yaml wasn't found or empty. path: {}/env.yaml", processorPath);
-            throw new IllegalStateException("#747.062 Processor isn't configured, env.yaml is empty or doesn't exist");
+            log.error("747.060 env.yaml wasn't found or empty. path: {}/env.yaml", processorPath);
+            throw new TerminateApplicationException("747.062 Processor isn't configured, env.yaml is empty or doesn't exist");
         }
+
+        List<List<String>> cmds = new ArrayList<>();
+        Set<String> cmdSet = new HashSet<>();
         for (EnvParamsYaml.Env envForVerify : envYaml.envs) {
             if (envForVerify.verify!=null) {
                 if (envForVerify.verify.run) {
@@ -98,21 +102,29 @@ public class EnvParams {
                             params.add(s);
                         }
                     }
-                    SystemProcessLauncher.ExecResult result = SystemProcessLauncher.execCmd(params, 10L, taskConsoleOutputMaxLines);
-                    if (!result.ok) {
-                        System.out.println("!!!");
-                        System.out.println("!!!");
-                        System.out.println("!!! ======================================================================================================");
-                        System.out.println("!!!");
-                        System.out.println("!!! Verification of environment was failed. Error while executing " + params);
-                        System.out.println("!!! Error: " + result.error);
-                        System.out.println("!!!");
-                        System.out.println("!!! ======================================================================================================");
-                        System.out.println("!!!");
-                        System.out.println("!!!");
-                        throw new IllegalStateException("Verification of environment was failed, error: " + result.error);
+                    String cmd = String.join(" ", params);
+                    if (cmdSet.contains(cmd)) {
+                        continue;
                     }
+                    cmdSet.add(cmd);
+                    cmds.add(params);
                 }
+            }
+        }
+        for (List<String> params : cmds) {
+            SystemProcessLauncher.ExecResult result = SystemProcessLauncher.execCmd(params, 10L, taskConsoleOutputMaxLines);
+            if (!result.ok) {
+                log.error("!!!");
+                log.error("!!!");
+                log.error("!!! ======================================================================================================");
+                log.error("!!!");
+                log.error("!!! Verification of environment was failed. Error while executing {}", params);
+                log.error("!!! Error: {}", result.error);
+                log.error("!!!");
+                log.error("!!! ======================================================================================================");
+                log.error("!!!");
+                log.error("!!!");
+                throw new TerminateApplicationException("Verification of environment was failed, error: " + result.error);
             }
         }
         verifyCoreCodes(envYaml);

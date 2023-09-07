@@ -114,6 +114,7 @@ public class Config {
     public static class SpringChecker {
 
         private final ApplicationContext appCtx;
+        private final Globals globals;
 
         @Value("${server.address:#{null}}")
         public String serverHost;
@@ -139,6 +140,7 @@ public class Config {
             List<String> profiles = SpringHelpersUtils.getProfiles(activeProfiles);
 
             if (!profiles.isEmpty()) {
+                globals.shutdownInProgress = true;
                 log.error("\nUnknown profile(s) was encountered in property spring.profiles.active.\nNeed to be fixed.\n" +
                         "Allowed profiles are: " + SpringHelpersUtils.POSSIBLE_PROFILES);
                 System.exit(SpringApplication.exit(appCtx, () -> -500));

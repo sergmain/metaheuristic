@@ -33,12 +33,12 @@ public class StandaloneEnvYamlProvider implements EnvYamlProvider {
               - code: java-11
                 exec: java -Dfile.encoding=UTF-8 -jar
                 verify:
-                  run: true
+                  run: false
                   params: --version
               - code: java-17
                 exec: java -Dfile.encoding=UTF-8 -jar
                 verify:
-                  run: true
+                  run: false
                   params: --version
             quotas:
               disabled: true

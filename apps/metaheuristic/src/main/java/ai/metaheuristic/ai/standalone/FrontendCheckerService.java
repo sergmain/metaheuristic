@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.standalone;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Globals;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +48,7 @@ import java.nio.charset.StandardCharsets;
 public class FrontendCheckerService {
 
     private final ApplicationContext appCtx;
+    private final Globals globals;
 
     private Request request = null;
     private int errors = 0;
@@ -74,6 +76,7 @@ public class FrontendCheckerService {
             log.error("367.080 ConnectException", th);
         }
         if (errors>2) {
+            globals.shutdownInProgress = true;
             log.warn("367.120 Front-end wasn't found, shutdown server-side");
             System.exit(SpringApplication.exit(appCtx, () -> -100));
         }

@@ -528,6 +528,7 @@ public class Globals {
     public boolean testing = false;
     public boolean eventEnabled = false;
     public boolean shutdownInProgress = false;
+    public boolean standaloneProfile = false;
 
     public boolean sslRequired = true;
 
@@ -557,6 +558,7 @@ public class Globals {
     @SneakyThrows
     @PostConstruct
     public void postConstruct() {
+        this.standaloneProfile = activeProfilesSet.contains(Consts.STANDALONE_PROFILE);
         dispatcherPath = getHome().resolve("dispatcher");
         Files.createDirectories(dispatcherPath);
         processorPath = getHome().resolve("processor");

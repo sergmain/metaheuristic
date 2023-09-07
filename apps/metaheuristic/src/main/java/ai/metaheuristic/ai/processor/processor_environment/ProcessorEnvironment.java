@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.processor.processor_environment;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.TerminateApplicationException;
 import ai.metaheuristic.ai.sec.AdditionalCustomUserDetails;
@@ -65,17 +64,16 @@ public class ProcessorEnvironment {
 
             if (defaultEnvYamlFile!=null && Files.notExists(defaultEnvYamlFile)) {
                 log.warn("#747.030 Processor's default yaml.yaml file doesn't exist: {}", defaultEnvYamlFile.toAbsolutePath());
-                throw new IllegalStateException("#747.014 Processor isn't configured, env.yaml is empty or doesn't exist");
+                throw new TerminateApplicationException("#747.014 Processor isn't configured, env.yaml is empty or doesn't exist");
             }
             EnvYamlProvider envYamlProvider = null;
-            if (globals.activeProfilesSet.contains(Consts.STANDALONE_PROFILE)) {
+            if (globals.standaloneProfile) {
                 envYamlProvider = new StandaloneEnvYamlProvider();
             }
             else if (defaultEnvYamlFile!=null) {
                 envYamlProvider = new FileEnvYamlProvider(defaultEnvYamlFile);
             }
             init(processorPath, envYamlProvider, defaultDispatcherYamlFile, taskConsoleOutputMaxLines);
-
         }
         catch (TerminateApplicationException e) {
             System.exit(SpringApplication.exit(appCtx, () -> -500));
@@ -84,7 +82,7 @@ public class ProcessorEnvironment {
 
     public void init(Path processorPath, @Nullable EnvYamlProvider envYamlProvider, @Nullable Path defaultDispatcherYamlFile, int taskConsoleOutputMaxLines) {
         envParams.init(processorPath, envYamlProvider, taskConsoleOutputMaxLines);
-        dispatcherLookupExtendedService = globals.activeProfilesSet.contains(Consts.STANDALONE_PROFILE)
+        dispatcherLookupExtendedService = globals.standaloneProfile
                 ? new StandaloneDispatcherLookupExtendedParams(additionalCustomUserDetails.restUserPassword)
                 : new FileDispatcherLookupExtendedParams(processorPath, defaultDispatcherYamlFile);
         metadataParams = new MetadataParams(processorPath, envParams, dispatcherLookupExtendedService);
