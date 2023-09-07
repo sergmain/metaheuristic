@@ -43,7 +43,7 @@ import java.nio.charset.StandardCharsets;
  */
 @Slf4j
 @Service
-@Profile("standalone")
+@Profile("standalone & !disable-check-frontend")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class FrontendCheckerService {
 

@@ -77,7 +77,7 @@ public class CustomUserDetails implements UserDetailsService {
             return account;
         }
 
-        if (Consts.REST_USER.equals(complexUsername.getUsername()) && globals.standaloneProfile) {
+        if (Consts.REST_USER.equals(complexUsername.getUsername()) && globals.standalone.active) {
             return additionalCustomUserDetails.restUserAccount;
         }
 

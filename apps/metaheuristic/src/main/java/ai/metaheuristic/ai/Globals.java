@@ -506,6 +506,10 @@ public class Globals {
         }
     }
 
+    public static class Standalone {
+        public boolean active = false;
+    }
+
     @Value("${spring.profiles.active}")
     public String[] activeProfiles;
 
@@ -516,6 +520,7 @@ public class Globals {
     public final Processor processor = new Processor();
     public final ThreadNumber threadNumber = new ThreadNumber();
     public final Mhbp mhbp = new Mhbp();
+    public final Standalone standalone = new Standalone();
 
     @Nullable
     public String systemOwner = null;
@@ -528,7 +533,6 @@ public class Globals {
     public boolean testing = false;
     public boolean eventEnabled = false;
     public boolean shutdownInProgress = false;
-    public boolean standaloneProfile = false;
 
     public boolean sslRequired = true;
 
@@ -558,7 +562,7 @@ public class Globals {
     @SneakyThrows
     @PostConstruct
     public void postConstruct() {
-        this.standaloneProfile = activeProfilesSet.contains(Consts.STANDALONE_PROFILE);
+        this.standalone.active = activeProfilesSet.contains(Consts.STANDALONE_PROFILE);
         dispatcherPath = getHome().resolve("dispatcher");
         Files.createDirectories(dispatcherPath);
         processorPath = getHome().resolve("processor");

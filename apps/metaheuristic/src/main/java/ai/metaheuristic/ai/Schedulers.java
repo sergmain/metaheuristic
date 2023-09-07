@@ -574,7 +574,7 @@ public class Schedulers {
     @Service
     @EnableScheduling
     @Slf4j
-    @Profile("standalone")
+    @Profile("standalone & !disable-check-frontend")
     @RequiredArgsConstructor(onConstructor_={@Autowired})
     public static class StandaloneSchedulers {
 

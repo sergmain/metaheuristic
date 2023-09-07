@@ -67,7 +67,7 @@ public class ProcessorEnvironment {
                 throw new TerminateApplicationException("#747.014 Processor isn't configured, env.yaml is empty or doesn't exist");
             }
             EnvYamlProvider envYamlProvider = null;
-            if (globals.standaloneProfile) {
+            if (globals.standalone.active) {
                 envYamlProvider = new StandaloneEnvYamlProvider();
             }
             else if (defaultEnvYamlFile!=null) {
@@ -82,7 +82,7 @@ public class ProcessorEnvironment {
 
     public void init(Path processorPath, @Nullable EnvYamlProvider envYamlProvider, @Nullable Path defaultDispatcherYamlFile, int taskConsoleOutputMaxLines) {
         envParams.init(processorPath, envYamlProvider, taskConsoleOutputMaxLines);
-        dispatcherLookupExtendedService = globals.standaloneProfile
+        dispatcherLookupExtendedService = globals.standalone.active
                 ? new StandaloneDispatcherLookupExtendedParams(additionalCustomUserDetails.restUserPassword)
                 : new FileDispatcherLookupExtendedParams(processorPath, defaultDispatcherYamlFile);
         metadataParams = new MetadataParams(processorPath, envParams, dispatcherLookupExtendedService);
