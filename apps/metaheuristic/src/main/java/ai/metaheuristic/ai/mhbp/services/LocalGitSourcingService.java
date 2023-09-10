@@ -49,6 +49,7 @@ import static ai.metaheuristic.ai.core.SystemProcessLauncher.execCmd;
 @Service
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class LocalGitSourcingService {
 
     private static final List<String> GIT_VERSION_CMD = List.of("git", "--version");
@@ -58,10 +59,6 @@ public class LocalGitSourcingService {
     private final Globals globals;
 
     public final GitData.GitStatusInfo gitStatusInfo = new GitData.GitStatusInfo(Enums.GitStatus.unknown);
-
-    public LocalGitSourcingService(@Autowired Globals globals) {
-        this.globals = globals;
-    }
 
     private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();

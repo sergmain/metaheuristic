@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
 import ai.metaheuristic.ai.mhbp.provider.ProviderData;
 import ai.metaheuristic.ai.mhbp.yaml.auth.ApiAuth;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -34,15 +35,11 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ApiKeysProvider {
 
     private final Globals globals;
     private final AccountRepository accountRepository;
-
-    public ApiKeysProvider(@Autowired Globals globals, @Autowired AccountRepository accountRepository) {
-        this.globals = globals;
-        this.accountRepository = accountRepository;
-    }
 
     @Nullable
     public String getActualToken(ApiAuth.Auth auth, ProviderData.QueriedData queriedData) {
