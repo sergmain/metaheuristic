@@ -29,10 +29,10 @@ public class TokenProviderTest {
 
     @Test
     public void test_getEnvParamName() {
-        assertEquals("A", ApiKeysProvider.getEnvParamName("A"));
-        assertEquals("A", ApiKeysProvider.getEnvParamName("%A"));
-        assertEquals("A", ApiKeysProvider.getEnvParamName("%A%"));
-        assertEquals("A", ApiKeysProvider.getEnvParamName("$A"));
-        assertEquals("A", ApiKeysProvider.getEnvParamName("$A$"));
+        assertEquals("A", ApiKeysProviderUtils.getEnvParamName("A"));
+        assertEquals("A", ApiKeysProviderUtils.getEnvParamName("%A"));
+        assertEquals("A", ApiKeysProviderUtils.getEnvParamName("%A%"));
+        assertEquals("A", ApiKeysProviderUtils.getEnvParamName("$A"));
+        assertEquals("A", ApiKeysProviderUtils.getEnvParamName("$A$"));
     }
 }
