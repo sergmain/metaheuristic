@@ -16,55 +16,53 @@
 
 package ai.metaheuristic.ai.mhbp.yaml.auth;
 
-import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtilsV2;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
-public class ApiAuthUtilsV1 extends
-        AbstractParamsYamlUtils<ApiAuthV1, ApiAuthV2, ApiAuthUtilsV2, Void, Void, Void> {
+public class ApiAuthUtilsV2 extends
+        AbstractParamsYamlUtils<ApiAuthV2, ApiAuth, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(ApiAuthV1.class);
+        return YamlUtils.init(ApiAuthV2.class);
     }
 
     @Override
-    public ApiAuthV2 upgradeTo(ApiAuthV1 v1) {
-        v1.checkIntegrity();
+    public ApiAuth upgradeTo(ApiAuthV2 v2) {
+        v2.checkIntegrity();
 
-        ApiAuthV2 t = new ApiAuthV2();
-        t.auth.code = v1.auth.code;
-        t.auth.type = v1.auth.type;
-        t.auth.basic = toBasicAuth(v1.auth.basic);
-        t.auth.token = toTokenAuth(v1.auth.token);
+        ApiAuth t = new ApiAuth();
+        t.auth.code = v2.auth.code;
+        t.auth.type = v2.auth.type;
+        t.auth.basic = toBasicAuth(v2.auth.basic);
+        t.auth.token = toTokenAuth(v2.auth.token);
 
         t.checkIntegrity();
         return t;
     }
 
     @Nullable
-    public static ApiAuthV2.BasicAuthV2 toBasicAuth(@Nullable ApiAuthV1.BasicAuthV1 v1) {
-        if (v1==null) {
+    public static ApiAuth.BasicAuth toBasicAuth(@Nullable ApiAuthV2.BasicAuthV2 v2) {
+        if (v2==null) {
             return null;
         }
-        ApiAuthV2.BasicAuthV2 ta = new ApiAuthV2.BasicAuthV2(v1.username, v1.password);
+        ApiAuth.BasicAuth ta = new ApiAuth.BasicAuth(v2.username, v2.password);
         return ta;
     }
 
     @Nullable
-    public static ApiAuthV2.TokenAuthV2 toTokenAuth(@Nullable ApiAuthV1.TokenAuthV1 v1) {
-        if (v1==null) {
+    public static ApiAuth.TokenAuth toTokenAuth(@Nullable ApiAuthV2.TokenAuthV2 v2) {
+        if (v2==null) {
             return null;
         }
-        ApiAuthV2.TokenAuthV2 ta = new ApiAuthV2.TokenAuthV2(v1.place, v1.token, v1.param, v1.env, null);
+        ApiAuth.TokenAuth ta = new ApiAuth.TokenAuth(v2.place, v2.token, v2.param, v2.env, v2.key);
         return ta;
     }
 
@@ -74,8 +72,8 @@ public class ApiAuthUtilsV1 extends
     }
 
     @Override
-    public ApiAuthUtilsV2 nextUtil() {
-        return (ApiAuthUtilsV2) ApiAuthUtils.UTILS.getForVersion(2);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -84,15 +82,15 @@ public class ApiAuthUtilsV1 extends
     }
 
     @Override
-    public String toString(ApiAuthV1 yaml) {
+    public String toString(ApiAuthV2 yaml) {
         yaml.checkIntegrity();
 
         return getYaml().dump(yaml);
     }
 
     @Override
-    public ApiAuthV1 to(String s) {
-        final ApiAuthV1 p = getYaml().load(s);
+    public ApiAuthV2 to(String s) {
+        final ApiAuthV2 p = getYaml().load(s);
         return p;
     }
 

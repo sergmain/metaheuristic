@@ -23,11 +23,13 @@ import java.util.Map;
 public class ApiAuthUtils {
 
     private static final ApiAuthUtilsV1 YAML_UTILS_V_1 = new ApiAuthUtilsV1();
-    private static final ApiAuthUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+    private static final ApiAuthUtilsV2 YAML_UTILS_V_2 = new ApiAuthUtilsV2();
+    private static final ApiAuthUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
 
     public static final BaseYamlUtils<ApiAuth> UTILS = new BaseYamlUtils<>(
             Map.of(
-                    1, YAML_UTILS_V_1
+                    1, YAML_UTILS_V_1,
+                    2, YAML_UTILS_V_2
             ),
             DEFAULT_UTILS
     );

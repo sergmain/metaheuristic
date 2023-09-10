@@ -16,9 +16,9 @@
 
 package ai.metaheuristic.ai.mhbp.yaml.auth;
 
-import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,7 +26,7 @@ import org.springframework.lang.Nullable;
 
 @SuppressWarnings("FieldMayBeStatic")
 @Data
-public class ApiAuth implements BaseParams {
+public class ApiAuthV2 implements BaseParams  {
 
     public final int version=2;
 
@@ -44,7 +44,7 @@ public class ApiAuth implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class BasicAuth {
+    public static class BasicAuthV2 {
         public String username;
         public String password;
     }
@@ -52,10 +52,8 @@ public class ApiAuth implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class TokenAuth {
+    public static class TokenAuthV2 {
         public Enums.TokenPlace place;
-        // this is a just anon token. it will be used in uri,
-        // i.e. https://api.weatherapi.com/v1/current.json?key=xxx&q=94103
         public String token;
         public String param;
         public String env;
@@ -65,15 +63,16 @@ public class ApiAuth implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Auth {
+    public static class AuthV2 {
         public String code;
         public Enums.AuthType type;
-        @Nullable
-        public BasicAuth basic;
 
         @Nullable
-        public TokenAuth token;
+        public BasicAuthV2 basic;
+
+        @Nullable
+        public TokenAuthV2 token;
     }
 
-    public final Auth auth = new Auth();
+    public final AuthV2 auth = new AuthV2();
 }
