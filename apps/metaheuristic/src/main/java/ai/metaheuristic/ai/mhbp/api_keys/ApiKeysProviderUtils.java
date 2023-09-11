@@ -52,8 +52,9 @@ public class ApiKeysProviderUtils {
     private static String getTokenFromAccount(Supplier<Account> accountProviderFunc, String key) {
         Account account = accountProviderFunc.get();
         AccountParamsYaml params = account.getAccountParamsYaml();
+        String keyName = normalizeKeyName(key);
 
-        String apiKey = getPredefinedApiKey(key, params);
+        String apiKey = getPredefinedApiKey(keyName, params);
         if (apiKey!=null) {
             return apiKey;
         }
@@ -64,7 +65,7 @@ public class ApiKeysProviderUtils {
     }
 
     public static String getTokenFromEnvironment(Function<String, String> systemEnvFunc, String env) {
-        String keyName = getEnvParamName(env);
+        String keyName = normalizeKeyName(env);
         String token = systemEnvFunc.apply(keyName);
         return token;
     }
@@ -78,7 +79,7 @@ public class ApiKeysProviderUtils {
         };
     }
 
-    public static String getEnvParamName(String env) {
+    public static String normalizeKeyName(String env) {
         if (S.b(env)) {
             throw new IllegalStateException("(S.b(env))");
         }

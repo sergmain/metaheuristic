@@ -35,6 +35,15 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 public class ApiKeysProviderUtilsTest {
 
     @Test
+    public void test_getEnvParamName() {
+        assertEquals("A", ApiKeysProviderUtils.normalizeKeyName("A"));
+        assertEquals("A", ApiKeysProviderUtils.normalizeKeyName("%A"));
+        assertEquals("A", ApiKeysProviderUtils.normalizeKeyName("%A%"));
+        assertEquals("A", ApiKeysProviderUtils.normalizeKeyName("$A"));
+        assertEquals("A", ApiKeysProviderUtils.normalizeKeyName("$A$"));
+    }
+
+    @Test
     public void test_getTokenFromEnvironment() {
         assertEquals("aaa", ApiKeysProviderUtils.getTokenFromEnvironment((key)->"aaa", "$OPENAI_API_KEY$"));
         assertEquals("aaa", ApiKeysProviderUtils.getTokenFromEnvironment((key)->"aaa", "$OPENAI_API_KEY"));
@@ -51,7 +60,7 @@ public class ApiKeysProviderUtilsTest {
               type: token
               token:
                 place: header
-                key: OPENAI_API_KEY
+                key: "%OPENAI_API_KEY%"
             """;
 
         ApiAuth apiAuth = ApiAuthUtils.UTILS.to(yaml);
