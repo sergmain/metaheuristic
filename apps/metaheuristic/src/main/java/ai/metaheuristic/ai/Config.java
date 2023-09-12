@@ -27,8 +27,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.annotation.EnableCaching;
@@ -156,6 +158,36 @@ public class Config {
         public void addInterceptors(InterceptorRegistry registry) {
             registry.addInterceptor(new CleanerInterceptor());
         }
+    }
+
+    @Bean
+    @Profile("dispatcher")
+    public MyBeanPostProcessor myBeanPostProcessor(){
+        return new MyBeanPostProcessor();
+    }
+
+    public static class MyBeanPostProcessor implements BeanPostProcessor {
+
+        @Override
+        public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+            System.out.println("--- postProcessBeforeInitialization executed --- "+ beanName +", " + bean.getClass().getSimpleName());
+//            if (bean instanceof MySpringBean) {
+//                System.out.println("--- postProcessBeforeInitialization executed ---");
+//            }
+            return bean;
+        }
+
+        @Override
+        public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+            System.out.println("--- postProcessAfterInitialization executed ---" + beanName +", " + bean.getClass().getSimpleName());
+/*
+            if (bean instanceof MySpringBean) {
+                System.out.println("--- postProcessAfterInitialization executed ---");
+            }
+*/
+            return bean;
+        }
+
     }
 
     @Configuration

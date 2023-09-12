@@ -194,4 +194,6 @@ public class Consts {
     public static final String FRONTEND_URL = "http://localhost:"+Consts.NODEJS_STANDALONE_PORT_NUMBER;
 
 
+    public static final String UUID_ARG = "uuid=";
+    public static final String APP_UUID_NONE = "none";
 }
