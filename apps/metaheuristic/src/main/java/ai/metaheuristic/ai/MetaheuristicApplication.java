@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.SpringApplication;
@@ -24,14 +23,15 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.time.LocalDateTime;
 
+import static ai.metaheuristic.ai.MetaheuristicStatus.APP_UUID;
+import static ai.metaheuristic.ai.MetaheuristicStatus.initAppStatus;
+
 @SpringBootApplication
 @Slf4j
 public class MetaheuristicApplication {
 
-    public static String APP_UUID = Consts.APP_UUID_NONE;
-
     public static void main(String[] args) {
-        initAppUuid(args);
+        initAppStatus(args);
         System.out.println("Metaheuristic was started at " + LocalDateTime.now()+", uuid: " + APP_UUID);
         final String encoding = System.getProperty("file.encoding");
         if (!StringUtils.equalsAnyIgnoreCase(encoding, "utf8", "utf-8")) {
@@ -42,18 +42,9 @@ public class MetaheuristicApplication {
             SpringApplication.run(MetaheuristicApplication.class, args);
         } catch (Throwable th) {
             log.error("error", th);
+            MetaheuristicStatus.appendError(th);
             System.exit(-2);
         }
     }
 
-    private static void initAppUuid(String[] args) {
-        for (String arg : args) {
-            if (arg.startsWith(Consts.UUID_ARG)) {
-                String uuid = arg.substring(Consts.UUID_ARG.length());
-                if (!S.b(uuid)) {
-                    APP_UUID = uuid;
-                }
-            }
-        }
-    }
 }

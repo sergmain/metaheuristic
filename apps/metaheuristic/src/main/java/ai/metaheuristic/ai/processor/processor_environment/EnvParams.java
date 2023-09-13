@@ -45,16 +45,16 @@ public class EnvParams {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
-    public void init(Path processorPath,@Nullable EnvYamlProvider envYamlProvider, int taskConsoleOutputMaxLines) {
+    public void init(Path processorPath,@Nullable EnvYamlProvider envYamlProvider, int taskConsoleOutputMaxLines, boolean verify) {
         writeLock.lock();
         try {
-            initInternal(processorPath, envYamlProvider, taskConsoleOutputMaxLines);
+            initInternal(processorPath, envYamlProvider, taskConsoleOutputMaxLines, verify);
         } finally {
             writeLock.unlock();
         }
     }
 
-    private void initInternal(Path processorPath, @Nullable EnvYamlProvider envYamlProvider, int taskConsoleOutputMaxLines) {
+    private void initInternal(Path processorPath, @Nullable EnvYamlProvider envYamlProvider, int taskConsoleOutputMaxLines, boolean verify) {
         final Path envYamlFile = processorPath.resolve(Consts.ENV_YAML_FILE_NAME);
         if (Files.notExists(envYamlFile)) {
             if (envYamlProvider==null) {
@@ -84,10 +84,18 @@ public class EnvParams {
             throw new TerminateApplicationException("747.062 Processor isn't configured, env.yaml is empty or doesn't exist");
         }
 
+        verifyProcessCmd(taskConsoleOutputMaxLines, verify);
+        verifyCoreCodes(envYaml);
+    }
+
+    private void verifyProcessCmd(int taskConsoleOutputMaxLines, boolean verify) {
+        if (!verify) {
+            return;
+        }
         List<List<String>> cmds = new ArrayList<>();
         Set<String> cmdSet = new HashSet<>();
         for (EnvParamsYaml.Env envForVerify : envYaml.envs) {
-            if (envForVerify.verify!=null) {
+            if (envForVerify.verify != null) {
                 if (envForVerify.verify.run) {
                     List<String> params = new ArrayList<>();
                     //noinspection ManualArrayToCollectionCopy
@@ -127,7 +135,6 @@ public class EnvParams {
                 throw new TerminateApplicationException("Verification of environment was failed, error: " + result.error);
             }
         }
-        verifyCoreCodes(envYaml);
     }
 
     private static void verifyCoreCodes(EnvParamsYaml envYaml) {

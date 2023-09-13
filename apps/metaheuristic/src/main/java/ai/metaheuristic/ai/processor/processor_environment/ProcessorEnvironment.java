@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.TerminateApplicationException;
 import ai.metaheuristic.ai.sec.AdditionalCustomUserDetails;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
@@ -39,19 +41,21 @@ import java.nio.file.Path;
 @Service
 @Slf4j
 @Profile("processor")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ProcessorEnvironment {
 
     private final Globals globals;
     private final AdditionalCustomUserDetails additionalCustomUserDetails;
+    private final ApplicationContext appCtx;
 
     public final EnvParams envParams = new EnvParams();
     public DispatcherLookupExtendedParams dispatcherLookupExtendedService;
     public MetadataParams metadataParams;
 
-    public ProcessorEnvironment(@Autowired Globals globals, @Autowired ApplicationContext appCtx, @Autowired AdditionalCustomUserDetails additionalCustomUserDetails) {
-        this.additionalCustomUserDetails = additionalCustomUserDetails;
-        this.globals = globals;
+//    public ProcessorEnvironment(@Autowired Globals globals, @Autowired ApplicationContext appCtx, @Autowired AdditionalCustomUserDetails additionalCustomUserDetails) {
 
+    @PostConstruct
+    public void init() {
         if (!globals.processor.enabled) {
             return;
         }
@@ -81,7 +85,7 @@ public class ProcessorEnvironment {
     }
 
     public void init(Path processorPath, @Nullable EnvYamlProvider envYamlProvider, @Nullable Path defaultDispatcherYamlFile, int taskConsoleOutputMaxLines) {
-        envParams.init(processorPath, envYamlProvider, taskConsoleOutputMaxLines);
+        envParams.init(processorPath, envYamlProvider, taskConsoleOutputMaxLines, !globals.standalone.active);
         dispatcherLookupExtendedService = globals.standalone.active
                 ? new StandaloneDispatcherLookupExtendedParams(additionalCustomUserDetails.restUserPassword)
                 : new FileDispatcherLookupExtendedParams(processorPath, defaultDispatcherYamlFile);

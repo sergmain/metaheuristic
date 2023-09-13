@@ -16,9 +16,14 @@
 
 package ai.metaheuristic.ai.utils;
 
+import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.lang.Nullable;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,5 +49,42 @@ public class ErrorUtils {
         }
 
         return throwableList.stream().map(Throwable::getMessage).collect(Collectors.joining(". "));
+    }
+
+    public static String getStackTrace(Throwable e, int numLines, @Nullable String addAtEndLine) {
+        ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+        try (final PrintStream printStream = new PrintStream(bytesOut, true)) {
+            e.printStackTrace(printStream);
+        }
+
+        byte[] bytes = bytesOut.toByteArray();
+        int countLines = 0;
+        int i = 0;
+        for (; i < bytes.length; i++) {
+            if (bytes[i] == '\n') {
+                countLines++;
+            }
+
+            if (countLines > numLines) {
+                break;
+            }
+        }
+
+        if (S.b(addAtEndLine)) {
+            if (i >= bytes.length) {
+                return new String(bytes);
+            }
+            else {
+                return new String(bytes, 0, i);
+            }
+        }
+        else {
+            if (i >= bytes.length) {
+                return StringUtils.replace(new String(bytes), "\n", addAtEndLine + "\n");
+            }
+            else {
+                return StringUtils.replace(new String(bytes, 0, i), "\n", addAtEndLine + "\n");
+            }
+        }
     }
 }

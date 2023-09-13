@@ -57,6 +57,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static ai.metaheuristic.ai.Enums.ApiKeySourceDefinedBy.none;
+import static ai.metaheuristic.ai.MetaheuristicStatus.APP_UUID;
 
 @ConfigurationProperties("mh")
 @Getter
@@ -554,7 +555,6 @@ public class Globals {
     public Path dispatcherStorageGlobalVariablesPath;
     public Path dispatcherStorageFunctionsPath;
     public Path dispatcherStorageCacheVariablessPath;
-
     public Path processorPath;
 
     public EnumsApi.OS os = EnumsApi.OS.unknown;
@@ -758,6 +758,9 @@ public class Globals {
             }
             log.info("'\t{}: {}", o, o2);
         });
+
+        log.info("Metaheuristic command-line params: ");
+        log.info("\tapp_uuid: " + APP_UUID);
     }
 
     private void logGlobals() {

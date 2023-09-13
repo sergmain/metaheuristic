@@ -67,6 +67,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class Config {
 
     private final Globals globals;
+
     @SuppressWarnings("unused")
     private final SpringChecker springChecker;
 
@@ -162,7 +163,7 @@ public class Config {
 
     @Bean
     @Profile("dispatcher")
-    public MyBeanPostProcessor myBeanPostProcessor(){
+    public MyBeanPostProcessor myBeanPostProcessor() {
         return new MyBeanPostProcessor();
     }
 
@@ -170,21 +171,33 @@ public class Config {
 
         @Override
         public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-            System.out.println("--- postProcessBeforeInitialization executed --- "+ beanName +", " + bean.getClass().getSimpleName());
-//            if (bean instanceof MySpringBean) {
-//                System.out.println("--- postProcessBeforeInitialization executed ---");
-//            }
+            final String simpleName = bean.getClass().getSimpleName();
+//            System.out.println("--- postProcessBeforeInitialization executed --- "+ beanName +", " + simpleName);
+            if (simpleName.equals("EmbeddedTomcat")) {
+                MetaheuristicStatus.appendStart("tomcat");
+            }
+            if (simpleName.equals("HikariDataSource")) {
+                MetaheuristicStatus.appendStart("datasource");
+            }
+            if (simpleName.equals("SpringLiquibase")) {
+                MetaheuristicStatus.appendStart("liquibase");
+            }
             return bean;
         }
 
         @Override
         public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-            System.out.println("--- postProcessAfterInitialization executed ---" + beanName +", " + bean.getClass().getSimpleName());
-/*
-            if (bean instanceof MySpringBean) {
-                System.out.println("--- postProcessAfterInitialization executed ---");
+            final String simpleName = bean.getClass().getSimpleName();
+//            System.out.println("--- postProcessAfterInitialization executed ---" + beanName +", " + bean.getClass().getSimpleName());
+            if (simpleName.equals("TomcatServletWebServerFactory")) {
+                MetaheuristicStatus.appendDone("tomcat");
             }
-*/
+            if (simpleName.equals("HikariDataSource")) {
+                MetaheuristicStatus.appendDone("datasource");
+            }
+            if (simpleName.equals("SpringLiquibase")) {
+                MetaheuristicStatus.appendDone("liquibase");
+            }
             return bean;
         }
 

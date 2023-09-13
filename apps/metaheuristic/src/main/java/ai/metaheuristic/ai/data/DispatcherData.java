@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * Time: 10:26 PM
  */
 public class DispatcherData {
+
+    public record DispatcherStatus(String stage, String status, @Nullable String error) {}
 
     /**
      * @author Serge

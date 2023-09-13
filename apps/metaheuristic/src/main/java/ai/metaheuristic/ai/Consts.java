@@ -196,4 +196,6 @@ public class Consts {
 
     public static final String UUID_ARG = "uuid=";
     public static final String APP_UUID_NONE = "none";
+    public static final String METAHEURISTIC_USERHOME_PATH = ".metaheuristic";
+    public static final String ELECTRON_PATH = "electron";
 }
