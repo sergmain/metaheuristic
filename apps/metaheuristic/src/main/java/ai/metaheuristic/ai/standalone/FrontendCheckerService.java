@@ -57,7 +57,7 @@ public class FrontendCheckerService {
     public void checkFrontend() {
 
         if (request==null) {
-            URI uri = new URIBuilder(Consts.FRONTEND_URL).setCharset(StandardCharsets.UTF_8).build();
+            URI uri = new URIBuilder(Consts.FRONTEND_URL+"/ping").setCharset(StandardCharsets.UTF_8).build();
             request = Request.get(uri).connectTimeout(Timeout.ofSeconds(1));
         }
         final Executor executor = Executor.newInstance();
