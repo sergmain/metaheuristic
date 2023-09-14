@@ -69,6 +69,7 @@ public class ExecContextParamsYaml implements BaseParams {
         public Boolean parentContext;
         @Nullable
         public String type;
+        // if true, this variable can be null
         @Nullable
         private Boolean nullable;
 

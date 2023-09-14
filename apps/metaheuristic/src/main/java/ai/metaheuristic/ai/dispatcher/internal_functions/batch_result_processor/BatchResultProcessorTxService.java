@@ -144,23 +144,23 @@ public class BatchResultProcessorTxService {
                     new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found,
                             S.f("#993.025 Meta '%s' wasn't found in ExecContext #%s", BATCH_ITEM_PROCESSED_FILE, simpleExecContext.execContextId)));
         }
-        final List<String> outputTypes = Stream.of(StringUtils.split(processedFileTypes, ", ")).toList();
+        final Set<String> outputTypes = Stream.of(StringUtils.split(processedFileTypes, ", ")).collect(Collectors.toSet());
 
         String statusFileTypes = MetaUtils.getValue(taskParamsYaml.task.metas, BATCH_ITEM_PROCESSING_STATUS);
         if (S.b(statusFileTypes)) {
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.meta_not_found,
                             S.f("#993.027 Meta '%s' wasn't found in ExecContext #%s", BATCH_ITEM_PROCESSING_STATUS, simpleExecContext.execContextId));
         }
-        final List<String> statusTypes = Stream.of(StringUtils.split(statusFileTypes, ", ")).collect(Collectors.toList());
+        final Set<String> statusTypes = Stream.of(StringUtils.split(statusFileTypes, ", ")).collect(Collectors.toSet());
 
         String mappingFileTypes = MetaUtils.getValue(taskParamsYaml.task.metas, BATCH_ITEM_MAPPING);
-        final List<String> mappingTypes;
+        final Set<String> mappingTypes;
         if (S.b(mappingFileTypes)) {
             log.info(S.f("#993.029 Meta '%s' wasn't found in ExecContext #%s", BATCH_ITEM_MAPPING, simpleExecContext.execContextId));
-            mappingTypes = List.of();
+            mappingTypes = Set.of();
         }
         else {
-            mappingTypes = Stream.of(StringUtils.split(mappingFileTypes, ", ")).collect(Collectors.toList());
+            mappingTypes = Stream.of(StringUtils.split(mappingFileTypes, ", ")).collect(Collectors.toSet());
         }
 
         // key is taskContextId
