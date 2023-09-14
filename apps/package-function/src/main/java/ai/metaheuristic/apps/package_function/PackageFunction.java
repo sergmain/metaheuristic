@@ -25,6 +25,7 @@ import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.file.PathUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -92,6 +93,8 @@ public class PackageFunction implements CommandLineRunner {
             System.out.println("Directory "+targetDir+" already exists");
             return;
         }
+        Files.createDirectories(targetDir);
+
         String yamlContent = FileUtils.readFileToString(functionYamlFile, StandardCharsets.UTF_8);
         FunctionConfigListYaml functionConfigList = FunctionConfigListYamlUtils.BASE_YAML_UTILS.to(yamlContent);
 
@@ -169,7 +172,7 @@ public class PackageFunction implements CommandLineRunner {
         Files.writeString(file, yaml, StandardCharsets.UTF_8);
 
         ZipUtils.createZip(targetDir, targetZip.toPath());
-        Files.deleteIfExists(targetDir);
+        PathUtils.deleteDirectory(targetDir);
 
         System.out.println("All done.");
     }
