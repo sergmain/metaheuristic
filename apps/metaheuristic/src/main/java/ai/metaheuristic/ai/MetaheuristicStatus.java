@@ -58,6 +58,7 @@ public class MetaheuristicStatus {
         Files.createDirectories(electronStatusPath);
 
         metaheuristicStatusFilePath = electronStatusPath.resolve("mh-" + APP_UUID + ".status");
+/*
         if (Files.exists(metaheuristicStatusFilePath)) {
             try {
                 Files.write(metaheuristicStatusFilePath, new byte[0], StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.SYNC);
@@ -65,6 +66,7 @@ public class MetaheuristicStatus {
                 //;
             }
         }
+*/
 
         //noinspection unused
         int i=0;
