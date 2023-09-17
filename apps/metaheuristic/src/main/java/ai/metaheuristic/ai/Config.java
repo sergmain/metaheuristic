@@ -197,6 +197,7 @@ public class Config {
             }
             if (simpleName.equals("SpringLiquibase")) {
                 MetaheuristicStatus.appendDone("liquibase");
+//                throw new RuntimeException("SpringLiquibase error");
             }
             return bean;
         }
