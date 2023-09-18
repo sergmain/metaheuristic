@@ -33,8 +33,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class DispatcherData {
 
-    public record DispatcherStatus(String stage, String status, @Nullable String error) {}
-
     /**
      * @author Serge
      * Date: 5/29/2019

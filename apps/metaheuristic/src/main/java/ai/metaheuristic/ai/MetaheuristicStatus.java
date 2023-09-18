@@ -16,28 +16,20 @@
 
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.data.DispatcherData;
-import ai.metaheuristic.ai.utils.ErrorUtils;
-import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import java.io.BufferedWriter;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.concurrent.locks.ReentrantLock;
 
-@SpringBootApplication
 @Slf4j
 public class MetaheuristicStatus {
 
-    public static String APP_UUID = Consts.APP_UUID_NONE;
+    public static String APP_UUID = CommonConsts.APP_UUID_NONE;
     public static Path metaheuristicStatusFilePath;
-    private static final ReentrantLock LOCK = new ReentrantLock();
 
     @SneakyThrows
     static void initAppStatus(String[] args) {
@@ -51,7 +43,7 @@ public class MetaheuristicStatus {
         }
         Path userHomePath = Path.of(System.getProperty("user.home"));
 
-        Path metaheuristicPath = userHomePath.resolve(Consts.METAHEURISTIC_USERHOME_PATH);
+        Path metaheuristicPath = userHomePath.resolve(CommonConsts.METAHEURISTIC_USERHOME_PATH);
         Files.createDirectories(metaheuristicPath);
 
         Path electronStatusPath = metaheuristicPath.resolve("status");
@@ -72,35 +64,4 @@ public class MetaheuristicStatus {
         int i=0;
     }
 
-    @SneakyThrows
-    public static void appendStart(String stage) {
-        appendStatus(new DispatcherData.DispatcherStatus(stage, "start", null));
-    }
-
-    @SneakyThrows
-    public static void appendDone(String stage) {
-        appendStatus(new DispatcherData.DispatcherStatus(stage, "done", null));
-    }
-
-    @SneakyThrows
-    public static void appendError(Throwable th) {
-        String error = ErrorUtils.getStackTrace(th, 20, null);
-        appendStatus(new DispatcherData.DispatcherStatus("unknown", "error", error));
-    }
-
-    @SneakyThrows
-    public static void appendStatus(DispatcherData.DispatcherStatus status) {
-
-        LOCK.lock();
-        try {
-            String json = JsonUtils.getMapper().writeValueAsString(status);
-            try (BufferedWriter writer = Files.newBufferedWriter(metaheuristicStatusFilePath, StandardCharsets.UTF_8, StandardOpenOption.APPEND, StandardOpenOption.CREATE, StandardOpenOption.SYNC)) {
-                writer.write(json);
-                writer.newLine();
-            }
-        }
-        finally {
-            LOCK.unlock();
-        }
-    }
 }

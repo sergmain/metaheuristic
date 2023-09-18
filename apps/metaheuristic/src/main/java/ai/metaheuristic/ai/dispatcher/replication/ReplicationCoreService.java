@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.replication;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
-import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;

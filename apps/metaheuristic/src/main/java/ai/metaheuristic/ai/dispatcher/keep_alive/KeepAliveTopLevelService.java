@@ -30,7 +30,7 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreTxService;
-import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.api.data.DispatcherApiData;

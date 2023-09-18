@@ -35,7 +35,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskQueueSyncStaticService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.*;
-import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;

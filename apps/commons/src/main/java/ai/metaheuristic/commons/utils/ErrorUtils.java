@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.utils;
+package ai.metaheuristic.commons.utils;
 
 import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;

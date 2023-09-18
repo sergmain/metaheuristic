@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.data;
 
-import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.commons.utils.JsonUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.SneakyThrows;

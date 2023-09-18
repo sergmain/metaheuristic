@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.mhbp.kb.reader.openai;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.mhbp.questions.QuestionData;
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParams;
-import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.commons.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.SneakyThrows;
 import org.springframework.lang.Nullable;

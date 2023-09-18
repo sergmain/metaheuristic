@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.ArtifactUtils;
 import ai.metaheuristic.ai.utils.EnvServiceUtils;
-import ai.metaheuristic.ai.utils.ErrorUtils;
+import ai.metaheuristic.commons.utils.ErrorUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;

@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.RefToDispatcherRepositories;
 import ai.metaheuristic.ai.mhbp.repositories.RefToMhbpRepositories;
 import ai.metaheuristic.ai.utils.SpringHelpersUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInterceptor;
+import ai.metaheuristic.standalone.StatusFileUtils;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -174,13 +175,13 @@ public class Config {
             final String simpleName = bean.getClass().getSimpleName();
 //            System.out.println("--- postProcessBeforeInitialization executed --- "+ beanName +", " + simpleName);
             if (simpleName.equals("EmbeddedTomcat")) {
-                MetaheuristicStatus.appendStart("tomcat");
+                StatusFileUtils.appendStart(MetaheuristicStatus.metaheuristicStatusFilePath, "tomcat");
             }
             if (simpleName.equals("HikariDataSource")) {
-                MetaheuristicStatus.appendStart("datasource");
+                StatusFileUtils.appendStart(MetaheuristicStatus.metaheuristicStatusFilePath, "datasource");
             }
             if (simpleName.equals("SpringLiquibase")) {
-                MetaheuristicStatus.appendStart("liquibase");
+                StatusFileUtils.appendStart(MetaheuristicStatus.metaheuristicStatusFilePath, "liquibase");
             }
             return bean;
         }
@@ -190,13 +191,13 @@ public class Config {
             final String simpleName = bean.getClass().getSimpleName();
 //            System.out.println("--- postProcessAfterInitialization executed ---" + beanName +", " + bean.getClass().getSimpleName());
             if (simpleName.equals("TomcatServletWebServerFactory")) {
-                MetaheuristicStatus.appendDone("tomcat");
+                StatusFileUtils.appendDone(MetaheuristicStatus.metaheuristicStatusFilePath, "tomcat");
             }
             if (simpleName.equals("HikariDataSource")) {
-                MetaheuristicStatus.appendDone("datasource");
+                StatusFileUtils.appendDone(MetaheuristicStatus.metaheuristicStatusFilePath, "datasource");
             }
             if (simpleName.equals("SpringLiquibase")) {
-                MetaheuristicStatus.appendDone("liquibase");
+                StatusFileUtils.appendDone(MetaheuristicStatus.metaheuristicStatusFilePath, "liquibase");
 //                throw new RuntimeException("SpringLiquibase error");
             }
             return bean;

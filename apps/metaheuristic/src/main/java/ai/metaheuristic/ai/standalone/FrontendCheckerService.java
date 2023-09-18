@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.standalone;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.commons.CommonConsts;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -57,7 +57,7 @@ public class FrontendCheckerService {
     public void checkFrontend() {
 
         if (request==null) {
-            URI uri = new URIBuilder(Consts.FRONTEND_URL+"/ping").setCharset(StandardCharsets.UTF_8).build();
+            URI uri = new URIBuilder(CommonConsts.FRONTEND_URL+"/ping").setCharset(StandardCharsets.UTF_8).build();
             request = Request.get(uri).connectTimeout(Timeout.ofSeconds(1));
         }
         final Executor executor = Executor.newInstance();

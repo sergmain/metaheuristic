@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai;
 
+import ai.metaheuristic.standalone.StatusFileUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.SpringApplication;
@@ -42,7 +43,7 @@ public class MetaheuristicApplication {
             SpringApplication.run(MetaheuristicApplication.class, args);
         } catch (Throwable th) {
             log.error("error", th);
-            MetaheuristicStatus.appendError(th);
+            StatusFileUtils.appendError(MetaheuristicStatus.metaheuristicStatusFilePath, th);
             System.exit(-2);
         }
     }

@@ -17,11 +17,9 @@
 package ai.metaheuristic.ai.yaml.function_execution_time;
 
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
-import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.api.data.BaseParams;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 
 import java.util.ArrayList;

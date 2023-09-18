@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.processor.function;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
-import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.data.replication.ReplicationApiData;

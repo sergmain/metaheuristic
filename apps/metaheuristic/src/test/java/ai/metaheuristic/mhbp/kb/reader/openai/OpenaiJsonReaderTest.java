@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.dispatcher.data.GitData;
 import ai.metaheuristic.ai.mhbp.kb.reader.openai.OpenaiInput;
 import ai.metaheuristic.ai.mhbp.kb.reader.openai.OpenaiJsonReader;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
-import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.mhbp.data.KbData;
 import ai.metaheuristic.ai.mhbp.questions.QuestionData;

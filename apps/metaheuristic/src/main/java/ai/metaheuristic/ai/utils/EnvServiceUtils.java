@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.api.ConstsApi;
+import ai.metaheuristic.commons.utils.ErrorUtils;
 import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;

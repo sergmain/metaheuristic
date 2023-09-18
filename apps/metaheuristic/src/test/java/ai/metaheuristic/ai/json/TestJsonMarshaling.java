@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.json;
 
-import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import com.fasterxml.jackson.annotation.*;

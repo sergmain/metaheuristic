@@ -19,6 +19,7 @@ package ai.metaheuristic.ai;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
@@ -189,13 +190,7 @@ public class Consts {
     public static final String REST_USER = "rest_user";
 
     public static final int STANDALONE_PORT_NUMBER = 64967;
-    public static final int NODEJS_STANDALONE_PORT_NUMBER = 64968;
-
-    public static final String FRONTEND_URL = "http://localhost:"+Consts.NODEJS_STANDALONE_PORT_NUMBER;
-
 
     public static final String UUID_ARG = "uuid=";
-    public static final String APP_UUID_NONE = "none";
-    public static final String METAHEURISTIC_USERHOME_PATH = ".metaheuristic";
     public static final String ELECTRON_PATH = "electron";
 }
