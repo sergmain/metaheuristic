@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.el.EvaluateExpressionLanguage;
-import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
@@ -38,8 +37,8 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -60,12 +59,9 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
@@ -101,12 +97,10 @@ public class TaskWithInternalContextEventService {
     private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     private final InternalFunctionProcessor internalFunctionProcessor;
 
-    private static final int MAX_ACTIVE_THREAD = 1;
-    // number of active executors with different execContextId
-    private static final int MAX_NUMBER_EXECUTORS = 4;
+    public static final int QUEUE_INITIAL_CAPACITY = 100;
 
     static class SomeClass {
-        private Semaphore semaphore = new Semaphore(100);
+        private Semaphore semaphore = new Semaphore(QUEUE_INITIAL_CAPACITY);
 
         @SneakyThrows
         public void execute() {
@@ -119,28 +113,97 @@ public class TaskWithInternalContextEventService {
         }
     }
 
-    public static class ExecutorForExecContext {
-        public Long execContextId;
-        public final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(MAX_ACTIVE_THREAD);
+    public static class ThreadWithEvents {
+        private final LinkedList<TaskWithInternalContextEvent> events = new LinkedList<>();
+        @Nullable
+        public Thread thread;
 
-        public ExecutorForExecContext(Long execContextId) {
-            this.execContextId = execContextId;
+        private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+        private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+        private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+
+        public int size() {
+            readLock.lock();
+            try {
+                return events.size();
+            } finally {
+                readLock.unlock();
+            }
+        }
+
+        public boolean isEmpty() {
+            readLock.lock();
+            try {
+                return events.isEmpty();
+            } finally {
+                readLock.unlock();
+            }
+        }
+
+        public boolean contains(TaskWithInternalContextEvent event) {
+            readLock.lock();
+            try {
+                return events.contains(event);
+            } finally {
+                readLock.unlock();
+            }
+        }
+
+        public void add(TaskWithInternalContextEvent event) {
+            writeLock.lock();
+            try {
+                if (events.contains(event)) {
+                    return;
+                }
+                events.add(event);
+            } finally {
+                writeLock.unlock();
+            }
+        }
+
+        @Nullable
+        public TaskWithInternalContextEvent pollFirst() {
+            writeLock.lock();
+            try {
+                return events.pollFirst();
+            } finally {
+                writeLock.unlock();
+            }
+        }
+
+        public TaskWithInternalContextEvent get(int i) {
+            readLock.lock();
+            try {
+                return events.get(i);
+            } finally {
+                readLock.unlock();
+            }
+        }
+
+        public void clear() {
+            writeLock.lock();
+            try {
+                events.clear();
+            } finally {
+                writeLock.unlock();
+            }
         }
     }
 
-    public static final LinkedHashMap<Long, LinkedList<TaskWithInternalContextEvent>> QUEUE = new LinkedHashMap<>();
+    public static final LinkedHashMap<Long, ThreadWithEvents> QUEUE = new LinkedHashMap<>(QUEUE_INITIAL_CAPACITY) {
+        protected boolean removeEldestEntry(Map.Entry<Long, ThreadWithEvents> entry) {
+            return this.size()>QUEUE_INITIAL_CAPACITY && entry.getValue().events.isEmpty() && entry.getValue().thread==null;
+        }
+    };
+
     private static final ReentrantReadWriteLock queueLock = new ReentrantReadWriteLock();
     private static final ReentrantReadWriteLock.ReadLock queueReadLock = queueLock.readLock();
     private static final ReentrantReadWriteLock.WriteLock queueWriteLock = queueLock.writeLock();
 
-    public static final ExecutorForExecContext[] POOL_OF_EXECUTORS = new ExecutorForExecContext[MAX_NUMBER_EXECUTORS];
-    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
-    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
-
+    @SuppressWarnings("MethodMayBeStatic")
     @PreDestroy
     public void onExit() {
-        shutdown();
+        clearQueue();
     }
 
     public void putToQueue(final TaskWithInternalContextEvent event) {
@@ -151,8 +214,17 @@ public class TaskWithInternalContextEventService {
     public static void clearQueue() {
         queueWriteLock.lock();
         try {
-            for (Map.Entry<Long, LinkedList<TaskWithInternalContextEvent>> entry : QUEUE.entrySet()) {
-                entry.getValue().clear();
+            for (Map.Entry<Long, ThreadWithEvents> entry : QUEUE.entrySet()) {
+                final ThreadWithEvents twe = entry.getValue();
+                if (twe.thread!=null) {
+                    try {
+                        twe.thread.interrupt();
+                    }
+                    catch (Throwable th) {
+                        //
+                    }
+                }
+                twe.clear();
             }
             QUEUE.clear();
         } finally {
@@ -160,120 +232,65 @@ public class TaskWithInternalContextEventService {
         }
     }
 
-    public static void shutdown() {
-        clearQueue();
-        writeLock.lock();
-        try {
-            for (int i = 0; i< POOL_OF_EXECUTORS.length; i++) {
-                if (POOL_OF_EXECUTORS[i] == null) {
-                    continue;
-                }
-                POOL_OF_EXECUTORS[i].executor.shutdownNow();
-                POOL_OF_EXECUTORS[i] = null;
-            }
-        } finally {
-            writeLock.unlock();
-        }
-    }
-
     public static void processPoolOfExecutors(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
-        writeLock.lock();
+        queueReadLock.lock();
         try {
-            for (int i = 0; i< POOL_OF_EXECUTORS.length; i++) {
-                if (POOL_OF_EXECUTORS[i] == null) {
-                    continue;
-                }
-                if (POOL_OF_EXECUTORS[i].executor.getQueue().isEmpty() && POOL_OF_EXECUTORS[i].executor.getActiveCount()==0) {
-                    POOL_OF_EXECUTORS[i].executor.shutdown();
-                    POOL_OF_EXECUTORS[i] = null;
-                }
-            }
-            final LinkedHashSet<Long> execContextIds;
-            queueWriteLock.lock();
-            try {
-                execContextIds = new LinkedHashSet<>(QUEUE.keySet());
-            } finally {
-                queueWriteLock.unlock();
-            }
-            for (Long id : execContextIds) {
-                if (pokeExecutor(id, taskProcessor)) {
-                    break;
-                }
+            ThreadWithEvents twe = QUEUE.get(execContextId);
+            if (twe!=null && twe.thread!=null) {
+                return;
             }
         } finally {
-            writeLock.unlock();
+            queueReadLock.unlock();
+        }
+
+        queueWriteLock.lock();
+        try {
+            ThreadWithEvents twe = QUEUE.get(execContextId);
+            if (twe==null || twe.isEmpty() || twe.thread!=null) {
+                return;
+            }
+            twe.thread = new Thread(() -> {
+                try {
+                    processTask(execContextId, taskProcessor);
+                } finally {
+                    twe.thread = null;
+                }
+            }, "TaskWithInternalContextEventService-" + ThreadUtils.nextThreadNum());
+            twe.thread.start();
+        } finally {
+            queueWriteLock.unlock();
         }
     }
 
-    /**
-     *
-     * @param execContextId Long
-     * @return boolean is POOL_OF_EXECUTORS already full and execContextId wasn't allocated
-     */
-    public static boolean pokeExecutor(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
-        writeLock.lock();
-        try {
-            for (ExecutorForExecContext poolExecutor : POOL_OF_EXECUTORS) {
-                if (poolExecutor==null) {
-                    continue;
-                }
-                if (poolExecutor.execContextId.equals(execContextId)) {
-                    return false;
-                }
-            }
-            for (int i = 0; i < POOL_OF_EXECUTORS.length; i++) {
-                if (POOL_OF_EXECUTORS[i]==null) {
-                    POOL_OF_EXECUTORS[i] = new ExecutorForExecContext(execContextId);
-
-                    final int idx = i;
-
-                    Thread t = new Thread(() -> processTask(execContextId, taskProcessor, POOL_OF_EXECUTORS[idx]), "TaskWithInternalContextEventService-" + ThreadUtils.nextThreadNum());
-                    POOL_OF_EXECUTORS[i].executor.submit(t);
-                    return false;
-                }
-            }
-            return true;
-        } finally {
-            writeLock.unlock();
-        }
-    }
-
-    private static void processTask(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor, ExecutorForExecContext poolExecutor) {
+    private static void processTask(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
         TaskWithInternalContextEvent e;
-        while ((e = pullFromQueue(poolExecutor.execContextId)) != null) {
+        while ((e = pullFromQueue(execContextId)) != null) {
             taskProcessor.accept(e);
         }
     }
 
     public static void putToQueueInternal(final TaskWithInternalContextEvent event) {
+        ThreadWithEvents q;
         queueWriteLock.lock();
         try {
-            LinkedList<TaskWithInternalContextEvent> q = QUEUE.computeIfAbsent(event.execContextId, (o)->new LinkedList<>());
-
-            if (q.contains(event)) {
-                return;
-            }
-            q.add(event);
+            q = QUEUE.computeIfAbsent(event.execContextId, (o)->new ThreadWithEvents());
         } finally {
             queueWriteLock.unlock();
         }
+        q.add(event);
     }
 
     @Nullable
     private static TaskWithInternalContextEvent pullFromQueue(Long execContextId) {
-        queueWriteLock.lock();
+        queueReadLock.lock();
         try {
-            final LinkedList<TaskWithInternalContextEvent> events = QUEUE.get(execContextId);
-            if (events==null) {
+            final ThreadWithEvents twe = QUEUE.get(execContextId);
+            if (twe==null) {
                 return null;
             }
-            if (events.isEmpty()) {
-                QUEUE.remove(execContextId);
-                return null;
-            }
-            return events.pollFirst();
+            return twe.pollFirst();
         } finally {
-            queueWriteLock.unlock();
+            queueReadLock.unlock();
         }
     }
 
