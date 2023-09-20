@@ -172,6 +172,10 @@ public class Config {
 
         @Override
         public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+            if (MetaheuristicStatus.metaheuristicStatusFilePath==null) {
+                return bean;
+            }
+
             final String simpleName = bean.getClass().getSimpleName();
 //            System.out.println("--- postProcessBeforeInitialization executed --- "+ beanName +", " + simpleName);
             if (simpleName.equals("EmbeddedTomcat")) {
@@ -188,6 +192,10 @@ public class Config {
 
         @Override
         public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+            if (MetaheuristicStatus.metaheuristicStatusFilePath==null) {
+                return bean;
+            }
+
             final String simpleName = bean.getClass().getSimpleName();
 //            System.out.println("--- postProcessAfterInitialization executed ---" + beanName +", " + bean.getClass().getSimpleName());
             if (simpleName.equals("TomcatServletWebServerFactory")) {
