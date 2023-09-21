@@ -44,8 +44,8 @@ public class QueueWithThread<T> {
         }
     }
 
-
     private final LinkedList<T> events = new LinkedList<>();
+
     @Nullable
     public Thread thread;
 
