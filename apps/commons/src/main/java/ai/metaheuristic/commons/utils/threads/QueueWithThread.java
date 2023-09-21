@@ -16,9 +16,11 @@
 
 package ai.metaheuristic.commons.utils.threads;
 
+import lombok.SneakyThrows;
 import org.springframework.lang.Nullable;
 
 import java.util.LinkedList;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -27,6 +29,22 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * Time: 1:44 PM
  */
 public class QueueWithThread<T> {
+
+    static class SomeClass {
+        private Semaphore semaphore = new Semaphore(100);
+
+        @SneakyThrows
+        public void execute() {
+            semaphore.acquire();
+            try {
+                //
+            } finally {
+                semaphore.release();
+            }
+        }
+    }
+
+
     private final LinkedList<T> events = new LinkedList<>();
     @Nullable
     public Thread thread;
