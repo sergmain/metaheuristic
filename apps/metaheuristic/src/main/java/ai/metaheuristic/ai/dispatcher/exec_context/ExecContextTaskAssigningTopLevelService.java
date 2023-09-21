@@ -27,25 +27,21 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.threads.ThreadUtils;
+import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
-import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 /**
@@ -81,11 +77,16 @@ public class ExecContextTaskAssigningTopLevelService {
         }
     }
 
-    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
-    private final LinkedList<FindUnassignedTasksAndRegisterInQueueEvent> queue = new LinkedList<>();
+    private final MultiTenantedQueue<Long, FindUnassignedTasksAndRegisterInQueueEvent> MULTI_TENANTED_QUEUE = new MultiTenantedQueue<>(2);
 
-    private final ReentrantReadWriteLock queueReadWriteLock = new ReentrantReadWriteLock();
-    private final ReentrantReadWriteLock.WriteLock queueWriteLock = queueReadWriteLock.writeLock();
+    @PreDestroy
+    public void onExit() {
+        MULTI_TENANTED_QUEUE.clearQueue();
+    }
+
+    public void putToQueue(final FindUnassignedTasksAndRegisterInQueueEvent event) {
+        MULTI_TENANTED_QUEUE.putToQueue(event, this::findUnassignedTasksAndRegisterInQueue);
+    }
 
     @Async
     @EventListener
@@ -93,78 +94,24 @@ public class ExecContextTaskAssigningTopLevelService {
         putToQueue(event);
     }
 
-    public void putToQueue(final FindUnassignedTasksAndRegisterInQueueEvent event) {
-        final int activeCount = executor.getActiveCount();
-        if (log.isDebugEnabled()) {
-            final long completedTaskCount = executor.getCompletedTaskCount();
-            final long taskCount = executor.getTaskCount();
-            log.debug("findUnassignedTasksAndRegisterInQueue, active task in executor: {}, awaiting tasks: {}", activeCount, taskCount - completedTaskCount);
+    private void findUnassignedTasksAndRegisterInQueue(FindUnassignedTasksAndRegisterInQueueEvent event) {
+        List<Long> execContextIds = execContextRepository.findAllStartedIds();
+        execContextIds.sort(Comparator.naturalOrder());
+        UnassignedTasksStat statTotal = new UnassignedTasksStat();
+        for (Long execContextId : execContextIds) {
+            UnassignedTasksStat stat = findUnassignedTasksAndRegisterInQueueInternal(execContextId);
+            statTotal.add(stat);
         }
-
-        if (activeCount>0 || queue.size()>0) {
-            return;
-        }
-
-        queueWriteLock.lock();
-        try {
-            queue.add(event);
-        }
-        finally {
-            queueWriteLock.unlock();
-        }
-        procesEvent();
-    }
-
-    @Nullable
-    private FindUnassignedTasksAndRegisterInQueueEvent pullFromQueue() {
-        queueWriteLock.lock();
-        try {
-            return queue.pollFirst();
-        }
-        finally {
-            queueWriteLock.unlock();
-        }
-    }
-
-    public void procesEvent() {
-        if (executor.getActiveCount()>0) {
-            return;
-        }
-        Thread t = new Thread(() -> {
-            FindUnassignedTasksAndRegisterInQueueEvent event;
-            while ((event = pullFromQueue())!=null) {
-                findUnassignedTasksAndRegisterInQueue();
+        if (log.isInfoEnabled()) {
+            log.info("#703.030 total found {}, allocated {}", statTotal.found, statTotal.allocated);
+            for (String notAllocatedReason : statTotal.notAllocatedReasons) {
+                log.info("  " + notAllocatedReason);
             }
-        }, "ExecContextTaskAssigningTopLevelService-" + ThreadUtils.nextThreadNum());
-        executor.submit(t);
-    }
-
-    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
-
-    public void findUnassignedTasksAndRegisterInQueue() {
-        writeLock.lock();
-        try {
-            List<Long> execContextIds = execContextRepository.findAllStartedIds();
-            execContextIds.sort(Comparator.naturalOrder());
-            UnassignedTasksStat statTotal = new UnassignedTasksStat();
-            for (Long execContextId : execContextIds) {
-                UnassignedTasksStat stat = findUnassignedTasksAndRegisterInQueueInternal(execContextId);
-                statTotal.add(stat);
-            }
-            if (log.isInfoEnabled()) {
-                log.info("#703.030 total found {}, allocated {}", statTotal.found, statTotal.allocated);
-                for (String notAllocatedReason : statTotal.notAllocatedReasons) {
-                    log.info("  " + notAllocatedReason);
-                }
-            }
-        }
-        finally {
-            writeLock.unlock();;
         }
     }
 
     private long mills = 0L;
+    @SuppressWarnings("SizeReplaceableByIsEmpty")
     private UnassignedTasksStat findUnassignedTasksAndRegisterInQueueInternal(Long execContextId) {
 
         UnassignedTasksStat stat = new UnassignedTasksStat();

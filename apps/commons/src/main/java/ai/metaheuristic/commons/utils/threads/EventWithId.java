@@ -14,19 +14,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.event.events;
-
-import ai.metaheuristic.commons.utils.threads.EventWithId;
+package ai.metaheuristic.commons.utils.threads;
 
 /**
  * @author Sergio Lissner
- * Date: 5/16/2023
- * Time: 9:16 PM
+ * Date: 9/21/2023
+ * Time: 1:54 PM
  */
-public class FindUnassignedTasksAndRegisterInQueueEvent implements EventWithId<Long> {
-
-    @Override
-    public Long getId() {
-        return 1L;
-    }
+public interface EventWithId<T> {
+    T getId();
 }

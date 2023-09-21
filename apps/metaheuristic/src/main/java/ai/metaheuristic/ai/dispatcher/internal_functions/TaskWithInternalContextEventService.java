@@ -47,7 +47,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.threads.ThreadUtils;
+import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -55,15 +55,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Consumer;
 
 /**
  * @author Serge
@@ -97,201 +91,20 @@ public class TaskWithInternalContextEventService {
     private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     private final InternalFunctionProcessor internalFunctionProcessor;
 
-    public static final int QUEUE_INITIAL_CAPACITY = 100;
-
-    static class SomeClass {
-        private Semaphore semaphore = new Semaphore(QUEUE_INITIAL_CAPACITY);
-
-        @SneakyThrows
-        public void execute() {
-            semaphore.acquire();
-            try {
-                //
-            } finally {
-                semaphore.release();
-            }
-        }
-    }
-
-    public static class ThreadWithEvents {
-        private final LinkedList<TaskWithInternalContextEvent> events = new LinkedList<>();
-        @Nullable
-        public Thread thread;
-
-        private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-        private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
-        private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
-
-        public int size() {
-            readLock.lock();
-            try {
-                return events.size();
-            } finally {
-                readLock.unlock();
-            }
-        }
-
-        public boolean isEmpty() {
-            readLock.lock();
-            try {
-                return events.isEmpty();
-            } finally {
-                readLock.unlock();
-            }
-        }
-
-        public boolean contains(TaskWithInternalContextEvent event) {
-            readLock.lock();
-            try {
-                return events.contains(event);
-            } finally {
-                readLock.unlock();
-            }
-        }
-
-        public void add(TaskWithInternalContextEvent event) {
-            writeLock.lock();
-            try {
-                if (events.contains(event)) {
-                    return;
-                }
-                events.add(event);
-            } finally {
-                writeLock.unlock();
-            }
-        }
-
-        @Nullable
-        public TaskWithInternalContextEvent pollFirst() {
-            writeLock.lock();
-            try {
-                return events.pollFirst();
-            } finally {
-                writeLock.unlock();
-            }
-        }
-
-        public TaskWithInternalContextEvent get(int i) {
-            readLock.lock();
-            try {
-                return events.get(i);
-            } finally {
-                readLock.unlock();
-            }
-        }
-
-        public void clear() {
-            writeLock.lock();
-            try {
-                events.clear();
-            } finally {
-                writeLock.unlock();
-            }
-        }
-    }
-
-    public static final LinkedHashMap<Long, ThreadWithEvents> QUEUE = new LinkedHashMap<>(QUEUE_INITIAL_CAPACITY) {
-        protected boolean removeEldestEntry(Map.Entry<Long, ThreadWithEvents> entry) {
-            return this.size()>QUEUE_INITIAL_CAPACITY && entry.getValue().events.isEmpty() && entry.getValue().thread==null;
-        }
-    };
-
-    private static final ReentrantReadWriteLock queueLock = new ReentrantReadWriteLock();
-    private static final ReentrantReadWriteLock.ReadLock queueReadLock = queueLock.readLock();
-    private static final ReentrantReadWriteLock.WriteLock queueWriteLock = queueLock.writeLock();
+    private static final MultiTenantedQueue<Long, TaskWithInternalContextEvent> MULTI_TENANTED_QUEUE = new MultiTenantedQueue<>(100);
 
     @SuppressWarnings("MethodMayBeStatic")
     @PreDestroy
     public void onExit() {
-        clearQueue();
-    }
-
-    public void putToQueue(final TaskWithInternalContextEvent event) {
-        putToQueueInternal(event);
-        processPoolOfExecutors(event.execContextId, this::process);
+        MULTI_TENANTED_QUEUE.clearQueue();
     }
 
     public static void clearQueue() {
-        queueWriteLock.lock();
-        try {
-            for (Map.Entry<Long, ThreadWithEvents> entry : QUEUE.entrySet()) {
-                final ThreadWithEvents twe = entry.getValue();
-                if (twe.thread!=null) {
-                    try {
-                        twe.thread.interrupt();
-                    }
-                    catch (Throwable th) {
-                        //
-                    }
-                }
-                twe.clear();
-            }
-            QUEUE.clear();
-        } finally {
-            queueWriteLock.unlock();
-        }
+        MULTI_TENANTED_QUEUE.clearQueue();
     }
 
-    public static void processPoolOfExecutors(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
-        queueReadLock.lock();
-        try {
-            ThreadWithEvents twe = QUEUE.get(execContextId);
-            if (twe!=null && twe.thread!=null) {
-                return;
-            }
-        } finally {
-            queueReadLock.unlock();
-        }
-
-        queueWriteLock.lock();
-        try {
-            ThreadWithEvents twe = QUEUE.get(execContextId);
-            if (twe==null || twe.isEmpty() || twe.thread!=null) {
-                return;
-            }
-            twe.thread = new Thread(() -> {
-                try {
-                    processTask(execContextId, taskProcessor);
-                } finally {
-                    twe.thread = null;
-                }
-            }, "TaskWithInternalContextEventService-" + ThreadUtils.nextThreadNum());
-            twe.thread.start();
-        } finally {
-            queueWriteLock.unlock();
-        }
-    }
-
-    private static void processTask(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
-        TaskWithInternalContextEvent e;
-        while ((e = pullFromQueue(execContextId)) != null) {
-            taskProcessor.accept(e);
-        }
-    }
-
-    public static void putToQueueInternal(final TaskWithInternalContextEvent event) {
-        ThreadWithEvents q;
-        queueWriteLock.lock();
-        try {
-            q = QUEUE.computeIfAbsent(event.execContextId, (o)->new ThreadWithEvents());
-        } finally {
-            queueWriteLock.unlock();
-        }
-        q.add(event);
-    }
-
-    @Nullable
-    private static TaskWithInternalContextEvent pullFromQueue(Long execContextId) {
-        queueReadLock.lock();
-        try {
-            final ThreadWithEvents twe = QUEUE.get(execContextId);
-            if (twe==null) {
-                return null;
-            }
-            return twe.pollFirst();
-        } finally {
-            queueReadLock.unlock();
-        }
+    public void putToQueue(final TaskWithInternalContextEvent event) {
+        MULTI_TENANTED_QUEUE.putToQueue(event, this::process);
     }
 
     private void process(final TaskWithInternalContextEvent event) {
