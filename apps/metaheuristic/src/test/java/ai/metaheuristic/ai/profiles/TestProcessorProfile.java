@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.profiles;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.api.ConstsApi;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,17 +66,17 @@ public class TestProcessorProfile {
         assertEquals(1735, globals.processor.timeout.dispatcherContextInfo.toSeconds());
         assertEquals(1737, globals.processor.timeout.artifactCleaner.toSeconds());
 
-        assertEquals(Globals.SECONDS_10.toSeconds(), globals.processor.timeout.getRequestDispatcher().toSeconds());
-        assertEquals(Globals.SECONDS_5.toSeconds(), globals.processor.timeout.getTaskAssigner().toSeconds());
-        assertEquals(Globals.SECONDS_9.toSeconds(), globals.processor.timeout.getTaskProcessor().toSeconds());
+        assertEquals(ConstsApi.SECONDS_10.toSeconds(), globals.processor.timeout.getRequestDispatcher().toSeconds());
+        assertEquals(ConstsApi.SECONDS_5.toSeconds(), globals.processor.timeout.getTaskAssigner().toSeconds());
+        assertEquals(ConstsApi.SECONDS_9.toSeconds(), globals.processor.timeout.getTaskProcessor().toSeconds());
         
-        assertEquals(Globals.SECONDS_11.toSeconds(), globals.processor.timeout.getDownloadFunction().toSeconds());
-        assertEquals(Globals.SECONDS_31.toSeconds(), globals.processor.timeout.getPrepareFunctionForDownloading().toSeconds());
-        assertEquals(Globals.SECONDS_3.toSeconds(), globals.processor.timeout.getDownloadResource().toSeconds());
+        assertEquals(ConstsApi.SECONDS_11.toSeconds(), globals.processor.timeout.getDownloadFunction().toSeconds());
+        assertEquals(ConstsApi.SECONDS_31.toSeconds(), globals.processor.timeout.getPrepareFunctionForDownloading().toSeconds());
+        assertEquals(ConstsApi.SECONDS_3.toSeconds(), globals.processor.timeout.getDownloadResource().toSeconds());
         
-        assertEquals(Globals.SECONDS_3.toSeconds(), globals.processor.timeout.getUploadResultResource().toSeconds());
-        assertEquals(Globals.SECONDS_19.toSeconds(), globals.processor.timeout.getDispatcherContextInfo().toSeconds());
-        assertEquals(Globals.SECONDS_29.toSeconds(), globals.processor.timeout.getArtifactCleaner().toSeconds());
+        assertEquals(ConstsApi.SECONDS_3.toSeconds(), globals.processor.timeout.getUploadResultResource().toSeconds());
+        assertEquals(ConstsApi.SECONDS_19.toSeconds(), globals.processor.timeout.getDispatcherContextInfo().toSeconds());
+        assertEquals(ConstsApi.SECONDS_29.toSeconds(), globals.processor.timeout.getArtifactCleaner().toSeconds());
         
     }
 }

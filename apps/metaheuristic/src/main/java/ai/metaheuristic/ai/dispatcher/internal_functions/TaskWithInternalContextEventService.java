@@ -50,14 +50,13 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.Semaphore;
+import java.time.Duration;
 
 /**
  * @author Serge
@@ -91,7 +90,7 @@ public class TaskWithInternalContextEventService {
     private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     private final InternalFunctionProcessor internalFunctionProcessor;
 
-    private static final MultiTenantedQueue<Long, TaskWithInternalContextEvent> MULTI_TENANTED_QUEUE = new MultiTenantedQueue<>(100);
+    private static final MultiTenantedQueue<Long, TaskWithInternalContextEvent> MULTI_TENANTED_QUEUE = new MultiTenantedQueue<>(100, Duration.ofSeconds(0));
 
     @SuppressWarnings("MethodMayBeStatic")
     @PreDestroy
