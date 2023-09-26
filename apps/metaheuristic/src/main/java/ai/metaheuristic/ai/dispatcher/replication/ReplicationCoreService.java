@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.replication;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
+import ai.metaheuristic.ai.utils.HttpUtils;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.commons.S;
@@ -29,7 +30,6 @@ import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.fluent.Executor;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
-import org.apache.hc.client5.http.utils.URIUtils;
 import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.net.URIBuilder;
 import org.apache.hc.core5.util.Timeout;
@@ -40,7 +40,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.function.Function;
@@ -75,7 +74,7 @@ public class ReplicationCoreService {
     private static Executor getExecutor(String dispatcherUrl, String restUsername, String restPassword) {
         HttpHost dispatcherHttpHostWithAuth;
         try {
-            dispatcherHttpHostWithAuth = URIUtils.extractHost(new URL(dispatcherUrl).toURI());
+            dispatcherHttpHostWithAuth = HttpUtils.getHttpHost(dispatcherUrl);
         } catch (Throwable th) {
             throw new IllegalArgumentException("Can't build HttpHost for " + dispatcherUrl, th);
         }

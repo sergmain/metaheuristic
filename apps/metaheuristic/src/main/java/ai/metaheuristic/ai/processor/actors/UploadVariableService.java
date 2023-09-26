@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.processor.CurrentExecState;
 import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
+import ai.metaheuristic.ai.utils.HttpUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.EnumsApi;
@@ -45,7 +46,6 @@ import org.apache.hc.client5.http.fluent.Executor;
 import org.apache.hc.client5.http.fluent.Form;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
-import org.apache.hc.client5.http.utils.URIUtils;
 import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.net.URIBuilder;
 import org.apache.hc.core5.util.Timeout;
@@ -328,7 +328,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
     private static Executor getExecutor(String dispatcherUrl, String restUsername, String restPassword) {
         HttpHost dispatcherHttpHostWithAuth;
         try {
-            dispatcherHttpHostWithAuth = URIUtils.extractHost(new URL(dispatcherUrl).toURI());
+            dispatcherHttpHostWithAuth = HttpUtils.getHttpHost(dispatcherUrl);
         } catch (Throwable th) {
             throw new IllegalArgumentException("Can't build HttpHost for " + dispatcherUrl, th);
         }

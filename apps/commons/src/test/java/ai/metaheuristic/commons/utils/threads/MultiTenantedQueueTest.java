@@ -178,12 +178,12 @@ public class MultiTenantedQueueTest {
                 break;
             }
             Thread.sleep(500);
-            System.out.println(Thread.currentThread().getId()+", "+ Thread.currentThread().getName()+", "+event.taskId+", i = " + i++);
+            System.out.println(Thread.currentThread().threadId()+", "+ Thread.currentThread().getName()+", "+event.taskId+", i = " + i++);
             if (i==100) {
                 throw new RuntimeException("Too long execution");
             }
         }
-        System.out.println(Thread.currentThread().getId()+", "+event.taskId+" done. ");
+        System.out.println(Thread.currentThread().threadId()+", "+event.taskId+" done. ");
     }
 
 }
