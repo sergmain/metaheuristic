@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.profiles;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.api.ConstsApi;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -72,9 +73,9 @@ public class TestDispatcherProfile {
         assertEquals(12343, globals.dispatcher.timeout.updateBatchStatuses.toSeconds());
         assertEquals(8, globals.dispatcher.timeout.batchDeletion.toDays());
 
-        assertEquals(Globals.SECONDS_300.toSeconds(), globals.dispatcher.timeout.getArtifactCleaner().toSeconds());
-        assertEquals(Globals.SECONDS_23.toSeconds(), globals.dispatcher.timeout.getUpdateBatchStatuses().toSeconds());
-        assertEquals(Globals.DAYS_14.toDays(), globals.dispatcher.timeout.getBatchDeletion().toDays());
+        assertEquals(ConstsApi.SECONDS_300.toSeconds(), globals.dispatcher.timeout.getArtifactCleaner().toSeconds());
+        assertEquals(ConstsApi.SECONDS_23.toSeconds(), globals.dispatcher.timeout.getUpdateBatchStatuses().toSeconds());
+        assertEquals(ConstsApi.DAYS_14.toDays(), globals.dispatcher.timeout.getBatchDeletion().toDays());
 
     }
 }

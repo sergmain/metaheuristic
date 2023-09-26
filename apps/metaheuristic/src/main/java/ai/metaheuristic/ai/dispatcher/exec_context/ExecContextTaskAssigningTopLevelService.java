@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.*;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -77,7 +78,7 @@ public class ExecContextTaskAssigningTopLevelService {
         }
     }
 
-    private final MultiTenantedQueue<Long, FindUnassignedTasksAndRegisterInQueueEvent> MULTI_TENANTED_QUEUE = new MultiTenantedQueue<>(2);
+    private final MultiTenantedQueue<Long, FindUnassignedTasksAndRegisterInQueueEvent> MULTI_TENANTED_QUEUE = new MultiTenantedQueue<>(2, ConstsApi.SECONDS_1);
 
     @PreDestroy
     public void onExit() {

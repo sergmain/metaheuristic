@@ -234,7 +234,8 @@ public class PreparingSourceCodeService {
         Thread.sleep(500);
 
         execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
-        execContextTaskAssigningTopLevelService.procesEvent();
+        //execContextTaskAssigningTopLevelService.procesEvent();
+
         Thread.sleep(500);
         eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
                 execContext.id, execContext.execContextGraphId, execContext.execContextTaskStateId));
@@ -259,7 +260,7 @@ public class PreparingSourceCodeService {
     @SneakyThrows
     public void findInternalTaskForRegisteringInQueue(Long execContextId) {
         execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
-        execContextTaskAssigningTopLevelService.procesEvent();
+        //execContextTaskAssigningTopLevelService.procesEvent();
 //        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContextId);
 
         boolean isQueueEmpty = true;

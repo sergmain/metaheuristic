@@ -16,8 +16,10 @@
 
 package ai.metaheuristic.commons.utils.threads;
 
+import lombok.SneakyThrows;
 import org.springframework.lang.Nullable;
 
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -31,6 +33,7 @@ import java.util.function.Consumer;
 public class MultiTenantedQueue<T, P extends EventWithId<T>> {
 
     public final int initialCapacity;
+    public final long postProcessingDelay;
 
     public final LinkedHashMap<T, QueueWithThread<P>> queue;
 
@@ -38,7 +41,7 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
     private final ReentrantReadWriteLock.ReadLock queueReadLock = queueLock.readLock();
     private final ReentrantReadWriteLock.WriteLock queueWriteLock = queueLock.writeLock();
 
-    public MultiTenantedQueue(int initialCapacity) {
+    public MultiTenantedQueue(int initialCapacity, Duration postProcessingDelay) {
         this.initialCapacity = initialCapacity;
 
         queue = new LinkedHashMap<>(initialCapacity) {
@@ -46,6 +49,7 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
                 return this.size() > initialCapacity && entry.getValue().canBeRemoved();
             }
         };
+        this.postProcessingDelay = postProcessingDelay.toMillis();
     }
 
     public void putToQueue(final P event, Consumer<P> eventConsumer) {
@@ -103,10 +107,14 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
         }
     }
 
+    @SneakyThrows
     private void process(T id, Consumer<P> taskProcessor) {
         P e;
         while ((e = pullFromQueue(id)) != null) {
             taskProcessor.accept(e);
+            if (postProcessingDelay>0) {
+                Thread.sleep(postProcessingDelay);
+            }
         }
     }
 

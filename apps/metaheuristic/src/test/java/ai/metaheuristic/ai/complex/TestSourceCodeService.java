@@ -258,7 +258,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
 
         execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
-        execContextTaskAssigningTopLevelService.procesEvent();
+//        execContextTaskAssigningTopLevelService.procesEvent();
         //execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(getExecContextForTest().id);
 
         DispatcherCommParamsYaml.AssignedTask t =
@@ -281,7 +281,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         });
 
         execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
-        execContextTaskAssigningTopLevelService.procesEvent();
+//        execContextTaskAssigningTopLevelService.procesEvent();
 //        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(getExecContextForTest().id);
 
         t = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
