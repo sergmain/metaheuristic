@@ -16,7 +16,7 @@
 *.yaml          text
 *.yml           text
 *.sql           text
-*.ts            text
+# *.ts            text
 
 .gitignore      text
 .gitattributes  text
