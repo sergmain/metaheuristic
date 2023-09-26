@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 import java.util.LinkedList;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -41,7 +42,7 @@ public class ThreadedPool<T> {
     private final Consumer<T> process;
     private final String namePrefix;
 
-    private final ThreadPoolExecutor executor;
+    private final ExecutorService executor;
     private final LinkedList<T> queue = new LinkedList<>();
 
     private boolean shutdown = false;
@@ -63,7 +64,8 @@ public class ThreadedPool<T> {
         this.maxQueueSize = maxQueueSize;
         this.immediateProcessing = immediateProcessing;
         this.checkForDouble = checkForDouble;
-        this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxThreadInPool);
+//        this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxThreadInPool);
+        this.executor = Executors.newVirtualThreadPerTaskExecutor();
         this.process = process;
         this.namePrefix = namePrefix;
     }
@@ -158,7 +160,7 @@ public class ThreadedPool<T> {
         if (executor.getActiveCount()>=maxThreadInPool) {
             return;
         }
-        Thread t = new Thread(this::actualProcessing, namePrefix+ + ThreadUtils.nextThreadNum());
+        Thread t = Thread.ofVirtual().start(this::actualProcessing);
         executor.submit(t);
     }
 

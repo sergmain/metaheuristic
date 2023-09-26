@@ -60,7 +60,7 @@ public class DirUtils {
 
     public static void deletePathAsync(@Nullable final Path fileOrDir) {
         if (fileOrDir != null) {
-            Thread t = new Thread(() -> {
+            Thread t = Thread.ofVirtual().start(() -> {
                 try {
                     if (Files.isDirectory(fileOrDir)) {
                         PathUtils.deleteDirectory(fileOrDir);
@@ -72,7 +72,6 @@ public class DirUtils {
                     // it's cleaning so don't report any error
                 }
             });
-            t.start();
         }
     }
 
@@ -132,7 +131,7 @@ public class DirUtils {
     @Deprecated(forRemoval = true)
     public static void deleteAsync(@Nullable final File fileOrDir) {
         if (fileOrDir != null) {
-            Thread t = new Thread(() -> {
+            Thread t = Thread.ofVirtual().start(() -> {
                 try {
                     if (fileOrDir.isDirectory()) {
                         FileUtils.deleteDirectory(fileOrDir);
@@ -144,7 +143,6 @@ public class DirUtils {
                     // it's cleaning so don't report any error
                 }
             });
-            t.start();
         }
     }
 

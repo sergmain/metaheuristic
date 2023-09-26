@@ -91,12 +91,8 @@ public class TaskCheckCachingService {
     private final TaskRepository taskRepository;
     private final ApplicationEventPublisher eventPublisher;
 
-    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(4);
-
-    private final Set<Long> queueIds = new HashSet<>();
     private final LinkedList<RegisterTaskForCheckCachingEvent> queue = new LinkedList<>();
 
-    private long mills = 0L;
     public boolean disableCacheChecking = false;
 
     private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
@@ -108,22 +104,7 @@ public class TaskCheckCachingService {
         }
         writeLock.lock();
         try {
-            // re-create queueIds, there is a possibility that queueIds was unsyncronized with queue when a task was resetting
-            if (System.currentTimeMillis() - mills > 60_000) {
-                queueIds.clear();
-                queue.forEach(o->queueIds.add(o.taskId));
-                mills = System.currentTimeMillis();
-            }
-            final long completedTaskCount = executor.getCompletedTaskCount();
-            final long taskCount = executor.getTaskCount();
-            final boolean contains = queueIds.contains(event.taskId);
-            final boolean queueIsFull = (taskCount - completedTaskCount) > 1000;
-            if (contains || queueIsFull) {
-                log.debug("task #{} wasn't queued, contains: {}, queueIsFull: {}", event.taskId, contains, queueIsFull);
-                return;
-            }
             queue.add(event);
-            queueIds.add(event.taskId);
         } finally {
             writeLock.unlock();
         }
@@ -135,13 +116,6 @@ public class TaskCheckCachingService {
         writeLock.lock();
         try {
             final RegisterTaskForCheckCachingEvent task = queue.pollFirst();
-            if (task==null) {
-                if (!queueIds.isEmpty()) {
-                    throw new IllegalStateException("(!queueIds.isEmpty())");
-                }
-                return null;
-            }
-            queueIds.remove(task.taskId);
             return task;
         } finally {
             writeLock.unlock();
@@ -149,33 +123,23 @@ public class TaskCheckCachingService {
     }
 
     public void checkCaching() {
-        final int activeCount = executor.getActiveCount();
-        if (log.isDebugEnabled()) {
-            final long completedTaskCount = executor.getCompletedTaskCount();
-            final long taskCount = executor.getTaskCount();
-            log.debug("checkCaching, active task in executor: {}, awaiting tasks: {}, queue size: {}", activeCount, taskCount - completedTaskCount, queue.size());
-        }
-
-        if (activeCount>0) {
-            return;
-        }
-        Thread t = new Thread(() -> {
-            RegisterTaskForCheckCachingEvent event;
-            while ((event = pullFromQueue())!=null) {
-                try {
-                    checkCachingInternal(event);
-                }
-                catch (Throwable th) {
-                    log.error("Error", th);
-                    eventPublisher.publishEvent(new TaskFinishWithErrorEvent(event.taskId, "Error while checking cache for task #" +event.taskId+", error: " + th.getMessage()));
-                    return;
-                }
-                finally {
-                    eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
-                }
+        RegisterTaskForCheckCachingEvent event;
+        while ((event = pullFromQueue())!=null) {
+            try {
+                final var finalEvent = event;
+                Thread.ofVirtual().name("TaskCheckCachingService-" + ThreadUtils.nextThreadNum()).start(() -> {
+                    checkCachingInternal(finalEvent);
+                });
             }
-        }, "TaskCheckCachingService-" + ThreadUtils.nextThreadNum());
-        executor.submit(t);
+            catch (Throwable th) {
+                log.error("Error", th);
+                eventPublisher.publishEvent(new TaskFinishWithErrorEvent(event.taskId, "Error while checking cache for task #" +event.taskId+", error: " + th.getMessage()));
+                return;
+            }
+            finally {
+                eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
+            }
+        }
     }
 
     private void checkCachingInternal(RegisterTaskForCheckCachingEvent event) {

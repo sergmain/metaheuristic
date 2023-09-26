@@ -135,7 +135,7 @@ public class SystemProcessLauncher {
         try (final OutputStream fos = Files.newOutputStream(consoleLogFile); BufferedOutputStream bos = new BufferedOutputStream(fos)) {
             final AtomicBoolean isRun = new AtomicBoolean(false);
             final AtomicBoolean isDone = new AtomicBoolean(false);
-            final Thread reader = new Thread(() -> {
+            final Thread reader = Thread.ofVirtual().start(() -> {
                 try {
                     log.info("thread #{}, start receiving stream from external process", Thread.currentThread().threadId());
                     streamHolder.is = process.getInputStream();
@@ -152,7 +152,6 @@ public class SystemProcessLauncher {
                     isDone.set(true);
                 }
             });
-            reader.start();
 
             if (timeout.get()>0 || !outerInterrupters.isEmpty()) {
                 final List<Supplier<Boolean>> interrupters = new ArrayList<>();
@@ -171,7 +170,7 @@ public class SystemProcessLauncher {
                     return false;
                 });
 
-                timeoutThread = new Thread(() -> {
+                timeoutThread = Thread.ofVirtual().start(() -> {
                     try {
                         while (!isRun.get()) {
                             log.info("thread #{} is waiting for reader thread, time - {}", Thread.currentThread().threadId(), new Date());
@@ -206,7 +205,6 @@ public class SystemProcessLauncher {
                         log.debug("thread #{}, current thread was interrupted", Thread.currentThread().threadId());
                     }
                 });
-                timeoutThread.start();
             }
 
             exitCode = process.waitFor();

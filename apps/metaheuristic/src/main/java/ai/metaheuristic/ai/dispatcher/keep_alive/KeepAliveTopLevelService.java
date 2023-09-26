@@ -124,7 +124,8 @@ public class KeepAliveTopLevelService {
 
             DispatcherApiData.ProcessorSessionId processorSessionId = null;
             if (processorAndSessionStatus==Enums.ProcessorAndSessionStatus.updateSession) {
-                Thread t = new Thread(()-> ProcessorSyncService.getWithSync(processor.id,
+                // use ai.metaheuristic.commons.utils.threads.MultiTenantedQueue
+                Thread t = Thread(()-> ProcessorSyncService.getWithSync(processor.id,
                         () -> processorTransactionService.checkProcessorId(processorAndSessionStatus, processor.id, remoteAddress)));
                 t.start();
             }

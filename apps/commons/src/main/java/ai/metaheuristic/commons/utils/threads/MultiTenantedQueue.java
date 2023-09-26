@@ -94,14 +94,14 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
             if (twe == null || twe.isEmpty() || twe.thread != null) {
                 return;
             }
-            twe.thread = new Thread(() -> {
+            twe.thread = Thread.ofVirtual().name("TaskWithInternalContextEventService-" + ThreadUtils.nextThreadNum()).start(() -> {
                 try {
                     process(id, eventConsumer);
                 } finally {
                     twe.thread = null;
                 }
-            }, "TaskWithInternalContextEventService-" + ThreadUtils.nextThreadNum());
-            twe.thread.start();
+            });
+//            twe.thread.start();
         } finally {
             queueWriteLock.unlock();
         }

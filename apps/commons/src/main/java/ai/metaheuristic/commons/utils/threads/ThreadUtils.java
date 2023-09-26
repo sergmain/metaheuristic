@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.StampedLock;
@@ -43,13 +44,11 @@ import java.util.regex.Pattern;
 @Slf4j
 public class ThreadUtils {
 
-    // TODO 2023-08-31 p0 check how this method is implemented in java 21
-    /* For autonumbering anonymous threads. */
-    private static int threadInitNumber;
-    public static synchronized int nextThreadNum() {
-        return threadInitNumber++;
+    /* For auto-numbering anonymous threads. */
+    private static final AtomicInteger THREAD_INIT_NUMBER = new AtomicInteger(1);
+    public static int nextThreadNum() {
+        return THREAD_INIT_NUMBER.incrementAndGet();
     }
-
 
     public static final class ResourceLock extends ReentrantLock implements AutoCloseable {
         @MustBeClosed
@@ -240,14 +239,13 @@ public class ThreadUtils {
         result[0] = null;
         final AtomicBoolean done = new AtomicBoolean(false);
         long mills = System.currentTimeMillis();
-        Thread t = new Thread(()-> {
+        Thread t = Thread.ofVirtual().start(()-> {
             Matcher matcher = p.matcher(new InterruptableCharSequence(text));
             if (matcher.find()) {
                 result[0] = matcher.group();
             }
             done.set(true);
         });
-        t.start();
         t.join(timeout.toMillis());
         long endMills = System.currentTimeMillis();
         long time = endMills - mills;
