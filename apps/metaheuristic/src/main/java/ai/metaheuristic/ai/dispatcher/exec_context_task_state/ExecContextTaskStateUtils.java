@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 
 import java.util.List;
@@ -30,23 +30,20 @@ import java.util.stream.Collectors;
  */
 public class ExecContextTaskStateUtils {
 
-    public static long getCountUnfinishedTasks(ExecContextTaskState execContextTaskState) {
-        return execContextTaskState.getExecContextTaskStateParamsYaml().states.entrySet()
-                .stream()
-                .filter(o -> o.getValue()== EnumsApi.TaskExecState.NONE || o.getValue()== EnumsApi.TaskExecState.IN_PROGRESS || o.getValue()== EnumsApi.TaskExecState.CHECK_CACHE)
-                .count();
+    public static long getCountUnfinishedTasks(ExecContextTaskStateParamsYaml params) {
+        return getUnfinishedTaskVertices(params).size();
     }
 
-    public static List<Long> getUnfinishedTaskVertices(ExecContextTaskState execContextTaskState) {
-        return geTaskVertices(execContextTaskState, EnumsApi.TaskExecState.NONE, EnumsApi.TaskExecState.IN_PROGRESS, EnumsApi.TaskExecState.CHECK_CACHE);
+    public static List<Long> getUnfinishedTaskVertices(ExecContextTaskStateParamsYaml params) {
+        return geTaskVertices(params, EnumsApi.TaskExecState.NONE, EnumsApi.TaskExecState.IN_PROGRESS, EnumsApi.TaskExecState.CHECK_CACHE);
     }
 
-    public static List<Long> getFinishedTaskVertices(ExecContextTaskState execContextTaskState) {
-        return geTaskVertices(execContextTaskState, EnumsApi.TaskExecState.OK, EnumsApi.TaskExecState.ERROR, EnumsApi.TaskExecState.ERROR_WITH_RECOVERY, EnumsApi.TaskExecState.SKIPPED);
+    public static List<Long> getFinishedTaskVertices(ExecContextTaskStateParamsYaml params) {
+        return geTaskVertices(params, EnumsApi.TaskExecState.OK, EnumsApi.TaskExecState.ERROR, EnumsApi.TaskExecState.ERROR_WITH_RECOVERY, EnumsApi.TaskExecState.SKIPPED);
     }
 
-    public static List<Long> geTaskVertices(ExecContextTaskState execContextTaskState, EnumsApi.TaskExecState... taskExecStates) {
-        return execContextTaskState.getExecContextTaskStateParamsYaml().states.entrySet()
+    public static List<Long> geTaskVertices(ExecContextTaskStateParamsYaml params, EnumsApi.TaskExecState... taskExecStates) {
+        return params.states.entrySet()
                 .stream()
                 .filter(o -> isState(o.getValue(), taskExecStates))
                 .map(Map.Entry::getKey)

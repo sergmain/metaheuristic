@@ -91,7 +91,7 @@ public class TestPermuteValuesOfVariables extends PreparingSourceCode {
         System.out.println("start findInternalTaskForRegisteringInQueue()");
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
 
-        final List<Long> taskIds = getUnfinishedTaskVertices(getExecContextForTest());
+        final List<Long> taskIds = getFinishedTaskVertices(getExecContextForTest());
         assertEquals(2, taskIds.size());
 
         System.out.println("start findTaskForRegisteringInQueue() #5");

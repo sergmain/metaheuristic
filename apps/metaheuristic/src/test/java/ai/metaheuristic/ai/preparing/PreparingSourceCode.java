@@ -238,7 +238,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         if (ects==null) {
             return List.of();
         }
-        return ExecContextTaskStateUtils.getUnfinishedTaskVertices(ects);
+        return ExecContextTaskStateUtils.getUnfinishedTaskVertices(ects.getExecContextTaskStateParamsYaml());
     }
 
     public List<Long> getFinishedTaskVertices(ExecContextImpl execContext) {
@@ -249,7 +249,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         if (ects==null) {
             return List.of();
         }
-        return ExecContextTaskStateUtils.getFinishedTaskVertices(ects);
+        return ExecContextTaskStateUtils.getFinishedTaskVertices(ects.getExecContextTaskStateParamsYaml());
     }
 
 

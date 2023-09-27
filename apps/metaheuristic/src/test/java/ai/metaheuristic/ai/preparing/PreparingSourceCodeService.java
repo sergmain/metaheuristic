@@ -323,7 +323,7 @@ public class PreparingSourceCodeService {
         if (ects==null) {
             return 0;
         }
-        return ExecContextTaskStateUtils.getCountUnfinishedTasks(ects);
+        return ExecContextTaskStateUtils.getCountUnfinishedTasks(ects.getExecContextTaskStateParamsYaml());
     }
 
     @Nullable
