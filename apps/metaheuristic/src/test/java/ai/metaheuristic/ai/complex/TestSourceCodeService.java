@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegiste
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskLastProcessingHelper;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -77,7 +77,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
     @Autowired private ExecContextCache execContextCache;
     @Autowired private TaskRepository taskRepository;
-    @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
+    @Autowired private ExecContextTaskStateService execContextTaskStateTopLevelService;
     @Autowired private ExecContextGraphTopLevelService execContextGraphTopLevelService;
     @Autowired private TaskFinishingTopLevelService taskFinishingTopLevelService;
     @Autowired private ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;

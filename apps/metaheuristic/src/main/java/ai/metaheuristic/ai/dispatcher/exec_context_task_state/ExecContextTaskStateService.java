@@ -49,7 +49,7 @@ import org.springframework.stereotype.Service;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class ExecContextTaskStateTopLevelService {
+public class ExecContextTaskStateService {
 
     private final ExecContextTaskStateTxService execContextTaskStateService;
     private final TaskRepository taskRepository;
