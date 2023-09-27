@@ -35,6 +35,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -50,6 +51,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest
 //@ActiveProfiles({"dispatcher", "mysql"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@AutoConfigureCache
 public class TestPermuteVariables extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
@@ -90,7 +92,7 @@ public class TestPermuteVariables extends PreparingSourceCode {
         System.out.println("start findInternalTaskForRegisteringInQueue()");
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
 
-        final List<Long> taskIds = getUnfinishedTaskVertices(getExecContextForTest());
+        final List<Long> taskIds = getFinishedTaskVertices(getExecContextForTest());
         assertEquals(2, taskIds.size());
 
         System.out.println("start findTaskForRegisteringInQueue() #5");

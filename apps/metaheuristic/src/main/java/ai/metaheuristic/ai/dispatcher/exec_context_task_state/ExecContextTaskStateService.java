@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
@@ -27,7 +26,6 @@ import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,8 +36,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+
+import static ai.metaheuristic.api.EnumsApi.*;
 
 /**
  * @author Serge
@@ -57,23 +55,8 @@ public class ExecContextTaskStateService {
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final EventPublisherService eventPublisherService;
 
-    public static long getCountUnfinishedTasks(ExecContextTaskState execContextTaskState) {
-        return execContextTaskState.getExecContextTaskStateParamsYaml().states.entrySet()
-                .stream()
-                .filter(o -> o.getValue()== EnumsApi.TaskExecState.NONE || o.getValue()==EnumsApi.TaskExecState.IN_PROGRESS || o.getValue()==EnumsApi.TaskExecState.CHECK_CACHE)
-                .count();
-    }
-
-    public static List<Long> getUnfinishedTaskVertices(ExecContextTaskState execContextTaskState) {
-        return execContextTaskState.getExecContextTaskStateParamsYaml().states.entrySet()
-                .stream()
-                .filter(o -> o.getValue()==EnumsApi.TaskExecState.NONE || o.getValue()==EnumsApi.TaskExecState.IN_PROGRESS || o.getValue()==EnumsApi.TaskExecState.CHECK_CACHE)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-    }
-
     @Transactional
-    public OperationStatusRest updateTaskExecStatesInGraph(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, String taskContextId) {
+    public OperationStatusRest updateTaskExecStatesInGraph(Long execContextGraphId, Long execContextTaskStateId, Long taskId, TaskExecState execState, String taskContextId) {
         ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
         TaskSyncService.checkWriteLockPresent(taskId);
 

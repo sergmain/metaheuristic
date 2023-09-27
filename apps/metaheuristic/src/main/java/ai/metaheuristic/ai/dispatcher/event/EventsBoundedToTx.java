@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.event;
 
 import ai.metaheuristic.ai.dispatcher.event.events.*;
-import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +25,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -61,13 +58,13 @@ public class EventsBoundedToTx {
         }
     }
 
-    //@Async
+    @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = CommonRollbackException.class)
+    //@Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = CommonRollbackException.class)
     public void handleCheckTaskCanBeFinishedTxEvent(CheckTaskCanBeFinishedTxEvent event) {
         log.debug("call EventsBoundedToTx.handleCheckTaskCanBeFinishedTxEvent(execContextId:#{}, taskId:#{})", event.execContextId, event.taskId);
         eventPublisher.publishEvent(event.to());
-        throw new CommonRollbackException();
+//        throw new CommonRollbackException();
     }
 
     @Async

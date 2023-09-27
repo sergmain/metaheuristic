@@ -129,7 +129,11 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
         while ((e = pullFromQueue(id)) != null) {
             taskProcessor.accept(e);
             if (postProcessingDelay>0) {
-                Thread.sleep(postProcessingDelay);
+                try {
+                    Thread.sleep(postProcessingDelay);
+                } catch (InterruptedException ex) {
+                    break;
+                }
             }
         }
     }
