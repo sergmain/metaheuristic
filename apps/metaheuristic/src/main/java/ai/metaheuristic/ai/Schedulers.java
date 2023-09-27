@@ -349,9 +349,6 @@ public class Schedulers {
 
         @PostConstruct
         public void post() {
-            if (processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap==null) {
-                throw new IllegalStateException("dispatcher.yaml wasn't configured");
-            }
             this.activeDispatchers = new ActiveDispatchers(processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap, "ActiveDispatchers for scheduler", Enums.DispatcherSelectionStrategy.priority);
         }
 
