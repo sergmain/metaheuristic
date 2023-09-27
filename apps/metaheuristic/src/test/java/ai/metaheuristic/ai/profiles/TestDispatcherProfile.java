@@ -50,7 +50,7 @@ public class TestDispatcherProfile {
 
     @Test
     public void simpleTest() {
-        assertEquals(12, globals.threadNumber.getScheduler());
+//        assertEquals(12, globals.threadNumber.getScheduler());
         assertEquals(List.of("http://localhost", "https://127.0.0.1", "http://192.168.0.1"), globals.corsAllowedOrigins);
 
         assertTrue(globals.dispatcher.enabled);

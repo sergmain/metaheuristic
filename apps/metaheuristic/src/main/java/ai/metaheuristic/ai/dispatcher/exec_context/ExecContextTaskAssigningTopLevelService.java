@@ -60,7 +60,7 @@ public class ExecContextTaskAssigningTopLevelService {
     private final ExecContextFSM execContextFSM;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final TaskRepository taskRepository;
-    private final TaskCheckCachingService taskCheckCachingTopLevelService;
+    private final TaskCheckCachingService taskCheckCachingService;
     private final TaskFinishingTxService taskFinishingTxService;
     private final ExecContextRepository execContextRepository;
     private final ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
@@ -78,7 +78,8 @@ public class ExecContextTaskAssigningTopLevelService {
         }
     }
 
-    private final MultiTenantedQueue<Long, FindUnassignedTasksAndRegisterInQueueEvent> MULTI_TENANTED_QUEUE = new MultiTenantedQueue<>(2, ConstsApi.SECONDS_1);
+    private final MultiTenantedQueue<Long, FindUnassignedTasksAndRegisterInQueueEvent> MULTI_TENANTED_QUEUE =
+        new MultiTenantedQueue<>(2, ConstsApi.SECONDS_1, true, null);
 
     @PreDestroy
     public void onExit() {
@@ -149,7 +150,7 @@ public class ExecContextTaskAssigningTopLevelService {
             }
             else {
                 if (allocatedTask.state == EnumsApi.TaskExecState.CHECK_CACHE) {
-                    taskCheckCachingTopLevelService.putToQueue(new RegisterTaskForCheckCachingEvent(execContextId, allocatedTask.queuedTask.taskId));
+                    taskCheckCachingService.putToQueue(new RegisterTaskForCheckCachingEvent(execContextId, allocatedTask.queuedTask.taskId));
                 }
             }
         }
@@ -185,7 +186,7 @@ public class ExecContextTaskAssigningTopLevelService {
 
                 if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
                     // cache will be checked via Schedulers.DispatcherSchedulers.processCheckCaching()
-                    taskCheckCachingTopLevelService.putToQueue(new RegisterTaskForCheckCachingEvent(execContextId, taskId));
+                    taskCheckCachingService.putToQueue(new RegisterTaskForCheckCachingEvent(execContextId, taskId));
                     if (log.isInfoEnabled()) stat.notAllocatedReasons.add("task #"+task.getId()+" task.execState == EnumsApi.TaskExecState.CHECK_CACHE");
                     continue;
                 }

@@ -48,10 +48,15 @@ public class QueueWithThread<T> {
 
     @Nullable
     public Thread thread;
+    public final boolean checkForDouble;
 
     private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
     private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+
+    public QueueWithThread(boolean checkForDouble) {
+        this.checkForDouble = checkForDouble;
+    }
 
     public int size() {
         readLock.lock();
@@ -83,8 +88,10 @@ public class QueueWithThread<T> {
     public void add(T event) {
         writeLock.lock();
         try {
-            if (events.contains(event)) {
-                return;
+            if (checkForDouble) {
+                if (events.contains(event)) {
+                    return;
+                }
             }
             events.add(event);
         } finally {

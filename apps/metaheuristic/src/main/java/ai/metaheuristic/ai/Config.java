@@ -105,6 +105,7 @@ public class Config {
         };
     }
 
+/*
     @Bean
     public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
         ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
@@ -112,6 +113,7 @@ public class Config {
         threadPoolTaskScheduler.setPoolSize(globals.threadNumber.getScheduler());
         return threadPoolTaskScheduler;
     }
+*/
 
     @Component
     @RequiredArgsConstructor(onConstructor_={@Autowired})
@@ -213,6 +215,7 @@ public class Config {
 
     }
 
+/*
     @Configuration
     @ComponentScan("ai.metaheuristic.ai.dispatcher")
     @EnableAsync
@@ -231,6 +234,7 @@ public class Config {
             return new ConcurrentTaskExecutor(executor);
         }
     }
+*/
 
     @Configuration
     @ComponentScan(value={"ai.metaheuristic.ai.dispatcher", "ai.metaheuristic.ai.processor", "ai.metaheuristic.ai.mhbp"},

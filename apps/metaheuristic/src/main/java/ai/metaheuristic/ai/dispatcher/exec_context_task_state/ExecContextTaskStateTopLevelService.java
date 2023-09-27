@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncSer
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
@@ -38,9 +39,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * @author Serge
@@ -57,54 +55,33 @@ public class ExecContextTaskStateTopLevelService {
     private final TaskRepository taskRepository;
     private final ExecContextCache execContextCache;
 
-    private final LinkedHashMap<Long, ThreadedPool<UpdateTaskExecStatesInGraphEvent>> updateTaskExecStatesInGraphEventThreadedPool = new LinkedHashMap<>(100) {
-        protected boolean removeEldestEntry(Map.Entry<Long, ThreadedPool<UpdateTaskExecStatesInGraphEvent>> entry) {
-            return this.size()>50 && entry.getValue().getQueueSize()==0 && entry.getValue().getActiveCount()==0;
-        }
-    };
 
-    private final LinkedHashMap<Long, ThreadedPool<TransferStateFromTaskQueueToExecContextEvent>> threadedPoolMap = new LinkedHashMap<>(100) {
-        protected boolean removeEldestEntry(Map.Entry<Long, ThreadedPool<TransferStateFromTaskQueueToExecContextEvent>> entry) {
-            return this.size()>50 && entry.getValue().getQueueSize()==0 && entry.getValue().getActiveCount()==0;
-        }
-    };
+    private final ThreadedPool<Long, TransferStateFromTaskQueueToExecContextEvent> threadedPoolMap =
+        new ThreadedPool<>("TransferStateFromTaskQueueToExecContext-", 2, true, false, this::transferStateFromTaskQueueToExecContext, ConstsApi.DURATION_NONE );
+
+    private final ThreadedPool<Long, UpdateTaskExecStatesInGraphEvent> updateTaskExecStatesInGraphEventThreadedPool =
+        new ThreadedPool<>("UpdateTaskExecStatesInGraph-", 100, false, false, this::updateTaskExecStatesInGraph, ConstsApi.SECONDS_5);
 
     @PreDestroy
     public void onExit() {
-        for (Map.Entry<Long, ThreadedPool<UpdateTaskExecStatesInGraphEvent>> en : updateTaskExecStatesInGraphEventThreadedPool.entrySet()) {
-            en.getValue().shutdown();
-        }
-        for (Map.Entry<Long, ThreadedPool<TransferStateFromTaskQueueToExecContextEvent>> en : threadedPoolMap.entrySet()) {
-            en.getValue().shutdown();
-        }
+        threadedPoolMap.shutdown();
+        updateTaskExecStatesInGraphEventThreadedPool.shutdown();
     }
 
     @Async
     @EventListener
     public void handleEvent(TransferStateFromTaskQueueToExecContextEvent event) {
-        final ThreadedPool<TransferStateFromTaskQueueToExecContextEvent> threadedPool = threadedPoolMap.computeIfAbsent(event.execContextId,
-            (id) -> new ThreadedPool<>("TransferStateFromTaskQueueToExecContextEvent-", 1, 2, true, false, this::transferStateFromTaskQueueToExecContext));
-
-        if (threadedPool.isShutdown()) {
-            return;
-        }
-        threadedPool.putToQueue(event);
+        threadedPoolMap.putToQueue(event);
     }
 
     @Async
     @EventListener
     public void handleEvent(UpdateTaskExecStatesInGraphEvent event) {
-        final ThreadedPool<UpdateTaskExecStatesInGraphEvent> threadedPool = updateTaskExecStatesInGraphEventThreadedPool.computeIfAbsent(event.execContextId,
-            (id) -> new ThreadedPool<>("UpdateTaskExecStatesInGraphEvent-", 1, 0, false, false, this::updateTaskExecStatesInGraph));
-
-        if (threadedPool.isShutdown()) {
-            return;
-        }
-        threadedPool.putToQueue(event);
+        updateTaskExecStatesInGraphEventThreadedPool.putToQueue(event);
     }
 
     public void processUpdateTaskExecStatesInGraph() {
-        updateTaskExecStatesInGraphEventThreadedPool.entrySet().stream().parallel().forEach(e->e.getValue().processEvent());
+//        updateTaskExecStatesInGraphEventThreadedPool.entrySet().stream().parallel().forEach(e->e.getValue().processEvent());
     }
 
     public void updateTaskExecStatesInGraph(UpdateTaskExecStatesInGraphEvent event) {

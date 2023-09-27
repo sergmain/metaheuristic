@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.mhbp.provider;
 
 import ai.metaheuristic.ai.mhbp.events.EvaluateProviderEvent;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.commons.utils.threads.ThreadedPool;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -38,12 +39,12 @@ public class ProcessSessionOfEvaluationService {
 
     public final ProviderQueryService providerQueryService;
 
-    private final ThreadedPool<EvaluateProviderEvent> evaluateProviderEventThreadedPool;
+    private final ThreadedPool<Long, EvaluateProviderEvent> evaluateProviderEventThreadedPool;
 
     public ProcessSessionOfEvaluationService(@Autowired ProviderQueryService providerQueryService) {
         this.providerQueryService = providerQueryService;
         this.evaluateProviderEventThreadedPool =
-                new ThreadedPool<>("ProcessSessionOfEvaluationService-", 1, 0, false, true, providerQueryService::evaluateProvider);
+                new ThreadedPool<>("ProcessSessionOfEvaluationService-", 10, false, true, providerQueryService::evaluateProvider, ConstsApi.DURATION_NONE);
     }
 
     @PreDestroy
@@ -55,9 +56,5 @@ public class ProcessSessionOfEvaluationService {
     @EventListener
     public void handleEvaluateProviderEvent(EvaluateProviderEvent event) {
         evaluateProviderEventThreadedPool.putToQueue(event);
-    }
-
-    public void processSessionEvent() {
-        evaluateProviderEventThreadedPool.processEvent();
     }
 }

@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.event.events;
 
+import ai.metaheuristic.commons.utils.threads.EventWithId;
 import lombok.AllArgsConstructor;
 
 /**
@@ -24,8 +25,13 @@ import lombok.AllArgsConstructor;
  * Time: 1:37 AM
  */
 @AllArgsConstructor
-public class TransferStateFromTaskQueueToExecContextEvent {
+public class TransferStateFromTaskQueueToExecContextEvent implements EventWithId<Long> {
     public final Long execContextId;
     public final Long execContextGraphId;
     public final Long execContextTaskStateId;
+
+    @Override
+    public Long getId() {
+        return 1L;
+    }
 }

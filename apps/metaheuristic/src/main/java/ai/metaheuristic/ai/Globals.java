@@ -461,6 +461,7 @@ public class Globals {
         public String[] envTokens;
     }
 
+/*
     public static class ThreadNumber {
         private int scheduler = 10;
         private int event =  Math.max(10, Runtime.getRuntime().availableProcessors()/2);
@@ -490,6 +491,7 @@ public class Globals {
             this.event = event;
         }
     }
+*/
 
     public static class Standalone {
         public boolean active = false;
@@ -503,7 +505,7 @@ public class Globals {
 
     public final Dispatcher dispatcher = new Dispatcher();
     public final Processor processor = new Processor();
-    public final ThreadNumber threadNumber = new ThreadNumber();
+//    public final ThreadNumber threadNumber = new ThreadNumber();
     public final Mhbp mhbp = new Mhbp();
     public final Standalone standalone = new Standalone();
 
@@ -757,8 +759,6 @@ public class Globals {
         log.info("'\tbranding: {}", branding);
         log.info("'\ttesting: {}", testing);
         log.info("'\tsslRequired: {}", sslRequired);
-        log.info("'\tthreadNumber.scheduler: {}", threadNumber.getScheduler());
-        log.info("'\tthreadNumber.event: {}", threadNumber.getEvent());
         log.info("'\tdispatcher.enabled: {}", dispatcher.enabled);
         log.info("'\tdispatcher.dir: {}", dispatcherPath.toAbsolutePath().normalize());
         log.info("'\tdispatcher.functionSignatureRequired: {}", dispatcher.functionSignatureRequired);

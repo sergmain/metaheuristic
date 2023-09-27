@@ -46,7 +46,7 @@ public class TestProcessorProfile {
 
     @Test
     public void simpleTest() {
-        assertEquals(13, globals.threadNumber.getScheduler());
+//        assertEquals(13, globals.threadNumber.getScheduler());
         assertFalse(globals.dispatcher.enabled);
         assertTrue(globals.processor.enabled);
 

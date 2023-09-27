@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.commons.utils.threads;
 
+import ai.metaheuristic.commons.S;
 import lombok.SneakyThrows;
 import org.springframework.lang.Nullable;
 
@@ -32,8 +33,10 @@ import java.util.function.Consumer;
  */
 public class MultiTenantedQueue<T, P extends EventWithId<T>> {
 
-    public final int initialCapacity;
+    public final int maxCapacity;
     public final long postProcessingDelay;
+    public final boolean checkForDouble;
+    public final String namePrefix;
 
     public final LinkedHashMap<T, QueueWithThread<P>> queue;
 
@@ -41,14 +44,26 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
     private final ReentrantReadWriteLock.ReadLock queueReadLock = queueLock.readLock();
     private final ReentrantReadWriteLock.WriteLock queueWriteLock = queueLock.writeLock();
 
-    public MultiTenantedQueue(int initialCapacity, Duration postProcessingDelay) {
-        this.initialCapacity = initialCapacity;
+    // if maxCapacity==-1 then max size is unbound
+    public MultiTenantedQueue(int maxCapacity, Duration postProcessingDelay, boolean checkForDouble, @Nullable String namePrefix) {
+        this.maxCapacity = maxCapacity;
+        this.checkForDouble = checkForDouble;
+        this.namePrefix = S.b(namePrefix) ? "virtual-tread-" : namePrefix;
 
-        queue = new LinkedHashMap<>(initialCapacity) {
-            protected boolean removeEldestEntry(Map.Entry<T, QueueWithThread<P>> entry) {
-                return this.size() > initialCapacity && entry.getValue().canBeRemoved();
-            }
-        };
+        if (maxCapacity == -1) {
+            queue = new LinkedHashMap<>() {
+                protected boolean removeEldestEntry(Map.Entry<T, QueueWithThread<P>> entry) {
+                    return entry.getValue().canBeRemoved();
+                }
+            };
+        }
+        else {
+            queue = new LinkedHashMap<>(maxCapacity) {
+                protected boolean removeEldestEntry(Map.Entry<T, QueueWithThread<P>> entry) {
+                    return this.size() > maxCapacity && entry.getValue().canBeRemoved();
+                }
+            };
+        }
         this.postProcessingDelay = postProcessingDelay.toMillis();
     }
 
@@ -91,17 +106,18 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
         queueWriteLock.lock();
         try {
             QueueWithThread<P> twe = queue.get(id);
+            // there is nothing for processing or processing is active rn
             if (twe == null || twe.isEmpty() || twe.thread != null) {
                 return;
             }
-            twe.thread = Thread.ofVirtual().name("TaskWithInternalContextEventService-" + ThreadUtils.nextThreadNum()).start(() -> {
+
+            twe.thread = Thread.ofVirtual().name(namePrefix + ThreadUtils.nextThreadNum()).start(() -> {
                 try {
                     process(id, eventConsumer);
                 } finally {
                     twe.thread = null;
                 }
             });
-//            twe.thread.start();
         } finally {
             queueWriteLock.unlock();
         }
@@ -122,7 +138,7 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
         QueueWithThread<P> q;
         queueWriteLock.lock();
         try {
-            q = queue.computeIfAbsent(event.getId(), (o) -> new QueueWithThread<>());
+            q = queue.computeIfAbsent(event.getId(), (o) -> new QueueWithThread<>(this.checkForDouble));
         } finally {
             queueWriteLock.unlock();
         }

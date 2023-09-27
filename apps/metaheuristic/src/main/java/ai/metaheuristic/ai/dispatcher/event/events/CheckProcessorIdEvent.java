@@ -14,18 +14,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mhbp.events;
+package ai.metaheuristic.ai.dispatcher.event.events;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.commons.utils.threads.EventWithId;
 
 /**
  * @author Sergio Lissner
- * Date: 3/19/2023
- * Time: 10:42 PM
+ * Date: 9/27/2023
+ * Time: 1:10 AM
  */
-public record EvaluateProviderEvent(long evaluationId, int limit, long accountId) implements EventWithId<Long> {
+public record CheckProcessorIdEvent(Long processorId, Enums.ProcessorAndSessionStatus processorAndSessionStatus,
+                                    String remoteAddress) implements EventWithId<Long> {
     @Override
     public Long getId() {
-        return evaluationId;
+        return processorId;
     }
 }

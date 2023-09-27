@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.event.events;
 
+import ai.metaheuristic.commons.utils.threads.EventWithId;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 
@@ -26,6 +27,11 @@ import lombok.EqualsAndHashCode;
  */
 @AllArgsConstructor
 @EqualsAndHashCode
-public class ResetTasksWithErrorEvent {
+public class ResetTasksWithErrorEvent implements EventWithId<Long> {
     public final Long execContextId;
+
+    @Override
+    public Long getId() {
+        return execContextId;
+    }
 }

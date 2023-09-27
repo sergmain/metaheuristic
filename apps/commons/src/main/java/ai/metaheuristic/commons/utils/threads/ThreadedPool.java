@@ -16,9 +16,11 @@
 
 package ai.metaheuristic.commons.utils.threads;
 
+import ai.metaheuristic.api.ConstsApi;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
+import java.time.Duration;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,147 +34,32 @@ import java.util.function.Consumer;
  * Time: 6:07 PM
  */
 @Slf4j
-public class ThreadedPool<T> {
-    private final int maxThreadInPool;
+public class ThreadedPool<I, T extends EventWithId<I>> {
 
-    // 0 is for unbound queue
-    private final int maxQueueSize;
-    private final boolean immediateProcessing;
-    private final boolean checkForDouble;
     private final Consumer<T> process;
-    private final String namePrefix;
-
-    private final ExecutorService executor;
-    private final LinkedList<T> queue = new LinkedList<>();
 
     private boolean shutdown = false;
 
-    private final ReentrantReadWriteLock queueReadWriteLock = new ReentrantReadWriteLock();
-    private final ReentrantReadWriteLock.ReadLock queueReadLock = queueReadWriteLock.readLock();
-    private final ReentrantReadWriteLock.WriteLock queueWriteLock = queueReadWriteLock.writeLock();
+    private final MultiTenantedQueue<I, T> queue;
 
-    public ThreadedPool(String namePrefix, int maxQueueSize, Consumer<T> process) {
-        this(namePrefix, 1, maxQueueSize, true, false, process);
-    }
-
-    public ThreadedPool(String namePrefix, int maxThreadInPool, int maxQueueSize, Consumer<T> process) {
-        this(namePrefix, maxThreadInPool, maxQueueSize, true, false, process);
-    }
-
-    public ThreadedPool(String namePrefix, int maxThreadInPool, int maxQueueSize, boolean immediateProcessing, boolean checkForDouble, Consumer<T> process) {
-        this.maxThreadInPool = maxThreadInPool;
-        this.maxQueueSize = maxQueueSize;
-        this.immediateProcessing = immediateProcessing;
-        this.checkForDouble = checkForDouble;
-//        this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxThreadInPool);
-        this.executor = Executors.newVirtualThreadPerTaskExecutor();
+    public ThreadedPool(String namePrefix, int maxThreadInPool, boolean immediateProcessing, boolean checkForDouble, Consumer<T> process, Duration postProcessingDelay) {
+        this.queue = new MultiTenantedQueue<>(2, postProcessingDelay, checkForDouble, namePrefix);
         this.process = process;
-        this.namePrefix = namePrefix;
     }
 
     public boolean isShutdown() {
-        queueReadLock.lock();
-        try {
-            return shutdown;
-        }
-        finally {
-            queueReadLock.unlock();
-        }
+        return shutdown;
     }
 
     public void shutdown() {
-        queueWriteLock.lock();
-        try {
-            shutdown = true;
-            queue.clear();
-        } finally {
-            queueWriteLock.unlock();
-        }
-        executor.shutdownNow();
+        shutdown = true;
+        queue.clearQueue();
     }
 
     public void putToQueue(final T event) {
-        final int activeCount = executor.getActiveCount();
-        if (log.isDebugEnabled()) {
-            final long completedTaskCount = executor.getCompletedTaskCount();
-            final long taskCount = executor.getTaskCount();
-            log.debug("putToQueue({}), active task in executor: {}, awaiting tasks: {}", event.getClass().getSimpleName(), activeCount, taskCount - completedTaskCount);
-        }
-
-        if (maxQueueSize!=0 && (activeCount>0 || queue.size()>maxQueueSize)) {
+        if (shutdown) {
             return;
         }
-
-        if (checkForDouble) {
-            queueReadLock.lock();
-            try {
-                if (shutdown) {
-                    return;
-                }
-                if (queue.contains(event)) {
-                    return;
-                }
-            }
-            finally {
-                queueReadLock.unlock();
-            }
-        }
-
-        queueWriteLock.lock();
-        try {
-            if (checkForDouble && queue.contains(event)) {
-                return;
-            }
-            queue.add(event);
-        } finally {
-            queueWriteLock.unlock();
-        }
-        if (immediateProcessing) {
-            processEvent();
-        }
-    }
-
-    @Nullable
-    private T pullFromQueue() {
-        queueWriteLock.lock();
-        try {
-            if (shutdown) {
-                return null;
-            }
-            return queue.pollFirst();
-        } finally {
-            queueWriteLock.unlock();
-        }
-    }
-
-    public int getActiveCount() {
-        return executor.getActiveCount();
-    }
-
-    public int getQueueSize() {
-        return queue.size();
-    }
-
-    public void processEvent() {
-        if (isShutdown()) {
-            return;
-        }
-        if (executor.getActiveCount()>=maxThreadInPool) {
-            return;
-        }
-        Thread t = Thread.ofVirtual().start(this::actualProcessing);
-        executor.submit(t);
-    }
-
-    private void actualProcessing() {
-        T event;
-        while (!shutdown && (event = pullFromQueue()) != null) {
-            try {
-                process.accept(event);
-            }
-            catch (Throwable th) {
-                log.error("207.040 Error while processing queue: "+ th.getMessage(), th);
-            }
-        }
+        queue.putToQueue(event, process);
     }
 }

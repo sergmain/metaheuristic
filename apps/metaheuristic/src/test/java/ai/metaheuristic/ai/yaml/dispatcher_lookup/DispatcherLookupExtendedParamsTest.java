@@ -14,18 +14,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mhbp.events;
+package ai.metaheuristic.ai.yaml.dispatcher_lookup;
 
-import ai.metaheuristic.commons.utils.threads.EventWithId;
+import ai.metaheuristic.ai.processor.processor_environment.StandaloneDispatcherLookupExtendedParams;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Sergio Lissner
- * Date: 3/19/2023
- * Time: 10:42 PM
+ * Date: 9/27/2023
+ * Time: 1:01 AM
  */
-public record EvaluateProviderEvent(long evaluationId, int limit, long accountId) implements EventWithId<Long> {
-    @Override
-    public Long getId() {
-        return evaluationId;
+public class DispatcherLookupExtendedParamsTest {
+
+    @Test
+    public void test_lookupExtendedMap_not_null() {
+        StandaloneDispatcherLookupExtendedParams p = new StandaloneDispatcherLookupExtendedParams("123");
+        assertNotNull(p.lookupExtendedMap);
     }
 }

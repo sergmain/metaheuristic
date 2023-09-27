@@ -25,6 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nullable;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -220,13 +223,42 @@ public class ThreadUtils {
         }
     }
 
+    public static void waitTaskCompleted(List<Future<?>> f, int numberOfPeriods) throws InterruptedException {
+        int i = 0;
+        int completed;
+        while ((f.size() - (completed = completed(f))) > 0) {
+            Thread.sleep(TimeUnit.SECONDS.toMillis(1));
+            if (++i % numberOfPeriods == 0) {
+                final Runtime rt = Runtime.getRuntime();
+                log.debug("Threads total: {}, completed: {}. RAM free: {}, max: {}, total: {}",
+                    f.size(), completed,
+                    rt.freeMemory(), rt.maxMemory(), rt.totalMemory());
+                i = 0;
+            }
+        }
+    }
+
+    public static int completed(List<Future<?>> f) {
+        int r = 0;
+        for (Future<?> future : f) {
+            if (future.isDone()) {
+                r++;
+            }
+        }
+        return r;
+    }
+
     public static long execStat(long mills, ThreadPoolExecutor executor) {
+        return execStat(mills, executor.getTaskCount());
+    }
+
+    public static long execStat(long mills, long taskCount) {
         final long curr = System.currentTimeMillis();
         if (log.isInfoEnabled()) {
             final int sec = (int) ((curr - mills) / 1000);
-            String s = S.f("\nprocessed %d tasks for %d seconds", executor.getTaskCount(), sec);
+            String s = S.f("\nprocessed %d tasks for %d seconds", taskCount, sec);
             if (sec!=0) {
-                s += (", " + (((int) executor.getTaskCount() / sec)) + " tasks/sec");
+                s += (", " + (((int) taskCount / sec)) + " tasks/sec");
             }
             log.info(s);
         }

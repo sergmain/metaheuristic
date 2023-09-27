@@ -53,7 +53,7 @@ public class MultiTenantedQueueTest {
     @Test
     public void test() {
         System.out.println("init queue");
-        MultiTenantedQueue<Long, Event> queue = new MultiTenantedQueue<>(100, ConstsApi.DURATION_NONE);
+        MultiTenantedQueue<Long, Event> queue = new MultiTenantedQueue<>(100, ConstsApi.DURATION_NONE, true, null);
 
         try {
 

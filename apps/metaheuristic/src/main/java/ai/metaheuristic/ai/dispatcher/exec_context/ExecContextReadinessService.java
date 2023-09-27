@@ -19,15 +19,19 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsService;
+import ai.metaheuristic.ai.dispatcher.event.events.ExecContextReadinessEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.StartProcessReadinessEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.StartTaskProcessingEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.commons.utils.threads.ThreadedPool;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +55,7 @@ import java.util.Map;
 @Profile("dispatcher")
 @Slf4j
 @Order(1000)
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextReadinessService {
 
     private final ExecContextCache execContextCache;
@@ -59,34 +64,17 @@ public class ExecContextReadinessService {
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
     private final DispatcherParamsService dispatcherParamsService;
     private final TaskTxService taskTxService;
+    private final ExecContextRepository execContextRepository;
+    private final ExecContextReadinessStateService execContextReadinessStateService;
 
-    private final ThreadedPool<Long> startProcessReadinessEventThreadedPool;
+    private ThreadedPool<Long, ExecContextReadinessEvent> startProcessReadinessEventThreadedPool;
 
-    public ExecContextReadinessService(
-            @Autowired ExecContextCache execContextCache, @Autowired TaskProviderTopLevelService taskProviderTopLevelService,
-            @Autowired ExecContextReconciliationTopLevelService execContextReconciliationTopLevelService,
-            @Autowired ExecContextRepository execContextRepository, @Autowired ExecContextReadinessStateService execContextReadinessStateService,
-            @Autowired ExecContextGraphTopLevelService execContextGraphTopLevelService,
-            @Autowired DispatcherParamsService dispatcherParamsService, @Autowired TaskTxService taskTxService) {
-
-        this.execContextCache = execContextCache;
-        this.taskProviderTopLevelService = taskProviderTopLevelService;
-        this.execContextReconciliationTopLevelService = execContextReconciliationTopLevelService;
-        this.execContextGraphTopLevelService = execContextGraphTopLevelService;
-        this.dispatcherParamsService = dispatcherParamsService;
-        this.taskTxService = taskTxService;
-
-        startProcessReadinessEventThreadedPool = new ThreadedPool<>("ExecContextReadinessService-", 1, 0, false, false, (execContextId) -> {
-            prepare(execContextId);
-            execContextReadinessStateService.remove(execContextId);
-        });
-
-        final List<Long> ids = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.STARTED.code);
-        log.info("Started execContextIds: " + ids);
-        execContextReadinessStateService.addAll(ids);
-        for (Long notReadyExecContextId : ids) {
-            startProcessReadinessEventThreadedPool.putToQueue(notReadyExecContextId);
-        }
+    @PostConstruct
+    public void init() {
+        startProcessReadinessEventThreadedPool = new ThreadedPool<>("ExecContextReadinessService-", 100, false, false, (event) -> {
+            prepare(event.getId());
+            execContextReadinessStateService.remove(event.getId());
+        }, ConstsApi.DURATION_NONE);
     }
 
     @PreDestroy
@@ -100,7 +88,12 @@ public class ExecContextReadinessService {
     @EventListener
     @SneakyThrows
     public void processSessionEvent(StartProcessReadinessEvent event) {
-        startProcessReadinessEventThreadedPool.processEvent();
+        final List<Long> ids = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.STARTED.code);
+        log.info("Started execContextIds: " + ids);
+        execContextReadinessStateService.addAll(ids);
+        for (Long notReadyExecContextId : ids) {
+            startProcessReadinessEventThreadedPool.putToQueue(new ExecContextReadinessEvent(notReadyExecContextId));
+        }
     }
 
     private void prepare(Long execContextId) {

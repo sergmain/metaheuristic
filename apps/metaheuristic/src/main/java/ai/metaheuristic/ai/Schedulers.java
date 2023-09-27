@@ -187,6 +187,7 @@ public class Schedulers {
 
         // Dispatcher schedulers with fixed delay
 
+/*
         private final ProcessSessionOfEvaluationService evaluateProviderService;
         private final KbInitializingService kbInitializingService;
 
@@ -197,7 +198,9 @@ public class Schedulers {
             }
             evaluateProviderService.processSessionEvent();
         }
+*/
 
+/*
         @Scheduled(initialDelay = 17_000, fixedDelay = 17_000 )
         public void processInitKb() {
             if (globals.testing) {
@@ -205,6 +208,7 @@ public class Schedulers {
             }
             kbInitializingService.processEvent();
         }
+*/
 
         @Scheduled(initialDelay = 63_000, fixedDelay = 630_000 )
         public void updateExecContextStatuses() {
@@ -231,19 +235,20 @@ public class Schedulers {
             }
         }
 
-        boolean needToInitializeReadyness = true;
+        boolean needToInitializeReadiness = true;
 
-        @Scheduled(initialDelay = 5_000, fixedDelay = 15_000)
+        @Scheduled(initialDelay = 1_000, fixedDelay = 15_000)
         public void registerInternalTasks() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
-            if (globals.dispatcher.asset.mode==EnumsApi.DispatcherAssetMode.source) {
+            if (needToInitializeReadiness) {
+                eventPublisher.publishEvent(new StartProcessReadinessEvent());
+                needToInitializeReadiness = false;
                 return;
             }
-            if (needToInitializeReadyness) {
-                eventPublisher.publishEvent(new StartProcessReadinessEvent());
-                needToInitializeReadyness = false;
+            if (globals.dispatcher.asset.mode==EnumsApi.DispatcherAssetMode.source) {
+                return;
             }
             log.info("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
             ArtifactCleanerAtDispatcher.setBusy();
@@ -279,6 +284,7 @@ public class Schedulers {
             execContextStatusService.resetStatus();
         }
 
+/*
         @Scheduled(initialDelay = 15_000, fixedDelay = 11_000 )
         public void resetTasksWithErrorForRecovery() {
             if (globals.testing || !globals.dispatcher.enabled) {
@@ -292,6 +298,7 @@ public class Schedulers {
                 ArtifactCleanerAtDispatcher.notBusy();
             }
         }
+*/
 
         @Scheduled(initialDelay = 15_000, fixedDelay = 5_000 )
         public void processCheckCaching() {
@@ -307,6 +314,7 @@ public class Schedulers {
             }
         }
 
+/*
         @Scheduled(initialDelay = 15_000, fixedDelay = 1_000 )
         public void processUpdateTaskExecStatesInGraph() {
             if (globals.testing || !globals.dispatcher.enabled) {
@@ -320,6 +328,7 @@ public class Schedulers {
                 ArtifactCleanerAtDispatcher.notBusy();
             }
         }
+*/
 
         @Scheduled(initialDelay = 25_000, fixedDelay = 15_000 )
         public void updateStateForLongRunning() {

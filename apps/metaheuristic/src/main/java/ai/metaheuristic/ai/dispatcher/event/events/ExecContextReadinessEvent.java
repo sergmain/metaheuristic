@@ -14,18 +14,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mhbp.events;
+package ai.metaheuristic.ai.dispatcher.event.events;
 
 import ai.metaheuristic.commons.utils.threads.EventWithId;
 
 /**
  * @author Sergio Lissner
- * Date: 3/19/2023
- * Time: 10:42 PM
+ * Date: 9/26/2023
+ * Time: 4:06 PM
  */
-public record EvaluateProviderEvent(long evaluationId, int limit, long accountId) implements EventWithId<Long> {
+public class ExecContextReadinessEvent implements EventWithId<Long> {
+    public final Long execContextId;
+
+    public ExecContextReadinessEvent(Long execContextId) {
+        this.execContextId = execContextId;
+    }
+
     @Override
     public Long getId() {
-        return evaluationId;
+        return execContextId;
     }
 }

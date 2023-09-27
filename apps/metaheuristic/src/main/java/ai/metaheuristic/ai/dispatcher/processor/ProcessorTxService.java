@@ -75,24 +75,24 @@ public class ProcessorTxService {
     @Nullable
     @Transactional
     public DispatcherApiData.ProcessorSessionId checkProcessorId(Enums.ProcessorAndSessionStatus processorAndSessionStatus, final Long processorId, String remoteAddress) {
-            if (processorAndSessionStatus == Enums.ProcessorAndSessionStatus.reassignProcessor) {
-                return reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
-            }
+        if (processorAndSessionStatus == Enums.ProcessorAndSessionStatus.reassignProcessor) {
+            return reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
+        }
 
-            Processor processor = processorCache.findById(processorId);
-            if (processor==null) {
-                throw new IllegalStateException("(processor==null)");
-            }
+        Processor processor = processorCache.findById(processorId);
+        if (processor==null) {
+            throw new IllegalStateException("(processor==null)");
+        }
 
-            if (processorAndSessionStatus == Enums.ProcessorAndSessionStatus.newSession) {
-                return assignNewSessionId(processor);
-            }
-            else if (processorAndSessionStatus == Enums.ProcessorAndSessionStatus.updateSession) {
-                updateSession(processor);
-                return null;
-            }
+        if (processorAndSessionStatus == Enums.ProcessorAndSessionStatus.newSession) {
+            return assignNewSessionId(processor);
+        }
+        else if (processorAndSessionStatus == Enums.ProcessorAndSessionStatus.updateSession) {
+            updateSession(processor);
+            return null;
+        }
 
-            throw new IllegalStateException("unknown processorAndSessionStatus: " + processorAndSessionStatus);
+        throw new IllegalStateException("unknown processorAndSessionStatus: " + processorAndSessionStatus);
     }
 
     @Transactional
