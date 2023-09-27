@@ -51,7 +51,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextTaskStateTopLevelService {
 
-    private final ExecContextTaskStateService execContextTaskStateService;
+    private final ExecContextTaskStateTxService execContextTaskStateService;
     private final TaskRepository taskRepository;
     private final ExecContextCache execContextCache;
 

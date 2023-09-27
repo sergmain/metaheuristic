@@ -48,7 +48,7 @@ import static ai.metaheuristic.api.EnumsApi.*;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class ExecContextTaskStateService {
+public class ExecContextTaskStateTxService {
 
     private final ExecContextGraphService execContextGraphService;
     private final TaskExecStateService taskExecStateService;
