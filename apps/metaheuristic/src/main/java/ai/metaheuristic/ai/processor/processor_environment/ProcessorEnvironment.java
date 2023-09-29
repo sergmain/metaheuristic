@@ -41,7 +41,7 @@ import java.nio.file.Path;
 @Service
 @Slf4j
 @Profile("processor")
-@RequiredArgsConstructor(onConstructor_={@Autowired})
+//@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ProcessorEnvironment {
 
     private final Globals globals;
@@ -52,10 +52,14 @@ public class ProcessorEnvironment {
     public DispatcherLookupExtendedParams dispatcherLookupExtendedService;
     public MetadataParams metadataParams;
 
-//    public ProcessorEnvironment(@Autowired Globals globals, @Autowired ApplicationContext appCtx, @Autowired AdditionalCustomUserDetails additionalCustomUserDetails) {
+    @Autowired
+    public ProcessorEnvironment(Globals globals, ApplicationContext appCtx, AdditionalCustomUserDetails additionalCustomUserDetails) {
+        this.globals = globals;
+        this.appCtx = appCtx;
+        this.additionalCustomUserDetails = additionalCustomUserDetails;
 
-    @PostConstruct
-    public void init() {
+//    @PostConstruct
+//    public void init() {
         if (!globals.processor.enabled) {
             return;
         }
