@@ -61,7 +61,6 @@ import java.util.concurrent.ThreadPoolExecutor;
  * Time: 17:21
  */
 @EnableCaching
-@EnableAsync
 @Configuration
 @Slf4j
 @EnableConfigurationProperties(Globals.class)
@@ -73,13 +72,11 @@ public class Config {
     @SuppressWarnings("unused")
     private final SpringChecker springChecker;
 
-/*
     @Configuration
-    @ComponentScan("ai.metaheuristic.ai.dispatcher")
+//    @ComponentScan("ai.metaheuristic.ai.dispatcher")
     @EnableAsync
     public static class SpringAsyncConfig implements AsyncConfigurer {
     }
-*/
 
     @Component
     public static class EOFCustomFilter implements Filter {

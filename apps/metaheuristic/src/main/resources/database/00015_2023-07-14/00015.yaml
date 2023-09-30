@@ -24,4 +24,9 @@ databaseChangeLog:
               path:  00015-hsqldb-Initial-revision.sql
               stripComments:  true
               relativeToChangelogFile: true
+         -  sqlFile:
+              dbms:  'derby'
+              path:  00015-derby-Initial-revision.sql
+              stripComments:  true
+              relativeToChangelogFile: true
 

@@ -36,7 +36,7 @@ public class SpringHelpersUtils {
             "dispatcher", "processor", "quickstart", "standalone", "disk-storage", "test", "disable-check-frontend",
 
             // db's profiles
-            "mysql", "postgresql", "h2", "hsqldb", "generic", "custom");
+            "mysql", "postgresql", "h2", "hsqldb", "derby", "generic", "custom");
 
     public static List<String> getProfiles(String activeProfiles) {
         List<String> profiles = Arrays.stream(StringUtils.split(activeProfiles, ", "))

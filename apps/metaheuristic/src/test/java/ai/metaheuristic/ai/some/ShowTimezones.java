@@ -28,6 +28,7 @@ import java.util.Set;
 public class ShowTimezones {
 
     public static void main(String[] args) {
+        System.out.println(System.currentTimeMillis());
         Set<String> allZones = ZoneId.getAvailableZoneIds();
         LocalDateTime dt = LocalDateTime.now();
 
