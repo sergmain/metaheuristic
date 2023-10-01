@@ -220,6 +220,7 @@ public class SouthbridgeService {
     }
 
     public String keepAlive(String data, String remoteAddress) {
+        globals.state.awaitingForProcessor = false;
         KeepAliveRequestParamYaml karpy = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.to(data);
         KeepAliveResponseParamYaml response = keepAliveTopLevelService.processKeepAliveInternal(karpy, remoteAddress, System.currentTimeMillis());
         String yaml = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.toString(response);

@@ -20,17 +20,14 @@ import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 public class MetaheuristicStatus {
 
     public static String APP_UUID = CommonConsts.APP_UUID_NONE;
-    @Nullable
     public static Path metaheuristicStatusFilePath = null;
 
     @SneakyThrows
@@ -52,15 +49,6 @@ public class MetaheuristicStatus {
         Files.createDirectories(electronStatusPath);
 
         metaheuristicStatusFilePath = electronStatusPath.resolve("mh-" + APP_UUID + ".status");
-/*
-        if (Files.exists(metaheuristicStatusFilePath)) {
-            try {
-                Files.write(metaheuristicStatusFilePath, new byte[0], StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.SYNC);
-            } catch (Throwable th) {
-                //;
-            }
-        }
-*/
 
         //noinspection unused
         int i=0;

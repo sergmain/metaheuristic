@@ -49,7 +49,7 @@ public class StandaloneAnonRestController {
 
     @GetMapping("/shutdown")
     public String shutdown() {
-        globals.shutdownInProgress = true;
+        globals.state.shutdownInProgress = true;
         final String s = SHUTDOWN_IN_PROGRESS + LocalDateTime.now();
         new Thread(()-> {
             log.warn(s);

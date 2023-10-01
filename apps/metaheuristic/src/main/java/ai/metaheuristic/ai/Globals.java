@@ -497,6 +497,11 @@ public class Globals {
         public boolean active = false;
     }
 
+    public static class State {
+        public boolean shutdownInProgress = false;
+        public boolean awaitingForProcessor = true;
+    }
+
     @Value("${spring.profiles.active}")
     public String[] activeProfiles;
 
@@ -508,6 +513,7 @@ public class Globals {
 //    public final ThreadNumber threadNumber = new ThreadNumber();
     public final Mhbp mhbp = new Mhbp();
     public final Standalone standalone = new Standalone();
+    public final State state = new State();
 
     @Nullable
     public String systemOwner = null;
@@ -519,7 +525,6 @@ public class Globals {
 
     public boolean testing = false;
     public boolean eventEnabled = false;
-    public boolean shutdownInProgress = false;
 
     public boolean sslRequired = true;
 
@@ -613,7 +618,7 @@ public class Globals {
 
     @PreDestroy
     public void onExit() {
-        shutdownInProgress = true;
+        state.shutdownInProgress = true;
     }
 
     private void logUlimitSh() {

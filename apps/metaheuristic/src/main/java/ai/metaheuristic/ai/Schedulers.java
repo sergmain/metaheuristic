@@ -414,7 +414,7 @@ public class Schedulers {
         }
 
         public void taskProcessor() {
-            if (globals.testing || !globals.processor.enabled || globals.shutdownInProgress) {
+            if (globals.testing || !globals.processor.enabled || globals.state.shutdownInProgress) {
                 return;
             }
             log.info("Run taskProcessor.fixedDelay()");
@@ -562,7 +562,7 @@ public class Schedulers {
 
         // this scheduler is being run at the processor side
 
-        @Scheduled(initialDelay = 4_000, fixedDelay = 20_000)
+        @Scheduled(initialDelay = 1_000, fixedDelay = 20_000)
         public void keepAlive() {
             if (globals.testing) {
                 return;
@@ -587,7 +587,7 @@ public class Schedulers {
 
         @Scheduled(initialDelay = 2_000, fixedDelay = 2_000 )
         public void updateStateForLongRunning() {
-            if (globals.shutdownInProgress) {
+            if (globals.state.shutdownInProgress) {
                 return;
             }
             frontendCheckerService.checkFrontend();

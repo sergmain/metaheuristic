@@ -76,7 +76,7 @@ public class FrontendCheckerService {
             log.error("367.080 ConnectException", th);
         }
         if (errors>2) {
-            globals.shutdownInProgress = true;
+            globals.state.shutdownInProgress = true;
             log.warn("367.120 Front-end wasn't found, shutdown server-side");
             System.exit(SpringApplication.exit(appCtx, () -> -100));
         }

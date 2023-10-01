@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
@@ -56,6 +57,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextTaskAssigningTopLevelService {
 
+    private final Globals globals;
     private final ExecContextCache execContextCache;
     private final ExecContextFSM execContextFSM;
     private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
@@ -93,6 +95,9 @@ public class ExecContextTaskAssigningTopLevelService {
     @Async
     @EventListener
     public void handleEvaluateProviderEvent(FindUnassignedTasksAndRegisterInQueueEvent event) {
+        if (globals.state.awaitingForProcessor) {
+            return;
+        }
         putToQueue(event);
     }
 
