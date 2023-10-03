@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -54,7 +54,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.ByteArrayInputStream;
@@ -72,7 +71,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
     @Autowired private TaskRepository taskRepository;
-    @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
+    @Autowired private ExecContextTaskStateService execContextTaskStateTopLevelService;
     @Autowired private TaskFinishingTopLevelService taskFinishingTopLevelService;
     @Autowired private TaskFinishingTxService taskFinishingTxService;
     @Autowired private ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;

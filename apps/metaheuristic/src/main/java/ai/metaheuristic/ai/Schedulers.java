@@ -22,14 +22,12 @@ import ai.metaheuristic.ai.dispatcher.event.events.StartProcessReadinessEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.long_running.LongRunningTopLevelService;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
-import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingService;
 import ai.metaheuristic.ai.dispatcher.thread.DeadLockDetector;
-import ai.metaheuristic.ai.mhbp.kb.KbInitializingService;
-import ai.metaheuristic.ai.mhbp.provider.ProcessSessionOfEvaluationService;
 import ai.metaheuristic.ai.processor.*;
 import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
 import ai.metaheuristic.ai.processor.actors.DownloadVariableService;
@@ -39,6 +37,7 @@ import ai.metaheuristic.ai.processor.dispatcher_selection.ActiveDispatchers;
 import ai.metaheuristic.ai.processor.event.KeepAliveEvent;
 import ai.metaheuristic.ai.processor.event.ProcessorEventBusService;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
+import ai.metaheuristic.ai.standalone.FrontendCheckerService;
 import ai.metaheuristic.api.EnumsApi;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -177,8 +176,8 @@ public class Schedulers {
         private final Globals globals;
         private final ExecContextSchedulerService execContextSchedulerService;
         private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
-        private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
-        private final ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
+        private final TaskCheckCachingService taskCheckCachingTopLevelService;
+        private final ExecContextTaskStateService execContextTaskStateTopLevelService;
         private final LongRunningTopLevelService longRunningTopLevelService;
         private final ApplicationEventPublisher eventPublisher;
         private final ExecContextStatusService execContextStatusService;
@@ -186,6 +185,7 @@ public class Schedulers {
 
         // Dispatcher schedulers with fixed delay
 
+/*
         private final ProcessSessionOfEvaluationService evaluateProviderService;
         private final KbInitializingService kbInitializingService;
 
@@ -196,7 +196,9 @@ public class Schedulers {
             }
             evaluateProviderService.processSessionEvent();
         }
+*/
 
+/*
         @Scheduled(initialDelay = 17_000, fixedDelay = 17_000 )
         public void processInitKb() {
             if (globals.testing) {
@@ -204,6 +206,7 @@ public class Schedulers {
             }
             kbInitializingService.processEvent();
         }
+*/
 
         @Scheduled(initialDelay = 63_000, fixedDelay = 630_000 )
         public void updateExecContextStatuses() {
@@ -230,19 +233,20 @@ public class Schedulers {
             }
         }
 
-        boolean needToInitializeReadyness = true;
+        boolean needToInitializeReadiness = true;
 
-        @Scheduled(initialDelay = 5_000, fixedDelay = 15_000)
+        @Scheduled(initialDelay = 1_000, fixedDelay = 15_000)
         public void registerInternalTasks() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
-            if (globals.dispatcher.asset.mode==EnumsApi.DispatcherAssetMode.source) {
+            if (needToInitializeReadiness) {
+                eventPublisher.publishEvent(new StartProcessReadinessEvent());
+                needToInitializeReadiness = false;
                 return;
             }
-            if (needToInitializeReadyness) {
-                eventPublisher.publishEvent(new StartProcessReadinessEvent());
-                needToInitializeReadyness = false;
+            if (globals.dispatcher.asset.mode==EnumsApi.DispatcherAssetMode.source) {
+                return;
             }
             log.info("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
             ArtifactCleanerAtDispatcher.setBusy();
@@ -278,6 +282,7 @@ public class Schedulers {
             execContextStatusService.resetStatus();
         }
 
+/*
         @Scheduled(initialDelay = 15_000, fixedDelay = 11_000 )
         public void resetTasksWithErrorForRecovery() {
             if (globals.testing || !globals.dispatcher.enabled) {
@@ -291,6 +296,7 @@ public class Schedulers {
                 ArtifactCleanerAtDispatcher.notBusy();
             }
         }
+*/
 
         @Scheduled(initialDelay = 15_000, fixedDelay = 5_000 )
         public void processCheckCaching() {
@@ -306,6 +312,7 @@ public class Schedulers {
             }
         }
 
+/*
         @Scheduled(initialDelay = 15_000, fixedDelay = 1_000 )
         public void processUpdateTaskExecStatesInGraph() {
             if (globals.testing || !globals.dispatcher.enabled) {
@@ -319,6 +326,7 @@ public class Schedulers {
                 ArtifactCleanerAtDispatcher.notBusy();
             }
         }
+*/
 
         @Scheduled(initialDelay = 25_000, fixedDelay = 15_000 )
         public void updateStateForLongRunning() {
@@ -339,9 +347,6 @@ public class Schedulers {
 
         @PostConstruct
         public void post() {
-            if (processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap==null) {
-                throw new IllegalStateException("dispatcher.yaml wasn't configured");
-            }
             this.activeDispatchers = new ActiveDispatchers(processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap, "ActiveDispatchers for scheduler", Enums.DispatcherSelectionStrategy.priority);
         }
 
@@ -409,7 +414,7 @@ public class Schedulers {
         }
 
         public void taskProcessor() {
-            if (globals.testing || !globals.processor.enabled) {
+            if (globals.testing || !globals.processor.enabled || globals.state.shutdownInProgress) {
                 return;
             }
             log.info("Run taskProcessor.fixedDelay()");
@@ -557,7 +562,7 @@ public class Schedulers {
 
         // this scheduler is being run at the processor side
 
-        @Scheduled(initialDelay = 4_000, fixedDelay = 20_000)
+        @Scheduled(initialDelay = 1_000, fixedDelay = 20_000)
         public void keepAlive() {
             if (globals.testing) {
                 return;
@@ -569,4 +574,24 @@ public class Schedulers {
             processorEventBusService.keepAlive(new KeepAliveEvent());
         }
     }
+
+    @Service
+    @EnableScheduling
+    @Slf4j
+    @Profile("standalone & !disable-check-frontend")
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
+    public static class StandaloneSchedulers {
+
+        private final FrontendCheckerService frontendCheckerService;
+        private final Globals globals;
+
+        @Scheduled(initialDelay = 2_000, fixedDelay = 2_000 )
+        public void updateStateForLongRunning() {
+            if (globals.state.shutdownInProgress) {
+                return;
+            }
+            frontendCheckerService.checkFrontend();
+        }
+    }
+
 }

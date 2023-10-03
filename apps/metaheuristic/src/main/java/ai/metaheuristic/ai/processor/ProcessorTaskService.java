@@ -34,6 +34,7 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +61,7 @@ import static java.nio.file.StandardOpenOption.*;
 @Service
 @Slf4j
 @Profile("processor")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ProcessorTaskService {
 
     private final Globals globals;
@@ -80,32 +82,35 @@ public class ProcessorTaskService {
 
     public Path processorPath;
 
+/*
     @Autowired
     public ProcessorTaskService(Globals globals, CurrentExecState currentExecState, ProcessorEnvironment processorEnvironment) {
         this.globals = globals;
         this.currentExecState = currentExecState;
         this.processorEnvironment = processorEnvironment;
-        if (globals.testing) {
-            return;
-        }
-        if (!globals.processor.enabled) {
+*/
+/*
+        if (globals.testing || !globals.processor.enabled) {
             return;
         }
         this.processorPath = globals.processorPath;
         init(processorPath);
-    }
+*//*
 
- /*   @PostConstruct
-    public void postConstruct() {
-        if (globals.testing) {
-            return;
-        }
-        this.processorPath = globals.processorPath;
-        init(processorPath);
-        //noinspection unused
-        int i = 0;
     }
 */
+
+   @PostConstruct
+    public void postConstruct() {
+       if (globals.testing || !globals.processor.enabled) {
+           return;
+       }
+       this.processorPath = globals.processorPath;
+       init(processorPath);
+       //noinspection unused
+       int i = 0;
+    }
+
     @SneakyThrows
     public void init(Path processorPath) {
         for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataParams.getAllEnabledRefsForCores()) {

@@ -16,35 +16,34 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
-import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
-import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.event.events.TransferStateFromTaskQueueToExecContextEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInGraphEvent;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
-import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.utils.threads.ThreadedPool;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
- * Date: 10/3/2020
- * Time: 10:22 PM
+ * Date: 12/18/2020
+ * Time: 6:37 PM
  */
 @Service
 @Profile("dispatcher")
@@ -52,73 +51,95 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextTaskStateService {
 
-    private final ExecContextGraphService execContextGraphService;
-    private final TaskExecStateService taskExecStateService;
-    private final ExecContextTaskStateRepository execContextTaskStateRepository;
-    private final EventPublisherService eventPublisherService;
+    private final ExecContextTaskStateTxService execContextTaskStateService;
+    private final TaskRepository taskRepository;
+    private final ExecContextCache execContextCache;
 
-    public static long getCountUnfinishedTasks(ExecContextTaskState execContextTaskState) {
-        return execContextTaskState.getExecContextTaskStateParamsYaml().states.entrySet()
-                .stream()
-                .filter(o -> o.getValue()== EnumsApi.TaskExecState.NONE || o.getValue()==EnumsApi.TaskExecState.IN_PROGRESS || o.getValue()==EnumsApi.TaskExecState.CHECK_CACHE)
-                .count();
+
+    private final ThreadedPool<Long, TransferStateFromTaskQueueToExecContextEvent> threadedPoolMap =
+        new ThreadedPool<>("TransferStateFromTaskQueueToExecContext-", 2, true, false, this::transferStateFromTaskQueueToExecContext, ConstsApi.DURATION_NONE );
+
+    private final ThreadedPool<Long, UpdateTaskExecStatesInGraphEvent> updateTaskExecStatesInGraphEventThreadedPool =
+        new ThreadedPool<>("UpdateTaskExecStatesInGraph-", 100, false, false, this::updateTaskExecStatesInGraph, ConstsApi.SECONDS_5);
+
+    @PreDestroy
+    public void onExit() {
+        threadedPoolMap.shutdown();
+        updateTaskExecStatesInGraphEventThreadedPool.shutdown();
     }
 
-    public static List<Long> getUnfinishedTaskVertices(ExecContextTaskState execContextTaskState) {
-        return execContextTaskState.getExecContextTaskStateParamsYaml().states.entrySet()
-                .stream()
-                .filter(o -> o.getValue()==EnumsApi.TaskExecState.NONE || o.getValue()==EnumsApi.TaskExecState.IN_PROGRESS || o.getValue()==EnumsApi.TaskExecState.CHECK_CACHE)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+    @Async
+    @EventListener
+    public void handleEvent(TransferStateFromTaskQueueToExecContextEvent event) {
+        threadedPoolMap.putToQueue(event);
     }
 
-    @Transactional
-    public OperationStatusRest updateTaskExecStatesInGraph(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, String taskContextId) {
-        ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
-        TaskSyncService.checkWriteLockPresent(taskId);
+    @Async
+    @EventListener
+    public void handleEvent(UpdateTaskExecStatesInGraphEvent event) {
+        updateTaskExecStatesInGraphEventThreadedPool.putToQueue(event);
+    }
 
-        final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
-                execContextGraphId, execContextTaskStateId, taskId, execState, taskContextId);
+    public void processUpdateTaskExecStatesInGraph() {
+//        updateTaskExecStatesInGraphEventThreadedPool.entrySet().stream().parallel().forEach(e->e.getValue().processEvent());
+    }
 
-        taskExecStateService.updateTasksStateInDb(status);
-        eventPublisherService.handleFindUnassignedTasksAndRegisterInQueueEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
+    public void updateTaskExecStatesInGraph(UpdateTaskExecStatesInGraphEvent event) {
+        try {
+            log.debug("call ExecContextTaskStateTopLevelService.updateTaskExecStatesInGraph({}, {})", event.execContextId, event.taskId);
+            TaskImpl task = taskRepository.findByIdReadOnly(event.taskId);
+            if (task==null) {
+                return;
+            }
+            TaskParamsYaml taskParams = task.getTaskParamsYaml();
+            if (!event.execContextId.equals(task.execContextId)) {
+                log.error("417.020 (!execContextId.equals(task.execContextId))");
+                return;
+            }
+            ExecContextImpl ec = execContextCache.findById(task.execContextId, true);
+            if (ec==null) {
+                return;
+            }
+            ExecContextTaskStateSyncService.getWithSyncNullable(ec.execContextTaskStateId,
+                    () -> TaskSyncService.getWithSyncNullable(event.taskId,
+                            () -> updateTaskExecStatesInGraph(ec.execContextGraphId, ec.execContextTaskStateId, event.taskId, EnumsApi.TaskExecState.from(task.execState), taskParams.task.taskContextId)));
 
-        return status.status;
+        } catch (Throwable th) {
+            log.error("417.020 Error, need to investigate ", th);
+        }
+    }
+
+    private OperationStatusRest updateTaskExecStatesInGraph(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState state, String taskContextId) {
+        return execContextTaskStateService.updateTaskExecStatesInGraph(execContextGraphId, execContextTaskStateId, taskId, state, taskContextId);
+    }
+
+
+    public void transferStateFromTaskQueueToExecContext(TransferStateFromTaskQueueToExecContextEvent event) {
+        try {
+            log.debug("call ExecContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext({})", event.execContextId);
+            TaskQueue.TaskGroup taskGroup;
+            int i = 1;
+            long mills = System.currentTimeMillis();
+            while ((taskGroup =
+                    ExecContextGraphSyncService.getWithSync(event.execContextGraphId, ()->
+                            ExecContextTaskStateSyncService.getWithSync(event.execContextTaskStateId, ()->
+                                    transferStateFromTaskQueueToExecContext(
+                                            event.execContextId, event.execContextGraphId, event.execContextTaskStateId))))!=null) {
+                taskGroup.reset();
+                if (System.currentTimeMillis() - mills > 1_000) {
+                    break;
+                }
+                i++;
+            }
+            log.info("417.060 transferStateFromTaskQueueToExecContext() was completed in {} loops within {} milliseconds", i-1, System.currentTimeMillis() - mills);
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
+        }
     }
 
     @Nullable
-    @Transactional
     public TaskQueue.TaskGroup transferStateFromTaskQueueToExecContext(Long execContextId, Long execContextGraphId, Long execContextTaskStateId) {
-        ExecContextGraphSyncService.checkWriteLockPresent(execContextGraphId);
-        ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
-
-        TaskQueue.TaskGroup taskGroup = TaskProviderTopLevelService.getTaskGroupForTransfering(execContextId);
-        if (taskGroup==null) {
-            return null;
-        }
-        boolean found = false;
-        for (TaskQueue.AllocatedTask task : taskGroup.tasks) {
-            if (task==null) {
-                continue;
-            }
-
-            if (task.queuedTask.taskParamYaml==null) {
-                throw new IllegalStateException("(task.queuedTask.taskParamYaml==null)");
-            }
-            String taskContextId = task.queuedTask.taskParamYaml.task.taskContextId;
-            final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
-                    execContextGraphId, execContextTaskStateId, task.queuedTask.taskId, task.state, taskContextId);
-
-            taskExecStateService.updateTasksStateInDb(status);
-            found = true;
-        }
-        return found ? taskGroup : null;
-    }
-
-    @Transactional
-    public Void deleteOrphanTaskStates(List<Long> ids) {
-        execContextTaskStateRepository.deleteAllByIdIn(ids);
-        return null;
+        return execContextTaskStateService.transferStateFromTaskQueueToExecContext(execContextId, execContextGraphId, execContextTaskStateId);
     }
 
 }

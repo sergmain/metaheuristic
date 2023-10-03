@@ -19,6 +19,7 @@ package ai.metaheuristic.ai;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
@@ -170,8 +171,8 @@ public class Consts {
     public static final Duration DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS = DURATION_20_SECONDS;
     public static final long DISPATCHER_SOCKET_TIMEOUT_MILLISECONDS = DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS.toMillis();
 
-//    public static final Duration DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS = DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS.minus(DURATION_5_SECONDS);
-    public static final Duration DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS = DURATION_1_HOUR;
+    public static final Duration DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS = DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS.minus(DURATION_5_SECONDS);
+//    public static final Duration DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS = DURATION_1_HOUR;
     public static final long DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS = DURATION_DISPATCHER_REQUEST_PROCESSSING_SECONDS.toMillis();
 
     public static final String GIT_PATH = "git";
@@ -189,4 +190,7 @@ public class Consts {
     public static final String REST_USER = "rest_user";
 
     public static final int STANDALONE_PORT_NUMBER = 64967;
+
+    public static final String UUID_ARG = "uuid=";
+    public static final String ELECTRON_PATH = "electron";
 }

@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.mhbp.data.NluData;
 import ai.metaheuristic.ai.mhbp.repositories.AuthRepository;
 import ai.metaheuristic.ai.mhbp.api_keys.ApiKeysProvider;
 import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
+import ai.metaheuristic.ai.utils.HttpUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.commons.S;
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
@@ -35,7 +36,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.fluent.Executor;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
-import org.apache.hc.client5.http.utils.URIUtils;
 import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
@@ -48,7 +48,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -212,7 +211,7 @@ public class ProviderApiSchemeService {
     private static Executor getExecutor(String url, String username, String password) {
         HttpHost httpHost;
         try {
-            httpHost = URIUtils.extractHost(new URL(url).toURI());
+            httpHost = HttpUtils.getHttpHost(url);
         } catch (Throwable th) {
             throw new IllegalArgumentException("Can't build HttpHost for " + url, th);
         }

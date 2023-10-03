@@ -70,6 +70,17 @@ public class AuthRestController {
         return authService.createAuth(code, params, context);
     }
 
+    @PostMapping("/auth-edit-commit")
+//    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
+    public OperationStatusRest editFormCommit(
+            @RequestParam(name = "authId") Long authId,
+            @RequestParam(name = "params") String params,
+            Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+
+        return authService.updateAuth(authId, params, context);
+    }
+
     @PostMapping("/auth-delete-commit")
 //    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest deleteCommit(Long id, Authentication authentication) {

@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
@@ -238,7 +238,18 @@ public abstract class PreparingSourceCode extends PreparingCore {
         if (ects==null) {
             return List.of();
         }
-        return ExecContextTaskStateService.getUnfinishedTaskVertices(ects);
+        return ExecContextTaskStateUtils.getUnfinishedTaskVertices(ects.getExecContextTaskStateParamsYaml());
+    }
+
+    public List<Long> getFinishedTaskVertices(ExecContextImpl execContext) {
+        if (execContext.execContextTaskStateId==null) {
+            return List.of();
+        }
+        ExecContextTaskState ects = execContextTaskStateRepository.findById(execContext.execContextTaskStateId).orElse(null);
+        if (ects==null) {
+            return List.of();
+        }
+        return ExecContextTaskStateUtils.getFinishedTaskVertices(ects.getExecContextTaskStateParamsYaml());
     }
 
 

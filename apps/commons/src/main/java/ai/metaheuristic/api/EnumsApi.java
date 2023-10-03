@@ -58,8 +58,8 @@ public class EnumsApi {
     }
 
     /**
-     * local - all assets are managed locally
-     * source - this dispatcher is source for all assets
+     * local - all assets are managed locally<br/>
+     * source - this dispatcher is source for all assets<br/>
      * replicated - all assets on this dispatcher are replicated from source dispatcher
      */
     public enum DispatcherAssetMode {local, source, replicated}

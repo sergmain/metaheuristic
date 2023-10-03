@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.standalone.rest;
 
+import ai.metaheuristic.ai.Globals;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,9 +45,11 @@ public class StandaloneAnonRestController {
 
     public static final String SHUTDOWN_IN_PROGRESS = "Shutdown of Metaheuristic was started at ";
     private final ApplicationContext appCtx;
+    private final Globals globals;
 
     @GetMapping("/shutdown")
     public String shutdown() {
+        globals.state.shutdownInProgress = true;
         final String s = SHUTDOWN_IN_PROGRESS + LocalDateTime.now();
         new Thread(()-> {
             log.warn(s);

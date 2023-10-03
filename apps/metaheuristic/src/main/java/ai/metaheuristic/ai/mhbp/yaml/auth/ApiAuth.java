@@ -28,15 +28,15 @@ import org.springframework.lang.Nullable;
 @Data
 public class ApiAuth implements BaseParams {
 
-    public final int version=1;
+    public final int version=2;
 
     @Override
     public boolean checkIntegrity() {
         if (auth.basic==null && auth.token==null) {
             throw new CheckIntegrityFailedException("(api.basicAuth==null && api.tokenAuth==null)");
         }
-        if (auth.token!=null && auth.token.token==null && auth.token.env==null) {
-            throw new CheckIntegrityFailedException("(auth.token!=null && auth.token.token==null && auth.token.env==null)");
+        if (auth.token!=null && auth.token.token==null && auth.token.env==null && auth.token.key==null) {
+            throw new CheckIntegrityFailedException("(auth.token!=null && auth.token.token==null && auth.token.env==null && auth.token.key==null)");
         }
         return true;
     }
@@ -59,6 +59,7 @@ public class ApiAuth implements BaseParams {
         public String token;
         public String param;
         public String env;
+        public String key;
     }
 
     @Data

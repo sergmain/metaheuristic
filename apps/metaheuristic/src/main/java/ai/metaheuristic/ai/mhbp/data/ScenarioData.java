@@ -20,7 +20,9 @@ import ai.metaheuristic.ai.mhbp.beans.ScenarioGroup;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.api.data.BaseDataClass;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Slice;
@@ -36,6 +38,7 @@ import java.util.*;
 public class ScenarioData {
 
     @Data
+    @NoArgsConstructor
     public static class StepVariable {
         public String name;
         public String value;
@@ -74,9 +77,9 @@ public class ScenarioData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     public static class PreparedStep extends BaseDataClass {
-        public final String uuid;
+        public String uuid;
         @Nullable
-        public final Set<String> inputs;
+        public Set<String> inputs;
 
         public PreparedStep(String uuid, @Nullable Set<String> inputs, @Nullable List<String> error) {
             this.uuid = uuid;
@@ -84,6 +87,14 @@ public class ScenarioData {
             if (error!=null && !error.isEmpty()) {
                 super.addErrorMessages(error);
             }
+        }
+
+        @JsonCreator
+        public PreparedStep(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
         }
     }
 

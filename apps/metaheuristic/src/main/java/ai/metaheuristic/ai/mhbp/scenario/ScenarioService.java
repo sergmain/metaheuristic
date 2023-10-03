@@ -45,7 +45,6 @@ import ai.metaheuristic.ai.mhbp.repositories.ScenarioRepository;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
 import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
 import ai.metaheuristic.ai.utils.CollectionUtils;
-import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -183,7 +182,7 @@ public class ScenarioService {
         }
         if (Objects.requireNonNull(preparedScenario.scenario).scenarioGroupId!=scenarioGroupId) {
             return new OperationStatusWithSourceCodeId(
-                    new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "373.120 scenario wasn't found, " + scenarioGroupId+", " + scenarioId), null);
+                    new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "373.080 scenario wasn't found, " + scenarioGroupId+", " + scenarioId), null);
         }
 
         Long sourceCodeId = Objects.requireNonNull(preparedScenario.sourceCode).id;
@@ -211,13 +210,13 @@ public class ScenarioService {
     public OperationStatusRest copyScenario(String scenarioGroupId, String scenarioId, DispatcherContext context) {
         Scenario s = scenarioRepository.findById(Long.parseLong(scenarioId)).orElse(null);
         if (s==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.240 Scenario # " + scenarioId+" wasn't found");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"373.160 Scenario # " + scenarioId+" wasn't found");
         }
         if (s.accountId!=context.getAccountId()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.280 accountId");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"373.200 accountId");
         }
         if (s.scenarioGroupId!=Long.parseLong(scenarioGroupId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.320 scenarioGroupId");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"373.240 scenarioGroupId");
         }
         //noinspection DataFlowIssue
         s.id = null;
@@ -233,13 +232,13 @@ public class ScenarioService {
     public OperationStatusRest updateScenarioInfo(long scenarioGroupId, long scenarioId, String name, String description, DispatcherContext context) {
         Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
         if (s==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.240 Scenario # " + scenarioId+" wasn't found");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"373.280 Scenario # " + scenarioId+" wasn't found");
         }
         if (s.accountId!=context.getAccountId()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.280 accountId");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"373.320 accountId");
         }
         if (s.scenarioGroupId!=scenarioGroupId) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.320 scenarioGroupId");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"373.360 scenarioGroupId");
         }
         s.name = name;
         s.description = description;
@@ -254,24 +253,24 @@ public class ScenarioService {
             DispatcherContext context) {
 
         if (S.b(scenarioGroupId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.120 scenarioGroupId is null");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"373.400 scenarioGroupId is null");
         }
         if (S.b(scenarioId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.160 scenarioId is null");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"373.430 scenarioId is null");
         }
         if (S.b(apiId) && S.b(functionCode)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.200 apiId is null");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"373.460 apiId is null");
         }
 
         Scenario s = scenarioRepository.findById(Long.parseLong(scenarioId)).orElse(null);
         if (s==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.240 Scenario # " + scenarioId+" wasn't found");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"373.490 Scenario # " + scenarioId+" wasn't found");
         }
         if (s.accountId!=context.getAccountId()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.280 accountId");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"373.520 accountId");
         }
         if (s.scenarioGroupId!=Long.parseLong(scenarioGroupId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.320 scenarioGroupId");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"373.550 scenarioGroupId");
         }
         ScenarioParams sp = s.getScenarioParams();
 
@@ -283,7 +282,7 @@ public class ScenarioService {
         else {
             step = sp.steps.stream().filter(o->o.uuid.equals(uuid)).findFirst().orElse(null);
             if (step==null) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.360 broken uuid");
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"373.580 broken uuid");
             }
             step.name = name;
             step.p = prompt;
@@ -295,26 +294,26 @@ public class ScenarioService {
         if (S.b(functionCode)) {
             Api api = apiRepository.findById(Long.parseLong(apiId)).orElse(null);
             if (api==null || api.companyId!=context.getCompanyId()) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.420 apiId");
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "373.610 apiId");
             }
             step.api = new ScenarioParams.Api(api.id, api.code);
         }
         else {
             if (S.b(prompt)) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.440 prompt");
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "373.640 prompt");
             }
             step.api = null;
             step.function = new ScenarioParams.Function(functionCode, EnumsApi.FunctionExecContext.internal);
             if (Consts.MH_ACCEPTANCE_TEST_FUNCTION.equals(functionCode)) {
                 Api api = apiRepository.findById(Long.parseLong(apiId)).orElse(null);
                 if (api==null || api.companyId!=context.getCompanyId()) {
-                    return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.480 apiId is null");
+                    return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "373.670 apiId is null");
                 }
                 step.api = new ScenarioParams.Api(api.id, api.code);
             }
             else if (Consts.MH_AGGREGATE_FUNCTION.equals(functionCode)) {
                 if (S.b(aggregateType)) {
-                    return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "229.520 aggregateType");
+                    return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "373.700 aggregateType");
                 }
                 step.aggregateType = AggregateFunction.AggregateType.valueOf(aggregateType);
             }
@@ -333,7 +332,7 @@ public class ScenarioService {
         Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
         if (s==null || s.accountId!=context.getAccountId()) {
             return new PreparedScenario(null, null,
-                    new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "373.120 scenario wasn't found, " + scenarioId));
+                    new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "373.730 scenario wasn't found, " + scenarioId));
         }
 
         String uid = ScenarioUtils.getUid(s);
@@ -343,7 +342,7 @@ public class ScenarioService {
             String yaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(scpy);
             SourceCodeApiData.SourceCodeResult result = sourceCodeTxService.createSourceCode(yaml, scpy, context.getCompanyId());
             if (!result.isValid()) {
-                final String es = S.f("373.160 validation: %s, %s", result.validationResult.status, result.validationResult.error);
+                final String es = S.f("373.760 validation: %s, %s", result.validationResult.status, result.validationResult.error);
                 log.error(es);
                 return new PreparedScenario(null, null,
                         new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es));
@@ -351,7 +350,7 @@ public class ScenarioService {
             sc = sourceCodeRepository.findById(result.id).orElse(null);
             if (sc==null) {
                 return new PreparedScenario(null, null,
-                        new OperationStatusRest(EnumsApi.OperationStatus.ERROR, S.f("373.180 SourceCode not found: %d", result.id)));
+                        new OperationStatusRest(EnumsApi.OperationStatus.ERROR, S.f("373.790 SourceCode not found: %d", result.id)));
             }
         }
         return new PreparedScenario(s, sc, OperationStatusRest.OPERATION_STATUS_OK);
@@ -365,24 +364,31 @@ public class ScenarioService {
 
     public ScenarioData.PreparedStep scenarioStepEvaluationPrepare(long scenarioId, String uuid, DispatcherContext context) {
 
-        PreparedScenario preparedScenario = prepareScenario(scenarioId, context);
-        if (preparedScenario.status.status!= EnumsApi.OperationStatus.OK) {
-            return new ScenarioData.PreparedStep(uuid, null, preparedScenario.status.getErrorMessages());
+        try {
+            PreparedScenario preparedScenario = prepareScenario(scenarioId, context);
+            if (preparedScenario.status.status!= EnumsApi.OperationStatus.OK) {
+                return new ScenarioData.PreparedStep(uuid, null, preparedScenario.status.getErrorMessages());
+            }
+
+            final Scenario scenario = Objects.requireNonNull(preparedScenario.scenario);
+            ScenarioParams sp = scenario.getScenarioParams();
+
+            SourceCodeParamsYaml.Process process = ScenarioUtils.getProcess(sp, new AtomicInteger(), this::apiSchemeResolver, uuid);
+
+            ScenarioData.PreparedStep result = new ScenarioData.PreparedStep(uuid, process.inputs.stream().map(i->i.name).collect(Collectors.toSet()), null);
+            return result;
+        } catch (Throwable th) {
+            String es = "373.810 Error: " + th.getMessage();
+            log.error(es, th);
+            ScenarioData.PreparedStep result = new ScenarioData.PreparedStep(uuid, null, List.of(es));
+            return result;
         }
-
-        final Scenario scenario = Objects.requireNonNull(preparedScenario.scenario);
-        ScenarioParams sp = scenario.getScenarioParams();
-
-        SourceCodeParamsYaml.Process process = ScenarioUtils.getProcess(sp, new AtomicInteger(), this::apiSchemeResolver, uuid);
-
-        ScenarioData.PreparedStep result = new ScenarioData.PreparedStep(uuid, process.inputs.stream().map(i->i.name).collect(Collectors.toSet()), null);
-        return result;
     }
 
     public ScenarioData.StepEvaluationResult scenarioStepEvaluationRun(long scenarioId, String uuid, String stepEvaluation, DispatcherContext context) {
         ScenarioData.StepEvaluationResult r = new ScenarioData.StepEvaluationResult(scenarioId, uuid);
         try {
-            ChatData.PromptEvaluation se = JsonUtils.getMapper().readValue(stepEvaluation, ChatData.PromptEvaluation.class);
+            ChatData.PromptEvaluation se = ScenarioUtils.toPromptEvaluation(stepEvaluation);
 
             PreparedScenario preparedScenario = prepareScenario(scenarioId, context);
             if (preparedScenario.status.status!= EnumsApi.OperationStatus.OK) {
@@ -393,7 +399,7 @@ public class ScenarioService {
             ScenarioParams sp = scenario.getScenarioParams();
             ScenarioParams.Step step = findStepByUuid(sp, uuid);
             if (step==null) {
-                r.error = "(step==null), uuid: " + uuid;
+                r.error = "373.820 (step==null), uuid: " + uuid;
                 return r;
             }
 
@@ -404,7 +410,7 @@ public class ScenarioService {
             if (!S.b(apiCode)) {
                 api = apiRepository.findByApiCode(apiCode);
                 if (api==null) {
-                    r.error = "373.190 API wasn't found with code '" + PROMPT + "' wasn't found or it's blank";
+                    r.error = "373.840 API wasn't found with code '" + PROMPT + "' wasn't found or it's blank";
                     return r;
                 }
             }
@@ -428,13 +434,11 @@ public class ScenarioService {
             return r;
         }
         catch (Throwable th) {
-            r.error = "373.380 error " + th.getMessage();
+            r.error = "373.860 error " + th.getMessage();
             log.error(r.error, th);
             return r;
         }
     }
-
-
 
     private static ChatData.ChatPrompt evaluationAsTextEnhance(ChatData.ChatPrompt r, ChatData.PromptEvaluation se) {
         String prompt = se.prompt;

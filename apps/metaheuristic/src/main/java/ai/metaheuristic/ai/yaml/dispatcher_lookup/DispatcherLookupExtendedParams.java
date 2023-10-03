@@ -21,8 +21,11 @@ import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.commons.utils.SecUtils;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import lombok.Data;
+import org.apache.commons.codec.binary.Base64;
+import org.springframework.http.HttpHeaders;
 import org.springframework.lang.Nullable;
 
+import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,6 +49,7 @@ public abstract class DispatcherLookupExtendedParams {
         public final ProcessorAndCoreData.DispatcherUrl dispatcherUrl;
         public final DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup;
         public final DispatcherSchedule schedule;
+        public String authHeader;
 
         @Nullable
         public final ThreadUtils.CommonThreadLocker<PublicKey> locker;
@@ -54,13 +58,19 @@ public abstract class DispatcherLookupExtendedParams {
             this.dispatcherUrl = dispatcherUrl;
             this.dispatcherLookup = dispatcherLookup;
             this.schedule = schedule;
-            locker = this.dispatcherLookup.publicKey==null ? null : new ThreadUtils.CommonThreadLocker<>(() -> SecUtils.getPublicKey(this.dispatcherLookup.publicKey));
+            this.locker = this.dispatcherLookup.publicKey==null ? null : new ThreadUtils.CommonThreadLocker<>(() -> SecUtils.getPublicKey(this.dispatcherLookup.publicKey));
+
+//            String auth = dispatcherLookup.restUsername + ':' + dispatcherLookup.restPassword;
+//            byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.US_ASCII));
+//            this.authHeader = "Basic " + new String(encodedAuth);
+            this.authHeader = "Basic " + HttpHeaders.encodeBasicAuth(dispatcherLookup.restUsername, dispatcherLookup.restPassword, StandardCharsets.US_ASCII);
         }
 
         @Nullable
         public PublicKey getPublicKey() {
             return locker==null ? null : locker.get();
         }
+
     }
 
     public DispatcherLookupExtendedParams(DispatcherLookupParamsYaml dispatcherLookupConfig) {
@@ -69,7 +79,8 @@ public abstract class DispatcherLookupExtendedParams {
             final Map<ProcessorAndCoreData.DispatcherUrl, DispatcherLookupExtendedParams.DispatcherLookupExtended> map = new HashMap<>();
             for (DispatcherLookupParamsYaml.DispatcherLookup dispatcher : dispatcherLookupConfig.dispatchers) {
                 ProcessorAndCoreData.DispatcherUrl dispatcherServerUrl = new ProcessorAndCoreData.DispatcherUrl(dispatcher.url);
-                DispatcherLookupExtendedParams.DispatcherLookupExtended lookupExtended = new DispatcherLookupExtendedParams.DispatcherLookupExtended(dispatcherServerUrl, dispatcher, DispatcherSchedule.createDispatcherSchedule(dispatcher.taskProcessingTime));
+                DispatcherLookupExtendedParams.DispatcherLookupExtended lookupExtended =
+                    new DispatcherLookupExtendedParams.DispatcherLookupExtended(dispatcherServerUrl, dispatcher, DispatcherSchedule.createDispatcherSchedule(dispatcher.taskProcessingTime));
                 map.put(dispatcherServerUrl, lookupExtended);
             }
             dispatcherLookupExtendedMap = Collections.unmodifiableMap(map);

@@ -399,7 +399,7 @@ public class BatchTopLevelService {
     }
 
     @Nullable
-    public CleanerInfo getBatchProcessingResultWitTx(Long batchId, Long companyUniqueId, boolean includeDeleted) {
+    public CleanerInfo getBatchProcessingResul(Long batchId, Long companyUniqueId, boolean includeDeleted) {
         try {
             return batchTxService.getBatchProcessingResultWitTx(batchId, companyUniqueId, includeDeleted);
         } catch (Throwable th) {

@@ -18,10 +18,12 @@ package ai.metaheuristic.ai.processor.utils;
 
 import ai.metaheuristic.ai.Consts;
 import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.core5.http.io.SocketConfig;
+import org.apache.hc.core5.util.TimeValue;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
@@ -41,12 +43,22 @@ public class DispatcherUtils {
 
         SocketConfig socketConfig = SocketConfig.custom().setSoTimeout(Timeout.ofSeconds(10)).build();
 
-        PoolingHttpClientConnectionManager manager = PoolingHttpClientConnectionManagerBuilder.create().setDefaultSocketConfig(socketConfig).build();
+        // https://github.com/apache/httpcomponents-client/blob/5.2.x/httpclient5/src/test/java/org/apache/hc/client5/http/examples/ClientConfiguration.java
+        PoolingHttpClientConnectionManager manager = PoolingHttpClientConnectionManagerBuilder
+            .create()
+            .setDefaultSocketConfig(socketConfig)
+            .setDefaultConnectionConfig(ConnectionConfig.custom()
+                .setConnectTimeout(Timeout.ofSeconds(5))
+                .setSocketTimeout(Timeout.ofSeconds(5))
+                .setValidateAfterInactivity(TimeValue.ofSeconds(10))
+                .setTimeToLive(TimeValue.ofHours(1))
+                .build())
+            .build();
 
         final HttpClient httpClient = HttpClientBuilder.create()
                 .setConnectionManager(manager)
                 .useSystemProperties()
-                .setDefaultRequestConfig(custom().setConnectTimeout(Timeout.ofSeconds(5)).build())
+//                .setDefaultRequestConfig(custom().setConnectTimeout(Timeout.ofSeconds(5)).build())
                 .build();
 
         final HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);

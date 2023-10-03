@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.exec_context;
 
-import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import lombok.SneakyThrows;

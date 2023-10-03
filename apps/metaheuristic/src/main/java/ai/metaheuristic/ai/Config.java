@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.RefToDispatcherRepositories;
 import ai.metaheuristic.ai.mhbp.repositories.RefToMhbpRepositories;
 import ai.metaheuristic.ai.utils.SpringHelpersUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInterceptor;
+import ai.metaheuristic.standalone.StatusFileUtils;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,8 +28,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.annotation.EnableCaching;
@@ -65,8 +68,15 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class Config {
 
     private final Globals globals;
+
     @SuppressWarnings("unused")
     private final SpringChecker springChecker;
+
+    @Configuration
+//    @ComponentScan("ai.metaheuristic.ai.dispatcher")
+    @EnableAsync
+    public static class SpringAsyncConfig implements AsyncConfigurer {
+    }
 
     @Component
     public static class EOFCustomFilter implements Filter {
@@ -101,6 +111,7 @@ public class Config {
         };
     }
 
+/*
     @Bean
     public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
         ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
@@ -108,12 +119,14 @@ public class Config {
         threadPoolTaskScheduler.setPoolSize(globals.threadNumber.getScheduler());
         return threadPoolTaskScheduler;
     }
+*/
 
     @Component
     @RequiredArgsConstructor(onConstructor_={@Autowired})
     public static class SpringChecker {
 
         private final ApplicationContext appCtx;
+        private final Globals globals;
 
         @Value("${server.address:#{null}}")
         public String serverHost;
@@ -139,6 +152,7 @@ public class Config {
             List<String> profiles = SpringHelpersUtils.getProfiles(activeProfiles);
 
             if (!profiles.isEmpty()) {
+                globals.state.shutdownInProgress = true;
                 log.error("\nUnknown profile(s) was encountered in property spring.profiles.active.\nNeed to be fixed.\n" +
                         "Allowed profiles are: " + SpringHelpersUtils.POSSIBLE_PROFILES);
                 System.exit(SpringApplication.exit(appCtx, () -> -500));
@@ -156,23 +170,55 @@ public class Config {
         }
     }
 
-    @Configuration
-    @ComponentScan("ai.metaheuristic.ai.dispatcher")
-    @EnableAsync
-    @Slf4j
-    @RequiredArgsConstructor(onConstructor_={@Autowired})
-    public static class SpringAsyncConfig implements AsyncConfigurer {
+    @Bean
+    @Profile("dispatcher")
+    public MyBeanPostProcessor myBeanPostProcessor() {
+        return new MyBeanPostProcessor();
+    }
 
-        private final Globals globals;
+    public static class MyBeanPostProcessor implements BeanPostProcessor {
 
         @Override
-        public Executor getAsyncExecutor() {
-            int threads = globals.threadNumber.getEvent();
-            log.info("Config.SpringAsyncConfig will use {} as a number of threads for an event processing", threads);
+        public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+            if (MetaheuristicStatus.metaheuristicStatusFilePath==null) {
+                return bean;
+            }
 
-            ThreadPoolExecutor executor =  (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
-            return new ConcurrentTaskExecutor(executor);
+            final String simpleName = bean.getClass().getSimpleName();
+//            System.out.println("--- postProcessBeforeInitialization executed --- "+ beanName +", " + simpleName);
+            if (simpleName.equals("EmbeddedTomcat")) {
+                StatusFileUtils.appendStart(MetaheuristicStatus.metaheuristicStatusFilePath, "tomcat");
+            }
+            if (simpleName.equals("HikariDataSource")) {
+                StatusFileUtils.appendStart(MetaheuristicStatus.metaheuristicStatusFilePath, "datasource");
+            }
+            if (simpleName.equals("SpringLiquibase")) {
+                StatusFileUtils.appendStart(MetaheuristicStatus.metaheuristicStatusFilePath, "liquibase");
+            }
+            return bean;
         }
+
+        @Override
+        public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+            if (MetaheuristicStatus.metaheuristicStatusFilePath==null) {
+                return bean;
+            }
+
+            final String simpleName = bean.getClass().getSimpleName();
+//            System.out.println("--- postProcessAfterInitialization executed ---" + beanName +", " + bean.getClass().getSimpleName());
+            if (simpleName.equals("TomcatServletWebServerFactory")) {
+                StatusFileUtils.appendDone(MetaheuristicStatus.metaheuristicStatusFilePath, "tomcat");
+            }
+            if (simpleName.equals("HikariDataSource")) {
+                StatusFileUtils.appendDone(MetaheuristicStatus.metaheuristicStatusFilePath, "datasource");
+            }
+            if (simpleName.equals("SpringLiquibase")) {
+                StatusFileUtils.appendDone(MetaheuristicStatus.metaheuristicStatusFilePath, "liquibase");
+//                throw new RuntimeException("SpringLiquibase error");
+            }
+            return bean;
+        }
+
     }
 
     @Configuration

@@ -53,7 +53,7 @@ public class TaskProcessorCoordinatorService {
         if (!globals.processor.enabled) {
             return;
         }
-        log.info("#415.020 Start processing task by cores. taskProcessors.size(): {}", taskProcessors.size());
+        log.info("415.020 Start processing task by cores. taskProcessors.size(): {}", taskProcessors.size());
 
         for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataParams.getAllEnabledRefsForCores()) {
             TaskProcessor taskProcessor = taskProcessors.computeIfAbsent( core.coreCode,

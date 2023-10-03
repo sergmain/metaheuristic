@@ -16,18 +16,16 @@
 
 package ai.metaheuristic.ai.processor.net;
 
-import org.apache.hc.client5.http.utils.URIUtils;
+import ai.metaheuristic.ai.utils.HttpUtils;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.client5.http.fluent.Executor;
-
-import java.net.URL;
 
 public class HttpClientExecutor {
 
     public static Executor getExecutor(String serverUrl, String restUsername, String restPassword) {
         HttpHost dispatcherHttpHostWithAuth;
         try {
-            dispatcherHttpHostWithAuth = URIUtils.extractHost(new URL(serverUrl).toURI());
+            dispatcherHttpHostWithAuth = HttpUtils.getHttpHost(serverUrl);
         } catch (Throwable th) {
             throw new IllegalArgumentException("Can't build HttpHost for "+serverUrl, th);
         }

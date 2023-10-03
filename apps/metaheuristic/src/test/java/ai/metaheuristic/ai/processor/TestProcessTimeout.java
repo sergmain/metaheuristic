@@ -54,7 +54,7 @@ public class TestProcessTimeout {
             final AtomicBoolean isRunned = new AtomicBoolean(false);
             final Thread reader = new Thread(() -> {
                 try {
-                    System.out.println("thread #"+Thread.currentThread().getId()+", time - " + new Date());
+                    System.out.println("thread #"+Thread.currentThread().threadId()+", time - " + new Date());
                     streamHolder.is = process.getInputStream();
                     int c;
                     isRunned.set(true);
@@ -66,7 +66,7 @@ public class TestProcessTimeout {
                     }
                 }
                 catch (InterruptedException | IOException e) {
-                    System.out.println("thread #"+Thread.currentThread().getId()+", current thread was interrupted");
+                    System.out.println("thread #"+Thread.currentThread().threadId()+", current thread was interrupted");
                 }
             });
             reader.start();
@@ -74,17 +74,17 @@ public class TestProcessTimeout {
             final Thread timeoutThread = new Thread(() -> {
                 try {
                     while (!isRunned.get()) {
-                        System.out.println("thread #"+Thread.currentThread().getId()+", time - " + new Date());
+                        System.out.println("thread #"+Thread.currentThread().threadId()+", time - " + new Date());
                         Thread.sleep(TimeUnit.MILLISECONDS.toMillis(200));
                     }
-                    System.out.println("thread #"+Thread.currentThread().getId()+", time before sleep - " + new Date());
+                    System.out.println("thread #"+Thread.currentThread().threadId()+", time before sleep - " + new Date());
                     Thread.sleep(timeout);
-                    System.out.println("thread #"+Thread.currentThread().getId()+", time before destroy - " + new Date());
+                    System.out.println("thread #"+Thread.currentThread().threadId()+", time before destroy - " + new Date());
                     process.destroy();
-                    System.out.println("thread #"+Thread.currentThread().getId()+", time after destroy - " + new Date());
+                    System.out.println("thread #"+Thread.currentThread().threadId()+", time after destroy - " + new Date());
                 }
                 catch (InterruptedException e) {
-                    System.out.println("thread #"+Thread.currentThread().getId()+", current thread was interrupted");
+                    System.out.println("thread #"+Thread.currentThread().threadId()+", current thread was interrupted");
                 }
             });
             timeoutThread.start();

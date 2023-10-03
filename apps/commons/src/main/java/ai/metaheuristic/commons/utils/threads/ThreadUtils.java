@@ -25,9 +25,13 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nullable;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.StampedLock;
@@ -42,6 +46,12 @@ import java.util.regex.Pattern;
  */
 @Slf4j
 public class ThreadUtils {
+
+    /* For auto-numbering anonymous threads. */
+    private static final AtomicInteger THREAD_INIT_NUMBER = new AtomicInteger(1);
+    public static int nextThreadNum() {
+        return THREAD_INIT_NUMBER.incrementAndGet();
+    }
 
     public static final class ResourceLock extends ReentrantLock implements AutoCloseable {
         @MustBeClosed
@@ -204,21 +214,51 @@ public class ThreadUtils {
         while ((executor.getTaskCount() - executor.getCompletedTaskCount()) > 0) {
             Thread.sleep(TimeUnit.SECONDS.toMillis(1));
             if (++i % numberOfPeriods == 0) {
-                System.out.print("total: " + executor.getTaskCount() + ", completed: " + executor.getCompletedTaskCount());
                 final Runtime rt = Runtime.getRuntime();
-                System.out.println(", free: " + rt.freeMemory() + ", max: " + rt.maxMemory() + ", total: " + rt.totalMemory());
+                log.debug("Threads total: {}, completed: {}. RAM free: {}, max: {}, total: {}",
+                    executor.getTaskCount(), executor.getCompletedTaskCount(),
+                    rt.freeMemory(), rt.maxMemory(), rt.totalMemory());
                 i = 0;
             }
         }
     }
 
+    public static void waitTaskCompleted(List<Future<?>> f, int numberOfPeriods) throws InterruptedException {
+        int i = 0;
+        int completed;
+        while ((f.size() - (completed = completed(f))) > 0) {
+            Thread.sleep(TimeUnit.SECONDS.toMillis(1));
+            if (++i % numberOfPeriods == 0) {
+                final Runtime rt = Runtime.getRuntime();
+                log.debug("Threads total: {}, completed: {}. RAM free: {}, max: {}, total: {}",
+                    f.size(), completed,
+                    rt.freeMemory(), rt.maxMemory(), rt.totalMemory());
+                i = 0;
+            }
+        }
+    }
+
+    public static int completed(List<Future<?>> f) {
+        int r = 0;
+        for (Future<?> future : f) {
+            if (future.isDone()) {
+                r++;
+            }
+        }
+        return r;
+    }
+
     public static long execStat(long mills, ThreadPoolExecutor executor) {
+        return execStat(mills, executor.getTaskCount());
+    }
+
+    public static long execStat(long mills, long taskCount) {
         final long curr = System.currentTimeMillis();
         if (log.isInfoEnabled()) {
             final int sec = (int) ((curr - mills) / 1000);
-            String s = S.f("\nprocessed %d tasks for %d seconds", executor.getTaskCount(), sec);
+            String s = S.f("\nprocessed %d tasks for %d seconds", taskCount, sec);
             if (sec!=0) {
-                s += (", " + (((int) executor.getTaskCount() / sec)) + " tasks/sec");
+                s += (", " + (((int) taskCount / sec)) + " tasks/sec");
             }
             log.info(s);
         }
@@ -231,14 +271,13 @@ public class ThreadUtils {
         result[0] = null;
         final AtomicBoolean done = new AtomicBoolean(false);
         long mills = System.currentTimeMillis();
-        Thread t = new Thread(()-> {
+        Thread t = Thread.ofVirtual().start(()-> {
             Matcher matcher = p.matcher(new InterruptableCharSequence(text));
             if (matcher.find()) {
                 result[0] = matcher.group();
             }
             done.set(true);
         });
-        t.start();
         t.join(timeout.toMillis());
         long endMills = System.currentTimeMillis();
         long time = endMills - mills;

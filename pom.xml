@@ -42,6 +42,7 @@
 
         <module>apps/utils/db_copy</module>
         <module>apps/utils/liquibase</module>
+        <module>apps/utils/status_file</module>
     </modules>
 
 </project>

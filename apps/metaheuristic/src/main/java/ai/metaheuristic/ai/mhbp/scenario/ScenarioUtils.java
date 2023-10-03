@@ -22,14 +22,17 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallService
 import ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter.BatchLineSplitterFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.enhance_text.EnhanceTextFunction;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
+import ai.metaheuristic.ai.mhbp.data.ChatData;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
 import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
 import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.StrUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
@@ -114,6 +117,10 @@ public class ScenarioUtils {
 
     public record OutputVariables(String main, @Nullable String raw) {}
 
+    public static ChatData.PromptEvaluation toPromptEvaluation(String stepEvaluation) throws JsonProcessingException {
+        return JsonUtils.getMapper().readValue(stepEvaluation, ChatData.PromptEvaluation.class);
+    }
+
     public static String getUid(Scenario s) {
         final String suffix = getString(s);
         final String uid = StrUtils.getCode(StringUtils.substring(s.name, 0, MAX_LENGTH_OF_UID - suffix.length()) + suffix, () -> "scenario" + suffix).toLowerCase();
@@ -160,7 +167,7 @@ public class ScenarioUtils {
     public static SourceCodeParamsYaml.Process getProcess(ScenarioParams sp, AtomicInteger processNumber, Function<String, ApiScheme> apiSchemeResolverFunc, String uuid) {
         ScenarioParams.Step step = findStepByUuid(sp, uuid);
         if (step==null) {
-            throw new IllegalStateException("(step==null), uuid: 4" + uuid);
+            throw new IllegalStateException("376.040 (step==null), uuid: 4" + uuid);
         }
         return getProcess(step, processNumber, apiSchemeResolverFunc, uuid);
     }
@@ -168,7 +175,7 @@ public class ScenarioUtils {
     public static SourceCodeParamsYaml.Process getProcess(ScenarioParams.Step step, AtomicInteger processNumber, Function<String, ApiScheme> apiSchemeResolverFunc, String uuid) {
         boolean isApi = step.function==null;
         if (isApi && step.api==null) {
-            throw new IllegalStateException("(isApi && step.api==null)");
+            throw new IllegalStateException("376.080 (isApi && step.api==null)");
         }
 
         SourceCodeParamsYaml.Process p = new SourceCodeParamsYaml.Process();
@@ -197,7 +204,7 @@ public class ScenarioUtils {
             if (step.api!=null) {
                 final ApiScheme apiScheme = apiSchemeResolverFunc.apply(step.api.code);
                 if (apiScheme==null) {
-                    throw new IllegalStateException("(apiScheme==null)");
+                    throw new IllegalStateException("376.120 (apiScheme==null)");
                 }
                 type = switch(apiScheme.scheme.response.type) {
                     case json, text -> {
@@ -239,7 +246,7 @@ public class ScenarioUtils {
             }
             else if (Consts.MH_ACCEPTANCE_TEST_FUNCTION.equals(step.function.code)) {
                 if (step.api==null || S.b(step.api.code)) {
-                    throw new IllegalStateException("(step.api==null || S.b(step.api.code))");
+                    throw new IllegalStateException("376.160 (step.api==null || S.b(step.api.code))");
                 }
                 p.metas.add(Map.of(ApiCallService.PROMPT, step.p));
                 p.metas.add(Map.of(ApiCallService.API_CODE, step.api.code));
@@ -247,13 +254,16 @@ public class ScenarioUtils {
 
             }
             else if (Consts.MH_AGGREGATE_FUNCTION.equals(step.function.code)) {
-                if (step.aggregateType==null) {
-                    throw new IllegalStateException("(step.aggregateType==null)");
+//                final AggregateFunction.AggregateType aggregateType =
+//                    step.aggregateType==null ? AggregateFunction.AggregateType.zip : step.aggregateType;
+                final AggregateFunction.AggregateType aggregateType = step.aggregateType;
+                if (aggregateType ==null) {
+                    throw new IllegalStateException("376.200 (step.aggregateType==null)");
                 }
                 p.metas.add(Map.of(AggregateFunction.VARIABLES, step.p));
-                p.metas.add(Map.of(AggregateFunction.TYPE, step.aggregateType.toString()));
+                p.metas.add(Map.of(AggregateFunction.TYPE, aggregateType.toString()));
                 p.metas.add(Map.of(AggregateFunction.PRODUCE_METADATA, "false"));
-                extractOutputVariables(p.outputs, step, step.aggregateType.type, false);
+                extractOutputVariables(p.outputs, step, aggregateType.type, false);
             }
         }
         return p;
@@ -268,7 +278,7 @@ public class ScenarioUtils {
             List<SourceCodeParamsYaml.Variable> outputs, ScenarioParams.Step step,
             EnumsApi.VariableType type, boolean needRawOutput) {
         if (S.b(step.resultCode)) {
-            throw new IllegalStateException("(S.b(step.resultCode))");
+            throw new IllegalStateException("376.240 (S.b(step.resultCode))");
         }
         String outputName = getVariables(step.resultCode, true).get(0);
         final SourceCodeParamsYaml.Variable v = new SourceCodeParamsYaml.Variable();
@@ -290,7 +300,7 @@ public class ScenarioUtils {
 
     private static void extractInputVariables(List<SourceCodeParamsYaml.Variable> inputs, ScenarioParams.Step step) {
         if (S.b(step.p)) {
-            throw new IllegalStateException("(S.b(step.p))");
+            throw new IllegalStateException("376.280 (S.b(step.p))");
         }
         String text = step.p.replace("[[]]", "[[mh.stub-variable]]");
         text = text.replace("{{}}", "[[mh.stub-variable]]");
@@ -309,7 +319,7 @@ public class ScenarioUtils {
     public static String getNameForVariable(String name) {
         return StrUtils.getVariableName(name, () -> {
             log.error("Wrong name for variable: " + name);
-            throw new IllegalStateException("Wrong name of variable: " + name);
+            throw new IllegalStateException("376.320 Wrong name of variable: " + name);
         }).toLowerCase();
     }
 

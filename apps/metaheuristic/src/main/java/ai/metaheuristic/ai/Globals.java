@@ -19,10 +19,12 @@ import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.dispatcher.data.KbData;
 import ai.metaheuristic.ai.exceptions.GlobalConfigurationException;
 import ai.metaheuristic.ai.utils.EnvProperty;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.SecUtils;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -56,29 +58,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static ai.metaheuristic.ai.Enums.ApiKeySourceDefinedBy.none;
+import static ai.metaheuristic.ai.MetaheuristicStatus.APP_UUID;
 
 @ConfigurationProperties("mh")
 @Getter
 @Setter
 @Slf4j
 public class Globals {
-    public static final Duration SECONDS_3 = Duration.ofSeconds(3);
-    public static final Duration SECONDS_5 = Duration.ofSeconds(5);
-    public static final Duration SECONDS_6 = Duration.ofSeconds(6);
-    public static final Duration SECONDS_9 = Duration.ofSeconds(9);
-    public static final Duration SECONDS_10 = Duration.ofSeconds(10);
-    public static final Duration SECONDS_11 = Duration.ofSeconds(11);
-    public static final Duration SECONDS_19 = Duration.ofSeconds(19);
-    public static final Duration SECONDS_23 = Duration.ofSeconds(23);
-    public static final Duration SECONDS_29 = Duration.ofSeconds(29);
-    public static final Duration SECONDS_31 = Duration.ofSeconds(31);
-    public static final Duration SECONDS_60 = Duration.ofSeconds(60);
-    public static final Duration SECONDS_120 = Duration.ofSeconds(120);
-    public static final Duration SECONDS_300 = Duration.ofSeconds(300);
-    public static final Duration SECONDS_3600 = Duration.ofSeconds(3600);
-    public static final Duration DAYS_14 = Duration.ofDays(14);
-    public static final Period DAYS_90 = Period.ofDays(90);
-    public static final Period DAYS_IN_YEARS_3 = Period.ofDays(365*3);
 
     public static final String METAHEURISTIC_PROJECT = "Metaheuristic project";
 
@@ -124,10 +110,10 @@ public class Globals {
         public String password;
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration syncTimeout = SECONDS_120;
+        public Duration syncTimeout = ConstsApi.SECONDS_120;
 
         public Duration getSyncTimeout() {
-            return syncTimeout.toSeconds() >= 60 && syncTimeout.toSeconds() <= 3600 ? syncTimeout : SECONDS_120;
+            return syncTimeout.toSeconds() >= 60 && syncTimeout.toSeconds() <= 3600 ? syncTimeout : ConstsApi.SECONDS_120;
         }
     }
 
@@ -215,7 +201,7 @@ public class Globals {
         public Duration gc = Duration.ofSeconds(3600);
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration artifactCleaner = SECONDS_60;
+        public Duration artifactCleaner = ConstsApi.SECONDS_60;
 
         @DurationUnit(ChronoUnit.SECONDS)
         public Duration updateBatchStatuses = Duration.ofSeconds(5);
@@ -224,22 +210,22 @@ public class Globals {
          * period of time after which a virtually deleted batch will be deleted from db
          */
         @DurationUnit(ChronoUnit.DAYS)
-        public Duration batchDeletion = DAYS_14;
+        public Duration batchDeletion = ConstsApi.DAYS_14;
 
         public Duration getBatchDeletion() {
-            return batchDeletion.toSeconds() >= 7 && batchDeletion.toSeconds() <= 180 ? batchDeletion : DAYS_14;
+            return batchDeletion.toSeconds() >= 7 && batchDeletion.toSeconds() <= 180 ? batchDeletion : ConstsApi.DAYS_14;
         }
 
         public Duration getArtifactCleaner() {
-            return artifactCleaner.toSeconds() >= 60 && artifactCleaner.toSeconds() <=600 ? artifactCleaner : SECONDS_300;
+            return artifactCleaner.toSeconds() >= 60 && artifactCleaner.toSeconds() <=600 ? artifactCleaner : ConstsApi.SECONDS_300;
         }
 
         public Duration getGc() {
-            return gc.toSeconds() >= 600 && gc.toSeconds() <= 3600*24*7 ? gc : SECONDS_3600;
+            return gc.toSeconds() >= 600 && gc.toSeconds() <= 3600*24*7 ? gc : ConstsApi.SECONDS_3600;
         }
 
         public Duration getUpdateBatchStatuses() {
-            return updateBatchStatuses.toSeconds() >= 5 && updateBatchStatuses.toSeconds() <=60 ? updateBatchStatuses : SECONDS_23;
+            return updateBatchStatuses.toSeconds() >= 5 && updateBatchStatuses.toSeconds() <=60 ? updateBatchStatuses : ConstsApi.SECONDS_23;
         }
 
         public void setGc(Duration gc) {
@@ -267,7 +253,7 @@ public class Globals {
         public DispatcherTimeout timeout = new DispatcherTimeout();
 
         @PeriodUnit(ChronoUnit.DAYS)
-        public Period keepEventsInDb = Period.ofDays(90);
+        public Period keepEventsInDb = ConstsApi.DAYS_90;
 
         public boolean functionSignatureRequired = true;
         public boolean enabled = false;
@@ -289,7 +275,7 @@ public class Globals {
         public DataSize chunkSize = DataSize.ofMegabytes(10);
 
         public Period getKeepEventsInDb() {
-            return keepEventsInDb.getDays() >= 7 && keepEventsInDb.getDays() <= DAYS_IN_YEARS_3.getDays() ? keepEventsInDb : DAYS_90;
+            return keepEventsInDb.getDays() >= 7 && keepEventsInDb.getDays() <= ConstsApi.DAYS_IN_YEARS_3.getDays() ? keepEventsInDb : ConstsApi.DAYS_90;
         }
 
         public void setMaxTriesAfterError(int maxTriesAfterError) {
@@ -367,66 +353,66 @@ public class Globals {
     @Setter
     public static class ProcessorTimeout {
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration requestDispatcher = SECONDS_6;
+        public Duration requestDispatcher = ConstsApi.SECONDS_6;
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration taskAssigner = SECONDS_5;
+        public Duration taskAssigner = ConstsApi.SECONDS_5;
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration taskProcessor = SECONDS_9;
+        public Duration taskProcessor = ConstsApi.SECONDS_9;
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration downloadFunction = SECONDS_11;
+        public Duration downloadFunction = ConstsApi.SECONDS_11;
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration prepareFunctionForDownloading = SECONDS_31;
+        public Duration prepareFunctionForDownloading = ConstsApi.SECONDS_31;
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration downloadResource = SECONDS_3;
+        public Duration downloadResource = ConstsApi.SECONDS_3;
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration uploadResultResource = SECONDS_3;
+        public Duration uploadResultResource = ConstsApi.SECONDS_3;
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration dispatcherContextInfo = SECONDS_19;
+        public Duration dispatcherContextInfo = ConstsApi.SECONDS_19;
 
         @DurationUnit(ChronoUnit.SECONDS)
-        public Duration artifactCleaner = SECONDS_29;
+        public Duration artifactCleaner = ConstsApi.SECONDS_29;
 
         public Duration getRequestDispatcher() {
-            return requestDispatcher.toSeconds() >= 6 && requestDispatcher.toSeconds() <= 30 ? requestDispatcher : SECONDS_10;
+            return requestDispatcher.toSeconds() >= 6 && requestDispatcher.toSeconds() <= 30 ? requestDispatcher : ConstsApi.SECONDS_10;
         }
 
         public Duration getTaskAssigner() {
-            return taskAssigner.toSeconds() >= 3 && taskAssigner.toSeconds() <= 20 ? taskAssigner : SECONDS_5;
+            return taskAssigner.toSeconds() >= 3 && taskAssigner.toSeconds() <= 20 ? taskAssigner : ConstsApi.SECONDS_5;
         }
 
         public Duration getTaskProcessor() {
-            return taskProcessor.toSeconds() >= 3 && taskProcessor.toSeconds() <= 20 ? taskProcessor : SECONDS_9;
+            return taskProcessor.toSeconds() >= 3 && taskProcessor.toSeconds() <= 20 ? taskProcessor : ConstsApi.SECONDS_9;
         }
 
         public Duration getDownloadFunction() {
-            return downloadFunction.toSeconds() >= 3 && downloadFunction.toSeconds() <= 20 ? downloadFunction : SECONDS_11;
+            return downloadFunction.toSeconds() >= 3 && downloadFunction.toSeconds() <= 20 ? downloadFunction : ConstsApi.SECONDS_11;
         }
 
         public Duration getPrepareFunctionForDownloading() {
-            return prepareFunctionForDownloading.toSeconds() >= 20 && prepareFunctionForDownloading.toSeconds() <= 60 ? prepareFunctionForDownloading : SECONDS_31;
+            return prepareFunctionForDownloading.toSeconds() >= 20 && prepareFunctionForDownloading.toSeconds() <= 60 ? prepareFunctionForDownloading : ConstsApi.SECONDS_31;
         }
 
         public Duration getDownloadResource() {
-            return downloadResource.toSeconds() >= 3 && downloadResource.toSeconds() <= 20 ? downloadResource : SECONDS_3;
+            return downloadResource.toSeconds() >= 3 && downloadResource.toSeconds() <= 20 ? downloadResource : ConstsApi.SECONDS_3;
         }
 
         public Duration getUploadResultResource() {
-            return uploadResultResource.toSeconds() >= 3 && uploadResultResource.toSeconds() <= 20 ? uploadResultResource : SECONDS_3;
+            return uploadResultResource.toSeconds() >= 3 && uploadResultResource.toSeconds() <= 20 ? uploadResultResource : ConstsApi.SECONDS_3;
         }
 
         public Duration getDispatcherContextInfo() {
-            return dispatcherContextInfo.toSeconds() >= 10 && dispatcherContextInfo.toSeconds() <= 60 ? dispatcherContextInfo : SECONDS_19;
+            return dispatcherContextInfo.toSeconds() >= 10 && dispatcherContextInfo.toSeconds() <= 60 ? dispatcherContextInfo : ConstsApi.SECONDS_19;
         }
 
         public Duration getArtifactCleaner() {
-            return artifactCleaner.toSeconds() >= 10 && artifactCleaner.toSeconds() <= 60 ? artifactCleaner : SECONDS_29;
+            return artifactCleaner.toSeconds() >= 10 && artifactCleaner.toSeconds() <= 60 ? artifactCleaner : ConstsApi.SECONDS_29;
         }
 
         @DeprecatedConfigurationProperty(replacement = "mh.processor.timeout.dispatcher-context-info")
@@ -475,6 +461,7 @@ public class Globals {
         public String[] envTokens;
     }
 
+/*
     public static class ThreadNumber {
         private int scheduler = 10;
         private int event =  Math.max(10, Runtime.getRuntime().availableProcessors()/2);
@@ -504,6 +491,16 @@ public class Globals {
             this.event = event;
         }
     }
+*/
+
+    public static class Standalone {
+        public boolean active = false;
+    }
+
+    public static class State {
+        public boolean shutdownInProgress = false;
+        public boolean awaitingForProcessor = true;
+    }
 
     @Value("${spring.profiles.active}")
     public String[] activeProfiles;
@@ -513,8 +510,10 @@ public class Globals {
 
     public final Dispatcher dispatcher = new Dispatcher();
     public final Processor processor = new Processor();
-    public final ThreadNumber threadNumber = new ThreadNumber();
+//    public final ThreadNumber threadNumber = new ThreadNumber();
     public final Mhbp mhbp = new Mhbp();
+    public final Standalone standalone = new Standalone();
+    public final State state = new State();
 
     @Nullable
     public String systemOwner = null;
@@ -547,7 +546,6 @@ public class Globals {
     public Path dispatcherStorageGlobalVariablesPath;
     public Path dispatcherStorageFunctionsPath;
     public Path dispatcherStorageCacheVariablessPath;
-
     public Path processorPath;
 
     public EnumsApi.OS os = EnumsApi.OS.unknown;
@@ -555,6 +553,7 @@ public class Globals {
     @SneakyThrows
     @PostConstruct
     public void postConstruct() {
+        this.standalone.active = activeProfilesSet.contains(Consts.STANDALONE_PROFILE);
         dispatcherPath = getHome().resolve("dispatcher");
         Files.createDirectories(dispatcherPath);
         processorPath = getHome().resolve("processor");
@@ -615,6 +614,11 @@ public class Globals {
         logGarbageCollectors();
 //        logDeprecated();
 
+    }
+
+    @PreDestroy
+    public void onExit() {
+        state.shutdownInProgress = true;
     }
 
     private void logUlimitSh() {
@@ -745,6 +749,9 @@ public class Globals {
             }
             log.info("'\t{}: {}", o, o2);
         });
+
+        log.info("Metaheuristic command-line params: ");
+        log.info("\tapp_uuid: " + APP_UUID);
     }
 
     private void logGlobals() {
@@ -757,8 +764,6 @@ public class Globals {
         log.info("'\tbranding: {}", branding);
         log.info("'\ttesting: {}", testing);
         log.info("'\tsslRequired: {}", sslRequired);
-        log.info("'\tthreadNumber.scheduler: {}", threadNumber.getScheduler());
-        log.info("'\tthreadNumber.event: {}", threadNumber.getEvent());
         log.info("'\tdispatcher.enabled: {}", dispatcher.enabled);
         log.info("'\tdispatcher.dir: {}", dispatcherPath.toAbsolutePath().normalize());
         log.info("'\tdispatcher.functionSignatureRequired: {}", dispatcher.functionSignatureRequired);

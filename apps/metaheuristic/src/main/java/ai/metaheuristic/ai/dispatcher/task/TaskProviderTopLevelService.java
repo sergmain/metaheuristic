@@ -79,7 +79,7 @@ public class TaskProviderTopLevelService {
     private final ExecContextCache execContextCache;
     private final ExecContextReadinessStateService execContextReadinessStateService;
     private final ApplicationEventPublisher eventPublisher;
-    private final TaskProviderUnassignedTaskTopLevelService taskProviderUnassignedTaskTopLevelService;
+    private final TaskProviderUnassignedTaskService taskProviderUnassignedTaskTopLevelService;
     private final VariableTxService variableService;
 
     public void registerTask(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {

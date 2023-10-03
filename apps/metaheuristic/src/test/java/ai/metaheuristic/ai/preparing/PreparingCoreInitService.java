@@ -220,7 +220,7 @@ public class PreparingCoreInitService {
             deleteProcessor(preparingCodeData.processor);
         }
 
-        TaskWithInternalContextEventService.shutdown();
+        TaskWithInternalContextEventService.clearQueue();
         System.out.println("afterPreparingCore() Was finished correctly");
         log.info("after() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 

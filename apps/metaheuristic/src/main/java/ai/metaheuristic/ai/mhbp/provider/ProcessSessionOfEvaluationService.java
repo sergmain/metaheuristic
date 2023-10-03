@@ -17,7 +17,9 @@
 package ai.metaheuristic.ai.mhbp.provider;
 
 import ai.metaheuristic.ai.mhbp.events.EvaluateProviderEvent;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.commons.utils.threads.ThreadedPool;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -37,12 +39,17 @@ public class ProcessSessionOfEvaluationService {
 
     public final ProviderQueryService providerQueryService;
 
-    private final ThreadedPool<EvaluateProviderEvent> evaluateProviderEventThreadedPool;
+    private final ThreadedPool<Long, EvaluateProviderEvent> evaluateProviderEventThreadedPool;
 
     public ProcessSessionOfEvaluationService(@Autowired ProviderQueryService providerQueryService) {
         this.providerQueryService = providerQueryService;
         this.evaluateProviderEventThreadedPool =
-                new ThreadedPool<>(1, 0, false, true, providerQueryService::evaluateProvider);
+                new ThreadedPool<>("ProcessSessionOfEvaluationService-", 10, false, true, providerQueryService::evaluateProvider, ConstsApi.DURATION_NONE);
+    }
+
+    @PreDestroy
+    public void onExit() {
+        evaluateProviderEventThreadedPool.shutdown();
     }
 
     @Async
@@ -50,48 +57,4 @@ public class ProcessSessionOfEvaluationService {
     public void handleEvaluateProviderEvent(EvaluateProviderEvent event) {
         evaluateProviderEventThreadedPool.putToQueue(event);
     }
-
-    public void processSessionEvent() {
-        evaluateProviderEventThreadedPool.processEvent();
-    }
-/*
-//    private final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
-//    private final LinkedList<EvaluateProviderEvent> queue = new LinkedList<>();
-
-    @Async
-    @EventListener
-    public void handleEvaluateProviderEvent(EvaluateProviderEvent event) {
-        evaluateProviderEventThreadedPool.putToQueue(event);
-        putToQueue(event);
-    }
-
-    public void putToQueue(final EvaluateProviderEvent event) {
-        synchronized (queue) {
-            if (queue.contains(event)) {
-                return;
-            }
-            queue.add(event);
-        }
-    }
-
-    @Nullable
-    private EvaluateProviderEvent pullFromQueue() {
-        synchronized (queue) {
-            return queue.pollFirst();
-        }
-    }
-
-    public void processSessionEvent() {
-        if (executor.getActiveCount()>0) {
-            return;
-        }
-        executor.submit(() -> {
-            EvaluateProviderEvent event;
-            while ((event = pullFromQueue())!=null) {
-                providerQueryService.evaluateProvider(event);
-            }
-        });
-    }
-*/
-
 }

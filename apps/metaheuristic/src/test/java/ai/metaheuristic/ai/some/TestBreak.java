@@ -25,6 +25,7 @@ import java.util.Locale;
 import static java.text.NumberFormat.*;
 import static java.util.Calendar.LONG;
 import static java.util.Calendar.SHORT;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class TestBreak {
@@ -33,7 +34,9 @@ public class TestBreak {
     public void test_() {
         double d = 12324.134;
         System.out.println(getCurrencyInstance(Locale.US).format(d));
-        System.out.println(getCurrencyInstance(new Locale("hi", "IN")).format(d));
+        final String formatted = getCurrencyInstance(Locale.of("hi", "IN")).format(d);
+        System.out.println(formatted);
+        assertEquals("₹12,324.13", formatted);
         System.out.println(getCurrencyInstance(Locale.CHINA).format(d));
         System.out.println(getCurrencyInstance(Locale.FRANCE).format(d));
     }
