@@ -142,11 +142,16 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
         QueueWithThread<P> q;
         queueWriteLock.lock();
         try {
-            q = queue.computeIfAbsent(event.getId(), (o) -> new QueueWithThread<>(this.checkForDouble));
+            q = queue.get(event.getId());
+            if (q!=null) {
+                q.add(event);
+            }
+            else {
+                queue.computeIfAbsent(event.getId(), (o) -> new QueueWithThread<>(this.checkForDouble, event));
+            }
         } finally {
             queueWriteLock.unlock();
         }
-        q.add(event);
     }
 
     @Nullable

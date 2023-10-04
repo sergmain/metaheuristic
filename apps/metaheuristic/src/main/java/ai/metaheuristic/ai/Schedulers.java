@@ -233,6 +233,25 @@ public class Schedulers {
             }
         }
 
+        @Scheduled(initialDelay = 1_000, fixedDelay = 10_000 )
+        public void initTasks() {
+            if (globals.testing || !globals.dispatcher.enabled) {
+                return;
+            }
+            log.info("Invoking ExecContextService.initTaskVariables()");
+            ArtifactCleanerAtDispatcher.setBusy();
+            try {
+                execContextSchedulerService.initTaskVariables();
+            } catch (InvalidDataAccessResourceUsageException e) {
+                log.error("!!! need to investigate. Error while initTaskVariables()",e);
+            } catch (Throwable th) {
+                log.error("Error while initTaskVariables()", th);
+            }
+            finally {
+                ArtifactCleanerAtDispatcher.notBusy();
+            }
+        }
+
         boolean needToInitializeReadiness = true;
 
         @Scheduled(initialDelay = 1_000, fixedDelay = 15_000)

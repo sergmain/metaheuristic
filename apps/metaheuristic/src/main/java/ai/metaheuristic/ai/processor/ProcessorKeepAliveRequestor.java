@@ -96,7 +96,7 @@ public class ProcessorKeepAliveRequestor {
         if (globals.testing) {
             return;
         }
-        if (!globals.processor.enabled || globals.state.awaitingForProcessor) {
+        if (!globals.processor.enabled) {
             return;
         }
 
@@ -138,7 +138,7 @@ public class ProcessorKeepAliveRequestor {
                 HttpHeaders headers = new HttpHeaders();
                 headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
                 headers.setContentType(MediaType.APPLICATION_JSON);
-                headers.setBasicAuth(HttpHeaders.AUTHORIZATION, dispatcher.authHeader);
+                headers.set(HttpHeaders.AUTHORIZATION, dispatcher.authHeader);
 
                 String yaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(karpy);
                 HttpEntity<String> request = new HttpEntity<>(yaml, headers);
