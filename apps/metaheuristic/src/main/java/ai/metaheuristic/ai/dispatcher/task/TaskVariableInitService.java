@@ -17,9 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.event.InitVariablesEvent;
-import ai.metaheuristic.ai.dispatcher.event.TaskFinishWithErrorEvent;
-import ai.metaheuristic.ai.dispatcher.event.TransferStateFromTaskQueueToExecContextEvent;
-import ai.metaheuristic.commons.utils.ThreadUtils;
+import ai.metaheuristic.ai.exceptions.CommonRollbackException;
+import ai.metaheuristic.commons.utils.threads.ThreadedPool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -27,8 +26,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.time.Duration;
 
 /**
  * @author Sergio Lissner
@@ -43,8 +41,8 @@ public class TaskVariableInitService {
 
     private final TaskVariableInitTxService taskVariableInitTxService;
 
-    private final ThreadUtils.ThreadedPool<InitVariablesEvent> threadedPool =
-            new ThreadUtils.ThreadedPool<>(10, 0, this::intiVariables);
+    private final ThreadedPool<Long, InitVariablesEvent> threadedPool =
+            new ThreadedPool<>("InitVariablesEvent-", -1, true, true, this::intiVariables, Duration.ZERO);
 
     @Async
     @EventListener
@@ -53,8 +51,12 @@ public class TaskVariableInitService {
     }
 
     public void intiVariables(InitVariablesEvent event) {
-        TaskSyncService.getWithSyncVoid(event.taskId,
-                ()-> taskVariableInitTxService.intiVariables(event));
+        try {
+            TaskSyncService.getWithSyncVoid(event.taskId,
+                    ()-> taskVariableInitTxService.intiVariables(event));
+        } catch (CommonRollbackException e) {
+            //;
+        }
     }
 
 }

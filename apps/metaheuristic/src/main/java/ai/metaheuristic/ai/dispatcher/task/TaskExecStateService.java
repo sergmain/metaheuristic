@@ -17,9 +17,9 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
-import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.SetTaskExecStateTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.SetTaskExecStateTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -101,6 +101,12 @@ public class TaskExecStateService {
             eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
         }
 
+        final SetTaskExecStateTxEvent event = getSetTaskExecStateTxEvent(task);
+        eventPublisherService.publishSetTaskExecStateTxEvent(event);
+        return task;
+    }
+
+    private static SetTaskExecStateTxEvent getSetTaskExecStateTxEvent(TaskImpl task) {
         final SetTaskExecStateTxEvent event;
         final EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.execState);
         if (execState== EnumsApi.TaskExecState.OK || execState== EnumsApi.TaskExecState.ERROR) {
@@ -110,24 +116,22 @@ public class TaskExecStateService {
         else {
             event = new SetTaskExecStateTxEvent(task.execContextId, task.id, execState, task.coreId, null, null);
         }
-        eventPublisherService.publishSetTaskExecStateTxEvent(event);
-        return task;
+        return event;
     }
 
     public void updateTasksStateInDb(ExecContextOperationStatusWithTaskList status) {
         TxUtils.checkTxExists();
 
-        status.childrenTasks.forEach(
-                t -> TaskSyncService.getWithSyncNullable(t.taskId, () -> {
-                    TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
-                    if (task != null) {
-                        changeTaskState(task, t.state);
-                    } else {
-                        log.error("305.180 Graph state is compromised, found task in graph but it doesn't exist in db");
-                    }
-                    return null;
-                })
-        );
+        for (ExecContextData.TaskWithState t : status.childrenTasks) {
+            TaskSyncService.getWithSyncVoid(t.taskId, () -> {
+                TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
+                if (task != null) {
+                    changeTaskState(task, t.state);
+                } else {
+                    log.error("305.180 Graph state is compromised, found task in graph but it doesn't exist in db");
+                }
+            });
+        }
     }
 
 

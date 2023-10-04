@@ -140,10 +140,9 @@ public class ExecContextTaskProducingService {
                     .forEach(parentTaskIds::addAll);
 
             final ExecContextParamsYaml.Process process = p;
-            TaskData.ProduceTaskResult result =
-                    taskProducingService.produceTaskForProcess(
-                            process, execContextParamsYaml, execContext.id,
-                            execContext.execContextGraphId, execContext.execContextTaskStateId, parentTaskIds);
+            TaskData.ProduceTaskResult result = taskProducingService.produceTaskForProcess(
+                process, execContextParamsYaml, execContext.id,
+                execContext.execContextGraphId, execContext.execContextTaskStateId, parentTaskIds);
 
             if (result.status!= EnumsApi.TaskProducingStatus.OK) {
                 return result;

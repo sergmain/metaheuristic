@@ -35,14 +35,20 @@ public class TestRoundRobinForDispatcher {
         LinkedHashMap<DispatcherUrl, DispatcherLookupExtendedParams.DispatcherLookupExtended> lookupExtendedMap = new LinkedHashMap<>();
 
         DispatcherUrl url1 = new DispatcherUrl("url1");
+        final DispatcherLookupParamsYaml.DispatcherLookup lookup1 = new DispatcherLookupParamsYaml.DispatcherLookup();
+        lookup1.restUsername = "username";
+        lookup1.restPassword = "password";
         DispatcherLookupExtendedParams.DispatcherLookupExtended lle1 = new DispatcherLookupExtendedParams.DispatcherLookupExtended(
-                url1, new DispatcherLookupParamsYaml.DispatcherLookup(), DispatcherSchedule.createDispatcherSchedule(null));
+                url1, lookup1, DispatcherSchedule.createDispatcherSchedule(null));
         lle1.dispatcherLookup.url = url1.url;
         lookupExtendedMap.put( url1, lle1);
 
         DispatcherUrl url2 = new DispatcherUrl("url2");
+        final DispatcherLookupParamsYaml.DispatcherLookup lookup2 = new DispatcherLookupParamsYaml.DispatcherLookup();
+        lookup2.restUsername = "username";
+        lookup2.restPassword = "password";
         DispatcherLookupExtendedParams.DispatcherLookupExtended lle2 = new DispatcherLookupExtendedParams.DispatcherLookupExtended(
-                url2, new DispatcherLookupParamsYaml.DispatcherLookup(), DispatcherSchedule.createDispatcherSchedule(null));
+                url2, lookup2, DispatcherSchedule.createDispatcherSchedule(null));
         lle2.dispatcherLookup.url = url2.url;
         lookupExtendedMap.put( url2, lle2);
 

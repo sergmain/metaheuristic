@@ -16,14 +16,13 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.InitVariablesEvent;
-import ai.metaheuristic.ai.dispatcher.event.UpdateTaskExecStatesInGraphTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
@@ -32,6 +31,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
+import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.exceptions.TaskCreationException;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -41,7 +41,6 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -63,40 +62,45 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TaskVariableInitTxService {
 
-    private final Globals globals;
     private final VariableTxService variableTxService;
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextCache execContextCache;
     private final TaskTxService taskTxService;
-    private final TaskStateService taskStateService;
+    private final TaskExecStateService taskExecStateService;
     private final TaskRepository taskRepository;
     private final GlobalVariableRepository globalVariableRepository;
-    private final ApplicationEventPublisher eventPublisher;
     private final EventPublisherService eventPublisherService;
 
-    @Transactional
+    @Transactional(rollbackFor = CommonRollbackException.class)
     public void intiVariables(InitVariablesEvent event) {
         TaskImpl task = taskRepository.findById(event.taskId).orElse(null);
         if (task==null) {
-            return;
+            throw new CommonRollbackException();
+        }
+        if (task.execState!=EnumsApi.TaskExecState.INIT.value) {
+            throw new CommonRollbackException();
+        }
+        final TaskParamsYaml paramsYaml = task.getTaskParamsYaml();
+        if (paramsYaml.task.init==null) {
+            throw new CommonRollbackException();
         }
 
         ExecContextImpl ec = execContextCache.findById(task.execContextId, true);
         if (ec==null) {
-            return;
+            throw new CommonRollbackException();
         }
 
-        List<String> allParentTaskContextIds = getAllParentTaskContextIds(task, event.parentTaskIds, task.getTaskParamsYaml().task.taskContextId, ec);
+        List<String> allParentTaskContextIds = getAllParentTaskContextIds(task, paramsYaml.task.init.parentTaskIds, paramsYaml.task.taskContextId, ec);
         if (allParentTaskContextIds!=null) {
             TaskImpl t = prepareVariables(ec.getExecContextParamsYaml(), task, allParentTaskContextIds);
             if (t!=null) {
                 task = taskTxService.save(t);
             }
         }
-        task.execState = event.nextState.value;
+        task.execState = paramsYaml.task.init.nextState.value;
 
         taskRepository.save(task);
-        taskStateService.updateTaskExecStates(task, event.nextState, false);
+        taskExecStateService.updateTaskExecStates(task, paramsYaml.task.init.nextState, false);
         eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
     }
 

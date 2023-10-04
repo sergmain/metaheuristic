@@ -43,7 +43,7 @@ public class ThreadedPool<I, T extends EventWithId<I>> {
     private final MultiTenantedQueue<I, T> queue;
 
     public ThreadedPool(String namePrefix, int maxThreadInPool, boolean immediateProcessing, boolean checkForDouble, Consumer<T> process, Duration postProcessingDelay) {
-        this.queue = new MultiTenantedQueue<>(2, postProcessingDelay, checkForDouble, namePrefix);
+        this.queue = new MultiTenantedQueue<>(maxThreadInPool, postProcessingDelay, checkForDouble, namePrefix);
         this.process = process;
     }
 

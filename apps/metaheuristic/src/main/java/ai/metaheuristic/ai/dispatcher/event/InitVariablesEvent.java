@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.event;
 
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.utils.threads.EventWithId;
 import lombok.AllArgsConstructor;
 
 import java.util.List;
@@ -27,8 +28,11 @@ import java.util.List;
  * Time: 8:59 PM
  */
 @AllArgsConstructor
-public class InitVariablesEvent {
+public class InitVariablesEvent implements EventWithId<Long> {
     public final Long taskId;
-    public final List<Long> parentTaskIds;
-    public EnumsApi.TaskExecState nextState;
+
+    @Override
+    public Long getId() {
+        return taskId;
+    }
 }

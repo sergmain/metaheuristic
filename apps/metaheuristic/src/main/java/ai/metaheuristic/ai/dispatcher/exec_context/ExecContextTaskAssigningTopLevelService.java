@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.event.InitVariablesEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.*;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -186,6 +187,12 @@ public class ExecContextTaskAssigningTopLevelService {
                         if (log.isInfoEnabled()) stat.notAllocatedReasons.add(es);
                     }
                     // this situation will be handled while a reconciliation stage
+                    continue;
+                }
+
+                if (task.execState == EnumsApi.TaskExecState.INIT.value) {
+                    eventPublisher.publishEvent(new InitVariablesEvent(task.id));
+                    if (log.isInfoEnabled()) stat.notAllocatedReasons.add("task #"+task.getId()+" task.execState == EnumsApi.TaskExecState.INIT");
                     continue;
                 }
 

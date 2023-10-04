@@ -17,13 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
-import ai.metaheuristic.ai.dispatcher.event.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.InitVariablesTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
@@ -33,7 +30,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskSta
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
-import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -42,17 +38,14 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -215,16 +208,17 @@ public class TaskProducingService {
         if (process.cache!=null) {
             taskParams.task.cache = new TaskParamsYaml.Cache(process.cache.enabled, process.cache.omitInline, process.cache.cacheMeta);
         }
+        taskParams.task.init = new TaskParamsYaml.Init(parentTaskIds, process.cache!=null && process.cache.enabled ? EnumsApi.TaskExecState.CHECK_CACHE : EnumsApi.TaskExecState.NONE);
+
 
         TaskImpl task = new TaskImpl();
         task.execState = EnumsApi.TaskExecState.INIT.value;
-        //task.execState = process.cache!=null && process.cache.enabled ? EnumsApi.TaskExecState.CHECK_CACHE.value : EnumsApi.TaskExecState.NONE.value;
         task.execContextId = execContextId;
         task.updateParams(taskParams);
 
         task = taskTxService.save(task);
 
-        eventPublisher.publishEvent(new InitVariablesTxEvent(task.id, parentTaskIds, process.cache!=null && process.cache.enabled ? EnumsApi.TaskExecState.CHECK_CACHE : EnumsApi.TaskExecState.NONE));
+        eventPublisher.publishEvent(new InitVariablesTxEvent(task.id));
 
 /*
         List<String> allParentTaskContextIds = getAllParentTaskContextIds(task, parentTaskIds, task.getTaskParamsYaml().task.taskContextId, execContextId);
