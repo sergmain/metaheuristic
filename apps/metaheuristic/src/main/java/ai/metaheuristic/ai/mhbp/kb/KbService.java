@@ -32,7 +32,7 @@ import ai.metaheuristic.ai.mhbp.services.LocalGitRepoService;
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParams;
 import ai.metaheuristic.ai.mhbp.yaml.part.PartParams;
 import ai.metaheuristic.ai.mhbp.yaml.part.PartParamsUtils;
-import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.utils.PageUtils;

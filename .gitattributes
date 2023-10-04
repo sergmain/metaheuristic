@@ -1,6 +1,8 @@
 * -text
 
 *.css           text
+*.scss           text
+*.sass           text
 *.html          text
 *.java          text
 *.js            text
@@ -14,10 +16,13 @@
 *.yaml          text
 *.yml           text
 *.sql           text
+# *.ts            text
 
 .gitignore      text
 .gitattributes  text
 .slugignore     text
+.editorconfig   text
+
 COPYING         text
 README.md       text
 mvnw            text
@@ -29,3 +34,6 @@ mvnw            text
 *.gif           binary
 *.jpg           binary
 *.png           binary
+*.ico           binary
+*.mp4           binary
+*.xcf           binary

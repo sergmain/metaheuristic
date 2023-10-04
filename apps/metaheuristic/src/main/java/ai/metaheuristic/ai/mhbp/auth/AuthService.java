@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.beans.Auth;
 import ai.metaheuristic.ai.mhbp.data.AuthData;
 import ai.metaheuristic.ai.mhbp.repositories.AuthRepository;
+import ai.metaheuristic.ai.mhbp.yaml.auth.ApiAuth;
+import ai.metaheuristic.ai.mhbp.yaml.auth.ApiAuthUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.utils.PageUtils;
@@ -43,6 +45,7 @@ import java.util.stream.Collectors;
  * Date: 4/13/2023
  * Time: 12:03 AM
  */
+@SuppressWarnings("DuplicatedCode")
 @Service
 @Slf4j
 @Profile("dispatcher")
@@ -106,4 +109,20 @@ public class AuthService {
         }
         return new AuthData.Auth(new AuthData.SimpleAuth(auth));
     }
+
+    public OperationStatusRest updateAuth(Long authId, String params, DispatcherContext context) {
+        Auth auth = authRepository.findById(authId).orElse(null);
+        if (auth == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                "247.040 API wasn't found, authId: " + authId, null);
+        }
+        if (auth.companyId!=context.getCompanyId()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "247.080 authId: " + authId);
+        }
+
+        ApiAuth apiAuth = ApiAuthUtils.UTILS.to(params);
+        auth.updateParams(apiAuth);
+
+        authRepository.save(auth);
+        return OperationStatusRest.OPERATION_STATUS_OK;    }
 }

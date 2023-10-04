@@ -16,10 +16,17 @@
 
 package ai.metaheuristic.ai.dispatcher.event.events;
 
+import ai.metaheuristic.commons.utils.threads.EventWithId;
+
 /**
  * @author Sergio Lissner
  * Date: 5/16/2023
  * Time: 9:16 PM
  */
-public class FindUnassignedTasksAndRegisterInQueueEvent {
+public class FindUnassignedTasksAndRegisterInQueueEvent implements EventWithId<Long> {
+
+    @Override
+    public Long getId() {
+        return 1L;
+    }
 }

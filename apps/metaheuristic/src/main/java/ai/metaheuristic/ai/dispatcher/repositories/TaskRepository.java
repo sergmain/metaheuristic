@@ -57,6 +57,10 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query("SELECT t.id FROM TaskImpl t where t.execContextId=:execContextId and t.execState=7")
     List<Long> findTaskForErrorWithRecoveryState(Long execContextId);
 
+    @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+    @Query("SELECT t.id FROM TaskImpl t where t.execContextId=:execContextId and t.execState=8")
+    List<Long> findTaskForInitState(Long execContextId);
+
     @Query(value="select t.execState, count(*) as count_records from TaskImpl t, ExecContextImpl e " +
             "where (e.rootExecContextId=:execContextId or e.id=:execContextId) and e.id = t.execContextId " +
             "group by t.execState ")

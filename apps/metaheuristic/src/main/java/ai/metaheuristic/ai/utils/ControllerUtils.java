@@ -35,25 +35,5 @@ public class ControllerUtils {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public static void addMessagesToModel(Model model, BaseDataClass baseData) {
-        Collection<?> collection1 = baseData.getErrorMessagesAsList();
-        if (collection1 != null && !collection1.isEmpty()) {
-            List errorMessages = ((List)model.asMap().get(Consts.MODEL_ATTR_ERROR_MESSAGE));
-            if (errorMessages==null) {
-                errorMessages = new ArrayList();
-                model.addAttribute(Consts.MODEL_ATTR_ERROR_MESSAGE, errorMessages);
-            }
-            errorMessages.addAll(baseData.getErrorMessagesAsList());
-        }
-        Collection<?> collection = baseData.getInfoMessagesAsList();
-        if (collection != null && !collection.isEmpty()) {
-            List infoMessages = ((List)model.asMap().get(Consts.MODEL_ATTR_INFO_MESSAGES));
-            if (infoMessages==null) {
-                infoMessages = new ArrayList();
-                model.addAttribute(Consts.MODEL_ATTR_INFO_MESSAGES, infoMessages);
-            }
-            infoMessages.addAll(baseData.getInfoMessagesAsList());
-        }
-    }
+
 }

@@ -28,9 +28,11 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepositor
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.threads.ThreadedPool;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,8 +60,13 @@ public class ExecContextTaskResettingTopLevelService {
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextCache execContextCache;
 
-    private final ThreadedPool<ResetTasksWithErrorEvent> resetTasksWithErrorEventThreadedPool =
-            new ThreadedPool<>(1, 0, false, false, this::resetTasksWithErrorForRecovery);
+    private final ThreadedPool<Long, ResetTasksWithErrorEvent> resetTasksWithErrorEventThreadedPool =
+            new ThreadedPool<>("ExecContextTaskResetting-", 100, false, false, this::resetTasksWithErrorForRecovery, ConstsApi.SECONDS_10);
+
+    @PreDestroy
+    public void onExit() {
+        resetTasksWithErrorEventThreadedPool.shutdown();
+    }
 
     @Async
     @EventListener
@@ -67,17 +74,17 @@ public class ExecContextTaskResettingTopLevelService {
         resetTasksWithErrorEventThreadedPool.putToQueue(event);
     }
 
-    public void resetTasksWithErrorForRecovery() {
 /*
-        final int activeCount = executor.getActiveCount();
-        if (log.isDebugEnabled()) {
-            final long completedTaskCount = executor.getCompletedTaskCount();
-            final long taskCount = executor.getTaskCount();
-            log.debug("resetTasksInQueue, active task in executor: {}, awaiting tasks: {}", activeCount, taskCount - completedTaskCount);
-        }
-*/
+    public void resetTasksWithErrorForRecovery() {
+//        final int activeCount = executor.getActiveCount();
+//        if (log.isDebugEnabled()) {
+//            final long completedTaskCount = executor.getCompletedTaskCount();
+//            final long taskCount = executor.getTaskCount();
+//            log.debug("resetTasksInQueue, active task in executor: {}, awaiting tasks: {}", activeCount, taskCount - completedTaskCount);
+//        }
         resetTasksWithErrorEventThreadedPool.processEvent();
     }
+*/
 
     @Async
     @EventListener

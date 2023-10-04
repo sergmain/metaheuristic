@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.event.events;
 
+import ai.metaheuristic.commons.utils.threads.EventWithId;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,7 +29,12 @@ import lombok.EqualsAndHashCode;
 @Data
 @AllArgsConstructor
 @EqualsAndHashCode(of = "taskId")
-public class UpdateTaskExecStatesInGraphEvent {
+public class UpdateTaskExecStatesInGraphEvent implements EventWithId<Long> {
     public final Long execContextId;
     public final Long taskId;
+
+    @Override
+    public Long getId() {
+        return execContextId;
+    }
 }

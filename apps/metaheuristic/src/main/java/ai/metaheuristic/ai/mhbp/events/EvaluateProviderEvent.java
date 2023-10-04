@@ -16,11 +16,16 @@
 
 package ai.metaheuristic.ai.mhbp.events;
 
-import org.springframework.lang.Nullable;
+import ai.metaheuristic.commons.utils.threads.EventWithId;
 
 /**
  * @author Sergio Lissner
  * Date: 3/19/2023
  * Time: 10:42 PM
  */
-public record EvaluateProviderEvent(long evaluationId, int limit, long accountId) {}
+public record EvaluateProviderEvent(long evaluationId, int limit, long accountId) implements EventWithId<Long> {
+    @Override
+    public Long getId() {
+        return evaluationId;
+    }
+}

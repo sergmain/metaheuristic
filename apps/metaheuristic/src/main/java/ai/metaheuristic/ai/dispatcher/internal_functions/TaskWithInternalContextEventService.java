@@ -37,8 +37,8 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
@@ -47,22 +47,16 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Consumer;
+import java.time.Duration;
 
 /**
  * @author Serge
@@ -96,159 +90,21 @@ public class TaskWithInternalContextEventService {
     private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     private final InternalFunctionProcessor internalFunctionProcessor;
 
-    private static final int MAX_ACTIVE_THREAD = 1;
-    // number of active executers with different execContextId
-    private static final int MAX_NUMBER_EXECUTORS = 4;
+    private static final MultiTenantedQueue<Long, TaskWithInternalContextEvent> MULTI_TENANTED_QUEUE =
+        new MultiTenantedQueue<>(100, Duration.ofSeconds(0), true, null);
 
-    public static class ExecutorForExecContext {
-        public Long execContextId;
-        public final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(MAX_ACTIVE_THREAD);
-
-        public ExecutorForExecContext(Long execContextId) {
-            this.execContextId = execContextId;
-        }
-    }
-
-    public static final LinkedHashMap<Long, LinkedList<TaskWithInternalContextEvent>> QUEUE = new LinkedHashMap<>();
-    private static final ReentrantReadWriteLock queueLock = new ReentrantReadWriteLock();
-    private static final ReentrantReadWriteLock.ReadLock queueReadLock = queueLock.readLock();
-    private static final ReentrantReadWriteLock.WriteLock queueWriteLock = queueLock.writeLock();
-
-    public static final ExecutorForExecContext[] POOL_OF_EXECUTORS = new ExecutorForExecContext[MAX_NUMBER_EXECUTORS];
-    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
-    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
-
-    public void putToQueue(final TaskWithInternalContextEvent event) {
-        putToQueueInternal(event);
-        processPoolOfExecutors(event.execContextId, this::process);
+    @SuppressWarnings("MethodMayBeStatic")
+    @PreDestroy
+    public void onExit() {
+        MULTI_TENANTED_QUEUE.clearQueue();
     }
 
     public static void clearQueue() {
-        queueWriteLock.lock();
-        try {
-            for (Map.Entry<Long, LinkedList<TaskWithInternalContextEvent>> entry : QUEUE.entrySet()) {
-                entry.getValue().clear();
-            }
-            QUEUE.clear();
-        } finally {
-            queueWriteLock.unlock();
-        }
+        MULTI_TENANTED_QUEUE.clearQueue();
     }
 
-    public static void shutdown() {
-        clearQueue();
-        writeLock.lock();
-        try {
-            for (int i = 0; i< POOL_OF_EXECUTORS.length; i++) {
-                if (POOL_OF_EXECUTORS[i] == null) {
-                    continue;
-                }
-                POOL_OF_EXECUTORS[i].executor.shutdownNow();
-                POOL_OF_EXECUTORS[i] = null;
-            }
-        } finally {
-            writeLock.unlock();
-        }
-    }
-
-    public static void processPoolOfExecutors(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
-        writeLock.lock();
-        try {
-            for (int i = 0; i< POOL_OF_EXECUTORS.length; i++) {
-                if (POOL_OF_EXECUTORS[i] == null) {
-                    continue;
-                }
-                if (POOL_OF_EXECUTORS[i].executor.getQueue().isEmpty() && POOL_OF_EXECUTORS[i].executor.getActiveCount()==0) {
-                    POOL_OF_EXECUTORS[i].executor.shutdown();
-                    POOL_OF_EXECUTORS[i] = null;
-                }
-            }
-            final LinkedHashSet<Long> execContextIds;
-            queueWriteLock.lock();
-            try {
-                execContextIds = new LinkedHashSet<>(QUEUE.keySet());
-            } finally {
-                queueWriteLock.unlock();
-            }
-            for (Long id : execContextIds) {
-                if (pokeExecutor(id, taskProcessor)) {
-                    break;
-                }
-            }
-        } finally {
-            writeLock.unlock();
-        }
-    }
-
-    /**
-     *
-     * @param execContextId Long
-     * @return boolean is POOL_OF_EXECUTORS already full and execContextId wasn't allocated
-     */
-    public static boolean pokeExecutor(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor) {
-        writeLock.lock();
-        try {
-            for (ExecutorForExecContext poolExecutor : POOL_OF_EXECUTORS) {
-                if (poolExecutor==null) {
-                    continue;
-                }
-                if (poolExecutor.execContextId.equals(execContextId)) {
-                    return false;
-                }
-            }
-            for (int i = 0; i < POOL_OF_EXECUTORS.length; i++) {
-                if (POOL_OF_EXECUTORS[i]==null) {
-                    POOL_OF_EXECUTORS[i] = new ExecutorForExecContext(execContextId);
-
-                    final int idx = i;
-                    POOL_OF_EXECUTORS[i].executor.submit(() -> processTask(execContextId, taskProcessor, POOL_OF_EXECUTORS[idx]));
-                    return false;
-                }
-            }
-            return true;
-        } finally {
-            writeLock.unlock();
-        }
-    }
-
-    private static void processTask(Long execContextId, Consumer<TaskWithInternalContextEvent> taskProcessor, ExecutorForExecContext poolExecutor) {
-        TaskWithInternalContextEvent e;
-        while ((e = pullFromQueue(poolExecutor.execContextId)) != null) {
-            taskProcessor.accept(e);
-        }
-    }
-
-    public static void putToQueueInternal(final TaskWithInternalContextEvent event) {
-        queueWriteLock.lock();
-        try {
-            LinkedList<TaskWithInternalContextEvent> q = QUEUE.computeIfAbsent(event.execContextId, (o)->new LinkedList<>());
-
-            if (q.contains(event)) {
-                return;
-            }
-            q.add(event);
-        } finally {
-            queueWriteLock.unlock();
-        }
-    }
-
-    @Nullable
-    private static TaskWithInternalContextEvent pullFromQueue(Long execContextId) {
-        queueWriteLock.lock();
-        try {
-            final LinkedList<TaskWithInternalContextEvent> events = QUEUE.get(execContextId);
-            if (events==null) {
-                return null;
-            }
-            if (events.isEmpty()) {
-                QUEUE.remove(execContextId);
-                return null;
-            }
-            return events.pollFirst();
-        } finally {
-            queueWriteLock.unlock();
-        }
+    public void putToQueue(final TaskWithInternalContextEvent event) {
+        MULTI_TENANTED_QUEUE.putToQueue(event, this::process);
     }
 
     private void process(final TaskWithInternalContextEvent event) {

@@ -58,8 +58,8 @@ public class EnumsApi {
     }
 
     /**
-     * local - all assets are managed locally
-     * source - this dispatcher is source for all assets
+     * local - all assets are managed locally<br/>
+     * source - this dispatcher is source for all assets<br/>
      * replicated - all assets on this dispatcher are replicated from source dispatcher
      */
     public enum DispatcherAssetMode {local, source, replicated}
@@ -321,7 +321,7 @@ public class EnumsApi {
 
     public enum TaskExecState { NONE(0), IN_PROGRESS(1),
         ERROR(2), OK(3), NOT_USED_ANYMORE(4),
-        SKIPPED(5), CHECK_CACHE(6), ERROR_WITH_RECOVERY(7);
+        SKIPPED(5), CHECK_CACHE(6), ERROR_WITH_RECOVERY(7), INIT(8);
 
         public final int value;
         TaskExecState(int value) {
@@ -337,6 +337,7 @@ public class EnumsApi {
                 case 5 -> SKIPPED;
                 case 6 -> CHECK_CACHE;
                 case 7 -> ERROR_WITH_RECOVERY;
+                case 8 -> INIT;
                 default -> throw new IllegalStateException("Unknown type : " + type);
             };
         }

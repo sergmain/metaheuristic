@@ -66,6 +66,9 @@ public class TaskParamsYamlUtilsV1
         if (v1.task.cache!=null) {
             t.task.cache = new TaskParamsYaml.Cache(v1.task.cache.enabled, v1.task.cache.omitInline, v1.task.cache.cacheMeta);
         }
+        if (v1.task.init!=null) {
+            t.task.init = new TaskParamsYaml.Init(v1.task.init.parentTaskIds, v1.task.init.nextState);
+        }
 
         t.checkIntegrity();
 

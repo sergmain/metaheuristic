@@ -35,7 +35,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskQueueSyncStaticService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.*;
-import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
@@ -220,6 +220,7 @@ public class SouthbridgeService {
     }
 
     public String keepAlive(String data, String remoteAddress) {
+        globals.state.awaitingForProcessor = false;
         KeepAliveRequestParamYaml karpy = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.to(data);
         KeepAliveResponseParamYaml response = keepAliveTopLevelService.processKeepAliveInternal(karpy, remoteAddress, System.currentTimeMillis());
         String yaml = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.toString(response);

@@ -51,14 +51,15 @@ public class DispatcherRequestorHolderService {
     }
     public final Map<DispatcherUrl, Requesters> dispatcherRequestorMap = new HashMap<>();
 
+    @Autowired
     public DispatcherRequestorHolderService(
-            @Autowired Globals globals,
-            @Autowired ProcessorService processorService,
-            @Autowired ProcessorTaskService processorTaskService,
-            @Autowired CurrentExecState currentExecState,
-            @Autowired ProcessorCommandProcessor processorCommandProcessor,
-            @Autowired ProcessorKeepAliveProcessor processorKeepAliveProcessor,
-            @Autowired ProcessorEnvironment processorEnvironment
+        Globals globals,
+        ProcessorService processorService,
+        ProcessorTaskService processorTaskService,
+        CurrentExecState currentExecState,
+        ProcessorCommandProcessor processorCommandProcessor,
+        ProcessorKeepAliveProcessor processorKeepAliveProcessor,
+        ProcessorEnvironment processorEnvironment
     ) {
 
         for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedParams.DispatcherLookupExtended> entry : processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {

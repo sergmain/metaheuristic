@@ -42,6 +42,7 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
@@ -70,6 +71,8 @@ public class ProcessorKeepAliveRequestor {
     private final RestTemplate restTemplate;
     private final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher;
     private final String dispatcherRestUrl;
+
+    private static final Random R = new Random();
 
     public ProcessorKeepAliveRequestor(
             DispatcherUrl dispatcherUrl, Globals globals,
@@ -129,16 +132,13 @@ public class ProcessorKeepAliveRequestor {
             ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
             karpy.functions.statuses.putAll(processorEnvironment.metadataParams.getAsFunctionDownloadStatuses(assetManagerUrl));
 
-            final String url = dispatcherRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8);
+//            final String url = dispatcherRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8);
+            final String url = dispatcherRestUrl + '/' + R.nextInt(100_000, 1_000_000);
             try {
                 HttpHeaders headers = new HttpHeaders();
                 headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
                 headers.setContentType(MediaType.APPLICATION_JSON);
-
-                String auth = dispatcher.dispatcherLookup.restUsername + ':' + dispatcher.dispatcherLookup.restPassword;
-                byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.US_ASCII));
-                String authHeader = "Basic " + new String(encodedAuth);
-                headers.set(HttpHeaders.AUTHORIZATION, authHeader);
+                headers.set(HttpHeaders.AUTHORIZATION, dispatcher.authHeader);
 
                 String yaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(karpy);
                 HttpEntity<String> request = new HttpEntity<>(yaml, headers);

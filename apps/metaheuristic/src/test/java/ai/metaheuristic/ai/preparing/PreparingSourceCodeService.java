@@ -27,8 +27,8 @@ import ai.metaheuristic.ai.dispatcher.event.events.ResetTasksWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.TransferStateFromTaskQueueToExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
@@ -234,7 +234,8 @@ public class PreparingSourceCodeService {
         Thread.sleep(500);
 
         execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
-        execContextTaskAssigningTopLevelService.procesEvent();
+        //execContextTaskAssigningTopLevelService.procesEvent();
+
         Thread.sleep(500);
         eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
                 execContext.id, execContext.execContextGraphId, execContext.execContextTaskStateId));
@@ -259,7 +260,7 @@ public class PreparingSourceCodeService {
     @SneakyThrows
     public void findInternalTaskForRegisteringInQueue(Long execContextId) {
         execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
-        execContextTaskAssigningTopLevelService.procesEvent();
+        //execContextTaskAssigningTopLevelService.procesEvent();
 //        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContextId);
 
         boolean isQueueEmpty = true;
@@ -322,7 +323,7 @@ public class PreparingSourceCodeService {
         if (ects==null) {
             return 0;
         }
-        return ExecContextTaskStateService.getCountUnfinishedTasks(ects);
+        return ExecContextTaskStateUtils.getCountUnfinishedTasks(ects.getExecContextTaskStateParamsYaml());
     }
 
     @Nullable

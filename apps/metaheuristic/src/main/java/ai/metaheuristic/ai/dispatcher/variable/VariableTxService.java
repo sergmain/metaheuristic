@@ -411,63 +411,6 @@ public class VariableTxService {
         }
     }
 
-    @Nullable
-    public TaskImpl prepareVariables(ExecContextParamsYaml execContextParamsYaml, TaskImpl task, List<String> allParentTaskContextIds) {
-        TxUtils.checkTxExists();
-
-        TaskParamsYaml taskParams = task.getTaskParamsYaml();
-
-        final Long execContextId = task.execContextId;
-        ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParams.task.processCode);
-        if (p==null) {
-            log.warn("#171.240 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
-            return null;
-        }
-
-        p.inputs.stream()
-                .map(v -> toInputVariable(allParentTaskContextIds, v, taskParams.task.taskContextId, execContextId))
-                .collect(Collectors.toCollection(()->taskParams.task.inputs));
-
-        return initOutputVariables(execContextId, task, p, taskParams);
-    }
-
-    private TaskParamsYaml.InputVariable toInputVariable(List<String> allParentTaskContextIds, ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {
-        TaskParamsYaml.InputVariable iv = new TaskParamsYaml.InputVariable();
-        if (v.context== EnumsApi.VariableContext.local || v.context== EnumsApi.VariableContext.array) {
-            String contextId = Boolean.TRUE.equals(v.parentContext) ? VariableUtils.getParentContext(taskContextId) : taskContextId;
-            if (S.b(contextId)) {
-                throw new TaskCreationException(
-                        S.f("#171.270 (S.b(contextId)), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
-                                v.name, v.context, taskContextId, execContextId));
-            }
-            Object[] variable = findVariableInAllInternalContexts(allParentTaskContextIds, v.name, contextId, execContextId);
-            if (variable==null) {
-                throw new TaskCreationException(
-                        S.f("#171.300 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
-                                v.name, v.context, taskContextId, execContextId));
-            }
-            iv.id = (Long)variable[0];
-            iv.filename = (String)variable[1];
-        }
-        else {
-            SimpleGlobalVariable variable = globalVariableRepository.findIdByName(v.name);
-            if (variable==null) {
-                throw new TaskCreationException(
-                        S.f("#171.330 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
-                                v.name, v.context, taskContextId, execContextId));
-            }
-            iv.id = variable.id;
-        }
-        iv.context = v.context;
-        iv.name = v.name;
-        iv.sourcing = v.sourcing;
-        iv.disk = v.disk;
-        iv.git = v.git;
-        iv.type = v.type;
-        iv.setNullable(v.getNullable());
-        return iv;
-    }
-
     @SuppressWarnings({"SameParameterValue"})
     @Nullable
     public Variable getVariableAsSimple(Long execContextId, String variable) {
@@ -514,7 +457,7 @@ public class VariableTxService {
     }
 
     @Nullable
-    private Object[] findVariableInAllInternalContexts(List<String> taskCtxIds, String variable, String taskContextId, Long execContextId) {
+    public Object[] findVariableInAllInternalContexts(List<String> taskCtxIds, String variable, String taskContextId, Long execContextId) {
         for (String taskCtxId : taskCtxIds) {
             List<Object[]> obj = variableRepository.findAsObject(variable, taskCtxId, execContextId);
             if (obj!=null && !obj.isEmpty()) {

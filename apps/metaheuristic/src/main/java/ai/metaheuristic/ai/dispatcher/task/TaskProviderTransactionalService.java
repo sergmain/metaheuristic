@@ -33,7 +33,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -45,6 +47,7 @@ import static ai.metaheuristic.ai.dispatcher.task.TaskQueueSyncStaticService.che
  * Date: 10/11/2020
  * Time: 3:25 PM
  */
+@SuppressWarnings("MethodMayBeStatic")
 @Service
 @Profile("dispatcher")
 @Slf4j
@@ -94,14 +97,16 @@ public class TaskProviderTransactionalService {
         return new TaskData.AssignedTask(t, resultTask.queuedTask.tag, quota.amount);
     }
 
-    @SuppressWarnings("MethodMayBeStatic")
+    @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+//    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleStartTaskProcessingTxEvent(PostTaskAssigningTxEvent event) {
         event.runnable.run();
     }
 
-    @SuppressWarnings("MethodMayBeStatic")
+    @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_ROLLBACK)
+//    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleStartTaskProcessingRollbackTxEvent(PostTaskAssigningRollbackTxEvent event) {
         event.runnable.run();
     }

@@ -135,9 +135,9 @@ public class SystemProcessLauncher {
         try (final OutputStream fos = Files.newOutputStream(consoleLogFile); BufferedOutputStream bos = new BufferedOutputStream(fos)) {
             final AtomicBoolean isRun = new AtomicBoolean(false);
             final AtomicBoolean isDone = new AtomicBoolean(false);
-            final Thread reader = new Thread(() -> {
+            final Thread reader = Thread.ofVirtual().start(() -> {
                 try {
-                    log.info("thread #{}, start receiving stream from external process", Thread.currentThread().getId());
+                    log.info("thread #{}, start receiving stream from external process", Thread.currentThread().threadId());
                     streamHolder.is = process.getInputStream();
                     int c;
                     isRun.set(true);
@@ -152,7 +152,6 @@ public class SystemProcessLauncher {
                     isDone.set(true);
                 }
             });
-            reader.start();
 
             if (timeout.get()>0 || !outerInterrupters.isEmpty()) {
                 final List<Supplier<Boolean>> interrupters = new ArrayList<>();
@@ -171,13 +170,13 @@ public class SystemProcessLauncher {
                     return false;
                 });
 
-                timeoutThread = new Thread(() -> {
+                timeoutThread = Thread.ofVirtual().start(() -> {
                     try {
                         while (!isRun.get()) {
-                            log.info("thread #{} is waiting for reader thread, time - {}", Thread.currentThread().getId(), new Date());
+                            log.info("thread #{} is waiting for reader thread, time - {}", Thread.currentThread().threadId(), new Date());
                             Thread.sleep(TimeUnit.MILLISECONDS.toMillis(500));
                         }
-                        log.info("thread #{}, time before sleep - {}", Thread.currentThread().getId(), new Date());
+                        log.info("thread #{}, time before sleep - {}", Thread.currentThread().threadId(), new Date());
                         while (true) {
                             Thread.sleep(TimeUnit.SECONDS.toMillis(2));
                             if (interrupters.stream().anyMatch(Supplier::get)) {
@@ -189,7 +188,7 @@ public class SystemProcessLauncher {
                                 return;
                             }
                         }
-                        log.info("thread #{}, time before destroy - {}", Thread.currentThread().getId(), new Date());
+                        log.info("thread #{}, time before destroy - {}", Thread.currentThread().threadId(), new Date());
 
                         final LinkedList<ProcessHandle> handles = new LinkedList<>();
                         collectHandlers(handles, process.toHandle());
@@ -200,13 +199,12 @@ public class SystemProcessLauncher {
                         destroy(handles);
                         timeoutMessage.append(String.format(TIMEOUT_MESSAGE, timeoutBeforeTerminate));
                         isTerminated.set(true);
-                        log.info("thread #{}, time after destroy - {}",  Thread.currentThread().getId(), new Date());
+                        log.info("thread #{}, time after destroy - {}",  Thread.currentThread().threadId(), new Date());
                     } catch (InterruptedException e) {
                         // this is a normal operation so it'll be debug level
-                        log.debug("thread #{}, current thread was interrupted", Thread.currentThread().getId());
+                        log.debug("thread #{}, current thread was interrupted", Thread.currentThread().threadId());
                     }
                 });
-                timeoutThread.start();
             }
 
             exitCode = process.waitFor();

@@ -68,24 +68,24 @@ public class ExecContextTaskProducingService {
         SourceCodeApiData.TaskProducingResultComplex result = new SourceCodeApiData.TaskProducingResultComplex();
         long mills = System.currentTimeMillis();
         result.sourceCodeValidationResult = sourceCodeValidationService.checkConsistencyOfSourceCode(sourceCode);
-        log.info("#701.100 SourceCode {} was validated for {} ms.", sourceCode.uid, System.currentTimeMillis() - mills);
+        log.info("701.100 SourceCode {} was validated for {} ms.", sourceCode.uid, System.currentTimeMillis() - mills);
 
         if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK) {
-            log.error("#701.120 Can't produce tasks, error: {}", result.sourceCodeValidationResult);
+            log.error("701.120 Can't produce tasks, error: {}", result.sourceCodeValidationResult);
             execContext.setState(EnumsApi.ExecContextState.STOPPED.code);
             return result;
         }
         mills = System.currentTimeMillis();
 
-        log.info("#701.140 Start producing tasks for SourceCode {}, execContextId: #{}", sourceCode.uid, execContext.id);
+        log.info("701.140 Start producing tasks for SourceCode {}, execContextId: #{}", sourceCode.uid, execContext.id);
 
         // create all not dynamic tasks
         TaskData.ProduceTaskResult produceTaskResult = produceTasksForExecContext(execContext);
         if (produceTaskResult.status== EnumsApi.TaskProducingStatus.OK) {
-            log.info("#701.160 Tasks were produced with status {}", produceTaskResult.status);
+            log.info("701.160 Tasks were produced with status {}", produceTaskResult.status);
         }
         else {
-            log.info("#701.180 Tasks were produced with status {}, error: {}", produceTaskResult.status, produceTaskResult.error);
+            log.info("701.180 Tasks were produced with status {}, error: {}", produceTaskResult.status, produceTaskResult.error);
         }
 
         if (produceTaskResult.status==EnumsApi.TaskProducingStatus.OK) {
@@ -99,9 +99,7 @@ public class ExecContextTaskProducingService {
         result.sourceCodeValidationResult = ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
         result.taskProducingStatus = produceTaskResult.status;
 
-        log.info("#701.190 SourceCodeService.produceTasks('{}') was processed for {} ms.", sourceCode.uid, System.currentTimeMillis() - mills);
-        eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
-
+        log.info("701.190 SourceCodeService.produceTasks('{}') was processed for {} ms.", sourceCode.uid, System.currentTimeMillis() - mills);
         return result;
     }
 
@@ -121,12 +119,12 @@ public class ExecContextTaskProducingService {
                             Consts.MH_FINISH_FUNCTION_INSTANCE);
                 }
                 else {
-                    return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.PROCESS_NOT_FOUND_ERROR, "#701.200 Process '"+processCode+"' wasn't found");
+                    return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.PROCESS_NOT_FOUND_ERROR, "701.200 Process '"+processCode+"' wasn't found");
                 }
             }
             if (internalFunctionRegisterService.get(p.function.code)!=null && p.function.context!=EnumsApi.FunctionExecContext.internal) {
                 return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.INTERNAL_FUNCTION_DECLARED_AS_EXTERNAL_ERROR,
-                        "#701.220 Process '"+processCode+"' must be internal");
+                        "701.220 Process '"+processCode+"' must be internal");
             }
             ExecContextParamsYaml.Process internalFuncProcess = checkForInternalFunctionAsParent(execContextParamsYaml, processGraph, processVertex);
             // internal functions will be processed in another thread
@@ -142,10 +140,9 @@ public class ExecContextTaskProducingService {
                     .forEach(parentTaskIds::addAll);
 
             final ExecContextParamsYaml.Process process = p;
-            TaskData.ProduceTaskResult result =
-                    taskProducingService.produceTaskForProcess(
-                            process, execContextParamsYaml, execContext.id,
-                            execContext.execContextGraphId, execContext.execContextTaskStateId, parentTaskIds);
+            TaskData.ProduceTaskResult result = taskProducingService.produceTaskForProcess(
+                process, execContextParamsYaml, execContext.id,
+                execContext.execContextGraphId, execContext.execContextTaskStateId, parentTaskIds);
 
             if (result.status!= EnumsApi.TaskProducingStatus.OK) {
                 return result;
@@ -168,7 +165,7 @@ public class ExecContextTaskProducingService {
         while ((directAncestor=getDirectAncestor(processGraph, directAncestor))!=null) {
             ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(directAncestor.process);
             if (p==null) {
-                log.warn("#701.260 Unusual state, need to investigate");
+                log.warn("701.260 Unusual state, need to investigate");
                 continue;
             }
             if (p.function.context== EnumsApi.FunctionExecContext.internal) {

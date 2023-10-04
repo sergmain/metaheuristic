@@ -128,6 +128,7 @@ public class ChatData {
 
     @Data
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class PromptEvaluation {
         public String uuid;
         public String prompt;

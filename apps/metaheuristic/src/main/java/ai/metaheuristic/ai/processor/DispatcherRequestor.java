@@ -31,7 +31,6 @@ import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.commons.CommonConsts;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.hc.client5.http.ConnectTimeoutException;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -75,6 +74,7 @@ public class DispatcherRequestor {
     private final RestTemplate restTemplate;
     private final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher;
     private final String serverRestUrl;
+    private static final Random R = new Random();
 
     public DispatcherRequestor(DispatcherUrl dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService, ProcessorService processorService, MetadataParams metadataService, CurrentExecState currentExecState, DispatcherLookupExtendedParams dispatcherLookupExtendedService, ProcessorCommandProcessor processorCommandProcessor) {
         this.dispatcherUrl = dispatcherUrl;
@@ -120,10 +120,7 @@ public class DispatcherRequestor {
     }
 
     public void proceedWithRequest() {
-        if (globals.testing) {
-            return;
-        }
-        if (!globals.processor.enabled) {
+        if (globals.testing || !globals.processor.enabled) {
             return;
         }
         if (dispatcher.dispatcherLookup.disabled) {
@@ -202,17 +199,14 @@ public class DispatcherRequestor {
                 return;
             }
 
-            final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8);
+//            final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8);
+            final String url = serverRestUrl + '/' + R.nextInt(100_000, 1_000_000);
             try {
-                // TODO 2021-02-18 refactor as a common method
+                // TODO 2021-02-18 refactor as a common method and replace in ProcessorKeepAliveRequestor too
                 HttpHeaders headers = new HttpHeaders();
                 headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
                 headers.setContentType(MediaType.APPLICATION_JSON);
-
-                String auth = dispatcher.dispatcherLookup.restUsername + ':' + dispatcher.dispatcherLookup.restPassword;
-                byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.US_ASCII));
-                String authHeader = "Basic " + new String(encodedAuth);
-                headers.set(HttpHeaders.AUTHORIZATION, authHeader);
+                headers.set(HttpHeaders.AUTHORIZATION, dispatcher.authHeader);
 
                 String yaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(pcpy);
                 HttpEntity<String> request = new HttpEntity<>(yaml, headers);

@@ -51,18 +51,9 @@ public class FunctionDataTxService {
         try {
             dispatcherBlobStorage.accessFunctionData(code, (is)-> {
                 DirUtils.copy(is, trgFile);
+                //noinspection unused
                 int k=0;
             });
-/*
-            Blob blob = functionDataRepository.getDataAsStreamByCode(code);
-            if (blob==null) {
-                log.warn("#088.010 Binary data for code {} wasn't found", code);
-                throw new FunctionDataNotFoundException(code, "#088.010 Function data wasn't found, code: " + code);
-            }
-            try (InputStream is = blob.getBinaryStream()) {
-                DirUtils.copy(is, trgFile);
-            }
-*/
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Throwable th) {

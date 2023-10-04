@@ -45,9 +45,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -113,47 +111,20 @@ public class ProviderQueryService {
 
     private void askQuestions(AtomicReference<Session> s, Api api, Stream<QuestionData.PromptWithAnswerWithChapterId> questions) throws InterruptedException {
         long mills = System.currentTimeMillis();
-        ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(globals.threadNumber.getQueryApi());
-
-        ConcurrentHashMap<Long, ChapterWithResults> chapterCache = new ConcurrentHashMap<>();
-        AtomicInteger currTotalErrors = new AtomicInteger();
-        questions.forEach(question -> {
-            executor.submit(() -> {
-                if (currTotalErrors.get() >= globals.mhbp.max.errorsPerEvaluation) {
-                    return;
-                }
-                ChapterWithResults withResults = chapterCache.computeIfAbsent(question.chapterId(),
-                        (chapterId)->chapterRepository.findById(chapterId).map(ChapterWithResults::new).orElse(null));
-
-                if (withResults==null) {
-                    return;
-                }
-                if (withResults.currErrors.get() >= globals.mhbp.max.errorsPerPart) {
-                    return;
-                }
-
-                ProviderData.QueriedData queriedData = new ProviderData.QueriedData(question.prompt().q(), null);
-                ProviderData.QuestionAndAnswer answer = processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
-
-                Enums.AnswerStatus status;
-                if (answer.status()==OK) {
-                    status = answer.a()!=null && answer.a().processedAnswer.answer()!=null && question.prompt().a().equals(answer.a().processedAnswer.answer().strip())
-                            ? Enums.AnswerStatus.normal
-                            : Enums.AnswerStatus.fail;
-                }
-                else {
-                    status = Enums.AnswerStatus.error;
-                }
-                if (status!=Enums.AnswerStatus.error) {
-                    currTotalErrors.incrementAndGet();
-                    withResults.currErrors.incrementAndGet();
-                }
-                withResults.answers.add(new PromptWithAnswer(question.prompt(), answer, status));
+        ConcurrentHashMap<Long, ChapterWithResults> chapterCache;
+        long endMills;
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            chapterCache = new ConcurrentHashMap<>();
+            AtomicInteger currTotalErrors = new AtomicInteger();
+            final List<Future<?>> f = new ArrayList<>();
+            questions.forEach(question -> {
+                Thread t = new Thread(() -> makeQuery(api, question, currTotalErrors, chapterCache), "ProviderQueryService-" + ThreadUtils.nextThreadNum());
+                f.add(executor.submit(t));
             });
-        });
 
-        ThreadUtils.waitTaskCompleted(executor);
-        long endMills = ThreadUtils.execStat(mills, executor);
+            ThreadUtils.waitTaskCompleted(f, 20);
+            endMills = ThreadUtils.execStat(mills, f.size());
+        }
 
         for (ChapterWithResults withResults : chapterCache.values()) {
             AnswerParams ap = new AnswerParams();
@@ -177,6 +148,39 @@ public class ProviderQueryService {
             }
             questionAndAnswerService.process(s.get(), withResults.c, ap);
         }
+    }
+
+    private void makeQuery(Api api, QuestionData.PromptWithAnswerWithChapterId question, AtomicInteger currTotalErrors, ConcurrentHashMap<Long, ChapterWithResults> chapterCache) {
+        if (currTotalErrors.get() >= globals.mhbp.max.errorsPerEvaluation) {
+            return;
+        }
+        ChapterWithResults withResults = chapterCache.computeIfAbsent(question.chapterId(),
+                (chapterId)->chapterRepository.findById(chapterId).map(ChapterWithResults::new).orElse(null));
+
+        if (withResults==null) {
+            return;
+        }
+        if (withResults.currErrors.get() >= globals.mhbp.max.errorsPerPart) {
+            return;
+        }
+
+        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(question.prompt().q(), null);
+        ProviderData.QuestionAndAnswer answer = processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
+
+        Enums.AnswerStatus status;
+        if (answer.status()==OK) {
+            status = answer.a()!=null && answer.a().processedAnswer.answer()!=null && question.prompt().a().equals(answer.a().processedAnswer.answer().strip())
+                    ? Enums.AnswerStatus.normal
+                    : Enums.AnswerStatus.fail;
+        }
+        else {
+            status = Enums.AnswerStatus.error;
+        }
+        if (status!=Enums.AnswerStatus.error) {
+            currTotalErrors.incrementAndGet();
+            withResults.currErrors.incrementAndGet();
+        }
+        withResults.answers.add(new PromptWithAnswer(question.prompt(), answer, status));
     }
 
 

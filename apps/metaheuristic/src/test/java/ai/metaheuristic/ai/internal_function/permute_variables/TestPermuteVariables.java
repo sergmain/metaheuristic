@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
@@ -35,9 +35,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.charset.StandardCharsets;
@@ -50,13 +50,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest
 //@ActiveProfiles({"dispatcher", "mysql"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@AutoConfigureCache
 public class TestPermuteVariables extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
     @Autowired private ExecContextService execContextService;
     @Autowired private ExecContextStatusService execContextStatusService;
-    @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
+    @Autowired private ExecContextTaskStateService execContextTaskStateTopLevelService;
     @Autowired private ExecContextGraphTopLevelService execContextGraphTopLevelService;
     @Autowired private ExecContextRepository execContextRepository;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
@@ -90,7 +91,7 @@ public class TestPermuteVariables extends PreparingSourceCode {
         System.out.println("start findInternalTaskForRegisteringInQueue()");
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
 
-        final List<Long> taskIds = getUnfinishedTaskVertices(getExecContextForTest());
+        final List<Long> taskIds = getFinishedTaskVertices(getExecContextForTest());
         assertEquals(2, taskIds.size());
 
         System.out.println("start findTaskForRegisteringInQueue() #5");

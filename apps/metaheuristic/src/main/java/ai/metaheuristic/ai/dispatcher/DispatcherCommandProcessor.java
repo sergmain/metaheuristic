@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.CheckForLostTaskEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
-import ai.metaheuristic.ai.dispatcher.task.TaskTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskService;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.data.DispatcherApiData;
@@ -56,7 +56,7 @@ public class DispatcherCommandProcessor {
 
     private final Globals globals;
     private final ExecContextTopLevelService execContextTopLevelService;
-    private final TaskTopLevelService taskTopLevelService;
+    private final TaskService taskTopLevelService;
     private final ProcessorTxService processorService;
     private final TaskProviderTopLevelService taskProviderService;
     private final ApplicationEventPublisher eventPublisher;

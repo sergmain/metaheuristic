@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextUtils;
-import ai.metaheuristic.ai.utils.JsonUtils;
+import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;

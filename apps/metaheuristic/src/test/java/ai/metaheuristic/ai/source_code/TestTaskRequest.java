@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.*;
@@ -41,7 +41,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.Objects;
@@ -58,7 +57,7 @@ public class TestTaskRequest extends FeatureMethods {
     @Autowired private TaskFinishingTopLevelService taskFinishingTopLevelService;
     @Autowired private TaskVariableTopLevelService taskVariableTopLevelService;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
-    @Autowired private ExecContextTaskStateTopLevelService execContextTaskStateTopLevelService;
+    @Autowired private ExecContextTaskStateService execContextTaskStateTopLevelService;
     @Autowired private ExecContextTopLevelService execContextTopLevelService;
     @Autowired private SouthbridgeService serverService;
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;

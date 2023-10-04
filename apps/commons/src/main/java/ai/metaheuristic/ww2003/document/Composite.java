@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ww2003.document;
 
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import ai.metaheuristic.ww2003.Enums;
 import ai.metaheuristic.ww2003.document.exceptions.DocumentProcessingException;
 import ai.metaheuristic.ww2003.document.persistence.ww2003.property.WW2003PropertyUtils;
@@ -26,7 +27,6 @@ import ai.metaheuristic.ww2003.document.tags.PropertyElement;
 import ai.metaheuristic.ww2003.document.tags.ww2003.DummyNode;
 import ai.metaheuristic.ww2003.document.tags.xml.*;
 import ai.metaheuristic.ww2003.document.tags.xml.table.TCellBorders;
-import ai.metaheuristic.ww2003.utils.ThreadUtils;
 import lombok.Getter;
 import javax.annotation.Nullable;
 

@@ -126,7 +126,7 @@ public class BatchForOperatorRestController {
             @PathVariable Long companyUniqueId, @PathVariable("batchId") Long batchId) {
         final ResponseEntity<AbstractResource> entity;
         try {
-            CleanerInfo resource = batchTopLevelService.getBatchProcessingResultWitTx(batchId, companyUniqueId, true);
+            CleanerInfo resource = batchTopLevelService.getBatchProcessingResul(batchId, companyUniqueId, true);
             if (resource==null) {
                 return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             }

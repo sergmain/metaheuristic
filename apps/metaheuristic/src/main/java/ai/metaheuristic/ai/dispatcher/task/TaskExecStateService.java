@@ -17,7 +17,9 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
+import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.SetTaskExecStateTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -27,9 +29,12 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import static ai.metaheuristic.api.EnumsApi.TaskExecState.NONE;
 
 /**
  * @author Serge
@@ -44,6 +49,7 @@ public class TaskExecStateService {
 
     private final TaskRepository taskRepository;
     private final EventPublisherService eventPublisherService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void updateTaskExecStates(Long taskId, EnumsApi.TaskExecState execState) {
@@ -81,6 +87,7 @@ public class TaskExecStateService {
             case IN_PROGRESS:
             case SKIPPED:
             case NONE:
+            case INIT:
             case CHECK_CACHE:
                 if (task.execState!=state.value) {
                     task.execState = state.value;
@@ -90,7 +97,16 @@ public class TaskExecStateService {
                 throw new IllegalStateException("#305.160 Right now it must be initialized somewhere else. state: " + state);
         }
 
+        if (state==NONE) {
+            eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
+        }
 
+        final SetTaskExecStateTxEvent event = getSetTaskExecStateTxEvent(task);
+        eventPublisherService.publishSetTaskExecStateTxEvent(event);
+        return task;
+    }
+
+    private static SetTaskExecStateTxEvent getSetTaskExecStateTxEvent(TaskImpl task) {
         final SetTaskExecStateTxEvent event;
         final EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.execState);
         if (execState== EnumsApi.TaskExecState.OK || execState== EnumsApi.TaskExecState.ERROR) {
@@ -100,24 +116,22 @@ public class TaskExecStateService {
         else {
             event = new SetTaskExecStateTxEvent(task.execContextId, task.id, execState, task.coreId, null, null);
         }
-        eventPublisherService.publishSetTaskExecStateTxEvent(event);
-        return task;
+        return event;
     }
 
     public void updateTasksStateInDb(ExecContextOperationStatusWithTaskList status) {
         TxUtils.checkTxExists();
 
-        status.childrenTasks.forEach(
-                t -> TaskSyncService.getWithSyncNullable(t.taskId, () -> {
-                    TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
-                    if (task != null) {
-                        changeTaskState(task, t.state);
-                    } else {
-                        log.error("305.180 Graph state is compromised, found task in graph but it doesn't exist in db");
-                    }
-                    return null;
-                })
-        );
+        for (ExecContextData.TaskWithState t : status.childrenTasks) {
+            TaskSyncService.getWithSyncVoid(t.taskId, () -> {
+                TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
+                if (task != null) {
+                    changeTaskState(task, t.state);
+                } else {
+                    log.error("305.180 Graph state is compromised, found task in graph but it doesn't exist in db");
+                }
+            });
+        }
     }
 
 

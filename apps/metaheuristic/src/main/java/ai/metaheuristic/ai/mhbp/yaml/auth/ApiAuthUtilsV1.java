@@ -16,13 +16,15 @@
 
 package ai.metaheuristic.ai.mhbp.yaml.auth;
 
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtilsV2;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 public class ApiAuthUtilsV1 extends
-        AbstractParamsYamlUtils<ApiAuthV1, ApiAuth, Void, Void, Void, Void> {
+        AbstractParamsYamlUtils<ApiAuthV1, ApiAuthV2, ApiAuthUtilsV2, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -35,10 +37,10 @@ public class ApiAuthUtilsV1 extends
     }
 
     @Override
-    public ApiAuth upgradeTo(ApiAuthV1 v1) {
+    public ApiAuthV2 upgradeTo(ApiAuthV1 v1) {
         v1.checkIntegrity();
 
-        ApiAuth t = new ApiAuth();
+        ApiAuthV2 t = new ApiAuthV2();
         t.auth.code = v1.auth.code;
         t.auth.type = v1.auth.type;
         t.auth.basic = toBasicAuth(v1.auth.basic);
@@ -49,20 +51,20 @@ public class ApiAuthUtilsV1 extends
     }
 
     @Nullable
-    public static ApiAuth.BasicAuth toBasicAuth(@Nullable ApiAuthV1.BasicAuthV1 v1) {
+    public static ApiAuthV2.BasicAuthV2 toBasicAuth(@Nullable ApiAuthV1.BasicAuthV1 v1) {
         if (v1==null) {
             return null;
         }
-        ApiAuth.BasicAuth ta = new ApiAuth.BasicAuth(v1.username, v1.password);
+        ApiAuthV2.BasicAuthV2 ta = new ApiAuthV2.BasicAuthV2(v1.username, v1.password);
         return ta;
     }
 
     @Nullable
-    public static ApiAuth.TokenAuth toTokenAuth(@Nullable ApiAuthV1.TokenAuthV1 v1) {
+    public static ApiAuthV2.TokenAuthV2 toTokenAuth(@Nullable ApiAuthV1.TokenAuthV1 v1) {
         if (v1==null) {
             return null;
         }
-        ApiAuth.TokenAuth ta = new ApiAuth.TokenAuth(v1.place, v1.token, v1.param, v1.env);
+        ApiAuthV2.TokenAuthV2 ta = new ApiAuthV2.TokenAuthV2(v1.place, v1.token, v1.param, v1.env, null);
         return ta;
     }
 
@@ -72,8 +74,8 @@ public class ApiAuthUtilsV1 extends
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public ApiAuthUtilsV2 nextUtil() {
+        return (ApiAuthUtilsV2) ApiAuthUtils.UTILS.getForVersion(2);
     }
 
     @Override

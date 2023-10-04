@@ -28,4 +28,12 @@ public class CommonConsts {
     public final static DateTimeFormatter EVENT_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
     public static final String MULTI_LANG_STRING = "ИИИ, 日本語, natürlich";
     public static final String METAHEURISTIC_TEMP = "metaheuristic-temp";
+
+    public static final int NODEJS_STANDALONE_PORT_NUMBER = 64968;
+    public static final String METAHEURISTIC_USERHOME_PATH = ".metaheuristic";
+
+    public static final String FRONTEND_URL = "http://localhost:"+ CommonConsts.NODEJS_STANDALONE_PORT_NUMBER;
+    public static final String APP_UUID_NONE = "none";
+
+
 }

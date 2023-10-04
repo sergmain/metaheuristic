@@ -59,22 +59,21 @@ public class TaskWithInternalContextService {
     private final ExecContextFSM execContextFSM;
 
     @Transactional
-    public Void preProcessing(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
+    public void preProcessing(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            log.warn("#707.030 Task #{} with internal context doesn't exist", taskId);
-            return null;
+            log.warn("707.030 Task #{} with internal context doesn't exist", taskId);
+            return;
         }
         preProcessInternalFunction(simpleExecContext, task);
-        return null;
     }
 
     @Transactional
     public void skipTask(Long taskId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            log.warn("#707.060 Task #{} with internal context doesn't exist", taskId);
+            log.warn("707.060 Task #{} with internal context doesn't exist", taskId);
             return;
         }
         // TODO 2021-10-15 investigate the possibility to mark as completed such tasks
@@ -98,6 +97,8 @@ public class TaskWithInternalContextService {
         r.result = FunctionExecUtils.toString(functionExec);
 
         execContextFSM.storeExecResult(task, r);
+
+        taskRepository.save(task);
     }
 
     private Enums.UploadVariableStatus setResultReceivedForInternalFunction(TaskImpl task) {

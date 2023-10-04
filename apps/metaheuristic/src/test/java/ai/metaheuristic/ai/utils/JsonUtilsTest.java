@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.api.data.BaseDataClass;
+import ai.metaheuristic.commons.utils.JsonUtils;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;

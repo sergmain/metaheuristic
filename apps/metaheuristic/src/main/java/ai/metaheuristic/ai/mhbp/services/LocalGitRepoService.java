@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.mhbp.data.KbData;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -39,15 +40,11 @@ import static ai.metaheuristic.ai.mhbp.services.LocalGitSourcingService.prepareR
  */
 @Service
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class LocalGitRepoService {
 
     private final Globals globals;
-
     private Path gitPath;
-
-    public LocalGitRepoService(@Autowired Globals globals) {
-        this.globals = globals;
-    }
 
     @PostConstruct
     public void postConstruct() {

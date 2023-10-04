@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
-import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTopLevelService;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +48,7 @@ import java.nio.file.Path;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class EventBusService {
 
-    private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
+    private final TaskCheckCachingService taskCheckCachingTopLevelService;
     private final TaskWithInternalContextEventService taskWithInternalContextEventService;
     private final TaskFinishingTopLevelService taskFinishingTopLevelService;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;

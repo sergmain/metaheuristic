@@ -16,9 +16,16 @@
 
 package ai.metaheuristic.ai.mhbp.events;
 
+import ai.metaheuristic.commons.utils.threads.EventWithId;
+
 /**
  * @author Sergio Lissner
  * Date: 4/23/2023
  * Time: 11:54 PM
  */
-public record InitKbEvent(long kbId, long companyId, long accountId) {}
+public record InitKbEvent(long kbId, long companyId, long accountId) implements EventWithId<Long> {
+    @Override
+    public Long getId() {
+        return kbId;
+    }
+}

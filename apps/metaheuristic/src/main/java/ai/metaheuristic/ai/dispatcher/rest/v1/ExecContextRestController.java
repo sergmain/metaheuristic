@@ -121,9 +121,8 @@ public class ExecContextRestController {
         return execContextTopLevelService.getExecContextExtended(execContextId);
     }
 
-    @SuppressWarnings("unused")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'OPERATOR', 'MANAGER')")
     @PostMapping("/exec-context-delete-commit")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public OperationStatusRest execContextDeleteCommit(Long sourceCodeId, Long execContextId, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         return execContextTopLevelService.deleteExecContextById(execContextId, context);

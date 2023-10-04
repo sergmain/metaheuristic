@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherCommandProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
+import ai.metaheuristic.ai.dispatcher.event.events.CheckProcessorIdEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
@@ -30,11 +31,14 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreTxService;
-import ai.metaheuristic.ai.utils.JsonUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
+import ai.metaheuristic.commons.utils.JsonUtils;
+import ai.metaheuristic.commons.utils.threads.ThreadedPool;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +56,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class KeepAliveTopLevelService {
 
+    public static final int MAX_REQUEST_PROCESSING_TIME = 12_000;
+
     private final Globals globals;
     private final ProcessorTopLevelService processorTopLevelService;
     private final FunctionTopLevelService functionTopLevelService;
@@ -61,6 +67,14 @@ public class KeepAliveTopLevelService {
     private final ProcessorCoreTxService processorCoreService;
     private final ProcessorCoreCache processorCoreCache;
     private final ExecContextStatusService execContextStatusService;
+
+    private ThreadedPool<Long, CheckProcessorIdEvent> checkProcessorIdEventPool;
+
+    @PostConstruct
+    public void init() {
+        this.checkProcessorIdEventPool = new ThreadedPool<>("CheckProcessorIdEvent-", 100, false, true,
+                this::checkProcessorIdSynced, ConstsApi.DURATION_NONE);
+    }
 
     private void initDispatcherInfo(KeepAliveResponseParamYaml keepAliveResponse) {
         keepAliveResponse.functions.infos.putAll(functionTopLevelService.toMapOfFunctionInfos());
@@ -73,6 +87,7 @@ public class KeepAliveTopLevelService {
 //    }
 //
 
+
     public KeepAliveResponseParamYaml processKeepAliveInternal(KeepAliveRequestParamYaml req, String remoteAddress, long startMills) {
         KeepAliveResponseParamYaml resp = new KeepAliveResponseParamYaml();
         resp.response.processorCode = req.processor.processorCode;
@@ -80,7 +95,7 @@ public class KeepAliveTopLevelService {
             Long processorId = processInfoAboutProcessor(req, remoteAddress, resp);
             // System.currentTimeMillis() - startMills < 12_000 - this is for to be sure that
             // request will be processed within http timeout window, which is 20 seconds
-            if (System.currentTimeMillis() - startMills < 12_000 || globals.isTesting()) {
+            if (System.currentTimeMillis() - startMills < MAX_REQUEST_PROCESSING_TIME || globals.isTesting()) {
                 processInfoAboutCores(processorId, req, startMills, resp);
             }
             initDispatcherInfo(resp);
@@ -123,14 +138,12 @@ public class KeepAliveTopLevelService {
         if (processorAndSessionStatus != Enums.ProcessorAndSessionStatus.ok) {
 
             DispatcherApiData.ProcessorSessionId processorSessionId = null;
+            CheckProcessorIdEvent event = new CheckProcessorIdEvent(processor.id, processorAndSessionStatus, remoteAddress);
             if (processorAndSessionStatus==Enums.ProcessorAndSessionStatus.updateSession) {
-                Thread t = new Thread(()-> ProcessorSyncService.getWithSync(processor.id,
-                        () -> processorTransactionService.checkProcessorId(processorAndSessionStatus, processor.id, remoteAddress)));
-                t.start();
+                checkProcessorIdEventPool.putToQueue(event);
             }
             else {
-                processorSessionId = ProcessorSyncService.getWithSync(processor.id,
-                        () -> processorTransactionService.checkProcessorId(processorAndSessionStatus, processor.id, remoteAddress));
+                processorSessionId = checkProcessorIdSynced(event);
             }
 
             if (processorSessionId != null) {
@@ -144,6 +157,11 @@ public class KeepAliveTopLevelService {
         //      keepAliveCommandProcessor.processLogRequest(processorRequest.processorCommContext.processorId, dispatcherResponse);
 
         return processorRequest.processorCommContext.processorId;
+    }
+
+    private DispatcherApiData.ProcessorSessionId checkProcessorIdSynced(CheckProcessorIdEvent event) {
+        return ProcessorSyncService.getWithSync(event.processorId(),
+            () -> processorTransactionService.checkProcessorId(event.processorAndSessionStatus(), event.processorId(), event.remoteAddress()));
     }
 
     private void processInfoAboutCores(Long processorId, KeepAliveRequestParamYaml req, long startMills, KeepAliveResponseParamYaml resp) {
@@ -162,7 +180,7 @@ public class KeepAliveTopLevelService {
             }
             resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(core.coreId, core.coreCode));
 
-            if (System.currentTimeMillis() - startMills > 12_000) {
+            if (System.currentTimeMillis() - startMills > MAX_REQUEST_PROCESSING_TIME) {
                 break;
             }
         }

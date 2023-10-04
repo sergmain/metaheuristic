@@ -208,6 +208,14 @@ public class TaskParamsYaml implements BaseParams {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Init {
+        public List<Long> parentTaskIds;
+        public EnumsApi.TaskExecState nextState;
+    }
+
+    @Data
     @NoArgsConstructor
     public static class TaskYaml {
         public Long execContextId;
@@ -226,6 +234,11 @@ public class TaskParamsYaml implements BaseParams {
         public final List<Map<String, String>> metas = new ArrayList<>();
 
         @Nullable public Cache cache;
+
+        // this field has meaning only for state EnumsApi.TaskExecState.INIT
+        // must be not null if task.state is EnumsApi.TaskExecState.INIT
+        @Nullable
+        public Init init;
 
         /**
          * Timeout before terminate a process with function

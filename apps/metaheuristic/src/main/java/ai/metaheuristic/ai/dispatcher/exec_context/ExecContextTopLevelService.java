@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.DeleteExecContextInListEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -72,7 +72,7 @@ public class ExecContextTopLevelService {
     private final TaskRepository taskRepository;
     private final ExecContextReconciliationTopLevelService execContextReconciliationTopLevelService;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
-    private final TaskCheckCachingTopLevelService taskCheckCachingTopLevelService;
+    private final TaskCheckCachingService taskCheckCachingTopLevelService;
     private final CacheProcessRepository cacheProcessRepository;
     private final TaskCheckCachingTxService taskCheckCachingTxService;
 
