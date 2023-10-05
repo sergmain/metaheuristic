@@ -98,7 +98,7 @@ public class BatchTxService {
 
     private void changeStateToProcessing(Batch b) {
         if (b.execState != Enums.BatchExecState.Preparing.code && b.execState != Enums.BatchExecState.Processing.code) {
-            throw new IllegalStateException("#990.040 Can't change state to Finished, " +
+            throw new IllegalStateException("990.040 Can't change state to Finished, " +
                     "current state: " + Enums.BatchExecState.toState(b.execState));
         }
         if (b.execState == Enums.BatchExecState.Processing.code) {
@@ -115,7 +115,7 @@ public class BatchTxService {
         for (Long batchId : batchIds) {
             Batch b = batchCache.findById(batchId);
             if (b==null) {
-                log.warn("#990.050 batch wasn't found {}", batchId);
+                log.warn("990.050 batch wasn't found {}", batchId);
                 continue;
             }
             ExecContextImpl ec = execContextCache.findById(b.execContextId, true);
@@ -126,7 +126,7 @@ public class BatchTxService {
                 continue;
             }
             if (b.execState != Enums.BatchExecState.Processing.code && b.execState != Enums.BatchExecState.Finished.code) {
-                log.warn("#990.060 Can't change state to Finished, current state: {}", Enums.BatchExecState.toState(b.execState));
+                log.warn("990.060 Can't change state to Finished, current state: {}", Enums.BatchExecState.toState(b.execState));
                 continue;
             }
             if (b.execState == Enums.BatchExecState.Finished.code) {

@@ -134,7 +134,7 @@ public class BatchTopLevelService {
 
     private static ZipUtils.ValidationResult isZipEntityNameOk(ZipEntry zipEntry) {
         Matcher m = ZIP_CHARS_PATTERN.matcher(zipEntry.getName());
-        return m.matches() ? ZipUtils.VALIDATION_RESULT_OK : new ZipUtils.ValidationResult("#981.010 Wrong name of file in zip file. Name: "+zipEntry.getName());
+        return m.matches() ? ZipUtils.VALIDATION_RESULT_OK : new ZipUtils.ValidationResult("981.010 Wrong name of file in zip file. Name: "+zipEntry.getName());
     }
 
     private static ZipUtils.ValidationResult isZipEntitySizeOk(ZipEntry zipEntry) {
@@ -142,7 +142,7 @@ public class BatchTopLevelService {
             return ZipUtils.VALIDATION_RESULT_OK;
         }
         return zipEntry.getSize()>0 ? ZipUtils.VALIDATION_RESULT_OK : new ZipUtils.ValidationResult(
-                "#981.013 File "+zipEntry.getName()+" has a zero length.");
+                "981.013 File "+zipEntry.getName()+" has a zero length.");
     }
 
     public BatchData.BatchesResult getBatches(Pageable pageable, DispatcherContext context, boolean includeDeleted, boolean filterBatches) {
@@ -151,7 +151,7 @@ public class BatchTopLevelService {
 
     public BatchData.BatchesResult getBatches(Pageable pageable, Long companyUniqueId, @Nullable Account account, boolean includeDeleted, boolean filterBatches) {
         if (filterBatches && account==null) {
-            log.warn("#981.020 (filterBatches && account==null)");
+            log.warn("981.020 (filterBatches && account==null)");
             return new BatchData.BatchesResult();
         }
         pageable = PageUtils.fixPageSize(20, pageable);
@@ -243,17 +243,17 @@ public class BatchTopLevelService {
 
     public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final DispatcherContext dispatcherContext) {
         if (Consts.ID_1.equals(dispatcherContext.getCompanyId())) {
-            return new BatchData.UploadingStatus("#981.030 Batch can't be created in company #1");
+            return new BatchData.UploadingStatus("981.030 Batch can't be created in company #1");
         }
         if (file.getSize()==0) {
-            return new BatchData.UploadingStatus("#981.035 Can't create a new batch because uploaded file has a zero length");
+            return new BatchData.UploadingStatus("981.035 Can't create a new batch because uploaded file has a zero length");
         }
 
-        log.info("#981.055 Staring of batchUploadFromFile(), file: {}, size: {}", file.getOriginalFilename(), file.getSize());
+        log.info("981.055 Staring of batchUploadFromFile(), file: {}, size: {}", file.getOriginalFilename(), file.getSize());
 
         String tempFilename = file.getOriginalFilename();
         if (S.b(tempFilename)) {
-            return new BatchData.UploadingStatus("#981.040 name of uploaded file is blank");
+            return new BatchData.UploadingStatus("981.040 name of uploaded file is blank");
         }
         // fix for the case when browser sends a full path, ie Edge
         final String originFilename = Path.of(tempFilename).getFileName().toString();
@@ -261,11 +261,11 @@ public class BatchTopLevelService {
         String extTemp = StrUtils.getExtension(originFilename);
         if (extTemp==null) {
             return new BatchData.UploadingStatus(
-                    "#981.060 file without extension, bad filename: " + originFilename);
+                    "981.060 file without extension, bad filename: " + originFilename);
         }
         String ext = extTemp.toLowerCase();
         if (!StringUtils.equalsAny(ext, ZIP_EXT, XML_EXT)) {
-            return new BatchData.UploadingStatus("#981.080 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
+            return new BatchData.UploadingStatus("981.080 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
         }
 
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, dispatcherContext.getCompanyId());
@@ -274,14 +274,14 @@ public class BatchTopLevelService {
         }
         SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
         if (sourceCode==null) {
-            return new BatchData.UploadingStatus("#981.100 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
+            return new BatchData.UploadingStatus("981.100 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
         }
         if (!sourceCode.getId().equals(sourceCodeId)) {
-            return new BatchData.UploadingStatus("#981.120 Fatal error in configuration of sourceCode, report to developers immediately");
+            return new BatchData.UploadingStatus("981.120 Fatal error in configuration of sourceCode, report to developers immediately");
         }
         Path tempDir = DirUtils.createMhTempPath("batch-processing-");
         if (tempDir==null) {
-            return new BatchData.UploadingStatus("#981.122 Can't create temporary directory. Batch file can't be processed");
+            return new BatchData.UploadingStatus("981.122 Can't create temporary directory. Batch file can't be processed");
         }
         try {
             // we need to create a temporary file because org.apache.commons.compress.archivers.zip.ZipFile
@@ -293,16 +293,16 @@ public class BatchTopLevelService {
                     DirUtils.copy(is, tempFile);
                 }
                 if (file.getSize()!=Files.size(tempFile)) {
-                    return new BatchData.UploadingStatus("#981.125 System error while preparing data. The sizes of files are different");
+                    return new BatchData.UploadingStatus("981.125 System error while preparing data. The sizes of files are different");
                 }
             } catch (IOException e) {
-                return new BatchData.UploadingStatus("#981.140 Can't create a new temp file, " + e.getMessage());
+                return new BatchData.UploadingStatus("981.140 Can't create a new temp file, " + e.getMessage());
             }
 
             if (ext.equals(ZIP_EXT)) {
                 List<String> errors = ZipUtils.validate(tempFile, VALIDATE_ZIP_ENTRY_SIZE_FUNCTION);
                 if (!errors.isEmpty()) {
-                    final BatchData.UploadingStatus status = new BatchData.UploadingStatus("#981.144 Batch can't be created because of following errors:");
+                    final BatchData.UploadingStatus status = new BatchData.UploadingStatus("981.144 Batch can't be created because of following errors:");
                     status.addErrorMessages(errors);
                     return status;
                 }
@@ -312,11 +312,11 @@ public class BatchTopLevelService {
 
             final SourceCodeImpl sc = sourceCodeCache.findById(sourceCode.id);
             if (sc==null) {
-                return new BatchData.UploadingStatus("#981.165 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
+                return new BatchData.UploadingStatus("981.165 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
             }
             ExecContextCreatorService.ExecContextCreationResult creationResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, dispatcherContext.asUserExecContext(), false);
             if (creationResult.isErrorMessages()) {
-                throw new BatchResourceProcessingException("#981.180 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
+                throw new BatchResourceProcessingException("981.180 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
             }
             final ExecContextParamsYaml execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();
             ExecContextParamsYaml.Variable variable = execContextParamsYaml.variables.inputs.get(0);
@@ -332,14 +332,14 @@ public class BatchTopLevelService {
             return uploadingStatus;
         }
         catch (ExecContextTooManyInstancesException e) {
-            String es = S.f("#981.255 Too many instances of SourceCode '%s', max allowed: %d, current count: %d", e.sourceCodeUid, e.max, e.curr);
+            String es = S.f("981.255 Too many instances of SourceCode '%s', max allowed: %d, current count: %d", e.sourceCodeUid, e.max, e.curr);
             log.warn(es);
             BatchData.UploadingStatus uploadingStatus = new BatchData.UploadingStatus();
             uploadingStatus.addInfoMessage(es);
             return uploadingStatus;
         }
         catch (Throwable th) {
-            String es = "#981.260 can't load file, error: " + th.getMessage() + ", class: " + th.getClass();
+            String es = "981.260 can't load file, error: " + th.getMessage() + ", class: " + th.getClass();
             log.error(es, th);
             return new BatchData.UploadingStatus(es);
         }
@@ -352,7 +352,7 @@ public class BatchTopLevelService {
         try {
             return processBatchDeleteCommit(batchId, context.getCompanyId(), isVirtualDeletion);
         } catch (Throwable th) {
-            final String es = "#981.270 Error while deleting batch #" + batchId;
+            final String es = "981.270 Error while deleting batch #" + batchId;
             log.error(es, th);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
@@ -361,7 +361,7 @@ public class BatchTopLevelService {
     public OperationStatusRest processBatchDeleteCommit(Long batchId, Long companyUniqueId, boolean isVirtualDeletion) {
         Long execContextId = batchRepository.getExecContextId(batchId);
         if (execContextId == null) {
-            final String es = "#981.280 Batch wasn't found, batchId: " + batchId;
+            final String es = "981.280 Batch wasn't found, batchId: " + batchId;
             log.info(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
@@ -369,7 +369,7 @@ public class BatchTopLevelService {
         if (isVirtualDeletion) {
             Batch batch = batchCache.findById(batchId);
             if (batch == null || !batch.companyId.equals(companyUniqueId)) {
-                final String es = "#981.280 Batch wasn't found, batchId: " + batchId;
+                final String es = "981.280 Batch wasn't found, batchId: " + batchId;
                 log.info(es);
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
             }
@@ -403,7 +403,7 @@ public class BatchTopLevelService {
         try {
             return batchTxService.getBatchProcessingResultWitTx(batchId, companyUniqueId, includeDeleted);
         } catch (Throwable th) {
-            String es = S.f("#981.400 Error while getting a result of processing for batch #%d, error: %s", batchId, th.getMessage());
+            String es = S.f("981.400 Error while getting a result of processing for batch #%d, error: %s", batchId, th.getMessage());
             log.error(es, th);
             return new CleanerInfo(es);
         }
@@ -414,7 +414,7 @@ public class BatchTopLevelService {
         try {
             return batchTxService.getBatchOriginFile(batchId);
         } catch (Throwable th) {
-            String es = S.f("#981.420 Error while getting an original file for batch #%d, error: %s", batchId, th.getMessage());
+            String es = S.f("981.420 Error while getting an original file for batch #%d, error: %s", batchId, th.getMessage());
             log.error(es, th);
             ExceptionUtils.rethrow(th);
             return null;

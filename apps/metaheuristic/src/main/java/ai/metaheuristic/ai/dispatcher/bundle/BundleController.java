@@ -47,7 +47,7 @@ public class BundleController {
 
     private static final String REDIRECT_BUNDLE_BUNDLE_ADD = "redirect:/dispatcher/bundle/bundle-add";
 
-    private final BundleTopLevelService bundleTopLevelService;
+    private final BundleService bundleTopLevelService;
     private final UserContextService userContextService;
 
     @GetMapping("/bundlea-add")
