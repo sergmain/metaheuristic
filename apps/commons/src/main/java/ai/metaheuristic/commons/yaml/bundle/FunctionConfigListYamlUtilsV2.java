@@ -89,7 +89,7 @@ public class FunctionConfigListYamlUtilsV2
 
     @Override
     public BundleParamsYamlUtilsV3 nextUtil() {
-        return (BundleParamsYamlUtilsV3) BundleParamsYamlUtils.BASE_YAML_UTILS.getForVersion(3);
+        return (BundleParamsYamlUtilsV3) BundleParamsYamlUtils.UTILS.getForVersion(3);
     }
 
     @Override

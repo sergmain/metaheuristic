@@ -29,7 +29,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @RestController
 @RequestMapping("/rest/v1/dispatcher/global-variable")
@@ -72,16 +71,12 @@ public class GlobalVariableRestController {
 
 
     @PostMapping(value = "/global-variable-with-value")
-    public String createGlobalVariableWithValue(
+    public OperationStatusRest createGlobalVariableWithValue(
             @Nullable @RequestParam(name = "variable") String variable,
-            @Nullable @RequestParam(name = "value") String value,
-            final RedirectAttributes redirectAttributes) {
+            @Nullable @RequestParam(name = "value") String value) {
 
         OperationStatusRest operationStatusRest = globalVariableTopLevelService.createGlobalVariableWithValue(variable, value);
-        if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.getErrorMessagesAsList());
-        }
-        return "redirect:/dispatcher/global-variable/global-variables";
+        return operationStatusRest;
     }
 
     // ============= Service methods =============

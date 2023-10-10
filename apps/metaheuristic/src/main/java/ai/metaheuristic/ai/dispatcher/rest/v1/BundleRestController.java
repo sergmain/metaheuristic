@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2021, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,54 +14,46 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.bundle;
+package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.bundle.BundleService;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
-import ai.metaheuristic.ai.dispatcher.data.BundleData;
-import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * @author Serge
  * Date: 7/26/2021
  * Time: 10:46 PM
  */
-@Controller
+@RestController
 @RequestMapping("/dispatcher/bundle")
 @Slf4j
 @Profile("dispatcher")
+@CrossOrigin
 @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
-@RequiredArgsConstructor
-public class BundleController {
-
-    private static final String REDIRECT_BUNDLE_BUNDLE_ADD = "redirect:/dispatcher/bundle/bundle-add";
+@RequiredArgsConstructor(onConstructor_={@Autowired})
+public class BundleRestController {
 
     private final BundleService bundleTopLevelService;
     private final UserContextService userContextService;
 
-    @GetMapping("/bundlea-add")
-    public String index() {
-        return "dispatcher/bundle/bundle-add";
-    }
-
     @PostMapping(value = "/bundle-upload-from-file")
-    public String uploadFile(final MultipartFile file, Long sourceCodeId, final RedirectAttributes redirectAttributes, Authentication authentication) {
+    public OperationStatusRest uploadFile(final MultipartFile file, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        BundleData.UploadingStatus uploadingStatus = bundleTopLevelService.uploadFromFile(file, sourceCodeId, context);
-
-        ControllerUtils.initRedirectAttributes(redirectAttributes, uploadingStatus);
-        return REDIRECT_BUNDLE_BUNDLE_ADD;
+        OperationStatusRest uploadingStatus = bundleTopLevelService.uploadFromFile(file, context);
+        return uploadingStatus;
     }
 
 }

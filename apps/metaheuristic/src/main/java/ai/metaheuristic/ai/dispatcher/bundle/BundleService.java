@@ -30,8 +30,10 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +47,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -53,6 +57,7 @@ import java.util.zip.ZipEntry;
 
 import static ai.metaheuristic.ai.Consts.XML_EXT;
 import static ai.metaheuristic.ai.Consts.ZIP_EXT;
+import static ai.metaheuristic.api.EnumsApi.OperationStatus.*;
 
 /**
  * @author Serge
@@ -76,81 +81,57 @@ public class BundleService {
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextVariableService execContextVariableService;
 
-    public BundleData.UploadingStatus uploadFromFile(final MultipartFile file, Long sourceCodeId, final DispatcherContext dispatcherContext) {
-/*
+    public OperationStatusRest uploadFromFile(final MultipartFile file, final DispatcherContext dispatcherContext) {
         if (Consts.ID_1.equals(dispatcherContext.getCompanyId())) {
-            return new BundleData.UploadingStatus("971.030 Batch can't be created in company #1");
+            return new OperationStatusRest(ERROR, "971.030 Batch can't be created in company #1");
         }
-*/
         if (file.getSize()==0) {
-            return new BundleData.UploadingStatus("971.035 Can't upload bundle because uploaded file has a zero length");
+            return new OperationStatusRest(ERROR, "971.035 Can't upload bundle because uploaded file has a zero length");
         }
 
         log.info("971.055 Staring of uploadFromFile(), file: {}, size: {}", file.getOriginalFilename(), file.getSize());
 
         String tempFilename = file.getOriginalFilename();
         if (S.b(tempFilename)) {
-            return new BundleData.UploadingStatus("971.040 name of uploaded file is blank");
+            return new OperationStatusRest(ERROR,"971.040 name of uploaded file is blank");
         }
         // fix for the case when browser sends a full path, ie Edge
         final String originFilename = new File(tempFilename).getName();
 
         String extTemp = StrUtils.getExtension(originFilename);
         if (extTemp==null) {
-            return new BundleData.UploadingStatus(
-                    "971.060 file without extension, bad filename: " + originFilename);
+            return new OperationStatusRest(ERROR, "971.060 file without extension, bad filename: " + originFilename);
         }
         String ext = extTemp.toLowerCase();
-        if (!StringUtils.equalsAny(ext, ZIP_EXT, XML_EXT)) {
-            return new BundleData.UploadingStatus("971.080 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
+        if (!StringUtils.equalsAny(ext, ZIP_EXT)) {
+            return new OperationStatusRest(ERROR,"971.080 only '.zip' files are supported, bad filename: " + originFilename);
         }
 
-        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, dispatcherContext.getCompanyId());
-        if (sourceCodesForCompany.isErrorMessages()) {
-            return new BundleData.UploadingStatus(sourceCodesForCompany.getErrorMessagesAsList());
-        }
-        SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
-        if (sourceCode==null) {
-            return new BundleData.UploadingStatus("971.100 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
-        }
-        if (!sourceCode.getId().equals(sourceCodeId)) {
-            return new BundleData.UploadingStatus("971.120 Fatal error in configuration of sourceCode, report to developers immediately");
-        }
-        File tempFile;
+        Path tempFile;
         try {
             // TODO 2021.03.13 add a support of
             //  CleanerInfo resource = new CleanerInfo();
-            tempFile = File.createTempFile("mh-temp-file-for-checking integrity-", ".bin");
+            Path tempDir = DirUtils.createMhTempPath("uploaded-bundle-");
+            if (tempDir==null) {
+                return new OperationStatusRest(ERROR, "971.090 Can't create a temporary dir");
+            }
+            tempFile = tempDir.resolve("zip.zip");
             file.transferTo(tempFile);
-            if (file.getSize()!=tempFile.length()) {
-                return new BundleData.UploadingStatus("971.125 System error while preparing data. The sizes of files are different");
+            if (file.getSize()!=Files.size(tempFile)) {
+                return new OperationStatusRest(ERROR, "971.125 System error while preparing data. The sizes of files are different");
+            }
+            List<String> errors = ZipUtils.validate(tempFile, VALIDATE_ZIP_ENTRY_SIZE_FUNCTION);
+            if (!errors.isEmpty()) {
+                errors.add(0, "971.144 Batch can't be created because of following errors:");
+                return new OperationStatusRest(ERROR, errors);
             }
         } catch (IOException e) {
-            return new BundleData.UploadingStatus("971.140 Can't create a new temp file");
+            return new OperationStatusRest(ERROR,"971.140 Can't create a new temp file");
         }
 
-        if (ext.equals(ZIP_EXT)) {
-            List<String> errors = ZipUtils.validate(tempFile.toPath(), VALIDATE_ZIP_ENTRY_SIZE_FUNCTION);
-            if (!errors.isEmpty()) {
-                final BundleData.UploadingStatus status = new BundleData.UploadingStatus("971.144 Batch can't be created because of following errors:");
-                status.addErrorMessages(errors);
-                return status;
-            }
-        }
 
-        dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FILE_UPLOADED, dispatcherContext.getCompanyId(), originFilename, file.getSize(), null, null, dispatcherContext );
-
-        final SourceCodeImpl sc = sourceCodeCache.findById(sourceCode.id);
-        if (sc==null) {
-            return new BundleData.UploadingStatus("971.165 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
-        }
         try {
-            ExecContextCreatorService.ExecContextCreationResult creationResult = execContextCreatorTopLevelService.createExecContext(sourceCodeId, dispatcherContext);
-            if (creationResult.isErrorMessages()) {
-                throw new BatchResourceProcessingException("971.180 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
-            }
-            final ExecContextParamsYaml execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();
-            try(InputStream is = new FileInputStream(tempFile)) {
+            try (InputStream is = new FileInputStream(tempFile)) {
                 execContextVariableService.initInputVariable(is, file.getSize(), originFilename, creationResult.execContext.id, execContextParamsYaml, 0);
             }
 /*
@@ -162,19 +143,17 @@ public class BundleService {
                                             sc, creationResult.execContext.id, execContextParamsYaml, dispatcherContext))));
             return uploadingStatus;
 */
-            return new BundleData.UploadingStatus();
+            return OperationStatusRest.OPERATION_STATUS_OK;
         }
         catch (ExecContextTooManyInstancesException e) {
             String es = S.f("971.255 Too many instances of SourceCode '%s', max allowed: %d, current count: %d", e.sourceCodeUid, e.max, e.curr);
             log.warn(es);
-            BundleData.UploadingStatus uploadingStatus = new BundleData.UploadingStatus();
-            uploadingStatus.addInfoMessage(es);
-            return uploadingStatus;
+            return new OperationStatusRest(ERROR, es);
         }
         catch (Throwable th) {
             String es = "971.260 can't load file, error: " + th.getMessage() + ", class: " + th.getClass();
             log.error(es, th);
-            return new BundleData.UploadingStatus(es);
+            return new OperationStatusRest(ERROR, es);
         }
     }
 

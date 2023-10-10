@@ -55,10 +55,10 @@ public class TestBundleParamsYaml {
 
         scs.functions.add(config);
 
-        String yaml = BundleParamsYamlUtils.BASE_YAML_UTILS.toString(scs);
+        String yaml = BundleParamsYamlUtils.UTILS.toString(scs);
         System.out.println(yaml);
 
-        BundleParamsYaml fcy = BundleParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+        BundleParamsYaml fcy = BundleParamsYamlUtils.UTILS.to(yaml);
 
         assertNotNull(fcy);
         assertNotNull(fcy.functions);
@@ -90,10 +90,10 @@ public class TestBundleParamsYaml {
 
         scs.functions.add(config);
 
-        String yaml = BundleParamsYamlUtils.BASE_YAML_UTILS.toString(scs);
+        String yaml = BundleParamsYamlUtils.UTILS.toString(scs);
         System.out.println(yaml);
 
-        BundleParamsYaml fcy = BundleParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+        BundleParamsYaml fcy = BundleParamsYamlUtils.UTILS.to(yaml);
         assertNotNull(fcy);
         assertEquals(3, fcy.version);
         assertNotNull(fcy.functions);
@@ -125,16 +125,16 @@ public class TestBundleParamsYaml {
 
         scs.functions.add(config);
 
-        String yaml = BundleParamsYamlUtils.BASE_YAML_UTILS.toString(scs);
+        String yaml = BundleParamsYamlUtils.UTILS.toString(scs);
         System.out.println(yaml);
-        assertThrows(CheckIntegrityFailedException.class, ()->BundleParamsYamlUtils.BASE_YAML_UTILS.to(yaml));
+        assertThrows(CheckIntegrityFailedException.class, ()->BundleParamsYamlUtils.UTILS.to(yaml));
     }
 
     @Test
     public void test_3() throws IOException {
         String yaml = IOUtils.resourceToString("/yaml/bundle.yaml", StandardCharsets.UTF_8);
 
-        BundleParamsYaml fcy = BundleParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+        BundleParamsYaml fcy = BundleParamsYamlUtils.UTILS.to(yaml);
         assertNotNull(fcy.functions);
         assertEquals(2, fcy.functions.size());
         {

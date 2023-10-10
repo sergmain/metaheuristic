@@ -19,16 +19,15 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
-import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
-import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
@@ -40,10 +39,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @RestController
 @RequestMapping("/rest/v1/dispatcher/source-code")
@@ -119,11 +116,16 @@ public class SourceCodeRestController {
         return sourceCodeTopLevelService.uploadSourceCode(file, context);
     }
 
-    // TODO p0 2023-05-20 создание архива с заготовками для задачи. т.е. кнопка Dev
     @GetMapping(value = "/source-code-devs/{id}")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
-    public String development(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, Authentication authentication) {
+    public String development(@PathVariable Long id, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
+        //noinspection ConstantValue
+        if (true) {
+            throw new NotImplementedException("Need to re-write as Rest API");
+        }
+        return "";
+/*
         SourceCodeData.Development development = sourceCodeTopLevelService.getSourceCodeDevs(id, context);
         if (development.isErrorMessages()) {
             ControllerUtils.initRedirectAttributes(redirectAttributes, development);
@@ -131,10 +133,9 @@ public class SourceCodeRestController {
         }
         model.addAttribute("result", development);
         return "dispatcher/source-code/source-code-devs";
+*/
     }
 
-
-    // TODO p0 2023-05-20 создание архива с заготовками для задачи. т.е. кнопка Dev
     @GetMapping(value= "/source-code-dev-generate/{sourceCodeId}/{processCode}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> sourceCodeDevGenerate(
             HttpServletRequest request, @PathVariable("sourceCodeId") Long sourceCodeId, @PathVariable("processCode") String processCode,

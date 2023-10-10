@@ -18,9 +18,7 @@ package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
-import ai.metaheuristic.ai.dispatcher.bundle.BundleVerificationUtils;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
-import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInGraphEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.api.EnumsApi;
@@ -33,12 +31,9 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.*;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
-import ai.metaheuristic.commons.utils.threads.ThreadedPool;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
 import jakarta.servlet.http.HttpServletResponse;
 import ai.metaheuristic.commons.yaml.bundle.BundleParamsYaml;
 import ai.metaheuristic.commons.yaml.bundle.BundleParamsYamlUtils;
@@ -59,7 +54,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -128,7 +124,7 @@ public class FunctionTopLevelService {
     private List<Pair<EnumsApi.FunctionSourcing, String>> functionInfosCache = null;
     private long mills = 0L;
 
-    private static class RefreshInfoAboutFunctionsEvent {}
+    public static class RefreshInfoAboutFunctionsEvent {}
 
     private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
 
@@ -207,20 +203,6 @@ public class FunctionTopLevelService {
             throw new IllegalStateException("(allIds.size()!=result.size())");
         }
         return result;
-
-        // TODO p3 2023-07-30 for deleting
-/*
-
-        final List<Pair<EnumsApi.FunctionSourcing, String>> result = allIds.stream()
-                .map(id -> functionRepository.findById(id).orElse(null))
-                .filter(Objects::nonNull)
-                .map(s -> {
-                    FunctionConfigYaml fcy = s.getFunctionConfigYaml();
-                    return Pair.of(fcy.sourcing, s.code);
-                })
-                .collect(Collectors.toList());
-        return result;
-*/
     }
 
     @SuppressWarnings("unused")
@@ -360,7 +342,7 @@ public class FunctionTopLevelService {
         return statuses.stream().filter(o->!o.isOk).findFirst().orElse(null)!=null;
     }
 
-    private void loadFunctionsRecursively(List<FunctionApiData.FunctionConfigStatus> statuses, Path startDir) throws IOException {
+    public void loadFunctionsRecursively(List<FunctionApiData.FunctionConfigStatus> statuses, Path startDir) throws IOException {
         try (final Stream<Path> list = Files.list(startDir)) {
             final List<Path> dirs = list.filter(Files::isDirectory).collect(Collectors.toList());
 
@@ -391,7 +373,7 @@ public class FunctionTopLevelService {
             return List.of(new FunctionApiData.FunctionConfigStatus(false, errorString));
         }
 
-        BundleParamsYaml functionConfigList = BundleParamsYamlUtils.BASE_YAML_UTILS.to(cfg);
+        BundleParamsYaml functionConfigList = BundleParamsYamlUtils.UTILS.to(cfg);
         List<FunctionApiData.FunctionConfigStatus> statuses = new ArrayList<>();
         for (BundleParamsYaml.FunctionConfig functionConfig : functionConfigList.functions) {
             try {

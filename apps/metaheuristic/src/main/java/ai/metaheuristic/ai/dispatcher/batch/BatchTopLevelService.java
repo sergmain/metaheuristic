@@ -316,7 +316,7 @@ public class BatchTopLevelService {
             }
             ExecContextCreatorService.ExecContextCreationResult creationResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, dispatcherContext.asUserExecContext(), false);
             if (creationResult.isErrorMessages()) {
-                throw new BatchResourceProcessingException("981.180 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
+                return new BatchData.UploadingStatus("981.180 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
             }
             final ExecContextParamsYaml execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();
             ExecContextParamsYaml.Variable variable = execContextParamsYaml.variables.inputs.get(0);

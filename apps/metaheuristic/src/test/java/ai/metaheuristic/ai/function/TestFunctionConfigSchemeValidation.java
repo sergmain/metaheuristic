@@ -108,6 +108,6 @@ public class TestFunctionConfigSchemeValidation {
         cfg.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
         cfgList.functions = List.of(cfg);
 
-        return BundleParamsYamlUtils.BASE_YAML_UTILS.toString(cfgList);
+        return BundleParamsYamlUtils.UTILS.toString(cfgList);
     }
 }

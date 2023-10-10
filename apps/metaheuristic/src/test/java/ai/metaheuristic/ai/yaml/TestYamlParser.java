@@ -94,7 +94,7 @@ public class TestYamlParser {
     @Test
     public void loadFunctionYamlWithError_01() throws IOException {
 
-        BundleParamsYaml config = BundleParamsYamlUtils.BASE_YAML_UTILS.to(IOUtils.resourceToString("/yaml/functions-test-error.yaml", StandardCharsets.UTF_8));
+        BundleParamsYaml config = BundleParamsYamlUtils.UTILS.to(IOUtils.resourceToString("/yaml/functions-test-error.yaml", StandardCharsets.UTF_8));
         assertNotNull(config);
         assertNotNull(config.getFunctions());
         assertEquals(1, config.getFunctions().size());
@@ -106,7 +106,7 @@ public class TestYamlParser {
     @Test
     public void loadFunctionsFromYaml() throws IOException {
 
-        BundleParamsYaml config = BundleParamsYamlUtils.BASE_YAML_UTILS.to(IOUtils.resourceToString("/yaml/functions-test.yaml", StandardCharsets.UTF_8));
+        BundleParamsYaml config = BundleParamsYamlUtils.UTILS.to(IOUtils.resourceToString("/yaml/functions-test.yaml", StandardCharsets.UTF_8));
         for (BundleParamsYaml.FunctionConfig function : config.functions) {
             FunctionCoreUtils.validate(function);
         }
