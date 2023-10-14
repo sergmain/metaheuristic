@@ -22,8 +22,8 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.MetaUtils;
-import ai.metaheuristic.commons.yaml.function_list.BundleParamsYaml;
-import ai.metaheuristic.commons.yaml.function_list.BundleParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
+import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
 import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlV1;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
@@ -40,10 +40,10 @@ public class TestBundleParamsYaml {
 
     @Test
     public void test() {
-        BundleParamsYaml scs = new BundleParamsYaml();
+        FunctionConfigListYaml scs = new FunctionConfigListYaml();
         scs.functions = new ArrayList<>();
 
-        BundleParamsYaml.FunctionConfig config = new BundleParamsYaml.FunctionConfig();
+        FunctionConfigListYaml.FunctionConfig config = new FunctionConfigListYaml.FunctionConfig();
         config.code = "aiai.fit.default.function:1.0";
         config.type = CommonConsts.FIT_TYPE;
         config.file = "fit-model.py";
@@ -55,16 +55,16 @@ public class TestBundleParamsYaml {
 
         scs.functions.add(config);
 
-        String yaml = BundleParamsYamlUtils.UTILS.toString(scs);
+        String yaml = FunctionConfigListYamlUtils.UTILS.toString(scs);
         System.out.println(yaml);
 
-        BundleParamsYaml fcy = BundleParamsYamlUtils.UTILS.to(yaml);
+        FunctionConfigListYaml fcy = FunctionConfigListYamlUtils.UTILS.to(yaml);
 
         assertNotNull(fcy);
         assertNotNull(fcy.functions);
         assertEquals(1, fcy.functions.size());
 
-        BundleParamsYaml.FunctionConfig fc = fcy.functions.get(0);
+        FunctionConfigListYaml.FunctionConfig fc = fcy.functions.get(0);
         assertNotNull(fc);
         assertNotNull(fc.getChecksumMap());
         assertNotNull(fc.getChecksumMap().get(EnumsApi.HashAlgo.SHA256));
@@ -90,16 +90,16 @@ public class TestBundleParamsYaml {
 
         scs.functions.add(config);
 
-        String yaml = BundleParamsYamlUtils.UTILS.toString(scs);
+        String yaml = FunctionConfigListYamlUtils.UTILS.toString(scs);
         System.out.println(yaml);
 
-        BundleParamsYaml fcy = BundleParamsYamlUtils.UTILS.to(yaml);
+        FunctionConfigListYaml fcy = FunctionConfigListYamlUtils.UTILS.to(yaml);
         assertNotNull(fcy);
         assertEquals(3, fcy.version);
         assertNotNull(fcy.functions);
         assertEquals(1, fcy.functions.size());
 
-        BundleParamsYaml.FunctionConfig fc = fcy.functions.get(0);
+        FunctionConfigListYaml.FunctionConfig fc = fcy.functions.get(0);
         assertNotNull(fc);
         assertEquals("content-of-file", fc.content);
         assertTrue(S.b(fc.params));
@@ -125,20 +125,20 @@ public class TestBundleParamsYaml {
 
         scs.functions.add(config);
 
-        String yaml = BundleParamsYamlUtils.UTILS.toString(scs);
+        String yaml = FunctionConfigListYamlUtils.UTILS.toString(scs);
         System.out.println(yaml);
-        assertThrows(CheckIntegrityFailedException.class, ()->BundleParamsYamlUtils.UTILS.to(yaml));
+        assertThrows(CheckIntegrityFailedException.class, ()-> FunctionConfigListYamlUtils.UTILS.to(yaml));
     }
 
     @Test
     public void test_3() throws IOException {
         String yaml = IOUtils.resourceToString("/yaml/bundle.yaml", StandardCharsets.UTF_8);
 
-        BundleParamsYaml fcy = BundleParamsYamlUtils.UTILS.to(yaml);
+        FunctionConfigListYaml fcy = FunctionConfigListYamlUtils.UTILS.to(yaml);
         assertNotNull(fcy.functions);
         assertEquals(2, fcy.functions.size());
         {
-            BundleParamsYaml.FunctionConfig fc = fcy.functions.get(0);
+            FunctionConfigListYaml.FunctionConfig fc = fcy.functions.get(0);
             assertNotNull(fc);
             assertEquals("fit:8.0", fc.code);
             assertEquals("fit", fc.type);
@@ -149,7 +149,7 @@ public class TestBundleParamsYaml {
             assertEquals("41", MetaUtils.getValue(fc.metas, "mh.task-params-version"));
         }
         {
-            BundleParamsYaml.FunctionConfig fc = fcy.functions.get(1);
+            FunctionConfigListYaml.FunctionConfig fc = fcy.functions.get(1);
             assertNotNull(fc);
             assertEquals("predict:8.0", fc.code);
             assertEquals("predict", fc.type);

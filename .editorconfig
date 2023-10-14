@@ -5,7 +5,8 @@ root = true
 charset = utf-8
 indent_style = space
 indent_size = 4
-insert_final_newline = true
+# DO NOT USE insert_final_newline = true
+#insert_final_newline = true
 
 [*.yaml]
 indent_size = 2

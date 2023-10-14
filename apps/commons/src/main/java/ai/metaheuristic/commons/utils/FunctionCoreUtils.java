@@ -24,7 +24,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
-import ai.metaheuristic.commons.yaml.function_list.BundleParamsYaml;
+import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -38,7 +38,7 @@ public class FunctionCoreUtils {
 
     private static final FunctionApiData.FunctionConfigStatus FUNCTION_CONFIG_STATUS_OK = new FunctionApiData.FunctionConfigStatus(true, null);
 
-    public static FunctionConfigYaml to(BundleParamsYaml.FunctionConfig fnSrc) {
+    public static FunctionConfigYaml to(FunctionConfigListYaml.FunctionConfig fnSrc) {
         FunctionConfigYaml fnTrg = new FunctionConfigYaml();
         BeanUtils.copyProperties(fnSrc, fnTrg, "checksumMap", "metas");
 
@@ -54,7 +54,7 @@ public class FunctionCoreUtils {
         return  fnTrg;
     }
 
-    public static FunctionApiData.FunctionConfigStatus validate(BundleParamsYaml.FunctionConfig functionConfig) {
+    public static FunctionApiData.FunctionConfigStatus validate(FunctionConfigListYaml.FunctionConfig functionConfig) {
         if ((functionConfig.file ==null || functionConfig.file.isBlank()) && (functionConfig.env ==null || functionConfig.env.isBlank())) {
             return new FunctionApiData.FunctionConfigStatus(false, "#401.10 Fields 'file' and 'env' can't be null or empty both.");
         }
@@ -87,7 +87,7 @@ public class FunctionCoreUtils {
         return FUNCTION_CONFIG_STATUS_OK;
     }
 
-    public static String getDataForChecksumForConfigOnly(BundleParamsYaml.FunctionConfig functionConfig) {
+    public static String getDataForChecksumForConfigOnly(FunctionConfigListYaml.FunctionConfig functionConfig) {
         return getDataForChecksumForConfigOnly(
                 functionConfig.code, functionConfig.env, functionConfig.file, functionConfig.params,
                 functionConfig.content, functionConfig.git, functionConfig.sourcing);

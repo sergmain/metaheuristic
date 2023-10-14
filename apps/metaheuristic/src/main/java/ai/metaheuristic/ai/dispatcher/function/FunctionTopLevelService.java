@@ -35,8 +35,8 @@ import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import jakarta.servlet.http.HttpServletResponse;
-import ai.metaheuristic.commons.yaml.function_list.BundleParamsYaml;
-import ai.metaheuristic.commons.yaml.function_list.BundleParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
+import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -373,9 +373,9 @@ public class FunctionTopLevelService {
             return List.of(new FunctionApiData.FunctionConfigStatus(false, errorString));
         }
 
-        BundleParamsYaml functionConfigList = BundleParamsYamlUtils.UTILS.to(cfg);
+        FunctionConfigListYaml functionConfigList = FunctionConfigListYamlUtils.UTILS.to(cfg);
         List<FunctionApiData.FunctionConfigStatus> statuses = new ArrayList<>();
-        for (BundleParamsYaml.FunctionConfig functionConfig : functionConfigList.functions) {
+        for (FunctionConfigListYaml.FunctionConfig functionConfig : functionConfigList.functions) {
             try {
                 FunctionApiData.FunctionConfigStatus status = FunctionCoreUtils.validate(functionConfig);
                 if (!status.isOk) {

@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.yaml.function_list;
+package ai.metaheuristic.commons.yaml.bundle;
 
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.commons.S;

@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.commons.yaml.function;
 
-import ai.metaheuristic.commons.yaml.function_list.BundleParamsYaml;
+import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
@@ -38,7 +38,7 @@ public class TestFunctionConfig {
     // have the same set of fields, except field version
     @Test
     public void test() {
-        Field[] fields = BundleParamsYaml.FunctionConfig.class.getDeclaredFields();
+        Field[] fields = FunctionConfigListYaml.FunctionConfig.class.getDeclaredFields();
 
         Field[] fields1 = ai.metaheuristic.commons.yaml.function.FunctionConfigYaml.class.getDeclaredFields();
 
