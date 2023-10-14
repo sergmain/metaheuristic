@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.commons.yaml.function;
 
-import ai.metaheuristic.commons.yaml.bundle.BundleParamsYaml;
+import ai.metaheuristic.commons.yaml.function_list.BundleParamsYaml;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;

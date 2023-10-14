@@ -22,9 +22,9 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.MetaUtils;
-import ai.metaheuristic.commons.yaml.bundle.BundleParamsYaml;
-import ai.metaheuristic.commons.yaml.bundle.BundleParamsYamlUtils;
-import ai.metaheuristic.commons.yaml.bundle.FunctionConfigListYamlV1;
+import ai.metaheuristic.commons.yaml.function_list.BundleParamsYaml;
+import ai.metaheuristic.commons.yaml.function_list.BundleParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlV1;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 

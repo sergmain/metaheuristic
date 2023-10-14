@@ -19,8 +19,8 @@ package ai.metaheuristic.ai.function;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.sourcing.GitInfo;
-import ai.metaheuristic.commons.yaml.bundle.BundleParamsYaml;
-import ai.metaheuristic.commons.yaml.bundle.BundleParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.function_list.BundleParamsYaml;
+import ai.metaheuristic.commons.yaml.function_list.BundleParamsYamlUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 

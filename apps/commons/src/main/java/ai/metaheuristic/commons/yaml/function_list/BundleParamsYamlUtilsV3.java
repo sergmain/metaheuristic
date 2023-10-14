@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2020, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.yaml.bundle;
+package ai.metaheuristic.commons.yaml.function_list;
 
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.commons.S;
@@ -23,7 +23,7 @@ import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
-import javax.annotation.Nonnull;
+import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
@@ -37,27 +37,27 @@ import java.util.stream.Collectors;
  * Date: 12/12/2020
  * Time: 5:28 PM
  */
-public class FunctionConfigListYamlUtilsV2
-        extends AbstractParamsYamlUtils<FunctionConfigListYamlV2, BundleParamsYamlV3, BundleParamsYamlUtilsV3, Void, Void, Void> {
+public class BundleParamsYamlUtilsV3
+        extends AbstractParamsYamlUtils<BundleParamsYamlV3, BundleParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 2;
+        return 3;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(FunctionConfigListYamlV2.class);
+        return YamlUtils.init(BundleParamsYamlV3.class);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public BundleParamsYamlV3 upgradeTo(@Nonnull FunctionConfigListYamlV2 src) {
+    public BundleParamsYaml upgradeTo(@NonNull BundleParamsYamlV3 src) {
         src.checkIntegrity();
-        BundleParamsYamlV3 trg = new BundleParamsYamlV3();
+        BundleParamsYaml trg = new BundleParamsYaml();
         trg.functions = src.functions.stream().map(fnCfgSrc-> {
-            BundleParamsYamlV3.FunctionConfigV3 fnCfgTrg = new BundleParamsYamlV3.FunctionConfigV3();
+            BundleParamsYaml.FunctionConfig fnCfgTrg = new BundleParamsYaml.FunctionConfig();
             BeanUtils.copyProperties(fnCfgSrc, fnCfgTrg);
 
             if (fnCfgSrc.checksumMap!=null) {
@@ -70,9 +70,9 @@ public class FunctionConfigListYamlUtilsV2
             if (paramsAsFile) {
                 fnCfgTrg.content = fnCfgSrc.params;
                 fnCfgTrg.params = null;
-                final List<Map<String, String>> metas = MetaUtils.remove(fnCfgSrc.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
-                if (metas!=null) {
-                    fnCfgTrg.metas = metas;
+                final List<Map<String, String>> cleanedMeta = MetaUtils.remove(fnCfgSrc.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
+                if (cleanedMeta!=null) {
+                    fnCfgTrg.metas = cleanedMeta;
                 }
             }
             return  fnCfgTrg;
@@ -81,15 +81,15 @@ public class FunctionConfigListYamlUtilsV2
         return trg;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Void downgradeTo(@Nonnull Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
     @Override
-    public BundleParamsYamlUtilsV3 nextUtil() {
-        return (BundleParamsYamlUtilsV3) BundleParamsYamlUtils.UTILS.getForVersion(3);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -98,17 +98,17 @@ public class FunctionConfigListYamlUtilsV2
     }
 
     @Override
-    public String toString(@Nonnull FunctionConfigListYamlV2 yaml) {
+    public String toString(@NonNull BundleParamsYamlV3 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public FunctionConfigListYamlV2 to(@Nonnull String yaml) {
+    public BundleParamsYamlV3 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
-        final FunctionConfigListYamlV2 p = getYaml().load(yaml);
+        final BundleParamsYamlV3 p = getYaml().load(yaml);
         return p;
     }
 

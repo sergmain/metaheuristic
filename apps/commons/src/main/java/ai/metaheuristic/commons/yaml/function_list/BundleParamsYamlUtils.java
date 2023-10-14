@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.commons.yaml.bundle;
+package ai.metaheuristic.commons.yaml.function_list;
 
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
