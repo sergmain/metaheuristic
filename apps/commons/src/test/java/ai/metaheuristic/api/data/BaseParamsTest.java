@@ -17,12 +17,6 @@
 package ai.metaheuristic.api.data;
 
 import ai.metaheuristic.api.data.event.DispatcherEventYaml;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultParams;
-import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParams;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYamlUtils;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
@@ -42,7 +36,6 @@ import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
-import javax.annotation.Nonnull;
 
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
@@ -63,7 +56,7 @@ public class BaseParamsTest {
             Pair.of(DispatcherEventYamlUtils.BASE_YAML_UTILS, DispatcherEventYaml.class),
             Pair.of(EnvParamsYamlUtils.BASE_YAML_UTILS, EnvParamsYaml.class),
             Pair.of(FittingYamlUtils.BASE_YAML_UTILS, FittingYaml.class),
-            Pair.of(FunctionConfigListYamlUtils.BASE_YAML_UTILS, FunctionConfigListYaml.class),
+            Pair.of(FunctionConfigListYamlUtils.UTILS, FunctionConfigListYaml.class),
             Pair.of(FunctionConfigYamlUtils.BASE_YAML_UTILS, FunctionConfigYaml.class),
             Pair.of(TaskFileParamsYamlUtils.BASE_YAML_UTILS, TaskFileParamsYaml.class),
             Pair.of(VariableArrayParamsYamlUtils.BASE_YAML_UTILS, VariableArrayParamsYaml.class)

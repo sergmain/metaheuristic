@@ -18,17 +18,22 @@ package ai.metaheuristic.apps.package_function;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.ExitApplicationException;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.utils.SecUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.function_list.BundleParamsYaml;
 import ai.metaheuristic.commons.yaml.function_list.BundleParamsYamlUtils;
+import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.file.PathUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
+import org.springframework.lang.Nullable;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -36,7 +41,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.GeneralSecurityException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -47,32 +54,30 @@ public class PackageFunction implements CommandLineRunner {
     private static final String FUNCTIONS_YAML = "functions.yaml";
     private static final String ZIP_EXTENSION = ".zip";
 
+    private final ApplicationContext appCtx;
+
+    public PackageFunction(ApplicationContext appCtx) {
+        this.appCtx = appCtx;
+    }
+
     public static void main(String[] args) {
             SpringApplication.run(PackageFunction.class, args);
         }
 
+    public record Cfg(int version, @Nullable PrivateKey privateKey) {}
+
     @Override
-    public void run(String... args) throws IOException, GeneralSecurityException {
+    public void run(String... args) throws IOException, GeneralSecurityException, ParseException {
+        try {
+            runInternal(args);
+        } catch (ExitApplicationException e) {
+            System.exit(SpringApplication.exit(appCtx, () -> -2));
+        }
+    }
 
-        if (args.length==0) {
-            System.out.println("PackageFunction <target zip file> [private key file]");
-            return;
-        }
-        if (!args[0].endsWith(ZIP_EXTENSION)) {
-            System.out.println("Zip file have to have .zip extension, actual: " + args[0]);
-            return;
-        }
+    public void runInternal(String... args) throws IOException, GeneralSecurityException, ParseException {
 
-        PrivateKey privateKey = null;
-        if (args.length>1) {
-            Path privateKeyFile = Path.of(args[1]);
-            if (Files.notExists(privateKeyFile)) {
-                System.out.println("Private key file wasn't found. File: " + privateKeyFile);
-                return;
-            }
-            String privateKeyStr = Files.readString(privateKeyFile, StandardCharsets.UTF_8);
-            privateKey = SecUtils.getPrivateKey(privateKeyStr);
-        }
+        Cfg cfg = initCfg(args);
 
         File functionYamlFile = new File(FUNCTIONS_YAML);
         if (!functionYamlFile.exists()) {
@@ -175,5 +180,47 @@ public class PackageFunction implements CommandLineRunner {
         PathUtils.deleteDirectory(targetDir);
 
         System.out.println("All done.");
+    }
+
+    private Cfg initCfg(String[] args) throws ParseException, IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+        CommandLine cmd = parseArgs(args);
+        String ver = cmd.getOptionValue("v");
+        if (args.length==0 || S.b(ver)) {
+            System.out.println("PackageFunction -v 2 [-key <private key file>]");
+            throw new ExitApplicationException();
+        }
+        int version = Integer.parseInt(ver);
+        PrivateKey privateKey = getPrivateKey(cmd);
+
+        Cfg cfg = new Cfg(version, privateKey);
+    }
+
+    @Nullable
+    private PrivateKey getPrivateKey(CommandLine cmd) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+        PrivateKey privateKey = null;
+        if (cmd.hasOption("key")) {
+            Path privateKeyFile = Path.of(cmd.getOptionValue("key"));
+            if (Files.notExists(privateKeyFile)) {
+                System.out.println("Private key file wasn't found. File: " + privateKeyFile);
+                throw new ExitApplicationException();
+            }
+            String privateKeyStr = Files.readString(privateKeyFile, StandardCharsets.UTF_8);
+            privateKey = SecUtils.getPrivateKey(privateKeyStr);
+        }
+        return privateKey;
+    }
+
+    public static CommandLine parseArgs(String... args) throws ParseException {
+        Options options = new Options();
+        Option versionOption = new Option("v", "version", true, "version of cli parameters");
+        versionOption.setRequired(false);
+        Option keyOption = new Option("key", "private-key", true, "Private key for signing content");
+        keyOption.setRequired(false);
+        options.addOption(versionOption.);
+        options.addOption(keyOption);
+
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmd = parser.parse(options, args);
+        return cmd;
     }
 }

@@ -18,20 +18,12 @@ package ai.metaheuristic.ai.dispatcher.bundle;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.data.BundleData;
-import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
-import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -55,9 +47,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 
-import static ai.metaheuristic.ai.Consts.XML_EXT;
 import static ai.metaheuristic.ai.Consts.ZIP_EXT;
-import static ai.metaheuristic.api.EnumsApi.OperationStatus.*;
+import static ai.metaheuristic.api.EnumsApi.OperationStatus.ERROR;
 
 /**
  * @author Serge
@@ -79,7 +70,6 @@ public class BundleService {
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
-    private final ExecContextVariableService execContextVariableService;
 
     public OperationStatusRest uploadFromFile(final MultipartFile file, final DispatcherContext dispatcherContext) {
         if (Consts.ID_1.equals(dispatcherContext.getCompanyId())) {
@@ -131,10 +121,11 @@ public class BundleService {
 
 
         try {
-            try (InputStream is = new FileInputStream(tempFile)) {
-                execContextVariableService.initInputVariable(is, file.getSize(), originFilename, creationResult.execContext.id, execContextParamsYaml, 0);
-            }
-/*
+//            try (InputStream is = new FileInputStream(tempFile)) {
+//                execContextVariableService.initInputVariable(is, file.getSize(), originFilename, creationResult.execContext.id, execContextParamsYaml, 0);
+//            }
+
+            /*
             final BundleData.UploadingStatus uploadingStatus;
             uploadingStatus = execContextSyncService.getWithSync(creationResult.execContext.id, ()->
                     execContextGraphSyncService.getWithSync(creationResult.execContext.execContextGraphId, ()->

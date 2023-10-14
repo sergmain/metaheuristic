@@ -76,7 +76,7 @@ public class FunctionConfigListYamlUtilsV1
 
     @Override
     public FunctionConfigListYamlUtilsV2 nextUtil() {
-        return (FunctionConfigListYamlUtilsV2) FunctionConfigListYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+        return (FunctionConfigListYamlUtilsV2) FunctionConfigListYamlUtils.UTILS.getForVersion(2);
     }
 
     @Override
