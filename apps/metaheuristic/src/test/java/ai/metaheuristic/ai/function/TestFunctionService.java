@@ -115,13 +115,12 @@ public class TestFunctionService {
         Function f = functionRepository.findByCode(TEST_FUNCTION);
         if (f == null) {
             FunctionConfigYaml sc = new FunctionConfigYaml();
-            sc.code = TEST_FUNCTION;
-            sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-            sc.type = "test";
-            sc.env = "python-3";
-            sc.file = "predict-filename.txt";
-            sc.skipParams = false;
-            sc.params = FUNCTION_PARAMS;
+            sc.function.code = TEST_FUNCTION;
+            sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
+            sc.function.type = "test";
+            sc.function.env = "python-3";
+            sc.function.file = "predict-filename.txt";
+            sc.function.params = FUNCTION_PARAMS;
 
             mills = System.currentTimeMillis();
             log.info("Start functionRepository.save() #2");

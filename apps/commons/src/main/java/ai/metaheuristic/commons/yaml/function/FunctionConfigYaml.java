@@ -40,7 +40,7 @@ import java.util.Map;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class FunctionConfigYaml implements BaseParams {
+public class FunctionConfigYaml implements BaseParams, Cloneable {
 
     public final int version=2;
 
@@ -71,6 +71,17 @@ public class FunctionConfigYaml implements BaseParams {
         }
 
         return true;
+    }
+
+    @SneakyThrows
+    @Override
+    public FunctionConfigYaml clone() {
+        FunctionConfigYaml clone = (FunctionConfigYaml) super.clone();
+        clone.function = this.function.clone();
+        if (this.system!=null) {
+            clone.system = this.system.clone();
+        }
+        return clone;
     }
 
     @Data

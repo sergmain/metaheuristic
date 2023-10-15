@@ -162,15 +162,15 @@ public class PreparingSourceCodeInitService {
 
     private Function createFunction(String functionCode) {
         FunctionConfigYaml sc = new FunctionConfigYaml();
-        sc.code = functionCode;
-        sc.type = functionCode + "-type";
-        sc.file = "some-file";
-        sc.env = "env-for-test-function";
-        sc.sourcing = EnumsApi.FunctionSourcing.processor;
+        sc.function.code = functionCode;
+        sc.function.type = functionCode + "-type";
+        sc.function.file = "some-file";
+        sc.function.env = "env-for-test-function";
+        sc.function.sourcing = EnumsApi.FunctionSourcing.processor;
 
 //  metas:
 //  - mh.task-params-version: '5'
-        Objects.requireNonNull(sc.metas).add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "5"));
+        Objects.requireNonNull(sc.function.metas).add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "5"));
         Long functionId = functionRepository.findIdByCode(functionCode);
         if (functionId!=null) {
             txSupportForTestingService.deleteFunctionById(functionId);

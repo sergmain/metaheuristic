@@ -91,19 +91,22 @@ public class TestTaskParamYaml {
         tpy.task.inputs.add(newVariable("type2", 2L));
         tpy.task.inputs.add(newVariable("type3", 3L));
         tpy.task.inline = Map.of(ConstsApi.MH_HYPER_PARAMS, Map.of("key1", "#1", "key2", "#1"));
-        tpy.task.setFunction(TaskParamsUtils.toFunctionConfig(new FunctionConfigYaml(
-                "123:1.0",
-                CommonConsts.FIT_TYPE,
-                "file.txt",
-                "112233",
-                "python",
-                EnumsApi.FunctionSourcing.dispatcher,
-                Map.of(),
-                null,
-                false,
-                List.of(),
-                null
-        )));
+
+        tpy.task.setFunction(TaskParamsUtils.toFunctionConfig(
+            new FunctionConfigYaml(
+                new FunctionConfigYaml.FunctionConfig(
+                    "123:1.0",
+                    CommonConsts.FIT_TYPE,
+                    "file.txt",
+                    "112233",
+                    "python",
+                    EnumsApi.FunctionSourcing.dispatcher,
+                    null,
+                    List.of()
+                ),
+                null)
+            )
+        );
 
         String s = TaskParamsYamlUtils.UTILS.toString(tpy);
         System.out.println(s);

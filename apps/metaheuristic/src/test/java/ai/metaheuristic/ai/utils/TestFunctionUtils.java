@@ -38,26 +38,26 @@ public class TestFunctionUtils {
     @Test
     public void testMetas() {
         final FunctionConfigYaml function = new FunctionConfigYaml();
-        Objects.requireNonNull(function.metas).add(Map.of("key1", "value1"));
+        Objects.requireNonNull(function.function.metas).add(Map.of("key1", "value1"));
 
         Meta m;
-        m = MetaUtils.getMeta(function.metas, "key1");
+        m = MetaUtils.getMeta(function.function.metas, "key1");
         assertNotNull(m);
         assertEquals("value1", m.getValue());
 
-        m = MetaUtils.getMeta(function.metas, "key2", "key1");
+        m = MetaUtils.getMeta(function.function.metas, "key2", "key1");
         assertNotNull(m);
         assertEquals("value1", m.getValue());
 
-        m = MetaUtils.getMeta(function.metas, "key2", "key3");
+        m = MetaUtils.getMeta(function.function.metas, "key2", "key3");
         assertNull(m);
 
-        m = MetaUtils.getMeta(function.metas);
+        m = MetaUtils.getMeta(function.function.metas);
         assertNull(m);
 
-        function.metas.clear();
+        function.function.metas.clear();
 
-        m = MetaUtils.getMeta(function.metas);
+        m = MetaUtils.getMeta(function.function.metas);
         assertNull(m);
     }
 

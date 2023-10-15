@@ -19,8 +19,8 @@ package ai.metaheuristic.ai.function;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.sourcing.GitInfo;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
@@ -93,9 +93,10 @@ public class TestFunctionConfigSchemeValidation {
     }
 
     private static String createYaml() {
-        FunctionConfigListYaml cfgList = new FunctionConfigListYaml();
+        FunctionConfigYaml cfgList = new FunctionConfigYaml();
         FunctionConfigYaml.FunctionConfig cfg = new FunctionConfigYaml.FunctionConfig();
-        cfg.checksumMap = Map.of(EnumsApi.HashAlgo.SHA256, "123");
+        cfgList.system = new FunctionConfigYaml.System();
+        cfgList.system.checksumMap.put(EnumsApi.HashAlgo.SHA256, "123");
         cfg.code = "code";
         cfg.type = "type";
         cfg.file = "file";
@@ -103,11 +104,9 @@ public class TestFunctionConfigSchemeValidation {
         cfg.env = "env";
         cfg.sourcing = EnumsApi.FunctionSourcing.dispatcher;
         cfg.git = new GitInfo("repo", "branch", "commit");
-        cfg.skipParams = false;
         cfg.metas.add(Map.of("meta-key", "meta-value"));
         cfg.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
-        cfgList.functions = List.of(cfg);
 
-        return FunctionConfigListYamlUtils.UTILS.toString(cfgList);
+        return FunctionConfigYamlUtils.UTILS.toString(cfgList);
     }
 }

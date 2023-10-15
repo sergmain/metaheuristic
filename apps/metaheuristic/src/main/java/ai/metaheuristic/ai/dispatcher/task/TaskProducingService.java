@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -173,7 +174,7 @@ public class TaskProducingService {
 
         if (taskParams.task.context== EnumsApi.FunctionExecContext.internal) {
             taskParams.task.function = new TaskParamsYaml.FunctionConfig(
-                    process.function.code, "internal", null, "internal",
+                    process.function.code, "internal", null, S.b(process.function.params) ? "" : process.function.params, "internal",
                     EnumsApi.FunctionSourcing.dispatcher, null,
                     null );
         }

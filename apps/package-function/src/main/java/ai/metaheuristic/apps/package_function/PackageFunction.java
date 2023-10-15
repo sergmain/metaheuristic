@@ -20,8 +20,6 @@ import ai.metaheuristic.commons.exceptions.ExitApplicationException;
 import ai.metaheuristic.commons.utils.*;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYaml;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYamlUtils;
-import ai.metaheuristic.commons.yaml.function_list.BundleParamsYaml;
-import ai.metaheuristic.commons.yaml.function_list.BundleParamsYamlUtils;
 import lombok.SneakyThrows;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.SystemUtils;
@@ -255,7 +253,7 @@ public class PackageFunction implements CommandLineRunner {
         versionOption.setRequired(false);
         Option keyOption = new Option("key", "private-key", true, "Private key for signing content");
         keyOption.setRequired(false);
-        options.addOption(versionOption.);
+        options.addOption(versionOption);
         options.addOption(keyOption);
 
         CommandLineParser parser = new DefaultParser();

@@ -52,7 +52,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.lang.Nullable;
 
 import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.PublicKey;
@@ -471,18 +470,6 @@ public class TaskProcessor {
                         //noinspection UseBulkOperation
                         Arrays.stream(StringUtils.split(functionPrepareResult.function.file)).forEachOrdered(cmd::add);
                     }
-                    else if (!S.b(functionPrepareResult.function.content)) {
-                        final String metaExt = MetaUtils.getValue(functionPrepareResult.function.metas, ConstsApi.META_MH_FUNCTION_PARAMS_FILE_EXT_META);
-                        String ext = S.b(metaExt) ? ".txt" : metaExt;
-                        if (ext.indexOf('.')==-1) {
-                            ext = "." + ext;
-                        }
-
-                        Path execFile = taskDir.resolve(ConstsApi.ARTIFACTS_DIR).resolve(ArtifactCommonUtils.normalizeCode(functionPrepareResult.function.code) + ext);
-                        FileSystemUtils.writeStringToFileWithSync(execFile, functionPrepareResult.function.content, StandardCharsets.UTF_8 );
-
-                        cmd.add(execFile.toAbsolutePath().toString());
-                    }
                     else {
                         log.warn("100.325 How?");
                     }
@@ -491,13 +478,11 @@ public class TaskProcessor {
                     throw new IllegalStateException("100.330 Unknown sourcing: "+ functionPrepareResult.function.sourcing );
             }
 
-            if (!functionPrepareResult.function.skipParams) {
-                if (!S.b(functionPrepareResult.function.params)) {
-                    List<String> list = Arrays.stream(StringUtils.split(functionPrepareResult.function.params)).filter(o->!S.b(o)).collect(Collectors.toList());
-                    cmd.addAll(list);
-                }
-                cmd.add(paramFile.toAbsolutePath().toString());
+            if (!S.b(functionPrepareResult.function.params)) {
+                List<String> list = Arrays.stream(StringUtils.split(functionPrepareResult.function.params)).filter(o->!S.b(o)).collect(Collectors.toList());
+                cmd.addAll(list);
             }
+            cmd.add(paramFile.toAbsolutePath().toString());
 
             Path consoleLogFile = systemDir.resolve(Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
 
@@ -521,7 +506,7 @@ public class TaskProcessor {
                     "\tinterpreter: " + interpreter+"\n" +
                     "\tfile: " + (functionPrepareResult.functionAssetFile !=null && functionPrepareResult.functionAssetFile.file!=null
                     ? functionPrepareResult.functionAssetFile.file.toAbsolutePath()
-                    : functionPrepareResult.function.exec) +"\n" +
+                    : functionPrepareResult.function.file) +"\n" +
                     "\tparams", th);
             systemExecResult = new FunctionApiData.SystemExecResult(
                     functionPrepareResult.function.code, false, -1, ExceptionUtils.getStackTrace(th));
@@ -623,7 +608,7 @@ public class TaskProcessor {
         FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
         functionPrepareResult.function = function;
 
-        if (S.b(functionPrepareResult.function.exec)) {
+        if (S.b(functionPrepareResult.function.file)) {
             String s = S.f("#100.480 Function %s has a blank file", functionPrepareResult.function.code);
             log.warn(s);
             functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1, s);
@@ -642,7 +627,7 @@ public class TaskProcessor {
             return functionPrepareResult;
         }
         functionPrepareResult.functionAssetFile = new AssetFile();
-        functionPrepareResult.functionAssetFile.file = result.functionDir.resolve(Objects.requireNonNull(functionPrepareResult.function.exec));
+        functionPrepareResult.functionAssetFile.file = result.functionDir.resolve(Objects.requireNonNull(functionPrepareResult.function.file));
         log.info("Function asset file: {}, exist: {}", functionPrepareResult.functionAssetFile.file.toAbsolutePath(), Files.exists(functionPrepareResult.functionAssetFile.file));
         return functionPrepareResult;
     }
@@ -652,7 +637,7 @@ public class TaskProcessor {
         functionPrepareResult.function = function;
 
         final Path baseResourceDir = metadataParams.prepareBaseDir(assetManagerUrl);
-        functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.exec);
+        functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
         // is this function prepared?
         if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
             log.info("100.460 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);

@@ -132,11 +132,11 @@ public class PreparingCoreInitService {
         if (function == null) {
 
             FunctionConfigYaml sc = new FunctionConfigYaml();
-            sc.code = PreparingConsts.TEST_FIT_FUNCTION;
-            sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-            sc.env = "python-3";
-            sc.type = CommonConsts.FIT_TYPE;
-            sc.file = "fit-filename.txt";
+            sc.function.code = PreparingConsts.TEST_FIT_FUNCTION;
+            sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
+            sc.function.env = "python-3";
+            sc.function.type = CommonConsts.FIT_TYPE;
+            sc.function.file = "fit-filename.txt";
 
             mills = System.currentTimeMillis();
             log.info("Start functionRepository.save() #1");
@@ -149,11 +149,11 @@ public class PreparingCoreInitService {
         if (predictFunction == null) {
             predictFunction = new Function();
             FunctionConfigYaml sc = new FunctionConfigYaml();
-            sc.code = PreparingConsts.TEST_PREDICT_FUNCTION;
-            sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-            sc.type = CommonConsts.PREDICT_TYPE;
-            sc.env = "python-3";
-            sc.file = "predict-filename.txt";
+            sc.function.code = PreparingConsts.TEST_PREDICT_FUNCTION;
+            sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
+            sc.function.type = CommonConsts.PREDICT_TYPE;
+            sc.function.env = "python-3";
+            sc.function.file = "predict-filename.txt";
 
             predictFunction.setCode(PreparingConsts.TEST_PREDICT_FUNCTION);
             predictFunction.setType(CommonConsts.PREDICT_TYPE);

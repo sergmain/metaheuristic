@@ -19,7 +19,6 @@ package ai.metaheuristic.commons.yaml.function;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
-import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -27,7 +26,6 @@ import javax.annotation.Nonnull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  * @author Serge
@@ -52,16 +50,16 @@ public class FunctionConfigYamlUtilsV1
     @Override
     public FunctionConfigYamlV2 upgradeTo(@Nonnull FunctionConfigYamlV1 src) {
         src.checkIntegrity();
-        FunctionConfigYaml trg = new FunctionConfigYaml();
+        FunctionConfigYamlV2 trg = new FunctionConfigYamlV2();
         BeanUtils.copyProperties(src, trg, "checksumMap", "metas");
 
-        trg.checksumMap = new HashMap<>();
         if (src.checksumMap!=null) {
-            trg.checksumMap.putAll(src.checksumMap);
+            trg.system = new FunctionConfigYamlV2.SystemV2();
+            trg.system.checksumMap.putAll(src.checksumMap);
         }
-        trg.metas = new ArrayList<>();
+        trg.function.metas = new ArrayList<>();
         if (src.metas!=null) {
-            trg.metas.addAll(src.metas);
+            trg.function.metas.addAll(src.metas);
         }
         trg.checkIntegrity();
         return trg;

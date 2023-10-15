@@ -50,7 +50,8 @@ public class TestFunctionConfigYaml {
 
         assertEquals(sc2.function.code, "sc.code");
         assertEquals(sc2.function.type, "sc.type");
-        assertEquals(sc2.function.exec, "sc.exec");
+        assertEquals(sc2.function.file, "sc.file");
+        assertEquals(sc2.function.params, "sc.params");
         assertEquals(sc2.function.env, "sc.env");
         assertEquals(sc2.function.sourcing, EnumsApi.FunctionSourcing.dispatcher);
         assertNotNull(sc2.function.git);
@@ -80,7 +81,8 @@ public class TestFunctionConfigYaml {
         FunctionConfigYamlV2 sc = new FunctionConfigYamlV2();
         sc.function.code = "sc.code";
         sc.function.type = "sc.type";
-        sc.function.exec = "sc.exec";
+        sc.function.file = "sc.file";
+        sc.function.params = "sc.params";
         sc.function.env = "sc.env";
         sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
         sc.function.git = new GitInfo("repo", "branch", "commit");
@@ -98,7 +100,8 @@ public class TestFunctionConfigYaml {
         FunctionConfigYaml sc = new FunctionConfigYaml();
         sc.function.code = "sc.code";
         sc.function.type = "sc.type";
-        sc.function.exec = "sc.exec";
+        sc.function.file = "sc.file";
+        sc.function.params = "sc.params";
         sc.function.env = "sc.env";
         sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
         sc.function.git = new GitInfo("repo", "branch", "commit");
@@ -120,7 +123,8 @@ public class TestFunctionConfigYaml {
     private void checkLatest(FunctionConfigYaml sc) {
         assertEquals(sc.function.code, "sc.code");
         assertEquals(sc.function.type, "sc.type");
-        assertEquals(sc.function.exec, "sc.exec");
+        assertEquals(sc.function.file, "sc.file");
+        assertEquals(sc.function.params, "sc.params");
         assertEquals(sc.function.env, "sc.env");
         assertEquals(sc.function.sourcing, EnumsApi.FunctionSourcing.dispatcher);
         assertNotNull(sc.function.git);
@@ -143,16 +147,16 @@ public class TestFunctionConfigYaml {
         FunctionConfigYaml sc = new FunctionConfigYaml();
         sc.function.code = "sc.code";
         sc.function.type = "sc.type";
-        sc.function.exec = "sc.exec";
+        sc.function.file = "sc.file";
+        sc.function.params = "sc.params";
         sc.function.env = "sc.env";
         sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
 
-//        FunctionConfigYaml sc1 = sc.clone();
-        FunctionConfigYaml sc1 = sc;
+        FunctionConfigYaml sc1 = sc.clone();
 
         assertEquals(sc1.function.code, "sc.code");
         assertEquals(sc1.function.type, "sc.type");
-        assertEquals(sc1.function.exec, "sc.exec");
+        assertEquals(sc1.function.file, "sc.file");
         assertEquals(sc1.function.env, "sc.env");
         assertEquals(sc1.function.sourcing, EnumsApi.FunctionSourcing.dispatcher);
         assertNull(sc1.function.git);

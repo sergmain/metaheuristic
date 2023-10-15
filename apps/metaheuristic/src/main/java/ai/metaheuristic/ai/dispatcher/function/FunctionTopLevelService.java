@@ -385,7 +385,7 @@ public class FunctionTopLevelService {
                     return statuses;
                 }
                 String sum=null;
-                Path file = S.b(functionConfig.exec) ? null : srcDir.resolve(functionConfig.exec);
+                Path file = S.b(functionConfig.file) ? null : srcDir.resolve(functionConfig.file);
                 if (globals.dispatcher.functionSignatureRequired) {
                     // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing right noww
                     final EnumsApi.HashAlgo hashAlgo = EnumsApi.HashAlgo.SHA256WithSignature;
@@ -417,14 +417,14 @@ public class FunctionTopLevelService {
 
                     switch(functionConfig.sourcing) {
                         case dispatcher:
-                            if (S.b(functionConfig.exec)) {
+                            if (S.b(functionConfig.file)) {
                                 String s = FunctionCoreUtils.getDataForChecksumForConfigOnly(functionConfig);
                                 sum = Checksum.getChecksum(hashAlgo, new ByteArrayInputStream(s.getBytes()));
                             }
                             else {
-                                file = srcDir.resolve(functionConfig.exec);
+                                file = srcDir.resolve(functionConfig.file);
                                 if (Files.notExists(file)) {
-                                    final String es = "#295.160 Function has a sourcing as 'dispatcher' but file " + functionConfig.exec + " wasn't found.";
+                                    final String es = "#295.160 Function has a sourcing as 'dispatcher' but file " + functionConfig.file + " wasn't found.";
                                     statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
                                     log.warn(es+" Temp dir: " + srcDir.normalize());
                                     return statuses;

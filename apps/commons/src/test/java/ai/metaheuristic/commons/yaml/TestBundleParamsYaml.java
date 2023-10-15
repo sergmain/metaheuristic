@@ -38,7 +38,7 @@ public class TestBundleParamsYaml {
         FunctionConfigYaml.FunctionConfig config = cfg.function;
         config.code = "aiai.fit.default.function:1.0";
         config.type = CommonConsts.FIT_TYPE;
-        config.exec = "fit-model.py";
+        config.file = "fit-model.py";
         assertNotNull(config.metas);
         config.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
 

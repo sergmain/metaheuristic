@@ -18,15 +18,10 @@ package ai.metaheuristic.ai.processor.processor_environment;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.TerminateApplicationException;
-import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
-import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
-import ai.metaheuristic.commons.utils.SecUtils;
-import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
@@ -34,11 +29,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.security.PublicKey;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Element;
 import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Scheme;
 
@@ -69,7 +61,7 @@ public class FileDispatcherLookupExtendedParams extends DispatcherLookupExtended
                                     )
                     ),
                     1,
-                    SEE_MORE_INFO),
+                    SEE_MORE_INFO, true),
             new Scheme(
                     List.of(
                             new Element(
@@ -98,7 +90,7 @@ public class FileDispatcherLookupExtendedParams extends DispatcherLookupExtended
                             )
                     ),
                     2,
-                    SEE_MORE_INFO)
+                    SEE_MORE_INFO, true)
 
     );
 
