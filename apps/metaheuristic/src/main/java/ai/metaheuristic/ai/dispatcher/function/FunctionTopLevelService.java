@@ -35,8 +35,6 @@ import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import jakarta.servlet.http.HttpServletResponse;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -384,7 +382,7 @@ public class FunctionTopLevelService {
                 if (!status.isOk) {
                     statuses.add(status);
                     log.error(status.error);
-                    continue;
+                    return statuses;
                 }
                 String sum=null;
                 Path file = S.b(functionConfig.exec) ? null : srcDir.resolve(functionConfig.exec);
@@ -392,13 +390,13 @@ public class FunctionTopLevelService {
                     // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing right noww
                     final EnumsApi.HashAlgo hashAlgo = EnumsApi.HashAlgo.SHA256WithSignature;
 
-                    if (functionConfig.checksumMap==null || functionConfig.checksumMap.keySet().stream().noneMatch(o->o== hashAlgo)) {
+                    if (functionConfigList.system==null || functionConfigList.system.checksumMap.keySet().stream().noneMatch(o->o==hashAlgo)) {
                         String es = S.f("#295.100 Global isFunctionSignatureRequired==true but function %s isn't signed with HashAlgo.SHA256WithSignature", functionConfig.code);
                         statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
                         log.error(es);
                         return statuses;
                     }
-                    String data = functionConfig.checksumMap.entrySet().stream()
+                    String data = functionConfigList.system.checksumMap.entrySet().stream()
                             .filter(o -> o.getKey() == hashAlgo)
                             .findFirst()
                             .map(Map.Entry::getValue).orElse(null);
@@ -419,14 +417,14 @@ public class FunctionTopLevelService {
 
                     switch(functionConfig.sourcing) {
                         case dispatcher:
-                            if (S.b(functionConfig.file)) {
+                            if (S.b(functionConfig.exec)) {
                                 String s = FunctionCoreUtils.getDataForChecksumForConfigOnly(functionConfig);
                                 sum = Checksum.getChecksum(hashAlgo, new ByteArrayInputStream(s.getBytes()));
                             }
                             else {
-                                file = srcDir.resolve(functionConfig.file);
+                                file = srcDir.resolve(functionConfig.exec);
                                 if (Files.notExists(file)) {
-                                    final String es = "#295.160 Function has a sourcing as 'dispatcher' but file " + functionConfig.file + " wasn't found.";
+                                    final String es = "#295.160 Function has a sourcing as 'dispatcher' but file " + functionConfig.exec + " wasn't found.";
                                     statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
                                     log.warn(es+" Temp dir: " + srcDir.normalize());
                                     return statuses;
@@ -471,8 +469,7 @@ public class FunctionTopLevelService {
                     return statuses;
                 }
                 else {
-                    FunctionConfigYaml scy = FunctionCoreUtils.
-                        to(functionConfig);
+                    FunctionConfigYaml scy = functionConfigList;
                     if (file != null) {
                         try (InputStream is = Files.newInputStream(file); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
                             functionTxService.persistFunction(scy, bis, Files.size(file));
@@ -515,9 +512,6 @@ public class FunctionTopLevelService {
             if (function != null) {
                 FunctionConfigYaml temp = function.getFunctionConfigYaml();
                 functionConfig = TaskParamsUtils.toFunctionConfig(temp);
-                if (!functionConfig.skipParams) {
-                    functionConfig.params = produceFinalCommandLineParams(functionConfig.params, functionDef.getParams());
-                }
             } else {
                 log.warn("#295.040 Can't find function for code {}", functionDef.getCode());
             }
@@ -592,7 +586,7 @@ public class FunctionTopLevelService {
             return "";
         }
         FunctionConfigYaml sc = function.getFunctionConfigYaml();
-        log.info("Send config of function {}", sc.getCode());
+        log.info("Send config of function {}", sc.function.getCode());
         return FunctionConfigYamlUtils.UTILS.toString(sc);
     }
 
@@ -604,8 +598,8 @@ public class FunctionTopLevelService {
             return Map.of();
         }
         FunctionConfigYaml sc = function.getFunctionConfigYaml();
-        log.info("#442.120 Send checksum {} for function {}", sc.checksumMap, sc.getCode());
-        return sc.checksumMap==null ? Map.of() : sc.checksumMap;
+        log.info("#442.120 Send checksum {} for function {}", sc.system!=null ? sc.system.checksumMap : null, sc.function.getCode());
+        return sc.system == null ? Map.of() : sc.system.checksumMap;
     }
 
 }

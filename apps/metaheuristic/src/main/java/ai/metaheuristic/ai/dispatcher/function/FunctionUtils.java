@@ -35,7 +35,7 @@ public class FunctionUtils {
         TaskParamsYaml.FunctionConfig fc = TaskParamsUtils.toFunctionConfig(f.getFunctionConfigYaml());
 
         fsc.code = fc.code;
-        fsc.file = fc.exec;
+        fsc.file = fc.file;
         fsc.checksumMap = fc.checksumMap;
         fsc.sourcing = fc.sourcing;
         fsc.metas.addAll(fc.metas);

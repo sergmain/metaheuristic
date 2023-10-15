@@ -22,20 +22,16 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.InitVariablesTxEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
-import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,13 +49,10 @@ import java.util.Map;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class TaskProducingService {
 
-    private final VariableTxService variableTxService;
     private final ExecContextGraphService execContextGraphService;
     private final FunctionTopLevelService functionTopLevelService;
     private final TaskTxService taskTxService;
     private final Globals globals;
-    private final ExecContextGraphCache execContextGraphCache;
-    private final ExecContextCache execContextCache;
     private final ApplicationEventPublisher eventPublisher;
 
     public TaskData.ProduceTaskResult produceTaskForProcess(
@@ -180,9 +173,9 @@ public class TaskProducingService {
 
         if (taskParams.task.context== EnumsApi.FunctionExecContext.internal) {
             taskParams.task.function = new TaskParamsYaml.FunctionConfig(
-                    process.function.code, "internal", null, S.b(process.function.params) ? "" : process.function.params,"internal",
+                    process.function.code, "internal", null, "internal",
                     EnumsApi.FunctionSourcing.dispatcher, null,
-                    null, false, null );
+                    null );
         }
         else {
             TaskParamsYaml.FunctionConfig fConfig = functionTopLevelService.getFunctionConfig(process.function);

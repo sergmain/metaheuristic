@@ -20,6 +20,8 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
+import ai.metaheuristic.commons.yaml.event.DispatcherEventYamlUtils;
+import ai.metaheuristic.commons.yaml.event.DispatcherEventYamlUtilsV2;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
 import javax.annotation.Nonnull;
@@ -34,7 +36,7 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("DuplicatedCode")
 public class TaskParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<TaskParamsYamlV1, TaskParamsYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<TaskParamsYamlV1, TaskParamsYamlV2, TaskParamsYamlUtilsV2, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -49,13 +51,10 @@ public class TaskParamsYamlUtilsV1
 
     @Nonnull
     @Override
-    public TaskParamsYaml upgradeTo(@Nonnull TaskParamsYamlV1 v1) {
-        if (true) {
-            throw new UpgradeNotSupportedException();
-        }
+    public TaskParamsYamlV2 upgradeTo(@Nonnull TaskParamsYamlV1 v1) {
         v1.checkIntegrity();
-        TaskParamsYaml t = new TaskParamsYaml();
-        t.task = new TaskParamsYaml.TaskYaml();
+        TaskParamsYamlV2 t = new TaskParamsYamlV2();
+        t.task = new TaskParamsYamlV2.TaskYamlV2();
         BeanUtils.copyProperties(v1.task, t.task, "function", "preFunctions", "postFunctions", "inline", "inputs", "outputs", "metas", "cache");
         t.task.function = toUp(v1.task.function);
         v1.task.preFunctions.stream().map(TaskParamsYamlUtilsV1::toUp).collect(Collectors.toCollection(()->t.task.preFunctions));
@@ -66,10 +65,10 @@ public class TaskParamsYamlUtilsV1
         v1.task.outputs.stream().map(TaskParamsYamlUtilsV1::upOutputVariable).collect(Collectors.toCollection(()->t.task.outputs));
         t.task.metas.addAll(v1.task.metas);
         if (v1.task.cache!=null) {
-            t.task.cache = new TaskParamsYaml.Cache(v1.task.cache.enabled, v1.task.cache.omitInline, v1.task.cache.cacheMeta);
+            t.task.cache = new TaskParamsYamlV2.CacheV2(v1.task.cache.enabled, v1.task.cache.omitInline, v1.task.cache.cacheMeta);
         }
         if (v1.task.init!=null) {
-            t.task.init = new TaskParamsYaml.Init(v1.task.init.parentTaskIds, v1.task.init.nextState);
+            t.task.init = new TaskParamsYamlV2.InitV2(v1.task.init.parentTaskIds, v1.task.init.nextState);
         }
 
         t.checkIntegrity();
@@ -77,14 +76,14 @@ public class TaskParamsYamlUtilsV1
         return t;
     }
 
-    private static TaskParamsYaml.InputVariable upInputVariable(TaskParamsYamlV1.InputVariableV1 v1) {
-        TaskParamsYaml.InputVariable v = new TaskParamsYaml.InputVariable(
-                v1.id, v1.context, v1.name, v1.sourcing, v1.git, v1.disk, v1.filename, v1.type,  v1.empty, v1.getNullable());
+    private static TaskParamsYamlV2.InputVariableV2 upInputVariable(TaskParamsYamlV1.InputVariableV1 v1) {
+        TaskParamsYamlV2.InputVariableV2 v = new TaskParamsYamlV2.InputVariableV2(
+                v1.id, v1.context, v1.name, v1.sourcing, v1.git, v1.disk, v1.filename, v1.type,  v1.empty, v1.getNullable(), null);
         return v;
     }
 
-    private static TaskParamsYaml.OutputVariable upOutputVariable(TaskParamsYamlV1.OutputVariableV1 v1) {
-        TaskParamsYaml.OutputVariable v = new TaskParamsYaml.OutputVariable(
+    private static TaskParamsYamlV2.OutputVariableV2 upOutputVariable(TaskParamsYamlV1.OutputVariableV1 v1) {
+        TaskParamsYamlV2.OutputVariableV2 v = new TaskParamsYamlV2.OutputVariableV2(
                 v1.id, v1.context, v1.name, v1.sourcing, v1.git, v1.disk, v1.filename, v1.uploaded, v1.type, v1.empty, v1.getNullable(), v1.ext);
         return v;
     }
@@ -95,17 +94,17 @@ public class TaskParamsYamlUtilsV1
         return null;
     }
 
-    private static TaskParamsYaml.FunctionConfig toUp(TaskParamsYamlV1.FunctionConfigV1 src) {
-        TaskParamsYaml.FunctionConfig trg = new TaskParamsYaml.FunctionConfig(
-                src.code, src.type, src.file, src.env, src.sourcing, src.checksumMap, src.git);
+    private static TaskParamsYamlV2.FunctionConfigV2 toUp(TaskParamsYamlV1.FunctionConfigV1 src) {
+        TaskParamsYamlV2.FunctionConfigV2 trg = new TaskParamsYamlV2.FunctionConfigV2(
+                src.code, src.type, src.file, src.params, src.env, src.sourcing, src.checksumMap, src.git);
 
         trg.metas.addAll(src.metas);
         return trg;
     }
 
     @Override
-    public Void nextUtil() {
-        return null;
+    public TaskParamsYamlUtilsV2 nextUtil() {
+        return (TaskParamsYamlUtilsV2) TaskParamsYamlUtils.UTILS.getForVersion(2);
     }
 
     @Override

@@ -50,10 +50,10 @@ public class FunctionConfigYaml implements BaseParams {
             throw new CheckIntegrityFailedException("sourcing==null");
         }
         List<String> errors = new ArrayList<>();
-        if (function.sourcing==EnumsApi.FunctionSourcing.processor && S.b(function.exec) && S.b(function.env)) {
+        if (function.sourcing==EnumsApi.FunctionSourcing.processor && S.b(function.file) && S.b(function.env)) {
             errors.add(S.f("function %s has a sourcing as %s but content, file, and env are empty", function.code, function.sourcing));
         }
-        if (function.sourcing==EnumsApi.FunctionSourcing.dispatcher && S.b(function.exec)) {
+        if (function.sourcing==EnumsApi.FunctionSourcing.dispatcher && S.b(function.file)) {
             errors.add(S.f("function %s has a sourcing as %s but file are empty", function.code, function.sourcing));
         }
         if (MetaUtils.getValue(function.metas, ConstsApi.META_MH_TASK_PARAMS_VERSION)==null) {
@@ -76,9 +76,16 @@ public class FunctionConfigYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class System {
+    public static class System implements Cloneable {
         public final Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
         public String archive;
+
+        @SneakyThrows
+        public System clone() {
+            final System clone = (System) super.clone();
+            clone.checksumMap.putAll(this.checksumMap);
+            return clone;
+        }
     }
 
     @Data
@@ -86,7 +93,16 @@ public class FunctionConfigYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(of = "code")
-    public static class FunctionConfig {
+    public static class FunctionConfig implements Cloneable {
+
+        @SneakyThrows
+        public FunctionConfig clone() {
+            final FunctionConfig clone = (FunctionConfig) super.clone();
+            if (this.metas!=null) {
+                clone.metas = new ArrayList<>(this.metas);
+            }
+            return clone;
+        }
 
         /**
          * code of function, i.e. simple-app:1.0
@@ -94,7 +110,17 @@ public class FunctionConfigYaml implements BaseParams {
         public String code;
         @Nullable
         public String type;
-        public String exec;
+
+        @Nullable
+        public String file;
+        /**
+         * params for command line for invoking function
+         * <p>
+         * this isn't a holder for yaml-based config
+         */
+        @Nullable
+        public String params;
+
         public String env;
         public EnumsApi.FunctionSourcing sourcing;
         @Nullable

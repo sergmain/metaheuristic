@@ -37,7 +37,7 @@ public class FunctionCoreUtils {
     private static final FunctionApiData.FunctionConfigStatus FUNCTION_CONFIG_STATUS_OK = new FunctionApiData.FunctionConfigStatus(true, null);
 
     public static FunctionApiData.FunctionConfigStatus validate(FunctionConfigYaml.FunctionConfig functionConfig) {
-        if ((functionConfig.exec ==null || functionConfig.exec.isBlank()) && (functionConfig.env ==null || functionConfig.env.isBlank())) {
+        if ((functionConfig.file ==null || functionConfig.file.isBlank()) && (functionConfig.env ==null || functionConfig.env.isBlank())) {
             return new FunctionApiData.FunctionConfigStatus(false, "#401.10 Fields 'file' and 'env' can't be null or empty both.");
         }
         if (S.b(functionConfig.code)) {
@@ -54,7 +54,7 @@ public class FunctionCoreUtils {
         }
         switch (functionConfig.sourcing) {
             case dispatcher:
-                if (StringUtils.isBlank(functionConfig.exec)) {
+                if (StringUtils.isBlank(functionConfig.file)) {
                     return new FunctionApiData.FunctionConfigStatus(false, "#401.30 sourcing is 'dispatcher' but file is empty: " + functionConfig.toString());
                 }
                 break;
@@ -71,24 +71,24 @@ public class FunctionCoreUtils {
 
     public static String getDataForChecksumForConfigOnly(FunctionConfigYaml.FunctionConfig functionConfig) {
         return getDataForChecksumForConfigOnly(
-                functionConfig.code, functionConfig.env, functionConfig.exec, functionConfig.git, functionConfig.sourcing);
+                functionConfig.code, functionConfig.env, functionConfig.file, functionConfig.params, functionConfig.git, functionConfig.sourcing);
     }
 
     public static String getDataForChecksumForConfigOnly(TaskParamsYaml.FunctionConfig functionConfig) {
         return getDataForChecksumForConfigOnly(
-                functionConfig.code, functionConfig.env, functionConfig.exec,
-                functionConfig.git, functionConfig.sourcing);
+                functionConfig.code, functionConfig.env, functionConfig.file, functionConfig.params, functionConfig.git, functionConfig.sourcing);
     }
 
     private static String getDataForChecksumForConfigOnly(
-        String functionCode, @Nullable String env, @Nullable String functionExec,
-        @Nullable GitInfo git, EnumsApi.FunctionSourcing sourcing) {
+        String functionCode, @Nullable String env, @Nullable String functionFile,
+        @Nullable String functionParams, @Nullable GitInfo git, EnumsApi.FunctionSourcing sourcing) {
 
         return functionCode + " " +
                 (S.b(env) ? null : env) +
                 ", " +
-                (S.b(functionExec) ? null : functionExec) +
+                (S.b(functionFile) ? null : functionFile) +
                 " " +
+                (S.b(functionParams) ? null : functionParams) +
                 (git !=null ? " " + git.branch+":"+ git.commit : "") +
                 (sourcing == EnumsApi.FunctionSourcing.dispatcher ? "" : " " + sourcing);
     }

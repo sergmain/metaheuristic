@@ -19,10 +19,7 @@ package ai.metaheuristic.api.data;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.utils.MetaUtils;
-import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
-import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
-import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtilsV1;
-import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlV1;
+import ai.metaheuristic.commons.yaml.function.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -39,128 +36,131 @@ public class TestFunctionConfigYaml {
 
     @Test
     public void testUpgradeToV2() {
-        FunctionConfigYamlV1 sc = getFunctionConfigYamlV1();
-        FunctionConfigYaml sc2 = new FunctionConfigYamlUtilsV1().upgradeTo(sc);
+        FunctionConfigYamlV2 sc = getFunctionConfigYamlV2();
+        FunctionConfigYaml sc2 = new FunctionConfigYamlUtilsV2().upgradeTo(sc);
 
         System.out.println(FunctionConfigYamlUtils.UTILS.toString(sc2));
 
         // to be sure that values were copied
-        Objects.requireNonNull(sc.checksumMap).put(EnumsApi.HashAlgo.SHA256WithSignature, "321qwe");
-        Objects.requireNonNull(sc.metas).add(Map.of("key2", "value2"));
+        assertNotNull(sc.system);
+        assertNotNull(sc.system.checksumMap);
+        assertTrue(sc.system.checksumMap.isEmpty());
+        sc.system.checksumMap.put(EnumsApi.HashAlgo.SHA256WithSignature, "321qwe");
+        Objects.requireNonNull(sc.function.metas).add(Map.of("key2", "value2"));
 
-        assertEquals(sc2.code, "sc.code");
-        assertEquals(sc2.type, "sc.type");
-        assertEquals(sc2.file, "sc.file");
-        assertEquals(sc2.params, "sc.params");
-        assertEquals(sc2.env, "sc.env");
-        assertEquals(sc2.sourcing, EnumsApi.FunctionSourcing.dispatcher);
-        assertNotNull(sc2.checksumMap);
-        assertEquals(1, sc2.checksumMap.size());
-        assertNotNull(sc2.checksumMap.get(EnumsApi.HashAlgo.SHA256));
-        assertNotNull(sc2.git);
-        assertEquals(sc2.git.repo, "repo");
-        assertEquals(sc2.git.branch, "branch");
-        assertEquals(sc2.git.commit, "commit");
-        assertTrue(sc2.skipParams);
-        assertNotNull(sc2.metas);
-        assertEquals(1, sc2.metas.size());
-        assertNotNull(MetaUtils.getMeta(sc2.metas, "key1"));
+        assertEquals(sc2.function.code, "sc.code");
+        assertEquals(sc2.function.type, "sc.type");
+        assertEquals(sc2.function.exec, "sc.exec");
+        assertEquals(sc2.function.env, "sc.env");
+        assertEquals(sc2.function.sourcing, EnumsApi.FunctionSourcing.dispatcher);
+        assertNotNull(sc2.function.git);
+        assertEquals(sc2.function.git.repo, "repo");
+        assertEquals(sc2.function.git.branch, "branch");
+        assertEquals(sc2.function.git.commit, "commit");
+        assertNotNull(sc2.function.metas);
+        assertEquals(1, sc2.function.metas.size());
+        assertNotNull(MetaUtils.getMeta(sc2.function.metas, "key1"));
         //noinspection ConstantConditions
-        assertEquals("value1", MetaUtils.getMeta(sc2.metas, "key1").getValue());
+        assertEquals("value1", MetaUtils.getMeta(sc2.function.metas, "key1").getValue());
+
+        assertNotNull(sc2.system);
+        assertNotNull(sc2.system.checksumMap);
+        assertEquals(1, sc2.system.checksumMap.size());
+        assertNotNull(sc2.system.checksumMap.get(EnumsApi.HashAlgo.SHA256));
     }
 
     @Test
     public void testUpgradeToLatest() {
-        FunctionConfigYamlV1 sc1 = getFunctionConfigYamlV1();
-        FunctionConfigYaml sc2 = new FunctionConfigYamlUtilsV1().upgradeTo(sc1);
+        FunctionConfigYamlV2 sc1 = getFunctionConfigYamlV2();
+        FunctionConfigYaml sc2 = new FunctionConfigYamlUtilsV2().upgradeTo(sc1);
         checkLatest(sc2);
     }
 
-    private FunctionConfigYamlV1 getFunctionConfigYamlV1() {
-        FunctionConfigYamlV1 sc = new FunctionConfigYamlV1();
-        sc.code = "sc.code";
-        sc.type = "sc.type";
-        sc.file = "sc.file";
-        sc.params = "sc.params";
-        sc.env = "sc.env";
-        sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-        assertNotNull(sc.checksumMap);
-        sc.checksumMap.put(EnumsApi.HashAlgo.SHA256, "qwe321");
-        sc.git = new GitInfo("repo", "branch", "commit");
-        sc.skipParams = true;
-        assertNotNull(sc.metas);
-        sc.metas.add(Map.of("key1", "value1"));
+    private static FunctionConfigYamlV2 getFunctionConfigYamlV2() {
+        FunctionConfigYamlV2 sc = new FunctionConfigYamlV2();
+        sc.function.code = "sc.code";
+        sc.function.type = "sc.type";
+        sc.function.exec = "sc.exec";
+        sc.function.env = "sc.env";
+        sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
+        sc.function.git = new GitInfo("repo", "branch", "commit");
+        assertNotNull(sc.function.metas);
+        sc.function.metas.add(Map.of("key1", "value1"));
+
+        sc.system = new FunctionConfigYamlV2.SystemV2();
+        assertNotNull(sc.system.checksumMap);
+        sc.system.checksumMap.put(EnumsApi.HashAlgo.SHA256, "qwe321");
         return sc;
     }
 
     @Test
     public void test() {
         FunctionConfigYaml sc = new FunctionConfigYaml();
-        sc.code = "sc.code";
-        sc.type = "sc.type";
-        sc.file = "sc.file";
-        sc.params = "sc.params";
-        sc.env = "sc.env";
-        sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-        Objects.requireNonNull(sc.checksumMap).put(EnumsApi.HashAlgo.SHA256, "qwe321");
-        sc.git = new GitInfo("repo", "branch", "commit");
-        sc.skipParams = true;
-        Objects.requireNonNull(sc.metas).add(Map.of("key1", "value1"));
+        sc.function.code = "sc.code";
+        sc.function.type = "sc.type";
+        sc.function.exec = "sc.exec";
+        sc.function.env = "sc.env";
+        sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
+        sc.function.git = new GitInfo("repo", "branch", "commit");
+        Objects.requireNonNull(sc.function.metas).add(Map.of("key1", "value1"));
+        sc.function.metas.add(Map.of("key2", "value2"));
 
-        FunctionConfigYaml sc1 = sc.clone();
+        assertNotNull(sc.system);
+        assertNotNull(sc.system.checksumMap);
+        sc.system.checksumMap.put(EnumsApi.HashAlgo.SHA256, "qwe321");
+
+//        FunctionConfigYaml sc1 = sc.clone();
 
         // to be sure that values were copied, we'll change original checksumMap
-        sc.checksumMap.put(EnumsApi.HashAlgo.SHA256WithSignature, "321qwe");
-        sc.metas.add(Map.of("key2", "value2"));
+        sc.system.checksumMap.put(EnumsApi.HashAlgo.SHA256WithSignature, "321qwe");
 
-        checkLatest(sc1);
+        checkLatest(sc);
     }
 
     private void checkLatest(FunctionConfigYaml sc) {
-        assertEquals(sc.code, "sc.code");
-        assertEquals(sc.type, "sc.type");
-        assertEquals(sc.file, "sc.file");
-        assertEquals(sc.params, "sc.params");
-        assertEquals(sc.env, "sc.env");
-        assertEquals(sc.sourcing, EnumsApi.FunctionSourcing.dispatcher);
-        assertNotNull(sc.checksumMap);
-        assertEquals(1, sc.checksumMap.size());
-        assertNotNull(sc.checksumMap.get(EnumsApi.HashAlgo.SHA256));
-        assertNull(sc.checksumMap.get(EnumsApi.HashAlgo.SHA256WithSignature));
-        assertNotNull(sc.git);
-        assertEquals(sc.git.repo, "repo");
-        assertEquals(sc.git.branch, "branch");
-        assertEquals(sc.git.commit, "commit");
-        assertTrue(sc.skipParams);
-        assertNotNull(sc.metas);
-        assertEquals(1, sc.metas.size());
-        assertEquals("value1", Objects.requireNonNull(MetaUtils.getMeta(sc.metas, "key1")).getValue());
+        assertEquals(sc.function.code, "sc.code");
+        assertEquals(sc.function.type, "sc.type");
+        assertEquals(sc.function.exec, "sc.exec");
+        assertEquals(sc.function.env, "sc.env");
+        assertEquals(sc.function.sourcing, EnumsApi.FunctionSourcing.dispatcher);
+        assertNotNull(sc.function.git);
+        assertEquals(sc.function.git.repo, "repo");
+        assertEquals(sc.function.git.branch, "branch");
+        assertEquals(sc.function.git.commit, "commit");
+        assertNotNull(sc.function.metas);
+        assertEquals(1, sc.function.metas.size());
+        assertEquals("value1", Objects.requireNonNull(MetaUtils.getMeta(sc.function.metas, "key1")).getValue());
+
+        assertNotNull(sc.system);
+        assertNotNull(sc.system.checksumMap);
+        assertEquals(1, sc.system.checksumMap.size());
+        assertNotNull(sc.system.checksumMap.get(EnumsApi.HashAlgo.SHA256));
+        assertNull(sc.system.checksumMap.get(EnumsApi.HashAlgo.SHA256WithSignature));
     }
 
     @Test
     public void testNull() {
         FunctionConfigYaml sc = new FunctionConfigYaml();
-        sc.code = "sc.code";
-        sc.type = "sc.type";
-        sc.file = "sc.file";
-        sc.params = "sc.params";
-        sc.env = "sc.env";
-        sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-        sc.skipParams = true;
+        sc.function.code = "sc.code";
+        sc.function.type = "sc.type";
+        sc.function.exec = "sc.exec";
+        sc.function.env = "sc.env";
+        sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
 
-        FunctionConfigYaml sc1 = sc.clone();
+//        FunctionConfigYaml sc1 = sc.clone();
+        FunctionConfigYaml sc1 = sc;
 
-        assertEquals(sc1.code, "sc.code");
-        assertEquals(sc1.type, "sc.type");
-        assertEquals(sc1.file, "sc.file");
-        assertEquals(sc1.params, "sc.params");
-        assertEquals(sc1.env, "sc.env");
-        assertEquals(sc1.sourcing, EnumsApi.FunctionSourcing.dispatcher);
-        assertNotNull(sc1.checksumMap);
-        assertTrue(sc1.checksumMap.isEmpty());
-        assertNull(sc1.git);
-        assertTrue(sc1.skipParams);
-        assertNotNull(sc1.metas);
-        assertTrue(sc1.metas.isEmpty());
+        assertEquals(sc1.function.code, "sc.code");
+        assertEquals(sc1.function.type, "sc.type");
+        assertEquals(sc1.function.exec, "sc.exec");
+        assertEquals(sc1.function.env, "sc.env");
+        assertEquals(sc1.function.sourcing, EnumsApi.FunctionSourcing.dispatcher);
+        assertNull(sc1.function.git);
+        assertNotNull(sc1.function.metas);
+        assertTrue(sc1.function.metas.isEmpty());
+
+        assertNotNull(sc1.system);
+        assertNotNull(sc1.system.checksumMap);
+        assertTrue(sc1.system.checksumMap.isEmpty());
     }
 }

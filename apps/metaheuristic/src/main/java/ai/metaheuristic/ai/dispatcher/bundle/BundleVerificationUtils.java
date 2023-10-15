@@ -43,7 +43,7 @@ public class BundleVerificationUtils {
                                     new YamlSchemeValidator.Element("sourcing"),
                                     new YamlSchemeValidator.Element("type", false, false),
                                     new YamlSchemeValidator.Element("checksumMap", false, false))
-                    )),1, SEE_MORE_INFO),
+                    )),1, SEE_MORE_INFO, true),
                     new YamlSchemeValidator.Scheme(List.of( new YamlSchemeValidator.Element(
                             "functions",
                             true, false,
@@ -59,7 +59,7 @@ public class BundleVerificationUtils {
                                     new YamlSchemeValidator.Element("type", false, false),
                                     new YamlSchemeValidator.Element("content", false, false),
                                     new YamlSchemeValidator.Element("checksumMap", false, false))
-                    ) ),2, SEE_MORE_INFO),
+                    ) ),2, SEE_MORE_INFO, true),
                     new YamlSchemeValidator.Scheme(List.of( new YamlSchemeValidator.Element(
                             "functions",
                             true, false,
@@ -82,7 +82,7 @@ public class BundleVerificationUtils {
                                     new YamlSchemeValidator.Element("file"),
                                     new YamlSchemeValidator.Element("lang", false, false))
                             )
-                    ),3, SEE_MORE_INFO)
+                    ),3, SEE_MORE_INFO, true)
             ),
             "the config file bundle.yaml",
             (es)-> es, SEE_MORE_INFO

@@ -70,7 +70,17 @@ public class FunctionConfigYamlV2 implements BaseParams {
         public String code;
         @Nullable
         public String type;
-        public String exec;
+
+        @Nullable
+        public String file;
+        /**
+         * params for command line for invoking function
+         * <p>
+         * this isn't a holder for yaml-based config
+         */
+        @Nullable
+        public String params;
+
         public String env;
         public EnumsApi.FunctionSourcing sourcing;
         @Nullable

@@ -39,7 +39,7 @@ public class TestYamlSchemeValidator {
                 List.of(new Scheme(
                         List.of(
                                 new Element("root", true, false, new String[]{"element1", "element2"})
-                        ), 1, SEE_MORE_INFO)
+                        ), 1, SEE_MORE_INFO, true)
                 ),
                 "the config file test.yaml",(es)-> es, SEE_MORE_INFO
         );
@@ -55,7 +55,7 @@ public class TestYamlSchemeValidator {
                         List.of(
                                 new Element("root1", true, false, new String[]{"element1-1", "element1-2"}),
                                 new Element("root2", true, false, new String[]{"element2-1", "element2-2"})
-                        ),1, SEE_MORE_INFO)
+                        ),1, SEE_MORE_INFO, true)
                 ),
                 "the config file test.yaml", (es)-> es, SEE_MORE_INFO
         );
@@ -71,7 +71,7 @@ public class TestYamlSchemeValidator {
                         List.of(
                                 new Element("root1", true, false, new String[]{"element1-1", "element1-2"}),
                                 new Element("root2", false, false, new String[]{"element2-1", "element2-2"})
-                        ),1, SEE_MORE_INFO)
+                        ),1, SEE_MORE_INFO, true)
                 ),
                 "the config file test.yaml", (es)-> es, SEE_MORE_INFO
         );
@@ -86,7 +86,7 @@ public class TestYamlSchemeValidator {
                 List.of(new Scheme(
                         List.of(
                                 new Element("root", true, false, new String[]{"element1", "element2"})
-                        ),1, SEE_MORE_INFO)
+                        ),1, SEE_MORE_INFO, true)
                 ),
                 "the config file test.yaml", (es)-> es, SEE_MORE_INFO
         );
@@ -101,7 +101,7 @@ public class TestYamlSchemeValidator {
                 List.of(new Scheme(
                         List.of(
                                 new Element("root", true, false, new String[]{"element1", "element2"})
-                        ),1, SEE_MORE_INFO)
+                        ),1, SEE_MORE_INFO, true)
                 ),
                 "the config file test.yaml", (es)-> es, SEE_MORE_INFO
         );
@@ -116,7 +116,7 @@ public class TestYamlSchemeValidator {
                 List.of(new Scheme(
                         List.of(
                                 new Element("root", true, false, new String[]{"element1", "element2"})
-                        ),1, SEE_MORE_INFO)
+                        ),1, SEE_MORE_INFO, true)
                 ),
                 "the config file test.yaml", (es)-> es, SEE_MORE_INFO
         );
@@ -131,7 +131,7 @@ public class TestYamlSchemeValidator {
                 List.of(new Scheme(
                         List.of(
                                 new Element("root", true, false, new String[]{"element1", "element2"})
-                        ),1, SEE_MORE_INFO)
+                        ),1, SEE_MORE_INFO, true)
                 ),
                 "the config file test.yaml", (es)-> es, SEE_MORE_INFO
         );

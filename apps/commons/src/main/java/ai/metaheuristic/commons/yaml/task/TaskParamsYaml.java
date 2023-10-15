@@ -23,7 +23,7 @@ import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
-import org.springframework.lang.Nullable;
+import javax.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,10 +55,10 @@ public class TaskParamsYaml implements BaseParams {
         if (task.execContextId==null) {
             throw new CheckIntegrityFailedException("execContextId is null");
         }
-        if (task.context== EnumsApi.FunctionExecContext.internal && !S.b(task.function.exec)) {
+        if (task.context== EnumsApi.FunctionExecContext.internal && !S.b(task.function.file)) {
             throw new CheckIntegrityFailedException("(task.context== EnumsApi.FunctionExecContext.internal && !S.b(task.function.file))");
         }
-        if (task.context== EnumsApi.FunctionExecContext.external && task.function.sourcing!= EnumsApi.FunctionSourcing.processor && S.b(task.function.exec)) {
+        if (task.context== EnumsApi.FunctionExecContext.external && task.function.sourcing!= EnumsApi.FunctionSourcing.processor && S.b(task.function.file)) {
             throw new CheckIntegrityFailedException(
                     "(task.context== EnumsApi.FunctionExecContext.external && " +
                             "task.function.sourcing!= EnumsApi.FunctionSourcing.processor && " +
@@ -172,8 +172,15 @@ public class TaskParamsYaml implements BaseParams {
         public String type;
 
         // Nullable for internal context, NonNull for external
+        @Nullable public String file;
+
+        /**
+         * params for command line for invoking function
+         * <p>
+         * this isn't a holder for yaml-based config
+         */
         @Nullable
-        public String exec;
+        public String params;
 
         public String env;
         public EnumsApi.FunctionSourcing sourcing;

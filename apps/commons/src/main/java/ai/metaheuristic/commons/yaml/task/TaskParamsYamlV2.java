@@ -57,10 +57,10 @@ public class TaskParamsYamlV2 implements BaseParams {
         if (task.execContextId==null) {
             throw new CheckIntegrityFailedException("execContextId is null");
         }
-        if (task.context== EnumsApi.FunctionExecContext.internal && !S.b(task.function.exec)) {
+        if (task.context== EnumsApi.FunctionExecContext.internal && !S.b(task.function.file)) {
             throw new CheckIntegrityFailedException("(task.context== EnumsApi.FunctionExecContext.internal && !S.b(task.function.file))");
         }
-        if (task.context== EnumsApi.FunctionExecContext.external && task.function.sourcing!= EnumsApi.FunctionSourcing.processor && S.b(task.function.exec)) {
+        if (task.context== EnumsApi.FunctionExecContext.external && task.function.sourcing!= EnumsApi.FunctionSourcing.processor && S.b(task.function.file)) {
             throw new CheckIntegrityFailedException(
                     "(task.context== EnumsApi.FunctionExecContext.external && " +
                             "task.function.sourcing!= EnumsApi.FunctionSourcing.processor && " +
@@ -155,9 +155,8 @@ public class TaskParamsYamlV2 implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(of = "code")
-    public static class FunctionConfigV2 /*implements Cloneable */{
+    public static class FunctionConfigV2 implements Cloneable {
 
-/*
         @SneakyThrows
         public FunctionConfigV2 clone() {
             final FunctionConfigV2 clone = (FunctionConfigV2) super.clone();
@@ -167,7 +166,6 @@ public class TaskParamsYamlV2 implements BaseParams {
             clone.metas.addAll(this.metas);
             return clone;
         }
-*/
 
         /**
          * code of function, i.e. simple-app:1.0
@@ -177,8 +175,15 @@ public class TaskParamsYamlV2 implements BaseParams {
         public String type;
 
         // Nullable for internal context, NonNull for external
+        @Nullable public String file;
+
+        /**
+         * params for command line for invoking function
+         * <p>
+         * this isn't a holder for yaml-based config
+         */
         @Nullable
-        public String exec;
+        public String params;
 
         public String env;
         public EnumsApi.FunctionSourcing sourcing;

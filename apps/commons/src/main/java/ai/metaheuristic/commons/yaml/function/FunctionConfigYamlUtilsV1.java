@@ -51,7 +51,20 @@ public class FunctionConfigYamlUtilsV1
     @Nonnull
     @Override
     public FunctionConfigYamlV2 upgradeTo(@Nonnull FunctionConfigYamlV1 src) {
-        throw new UpgradeNotSupportedException();
+        src.checkIntegrity();
+        FunctionConfigYaml trg = new FunctionConfigYaml();
+        BeanUtils.copyProperties(src, trg, "checksumMap", "metas");
+
+        trg.checksumMap = new HashMap<>();
+        if (src.checksumMap!=null) {
+            trg.checksumMap.putAll(src.checksumMap);
+        }
+        trg.metas = new ArrayList<>();
+        if (src.metas!=null) {
+            trg.metas.addAll(src.metas);
+        }
+        trg.checkIntegrity();
+        return trg;
     }
 
     @Nonnull

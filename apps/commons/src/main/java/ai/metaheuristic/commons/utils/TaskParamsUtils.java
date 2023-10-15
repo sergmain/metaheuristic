@@ -31,11 +31,12 @@ public class TaskParamsUtils {
         trg.checksumMap = src.system!=null ? src.system.checksumMap : null;
         trg.code = src.function.code;
         trg.env = src.function.env;
-        trg.exec = src.function.exec;
+        trg.file = src.function.file;
         trg.git = src.function.git;
         if (src.function.metas!=null) {
             trg.metas.addAll(src.function.metas);
         }
+        trg.params = src.function.params;
         trg.sourcing = src.function.sourcing;
         trg.type = src.function.type;
         return trg;

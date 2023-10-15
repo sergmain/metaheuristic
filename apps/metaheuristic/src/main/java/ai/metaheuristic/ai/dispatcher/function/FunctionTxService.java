@@ -56,8 +56,8 @@ public class FunctionTxService {
     @Transactional
     public Function persistFunction(FunctionConfigYaml functionConfig, @Nullable InputStream inputStream, long size) {
         Function function = new Function();
-        function.code = functionConfig.code;
-        function.type = functionConfig.type!=null ? functionConfig.type : "";
+        function.code = functionConfig.function.code;
+        function.type = functionConfig.function.type!=null ? functionConfig.function.type : "";
         function.updateParams(functionConfig);
 
         String functionCode = function.getCode();
@@ -74,7 +74,7 @@ public class FunctionTxService {
         return functionRepository.findAllAsStream()
                 .map(function->{
                     FunctionConfigYaml fcy = function.getFunctionConfigYaml();
-                    return Pair.of(fcy.sourcing, function.code);
+                    return Pair.of(fcy.function.sourcing, function.code);
                 })
                 .collect(Collectors.toList());
     }

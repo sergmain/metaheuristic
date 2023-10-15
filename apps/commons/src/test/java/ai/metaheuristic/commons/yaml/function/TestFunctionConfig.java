@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.commons.yaml.function;
 
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
@@ -31,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class TestFunctionConfig {
 
-    // this test is cheching that both classes
+    // this test is checking that both classes
     //  ai.metaheuristic.commons.yaml.bundle.BundleParamsYaml
     // and
     //  ai.metaheuristic.commons.yaml.function.FunctionConfigYaml

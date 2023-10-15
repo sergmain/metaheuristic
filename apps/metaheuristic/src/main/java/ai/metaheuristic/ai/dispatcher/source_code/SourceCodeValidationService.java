@@ -279,7 +279,7 @@ public class SourceCodeValidationService {
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR, es);
         }
-        if (!fc.skipParams && taskParamsYamlVersion > FunctionCoreUtils.getTaskParamsVersion(fc.metas)) {
+        if (taskParamsYamlVersion > FunctionCoreUtils.getTaskParamsVersion(fc.metas)) {
             String es = S.f("#175.460 Version of function %s is too low, required version: %s", fnDef.code, taskParamsYamlVersion);
             log.error(es);
             return new SourceCodeApiData.SourceCodeValidationResult(
