@@ -43,7 +43,7 @@ public class TaskProviderUtils {
             Function<Long, Variable> variableFunction, Consumer<TaskFinishWithErrorEvent> eventPublisherFunc) {
         String params;
         try {
-            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(taskParams);
+            TaskParamsYaml tpy = TaskParamsYamlUtils.UTILS.to(taskParams);
 
             for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
                 if (input.context!=EnumsApi.VariableContext.global) {
@@ -57,7 +57,7 @@ public class TaskProviderUtils {
                     input.empty = sv.nullified;
                 }
             }
-            params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, taskParamsVersion);
+            params = TaskParamsYamlUtils.UTILS.toStringAsVersion(tpy, taskParamsVersion);
 
         } catch (DowngradeNotSupportedException e) {
             // TODO 2020-09-26 there is a possible situation when a check in ExecContextFSM.findUnassignedTaskAndAssign() would be ok

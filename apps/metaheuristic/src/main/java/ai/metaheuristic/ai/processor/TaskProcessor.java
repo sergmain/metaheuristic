@@ -37,16 +37,14 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.commons.dispatcher_schedule.ExtendedTimePeriod;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.utils.Checksum;
-import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
-import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +53,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.lang.Nullable;
 
 import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.PublicKey;
@@ -194,7 +191,7 @@ public class TaskProcessor {
 
             final TaskParamsYaml taskParamYaml;
             try {
-                taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                taskParamYaml = TaskParamsYamlUtils.UTILS.to(task.getParams());
             } catch (CheckIntegrityFailedException e) {
                 processorTaskService.markAsFinishedWithError(core, task.taskId, "100.037 Broken task. Check of integrity was failed.");
                 continue;
@@ -470,21 +467,12 @@ public class TaskProcessor {
                     cmd.add(functionPrepareResult.functionAssetFile.file.toAbsolutePath().toString());
                     break;
                 case processor:
-                    if (!S.b(functionPrepareResult.function.file)) {
-                        //noinspection UseBulkOperation
-                        Arrays.stream(StringUtils.split(functionPrepareResult.function.file)).forEachOrdered(cmd::add);
-                    }
-                    else if (!S.b(functionPrepareResult.function.content)) {
-                        final String metaExt = MetaUtils.getValue(functionPrepareResult.function.metas, ConstsApi.META_MH_FUNCTION_PARAMS_FILE_EXT_META);
-                        String ext = S.b(metaExt) ? ".txt" : metaExt;
-                        if (ext.indexOf('.')==-1) {
-                            ext = "." + ext;
+                    if (!S.b(functionPrepareResult.function.exec)) {
+                        //noinspection ManualArrayToCollectionCopy
+                        for (String s : StringUtils.split(functionPrepareResult.function.exec)) {
+                            //noinspection UseBulkOperation
+                            cmd.add(s);
                         }
-
-                        Path execFile = taskDir.resolve(ConstsApi.ARTIFACTS_DIR).resolve(toFilename(functionPrepareResult.function.code) + ext);
-                        FileSystemUtils.writeStringToFileWithSync(execFile, functionPrepareResult.function.content, StandardCharsets.UTF_8 );
-
-                        cmd.add(execFile.toAbsolutePath().toString());
                     }
                     else {
                         log.warn("100.325 How?");
@@ -493,14 +481,7 @@ public class TaskProcessor {
                 default:
                     throw new IllegalStateException("100.330 Unknown sourcing: "+ functionPrepareResult.function.sourcing );
             }
-
-            if (!functionPrepareResult.function.skipParams) {
-                if (!S.b(functionPrepareResult.function.params)) {
-                    List<String> list = Arrays.stream(StringUtils.split(functionPrepareResult.function.params)).filter(o->!S.b(o)).collect(Collectors.toList());
-                    cmd.addAll(list);
-                }
-                cmd.add(paramFile.toAbsolutePath().toString());
-            }
+            cmd.add(paramFile.toAbsolutePath().toString());
 
             Path consoleLogFile = systemDir.resolve(Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
 
@@ -524,7 +505,7 @@ public class TaskProcessor {
                     "\tinterpreter: " + interpreter+"\n" +
                     "\tfile: " + (functionPrepareResult.functionAssetFile !=null && functionPrepareResult.functionAssetFile.file!=null
                     ? functionPrepareResult.functionAssetFile.file.toAbsolutePath()
-                    : functionPrepareResult.function.file) +"\n" +
+                    : functionPrepareResult.function.exec) +"\n" +
                     "\tparams", th);
             systemExecResult = new FunctionApiData.SystemExecResult(
                     functionPrepareResult.function.code, false, -1, ExceptionUtils.getStackTrace(th));
@@ -581,10 +562,6 @@ public class TaskProcessor {
         return new FunctionApiData.SystemExecResult(function.code, true, 0, "");
     }
 
-    private static String toFilename(String functionCode) {
-        return functionCode.replace(':', '_').replace(' ', '_');
-    }
-
     @SuppressWarnings({"WeakerAccess", "StatementWithEmptyBody"})
     // TODO 2019.05.02 implement unit-test for this method
     public FunctionPrepareResult prepareFunction(DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, MetadataParamsYaml.ProcessorSession processorState, TaskParamsYaml.FunctionConfig function) {
@@ -630,7 +607,7 @@ public class TaskProcessor {
         FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
         functionPrepareResult.function = function;
 
-        if (S.b(functionPrepareResult.function.file)) {
+        if (S.b(functionPrepareResult.function.exec)) {
             String s = S.f("#100.480 Function %s has a blank file", functionPrepareResult.function.code);
             log.warn(s);
             functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1, s);
@@ -649,7 +626,7 @@ public class TaskProcessor {
             return functionPrepareResult;
         }
         functionPrepareResult.functionAssetFile = new AssetFile();
-        functionPrepareResult.functionAssetFile.file = result.functionDir.resolve(Objects.requireNonNull(functionPrepareResult.function.file));
+        functionPrepareResult.functionAssetFile.file = result.functionDir.resolve(Objects.requireNonNull(functionPrepareResult.function.exec));
         log.info("Function asset file: {}, exist: {}", functionPrepareResult.functionAssetFile.file.toAbsolutePath(), Files.exists(functionPrepareResult.functionAssetFile.file));
         return functionPrepareResult;
     }
@@ -659,7 +636,7 @@ public class TaskProcessor {
         functionPrepareResult.function = function;
 
         final Path baseResourceDir = metadataParams.prepareBaseDir(assetManagerUrl);
-        functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
+        functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.exec);
         // is this function prepared?
         if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
             log.info("100.460 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);

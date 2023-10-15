@@ -28,19 +28,16 @@ public class TaskParamsUtils {
 
     public static TaskParamsYaml.FunctionConfig toFunctionConfig(FunctionConfigYaml src) {
         TaskParamsYaml.FunctionConfig trg = new TaskParamsYaml.FunctionConfig();
-        trg.checksumMap = src.checksumMap;
-        trg.code = src.code;
-        trg.env = src.env;
-        trg.file = src.file;
-        trg.git = src.git;
-        if (src.metas!=null) {
-            trg.metas.addAll(src.metas);
+        trg.checksumMap = src.system!=null ? src.system.checksumMap : null;
+        trg.code = src.function.code;
+        trg.env = src.function.env;
+        trg.exec = src.function.exec;
+        trg.git = src.function.git;
+        if (src.function.metas!=null) {
+            trg.metas.addAll(src.function.metas);
         }
-        trg.params = src.params;
-        trg.skipParams = src.skipParams;
-        trg.sourcing = src.sourcing;
-        trg.type = src.type;
-        trg.content = src.content;
+        trg.sourcing = src.function.sourcing;
+        trg.type = src.function.type;
         return trg;
     }
 }

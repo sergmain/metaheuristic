@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.utils.asset;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -88,7 +89,7 @@ public class AssetUtils {
             assetFile.file = assetDir.resolve(filename);
         }
         else if (!S.b(dataId)) {
-            final String resId = dataId.replace(':', '_');
+            final String resId = ArtifactCommonUtils.normalizeCode(dataId);
             assetFile.file = assetDir.resolve(resId);
         }
         else {
@@ -114,7 +115,7 @@ public class AssetUtils {
 
         Path baseFunctionDir = baseDir.resolve(EnumsApi.DataType.function.toString());
 
-        final String resId = functionCode.replace(':', '_');
+        final String resId = ArtifactCommonUtils.normalizeCode(functionCode);
         final Path resDir = baseFunctionDir.resolve(resId);
         Files.createDirectories(resDir);
 

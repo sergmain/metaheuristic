@@ -81,8 +81,8 @@ public class TestTaskParamsYaml {
         ty.function.file = "exec file";
         ty.processCode = "test-process-01";
 
-        String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(v1);
-        TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(s);
+        String s = TaskParamsYamlUtils.UTILS.toString(v1);
+        TaskParamsYaml tpy = TaskParamsYamlUtils.UTILS.to(s);
 
         assertNotNull(tpy);
         assertEquals(1, tpy.version);

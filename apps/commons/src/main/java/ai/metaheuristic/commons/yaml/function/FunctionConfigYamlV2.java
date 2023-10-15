@@ -39,7 +39,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class FunctionConfigYamlV2 implements BaseParams {
 
-    public final int version=1;
+    public final int version=2;
 
     @Override
     public boolean checkIntegrity() {

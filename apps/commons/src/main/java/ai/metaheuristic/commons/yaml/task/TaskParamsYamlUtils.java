@@ -21,12 +21,14 @@ import java.util.Map;
 
 public class TaskParamsYamlUtils {
 
-    private static final TaskParamsYamlUtilsV1 YAML_UTILS_V_1 = new TaskParamsYamlUtilsV1();
-    private static final TaskParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+    private static final TaskParamsYamlUtilsV1 UTILS_V_1 = new TaskParamsYamlUtilsV1();
+    private static final TaskParamsYamlUtilsV2 UTILS_V_2 = new TaskParamsYamlUtilsV2();
+    private static final TaskParamsYamlUtilsV2 DEFAULT_UTILS = UTILS_V_2;
 
-    public static final BaseYamlUtils<TaskParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseYamlUtils<TaskParamsYaml> UTILS = new BaseYamlUtils<>(
             Map.of(
-                    1, YAML_UTILS_V_1
+                    1, UTILS_V_1,
+                    2, UTILS_V_2
             ),
             DEFAULT_UTILS
     );

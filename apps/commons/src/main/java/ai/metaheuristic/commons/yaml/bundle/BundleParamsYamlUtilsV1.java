@@ -37,8 +37,8 @@ import java.util.stream.Collectors;
  * Date: 12/12/2020
  * Time: 5:28 PM
  */
-public class BundleParamsYamlUtilsV3
-        extends AbstractParamsYamlUtils<BundleParamsYamlV3, BundleParamsYaml, Void, Void, Void, Void> {
+public class BundleParamsYamlUtilsV1
+        extends AbstractParamsYamlUtils<BundleParamsYamlV1, BundleParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -48,12 +48,12 @@ public class BundleParamsYamlUtilsV3
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(BundleParamsYamlV3.class);
+        return YamlUtils.init(BundleParamsYamlV1.class);
     }
 
     @NonNull
     @Override
-    public BundleParamsYaml upgradeTo(@NonNull BundleParamsYamlV3 src) {
+    public BundleParamsYaml upgradeTo(@NonNull BundleParamsYamlV1 src) {
         src.checkIntegrity();
         BundleParamsYaml trg = new BundleParamsYaml();
         trg.functions = src.functions.stream().map(fnCfgSrc-> {
@@ -65,15 +65,6 @@ public class BundleParamsYamlUtilsV3
             }
             if (fnCfgSrc.metas!=null) {
                 fnCfgTrg.metas = new ArrayList<>(fnCfgSrc.metas);
-            }
-            boolean paramsAsFile = MetaUtils.isTrue(fnCfgSrc.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
-            if (paramsAsFile) {
-                fnCfgTrg.content = fnCfgSrc.params;
-                fnCfgTrg.params = null;
-                final List<Map<String, String>> cleanedMeta = MetaUtils.remove(fnCfgSrc.metas, ConstsApi.META_MH_FUNCTION_PARAMS_AS_FILE_META);
-                if (cleanedMeta!=null) {
-                    fnCfgTrg.metas = cleanedMeta;
-                }
             }
             return  fnCfgTrg;
         }).collect(Collectors.toList());
@@ -98,17 +89,17 @@ public class BundleParamsYamlUtilsV3
     }
 
     @Override
-    public String toString(@NonNull BundleParamsYamlV3 yaml) {
+    public String toString(@NonNull BundleParamsYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public BundleParamsYamlV3 to(@NonNull String yaml) {
+    public BundleParamsYamlV1 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
-        final BundleParamsYamlV3 p = getYaml().load(yaml);
+        final BundleParamsYamlV1 p = getYaml().load(yaml);
         return p;
     }
 

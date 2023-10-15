@@ -306,7 +306,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         TaskImpl task32 = taskRepository.findById(simpleTask32.getTaskId()).orElse(null);
         assertNotNull(task32);
 
-        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask32.params);
+        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.UTILS.to(simpleTask32.params);
         storeOutputVariable(outputVariable, "feature-processing-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask32);
 
@@ -342,7 +342,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         Task task32 = taskRepository.findById(simpleTask32.getTaskId()).orElse(null);
         assertNotNull(task32);
 
-        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask32.params);
+        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.UTILS.to(simpleTask32.params);
         assertNotNull(taskParamsYaml.task.processCode);
         assertNotNull(taskParamsYaml.task.inputs);
         assertNotNull(taskParamsYaml.task.outputs);
@@ -388,7 +388,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(simpleTask21);
         assertEquals(simpleTask20.getTaskId(), simpleTask21.getTaskId());
 
-        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask20.params);
+        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.UTILS.to(simpleTask20.params);
         assertNotNull(taskParamsYaml.task.processCode);
         assertNotNull(taskParamsYaml.task.inputs);
         assertNotNull(taskParamsYaml.task.outputs);
@@ -438,7 +438,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(simpleTask2);
         assertEquals(simpleTask.getTaskId(), simpleTask2.getTaskId());
 
-        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask.params);
+        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.UTILS.to(simpleTask.params);
         assertNotNull(taskParamsYaml.task.processCode);
         assertNotNull(taskParamsYaml.task.inputs);
         assertNotNull(taskParamsYaml.task.outputs);

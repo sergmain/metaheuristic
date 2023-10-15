@@ -99,7 +99,8 @@ public class FunctionConfigYaml implements BaseParams {
         public EnumsApi.FunctionSourcing sourcing;
         @Nullable
         public GitInfo git;
-        public @Nullable List<Map<String, String>> metas = new ArrayList<>();
+        @Nullable
+        public List<Map<String, String>> metas = new ArrayList<>();
     }
 
     public FunctionConfig function = new FunctionConfig();

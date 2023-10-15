@@ -201,7 +201,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
         assertNotNull(simpleTask2);
         assertEquals(simpleTask.getTaskId(), simpleTask2.getTaskId());
 
-        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(simpleTask.params);
+        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.UTILS.to(simpleTask.params);
         assertNotNull(taskParamsYaml.task.processCode);
         assertNotNull(taskParamsYaml.task.inputs);
         assertNotNull(taskParamsYaml.task.outputs);

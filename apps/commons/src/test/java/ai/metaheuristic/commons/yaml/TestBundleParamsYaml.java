@@ -18,67 +18,56 @@ package ai.metaheuristic.commons.yaml;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
-import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.utils.Checksum;
-import ai.metaheuristic.commons.utils.MetaUtils;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlV1;
-import org.apache.commons.io.IOUtils;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class TestBundleParamsYaml {
 
     @Test
     public void test() {
-        FunctionConfigListYaml scs = new FunctionConfigListYaml();
-        scs.functions = new ArrayList<>();
 
-        FunctionConfigYaml.FunctionConfig config = new FunctionConfigYaml.FunctionConfig();
+        FunctionConfigYaml cfg = new FunctionConfigYaml();
+
+        FunctionConfigYaml.FunctionConfig config = cfg.function;
         config.code = "aiai.fit.default.function:1.0";
         config.type = CommonConsts.FIT_TYPE;
-        config.file = "fit-model.py";
-        config.metas.add(
-                Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
+        config.exec = "fit-model.py";
+        assertNotNull(config.metas);
+        config.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
 
-        config.checksumMap = Checksum.fromJson("{\"checksums\":{\"SHA256\":\"<some value #1>\"}}").checksums;
-        config.checksumMap.putAll( Checksum.fromJson("{\"checksums\":{\"MD5\":\"<some value #2>\"}}").checksums);
+        cfg.system = new FunctionConfigYaml.System();
+        cfg.system.checksumMap.putAll( Checksum.fromJson("{\"checksums\":{\"SHA256\":\"<some value #1>\"}}").checksums);
+        cfg.system.checksumMap.putAll( Checksum.fromJson("{\"checksums\":{\"MD5\":\"<some value #2>\"}}").checksums);
 
-        scs.functions.add(config);
-
-        String yaml = FunctionConfigListYamlUtils.UTILS.toString(scs);
+        String yaml = FunctionConfigYamlUtils.UTILS.toString(cfg);
         System.out.println(yaml);
 
-        FunctionConfigListYaml fcy = FunctionConfigListYamlUtils.UTILS.to(yaml);
+        FunctionConfigYaml fcy = FunctionConfigYamlUtils.UTILS.to(yaml);
 
         assertNotNull(fcy);
-        assertNotNull(fcy.functions);
-        assertEquals(1, fcy.functions.size());
+        assertNotNull(fcy.function);
 
-        FunctionConfigYaml.FunctionConfig fc = fcy.functions.get(0);
+        FunctionConfigYaml.FunctionConfig fc = fcy.function;
         assertNotNull(fc);
-        assertNotNull(fc.getChecksumMap());
-        assertNotNull(fc.getChecksumMap().get(EnumsApi.HashAlgo.SHA256));
-        assertNotNull(fc.getChecksumMap().get(EnumsApi.HashAlgo.MD5));
-        assertEquals("<some value #1>", fc.getChecksumMap().get(EnumsApi.HashAlgo.SHA256));
-        assertEquals("<some value #2>", fc.getChecksumMap().get(EnumsApi.HashAlgo.MD5));
+        assertNotNull(fcy.system);
+        assertNotNull(fcy.system.getChecksumMap());
+        assertNotNull(fcy.system.getChecksumMap().get(EnumsApi.HashAlgo.SHA256));
+        assertNotNull(fcy.system.getChecksumMap().get(EnumsApi.HashAlgo.MD5));
+        assertEquals("<some value #1>", fcy.system.getChecksumMap().get(EnumsApi.HashAlgo.SHA256));
+        assertEquals("<some value #2>", fcy.system.getChecksumMap().get(EnumsApi.HashAlgo.MD5));
     }
 
+/*
     @Test
     public void test_1() {
-        FunctionConfigListYamlV1 scs = new FunctionConfigListYamlV1();
-        scs.functions = new ArrayList<>();
-
-        FunctionConfigListYamlV1.FunctionConfigV1 config = new FunctionConfigListYamlV1.FunctionConfigV1();
+        FunctionConfigYamlV1.FunctionConfigV1 config = new FunctionConfigListYamlV1.FunctionConfigV1();
         config.code = "aiai.fit.default.function:1.0";
         config.type = CommonConsts.FIT_TYPE;
         config.params = "content-of-file";
@@ -107,7 +96,9 @@ public class TestBundleParamsYaml {
         assertEquals("111", MetaUtils.getValue(fc.metas, "some-meta"));
 
     }
+*/
 
+/*
     @Test
     public void test_2() {
         FunctionConfigListYamlV1 scs = new FunctionConfigListYamlV1();
@@ -129,8 +120,10 @@ public class TestBundleParamsYaml {
         System.out.println(yaml);
         assertThrows(CheckIntegrityFailedException.class, ()-> FunctionConfigListYamlUtils.UTILS.to(yaml));
     }
+*/
 
-    @Test
+    // TODO p0 2023-10-13 implement
+/*    @Test
     public void test_3() throws IOException {
         String yaml = IOUtils.resourceToString("/yaml/bundle.yaml", StandardCharsets.UTF_8);
 
@@ -159,5 +152,5 @@ public class TestBundleParamsYaml {
             assertTrue(S.b(fc.params));
             assertEquals("42", MetaUtils.getValue(fc.metas, "mh.task-params-version"));
         }
-    }
+    }*/
 }

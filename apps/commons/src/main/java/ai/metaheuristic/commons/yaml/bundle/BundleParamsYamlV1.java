@@ -31,7 +31,7 @@ import java.util.Map;
 
 @Data
 @Slf4j
-public class BundleParamsYamlV3 implements BaseParams {
+public class BundleParamsYamlV1 implements BaseParams {
 
     public final int version=3;
 

@@ -246,7 +246,7 @@ public class TaskProviderUnassignedTaskService {
                         log.info("#317.138 check downgrading is possible, actual version: {}, required version: {}", v.getActualVersion(), psy.taskParamsVersion);
                         TaskParamsYaml tpy = queuedTask.task.getTaskParamsYaml();
                         //noinspection unused
-                        String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
+                        String params = TaskParamsYamlUtils.UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
                     }
                 } catch (DowngradeNotSupportedException e) {
                     log.warn("#317.140 Task #{} can't be assigned to core #{} because it's too old, downgrade to required taskParams level {} isn't supported",

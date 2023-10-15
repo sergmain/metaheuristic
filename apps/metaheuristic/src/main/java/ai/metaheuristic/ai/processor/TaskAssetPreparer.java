@@ -161,7 +161,7 @@ public class TaskAssetPreparer {
             log.info("#951.080 Deleted orphan task {}", task);
             return null;
         }
-        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.UTILS.to(task.getParams());
 
         // Start preparing data for function
         Path taskDir = processorTaskService.prepareTaskDir(core, task.taskId);

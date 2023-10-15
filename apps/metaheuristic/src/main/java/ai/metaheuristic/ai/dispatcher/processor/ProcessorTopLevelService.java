@@ -225,7 +225,7 @@ public class ProcessorTopLevelService {
 
     @Nullable
     private static String processorBlacklisted(ProcessorStatusYaml status) {
-        if (status.taskParamsVersion > TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
+        if (status.taskParamsVersion > TaskParamsYamlUtils.UTILS.getDefault().getVersion()) {
             return "#809.400 Dispatcher is too old and can't communicate to this processor, needs to be upgraded";
         }
         return null;

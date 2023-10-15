@@ -36,7 +36,7 @@ public class TestTaskParamYaml {
 
     @Test
     public void testVersion() {
-        assertEquals( new TaskParamsYaml().version, TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion() );
+        assertEquals( new TaskParamsYaml().version, TaskParamsYamlUtils.UTILS.getDefault().getVersion() );
     }
 
     @Test
@@ -105,12 +105,12 @@ public class TestTaskParamYaml {
                 null
         )));
 
-        String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
+        String s = TaskParamsYamlUtils.UTILS.toString(tpy);
         System.out.println(s);
 
         assertFalse(s.startsWith("!!"));
 
-        TaskParamsYaml seq1 = TaskParamsYamlUtils.BASE_YAML_UTILS.to(s);
+        TaskParamsYaml seq1 = TaskParamsYamlUtils.UTILS.to(s);
         assertEquals(tpy, seq1);
     }
 }

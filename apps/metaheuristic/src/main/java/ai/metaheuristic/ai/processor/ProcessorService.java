@@ -87,7 +87,7 @@ public class ProcessorService {
                 schedule.asString,
                 "[unknown]", "[unknown]",
                 logFile!=null && Files.exists(logFile),
-                TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(),
+                TaskParamsYamlUtils.UTILS.getDefault().getVersion(),
                 globals.os, globals.processorPath.toAbsolutePath().toString(), null);
 
         try {
@@ -178,7 +178,7 @@ public class ProcessorService {
         if (task==null) {
             return Enums.ResendTaskOutputResourceStatus.TASK_NOT_FOUND;
         }
-        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.UTILS.to(task.getParams());
         Path taskDir = processorTaskService.prepareTaskDir(core, taskId);
 
         for (TaskParamsYaml.OutputVariable outputVariable : taskParamYaml.task.outputs) {

@@ -55,7 +55,7 @@ public class TaskProviderUtilsTest {
         - name: assembled-raw-output
 */
         tpy.task.inputs.add(iv);
-        String taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy);
+        String taskParams = TaskParamsYamlUtils.UTILS.toString(tpy);
         final List<String> events = new ArrayList<>();
 
         final String params = TaskProviderUtils.initEmptiness(2L, new TaskParamsYaml().version, taskParams, 42L,

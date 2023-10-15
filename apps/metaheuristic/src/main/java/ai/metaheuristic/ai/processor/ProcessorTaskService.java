@@ -378,7 +378,7 @@ public class ProcessorTaskService {
                 log.error("#713.110 ProcessorCoreTask wasn't found for Id #" + taskId);
             } else {
                 if (task.getLaunchedOn() == null) {
-                    final TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                    final TaskParamsYaml tpy = TaskParamsYamlUtils.UTILS.to(task.getParams());
                     log.info("#713.113 task #{}, function '{}', doesn't have the launchedOn as inited", taskId, tpy.task.function.code);
                     final String es = "#713.114 stacktrace";
                     try {
@@ -515,7 +515,7 @@ public class ProcessorTaskService {
             task.execContextId = assignedTask.execContextId;
             task.params = assignedTask.params;
             task.functionExecResult = null;
-            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(assignedTask.params);
+            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.UTILS.to(assignedTask.params);
             task.clean = taskParamYaml.task.clean;
             task.dispatcherUrl = core.dispatcherUrl.url;
             task.createdOn = System.currentTimeMillis();

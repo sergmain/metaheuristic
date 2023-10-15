@@ -24,8 +24,6 @@ import ai.metaheuristic.commons.yaml.env.EnvParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.event.DispatcherEventYamlUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYamlUtils;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYaml;
 import ai.metaheuristic.commons.yaml.ml.fitting.FittingYamlUtils;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
@@ -56,7 +54,6 @@ public class BaseParamsTest {
             Pair.of(DispatcherEventYamlUtils.BASE_YAML_UTILS, DispatcherEventYaml.class),
             Pair.of(EnvParamsYamlUtils.BASE_YAML_UTILS, EnvParamsYaml.class),
             Pair.of(FittingYamlUtils.BASE_YAML_UTILS, FittingYaml.class),
-            Pair.of(FunctionConfigListYamlUtils.UTILS, FunctionConfigYaml.class),
             Pair.of(FunctionConfigYamlUtils.UTILS, FunctionConfigYaml.class),
             Pair.of(TaskFileParamsYamlUtils.BASE_YAML_UTILS, TaskFileParamsYaml.class),
             Pair.of(VariableArrayParamsYamlUtils.BASE_YAML_UTILS, VariableArrayParamsYaml.class)

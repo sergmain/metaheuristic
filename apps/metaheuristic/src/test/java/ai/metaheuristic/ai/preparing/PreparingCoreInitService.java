@@ -95,7 +95,7 @@ public class PreparingCoreInitService {
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "",
                 ""+ UUID.randomUUID(), System.currentTimeMillis(),
                 Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false,
-                TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(), EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
+                TaskParamsYamlUtils.UTILS.getDefault().getVersion(), EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
         final String description = "Test processor. Must be deleted automatically";
         final String descriptionCore = "Test processor core. Must be deleted automatically";
         ss.functions.put(PreparingConsts.TEST_FIT_FUNCTION, EnumsApi.FunctionState.ready);

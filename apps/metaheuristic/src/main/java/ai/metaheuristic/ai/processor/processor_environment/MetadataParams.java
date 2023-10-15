@@ -261,7 +261,7 @@ public class MetadataParams {
         TaskParamsYaml.FunctionConfig functionConfig = downloadedFunctionConfigStatus.functionConfig;
         setChecksumMap(assetManagerUrl, functionCode, functionConfig.checksumMap);
 
-        if (S.b(functionConfig.file) && S.b(functionConfig.content)) {
+        if (S.b(functionConfig.exec) && S.b(functionConfig.content)) {
             log.error("#815.100 name of file for function {} is blank and content of function is blank too", functionCode);
             return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.function_config_error));
         }
@@ -272,7 +272,7 @@ public class MetadataParams {
 
         Path baseFunctionDir = prepareBaseDir(assetManagerUrl);
 
-        final AssetFile assetFile = AssetUtils.prepareFunctionFile(baseFunctionDir, status.code, functionConfig.file);
+        final AssetFile assetFile = AssetUtils.prepareFunctionFile(baseFunctionDir, status.code, functionConfig.exec);
         if (assetFile.isError) {
             return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error));
         }

@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.mhbp.data.KbData;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.file.PathUtils;
@@ -138,7 +139,7 @@ public class LocalGitSourcingService {
                 return assetFile;
             }
         }
-        final String resId = functionCode.replace(':', '_');
+        final String resId = ArtifactCommonUtils.normalizeCode(functionCode);
         final Path resDir = trgDir.resolve(resId);
         log.info("Resource dir: {}, exist: {}", resDir.toAbsolutePath(), Files.exists(resDir) );
         if (Files.notExists(resDir)) {

@@ -87,7 +87,7 @@ public class DbCopyService {
         for (FunctionData functionData : srcFunctionDataRepository.findAll()) {
             System.out.println("migrate " + functionData.getFunctionCode());
 
-            final String child = (functionData.functionCode + ".jar").replace(':', '-');
+            final String child = ai.metaheuristic.commons.utils.FunctionCoreUtils.normalizeFunctionCode(functionData.functionCode) + ".jar";
             System.out.print("\tcopy to file " + child);
             Path f = Path.of("data", child);
             dbCopyTxService.storeToFileFromPrimary(functionData.getFunctionCode(), f);

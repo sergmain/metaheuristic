@@ -19,6 +19,7 @@ package ai.metaheuristic.commons.utils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author Sergio Lissner
@@ -67,5 +68,13 @@ public class ArtifactCommonUtils {
         v.empty = v1.empty;
         v.setNullable(v1.getNullable());
         return v;
+    }
+
+    public static String normalizeCode(String code) {
+
+        if (StringUtils.containsWhitespace(code)) {
+            throw new IllegalStateException("Code can't contain any whitespace char");
+        }
+        return code.replace(':', '_');
     }
 }

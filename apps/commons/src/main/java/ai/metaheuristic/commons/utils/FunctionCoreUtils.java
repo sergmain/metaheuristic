@@ -26,8 +26,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-
-import javax.annotation.Nullable;
+import org.springframework.lang.Nullable;
 
 import java.util.*;
 
@@ -55,7 +54,7 @@ public class FunctionCoreUtils {
         }
         switch (functionConfig.sourcing) {
             case dispatcher:
-                if (StringUtils.isBlank(functionConfig.file)) {
+                if (StringUtils.isBlank(functionConfig.exec)) {
                     return new FunctionApiData.FunctionConfigStatus(false, "#401.30 sourcing is 'dispatcher' but file is empty: " + functionConfig.toString());
                 }
                 break;
@@ -77,12 +76,12 @@ public class FunctionCoreUtils {
 
     public static String getDataForChecksumForConfigOnly(TaskParamsYaml.FunctionConfig functionConfig) {
         return getDataForChecksumForConfigOnly(
-                functionConfig.code, functionConfig.env, functionConfig.file, functionConfig.params,
-                functionConfig.content, functionConfig.git, functionConfig.sourcing);
+                functionConfig.code, functionConfig.env, functionConfig.exec,
+                functionConfig.git, functionConfig.sourcing);
     }
 
     private static String getDataForChecksumForConfigOnly(
-        String functionCode, @Nullable String env, String functionExec,
+        String functionCode, @Nullable String env, @Nullable String functionExec,
         @Nullable GitInfo git, EnumsApi.FunctionSourcing sourcing) {
 
         return functionCode + " " +

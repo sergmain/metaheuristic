@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.ArtifactUtils;
 import ai.metaheuristic.ai.utils.EnvServiceUtils;
-import ai.metaheuristic.commons.utils.ErrorUtils;
+import ai.metaheuristic.commons.utils.*;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -42,9 +42,6 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
-import ai.metaheuristic.commons.utils.DirUtils;
-import ai.metaheuristic.commons.utils.StrUtils;
-import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
@@ -274,7 +271,7 @@ public class SourceCodeTopLevelService {
             }
             resource.toClean.add(tempDir);
 
-            final String processCodeDirName = process.processCode.replace(':', '_');
+            final String processCodeDirName = ArtifactCommonUtils.normalizeCode(process.processCode);
 
             Path outputDir = tempDir.resolve(processCodeDirName);
             Files.createDirectory(outputDir);

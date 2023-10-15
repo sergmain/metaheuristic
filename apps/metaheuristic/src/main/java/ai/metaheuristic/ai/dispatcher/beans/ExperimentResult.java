@@ -93,7 +93,7 @@ public class ExperimentResult implements Serializable {
 
     @JsonIgnore
     public void updateParams(ExperimentResultParams tpy) {
-        setParams(TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy));
+        setParams(TaskParamsYamlUtils.UTILS.toString(tpy));
     }
 
 }

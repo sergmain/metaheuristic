@@ -123,7 +123,7 @@ public class TaskImpl implements Serializable, Task {
             new ThreadUtils.CommonThreadLocker<>(this::parseParams);
 
     private TaskParamsYaml parseParams() {
-        TaskParamsYaml temp = TaskParamsYamlUtils.BASE_YAML_UTILS.to(params);
+        TaskParamsYaml temp = TaskParamsYamlUtils.UTILS.to(params);
         TaskParamsYaml ecpy = temp==null ? new TaskParamsYaml() : temp;
         return ecpy;
     }
@@ -135,7 +135,7 @@ public class TaskImpl implements Serializable, Task {
 
     @JsonIgnore
     public void updateParams(TaskParamsYaml tpy) {
-        setParams(TaskParamsYamlUtils.BASE_YAML_UTILS.toString(tpy));
+        setParams(TaskParamsYamlUtils.UTILS.toString(tpy));
     }
 
 }

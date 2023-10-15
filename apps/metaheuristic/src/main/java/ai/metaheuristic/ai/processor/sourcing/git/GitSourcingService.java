@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -112,7 +113,7 @@ public class GitSourcingService {
                 return assetFile;
             }
         }
-        final String resId = functionCode.replace(':', '_');
+        final String resId = ArtifactCommonUtils.normalizeCode(functionCode);
         final Path resDir = trgDir.resolve(resId);
         log.info("Resource dir: {}, exist: {}", resDir.toAbsolutePath(), Files.exists(resDir) );
         if (Files.notExists(resDir)) {
