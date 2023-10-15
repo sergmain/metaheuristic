@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallService
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.mhbp.provider.ProviderData;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;

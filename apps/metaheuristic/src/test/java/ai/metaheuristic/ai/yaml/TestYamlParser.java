@@ -98,7 +98,7 @@ public class TestYamlParser {
         assertNotNull(config);
         assertNotNull(config.getFunctions());
         assertEquals(1, config.getFunctions().size());
-        FunctionConfigListYaml.FunctionConfig function = config.getFunctions().get(0);
+        FunctionConfigYaml.FunctionConfig function = config.getFunctions().get(0);
         FunctionApiData.FunctionConfigStatus status = FunctionCoreUtils.validate(function);
         assertFalse(status.isOk);
     }
@@ -107,7 +107,7 @@ public class TestYamlParser {
     public void loadFunctionsFromYaml() throws IOException {
 
         FunctionConfigListYaml config = FunctionConfigListYamlUtils.UTILS.to(IOUtils.resourceToString("/yaml/functions-test.yaml", StandardCharsets.UTF_8));
-        for (FunctionConfigListYaml.FunctionConfig function : config.functions) {
+        for (FunctionConfigYaml.FunctionConfig function : config.functions) {
             FunctionCoreUtils.validate(function);
         }
 
@@ -115,7 +115,7 @@ public class TestYamlParser {
         assertNotNull(config.functions);
         assertEquals(3, config.functions.size());
 
-        FunctionConfigListYaml.FunctionConfig sc;
+        FunctionConfigYaml.FunctionConfig sc;
         sc = config.functions.get(0);
         assertEquals("aiai.fit.default.function:1.0-SNAPSHOT", sc.code);
         assertEquals(CommonConsts.FIT_TYPE, sc.type);

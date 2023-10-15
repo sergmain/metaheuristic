@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.event.events;
 
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 
 /**
  * @author Sergio Lissner

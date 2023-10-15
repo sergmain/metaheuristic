@@ -27,7 +27,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.data.replication.ReplicationApiData;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.*;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
@@ -471,7 +471,8 @@ public class FunctionTopLevelService {
                     return statuses;
                 }
                 else {
-                    FunctionConfigYaml scy = FunctionCoreUtils.to(functionConfig);
+                    FunctionConfigYaml scy = FunctionCoreUtils.
+                        to(functionConfig);
                     if (file != null) {
                         try (InputStream is = Files.newInputStream(file); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
                             functionTxService.persistFunction(scy, bis, Files.size(file));

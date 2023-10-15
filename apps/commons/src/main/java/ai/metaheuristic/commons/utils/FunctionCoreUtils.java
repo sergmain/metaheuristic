@@ -20,13 +20,13 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeanUtils;
+
 import javax.annotation.Nullable;
 
 import java.util.*;
@@ -37,24 +37,8 @@ public class FunctionCoreUtils {
 
     private static final FunctionApiData.FunctionConfigStatus FUNCTION_CONFIG_STATUS_OK = new FunctionApiData.FunctionConfigStatus(true, null);
 
-    public static FunctionConfigYaml to(FunctionConfigYaml.FunctionConfig fnSrc) {
-        FunctionConfigYaml fnTrg = new FunctionConfigYaml();
-        BeanUtils.copyProperties(fnSrc, fnTrg, "checksumMap", "metas");
-
-        fnTrg.checksumMap = new HashMap<>();
-        if (fnSrc.checksumMap!=null) {
-            fnTrg.checksumMap.putAll(fnSrc.checksumMap);
-        }
-        fnTrg.metas = new ArrayList<>();
-        if (fnSrc.metas!=null) {
-            fnTrg.metas.addAll(fnSrc.metas);
-        }
-
-        return  fnTrg;
-    }
-
-    public static FunctionApiData.FunctionConfigStatus validate(FunctionConfigListYaml.FunctionConfig functionConfig) {
-        if ((functionConfig.file ==null || functionConfig.file.isBlank()) && (functionConfig.env ==null || functionConfig.env.isBlank())) {
+    public static FunctionApiData.FunctionConfigStatus validate(FunctionConfigYaml.FunctionConfig functionConfig) {
+        if ((functionConfig.exec ==null || functionConfig.exec.isBlank()) && (functionConfig.env ==null || functionConfig.env.isBlank())) {
             return new FunctionApiData.FunctionConfigStatus(false, "#401.10 Fields 'file' and 'env' can't be null or empty both.");
         }
         if (S.b(functionConfig.code)) {
@@ -86,7 +70,7 @@ public class FunctionCoreUtils {
         return FUNCTION_CONFIG_STATUS_OK;
     }
 
-    public static String getDataForChecksumForConfigOnly(FunctionConfigListYaml.FunctionConfig functionConfig) {
+    public static String getDataForChecksumForConfigOnly(FunctionConfigYaml.FunctionConfig functionConfig) {
         return getDataForChecksumForConfigOnly(
                 functionConfig.code, functionConfig.env, functionConfig.exec, functionConfig.git, functionConfig.sourcing);
     }

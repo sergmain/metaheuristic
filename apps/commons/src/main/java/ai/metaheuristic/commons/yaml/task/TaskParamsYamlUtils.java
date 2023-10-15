@@ -16,7 +16,6 @@
 package ai.metaheuristic.commons.yaml.task;
 
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
 
 import java.util.Map;
 

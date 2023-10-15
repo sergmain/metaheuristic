@@ -17,9 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.storage.variable;
 
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
-
-import java.io.IOException;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 
 /**
  * @author Serge

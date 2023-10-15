@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;

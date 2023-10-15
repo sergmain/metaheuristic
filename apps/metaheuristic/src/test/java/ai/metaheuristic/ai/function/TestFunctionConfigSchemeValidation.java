@@ -94,7 +94,7 @@ public class TestFunctionConfigSchemeValidation {
 
     private static String createYaml() {
         FunctionConfigListYaml cfgList = new FunctionConfigListYaml();
-        FunctionConfigListYaml.FunctionConfig cfg = new FunctionConfigListYaml.FunctionConfig();
+        FunctionConfigYaml.FunctionConfig cfg = new FunctionConfigYaml.FunctionConfig();
         cfg.checksumMap = Map.of(EnumsApi.HashAlgo.SHA256, "123");
         cfg.code = "code";
         cfg.type = "type";

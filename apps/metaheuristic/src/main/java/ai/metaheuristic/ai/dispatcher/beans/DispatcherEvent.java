@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.api.data.event.DispatcherEventYaml;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import ai.metaheuristic.commons.yaml.event.DispatcherEventYamlUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;

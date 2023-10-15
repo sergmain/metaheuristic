@@ -43,7 +43,7 @@ public class TestBundleParamsYaml {
         FunctionConfigListYaml scs = new FunctionConfigListYaml();
         scs.functions = new ArrayList<>();
 
-        FunctionConfigListYaml.FunctionConfig config = new FunctionConfigListYaml.FunctionConfig();
+        FunctionConfigYaml.FunctionConfig config = new FunctionConfigYaml.FunctionConfig();
         config.code = "aiai.fit.default.function:1.0";
         config.type = CommonConsts.FIT_TYPE;
         config.file = "fit-model.py";
@@ -64,7 +64,7 @@ public class TestBundleParamsYaml {
         assertNotNull(fcy.functions);
         assertEquals(1, fcy.functions.size());
 
-        FunctionConfigListYaml.FunctionConfig fc = fcy.functions.get(0);
+        FunctionConfigYaml.FunctionConfig fc = fcy.functions.get(0);
         assertNotNull(fc);
         assertNotNull(fc.getChecksumMap());
         assertNotNull(fc.getChecksumMap().get(EnumsApi.HashAlgo.SHA256));
@@ -99,7 +99,7 @@ public class TestBundleParamsYaml {
         assertNotNull(fcy.functions);
         assertEquals(1, fcy.functions.size());
 
-        FunctionConfigListYaml.FunctionConfig fc = fcy.functions.get(0);
+        FunctionConfigYaml.FunctionConfig fc = fcy.functions.get(0);
         assertNotNull(fc);
         assertEquals("content-of-file", fc.content);
         assertTrue(S.b(fc.params));
@@ -138,7 +138,7 @@ public class TestBundleParamsYaml {
         assertNotNull(fcy.functions);
         assertEquals(2, fcy.functions.size());
         {
-            FunctionConfigListYaml.FunctionConfig fc = fcy.functions.get(0);
+            FunctionConfigYaml.FunctionConfig fc = fcy.functions.get(0);
             assertNotNull(fc);
             assertEquals("fit:8.0", fc.code);
             assertEquals("fit", fc.type);
@@ -149,7 +149,7 @@ public class TestBundleParamsYaml {
             assertEquals("41", MetaUtils.getValue(fc.metas, "mh.task-params-version"));
         }
         {
-            FunctionConfigListYaml.FunctionConfig fc = fcy.functions.get(1);
+            FunctionConfigYaml.FunctionConfig fc = fcy.functions.get(1);
             assertNotNull(fc);
             assertEquals("predict:8.0", fc.code);
             assertEquals("predict", fc.type);

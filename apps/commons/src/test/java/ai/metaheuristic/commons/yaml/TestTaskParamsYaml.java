@@ -18,8 +18,8 @@ package ai.metaheuristic.commons.yaml;
 
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.data.task.TaskParamsYamlV1;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlV1;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import org.junit.jupiter.api.Test;
 

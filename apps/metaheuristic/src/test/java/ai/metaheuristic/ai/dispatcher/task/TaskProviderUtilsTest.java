@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import org.junit.jupiter.api.Test;
 

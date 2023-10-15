@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.dispatcher.beans;
 
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;

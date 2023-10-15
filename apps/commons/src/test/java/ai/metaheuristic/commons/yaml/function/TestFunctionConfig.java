@@ -38,12 +38,12 @@ public class TestFunctionConfig {
     // have the same set of fields, except field version
     @Test
     public void test() {
-        Field[] fields = FunctionConfigListYaml.FunctionConfig.class.getDeclaredFields();
+        Field[] fields = FunctionConfigYaml.FunctionConfig.class.getDeclaredFields();
 
         Field[] fields1 = ai.metaheuristic.commons.yaml.function.FunctionConfigYaml.class.getDeclaredFields();
 
         boolean ok = check(fields, fields1, "FunctionConfigYaml", Set.of());
-        ok &= check(fields1, fields, "FunctionConfigListYaml.FunctionConfig", Set.of("version"));
+        ok &= check(fields1, fields, "FunctionConfigYaml.FunctionConfig", Set.of("version"));
 
         assertTrue(ok);
     }

@@ -17,7 +17,7 @@
 package ai.metaheuristic.commons.utils;
 
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 
 /**

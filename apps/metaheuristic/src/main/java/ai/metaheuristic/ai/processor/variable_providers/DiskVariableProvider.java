@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import lombok.RequiredArgsConstructor;

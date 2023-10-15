@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.api.data.replication.ReplicationApiData;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.TaskParamsUtils;
 
 /**
