@@ -83,7 +83,7 @@ public class ProcessorFunctionUtils {
             Response response = HttpClientExecutor.getExecutor(assetManager.url, assetManager.username, assetManager.password).execute(request);
             String yaml = response.returnContent().asString(StandardCharsets.UTF_8);
 
-            functionConfigStatus.functionConfig = TaskParamsUtils.toFunctionConfig(FunctionConfigYamlUtils.BASE_YAML_UTILS.to(yaml));
+            functionConfigStatus.functionConfig = TaskParamsUtils.toFunctionConfig(FunctionConfigYamlUtils.UTILS.to(yaml));
             functionConfigStatus.status = ConfigStatus.ok;
 
         } catch (HttpResponseException e) {

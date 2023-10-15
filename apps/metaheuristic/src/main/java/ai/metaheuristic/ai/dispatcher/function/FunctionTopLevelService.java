@@ -73,8 +73,8 @@ import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Scheme;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class FunctionTopLevelService {
 
-    private static final String SEE_MORE_INFO = "See https://docs.metaheuristic.ai/p/function#configuration.\n";
-    public static final YamlSchemeValidator<String> FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
+    private static final String SEE_MORE_INFO = "See https://github.com/sergmain/metaheuristic/wiki/function#configuration\n";
+    public static final YamlSchemeValidator<String> FUNCTION_CONFIG_YAML_SCHEME_VALIDATOR = new YamlSchemeValidator<> (
             List.of( new Scheme(
                     List.of( new Element(
                             "functions",
@@ -91,26 +91,30 @@ public class FunctionTopLevelService {
                                     new Element("type", false, false),
                                     new Element("checksumMap", false, false))
                     ) ),
-            1, SEE_MORE_INFO),
+            1, SEE_MORE_INFO, false),
                     new Scheme(
                     List.of( new Element(
-                            "functions",
+                            "function",
                             true, false,
                             List.of(
                                     new Element("code"),
                                     new Element("env", false, false),
-                                    new Element("file", false, false),
+                                    new Element("exec", false, false),
                                     new Element("git", false, false),
-                                    new Element("params", false, false),
                                     new Element("metas", false, false),
-                                    new Element("skipParams", false, false),
                                     new Element("sourcing"),
-                                    new Element("type", false, false),
-                                    new Element("content", false, false),
-                                    new Element("checksumMap", false, false))
-                    ) ),
-            2, SEE_MORE_INFO)),
-            "the config file functions.yaml",
+                                    new Element("type", false, false)
+                            )
+                    ), new Element(
+                        "system",
+                        true, false,
+                        List.of(
+                            new Element("archive"),
+                            new Element("checksumMap", false, false))
+                    )),
+            2, SEE_MORE_INFO, true)
+            ),
+            "the config file function.yaml",
             (es)-> es, SEE_MORE_INFO
     );
 
@@ -191,7 +195,7 @@ public class FunctionTopLevelService {
                 final Function f = functionRepository.findByIdNullable(id);
                 if (f!=null) {
                     FunctionConfigYaml fcy = f.getFunctionConfigYaml();
-                    pair = Pair.of(fcy.sourcing, f.code);
+                    pair = Pair.of(fcy.function.sourcing, f.code);
                     sourcingInfoCache.put(id, pair);
                 }
             }
@@ -220,8 +224,6 @@ public class FunctionTopLevelService {
             rwl.writeLock().unlock();
         }
     }
-
-
 
     public static String produceFinalCommandLineParams(@Nullable String functionConfigParams, @Nullable String functionDefParams) {
         String s;
@@ -368,14 +370,15 @@ public class FunctionTopLevelService {
         }
 
         String cfg = Files.readString(yamlConfigFile);
-        String errorString = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+        String errorString = FUNCTION_CONFIG_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
         if (errorString!=null) {
             return List.of(new FunctionApiData.FunctionConfigStatus(false, errorString));
         }
 
-        FunctionConfigListYaml functionConfigList = FunctionConfigListYamlUtils.UTILS.to(cfg);
+        FunctionConfigYaml functionConfigList = FunctionConfigYamlUtils.UTILS.to(cfg);
         List<FunctionApiData.FunctionConfigStatus> statuses = new ArrayList<>();
-        for (FunctionConfigListYaml.FunctionConfig functionConfig : functionConfigList.functions) {
+        FunctionConfigYaml.FunctionConfig functionConfig = functionConfigList.function;
+        {
             try {
                 FunctionApiData.FunctionConfigStatus status = FunctionCoreUtils.validate(functionConfig);
                 if (!status.isOk) {
@@ -384,7 +387,7 @@ public class FunctionTopLevelService {
                     continue;
                 }
                 String sum=null;
-                Path file = S.b(functionConfig.file) ? null : srcDir.resolve(functionConfig.file);
+                Path file = S.b(functionConfig.exec) ? null : srcDir.resolve(functionConfig.exec);
                 if (globals.dispatcher.functionSignatureRequired) {
                     // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing right noww
                     final EnumsApi.HashAlgo hashAlgo = EnumsApi.HashAlgo.SHA256WithSignature;
@@ -393,7 +396,7 @@ public class FunctionTopLevelService {
                         String es = S.f("#295.100 Global isFunctionSignatureRequired==true but function %s isn't signed with HashAlgo.SHA256WithSignature", functionConfig.code);
                         statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
                         log.error(es);
-                        continue;
+                        return statuses;
                     }
                     String data = functionConfig.checksumMap.entrySet().stream()
                             .filter(o -> o.getKey() == hashAlgo)
@@ -404,14 +407,14 @@ public class FunctionTopLevelService {
                         String es = S.f("#295.120 Global isFunctionSignatureRequired==true but function %s has empty SHA256WithSignature value", functionConfig.code);
                         statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
                         log.warn(es);
-                        continue;
+                        return statuses;
                     }
                     ChecksumAndSignatureData.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureUtils.parse(data);
                     if (S.b(checksumWithSignature.checksum) || S.b(checksumWithSignature.signature)) {
                         String es = S.f("#295.140 Global isFunctionSignatureRequired==true but function %s has empty checksum or signature", functionConfig.code);
                         statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
                         log.warn(es);
-                        continue;
+                        return statuses;
                     }
 
                     switch(functionConfig.sourcing) {
@@ -426,7 +429,7 @@ public class FunctionTopLevelService {
                                     final String es = "#295.160 Function has a sourcing as 'dispatcher' but file " + functionConfig.file + " wasn't found.";
                                     statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
                                     log.warn(es+" Temp dir: " + srcDir.normalize());
-                                    continue;
+                                    return statuses;
                                 }
                                 try (InputStream inputStream = Files.newInputStream(file)) {
                                     sum = Checksum.getChecksum(hashAlgo, inputStream);
@@ -443,7 +446,7 @@ public class FunctionTopLevelService {
                         String es = S.f("#295.180 Function %s has wrong checksum", functionConfig.code);
                         statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
                         log.warn(es);
-                        continue;
+                        return statuses;
                     }
                     // ###idea### why?
                     //noinspection ConstantConditions
@@ -455,7 +458,7 @@ public class FunctionTopLevelService {
                             String es = S.f("#295.200 Function %s has wrong signature", functionConfig.code);
                             statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
                             log.warn(es);
-                            continue;
+                            return statuses;
                         }
                     }
                 }
@@ -465,8 +468,7 @@ public class FunctionTopLevelService {
                 if (function !=null) {
                     statuses.add(new FunctionApiData.FunctionConfigStatus(false,
                             "#295.220 Replacing of existing function isn't supported any more, need to upload a function as a new one. Function code: "+ function.code));
-                    //noinspection UnnecessaryContinue
-                    continue;
+                    return statuses;
                 }
                 else {
                     FunctionConfigYaml scy = FunctionCoreUtils.to(functionConfig);
@@ -590,7 +592,7 @@ public class FunctionTopLevelService {
         }
         FunctionConfigYaml sc = function.getFunctionConfigYaml();
         log.info("Send config of function {}", sc.getCode());
-        return FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc);
+        return FunctionConfigYamlUtils.UTILS.toString(sc);
     }
 
     public Map<EnumsApi.HashAlgo, String> getFunctionChecksum(HttpServletResponse response, String functionCode) throws IOException {

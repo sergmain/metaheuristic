@@ -13,50 +13,56 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.commons.yaml.function_list;
+
+package ai.metaheuristic.commons.yaml.function;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
-import javax.annotation.Nullable;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author Serge
+ * Date: 11/3/2019
+ * Time: 4:53 PM
+ */
 @Data
-public class FunctionConfigListYamlV1 implements BaseParams {
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
+public class FunctionConfigYamlV2 implements BaseParams {
 
     public final int version=1;
 
     @Override
     public boolean checkIntegrity() {
+        if (function.sourcing==null) {
+            throw new CheckIntegrityFailedException("sourcing==null");
+        }
         return true;
     }
 
-    public List<FunctionConfigV1> functions;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SystemV2 {
+        public final Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
+        public String archive;
+    }
 
-    @SuppressWarnings("DuplicatedCode")
     @Data
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(of = "code")
-    public static class FunctionConfigV1 implements Cloneable {
-
-        @SneakyThrows
-        public FunctionConfigV1 clone() {
-            final FunctionConfigV1 clone = (FunctionConfigV1) super.clone();
-            if (this.checksumMap != null) {
-                clone.checksumMap = new HashMap<>(this.checksumMap);
-            }
-            if (this.metas != null) {
-                clone.metas = new ArrayList<>(this.metas);
-            }
-            return clone;
-        }
+    public static class FunctionConfigV2 {
 
         /**
          * code of function, i.e. simple-app:1.0
@@ -64,21 +70,17 @@ public class FunctionConfigListYamlV1 implements BaseParams {
         public String code;
         @Nullable
         public String type;
-        @Nullable
-        public String file;
-        /**
-         * params for command line for invoking function
-         * <p>
-         * this isn't a holder for yaml-based config
-         */
-        @Nullable
-        public String params;
+        public String exec;
         public String env;
         public EnumsApi.FunctionSourcing sourcing;
-        public Map<EnumsApi.HashAlgo, String> checksumMap;
         @Nullable
         public GitInfo git;
-        public boolean skipParams = false;
-        public List<Map<String, String>> metas = new ArrayList<>();
+        public @Nullable List<Map<String, String>> metas = new ArrayList<>();
     }
+
+
+    public FunctionConfigV2 function = new FunctionConfigV2();
+
+    @Nullable
+    public SystemV2 system;
 }

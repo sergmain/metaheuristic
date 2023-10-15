@@ -476,8 +476,7 @@ public class TaskProcessor {
                         Arrays.stream(StringUtils.split(functionPrepareResult.function.file)).forEachOrdered(cmd::add);
                     }
                     else if (!S.b(functionPrepareResult.function.content)) {
-                        final String metaExt = MetaUtils.getValue(functionPrepareResult.function.metas,
-                                ConstsApi.META_MH_FUNCTION_PARAMS_FILE_EXT_META);
+                        final String metaExt = MetaUtils.getValue(functionPrepareResult.function.metas, ConstsApi.META_MH_FUNCTION_PARAMS_FILE_EXT_META);
                         String ext = S.b(metaExt) ? ".txt" : metaExt;
                         if (ext.indexOf('.')==-1) {
                             ext = "." + ext;

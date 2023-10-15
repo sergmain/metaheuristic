@@ -24,7 +24,6 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
-import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -38,7 +37,7 @@ public class FunctionCoreUtils {
 
     private static final FunctionApiData.FunctionConfigStatus FUNCTION_CONFIG_STATUS_OK = new FunctionApiData.FunctionConfigStatus(true, null);
 
-    public static FunctionConfigYaml to(FunctionConfigListYaml.FunctionConfig fnSrc) {
+    public static FunctionConfigYaml to(FunctionConfigYaml.FunctionConfig fnSrc) {
         FunctionConfigYaml fnTrg = new FunctionConfigYaml();
         BeanUtils.copyProperties(fnSrc, fnTrg, "checksumMap", "metas");
 
@@ -89,8 +88,7 @@ public class FunctionCoreUtils {
 
     public static String getDataForChecksumForConfigOnly(FunctionConfigListYaml.FunctionConfig functionConfig) {
         return getDataForChecksumForConfigOnly(
-                functionConfig.code, functionConfig.env, functionConfig.file, functionConfig.params,
-                functionConfig.content, functionConfig.git, functionConfig.sourcing);
+                functionConfig.code, functionConfig.env, functionConfig.exec, functionConfig.git, functionConfig.sourcing);
     }
 
     public static String getDataForChecksumForConfigOnly(TaskParamsYaml.FunctionConfig functionConfig) {
@@ -100,16 +98,14 @@ public class FunctionCoreUtils {
     }
 
     private static String getDataForChecksumForConfigOnly(
-            String functionCode, @Nullable String env, @Nullable String functionFile,
-            @Nullable String functionParams, @Nullable String content, @Nullable GitInfo git, EnumsApi.FunctionSourcing sourcing) {
+        String functionCode, @Nullable String env, String functionExec,
+        @Nullable GitInfo git, EnumsApi.FunctionSourcing sourcing) {
 
         return functionCode + " " +
                 (S.b(env) ? null : env) +
                 ", " +
-                (S.b(functionFile) ? null : functionFile) +
+                (S.b(functionExec) ? null : functionExec) +
                 " " +
-                (S.b(functionParams) ? null : functionParams) +
-                (S.b(content) ? "" : " " + content) +
                 (git !=null ? " " + git.branch+":"+ git.commit : "") +
                 (sourcing == EnumsApi.FunctionSourcing.dispatcher ? "" : " " + sourcing);
     }

@@ -16,12 +16,15 @@
 
 package ai.metaheuristic.commons.yaml.function;
 
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.*;
-import javax.annotation.Nullable;
+import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,55 +40,71 @@ import java.util.Map;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = "code")
-public class FunctionConfigYaml implements Cloneable, BaseParams {
+public class FunctionConfigYaml implements BaseParams {
 
-    public final int version=1;
+    public final int version=2;
 
     @Override
     public boolean checkIntegrity() {
-        if (sourcing==null) {
+        if (function.sourcing==null) {
             throw new CheckIntegrityFailedException("sourcing==null");
         }
+        List<String> errors = new ArrayList<>();
+        if (function.sourcing==EnumsApi.FunctionSourcing.processor && S.b(function.exec) && S.b(function.env)) {
+            errors.add(S.f("function %s has a sourcing as %s but content, file, and env are empty", function.code, function.sourcing));
+        }
+        if (function.sourcing==EnumsApi.FunctionSourcing.dispatcher && S.b(function.exec)) {
+            errors.add(S.f("function %s has a sourcing as %s but file are empty", function.code, function.sourcing));
+        }
+        if (MetaUtils.getValue(function.metas, ConstsApi.META_MH_TASK_PARAMS_VERSION)==null) {
+            errors.add(S.f("function %s must have a meta 'mh.task-params-version' with effective version of TaskParams", function.code));
+        }
+        if (function.metas!=null) {
+            for (Map<String, String> meta : function.metas) {
+                if (meta.size()!=1) {
+                    errors.add(S.f("function %s has an incorrectly defined meta, mest be one meta per yaml element, %s", function.code, meta));
+                }
+            }
+        }
+        if (!errors.isEmpty()) {
+            throw new CheckIntegrityFailedException(errors.toString());
+        }
+
         return true;
     }
 
-    @SneakyThrows
-    public FunctionConfigYaml clone() {
-        final FunctionConfigYaml clone = (FunctionConfigYaml) super.clone();
-        if (this.checksumMap!=null) {
-            clone.checksumMap = new HashMap<>(this.checksumMap);
-        }
-        if (this.metas!=null) {
-            clone.metas = new ArrayList<>(this.metas);
-        }
-        return clone;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class System {
+        public final Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
+        public String archive;
     }
 
-    /**
-     * code of function, i.e. simple-app:1.0
-     */
-    public String code;
+    @Data
+    @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode(of = "code")
+    public static class FunctionConfig {
+
+        /**
+         * code of function, i.e. simple-app:1.0
+         */
+        public String code;
+        @Nullable
+        public String type;
+        public String exec;
+        public String env;
+        public EnumsApi.FunctionSourcing sourcing;
+        @Nullable
+        public GitInfo git;
+        public @Nullable List<Map<String, String>> metas = new ArrayList<>();
+    }
+
+    public FunctionConfig function = new FunctionConfig();
+
     @Nullable
-    public String type;
-    @Nullable
-    public String file;
-    /**
-     * params for command line for invoking function
-     * <p>
-     * this isn't a holder for yaml-based config
-     */
-    @Nullable
-    public String params;
-    public String env;
-    public EnumsApi.FunctionSourcing sourcing;
-    @Nullable
-    public Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
-    @Nullable
-    public GitInfo git;
-    public boolean skipParams = false;
-    public @Nullable List<Map<String, String>> metas = new ArrayList<>();
-    @Nullable
-    public String content;
+    public System system;
 
 }

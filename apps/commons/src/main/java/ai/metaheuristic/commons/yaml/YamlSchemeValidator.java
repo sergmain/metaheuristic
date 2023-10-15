@@ -75,6 +75,7 @@ public class YamlSchemeValidator<T> {
         public final List<Element> roots;
         public final int version;
         public final String seeMoreInfo;
+        public boolean supported;
     }
 
     public YamlSchemeValidator(List<Scheme> schemes, String filename, Function<String, T> exitFunction, String mainSeeMoreInfo)  {

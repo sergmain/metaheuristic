@@ -15,20 +15,16 @@
  */
 package ai.metaheuristic.apps.package_function;
 
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.ExitApplicationException;
-import ai.metaheuristic.commons.utils.Checksum;
-import ai.metaheuristic.commons.utils.FunctionCoreUtils;
-import ai.metaheuristic.commons.utils.SecUtils;
-import ai.metaheuristic.commons.utils.ZipUtils;
+import ai.metaheuristic.commons.utils.*;
+import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYaml;
+import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYamlUtils;
 import ai.metaheuristic.commons.yaml.function_list.BundleParamsYaml;
 import ai.metaheuristic.commons.yaml.function_list.BundleParamsYamlUtils;
+import lombok.SneakyThrows;
 import org.apache.commons.cli.*;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.file.PathUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.lang3.SystemUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -39,20 +35,17 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 @SpringBootApplication
 public class PackageFunction implements CommandLineRunner {
 
     private static final String FUNCTIONS_YAML = "functions.yaml";
     private static final String ZIP_EXTENSION = ".zip";
+    private static final String BUNDLE_CFG_YAML = "bundle-cfg.yaml";
 
     private final ApplicationContext appCtx;
 
@@ -64,7 +57,8 @@ public class PackageFunction implements CommandLineRunner {
             SpringApplication.run(PackageFunction.class, args);
         }
 
-    public record Cfg(int version, @Nullable PrivateKey privateKey) {}
+    public record Cfg(int version, @Nullable PrivateKey privateKey, Path tempDir, Path currDir,
+                      BundleCfgYaml bundleCfg) {}
 
     @Override
     public void run(String... args) throws IOException, GeneralSecurityException, ParseException {
@@ -77,7 +71,9 @@ public class PackageFunction implements CommandLineRunner {
 
     public void runInternal(String... args) throws IOException, GeneralSecurityException, ParseException {
 
-        Cfg cfg = initCfg(args);
+        Cfg cfg = initPackaging(args);
+
+        prepareData(cfg);
 
         File functionYamlFile = new File(FUNCTIONS_YAML);
         if (!functionYamlFile.exists()) {
@@ -100,6 +96,7 @@ public class PackageFunction implements CommandLineRunner {
         }
         Files.createDirectories(targetDir);
 
+/*
         String yamlContent = FileUtils.readFileToString(functionYamlFile, StandardCharsets.UTF_8);
         BundleParamsYaml functionConfigList = BundleParamsYamlUtils.BASE_YAML_UTILS.to(yamlContent);
 
@@ -178,11 +175,40 @@ public class PackageFunction implements CommandLineRunner {
 
         ZipUtils.createZip(targetDir, targetZip.toPath());
         PathUtils.deleteDirectory(targetDir);
+*/
 
         System.out.println("All done.");
     }
 
-    private Cfg initCfg(String[] args) throws ParseException, IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+    @SneakyThrows
+    private static BundleCfgYaml initBundleCfg(Path currDir) {
+        Path bundleCfgPath = currDir.resolve(BUNDLE_CFG_YAML);
+
+        if (Files.notExists(bundleCfgPath)) {
+            System.out.printf("File %s wasn't found in path %s\n", BUNDLE_CFG_YAML, currDir.toAbsolutePath());
+            throw new ExitApplicationException();
+        }
+
+        String yaml = Files.readString(bundleCfgPath);
+        BundleCfgYaml bundleCfgYaml = BundleCfgYamlUtils.UTILS.to(yaml);
+        return bundleCfgYaml;
+    }
+
+    private static void prepareData(Cfg cfg) {
+
+        for (BundleCfgYaml.BundleConfig bundleConfig : cfg.bundleCfg.bundleConfig) {
+            Path p = cfg.currDir.resolve(bundleConfig.path);
+            if (Files.notExists(p) || !Files.isDirectory(p)) {
+                System.out.printf("Path %s is broken\n", p.toAbsolutePath());
+                throw new ExitApplicationException();
+            }
+
+
+        }
+
+    }
+
+    private static Cfg initPackaging(String[] args) throws ParseException, IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         CommandLine cmd = parseArgs(args);
         String ver = cmd.getOptionValue("v");
         if (args.length==0 || S.b(ver)) {
@@ -192,11 +218,24 @@ public class PackageFunction implements CommandLineRunner {
         int version = Integer.parseInt(ver);
         PrivateKey privateKey = getPrivateKey(cmd);
 
-        Cfg cfg = new Cfg(version, privateKey);
+        Path currDir = Path.of(SystemUtils.USER_HOME);
+        Path tempDir = currDir.resolve("temp");
+        if (Files.notExists(tempDir)) {
+            Files.createDirectories(tempDir);
+        }
+        Path workingDir = DirUtils.createMhTempPath(tempDir, "bundle-");
+        if (workingDir==null) {
+            System.out.println("Can't create temp directory in path " + tempDir);
+            throw new ExitApplicationException();
+        }
+
+        BundleCfgYaml bundleCfgYaml = initBundleCfg(currDir);
+        Cfg cfg = new Cfg(version, privateKey, workingDir, currDir, bundleCfgYaml);
+        return cfg;
     }
 
     @Nullable
-    private PrivateKey getPrivateKey(CommandLine cmd) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+    private static PrivateKey getPrivateKey(CommandLine cmd) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         PrivateKey privateKey = null;
         if (cmd.hasOption("key")) {
             Path privateKeyFile = Path.of(cmd.getOptionValue("key"));

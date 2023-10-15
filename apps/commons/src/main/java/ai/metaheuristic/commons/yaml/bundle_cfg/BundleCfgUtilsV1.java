@@ -14,27 +14,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.yaml.function_list;
+package ai.metaheuristic.commons.yaml.bundle_cfg;
 
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.beans.BeanUtils;
-import javax.annotation.Nonnull;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import javax.annotation.Nonnull;
 import java.util.stream.Collectors;
 
 /**
  * @author Serge
- * Date: 6/17/2019
- * Time: 12:10 AM
+ * Date: 8/19/2020
+ * Time: 3:40 AM
  */
-public class FunctionConfigListYamlUtilsV1
-        extends AbstractParamsYamlUtils<FunctionConfigListYamlV1, FunctionConfigListYamlV2, FunctionConfigListYamlUtilsV2, Void, Void, Void> {
+public class BundleCfgUtilsV1
+        extends AbstractParamsYamlUtils<BundleCfgYamlV1, BundleCfgYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -44,26 +41,17 @@ public class FunctionConfigListYamlUtilsV1
     @Nonnull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(FunctionConfigListYamlV1.class);
+        return YamlUtils.init(BundleCfgYamlV1.class);
     }
 
     @Nonnull
     @Override
-    public FunctionConfigListYamlV2 upgradeTo(@Nonnull FunctionConfigListYamlV1 src) {
+    public BundleCfgYaml upgradeTo(@Nonnull BundleCfgYamlV1 src) {
         src.checkIntegrity();
-        FunctionConfigListYamlV2 trg = new FunctionConfigListYamlV2();
-        trg.functions = src.functions.stream().map(snSrc-> {
-            FunctionConfigListYamlV2.FunctionConfigV2 snTrg = new FunctionConfigListYamlV2.FunctionConfigV2();
-            BeanUtils.copyProperties(snSrc, snTrg);
+        BundleCfgYaml trg = new BundleCfgYaml();
 
-            if (snSrc.checksumMap!=null) {
-                snTrg.checksumMap = new HashMap<>(snSrc.checksumMap);
-            }
-            if (snSrc.metas!=null) {
-                snTrg.metas = new ArrayList<>(snSrc.metas);
-            }
-            return  snTrg;
-        }).collect(Collectors.toList());
+        src.bundleConfig.stream().map(o->new BundleCfgYaml.BundleConfig(o.path, o.type)).collect(Collectors.toCollection(()->trg.bundleConfig));
+
         trg.checkIntegrity();
         return trg;
     }
@@ -75,8 +63,8 @@ public class FunctionConfigListYamlUtilsV1
     }
 
     @Override
-    public FunctionConfigListYamlUtilsV2 nextUtil() {
-        return (FunctionConfigListYamlUtilsV2) FunctionConfigListYamlUtils.UTILS.getForVersion(2);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -85,18 +73,19 @@ public class FunctionConfigListYamlUtilsV1
     }
 
     @Override
-    public String toString(@Nonnull FunctionConfigListYamlV1 yaml) {
+    public String toString(@Nonnull BundleCfgYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @Nonnull
     @Override
-    public FunctionConfigListYamlV1 to(@Nonnull String yaml) {
+    public BundleCfgYamlV1 to(@Nonnull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
-        final FunctionConfigListYamlV1 p = getYaml().load(yaml);
+        final BundleCfgYamlV1 p = getYaml().load(yaml);
         return p;
     }
+
 
 }

@@ -22,6 +22,8 @@ import javax.annotation.Nullable;
 
 public class EnumsApi {
 
+    public enum BundleItemType { function, sourceCode }
+
     public enum BatchMappingKey {id, name }
 
     public enum SourceCodeLang { yaml, python }

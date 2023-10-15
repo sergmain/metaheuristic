@@ -18,50 +18,76 @@ package ai.metaheuristic.commons.yaml.function;
 
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
-import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
-import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
+import ai.metaheuristic.commons.yaml.function_list.FunctionConfigListYaml;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
-import javax.annotation.Nonnull;
+import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  * @author Serge
  * Date: 6/17/2019
  * Time: 12:10 AM
  */
-public class FunctionConfigYamlUtilsV1
-        extends AbstractParamsYamlUtils<FunctionConfigYamlV1, FunctionConfigYamlV2, FunctionConfigYamlUtilsV2, Void, Void, Void> {
+public class FunctionConfigYamlUtilsV2
+        extends AbstractParamsYamlUtils<FunctionConfigYamlV2, FunctionConfigYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     @Nonnull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(FunctionConfigYamlV1.class);
+        return YamlUtils.init(FunctionConfigYamlV2.class);
     }
 
     @Nonnull
     @Override
-    public FunctionConfigYamlV2 upgradeTo(@Nonnull FunctionConfigYamlV1 src) {
-        throw new UpgradeNotSupportedException();
+    public FunctionConfigYaml upgradeTo(@Nonnull FunctionConfigYamlV2 src) {
+        src.checkIntegrity();
+        FunctionConfigYaml trg = new FunctionConfigYaml();
+        trg.function = to(src.function);
+        trg.system = toSystem(src.system);
+        trg.checkIntegrity();
+        return trg;
+    }
+
+    private static FunctionConfigYaml.FunctionConfig  to(FunctionConfigYamlV2.FunctionConfigV2 src) {
+        FunctionConfigYaml.FunctionConfig trg = new FunctionConfigYaml.FunctionConfig ();
+        BeanUtils.copyProperties(src, trg);
+
+        if (src.metas!=null) {
+            trg.metas = new ArrayList<>(src.metas);
+        }
+
+        return trg;
+    }
+
+    @Nullable
+    private static FunctionConfigYaml.System toSystem(@Nullable FunctionConfigYamlV2.SystemV2 src) {
+        if (src==null) {
+            return null;
+        }
+        FunctionConfigYaml.System trg = new FunctionConfigYaml.System();
+        trg.checksumMap.putAll(src.checksumMap);
+        trg.archive = src.archive;
+        return trg;
     }
 
     @Nonnull
     @Override
     public Void downgradeTo(@Nonnull Void yaml) {
-        throw new DowngradeNotSupportedException();
+        return null;
     }
 
     @Override
-    public FunctionConfigYamlUtilsV2 nextUtil() {
+    public Void nextUtil() {
         return null;
     }
 
@@ -71,17 +97,17 @@ public class FunctionConfigYamlUtilsV1
     }
 
     @Override
-    public String toString(@Nonnull FunctionConfigYamlV1 yaml) {
+    public String toString(@Nonnull FunctionConfigYamlV2 yaml) {
         return getYaml().dump(yaml);
     }
 
     @Nonnull
     @Override
-    public FunctionConfigYamlV1 to(@Nonnull String yaml) {
+    public FunctionConfigYamlV2 to(@Nonnull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
-        final FunctionConfigYamlV1 p = getYaml().load(yaml);
+        final FunctionConfigYamlV2 p = getYaml().load(yaml);
         return p;
     }
 

@@ -44,12 +44,6 @@ public class ConstsApi {
 
     // === functions' metas
 
-    // with FunctionConfigListYamlV2 content of function must be specified in field 'content'
-    public static final String META_MH_FUNCTION_PARAMS_AS_FILE_META = "mh.function-params-as-file";
-
-    // extension for scripting file which will be executed as a function
-    public static final String META_MH_FUNCTION_PARAMS_FILE_EXT_META = "mh.function-params-file-ext";
-
     public static final String META_MH_TASK_PARAMS_VERSION = "mh.task-params-version";
 
     public static final String META_MH_FUNCTION_SUPPORTED_OS = "mh.function-supported-os";

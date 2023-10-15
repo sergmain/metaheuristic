@@ -23,12 +23,14 @@ import java.util.Map;
 @Slf4j
 public class FunctionConfigYamlUtils {
 
-    private static final FunctionConfigYamlUtilsV1 YAML_UTILS_V_1 = new FunctionConfigYamlUtilsV1();
-    private static final FunctionConfigYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+    private static final FunctionConfigYamlUtilsV1 UTILS_V_1 = new FunctionConfigYamlUtilsV1();
+    private static final FunctionConfigYamlUtilsV2 UTILS_V_2 = new FunctionConfigYamlUtilsV2();
+    private static final FunctionConfigYamlUtilsV2 DEFAULT_UTILS = UTILS_V_2;
 
-    public static final BaseYamlUtils<FunctionConfigYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseYamlUtils<FunctionConfigYaml> UTILS = new BaseYamlUtils<>(
             Map.of(
-                    1, YAML_UTILS_V_1
+                    1, UTILS_V_1,
+                    2, UTILS_V_2
             ),
             DEFAULT_UTILS
     );

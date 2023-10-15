@@ -42,7 +42,7 @@ public class TestFunctionConfigYaml {
         FunctionConfigYamlV1 sc = getFunctionConfigYamlV1();
         FunctionConfigYaml sc2 = new FunctionConfigYamlUtilsV1().upgradeTo(sc);
 
-        System.out.println(FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(sc2));
+        System.out.println(FunctionConfigYamlUtils.UTILS.toString(sc2));
 
         // to be sure that values were copied
         Objects.requireNonNull(sc.checksumMap).put(EnumsApi.HashAlgo.SHA256WithSignature, "321qwe");

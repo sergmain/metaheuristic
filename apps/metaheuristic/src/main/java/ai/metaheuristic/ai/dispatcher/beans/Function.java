@@ -69,7 +69,7 @@ public class Function implements Serializable {
             new ThreadUtils.CommonThreadLocker<>(this::parseParams);
 
     private FunctionConfigYaml parseParams() {
-        FunctionConfigYaml temp = FunctionConfigYamlUtils.BASE_YAML_UTILS.to(params);
+        FunctionConfigYaml temp = FunctionConfigYamlUtils.UTILS.to(params);
         FunctionConfigYaml ecpy = temp==null ? new FunctionConfigYaml() : temp;
         return ecpy;
     }
@@ -81,7 +81,7 @@ public class Function implements Serializable {
 
     @JsonIgnore
     public void updateParams(FunctionConfigYaml tpy) {
-        setParams(FunctionConfigYamlUtils.BASE_YAML_UTILS.toString(tpy));
+        setParams(FunctionConfigYamlUtils.UTILS.toString(tpy));
     }
 
 }

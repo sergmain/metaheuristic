@@ -57,7 +57,7 @@ public class BaseParamsTest {
             Pair.of(EnvParamsYamlUtils.BASE_YAML_UTILS, EnvParamsYaml.class),
             Pair.of(FittingYamlUtils.BASE_YAML_UTILS, FittingYaml.class),
             Pair.of(FunctionConfigListYamlUtils.UTILS, FunctionConfigListYaml.class),
-            Pair.of(FunctionConfigYamlUtils.BASE_YAML_UTILS, FunctionConfigYaml.class),
+            Pair.of(FunctionConfigYamlUtils.UTILS, FunctionConfigYaml.class),
             Pair.of(TaskFileParamsYamlUtils.BASE_YAML_UTILS, TaskFileParamsYaml.class),
             Pair.of(VariableArrayParamsYamlUtils.BASE_YAML_UTILS, VariableArrayParamsYaml.class)
     );

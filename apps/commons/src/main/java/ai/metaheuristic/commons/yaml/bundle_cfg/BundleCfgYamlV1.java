@@ -13,23 +13,38 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.commons.yaml.function_list;
 
-import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+package ai.metaheuristic.commons.yaml.bundle_cfg;
 
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.BaseParams;
+import lombok.Data;
+
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-public class FunctionConfigListYamlUtils {
+/**
+ * @author Serge
+ * Date: 8/19/2020
+ * Time: 3:39 AM
+ */
+@Data
+public class BundleCfgYamlV1 implements BaseParams {
 
-    private static final FunctionConfigListYamlUtilsV1 UTILS_V_1 = new FunctionConfigListYamlUtilsV1();
-    private static final FunctionConfigListYamlUtilsV2 UTILS_V_2 = new FunctionConfigListYamlUtilsV2();
-    private static final FunctionConfigListYamlUtilsV2 DEFAULT_UTILS = UTILS_V_2;
+    public final int version=1;
 
-    public static final BaseYamlUtils<FunctionConfigListYaml> UTILS = new BaseYamlUtils<>(
-            Map.of(
-                    1, UTILS_V_1,
-                    2, UTILS_V_2
-            ),
-            DEFAULT_UTILS
-    );
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
+
+    public static class BundleConfigV1 {
+        public String path;
+        public EnumsApi.BundleItemType type;
+    }
+
+    public final List<BundleConfigV1> bundleConfig = new ArrayList<>();
 }

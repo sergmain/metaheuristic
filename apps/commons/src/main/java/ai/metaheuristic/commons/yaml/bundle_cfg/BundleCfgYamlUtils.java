@@ -14,7 +14,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@ParametersAreNonnullByDefault
-package ai.metaheuristic.commons.yaml.function_list;
+package ai.metaheuristic.commons.yaml.bundle_cfg;
 
-import javax.annotation.ParametersAreNonnullByDefault;
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+
+import java.util.Map;
+
+/**
+ * @author Serge
+ * Date: 8/19/2020
+ * Time: 3:39 AM
+ */
+public class BundleCfgYamlUtils {
+
+    private static final BundleCfgUtilsV1 UTILS_V_1 = new BundleCfgUtilsV1();
+    private static final BundleCfgUtilsV1 DEFAULT_UTILS = UTILS_V_1;
+
+    public static final BaseYamlUtils<BundleCfgYaml> UTILS = new BaseYamlUtils<>(
+            Map.of(
+                    1, UTILS_V_1
+            ),
+            DEFAULT_UTILS
+    );
+
+
+}
