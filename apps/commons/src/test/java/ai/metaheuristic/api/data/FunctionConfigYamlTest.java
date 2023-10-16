@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 10/8/2019
  * Time: 9:31 PM
  */
-public class TestFunctionConfigYaml {
+public class FunctionConfigYamlTest {
 
     @Test
     public void testUpgradeToV2() {
