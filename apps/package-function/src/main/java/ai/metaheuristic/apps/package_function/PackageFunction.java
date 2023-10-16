@@ -15,13 +15,18 @@
  */
 package ai.metaheuristic.apps.package_function;
 
+import ai.metaheuristic.api.ConstsApi;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.ExitApplicationException;
 import ai.metaheuristic.commons.utils.*;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYaml;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYamlUtils;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.SneakyThrows;
 import org.apache.commons.cli.*;
+import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -31,17 +36,22 @@ import org.springframework.lang.Nullable;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
+import java.util.ArrayList;
+import java.util.List;
 
 @SpringBootApplication
 public class PackageFunction implements CommandLineRunner {
 
-    private static final String FUNCTIONS_YAML = "functions.yaml";
+    private static final String FUNCTION_YAML = "function.yaml";
     private static final String ZIP_EXTENSION = ".zip";
     private static final String BUNDLE_CFG_YAML = "bundle-cfg.yaml";
 
@@ -55,7 +65,7 @@ public class PackageFunction implements CommandLineRunner {
             SpringApplication.run(PackageFunction.class, args);
         }
 
-    public record Cfg(int version, @Nullable PrivateKey privateKey, Path tempDir, Path currDir,
+    public record Cfg(int version, @Nullable PrivateKey privateKey, Path workingDir, Path currDir,
                       BundleCfgYaml bundleCfg) {}
 
     @Override
@@ -71,9 +81,12 @@ public class PackageFunction implements CommandLineRunner {
 
         Cfg cfg = initPackaging(args);
 
-        prepareData(cfg);
+        prepareFunctions(cfg);
 
-        File functionYamlFile = new File(FUNCTIONS_YAML);
+
+
+/*
+        File functionYamlFile = new File(FUNCTION_YAML);
         if (!functionYamlFile.exists()) {
             System.out.println("File "+functionYamlFile.getPath()+" wasn't found");
             return;
@@ -93,6 +106,7 @@ public class PackageFunction implements CommandLineRunner {
             return;
         }
         Files.createDirectories(targetDir);
+*/
 
 /*
         String yamlContent = FileUtils.readFileToString(functionYamlFile, StandardCharsets.UTF_8);
@@ -192,18 +206,57 @@ public class PackageFunction implements CommandLineRunner {
         return bundleCfgYaml;
     }
 
-    private static void prepareData(Cfg cfg) {
+    @SneakyThrows
+    private static void prepareFunctions(Cfg cfg) {
 
         for (BundleCfgYaml.BundleConfig bundleConfig : cfg.bundleCfg.bundleConfig) {
+            if (bundleConfig.type!= EnumsApi.BundleItemType.function) {
+                continue;
+            }
             Path p = cfg.currDir.resolve(bundleConfig.path);
             if (Files.notExists(p) || !Files.isDirectory(p)) {
                 System.out.printf("Path %s is broken\n", p.toAbsolutePath());
                 throw new ExitApplicationException();
             }
+            Path tempFuncPath = cfg.workingDir.resolve(bundleConfig.path);
+            System.out.println("\t\tprocess path " + tempFuncPath);
+            Files.createDirectories(tempFuncPath);
+
+
+            final FunctionConfigYaml fcy = getFunctionConfigYaml(p);
+            createZip(cfg, tempFuncPath, fcy);
 
 
         }
 
+    }
+
+    @SneakyThrows
+    private static void createZip(Cfg cfg, Path tempFuncPath, FunctionConfigYaml fcy) {
+        Path zip = tempFuncPath.resolve(ArtifactCommonUtils.normalizeCode(fcy.function.code) + ZIP_EXTENSION);
+
+        final List<Path> paths = new ArrayList<>();
+        Files.walkFileTree(tempFuncPath, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path p, BasicFileAttributes attrs) throws IOException {
+                if (Files.isDirectory(p)) {
+                    paths.add(p);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        ZipUtils.createZip(paths, zip);
+    }
+
+    private static FunctionConfigYaml getFunctionConfigYaml(Path p) throws IOException {
+        Path functionYaml = p.resolve(FUNCTION_YAML);
+        if (Files.notExists(p)) {
+            System.out.printf("File %s wasn't found in path %s\n", FUNCTION_YAML, p.toAbsolutePath());
+            throw new ExitApplicationException();
+        }
+        String yaml = Files.readString(functionYaml);
+        FunctionConfigYaml fcy = FunctionConfigYamlUtils.UTILS.to(yaml);
+        return fcy;
     }
 
     private static Cfg initPackaging(String[] args) throws ParseException, IOException, NoSuchAlgorithmException, InvalidKeySpecException {
@@ -216,18 +269,21 @@ public class PackageFunction implements CommandLineRunner {
         int version = Integer.parseInt(ver);
         PrivateKey privateKey = getPrivateKey(cmd);
 
-        Path currDir = Path.of(SystemUtils.USER_HOME);
+        Path currDir = Path.of(SystemUtils.USER_DIR);
         Path tempDir = currDir.resolve("temp");
-        if (Files.notExists(tempDir)) {
-            Files.createDirectories(tempDir);
-        }
-        Path workingDir = DirUtils.createMhTempPath(tempDir, "bundle-");
+//        if (Files.exists(tempDir)) {
+//            PathUtils.deleteDirectory(tempDir);
+//        }
+        Files.createDirectories(tempDir);
+        Path workingDir = DirUtils.createTempPath(tempDir, "bundle-");
         if (workingDir==null) {
             System.out.println("Can't create temp directory in path " + tempDir);
             throw new ExitApplicationException();
         }
 
         BundleCfgYaml bundleCfgYaml = initBundleCfg(currDir);
+        System.out.println("\tcurrDir dir: " + currDir);
+        System.out.println("\tworking dir: " + workingDir);
         Cfg cfg = new Cfg(version, privateKey, workingDir, currDir, bundleCfgYaml);
         return cfg;
     }
