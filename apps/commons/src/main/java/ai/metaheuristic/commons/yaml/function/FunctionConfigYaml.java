@@ -78,9 +78,8 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
     public FunctionConfigYaml clone() {
         FunctionConfigYaml clone = (FunctionConfigYaml) super.clone();
         clone.function = this.function.clone();
-        if (this.system!=null) {
-            clone.system = this.system.clone();
-        }
+        clone.system.archive = this.system.archive;
+        clone.system.checksumMap.putAll(this.system.checksumMap);
         return clone;
     }
 
@@ -142,7 +141,6 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
 
     public FunctionConfig function = new FunctionConfig();
 
-    @Nullable
-    public System system;
+    public final System system = new System();
 
 }

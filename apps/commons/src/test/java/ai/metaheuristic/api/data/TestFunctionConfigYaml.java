@@ -89,7 +89,6 @@ public class TestFunctionConfigYaml {
         assertNotNull(sc.function.metas);
         sc.function.metas.add(Map.of("key1", "value1"));
 
-        sc.system = new FunctionConfigYamlV2.SystemV2();
         assertNotNull(sc.system.checksumMap);
         sc.system.checksumMap.put(EnumsApi.HashAlgo.SHA256, "qwe321");
         return sc;

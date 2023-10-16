@@ -34,11 +34,15 @@ public class SecUtils {
         return getSignature(data, privateKey, false);
     }
 
-    public static String getSignature(String data, PrivateKey privateKey, boolean isChuncked) throws GeneralSecurityException {
-        Signature signer= Signature.getInstance("SHA256withRSA");
+    public static String getSignature(String data, PrivateKey privateKey, boolean isChunked) throws GeneralSecurityException {
+        return getSignature(data, privateKey, isChunked, "SHA256withRSA");
+    }
+
+    public static String getSignature(String data, PrivateKey privateKey, boolean isChunked, String algorithm) throws GeneralSecurityException {
+        Signature signer= Signature.getInstance(algorithm);
         signer.initSign(privateKey);
         signer.update(data.getBytes(StandardCharsets.UTF_8));
-        return StringUtils.newStringUsAscii(Base64.encodeBase64(signer.sign(), isChuncked));
+        return StringUtils.newStringUsAscii(Base64.encodeBase64(signer.sign(), isChunked));
     }
 
     public static PublicKey getPublicKey(String keyBase64) {

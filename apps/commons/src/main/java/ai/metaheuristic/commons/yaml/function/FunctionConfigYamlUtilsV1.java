@@ -54,7 +54,6 @@ public class FunctionConfigYamlUtilsV1
         BeanUtils.copyProperties(src, trg, "checksumMap", "metas");
 
         if (src.checksumMap!=null) {
-            trg.system = new FunctionConfigYamlV2.SystemV2();
             trg.system.checksumMap.putAll(src.checksumMap);
         }
         trg.function.metas = new ArrayList<>();

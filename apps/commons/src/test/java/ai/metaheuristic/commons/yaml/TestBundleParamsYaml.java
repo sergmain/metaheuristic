@@ -42,7 +42,6 @@ public class TestBundleParamsYaml {
         assertNotNull(config.metas);
         config.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
 
-        cfg.system = new FunctionConfigYaml.System();
         cfg.system.checksumMap.putAll( Checksum.fromJson("{\"checksums\":{\"SHA256\":\"<some value #1>\"}}").checksums);
         cfg.system.checksumMap.putAll( Checksum.fromJson("{\"checksums\":{\"MD5\":\"<some value #2>\"}}").checksums);
 

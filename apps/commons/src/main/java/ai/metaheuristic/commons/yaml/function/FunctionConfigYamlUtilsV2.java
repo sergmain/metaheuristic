@@ -52,7 +52,8 @@ public class FunctionConfigYamlUtilsV2
         src.checkIntegrity();
         FunctionConfigYaml trg = new FunctionConfigYaml();
         trg.function = to(src.function);
-        trg.system = toSystem(src.system);
+        toSystem(src.system, trg.system);
+
         trg.checkIntegrity();
         return trg;
     }
@@ -68,15 +69,9 @@ public class FunctionConfigYamlUtilsV2
         return trg;
     }
 
-    @Nullable
-    private static FunctionConfigYaml.System toSystem(@Nullable FunctionConfigYamlV2.SystemV2 src) {
-        if (src==null) {
-            return null;
-        }
-        FunctionConfigYaml.System trg = new FunctionConfigYaml.System();
+    private static void toSystem(FunctionConfigYamlV2.SystemV2 src, FunctionConfigYaml.System trg) {
         trg.checksumMap.putAll(src.checksumMap);
         trg.archive = src.archive;
-        return trg;
     }
 
     @Nonnull

@@ -91,6 +91,5 @@ public class FunctionConfigYamlV2 implements BaseParams {
 
     public FunctionConfigV2 function = new FunctionConfigV2();
 
-    @Nullable
-    public SystemV2 system;
+    public final SystemV2 system = new SystemV2();
 }
