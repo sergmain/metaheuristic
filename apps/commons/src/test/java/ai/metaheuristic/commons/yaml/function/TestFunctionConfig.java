@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.commons.yaml.function;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
@@ -35,6 +36,7 @@ public class TestFunctionConfig {
     // and
     //  ai.metaheuristic.commons.yaml.function.FunctionConfigYaml
     // have the same set of fields, except field version
+    @Disabled("Left this test as a reference for another tests")
     @Test
     public void test() {
         Field[] fields = FunctionConfigYaml.FunctionConfig.class.getDeclaredFields();

@@ -78,8 +78,9 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
     public FunctionConfigYaml clone() {
         FunctionConfigYaml clone = (FunctionConfigYaml) super.clone();
         clone.function = this.function.clone();
-        clone.system.archive = this.system.archive;
-        clone.system.checksumMap.putAll(this.system.checksumMap);
+        clone.system = this.system.clone();
+//        clone.system.archive = this.system.archive;
+//        clone.system.checksumMap.putAll(this.system.checksumMap);
         return clone;
     }
 
@@ -87,13 +88,14 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class System implements Cloneable {
-        public final Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
+        public Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
         public String archive;
 
         @SneakyThrows
         public System clone() {
             final System clone = (System) super.clone();
-            clone.checksumMap.putAll(this.checksumMap);
+            clone.checksumMap = new HashMap<>(this.checksumMap);
+            clone.archive = this.archive;
             return clone;
         }
     }
@@ -141,6 +143,6 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
 
     public FunctionConfig function = new FunctionConfig();
 
-    public final System system = new System();
+    public System system = new System();
 
 }

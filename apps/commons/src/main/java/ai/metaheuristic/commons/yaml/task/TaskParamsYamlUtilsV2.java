@@ -33,22 +33,22 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("DuplicatedCode")
 public class TaskParamsYamlUtilsV2
-        extends AbstractParamsYamlUtils<TaskParamsYamlV1, TaskParamsYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<TaskParamsYamlV2, TaskParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     @Nonnull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(TaskParamsYamlV1.class);
+        return YamlUtils.init(TaskParamsYamlV2.class);
     }
 
     @Nonnull
     @Override
-    public TaskParamsYaml upgradeTo(@Nonnull TaskParamsYamlV1 v1) {
+    public TaskParamsYaml upgradeTo(@Nonnull TaskParamsYamlV2 v1) {
         v1.checkIntegrity();
         TaskParamsYaml t = new TaskParamsYaml();
         t.task = new TaskParamsYaml.TaskYaml();
@@ -73,13 +73,13 @@ public class TaskParamsYamlUtilsV2
         return t;
     }
 
-    private static TaskParamsYaml.InputVariable upInputVariable(TaskParamsYamlV1.InputVariableV1 v1) {
+    private static TaskParamsYaml.InputVariable upInputVariable(TaskParamsYamlV2.InputVariableV2 v1) {
         TaskParamsYaml.InputVariable v = new TaskParamsYaml.InputVariable(
                 v1.id, v1.context, v1.name, v1.sourcing, v1.git, v1.disk, v1.filename, v1.type,  v1.empty, v1.getNullable());
         return v;
     }
 
-    private static TaskParamsYaml.OutputVariable upOutputVariable(TaskParamsYamlV1.OutputVariableV1 v1) {
+    private static TaskParamsYaml.OutputVariable upOutputVariable(TaskParamsYamlV2.OutputVariableV2 v1) {
         TaskParamsYaml.OutputVariable v = new TaskParamsYaml.OutputVariable(
                 v1.id, v1.context, v1.name, v1.sourcing, v1.git, v1.disk, v1.filename, v1.uploaded, v1.type, v1.empty, v1.getNullable(), v1.ext);
         return v;
@@ -91,7 +91,7 @@ public class TaskParamsYamlUtilsV2
         return null;
     }
 
-    private static TaskParamsYaml.FunctionConfig toUp(TaskParamsYamlV1.FunctionConfigV1 src) {
+    private static TaskParamsYaml.FunctionConfig toUp(TaskParamsYamlV2.FunctionConfigV2 src) {
         TaskParamsYaml.FunctionConfig trg = new TaskParamsYaml.FunctionConfig(
                 src.code, src.type, src.file, src.params, src.env, src.sourcing, src.checksumMap, src.git);
 
@@ -110,18 +110,18 @@ public class TaskParamsYamlUtilsV2
     }
 
     @Override
-    public String toString(@Nonnull TaskParamsYamlV1 params) {
+    public String toString(@Nonnull TaskParamsYamlV2 params) {
         params.checkIntegrity();
         return getYaml().dump(params);
     }
 
     @Nonnull
     @Override
-    public TaskParamsYamlV1 to(@Nonnull String yaml) {
+    public TaskParamsYamlV2 to(@Nonnull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
-        final TaskParamsYamlV1 p = getYaml().load(yaml);
+        final TaskParamsYamlV2 p = getYaml().load(yaml);
         return p;
     }
 

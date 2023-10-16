@@ -51,7 +51,7 @@ public class FunctionConfigYamlUtilsV1
     public FunctionConfigYamlV2 upgradeTo(@Nonnull FunctionConfigYamlV1 src) {
         src.checkIntegrity();
         FunctionConfigYamlV2 trg = new FunctionConfigYamlV2();
-        BeanUtils.copyProperties(src, trg, "checksumMap", "metas");
+        BeanUtils.copyProperties(src, trg.function, "checksumMap", "metas");
 
         if (src.checksumMap!=null) {
             trg.system.checksumMap.putAll(src.checksumMap);

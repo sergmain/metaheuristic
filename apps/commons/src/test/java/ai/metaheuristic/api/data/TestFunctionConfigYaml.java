@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.api.data;
 
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.utils.MetaUtils;
@@ -36,7 +37,7 @@ public class TestFunctionConfigYaml {
 
     @Test
     public void testUpgradeToV2() {
-        FunctionConfigYamlV2 sc = getFunctionConfigYamlV2();
+        FunctionConfigYamlV2 sc = new FunctionConfigYamlUtilsV1().upgradeTo(getFunctionConfigYamlV1());
         FunctionConfigYaml sc2 = new FunctionConfigYamlUtilsV2().upgradeTo(sc);
 
         System.out.println(FunctionConfigYamlUtils.UTILS.toString(sc2));
@@ -44,7 +45,6 @@ public class TestFunctionConfigYaml {
         // to be sure that values were copied
         assertNotNull(sc.system);
         assertNotNull(sc.system.checksumMap);
-        assertTrue(sc.system.checksumMap.isEmpty());
         sc.system.checksumMap.put(EnumsApi.HashAlgo.SHA256WithSignature, "321qwe");
         Objects.requireNonNull(sc.function.metas).add(Map.of("key2", "value2"));
 
@@ -59,7 +59,7 @@ public class TestFunctionConfigYaml {
         assertEquals(sc2.function.git.branch, "branch");
         assertEquals(sc2.function.git.commit, "commit");
         assertNotNull(sc2.function.metas);
-        assertEquals(1, sc2.function.metas.size());
+        assertEquals(2, sc2.function.metas.size());
         assertNotNull(MetaUtils.getMeta(sc2.function.metas, "key1"));
         //noinspection ConstantConditions
         assertEquals("value1", MetaUtils.getMeta(sc2.function.metas, "key1").getValue());
@@ -72,25 +72,26 @@ public class TestFunctionConfigYaml {
 
     @Test
     public void testUpgradeToLatest() {
-        FunctionConfigYamlV2 sc1 = getFunctionConfigYamlV2();
-        FunctionConfigYaml sc2 = new FunctionConfigYamlUtilsV2().upgradeTo(sc1);
+        FunctionConfigYamlV1 sc1 = getFunctionConfigYamlV1();
+        FunctionConfigYaml sc2 = new FunctionConfigYamlUtilsV2().upgradeTo(new FunctionConfigYamlUtilsV1().upgradeTo(sc1));
         checkLatest(sc2);
     }
 
-    private static FunctionConfigYamlV2 getFunctionConfigYamlV2() {
-        FunctionConfigYamlV2 sc = new FunctionConfigYamlV2();
-        sc.function.code = "sc.code";
-        sc.function.type = "sc.type";
-        sc.function.file = "sc.file";
-        sc.function.params = "sc.params";
-        sc.function.env = "sc.env";
-        sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-        sc.function.git = new GitInfo("repo", "branch", "commit");
-        assertNotNull(sc.function.metas);
-        sc.function.metas.add(Map.of("key1", "value1"));
+    private static FunctionConfigYamlV1 getFunctionConfigYamlV1() {
+        FunctionConfigYamlV1 sc = new FunctionConfigYamlV1();
+        sc.code = "sc.code";
+        sc.type = "sc.type";
+        sc.file = "sc.file";
+        sc.params = "sc.params";
+        sc.env = "sc.env";
+        sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
+        sc.git = new GitInfo("repo", "branch", "commit");
+        assertNotNull(sc.metas);
+        sc.metas.add(Map.of("key1", "value1"));
+        sc.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
 
-        assertNotNull(sc.system.checksumMap);
-        sc.system.checksumMap.put(EnumsApi.HashAlgo.SHA256, "qwe321");
+        assertNotNull(sc.checksumMap);
+        sc.checksumMap.put(EnumsApi.HashAlgo.SHA256, "qwe321");
         return sc;
     }
 
@@ -105,21 +106,22 @@ public class TestFunctionConfigYaml {
         sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
         sc.function.git = new GitInfo("repo", "branch", "commit");
         Objects.requireNonNull(sc.function.metas).add(Map.of("key1", "value1"));
-        sc.function.metas.add(Map.of("key2", "value2"));
+        sc.function.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
 
         assertNotNull(sc.system);
         assertNotNull(sc.system.checksumMap);
         sc.system.checksumMap.put(EnumsApi.HashAlgo.SHA256, "qwe321");
 
-//        FunctionConfigYaml sc1 = sc.clone();
+        FunctionConfigYaml sc1 = sc.clone();
 
         // to be sure that values were copied, we'll change original checksumMap
         sc.system.checksumMap.put(EnumsApi.HashAlgo.SHA256WithSignature, "321qwe");
+        sc.function.metas.add(Map.of("key2", "value2"));
 
-        checkLatest(sc);
+        checkLatest(sc1);
     }
 
-    private void checkLatest(FunctionConfigYaml sc) {
+    private static void checkLatest(FunctionConfigYaml sc) {
         assertEquals(sc.function.code, "sc.code");
         assertEquals(sc.function.type, "sc.type");
         assertEquals(sc.function.file, "sc.file");
@@ -131,7 +133,7 @@ public class TestFunctionConfigYaml {
         assertEquals(sc.function.git.branch, "branch");
         assertEquals(sc.function.git.commit, "commit");
         assertNotNull(sc.function.metas);
-        assertEquals(1, sc.function.metas.size());
+        assertEquals(2, sc.function.metas.size());
         assertEquals("value1", Objects.requireNonNull(MetaUtils.getMeta(sc.function.metas, "key1")).getValue());
 
         assertNotNull(sc.system);

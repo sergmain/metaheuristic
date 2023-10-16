@@ -39,6 +39,8 @@ public class TestBundleParamsYaml {
         config.code = "aiai.fit.default.function:1.0";
         config.type = CommonConsts.FIT_TYPE;
         config.file = "fit-model.py";
+        config.sourcing = EnumsApi.FunctionSourcing.dispatcher;
+
         assertNotNull(config.metas);
         config.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
 

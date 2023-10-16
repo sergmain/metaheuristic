@@ -85,7 +85,7 @@ public class TestTaskParamsYaml {
         TaskParamsYaml tpy = TaskParamsYamlUtils.UTILS.to(s);
 
         assertNotNull(tpy);
-        assertEquals(1, tpy.version);
+        assertEquals(2, tpy.version);
         assertNotNull(tpy.task);
         assertNotNull(tpy.task.preFunctions);
         assertNotNull(tpy.task.function);
