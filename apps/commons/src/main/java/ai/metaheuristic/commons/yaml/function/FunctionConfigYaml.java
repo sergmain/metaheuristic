@@ -66,7 +66,7 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
         if (function.metas!=null) {
             for (Map<String, String> meta : function.metas) {
                 if (meta.size()!=1) {
-                    errors.add(S.f("function %s has an incorrectly defined meta, mest be one meta per yaml element, %s", function.code, meta));
+                    errors.add(S.f("function %s has an incorrectly defined meta, must be one meta per yaml element, %s", function.code, meta));
                 }
             }
         }
