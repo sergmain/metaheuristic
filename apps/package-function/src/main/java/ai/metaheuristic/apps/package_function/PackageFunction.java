@@ -17,6 +17,7 @@ package ai.metaheuristic.apps.package_function;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.ExitApplicationException;
 import ai.metaheuristic.commons.utils.*;
@@ -24,6 +25,7 @@ import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYaml;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYamlUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
+import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.boot.CommandLineRunner;
@@ -78,10 +80,40 @@ public class PackageFunction implements CommandLineRunner {
     public static void runInternal(String... args) throws IOException, GeneralSecurityException, ParseException {
         Cfg cfg = initPackaging(args);
         processFunctions(cfg);
+        processSourceCodes(cfg);
         createFinalZip(cfg);
     }
 
+    private static void processSourceCodes(Cfg cfg) throws IOException {
+        for (BundleCfgYaml.BundleConfig bundleConfig : cfg.bundleCfg.bundleConfig) {
+            if (bundleConfig.type!= EnumsApi.BundleItemType.sourceCode) {
+                continue;
+            }
+            Path p = cfg.currDir.resolve(bundleConfig.path);
+            if (Files.notExists(p) || !Files.isDirectory(p)) {
+                System.out.printf("Path %s is broken\n", p.toAbsolutePath());
+                throw new ExitApplicationException();
+            }
+            Path tempPath = cfg.workingDir.resolve(bundleConfig.path);
+            System.out.println("\t\tprocess path " + bundleConfig.path);
+            Files.createDirectories(tempPath);
+
+
+//            final FunctionConfigAndFile fcy = getFunctionConfigYaml(p);
+//            if (verifySourceCode(fcy, p)) {
+//                throw new ExitApplicationException();
+//            }
+
+            prepareSourceCodes(tempPath, p);
+        }
+
+    }
+
     private static void createFinalZip(Cfg cfg) throws IOException {
+        String bundleCfgYaml = BundleCfgYamlUtils.UTILS.toString(cfg.bundleCfg);
+        Path bundleCfgPath = cfg.workingDir.resolve(BUNDLE_CFG_YAML);
+        Files.writeString(bundleCfgPath, bundleCfgYaml);
+
         final List<Path> paths = new ArrayList<>();
         Files.walkFileTree(cfg.workingDir, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
             @Override
@@ -167,7 +199,7 @@ public class PackageFunction implements CommandLineRunner {
                 throw new ExitApplicationException();
             }
 
-            Path zippedFunction = createZip(tempFuncPath, fcy.config, p);
+            Path zippedFunction = createZipWithFunction(tempFuncPath, fcy.config, p);
 
             calcChecksum(zippedFunction, fcy.config, cfg);
             storeFunctionConfigYaml(tempFuncPath, fcy.config);
@@ -206,7 +238,7 @@ public class PackageFunction implements CommandLineRunner {
         }
     }
 
-    private static Path createZip(Path tempFuncPath, FunctionConfigYaml fcy, Path funcPath) throws IOException {
+    private static Path createZipWithFunction(Path tempFuncPath, FunctionConfigYaml fcy, Path funcPath) throws IOException {
         final List<Path> paths = new ArrayList<>();
         Files.walkFileTree(funcPath, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
             @Override
@@ -224,6 +256,26 @@ public class PackageFunction implements CommandLineRunner {
         ZipUtils.createZip(paths, zip);
         fcy.system.archive = zipName;
         return zip;
+    }
+
+    private static void prepareSourceCodes(Path tempFuncPath, Path srcPath) throws IOException {
+        Files.walkFileTree(srcPath, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path p, BasicFileAttributes attrs) throws IOException {
+                if (Files.isDirectory(p) || FUNCTION_YAML.equals(p.getFileName().toString())) {
+                    return FileVisitResult.CONTINUE;
+                }
+                String yaml = Files.readString(p);
+
+                // let's check that this yaml is actually SourceCode
+                //noinspection unused
+                SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+
+                Path file = tempFuncPath.resolve(p.getFileName().toString());
+                Files.writeString(file, yaml);
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
     public record FunctionConfigAndFile(FunctionConfigYaml config, Path file) {}
@@ -250,7 +302,7 @@ public class PackageFunction implements CommandLineRunner {
         PrivateKey privateKey = getPrivateKey(cmd);
 
         Path currDir = Path.of(SystemUtils.USER_DIR);
-        Path tempDir = currDir.resolve("temp");
+        Path tempDir = currDir.resolve("bundles");
         Files.createDirectories(tempDir);
         Path workingDir = DirUtils.createTempPath(tempDir, "bundle-");
         if (workingDir==null) {

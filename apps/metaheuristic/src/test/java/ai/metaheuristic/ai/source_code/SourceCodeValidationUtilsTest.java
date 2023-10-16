@@ -17,8 +17,7 @@
 package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils;
-import ai.metaheuristic.ai.yaml.source_code.SourceCodeParamsYamlUtils;
-import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import org.apache.commons.io.IOUtils;
@@ -30,7 +29,6 @@ import java.nio.charset.StandardCharsets;
 
 import static ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils.NULL_CHECK_FUNC;
 import static ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils.validateSourceCodeParamsYaml;
-import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR;
 import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.SOURCE_OF_VARIABLE_NOT_FOUND_ERROR;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
