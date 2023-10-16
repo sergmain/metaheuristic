@@ -103,7 +103,8 @@ public class TestTaskParamYaml {
                     EnumsApi.FunctionSourcing.dispatcher,
                     null,
                     List.of()
-                ))
+                ),
+                null)
             )
         );
 

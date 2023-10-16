@@ -34,6 +34,7 @@ import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
@@ -46,6 +47,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -137,6 +139,7 @@ public class PreparingCoreInitService {
             sc.function.env = "python-3";
             sc.function.type = CommonConsts.FIT_TYPE;
             sc.function.file = "fit-filename.txt";
+            sc.function.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
 
             mills = System.currentTimeMillis();
             log.info("Start functionRepository.save() #1");
@@ -154,6 +157,7 @@ public class PreparingCoreInitService {
             sc.function.type = CommonConsts.PREDICT_TYPE;
             sc.function.env = "python-3";
             sc.function.file = "predict-filename.txt";
+            sc.function.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
 
             predictFunction.setCode(PreparingConsts.TEST_PREDICT_FUNCTION);
             predictFunction.setType(CommonConsts.PREDICT_TYPE);
