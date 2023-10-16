@@ -1,5 +1,6 @@
-functions:
-    - code: aiai.fit.default.function:1.0-SNAPSHOT
+version: 2
+function:
+      code: aiai.fit.default.function:1.0-SNAPSHOT
       type: fit
       file: fit-model.py
       metas:

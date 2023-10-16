@@ -13,21 +13,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.commons.yaml.bundle;
 
-import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+@ParametersAreNonnullByDefault
+package ai.metaheuristic.commons.yaml.bundle_cfg;
 
-import java.util.Map;
-
-public class BundleParamsYamlUtils {
-
-    private static final BundleParamsYamlUtilsV1 UTILS_V_1 = new BundleParamsYamlUtilsV1();
-    private static final BundleParamsYamlUtilsV1 DEFAULT_UTILS = UTILS_V_1;
-
-    public static final BaseYamlUtils<BundleParamsYaml> UTILS = new BaseYamlUtils<>(
-            Map.of(
-                    1, UTILS_V_1
-            ),
-            DEFAULT_UTILS
-    );
-}
+import javax.annotation.ParametersAreNonnullByDefault;

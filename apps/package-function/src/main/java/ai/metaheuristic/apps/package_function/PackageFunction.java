@@ -161,7 +161,7 @@ public class PackageFunction implements CommandLineRunner {
         }
         else if (function.sourcing== EnumsApi.FunctionSourcing.processor) {
             // we don't need any checks here because all checks
-            // will be made in ai.metaheuristic.commons.yaml.function_list.BundleParamsYaml.checkIntegrity
+            // will be made in ai.metaheuristic.commons.yaml.function.FunctionConfigYaml.checkIntegrity
         }
         return isError;
     }

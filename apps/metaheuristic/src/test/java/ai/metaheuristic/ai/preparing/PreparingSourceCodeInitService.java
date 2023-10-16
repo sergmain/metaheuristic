@@ -169,8 +169,8 @@ public class PreparingSourceCodeInitService {
         sc.function.sourcing = EnumsApi.FunctionSourcing.processor;
 
 //  metas:
-//  - mh.task-params-version: '5'
-        Objects.requireNonNull(sc.function.metas).add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "5"));
+//  - mh.task-params-version: '2'
+        Objects.requireNonNull(sc.function.metas).add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "2"));
         Long functionId = functionRepository.findIdByCode(functionCode);
         if (functionId!=null) {
             txSupportForTestingService.deleteFunctionById(functionId);

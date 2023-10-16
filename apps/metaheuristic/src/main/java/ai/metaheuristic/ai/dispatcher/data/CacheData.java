@@ -48,14 +48,14 @@ public class CacheData {
     @Data
     public static class FullKey {
         public String functionCode;
-        public String funcExec;
+        public String funcParams;
         public final Map<String, Map<String, String>> inline = new HashMap<>();
         public final List<Sha256PlusLength> inputs = new ArrayList<>();
         public final List<Sha256PlusLength> metas = new ArrayList<>();
 
         public FullKey(String functionCode, String funcParams) {
             this.functionCode = functionCode;
-            this.funcExec = funcParams;
+            this.funcParams = funcParams;
         }
 
         @SneakyThrows

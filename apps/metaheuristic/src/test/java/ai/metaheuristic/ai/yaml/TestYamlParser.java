@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.yaml;
 
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
@@ -94,13 +95,7 @@ public class TestYamlParser {
 
     @Test
     public void loadFunctionYamlWithError_01() throws IOException {
-
-        FunctionConfigYaml config = FunctionConfigYamlUtils.UTILS.to(IOUtils.resourceToString("/yaml/functions-test-error.yaml", StandardCharsets.UTF_8));
-        assertNotNull(config);
-        assertNotNull(config.function);
-        FunctionConfigYaml.FunctionConfig function = config.function;
-        FunctionApiData.FunctionConfigStatus status = FunctionCoreUtils.validate(function);
-        assertFalse(status.isOk);
+        assertThrows(CheckIntegrityFailedException.class, ()-> FunctionConfigYamlUtils.UTILS.to(IOUtils.resourceToString("/yaml/functions-test-error.yaml", StandardCharsets.UTF_8)));
     }
 
     @Disabled("Need to re-write this test")

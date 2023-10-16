@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionDataTxService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTxService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
@@ -42,6 +43,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -121,6 +123,7 @@ public class TestFunctionService {
             sc.function.env = "python-3";
             sc.function.file = "predict-filename.txt";
             sc.function.params = FUNCTION_PARAMS;
+            sc.function.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
 
             mills = System.currentTimeMillis();
             log.info("Start functionRepository.save() #2");

@@ -34,6 +34,30 @@ public class TestYamlSchemeValidator {
     private static final String SEE_MORE_INFO = "https://docs.metaheuristic.ai";
 
     @Test
+    public void testOneElement() {
+        YamlSchemeValidator<String> validator = new YamlSchemeValidator<> (
+            List.of(new Scheme(
+                List.of(
+                    new Element("root1", true, false, new String[]{"element1", "element2"}),
+                    new Element("root2", true, false, new String[]{"element3"})
+                ),1, SEE_MORE_INFO, true)
+            ),
+            "the config file test.yaml", (es)-> es, SEE_MORE_INFO
+        );
+
+        String cfg= """
+           root1:
+             element1: code
+             element2: env
+           root2:
+             element3: env
+           version: 1
+           """;
+        assertNull(validator.validateStructureOfDispatcherYaml(cfg));
+    }
+
+
+    @Test
     public void testOk() {
         YamlSchemeValidator<String> validator = new YamlSchemeValidator<> (
                 List.of(new Scheme(
@@ -106,7 +130,11 @@ public class TestYamlSchemeValidator {
                 "the config file test.yaml", (es)-> es, SEE_MORE_INFO
         );
 
-        String cfg="root:\n  - element1: 1\n    element2: 2\nversion: 99";
+        String cfg= """
+                root:
+                  - element1: 1
+                    element2: 2
+                version: 99""";
         assertNotNull(validator.validateStructureOfDispatcherYaml(cfg));
     }
 

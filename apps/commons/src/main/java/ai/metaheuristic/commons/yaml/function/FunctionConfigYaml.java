@@ -56,8 +56,12 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
         if (function.sourcing==EnumsApi.FunctionSourcing.dispatcher && S.b(function.file)) {
             errors.add(S.f("function %s has a sourcing as %s but file are empty", function.code, function.sourcing));
         }
-        if (MetaUtils.getValue(function.metas, ConstsApi.META_MH_TASK_PARAMS_VERSION)==null) {
-            errors.add(S.f("function %s must have a meta 'mh.task-params-version' with effective version of TaskParams", function.code));
+        final String value = MetaUtils.getValue(function.metas, ConstsApi.META_MH_TASK_PARAMS_VERSION);
+        if (value!=null) {
+            int ver = Integer.parseInt(value);
+            if (ver!=1 && ver!=2) {
+                errors.add(S.f("function %s has unsupported version, version==%s, as value of 'mh.task-params-version'", function.code, value));
+            }
         }
         if (function.metas!=null) {
             for (Map<String, String> meta : function.metas) {

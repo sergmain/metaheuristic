@@ -23,48 +23,50 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Map;
 
-import static ai.metaheuristic.ai.dispatcher.bundle.BundleVerificationUtils.FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR;
-import static org.junit.jupiter.api.Assertions.*;
+import static ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService.FUNCTION_CONFIG_YAML_SCHEME_VALIDATOR;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 9/10/2020
  * Time: 12:02 AM
  */
+@Execution(CONCURRENT)
 public class TestFunctionConfigSchemeValidation {
 
     @Test
     public void testOk() {
-
         String yaml = createYaml();
-        String result = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(yaml);
+        String result = FUNCTION_CONFIG_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(yaml);
         assertNull(result, result);
     }
 
     @Test
     public void testError_01() throws IOException {
         String cfg = IOUtils.resourceToString("/yaml/bundle/bundle-verification-test-error-v3-01.yaml", StandardCharsets.UTF_8);
-        String result = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+        String result = FUNCTION_CONFIG_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
         assertNotNull(result, result);
     }
 
     @Test
     public void testError_02() throws IOException {
         String cfg = IOUtils.resourceToString("/yaml/bundle/bundle-verification-test-error-v3-02.yaml", StandardCharsets.UTF_8);
-        String result = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+        String result = FUNCTION_CONFIG_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
         assertNotNull(result, result);
     }
 
     @Test
     public void test_v1_01() throws IOException {
         String cfg = IOUtils.resourceToString("/yaml/bundle/bundle-verification-test-v1-01.yaml", StandardCharsets.UTF_8);
-        String result = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+        String result = FUNCTION_CONFIG_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
         assertNull(result, result);
     }
 
@@ -72,7 +74,7 @@ public class TestFunctionConfigSchemeValidation {
     public void test_v2_01() throws IOException {
         String cfg = IOUtils.resourceToString("/yaml/bundle/bundle-verification-test-v2-01.yaml", StandardCharsets.UTF_8);
 
-        String result = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+        String result = FUNCTION_CONFIG_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
         assertNull(result, result);
     }
 
@@ -80,7 +82,7 @@ public class TestFunctionConfigSchemeValidation {
     public void test_v3_01() throws IOException {
         String cfg = IOUtils.resourceToString("/yaml/bundle/bundle-verification-test-v3-01.yaml", StandardCharsets.UTF_8);
 
-        String result = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+        String result = FUNCTION_CONFIG_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
         assertNull(result, result);
     }
 
@@ -88,13 +90,13 @@ public class TestFunctionConfigSchemeValidation {
     public void test_v3_02() throws IOException {
         String cfg = IOUtils.resourceToString("/yaml/bundle/bundle-verification-test-v3-02.yaml", StandardCharsets.UTF_8);
 
-        String result = FUNCTION_CONFIG_LIST_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
+        String result = FUNCTION_CONFIG_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(cfg);
         assertNull(result, result);
     }
 
     private static String createYaml() {
         FunctionConfigYaml cfgList = new FunctionConfigYaml();
-        FunctionConfigYaml.FunctionConfig cfg = new FunctionConfigYaml.FunctionConfig();
+        FunctionConfigYaml.FunctionConfig cfg = cfgList.function;
 
         cfgList.system.checksumMap.put(EnumsApi.HashAlgo.SHA256, "123");
         cfg.code = "code";

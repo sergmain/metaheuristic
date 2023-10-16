@@ -20,6 +20,8 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
+import ai.metaheuristic.commons.yaml.event.DispatcherEventYamlUtils;
+import ai.metaheuristic.commons.yaml.event.DispatcherEventYamlUtilsV2;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
 import javax.annotation.Nonnull;
@@ -72,7 +74,7 @@ public class FunctionConfigYamlUtilsV1
 
     @Override
     public FunctionConfigYamlUtilsV2 nextUtil() {
-        return null;
+        return (FunctionConfigYamlUtilsV2) FunctionConfigYamlUtils.UTILS.getForVersion(2);
     }
 
     @Override

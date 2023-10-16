@@ -15,6 +15,6 @@
  */
 
 @ParametersAreNonnullByDefault
-package ai.metaheuristic.commons.yaml.bundle;
+package ai.metaheuristic.commons.utils.threads;
 
 import javax.annotation.ParametersAreNonnullByDefault;
