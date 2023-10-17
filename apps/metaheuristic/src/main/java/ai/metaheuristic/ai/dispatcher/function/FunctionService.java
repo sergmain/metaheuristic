@@ -278,6 +278,7 @@ public class FunctionService {
 
             String yaml = Files.readString(yamlConfigFile);
             // TODO p3 2023-10-16 after fixing validation of yaml with single element, enable this validation
+            //  test about this problem - ai.metaheuristic.commons.yaml.TestYamlSchemeValidator.testOneElement
 //            String errorString = FUNCTION_CONFIG_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(yaml);
 //            if (errorString!=null) {
 //                return List.of(new FunctionApiData.FunctionConfigStatus(false, errorString));

@@ -17,10 +17,13 @@
 package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.api.data.BaseDataClass;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 
 import java.util.List;
 
@@ -36,8 +39,6 @@ public class BundleData {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class UploadingStatus extends BaseDataClass {
-        public Long batchId;
-        public Long execContextId;
 
         public UploadingStatus(String errorMessage) {
             addErrorMessage(errorMessage);
@@ -45,6 +46,14 @@ public class BundleData {
 
         public UploadingStatus(List<String> errorMessages) {
             addErrorMessages(errorMessages);
+        }
+
+        @JsonCreator
+        public UploadingStatus (
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
         }
     }
 

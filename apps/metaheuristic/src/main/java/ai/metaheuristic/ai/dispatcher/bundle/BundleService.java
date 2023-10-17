@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.bundle;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.data.BundleData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
@@ -26,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.exceptions.BundleProcessingException;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
@@ -42,6 +44,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Function;
@@ -75,12 +78,12 @@ public class BundleService {
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final SourceCodeSelectorService sourceCodeSelectorService;
 
-    public OperationStatusRest uploadFromFile(final MultipartFile file, final DispatcherContext dispatcherContext) {
+    public BundleData.UploadingStatus uploadFromFile(final MultipartFile file, final DispatcherContext dispatcherContext) {
         if (Consts.ID_1.equals(dispatcherContext.getCompanyId())) {
-            return new OperationStatusRest(ERROR, "971.030 Batch can't be created in company #1");
+            return new BundleData.UploadingStatus("971.030 Batch can't be created in company #1");
         }
         if (file.getSize()==0) {
-            return new OperationStatusRest(ERROR, "971.035 Can't upload bundle because uploaded file has a zero length");
+            return new BundleData.UploadingStatus("971.035 Can't upload bundle because uploaded file has a zero length");
         }
 
         log.info("971.055 Staring of uploadFromFile(), file: {}, size: {}", file.getOriginalFilename(), file.getSize());
@@ -91,36 +94,36 @@ public class BundleService {
             //  CleanerInfo resource = new CleanerInfo();
             Path tempDir = DirUtils.createMhTempPath("uploaded-bundle-");
             if (tempDir==null) {
-                return new OperationStatusRest(ERROR, "971.090 Can't create a temporary dir");
+                return new BundleData.UploadingStatus( "971.090 Can't create a temporary dir");
             }
             Path tempFile = tempDir.resolve("zip.zip");
             file.transferTo(tempFile);
             if (file.getSize()!=Files.size(tempFile)) {
-                return new OperationStatusRest(ERROR, "971.125 System error while preparing data. The sizes of files are different");
+                return new BundleData.UploadingStatus( "971.125 System error while preparing data. The sizes of files are different");
             }
             List<String> errors = ZipUtils.validate(tempFile, VALIDATE_ZIP_ENTRY_SIZE_FUNCTION);
             if (!errors.isEmpty()) {
                 errors.add(0, "971.144 Batch can't be created because of following errors:");
-                return new OperationStatusRest(ERROR, errors);
+                return new BundleData.UploadingStatus( errors);
             }
             bundleLocation = new BundleLocation(tempDir, tempFile);
         } catch (IOException e) {
-            return new OperationStatusRest(ERROR,"971.140 Can't create a new temp zip file");
+            return new BundleData.UploadingStatus("971.140 Can't create a new temp zip file");
         }
 
         try {
             processBundle(bundleLocation);
-            return OperationStatusRest.OPERATION_STATUS_OK;
+            return new BundleData.UploadingStatus();
         }
         catch (ExecContextTooManyInstancesException e) {
             String es = S.f("971.255 Too many instances of SourceCode '%s', max allowed: %d, current count: %d", e.sourceCodeUid, e.max, e.curr);
             log.warn(es);
-            return new OperationStatusRest(ERROR, es);
+            return new BundleData.UploadingStatus(es);
         }
         catch (Throwable th) {
             String es = "971.260 can't load bundle file, error: " + th.getMessage() + ", class: " + th.getClass();
             log.error(es, th);
-            return new OperationStatusRest(ERROR, es);
+            return new BundleData.UploadingStatus(es);
         }
         finally {
             DirUtils.deletePathAsync(bundleLocation.dir);
@@ -145,18 +148,25 @@ public class BundleService {
     }
 
     private void processFunctions(BundleCfgYaml bundleCfgYaml, Path data) {
-/*
-        Files.walkFileTree(cfg.workingDir, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
-            @Override
-            public FileVisitResult visitFile(Path p, BasicFileAttributes attrs) {
-                if (CommonConsts.FUNCTION_YAML.equals(p.getFileName().toString())) {
-                    return FileVisitResult.CONTINUE;
-                }
-                paths.add(p);
-                return FileVisitResult.CONTINUE;
+        List<FunctionApiData.FunctionConfigStatus> statuses = new ArrayList<>();
+
+        for (BundleCfgYaml.BundleConfig bundleConfig : bundleCfgYaml.bundleConfig) {
+            if (bundleConfig.type!= EnumsApi.BundleItemType.function) {
+                continue;
             }
-        });
-*/
+            Path f = data.resolve(bundleConfig.path);
+            if (Files.notExists(f)) {
+                log.error("invalid record in bundle-cfg.yaml, path {} doesn't exist", bundleConfig.path);
+                continue;
+            }
+            functionService.loadFunction(f);
+        }
+//        Files.walkFileTree(bundleCfgYaml.dir, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
+//            @Override
+//            public FileVisitResult visitFile(Path p, BasicFileAttributes attrs) {
+//                return FileVisitResult.CONTINUE;
+//            }
+//        });
     }
 
     private static ZipUtils.ValidationResult isZipEntityNameOk(ZipEntry zipEntry) {
