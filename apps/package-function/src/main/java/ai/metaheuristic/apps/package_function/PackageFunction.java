@@ -18,6 +18,7 @@ package ai.metaheuristic.apps.package_function;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.ExitApplicationException;
 import ai.metaheuristic.commons.utils.*;
@@ -49,10 +50,6 @@ import java.util.*;
 
 @SpringBootApplication
 public class PackageFunction implements CommandLineRunner {
-
-    private static final String FUNCTION_YAML = "function.yaml";
-    private static final String ZIP_EXTENSION = ".zip";
-    private static final String BUNDLE_CFG_YAML = "bundle-cfg.yaml";
 
     private final ApplicationContext appCtx;
 
@@ -111,14 +108,14 @@ public class PackageFunction implements CommandLineRunner {
 
     private static void createFinalZip(Cfg cfg) throws IOException {
         String bundleCfgYaml = BundleCfgYamlUtils.UTILS.toString(cfg.bundleCfg);
-        Path bundleCfgPath = cfg.workingDir.resolve(BUNDLE_CFG_YAML);
+        Path bundleCfgPath = cfg.workingDir.resolve(CommonConsts.BUNDLE_CFG_YAML);
         Files.writeString(bundleCfgPath, bundleCfgYaml);
 
         final List<Path> paths = new ArrayList<>();
         Files.walkFileTree(cfg.workingDir, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path p, BasicFileAttributes attrs) {
-                if (FUNCTION_YAML.equals(p.getFileName().toString())) {
+                if (CommonConsts.FUNCTION_YAML.equals(p.getFileName().toString())) {
                     return FileVisitResult.CONTINUE;
                 }
                 paths.add(p);
@@ -126,7 +123,7 @@ public class PackageFunction implements CommandLineRunner {
             }
         });
 
-        Path zip = cfg.workingDir.resolve("bundle-" + LocalDate.now() + ZIP_EXTENSION);
+        Path zip = cfg.workingDir.resolve("bundle-" + LocalDate.now() + CommonConsts.ZIP_EXTENSION);
         ZipUtils.createZip(paths, zip);
     }
 
@@ -167,10 +164,10 @@ public class PackageFunction implements CommandLineRunner {
     }
 
     private static BundleCfgYaml initBundleCfg(Path currDir) throws IOException {
-        Path bundleCfgPath = currDir.resolve(BUNDLE_CFG_YAML);
+        Path bundleCfgPath = currDir.resolve(CommonConsts.BUNDLE_CFG_YAML);
 
         if (Files.notExists(bundleCfgPath)) {
-            System.out.printf("File %s wasn't found in path %s\n", BUNDLE_CFG_YAML, currDir.toAbsolutePath());
+            System.out.printf("File %s wasn't found in path %s\n", CommonConsts.BUNDLE_CFG_YAML, currDir.toAbsolutePath());
             throw new ExitApplicationException();
         }
 
@@ -208,7 +205,7 @@ public class PackageFunction implements CommandLineRunner {
 
     private static void storeFunctionConfigYaml(Path tempFuncPath, FunctionConfigYaml config) throws IOException {
         String yaml = FunctionConfigYamlUtils.UTILS.toString(config);
-        Path f = tempFuncPath.resolve(FUNCTION_YAML);
+        Path f = tempFuncPath.resolve(CommonConsts.FUNCTION_YAML);
         Files.writeString(f, yaml);
     }
 
@@ -243,7 +240,7 @@ public class PackageFunction implements CommandLineRunner {
         Files.walkFileTree(funcPath, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path p, BasicFileAttributes attrs) {
-                if (FUNCTION_YAML.equals(p.getFileName().toString())) {
+                if (CommonConsts.FUNCTION_YAML.equals(p.getFileName().toString())) {
                     return FileVisitResult.CONTINUE;
                 }
                 paths.add(p);
@@ -251,7 +248,7 @@ public class PackageFunction implements CommandLineRunner {
             }
         });
 
-        final String zipName = ArtifactCommonUtils.normalizeCode(fcy.function.code) + ZIP_EXTENSION;
+        final String zipName = ArtifactCommonUtils.normalizeCode(fcy.function.code) + CommonConsts.ZIP_EXTENSION;
         Path zip = tempFuncPath.resolve(zipName);
         ZipUtils.createZip(paths, zip);
         fcy.system.archive = zipName;
@@ -262,7 +259,7 @@ public class PackageFunction implements CommandLineRunner {
         Files.walkFileTree(srcPath, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path p, BasicFileAttributes attrs) throws IOException {
-                if (Files.isDirectory(p) || FUNCTION_YAML.equals(p.getFileName().toString())) {
+                if (Files.isDirectory(p) || CommonConsts.FUNCTION_YAML.equals(p.getFileName().toString())) {
                     return FileVisitResult.CONTINUE;
                 }
                 String yaml = Files.readString(p);
@@ -281,9 +278,9 @@ public class PackageFunction implements CommandLineRunner {
     public record FunctionConfigAndFile(FunctionConfigYaml config, Path file) {}
 
     private static FunctionConfigAndFile getFunctionConfigYaml(Path p) throws IOException {
-        Path functionYaml = p.resolve(FUNCTION_YAML);
+        Path functionYaml = p.resolve(CommonConsts.FUNCTION_YAML);
         if (Files.notExists(p)) {
-            System.out.printf("File %s wasn't found in path %s\n", FUNCTION_YAML, p.toAbsolutePath());
+            System.out.printf("File %s wasn't found in path %s\n", CommonConsts.FUNCTION_YAML, p.toAbsolutePath());
             throw new ExitApplicationException();
         }
         String yaml = Files.readString(functionYaml);

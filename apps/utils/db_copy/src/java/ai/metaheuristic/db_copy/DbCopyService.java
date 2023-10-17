@@ -61,7 +61,7 @@ public class DbCopyService {
 
             System.out.println("\tpersist to db");
 /*
-            try (FileInputStream fis = new FileInputStream(f)) {
+            try (InputStream fis = Files.newInputStream(f)) {
                 dbCopyTxService.save(functionData.functionCode, functionData.uploadTs, functionData.params, fis, f.length());
             }
 */

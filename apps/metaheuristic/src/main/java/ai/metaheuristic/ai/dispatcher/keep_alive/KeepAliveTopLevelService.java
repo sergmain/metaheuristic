@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.event.events.CheckProcessorIdEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
-import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorSyncService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
@@ -60,7 +60,7 @@ public class KeepAliveTopLevelService {
 
     private final Globals globals;
     private final ProcessorTopLevelService processorTopLevelService;
-    private final FunctionTopLevelService functionTopLevelService;
+    private final FunctionService functionTopLevelService;
     private final ProcessorCache processorCache;
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
     private final ProcessorTxService processorTransactionService;

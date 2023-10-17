@@ -20,34 +20,35 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
+import ai.metaheuristic.ai.exceptions.BundleProcessingException;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
-import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
+import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYaml;
+import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 
-import static ai.metaheuristic.ai.Consts.ZIP_EXT;
 import static ai.metaheuristic.api.EnumsApi.OperationStatus.ERROR;
 
 /**
@@ -66,6 +67,9 @@ public class BundleService {
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_FUNCTION = BundleService::isZipEntityNameOk;
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_ENTRY_SIZE_FUNCTION = BundleService::isZipEntitySizeOk;
 
+    private record BundleLocation(Path dir, Path zipFile) {}
+
+    private final FunctionService functionService;
     private final SourceCodeCache sourceCodeCache;
     private final DispatcherEventService dispatcherEventService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
@@ -81,23 +85,7 @@ public class BundleService {
 
         log.info("971.055 Staring of uploadFromFile(), file: {}, size: {}", file.getOriginalFilename(), file.getSize());
 
-        String tempFilename = file.getOriginalFilename();
-        if (S.b(tempFilename)) {
-            return new OperationStatusRest(ERROR,"971.040 name of uploaded file is blank");
-        }
-        // fix for the case when browser sends a full path, ie Edge
-        final String originFilename = new File(tempFilename).getName();
-
-        String extTemp = StrUtils.getExtension(originFilename);
-        if (extTemp==null) {
-            return new OperationStatusRest(ERROR, "971.060 file without extension, bad filename: " + originFilename);
-        }
-        String ext = extTemp.toLowerCase();
-        if (!StringUtils.equalsAny(ext, ZIP_EXT)) {
-            return new OperationStatusRest(ERROR,"971.080 only '.zip' files are supported, bad filename: " + originFilename);
-        }
-
-        Path tempFile;
+        BundleLocation bundleLocation;
         try {
             // TODO 2021.03.13 add a support of
             //  CleanerInfo resource = new CleanerInfo();
@@ -105,7 +93,7 @@ public class BundleService {
             if (tempDir==null) {
                 return new OperationStatusRest(ERROR, "971.090 Can't create a temporary dir");
             }
-            tempFile = tempDir.resolve("zip.zip");
+            Path tempFile = tempDir.resolve("zip.zip");
             file.transferTo(tempFile);
             if (file.getSize()!=Files.size(tempFile)) {
                 return new OperationStatusRest(ERROR, "971.125 System error while preparing data. The sizes of files are different");
@@ -115,25 +103,13 @@ public class BundleService {
                 errors.add(0, "971.144 Batch can't be created because of following errors:");
                 return new OperationStatusRest(ERROR, errors);
             }
+            bundleLocation = new BundleLocation(tempDir, tempFile);
         } catch (IOException e) {
-            return new OperationStatusRest(ERROR,"971.140 Can't create a new temp file");
+            return new OperationStatusRest(ERROR,"971.140 Can't create a new temp zip file");
         }
 
-
         try {
-//            try (InputStream is = new FileInputStream(tempFile)) {
-//                execContextVariableService.initInputVariable(is, file.getSize(), originFilename, creationResult.execContext.id, execContextParamsYaml, 0);
-//            }
-
-            /*
-            final BundleData.UploadingStatus uploadingStatus;
-            uploadingStatus = execContextSyncService.getWithSync(creationResult.execContext.id, ()->
-                    execContextGraphSyncService.getWithSync(creationResult.execContext.execContextGraphId, ()->
-                            execContextTaskStateSyncService.getWithSync(creationResult.execContext.execContextTaskStateId, ()->
-                                    batchService.createBatchForFile(
-                                            sc, creationResult.execContext.id, execContextParamsYaml, dispatcherContext))));
-            return uploadingStatus;
-*/
+            processBundle(bundleLocation);
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
         catch (ExecContextTooManyInstancesException e) {
@@ -142,10 +118,45 @@ public class BundleService {
             return new OperationStatusRest(ERROR, es);
         }
         catch (Throwable th) {
-            String es = "971.260 can't load file, error: " + th.getMessage() + ", class: " + th.getClass();
+            String es = "971.260 can't load bundle file, error: " + th.getMessage() + ", class: " + th.getClass();
             log.error(es, th);
             return new OperationStatusRest(ERROR, es);
         }
+        finally {
+            DirUtils.deletePathAsync(bundleLocation.dir);
+        }
+    }
+
+    private void processBundle(BundleLocation bundleLocation) throws IOException {
+        Path data = bundleLocation.dir.resolve("data");
+        Files.createDirectories(data);
+        ZipUtils.unzipFolder(bundleLocation.zipFile, data);
+
+        Path bundleCfg = data.resolve(CommonConsts.BUNDLE_CFG_YAML);
+        if (Files.notExists(bundleCfg)) {
+            throw new BundleProcessingException(S.f("File %s wasn't found in bundle archive", CommonConsts.BUNDLE_CFG_YAML));
+        }
+
+        String yaml = Files.readString(bundleCfg);
+        BundleCfgYaml bundleCfgYaml = BundleCfgYamlUtils.UTILS.to(yaml);
+
+        processFunctions(bundleCfgYaml, data);
+//        processSourceCodes(bundleCfgYaml, data);
+    }
+
+    private void processFunctions(BundleCfgYaml bundleCfgYaml, Path data) {
+/*
+        Files.walkFileTree(cfg.workingDir, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path p, BasicFileAttributes attrs) {
+                if (CommonConsts.FUNCTION_YAML.equals(p.getFileName().toString())) {
+                    return FileVisitResult.CONTINUE;
+                }
+                paths.add(p);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+*/
     }
 
     private static ZipUtils.ValidationResult isZipEntityNameOk(ZipEntry zipEntry) {

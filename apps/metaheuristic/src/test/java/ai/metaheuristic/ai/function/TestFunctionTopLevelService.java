@@ -18,14 +18,12 @@ package ai.metaheuristic.ai.function;
 
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
-import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.api.EnumsApi;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -46,7 +44,7 @@ public class TestFunctionTopLevelService {
                 2L, new Function(2L, 0, "code-2", "type", "params")
         );
 
-        FunctionData.FunctionsResult r = FunctionTopLevelService.getFunctions(()->List.of(2L, 1L, 3L), map::get, EnumsApi.DispatcherAssetMode.local);
+        FunctionData.FunctionsResult r = FunctionService.getFunctions(()->List.of(2L, 1L, 3L), map::get, EnumsApi.DispatcherAssetMode.local);
         assertNotNull(r.functions);
         assertEquals(3, r.functions.size());
 

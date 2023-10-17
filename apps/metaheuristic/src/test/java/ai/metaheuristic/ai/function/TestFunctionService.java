@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataTxService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTxService;
-import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -67,7 +67,7 @@ public class TestFunctionService {
     private FunctionTxService functionTxService;
 
     @Autowired
-    private FunctionTopLevelService functionTopLevelService;
+    private FunctionService functionTopLevelService;
 
     @Autowired
     private FunctionRepository functionRepository;

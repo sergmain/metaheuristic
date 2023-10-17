@@ -23,9 +23,10 @@ import ai.metaheuristic.commons.utils.SecUtils;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.PublicKey;
 
 /**
@@ -76,7 +77,7 @@ public class VerifySignature {
         EnumsApi.SignatureState status = ChecksumWithSignatureUtils.isValid(EnumsApi.HashAlgo.SHA256WithSignature.signatureAlgo, checksum.getBytes(), signature, publicKey);
         System.out.println(status);
 
-        try (FileInputStream fis = new FileInputStream(new File(args[0]))) {
+        try (InputStream fis = Files.newInputStream(Path.of(args[0]))) {
             CheckSumAndSignatureStatus s = ChecksumWithSignatureUtils.verifyChecksumAndSignature(cs, "info:", fis, publicKey);
             System.out.println(s);
         }

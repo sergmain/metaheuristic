@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.function;
 
-import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,13 +30,13 @@ public class TestProduceFinalCommandLineParams {
 
     @Test
     public void test() {
-        assertEquals("", FunctionTopLevelService.produceFinalCommandLineParams(null, null));
-        assertEquals("", FunctionTopLevelService.produceFinalCommandLineParams("", ""));
-        assertEquals("123", FunctionTopLevelService.produceFinalCommandLineParams("123", null));
-        assertEquals("123", FunctionTopLevelService.produceFinalCommandLineParams("123", ""));
-        assertEquals("456", FunctionTopLevelService.produceFinalCommandLineParams(null, "456"));
-        assertEquals("456", FunctionTopLevelService.produceFinalCommandLineParams("", "456"));
-        assertEquals("123 456", FunctionTopLevelService.produceFinalCommandLineParams("123", "456"));
+        assertEquals("", FunctionService.produceFinalCommandLineParams(null, null));
+        assertEquals("", FunctionService.produceFinalCommandLineParams("", ""));
+        assertEquals("123", FunctionService.produceFinalCommandLineParams("123", null));
+        assertEquals("123", FunctionService.produceFinalCommandLineParams("123", ""));
+        assertEquals("456", FunctionService.produceFinalCommandLineParams(null, "456"));
+        assertEquals("456", FunctionService.produceFinalCommandLineParams("", "456"));
+        assertEquals("123 456", FunctionService.produceFinalCommandLineParams("123", "456"));
     }
 
 }

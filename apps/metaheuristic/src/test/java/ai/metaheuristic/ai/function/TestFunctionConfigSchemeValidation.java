@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import static ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService.FUNCTION_CONFIG_YAML_SCHEME_VALIDATOR;
+import static ai.metaheuristic.ai.dispatcher.function.FunctionService.FUNCTION_CONFIG_YAML_SCHEME_VALIDATOR;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;

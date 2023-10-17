@@ -17,14 +17,13 @@
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
-import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/rest/v1/dispatcher/function")
@@ -33,7 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class FunctionRestController {
 
-    private final FunctionTopLevelService functionTopLevelService;
+    private final FunctionService functionTopLevelService;
 
     @GetMapping("/functions")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA', 'MANAGER')")
@@ -46,11 +45,4 @@ public class FunctionRestController {
     public OperationStatusRest deleteCommit(@PathVariable Long id) {
         return functionTopLevelService.deleteFunctionById(id);
     }
-
-    @PostMapping(value = "/function-upload-from-file")
-    @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
-    public OperationStatusRest uploadFunction(final MultipartFile file) {
-        return functionTopLevelService.uploadFunction(file);
-    }
-
 }

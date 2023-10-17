@@ -14,26 +14,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.utils;
-
-import org.apache.commons.io.IOUtils;
-
-import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-import static java.nio.file.StandardOpenOption.*;
+package ai.metaheuristic.ai.exceptions;
 
 /**
- * @author Serge
- * Date: 12/19/2021
- * Time: 2:23 AM
+ * @author Sergio Lissner
+ * Date: 10/16/2023
+ * Time: 10:02 PM
  */
-public class FileSystemUtils {
-
-    public static void writeStringToFileWithSync(final Path file, final String data, final Charset charset) throws IOException {
-        Files.writeString(file, data, charset, SYNC, CREATE, WRITE, TRUNCATE_EXISTING);
+public class BundleProcessingException extends RuntimeException {
+    public BundleProcessingException(String message) {
+        super(message);
     }
-
 }

@@ -22,9 +22,7 @@ import ai.metaheuristic.commons.utils.SecUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.StringUtils;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.springframework.lang.Nullable;
 
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
@@ -40,7 +38,7 @@ public class ChecksumWithSignatureUtils {
     private static final CheckSumAndSignatureStatus CHECK_SUM_AND_SIGNATURE_NOT_PRESENTED = new CheckSumAndSignatureStatus(EnumsApi.ChecksumState.not_presented, EnumsApi.SignatureState.not_presented);
     private static final CheckSumAndSignatureStatus CHECK_SUM_AND_SIGNATURE_WRONG = new CheckSumAndSignatureStatus(EnumsApi.ChecksumState.wrong, EnumsApi.SignatureState.wrong);
 
-    public static CheckSumAndSignatureStatus verifyChecksumAndSignature(@Nonnull Checksum checksum, String infoPrefix, InputStream fis, PublicKey publicKey ) {
+    public static CheckSumAndSignatureStatus verifyChecksumAndSignature(Checksum checksum, String infoPrefix, InputStream fis, PublicKey publicKey ) {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
         for (Map.Entry<EnumsApi.HashAlgo, String> entry : checksum.checksums.entrySet()) {
             status = verifyChecksumAndSignature(infoPrefix, fis, publicKey, entry.getValue(), entry.getKey());

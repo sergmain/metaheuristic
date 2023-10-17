@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.replication;
 
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
-import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +48,7 @@ public class ReplicationFunctionTopLevelService {
     private final ReplicationFunctionService replicationFunctionService;
     private final FunctionRepository functionRepository;
     private final FunctionCache functionCache;
-    private final FunctionTopLevelService functionTopLevelService;
+    private final FunctionService functionTopLevelService;
 
     public void syncFunctions(List<String> actualFunctions) {
         functionRepository.findAllFunctionCodes().stream()

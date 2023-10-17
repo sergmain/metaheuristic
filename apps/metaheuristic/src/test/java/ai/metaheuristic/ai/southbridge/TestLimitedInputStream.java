@@ -27,8 +27,10 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -40,25 +42,25 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class TestLimitedInputStream {
 
     private static final long SKIP_BYTES = 15L;
-    private File testFile = null;
+    private Path testFile = null;
 
     @BeforeEach
     public void before() throws IOException {
-        testFile = File.createTempFile("test-limited-input-stream", Consts.BIN_EXT);
+        testFile = Files.createTempFile("test-limited-input-stream", Consts.BIN_EXT);
     }
 
     @AfterEach
-    public void after() {
+    public void after() throws IOException {
         if (testFile!=null) {
-            testFile.delete();
+            Files.deleteIfExists(testFile);
         }
     }
 
     @Test
     public void test() throws IOException {
-        FileUtils.writeStringToFile(testFile, "123456789012345678901234567890", StandardCharsets.UTF_8);
+        Files.writeString(testFile, "123456789012345678901234567890", StandardCharsets.UTF_8);
 
-        try(FileInputStream fis = new FileInputStream(testFile);
+        try (InputStream fis = Files.newInputStream( testFile);
             BoundedInputStream bis = new BoundedInputStream(fis, 5)) {
             long skipped = fis.skip(SKIP_BYTES);
             assertEquals(15L, skipped);

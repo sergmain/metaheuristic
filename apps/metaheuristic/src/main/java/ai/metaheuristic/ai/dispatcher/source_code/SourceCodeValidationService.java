@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
-import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
@@ -64,7 +64,7 @@ import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class SourceCodeValidationService {
 
-    private final FunctionTopLevelService functionTopLevelService;
+    private final FunctionService functionTopLevelService;
     private final FunctionRepository functionRepository;
     private final SourceCodeStateService sourceCodeStateService;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;

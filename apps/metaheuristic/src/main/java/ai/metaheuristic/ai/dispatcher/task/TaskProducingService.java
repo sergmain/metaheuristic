@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.dispatcher.event.InitVariablesTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.function.FunctionTopLevelService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -51,7 +51,7 @@ import java.util.Map;
 public class TaskProducingService {
 
     private final ExecContextGraphService execContextGraphService;
-    private final FunctionTopLevelService functionTopLevelService;
+    private final FunctionService functionTopLevelService;
     private final TaskTxService taskTxService;
     private final Globals globals;
     private final ApplicationEventPublisher eventPublisher;
