@@ -36,7 +36,6 @@ public class BundleData {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
-    @AllArgsConstructor
     @NoArgsConstructor
     public static class UploadingStatus extends BaseDataClass {
 

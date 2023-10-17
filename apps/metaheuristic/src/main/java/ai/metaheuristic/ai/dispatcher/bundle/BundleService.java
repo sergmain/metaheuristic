@@ -28,7 +28,6 @@ import ai.metaheuristic.ai.exceptions.BundleProcessingException;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -43,16 +42,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
-
-import static ai.metaheuristic.api.EnumsApi.OperationStatus.ERROR;
 
 /**
  * @author Serge
@@ -112,8 +107,8 @@ public class BundleService {
         }
 
         try {
-            processBundle(bundleLocation);
-            return new BundleData.UploadingStatus();
+            BundleData.UploadingStatus status = processBundle(bundleLocation);
+            return status;
         }
         catch (ExecContextTooManyInstancesException e) {
             String es = S.f("971.255 Too many instances of SourceCode '%s', max allowed: %d, current count: %d", e.sourceCodeUid, e.max, e.curr);
@@ -130,7 +125,7 @@ public class BundleService {
         }
     }
 
-    private void processBundle(BundleLocation bundleLocation) throws IOException {
+    private BundleData.UploadingStatus processBundle(BundleLocation bundleLocation) throws IOException {
         Path data = bundleLocation.dir.resolve("data");
         Files.createDirectories(data);
         ZipUtils.unzipFolder(bundleLocation.zipFile, data);
@@ -142,14 +137,15 @@ public class BundleService {
 
         String yaml = Files.readString(bundleCfg);
         BundleCfgYaml bundleCfgYaml = BundleCfgYamlUtils.UTILS.to(yaml);
+        BundleData.UploadingStatus status = new BundleData.UploadingStatus();
 
-        processFunctions(bundleCfgYaml, data);
+        processFunctions(bundleCfgYaml, data, status);
+
 //        processSourceCodes(bundleCfgYaml, data);
+        return status;
     }
 
-    private void processFunctions(BundleCfgYaml bundleCfgYaml, Path data) {
-        List<FunctionApiData.FunctionConfigStatus> statuses = new ArrayList<>();
-
+    private void processFunctions(BundleCfgYaml bundleCfgYaml, Path data, BundleData.UploadingStatus status) {
         for (BundleCfgYaml.BundleConfig bundleConfig : bundleCfgYaml.bundleConfig) {
             if (bundleConfig.type!= EnumsApi.BundleItemType.function) {
                 continue;
@@ -159,14 +155,8 @@ public class BundleService {
                 log.error("invalid record in bundle-cfg.yaml, path {} doesn't exist", bundleConfig.path);
                 continue;
             }
-            functionService.loadFunction(f);
+            functionService.loadFunction(f, status);
         }
-//        Files.walkFileTree(bundleCfgYaml.dir, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
-//            @Override
-//            public FileVisitResult visitFile(Path p, BasicFileAttributes attrs) {
-//                return FileVisitResult.CONTINUE;
-//            }
-//        });
     }
 
     private static ZipUtils.ValidationResult isZipEntityNameOk(ZipEntry zipEntry) {

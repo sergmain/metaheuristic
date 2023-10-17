@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
+import ai.metaheuristic.ai.dispatcher.data.BundleData;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
@@ -265,15 +266,14 @@ public class FunctionService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public List<FunctionApiData.FunctionConfigStatus> loadFunction(Path srcDir) {
-        List<FunctionApiData.FunctionConfigStatus> statuses = new ArrayList<>();
+    public void loadFunction(Path srcDir, BundleData.UploadingStatus status) {
         try {
             Path yamlConfigFile = srcDir.resolve(CommonConsts.FUNCTION_YAML);
             if (Files.notExists(yamlConfigFile)) {
-                String es = S.f("#295.080 File '%s' wasn't found in dir %s", CommonConsts.FUNCTION_YAML, srcDir.normalize());
-                statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
+                String es = S.f("295.080 File '%s' wasn't found in dir %s", CommonConsts.FUNCTION_YAML, srcDir.normalize());
+                status.addErrorMessage(es);
                 log.error(es);
-                return statuses;
+                return;
             }
 
             String yaml = Files.readString(yamlConfigFile);
@@ -285,78 +285,81 @@ public class FunctionService {
 //            }
 
             FunctionConfigYaml functionConfigList = FunctionConfigYamlUtils.UTILS.to(yaml);
-
-            loadFunctionInternal(srcDir, statuses, functionConfigList);
-            return statuses;
+            loadFunctionInternal(srcDir, status, functionConfigList);
         }
         catch (VariableSavingException e) {
-            statuses.add(new FunctionApiData.FunctionConfigStatus(false, e.getMessage()));
+            status.addErrorMessage(e.getMessage());
         }
         catch(Throwable th) {
-            final String es = "#295.240 Error " + th.getClass().getName() + " while uploading functions from bundle: " + th.getMessage();
+            final String es = "295.240 Error " + th.getClass().getName() + " while uploading functions from bundle: " + th.getMessage();
             log.error(es, th);
-            statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
+            status.addErrorMessage(es);
         }
-
-        return statuses;
     }
 
-    private void loadFunctionInternal(Path srcDir, List<FunctionApiData.FunctionConfigStatus> statuses, FunctionConfigYaml functionConfigList) throws IOException {
-        FunctionConfigYaml.FunctionConfig functionConfig = functionConfigList.function;
-        FunctionApiData.FunctionConfigStatus status = FunctionCoreUtils.validate(functionConfig);
-        if (!status.isOk) {
-            statuses.add(status);
-            log.error(status.error);
+    private void loadFunctionInternal(Path srcDir, BundleData.UploadingStatus status, FunctionConfigYaml functionConfigYaml) throws IOException {
+        FunctionConfigYaml.FunctionConfig functionConfig = functionConfigYaml.function;
+        Function function = functionRepository.findByCode(functionConfig.code);
+        // the function was already uploaded
+        if (function !=null) {
+            final String es = S.f("295.220 Function %s was already uploaded", function.code);
+            status.addInfoMessage(es);
+            return;
+        }
+
+        FunctionApiData.FunctionConfigStatus validated = FunctionCoreUtils.validate(functionConfig);
+        if (!validated.isOk) {
+            status.addErrorMessage(validated.error);
+            log.error(validated.error);
+            return;
+        }
+        if (functionConfigYaml.system==null || S.b(functionConfigYaml.system.archive)) {
+            final String es = S.f("295.220 Config yaml for function %s is broken, field system or system.archive is empty ", functionConfig.code);
+            status.addErrorMessage(es);
             return;
         }
         String sum=null;
-        Path file = S.b(functionConfig.file) ? null : srcDir.resolve(functionConfig.file);
+        Path file = srcDir.resolve(functionConfigYaml.system.archive);
+        if (Files.notExists(file)) {
+            final String es = "295.160 Function has broken functionConfigYaml.system.archive, file not found " + file;
+            status.addErrorMessage(es);
+            log.warn(es+" Temp dir: " + srcDir.normalize());
+            return;
+        }
+
         if (globals.dispatcher.functionSignatureRequired) {
             // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing right noww
             final EnumsApi.HashAlgo hashAlgo = EnumsApi.HashAlgo.SHA256WithSignature;
 
-            if (functionConfigList.system==null || functionConfigList.system.checksumMap.keySet().stream().noneMatch(o->o==hashAlgo)) {
-                String es = S.f("#295.100 Global isFunctionSignatureRequired==true but function %s isn't signed with HashAlgo.SHA256WithSignature", functionConfig.code);
-                statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
+            if (functionConfigYaml.system.checksumMap.keySet().stream().noneMatch(o->o==hashAlgo)) {
+                String es = S.f("295.100 Global isFunctionSignatureRequired==true but function %s isn't signed with HashAlgo.SHA256WithSignature", functionConfig.code);
+                status.addErrorMessage(es);
                 log.error(es);
                 return;
             }
-            String data = functionConfigList.system.checksumMap.entrySet().stream()
+            String data = functionConfigYaml.system.checksumMap.entrySet().stream()
                     .filter(o -> o.getKey() == hashAlgo)
                     .findFirst()
                     .map(Map.Entry::getValue).orElse(null);
 
             if (S.b(data)) {
-                String es = S.f("#295.120 Global isFunctionSignatureRequired==true but function %s has empty SHA256WithSignature value", functionConfig.code);
-                statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
+                String es = S.f("295.120 Global isFunctionSignatureRequired==true but function %s has empty SHA256WithSignature value", functionConfig.code);
+                status.addErrorMessage(es);
                 log.warn(es);
                 return;
             }
             ChecksumAndSignatureData.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureUtils.parse(data);
             if (S.b(checksumWithSignature.checksum) || S.b(checksumWithSignature.signature)) {
-                String es = S.f("#295.140 Global isFunctionSignatureRequired==true but function %s has empty checksum or signature", functionConfig.code);
-                statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
+                String es = S.f("295.140 Global isFunctionSignatureRequired==true but function %s has empty checksum or signature", functionConfig.code);
+                status.addErrorMessage(es);
                 log.warn(es);
                 return;
             }
 
             switch(functionConfig.sourcing) {
                 case dispatcher:
-                    if (S.b(functionConfig.file)) {
-                        String s = FunctionCoreUtils.getDataForChecksumForConfigOnly(functionConfig);
-                        sum = Checksum.getChecksum(hashAlgo, new ByteArrayInputStream(s.getBytes()));
-                    }
-                    else {
-                        file = srcDir.resolve(functionConfig.file);
-                        if (Files.notExists(file)) {
-                            final String es = "#295.160 Function has a sourcing as 'dispatcher' but file " + functionConfig.file + " wasn't found.";
-                            statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
-                            log.warn(es+" Temp dir: " + srcDir.normalize());
-                            return;
-                        }
-                        try (InputStream inputStream = Files.newInputStream(file)) {
-                            sum = Checksum.getChecksum(hashAlgo, inputStream);
-                        }
+                    try (InputStream inputStream = Files.newInputStream(file)) {
+                        sum = Checksum.getChecksum(hashAlgo, inputStream);
                     }
                     break;
                 case processor:
@@ -366,8 +369,8 @@ public class FunctionService {
                     break;
             }
             if (!checksumWithSignature.checksum.equals(sum)) {
-                String es = S.f("#295.180 Function %s has wrong checksum", functionConfig.code);
-                statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
+                String es = S.f("295.180 Function %s has wrong checksum", functionConfig.code);
+                status.addErrorMessage(es);
                 log.warn(es);
                 return;
             }
@@ -378,31 +381,17 @@ public class FunctionService {
 
             if (st!= EnumsApi.SignatureState.correct) {
                 if (!checksumWithSignature.checksum.equals(sum)) {
-                    String es = S.f("#295.200 Function %s has wrong signature", functionConfig.code);
-                    statuses.add(new FunctionApiData.FunctionConfigStatus(false, es));
+                    String es = S.f("295.200 Function %s has wrong signature", functionConfig.code);
+                    status.addErrorMessage(es);
                     log.warn(es);
                     return;
                 }
             }
         }
 
-        Function function = functionRepository.findByCode(functionConfig.code);
-        // there is a function with the same code
-        if (function !=null) {
-            statuses.add(new FunctionApiData.FunctionConfigStatus(false,
-                    "#295.220 Replacing of existing function isn't supported any more, need to upload a function as a new one. Function code: "+ function.code));
-            return;
-        }
-        else {
-            FunctionConfigYaml scy = functionConfigList;
-            if (file != null) {
-                try (InputStream is = Files.newInputStream(file); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-                    functionTxService.persistFunction(scy, bis, Files.size(file));
-                }
-            }
-            else {
-                functionTxService.persistFunction(scy, null, 0);
-            }
+        FunctionConfigYaml scy = functionConfigYaml;
+        try (InputStream is = Files.newInputStream(file); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
+            functionTxService.persistFunction(scy, bis, Files.size(file));
         }
     }
 
@@ -427,7 +416,7 @@ public class FunctionService {
                 FunctionConfigYaml temp = function.getFunctionConfigYaml();
                 functionConfig = TaskParamsUtils.toFunctionConfig(temp);
             } else {
-                log.warn("#295.040 Can't find function for code {}", functionDef.getCode());
+                log.warn("295.040 Can't find function for code {}", functionDef.getCode());
             }
         }
         return functionConfig;

@@ -33,17 +33,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+
 /**
  * @author Serge
  * Date: 7/26/2021
  * Time: 10:46 PM
  */
 @RestController
-@RequestMapping("/dispatcher/bundle")
+@RequestMapping("/rest/v1/dispatcher/bundle")
 @Slf4j
 @Profile("dispatcher")
 @CrossOrigin
-@PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class BundleRestController {
 
@@ -51,6 +51,7 @@ public class BundleRestController {
     private final UserContextService userContextService;
 
     @PostMapping(value = "/bundle-upload-from-file")
+    @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA', 'MANAGER')")
     public BundleData.UploadingStatus uploadFile(final MultipartFile file, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         BundleData.UploadingStatus status = bundleTopLevelService.uploadFromFile(file, context);
