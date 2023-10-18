@@ -93,11 +93,11 @@ public class SourceCodeValidationService {
     private SourceCodeApiData.SourceCodeValidationResult getSourceCodeValidationResult(SourceCodeImpl sourceCode, List<String> checkedUids) {
         if (StringUtils.isBlank(sourceCode.uid)) {
             return new SourceCodeApiData.SourceCodeValidationResult(
-                    EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_UID_EMPTY_ERROR, "#177.040 UID can't be blank");
+                    EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_UID_EMPTY_ERROR, "178.040 UID can't be blank");
         }
         if (StringUtils.isBlank(sourceCode.getParams())) {
             return new SourceCodeApiData.SourceCodeValidationResult(
-                    EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_PARAMS_EMPTY_ERROR, "#177.060 SourceCode is blank");
+                    EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_PARAMS_EMPTY_ERROR, "178.060 SourceCode is blank");
         }
         final Function<SourceCodeParamsYaml.Process, SourceCodeApiData.SourceCodeValidationResult> checkFunctionsFunc = (p) -> checkFunctions(sourceCode, p, checkedUids);
 
@@ -119,13 +119,13 @@ public class SourceCodeValidationService {
         if (sourceCode.isValid() || sourceCodeValidation.status.status==OK) {
             dispatcherParamsTopLevelService.registerSourceCode(sourceCode);
             if (sourceCode.isValid() && sourceCodeValidation.status.status!=OK) {
-                log.error("#177.240 Need to investigate: (sourceCode.isValid() && sourceCodeValidation.status!=OK)");
+                log.error("178.08 Need to investigate: (sourceCode.isValid() && sourceCodeValidation.status!=OK)");
             }
             sourceCodeValidation.infoMessages = Collections.singletonList("Validation result: OK");
         }
         else {
             dispatcherParamsTopLevelService.unregisterSourceCode(sourceCode.uid);
-            final String es = "#177.260 Validation status: " + sourceCodeValidation.status.status+", sourceCode UID: " + sourceCode.uid;
+            final String es = "178.100 Validation status: " + sourceCodeValidation.status.status+", sourceCode UID: " + sourceCode.uid;
             log.error(es+", error: " + sourceCodeValidation.status.error);
             sourceCodeValidation.addErrorMessage(es);
             sourceCodeValidation.addErrorMessage(sourceCodeValidation.status.error);
@@ -138,21 +138,21 @@ public class SourceCodeValidationService {
         try {
             sourceCodeValidation.status = checkConsistencyOfSourceCode(sourceCode);
         } catch (YAMLException e) {
-            sourceCodeValidation.addErrorMessage("#177.280 Error while parsing yaml config, " + e.getMessage());
+            sourceCodeValidation.addErrorMessage("178.120 Error while parsing yaml config, " + e.getMessage());
             sourceCodeValidation.status = new SourceCodeApiData.SourceCodeValidationResult(
-                    EnumsApi.SourceCodeValidateStatus.YAML_PARSING_ERROR, "#177.300 Error while parsing yaml config");
+                    EnumsApi.SourceCodeValidateStatus.YAML_PARSING_ERROR, "178.300 Error while parsing yaml config");
         }
         return sourceCodeValidation;
     }
 
     private SourceCodeApiData.SourceCodeValidationResult checkRequiredVersionOfTaskParams(int sourceCodeYamlAsStr, SourceCodeParamsYaml.Process process, SourceCodeParamsYaml.FunctionDefForSourceCode snDef) {
         if (S.b(snDef.code)) {
-            String es = S.f("#177.340 function wasn't found for code: %s, process: %s", snDef.code, process.code);
+            String es = S.f("178.140 function wasn't found for code: %s, process: %s", snDef.code, process.code);
             log.error(es);
             return new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR, es);
         }
         if (snDef.refType==null) {
-            String es = S.f("#175.430 function %s has empty refType field");
+            String es = S.f("178.160 function %s has empty refType field");
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.FUNCTION_REF_TYPE_EMPTY_ERROR, es);
         }
@@ -168,7 +168,7 @@ public class SourceCodeValidationService {
             throw new IllegalStateException("unknown refType: " + snDef.refType);
         }
         if (functionId == null) {
-            String es = S.f("177.320 Function wasn't found for code: %s, refType: %s,  process: %s", snDef.code, snDef.refType, process.code);
+            String es = S.f("177.180 Function wasn't found for code: %s, refType: %s,  process: %s", snDef.code, snDef.refType, process.code);
             log.error(es);
             return new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR, es);
         }
@@ -185,7 +185,7 @@ public class SourceCodeValidationService {
                 if (internalFunction==null) {
                     return new SourceCodeApiData.SourceCodeValidationResult(
                             EnumsApi.SourceCodeValidateStatus.INTERNAL_FUNCTION_NOT_FOUND_ERROR,
-                            "177.380 Unknown internal function '"+snDef.code+"'"
+                            "177.200 Unknown internal function '"+snDef.code+"'"
                     );
                 }
 
@@ -193,7 +193,7 @@ public class SourceCodeValidationService {
                     process.cache!=null && process.cache.enabled ) {
                     return new SourceCodeApiData.SourceCodeValidationResult(
                             EnumsApi.SourceCodeValidateStatus.CACHING_ISNT_SUPPORTED_FOR_INTERNAL_FUNCTION_ERROR,
-                            S.f("177.110 Caching isn't supported for internal functions %s. Process: ", internalFunction.getCode(), process.code));
+                            S.f("177.220 Caching isn't supported for internal functions %s. Process: ", internalFunction.getCode(), process.code));
                 }
 
                 if (Consts.MH_EXEC_SOURCE_CODE_FUNCTION.equals(snDef.code)) {
@@ -201,14 +201,14 @@ public class SourceCodeValidationService {
                     if (S.b(scUid)) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.META_NOT_FOUND_ERROR,
-                                "177.383 meta '"+Consts.SOURCE_CODE_UID+"' must be defined for internal function " + Consts.MH_EXEC_SOURCE_CODE_FUNCTION
+                                "177.240 meta '"+Consts.SOURCE_CODE_UID+"' must be defined for internal function " + Consts.MH_EXEC_SOURCE_CODE_FUNCTION
                         );
                     }
                     SourceCodeImpl sc = sourceCodeRepository.findByUid(scUid);
                     if (sc==null) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR,
-                                "#177.383 SourceCode wasn't found for uid '"+scUid+"'"
+                                "178.260 SourceCode wasn't found for uid '"+scUid+"'"
                         );
                     }
                     SourceCodeStoredParamsYaml scspy = sc.getSourceCodeStoredParamsYaml();
@@ -218,7 +218,7 @@ public class SourceCodeValidationService {
                     if (process.inputs.size()!=inputNumber) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.INPUT_VARIABLES_COUNT_MISMATCH_ERROR,
-                                S.f("#177.386 SourceCode '%s' has different number of input variables (count: %d) from sourceCode '%s' (count: %d)",
+                                S.f("178.280 SourceCode '%s' has different number of input variables (count: %d) from sourceCode '%s' (count: %d)",
                                         sourceCode.uid, process.inputs.size(), sc.uid, inputNumber)
                         );
                     }
@@ -226,7 +226,7 @@ public class SourceCodeValidationService {
                     if (process.outputs.size()!=outputNumber) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLES_COUNT_MISMATCH_ERROR,
-                                S.f("#177.388 SourceCode '%s' has different number of output variables (count: %d) from sourceCode '%s' (count: %d)",
+                                S.f("178.300 SourceCode '%s' has different number of output variables (count: %d) from sourceCode '%s' (count: %d)",
                                         sourceCode.uid, process.outputs.size(), sc.uid, outputNumber)
                         );
                     }
@@ -235,7 +235,7 @@ public class SourceCodeValidationService {
             else {
                 SourceCodeApiData.SourceCodeValidationResult x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
                 if (x.status != OK) {
-                    log.error("#177.400 Function wasn't found for code: {}, process: {}", snDef.code, process);
+                    log.error("178.320 Function wasn't found for code: {}, process: {}", snDef.code, process);
                     return x;
                 }
             }
@@ -244,7 +244,7 @@ public class SourceCodeValidationService {
             for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.preFunctions) {
                 SourceCodeApiData.SourceCodeValidationResult x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
                 if (x.status != OK) {
-                    log.error("#177.420 Pre-function {} wasn't found", snDef.code);
+                    log.error("178.340 Pre-function {} wasn't found", snDef.code);
                     return x;
                 }
             }
@@ -253,7 +253,7 @@ public class SourceCodeValidationService {
             for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.postFunctions) {
                 SourceCodeApiData.SourceCodeValidationResult x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
                 if (x.status != OK) {
-                    log.error("#177.440 Post-function {} wasn't found", snDef.code);
+                    log.error("178.360 Post-function {} wasn't found", snDef.code);
                     return x;
                 }
             }
@@ -275,12 +275,12 @@ public class SourceCodeValidationService {
         int taskParamsYamlVersion = SourceCodeParamsYamlUtils.getRequiredVersionOfTaskParamsYaml(sourceCodeParamsVersion);
         TaskParamsYaml.FunctionConfig fc = functionTopLevelService.getFunctionConfig(fnDef);
         if (fc==null) {
-            String es = S.f("#175.440 Function %s wasn't found",  fnDef.code);
+            String es = S.f("178.380 Function %s wasn't found",  fnDef.code);
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.FUNCTION_NOT_FOUND_ERROR, es);
         }
         if (taskParamsYamlVersion > FunctionCoreUtils.getTaskParamsVersion(fc.metas)) {
-            String es = S.f("#175.460 Version of function %s is too low, required version: %s", fnDef.code, taskParamsYamlVersion);
+            String es = S.f("178.400 Version of function %s is too low, required version: %s", fnDef.code, taskParamsYamlVersion);
             log.error(es);
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.VERSION_OF_FUNCTION_IS_TOO_LOW_ERROR, es);

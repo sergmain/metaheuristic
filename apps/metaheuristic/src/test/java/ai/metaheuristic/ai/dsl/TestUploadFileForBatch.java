@@ -128,7 +128,7 @@ public class TestUploadFileForBatch extends PreparingSourceCode {
 
         SourceCodeApiData.SourceCodeResult sourceCodeResult = sourceCodeTxService.validateSourceCode(getSourceCode().id, context);
         assertEquals(EnumsApi.SourceCodeValidateStatus.OK, sourceCodeResult.validationResult.status);
-        // TODO p5 delete this line if thest will work ok without it
+        // TODO p5 delete this line if test will work OK without it
 //        sourceCode = Objects.requireNonNull(sourceCodeCache.findById(getSourceCode().id));
         assertNotNull(getSourceCode());
         assertTrue(getSourceCode().isValid());

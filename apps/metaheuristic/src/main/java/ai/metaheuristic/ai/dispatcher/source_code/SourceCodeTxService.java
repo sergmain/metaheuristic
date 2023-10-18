@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
-import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
@@ -31,7 +30,6 @@ import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
@@ -148,7 +146,8 @@ public class SourceCodeTxService {
         }
     }
 
-    @Transactional
+    // TODO p3 2023-10-17 do we need Transaction for validating?
+//    @Transactional
     public SourceCodeApiData.SourceCodeResult validateSourceCode(Long sourceCodeId, DispatcherContext context) {
         final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
@@ -194,7 +193,7 @@ public class SourceCodeTxService {
         return result;
     }
 
-    @Transactional
+/*    @Transactional
     public SourceCodeApiData.SourceCodeResult updateSourceCode(Long sourceCodeId, String sourceCodeYamlAsStr, DispatcherContext context) {
         if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new SourceCodeApiData.SourceCodeResult("#565.300 Can't update a sourceCode while 'replicated' mode of asset is active");
@@ -235,7 +234,7 @@ public class SourceCodeTxService {
         result.infoMessages = sourceCodeValidation.infoMessages;
         result.errorMessages = sourceCodeValidation.errorMessages;
         return result;
-    }
+    }*/
 
     @Transactional
     public OperationStatusRest archiveSourceCodeById(Long sourceCodeId, DispatcherContext context) {

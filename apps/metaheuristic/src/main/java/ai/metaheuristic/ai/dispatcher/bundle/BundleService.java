@@ -167,6 +167,7 @@ public class BundleService {
                     String yaml = Files.readString(p);
                     SourceCodeApiData.SourceCodeResult codeResult = sourceCodeService.createSourceCode(yaml, dispatcherContext.getCompanyId());
                     status.addErrorMessages(codeResult.getErrorMessagesAsList());
+                    status.addInfoMessages(codeResult.getInfoMessagesAsList());
                     return FileVisitResult.CONTINUE;
                 }
             });
