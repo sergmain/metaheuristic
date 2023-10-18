@@ -80,7 +80,7 @@ import static ai.metaheuristic.ai.Consts.YML_EXT;
 @Profile("dispatcher")
 @Service
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class SourceCodeTopLevelService {
+public class SourceCodeService {
 
     private final SourceCodeTxService sourceCodeTxService;
     private final Globals globals;

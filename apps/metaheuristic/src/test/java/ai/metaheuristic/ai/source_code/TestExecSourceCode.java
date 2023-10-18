@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -62,7 +62,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestExecSourceCode {
 
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
-    @Autowired private SourceCodeTopLevelService sourceCodeTopLevelService;
+    @Autowired private SourceCodeService sourceCodeService;
     @Autowired private SourceCodeCache sourceCodeCache;
     @Autowired private SourceCodeTxService sourceCodeTxService;
     @Autowired private CompanyTopLevelService companyTopLevelService;
@@ -96,13 +96,13 @@ public class TestExecSourceCode {
         SourceCodeApiData.SourceCodeResult scr = null;
         SourceCodeApiData.SourceCodeResult scrSub = null;
         try {
-            scrSub = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-correct-sub-source-code.yaml"), company.uniqueId);
+            scrSub = sourceCodeService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-correct-sub-source-code.yaml"), company.uniqueId);
             assertTrue(scrSub.isValid());
             assertFalse(scrSub.isErrorMessages());
             System.out.println(scrSub.getErrorMessagesAsStr());
             assertEquals(scrSub.validationResult.status, EnumsApi.SourceCodeValidateStatus.OK);
 
-            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-correct.yaml"), company.uniqueId);
+            scr = sourceCodeService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-correct.yaml"), company.uniqueId);
             assertTrue(scr.isValid());
             assertFalse(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());
@@ -117,7 +117,7 @@ public class TestExecSourceCode {
     public void testRecursionExecError() throws IOException {
         SourceCodeApiData.SourceCodeResult scr = null;
         try {
-            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-1.yaml"), company.uniqueId);
+            scr = sourceCodeService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-1.yaml"), company.uniqueId);
             assertTrue(scr.isValid());
         } finally {
             finalize(scr);
@@ -128,7 +128,7 @@ public class TestExecSourceCode {
     public void testMetaNotFoundError() throws IOException {
         SourceCodeApiData.SourceCodeResult scr = null;
         try {
-            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-2.yaml"), company.uniqueId);
+            scr = sourceCodeService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-2.yaml"), company.uniqueId);
             assertFalse(scr.isValid());
             assertTrue(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());
@@ -143,7 +143,7 @@ public class TestExecSourceCode {
     public void testInputsCountMismatchError() throws IOException {
         SourceCodeApiData.SourceCodeResult scr = null;
         try {
-            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-3.yaml"), company.uniqueId);
+            scr = sourceCodeService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-3.yaml"), company.uniqueId);
             assertFalse(scr.isValid());
             assertTrue(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());
@@ -158,7 +158,7 @@ public class TestExecSourceCode {
     public void testOutputsCountMismatchError() throws IOException {
         SourceCodeApiData.SourceCodeResult scr = null;
         try {
-            scr = sourceCodeTopLevelService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-4.yaml"), company.uniqueId);
+            scr = sourceCodeService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-4.yaml"), company.uniqueId);
             assertFalse(scr.isValid());
             assertTrue(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());

@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
@@ -72,7 +72,7 @@ public class PreparingSourceCodeInitService {
     private final AccountService accountTopLevelService;
     private final GlobalVariableTxService globalVariableService;
     private final GeneralBlobTxService variableBlobTxService;
-    private final SourceCodeTopLevelService sourceCodeTopLevelService;
+    private final SourceCodeService sourceCodeService;
     private final SourceCodeCache sourceCodeCache;
     private final FunctionRepository functionRepository;
     private final FunctionTxService functionTxService;
@@ -136,7 +136,7 @@ public class PreparingSourceCodeInitService {
         data.f4 = createFunction("function-04:1.1");
         data.f5 = createFunction("function-05:1.1");
 
-        SourceCodeApiData.SourceCodeResult scr = sourceCodeTopLevelService.createSourceCode(params, data.company.uniqueId);
+        SourceCodeApiData.SourceCodeResult scr = sourceCodeService.createSourceCode(params, data.company.uniqueId);
         data.sourceCode = Objects.requireNonNull(sourceCodeCache.findById(scr.id));
 
         byte[] bytes = "A resource for input pool".getBytes();

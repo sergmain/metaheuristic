@@ -299,10 +299,18 @@ public class FunctionService {
 
     private void loadFunctionInternal(Path srcDir, BundleData.UploadingStatus status, FunctionConfigYaml functionConfigYaml) throws IOException {
         FunctionConfigYaml.FunctionConfig functionConfig = functionConfigYaml.function;
+        if (functionConfigYaml.system == null) {
+            final String es = S.f("295.220 Config yaml for function %s is broken, field system or system.archive is empty ", functionConfig.code);
+            status.addErrorMessage(es);
+            return;
+        }
+
         Function function = functionRepository.findByCode(functionConfig.code);
         // the function was already uploaded
         if (function !=null) {
-            final String es = S.f("295.220 Function %s was already uploaded", function.code);
+            FunctionConfigYaml cfg = function.getFunctionConfigYaml();
+            final String checksumInfo = getChecksumInfo(functionConfigYaml, cfg);
+            final String es = S.f("295.220 Function %s was already uploaded. Checksum %s", function.code, checksumInfo);
             status.addInfoMessage(es);
             return;
         }
@@ -313,7 +321,7 @@ public class FunctionService {
             log.error(validated.error);
             return;
         }
-        if (functionConfigYaml.system==null || S.b(functionConfigYaml.system.archive)) {
+        if (S.b(functionConfigYaml.system.archive)) {
             final String es = S.f("295.220 Config yaml for function %s is broken, field system or system.archive is empty ", functionConfig.code);
             status.addErrorMessage(es);
             return;
@@ -393,6 +401,30 @@ public class FunctionService {
         try (InputStream is = Files.newInputStream(file); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
             functionTxService.persistFunction(scy, bis, Files.size(file));
         }
+    }
+
+    private static String getChecksumInfo(FunctionConfigYaml functionConfigYaml, FunctionConfigYaml cfg) {
+        String checksumInfo = " not present.";
+        if (cfg.system!=null && cfg.system.checksumMap!=null) {
+            if (functionConfigYaml.system.checksumMap==null || functionConfigYaml.system.checksumMap.isEmpty()) {
+                //
+            }
+            else {
+                for (Map.Entry<EnumsApi.HashAlgo, String> en : cfg.system.checksumMap.entrySet()) {
+                    ChecksumAndSignatureData.ChecksumWithSignature checksumWithSignature2 = ChecksumWithSignatureUtils.parse(en.getValue());
+                    for (Map.Entry<EnumsApi.HashAlgo, String> o : functionConfigYaml.system.checksumMap.entrySet()) {
+                        if (o.getKey() == en.getKey()) {
+                            ChecksumAndSignatureData.ChecksumWithSignature checksumWithSignature1 = ChecksumWithSignatureUtils.parse(o.getValue());
+                            if (Objects.equals(checksumWithSignature1.checksum, checksumWithSignature2.checksum)) {
+                                return " is the same.";
+                            }
+                        }
+                    }
+                }
+                return " is different.";
+            }
+        }
+        return checksumInfo;
     }
 
     @Nullable

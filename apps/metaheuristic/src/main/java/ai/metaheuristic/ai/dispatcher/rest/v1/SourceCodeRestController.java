@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTopLevelService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
@@ -51,7 +51,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class SourceCodeRestController {
 
     private final SourceCodeTxService sourceCodeTxService;
-    private final SourceCodeTopLevelService sourceCodeTopLevelService;
+    private final SourceCodeService sourceCodeService;
     private final UserContextService userContextService;
 
     @GetMapping("/source-codes")
@@ -72,7 +72,7 @@ public class SourceCodeRestController {
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public SourceCodeApiData.SourceCodeResult edit(@PathVariable Long id, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeTopLevelService.getSourceCode(id, context);
+        return sourceCodeService.getSourceCode(id, context);
     }
 
     @GetMapping(value = "/source-code-validate/{id}")
@@ -86,7 +86,7 @@ public class SourceCodeRestController {
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public SourceCodeApiData.SourceCodeResult addFormCommit(@RequestParam(name = "source") String sourceCodeYamlAsStr, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeTopLevelService.createSourceCode(sourceCodeYamlAsStr, context.getCompanyId());
+        return sourceCodeService.createSourceCode(sourceCodeYamlAsStr, context.getCompanyId());
     }
 
     @PostMapping("/source-code-edit-commit")
@@ -113,7 +113,7 @@ public class SourceCodeRestController {
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest uploadSourceCode(final MultipartFile file, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeTopLevelService.uploadSourceCode(file, context);
+        return sourceCodeService.uploadSourceCode(file, context);
     }
 
     @GetMapping(value = "/source-code-devs/{id}")
@@ -126,7 +126,7 @@ public class SourceCodeRestController {
         }
         return "";
 /*
-        SourceCodeData.Development development = sourceCodeTopLevelService.getSourceCodeDevs(id, context);
+        SourceCodeData.Development development = sourceCodeService.getSourceCodeDevs(id, context);
         if (development.isErrorMessages()) {
             ControllerUtils.initRedirectAttributes(redirectAttributes, development);
             return "";
@@ -144,7 +144,7 @@ public class SourceCodeRestController {
 
         final ResponseEntity<AbstractResource> entity;
         try {
-            CleanerInfo resource = sourceCodeTopLevelService.generateDirsForDev(sourceCodeId, processCode, context.getCompanyId());
+            CleanerInfo resource = sourceCodeService.generateDirsForDev(sourceCodeId, processCode, context.getCompanyId());
             if (resource==null) {
                 return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             }

@@ -141,8 +141,12 @@ public class BundleService {
 
         processFunctions(bundleCfgYaml, data, status);
 
-//        processSourceCodes(bundleCfgYaml, data);
+        processSourceCodes(bundleCfgYaml, data);
         return status;
+    }
+
+    private void processSourceCodes(BundleCfgYaml bundleCfgYaml, Path data) {
+        
     }
 
     private void processFunctions(BundleCfgYaml bundleCfgYaml, Path data, BundleData.UploadingStatus status) {

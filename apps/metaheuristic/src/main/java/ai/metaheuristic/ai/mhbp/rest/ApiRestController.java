@@ -75,7 +75,7 @@ public class ApiRestController {
 //    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public SourceCodeApiData.SourceCodeResult addFormCommit(@RequestParam(name = "source") String sourceCodeYamlAsStr, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return sourceCodeTopLevelService.createSourceCode(sourceCodeYamlAsStr, context.getCompanyId());
+        return sourceCodeService.createSourceCode(sourceCodeYamlAsStr, context.getCompanyId());
     }
 
     @PostMapping("/evaluation-edit-commit")
