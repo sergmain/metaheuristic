@@ -59,7 +59,7 @@ public class TaskProducingService {
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParamsYaml.Process process,
             ExecContextParamsYaml execContextParamsYaml, Long execContextId, Long execContextGraphId, Long execContextTaskStateId,
-            List<Long> parentTaskIds) {
+            List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState) {
         TxUtils.checkTxExists();
         ExecContextGraphSyncService.checkWriteLockPresent(execContextGraphId);
         ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
@@ -68,7 +68,7 @@ public class TaskProducingService {
 
         // for external Functions internalContextId==process.internalContextId
         TaskImpl t = createTaskHelper(execContextId, execContextParamsYaml, process, process.internalContextId,
-                execContextParamsYaml.variables.inline, parentTaskIds);
+                execContextParamsYaml.variables.inline, parentTaskIds, taskExecState);
         if (t == null) {
             return new TaskData.ProduceTaskResult(
                     EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR, "#375.020 Unknown reason of error while task creation");
@@ -141,7 +141,7 @@ public class TaskProducingService {
                     throw new BreakFromLambdaException("#375.060 only the 'sequential' and 'and' logics are supported");
             }
 
-            t = createTaskHelper(simpleExecContext.execContextId, execContextParamsYaml, p, actualProcessContextId, inlines, List.of(parentTaskId));
+            t = createTaskHelper(simpleExecContext.execContextId, execContextParamsYaml, p, actualProcessContextId, inlines, List.of(parentTaskId), EnumsApi.TaskExecState.PRE_INIT);
 
             if (t==null) {
                 throw new BreakFromLambdaException("#375.120 Creation of task failed");
@@ -161,8 +161,8 @@ public class TaskProducingService {
 
     @Nullable
     private TaskImpl createTaskHelper(
-            Long execContextId, ExecContextParamsYaml execContextParamsYaml, ExecContextParamsYaml.Process process,
-            String taskContextId, @Nullable Map<String, Map<String, String>> inlines, List<Long> parentTaskIds) {
+        Long execContextId, ExecContextParamsYaml execContextParamsYaml, ExecContextParamsYaml.Process process,
+        String taskContextId, @Nullable Map<String, Map<String, String>> inlines, List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState) {
 
         TaskParamsYaml taskParams = new TaskParamsYaml();
         taskParams.task.execContextId = execContextId;
@@ -206,23 +206,14 @@ public class TaskProducingService {
 
 
         TaskImpl task = new TaskImpl();
-        task.execState = EnumsApi.TaskExecState.INIT.value;
+        task.execState = taskExecState.value;
+//        task.execState = EnumsApi.TaskExecState.PRE_INIT.value;
         task.execContextId = execContextId;
         task.updateParams(taskParams);
 
         task = taskTxService.save(task);
 
         eventPublisher.publishEvent(new InitVariablesTxEvent(task.id));
-
-/*
-        List<String> allParentTaskContextIds = getAllParentTaskContextIds(task, parentTaskIds, task.getTaskParamsYaml().task.taskContextId, execContextId);
-        if (allParentTaskContextIds!=null) {
-            TaskImpl t = variableTxService.prepareVariables(execContextParamsYaml, task, allParentTaskContextIds);
-            if (t!=null) {
-                task = TaskSyncService.getWithSyncForCreation(t.id, ()-> taskTxService.save(t));
-            }
-        }
-*/
 
         return task;
     }

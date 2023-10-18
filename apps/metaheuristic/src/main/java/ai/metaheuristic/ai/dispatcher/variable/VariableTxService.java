@@ -456,7 +456,7 @@ public class VariableTxService {
     }
 
     @Nullable
-    public Object[] findVariableInAllInternalContexts(List<String> taskCtxIds, String variable, String taskContextId, Long execContextId) {
+    public Object[] findVariableInAllInternalContexts(List<String> taskCtxIds, String variable, Long execContextId) {
         for (String taskCtxId : taskCtxIds) {
             List<Object[]> obj = variableRepository.findAsObject(variable, taskCtxId, execContextId);
             if (obj!=null && !obj.isEmpty()) {

@@ -133,7 +133,7 @@ public class TaskVariableInitTxService {
                         S.f("#171.270 (S.b(contextId)), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
                                 v.name, v.context, taskContextId, execContextId));
             }
-            Object[] variable = variableTxService.findVariableInAllInternalContexts(allParentTaskContextIds, v.name, contextId, execContextId);
+            Object[] variable = variableTxService.findVariableInAllInternalContexts(allParentTaskContextIds, v.name, execContextId);
             if (variable==null) {
                 throw new TaskCreationException(
                         S.f("#171.300 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",

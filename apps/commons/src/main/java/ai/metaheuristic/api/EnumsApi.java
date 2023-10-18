@@ -321,13 +321,24 @@ public class EnumsApi {
         }
     }
 
-    public enum TaskExecState { NONE(0), IN_PROGRESS(1),
-        ERROR(2), OK(3), NOT_USED_ANYMORE(4),
-        SKIPPED(5), CHECK_CACHE(6), ERROR_WITH_RECOVERY(7), INIT(8);
+    public enum TaskExecState {
+        NONE(0, "Task is ready for processing"),
+        IN_PROGRESS(1, "Task is processing"),
+        ERROR(2, "Task finished with an error"),
+        OK(3, "Task finished with OK"),
+        NOT_USED_ANYMORE(4, "Not used anymore"),
+        SKIPPED(5, "Task was skipped"),
+        CHECK_CACHE(6, "Task for checking cache"),
+        ERROR_WITH_RECOVERY(7, "Task was finished with an error but will be re-run again"),
+        INIT(8, "Task marked for initing of variables"),
+        PRE_INIT(9, "Task was created, but init of variables postponed until all previous tasks will finish")
+        ;
 
         public final int value;
-        TaskExecState(int value) {
+        public final String desc;
+        TaskExecState(int value, String desc) {
             this.value = value;
+            this.desc = desc;
         }
 
         public static TaskExecState from(int type) {
@@ -340,6 +351,7 @@ public class EnumsApi {
                 case 6 -> CHECK_CACHE;
                 case 7 -> ERROR_WITH_RECOVERY;
                 case 8 -> INIT;
+                case 9 -> PRE_INIT;
                 default -> throw new IllegalStateException("Unknown type : " + type);
             };
         }

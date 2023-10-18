@@ -142,7 +142,8 @@ public class ExecContextTaskProducingService {
             final ExecContextParamsYaml.Process process = p;
             TaskData.ProduceTaskResult result = taskProducingService.produceTaskForProcess(
                 process, execContextParamsYaml, execContext.id,
-                execContext.execContextGraphId, execContext.execContextTaskStateId, parentTaskIds);
+                execContext.execContextGraphId, execContext.execContextTaskStateId, parentTaskIds,
+                parentProcesses.isEmpty() ? EnumsApi.TaskExecState.INIT : EnumsApi.TaskExecState.PRE_INIT);
 
             if (result.status!= EnumsApi.TaskProducingStatus.OK) {
                 return result;
