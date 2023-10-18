@@ -19,35 +19,38 @@ package ai.metaheuristic.ai.dispatcher.bundle;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.data.BundleData;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.exceptions.BundleProcessingException;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYaml;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.ArrayList;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
+
+import static ai.metaheuristic.ai.Consts.YAML_EXT;
+import static ai.metaheuristic.ai.Consts.YML_EXT;
 
 /**
  * @author Serge
@@ -68,10 +71,7 @@ public class BundleService {
     private record BundleLocation(Path dir, Path zipFile) {}
 
     private final FunctionService functionService;
-    private final SourceCodeCache sourceCodeCache;
-    private final DispatcherEventService dispatcherEventService;
-    private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
-    private final SourceCodeSelectorService sourceCodeSelectorService;
+    private final SourceCodeService sourceCodeService;
 
     public BundleData.UploadingStatus uploadFromFile(final MultipartFile file, final DispatcherContext dispatcherContext) {
         if (Consts.ID_1.equals(dispatcherContext.getCompanyId())) {
@@ -107,7 +107,7 @@ public class BundleService {
         }
 
         try {
-            BundleData.UploadingStatus status = processBundle(bundleLocation);
+            BundleData.UploadingStatus status = processBundle(bundleLocation, dispatcherContext);
             return status;
         }
         catch (ExecContextTooManyInstancesException e) {
@@ -125,7 +125,7 @@ public class BundleService {
         }
     }
 
-    private BundleData.UploadingStatus processBundle(BundleLocation bundleLocation) throws IOException {
+    private BundleData.UploadingStatus processBundle(BundleLocation bundleLocation, DispatcherContext dispatcherContext) throws IOException {
         Path data = bundleLocation.dir.resolve("data");
         Files.createDirectories(data);
         ZipUtils.unzipFolder(bundleLocation.zipFile, data);
@@ -140,13 +140,37 @@ public class BundleService {
         BundleData.UploadingStatus status = new BundleData.UploadingStatus();
 
         processFunctions(bundleCfgYaml, data, status);
+        processSourceCodes(bundleCfgYaml, data, status, dispatcherContext);
 
-        processSourceCodes(bundleCfgYaml, data);
         return status;
     }
 
-    private void processSourceCodes(BundleCfgYaml bundleCfgYaml, Path data) {
-        
+    private void processSourceCodes(BundleCfgYaml bundleCfgYaml, Path data, BundleData.UploadingStatus status, DispatcherContext dispatcherContext) throws IOException {
+        for (BundleCfgYaml.BundleConfig bundleConfig : bundleCfgYaml.bundleConfig) {
+            if (bundleConfig.type!= EnumsApi.BundleItemType.sourceCode) {
+                continue;
+            }
+            Path p = data.resolve(bundleConfig.path);
+            if (Files.notExists(p)) {
+                log.error("invalid record in bundle-cfg.yaml, path {} doesn't exist", bundleConfig.path);
+                continue;
+            }
+
+            Files.walkFileTree(p, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult visitFile(Path p, BasicFileAttributes attrs) throws IOException {
+                    final String filename = p.getFileName().toString();
+                    String ext = StrUtils.getExtension(filename);
+                    if (ext == null || !StringUtils.equalsAny(ext.toLowerCase(), YAML_EXT, YML_EXT)) {
+                        return FileVisitResult.CONTINUE;
+                    }
+                    String yaml = Files.readString(p);
+                    SourceCodeApiData.SourceCodeResult codeResult = sourceCodeService.createSourceCode(yaml, dispatcherContext.getCompanyId());
+                    status.addErrorMessages(codeResult.getErrorMessagesAsList());
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
     }
 
     private void processFunctions(BundleCfgYaml bundleCfgYaml, Path data, BundleData.UploadingStatus status) {

@@ -21,11 +21,14 @@ import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.api.EnumsApi;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
+import org.springframework.lang.Nullable;
 
 import java.util.*;
 
@@ -114,6 +117,14 @@ public class SourceCodeApiData {
 
         public SourceCodeResult(String errorMessage) {
             this.errorMessages = Collections.singletonList(errorMessage);
+        }
+
+        @JsonCreator
+        public SourceCodeResult (
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
         }
 
         public SourceCodeResult(SourceCode sc, SourceCodeStoredParamsYaml sourceCode, EnumsApi.DispatcherAssetMode assetMode) {

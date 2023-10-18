@@ -214,10 +214,12 @@ public class SourceCodeService {
         }
 
         try {
-            SourceCodeParamsYaml ppy;
             String sourceCodeYamlAsStr;
             try (InputStream is = file.getInputStream()) {
                 sourceCodeYamlAsStr = StreamUtils.copyToString(is, StandardCharsets.UTF_8);
+            }
+            SourceCodeParamsYaml ppy;
+            try {
                 ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeYamlAsStr);
             } catch (WrongVersionOfParamsException e) {
                 String es = "#560.340 An error parsing yaml: " + e.getMessage();
