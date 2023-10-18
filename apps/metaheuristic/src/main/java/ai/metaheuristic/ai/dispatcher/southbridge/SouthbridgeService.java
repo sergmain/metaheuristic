@@ -129,7 +129,7 @@ public class SouthbridgeService {
             case function:
                 assetFile = AssetUtils.prepareFunctionFile(globals.dispatcherResourcesPath, dataId, null);
                 if (assetFile.isError) {
-                    String es = "#444.100 Function with id " + dataId + " is broken";
+                    String es = "444.100 Function with id " + dataId + " is broken";
                     log.error(es);
                     throw new FunctionDataNotFoundException(dataId, es);
                 }
@@ -138,7 +138,7 @@ public class SouthbridgeService {
             case variable:
                 assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempPath, "" + EnumsApi.DataType.variable + '-' + dataId, null, binaryType);
                 if (assetFile.isError) {
-                    String es = "#444.120 Resource with id " + dataId + " is broken";
+                    String es = "444.120 Resource with id " + dataId + " is broken";
                     log.error(es);
                     throw new VariableDataNotFoundException(Long.parseLong(dataId), EnumsApi.VariableContext.local, es);
                 }
@@ -150,14 +150,14 @@ public class SouthbridgeService {
             case global_variable:
                 assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempPath, "" + EnumsApi.DataType.global_variable + '-' + dataId, null, binaryType);
                 if (assetFile.isError) {
-                    String es = "#444.140 Global variable with id " + dataId + " is broken";
+                    String es = "444.140 Global variable with id " + dataId + " is broken";
                     log.error(es);
                     throw new VariableDataNotFoundException(Long.parseLong(dataId), EnumsApi.VariableContext.local, es);
                 }
                 dataSaver = (variableId, trgFile) -> globalVariableService.storeToFileWithTx(Long.parseLong(variableId), trgFile);
                 break;
             default:
-                throw new IllegalStateException("#444.160 Unknown type of data: " + binaryType);
+                throw new IllegalStateException("444.160 Unknown type of data: " + binaryType);
         }
 
         CleanerInfo resource = new CleanerInfo();
@@ -171,7 +171,7 @@ public class SouthbridgeService {
                 return resource;
             }
             catch (CommonErrorWithDataException e) {
-                log.error("#444.180 Error store data to temp file, data doesn't exist in db, id " + dataId + ", file: " + assetFile.file);
+                log.error("444.180 Error store data to temp file, data doesn't exist in db, id " + dataId + ", file: " + assetFile.file);
                 throw e;
             }
         }
@@ -201,7 +201,7 @@ public class SouthbridgeService {
                 byteToRead = realSize;
                 long skipped = fis.skip(offset);
                 if (skipped!=offset) {
-                    String es = S.f("#444.190 Error (skipped!=offset), skipped: %d, offset: %d", skipped, offset);
+                    String es = S.f("444.190 Error (skipped!=offset), skipped: %d, offset: %d", skipped, offset);
                     log.error(es);
                     throw new CommonIOErrorWithDataException(es);
 
@@ -224,7 +224,7 @@ public class SouthbridgeService {
         KeepAliveRequestParamYaml karpy = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.to(data);
         KeepAliveResponseParamYaml response = keepAliveTopLevelService.processKeepAliveInternal(karpy, remoteAddress, System.currentTimeMillis());
         String yaml = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.toString(response);
-        log.info("#444.194 keepAlive(), size of request yaml: {}, response yaml: {}", data.length(), yaml.length());
+        log.info("444.194 keepAlive(), size of request yaml: {}, response yaml: {}", data.length(), yaml.length());
         return yaml;
     }
 
@@ -252,8 +252,8 @@ public class SouthbridgeService {
             catch (JsonProcessingException e) {
                 json = scpy.toString();
             }
-            log.error("#444.320 Error while processing client's request, size: {}, ProcessorCommParamsYaml:\n{}", json.length(), json);
-            log.error("#444.330 Error", th);
+            log.error("444.320 Error while processing client's request, size: {}, ProcessorCommParamsYaml:\n{}", json.length(), json);
+            log.error("444.330 Error", th);
             DispatcherCommParamsYaml lcpy = new DispatcherCommParamsYaml();
             lcpy.success = false;
             lcpy.msg = th.getMessage();
@@ -286,7 +286,7 @@ public class SouthbridgeService {
         Long processorId = request.processorCommContext.processorId;
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
-            log.warn("#444.200 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
+            log.warn("444.200 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
             DispatcherApiData.ProcessorSessionId processorSessionId = processorTransactionService.reassignProcessorId(remoteAddress, "Id was reassigned from " + request.processorCommContext.processorId);
             response.reAssignedProcessorId = new DispatcherCommParamsYaml.ReAssignProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
             return;
@@ -295,7 +295,7 @@ public class SouthbridgeService {
         Enums.ProcessorAndSessionStatus processorAndSessionStatus = ProcessorTopLevelService.checkProcessorAndSessionStatus(processor, request.processorCommContext.sessionId);
         if (processorAndSessionStatus == Enums.ProcessorAndSessionStatus.reassignProcessor || processorAndSessionStatus == Enums.ProcessorAndSessionStatus.newSession) {
             // do nothing because sessionId will be initialized via KeepAlive call
-            log.info("#444.220 do nothing: (processorAndSessionStatus==Enums.ProcessorAndSessionStatus.reassignProcessor || processorAndSessionStatus== Enums.ProcessorAndSessionStatus.newSession)");
+            log.info("444.220 do nothing: (processorAndSessionStatus==Enums.ProcessorAndSessionStatus.reassignProcessor || processorAndSessionStatus== Enums.ProcessorAndSessionStatus.newSession)");
             return;
         }
 

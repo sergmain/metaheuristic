@@ -91,7 +91,7 @@ public class DispatcherRequestor {
         this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
         this.dispatcher = dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
         if (dispatcher == null) {
-            throw new IllegalStateException("#775.010 Can't find dispatcher config for url " + dispatcherUrl);
+            throw new IllegalStateException("775.010 Can't find dispatcher config for url " + dispatcherUrl);
         }
         serverRestUrl = dispatcherUrl.url + CommonConsts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
     }
@@ -112,7 +112,7 @@ public class DispatcherRequestor {
     }
 
     private void processDispatcherCommParamsYaml(ProcessorCommParamsYaml scpy, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
-        log.debug("#775.020 DispatcherCommParamsYaml:\n{}", dispatcherYaml);
+        log.debug("775.015 DispatcherCommParamsYaml:\n{}", dispatcherYaml);
         withSync(() -> {
             processorCommandProcessor.processDispatcherCommParamsYaml(scpy, dispatcherUrl, dispatcherYaml);
             return null;
@@ -124,7 +124,7 @@ public class DispatcherRequestor {
             return;
         }
         if (dispatcher.dispatcherLookup.disabled) {
-            log.warn("#775.020 dispatcher {} is disabled", dispatcherUrl.url);
+            log.warn("775.020 dispatcher {} is disabled", dispatcherUrl.url);
             return;
         }
 
@@ -195,7 +195,7 @@ public class DispatcherRequestor {
             }
 
             if (!newRequest(pcpy)) {
-                log.info("#775.045 no new requests to {}", dispatcherUrl.url );
+                log.info("775.045 no new requests to {}", dispatcherUrl.url );
                 return;
             }
 
@@ -217,13 +217,13 @@ public class DispatcherRequestor {
                 String result = response.getBody();
                 log.debug("ExchangeData from dispatcher:\n{}", result);
                 if (result == null) {
-                    log.warn("#775.050 Dispatcher returned null as a result");
+                    log.warn("775.050 Dispatcher returned null as a result");
                     return;
                 }
                 DispatcherCommParamsYaml dispatcherYaml = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(result);
 
                 if (!dispatcherYaml.success) {
-                    log.error("#775.060 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
+                    log.error("775.060 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
                     return;
                 }
                 processDispatcherCommParamsYaml(pcpy, dispatcherUrl, dispatcherYaml);
@@ -231,7 +231,7 @@ public class DispatcherRequestor {
             } catch (HttpClientErrorException e) {
                 int value = e.getStatusCode().value();
                 if (value==UNAUTHORIZED.value() || value==FORBIDDEN.value() || value==NOT_FOUND.value()) {
-                    log.error("#775.070 Error {} accessing url {}", e.getStatusCode().value(), serverRestUrl);
+                    log.error("775.070 Error {} accessing url {}", e.getStatusCode().value(), serverRestUrl);
                 }
                 else {
                     throw e;
@@ -239,46 +239,46 @@ public class DispatcherRequestor {
             } catch (ResourceAccessException e) {
                 Throwable cause = e.getCause();
                 if (cause instanceof SocketException) {
-                    log.error("#775.090 Connection error: url: {}, err: {}", url, cause.getMessage());
+                    log.error("775.090 Connection error: url: {}, err: {}", url, cause.getMessage());
                 }
                 else if (cause instanceof UnknownHostException) {
-                    log.error("#775.093 Host unreachable, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                    log.error("775.093 Host unreachable, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else if (cause instanceof ConnectTimeoutException) {
-                    log.warn("#775.095 Connection timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                    log.warn("775.095 Connection timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else if (cause instanceof SocketTimeoutException) {
-                    log.warn("#775.097 Socket timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                    log.warn("775.097 Socket timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else if (cause instanceof SSLPeerUnverifiedException) {
-                    log.error("#775.098 SSL certificate mismatched, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                    log.error("775.098 SSL certificate mismatched, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else if (cause instanceof SSLException) {
-                    log.error("#775.098 SSL error, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                    log.error("775.098 SSL error, url: {}, error: {}", serverRestUrl, cause.getMessage());
                 }
                 else {
-                    log.error("#775.100 Error, url: " + url, e);
+                    log.error("775.100 Error, url: " + url, e);
                 }
             } catch (RestClientException e) {
                 if (e instanceof HttpStatusCodeException httpStatusCodeException && httpStatusCodeException.getStatusCode().value()>=500 && httpStatusCodeException.getStatusCode().value()<600 ) {
                     int errorCode = httpStatusCodeException.getStatusCode().value();
                     if (errorCode==503) {
-                        log.warn("#775.110 Error accessing url: {}, error: 503 Service Unavailable", url);
+                        log.warn("775.110 Error accessing url: {}, error: 503 Service Unavailable", url);
                     }
                     else if (errorCode==502) {
-                        log.warn("#775.112 Error accessing url: {}, error: 502 Bad Gateway", url);
+                        log.warn("775.112 Error accessing url: {}, error: 502 Bad Gateway", url);
                     }
                     else {
-                        log.error("#775.117 Error accessing url: {}, error: {}", url, e.getMessage());
+                        log.error("775.117 Error accessing url: {}, error: {}", url, e.getMessage());
                     }
                 }
                 else {
-                    log.error("#775.120 Error accessing url: {}", url);
-                    log.error("#775.125 Stacktrace", e);
+                    log.error("775.120 Error accessing url: {}", url);
+                    log.error("775.125 Stacktrace", e);
                 }
             }
         } catch (Throwable e) {
-            log.error("#775.130 Error in fixedDelay(), url: {}, error: {}", serverRestUrl, e.getMessage());
+            log.error("775.130 Error in fixedDelay(), url: {}, error: {}", serverRestUrl, e.getMessage());
         }
     }
 

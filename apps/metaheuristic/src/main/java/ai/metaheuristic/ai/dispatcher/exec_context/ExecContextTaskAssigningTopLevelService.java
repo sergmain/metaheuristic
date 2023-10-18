@@ -111,7 +111,7 @@ public class ExecContextTaskAssigningTopLevelService {
             statTotal.add(stat);
         }
         if (log.isInfoEnabled()) {
-            log.info("#703.030 total found {}, allocated {}", statTotal.found, statTotal.allocated);
+            log.info("703.030 total found {}, allocated {}", statTotal.found, statTotal.allocated);
             for (String notAllocatedReason : statTotal.notAllocatedReasons) {
                 log.info("  " + notAllocatedReason);
             }
@@ -124,7 +124,7 @@ public class ExecContextTaskAssigningTopLevelService {
 
         UnassignedTasksStat stat = new UnassignedTasksStat();
 
-        log.info("#703.100 start searching a new tasks for registering, execContextId: #{}", execContextId);
+        log.info("703.100 start searching a new tasks for registering, execContextId: #{}", execContextId);
         final ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext == null) {
             return stat;
@@ -141,7 +141,7 @@ public class ExecContextTaskAssigningTopLevelService {
                         execContext.execContextGraphId, execContext.execContextTaskStateId, true));
 
         stat.found = vertices.size();
-        log.debug("#703.140 found {} tasks for registering, execContextId: #{}", vertices.size(), execContextId);
+        log.debug("703.140 found {} tasks for registering, execContextId: #{}", vertices.size(), execContextId);
 
         if (vertices.isEmpty()) {
             execContextTaskResettingTopLevelService.handleEvaluateProviderEvent(new ResetTasksWithErrorEvent(execContextId));
@@ -182,7 +182,7 @@ public class ExecContextTaskAssigningTopLevelService {
                 if (EnumsApi.TaskExecState.isFinishedState(task.execState)) {
                     EnumsApi.TaskExecState state = EnumsApi.TaskExecState.from(task.execState);
                     if (log.isWarnEnabled()) {
-                        String es = "#703.380 Task #"+task.getId()+" was already processed with status " + state;
+                        String es = "703.380 Task #"+task.getId()+" was already processed with status " + state;
                         log.warn(es);
                         if (log.isInfoEnabled()) stat.notAllocatedReasons.add(es);
                     }
@@ -227,8 +227,8 @@ public class ExecContextTaskAssigningTopLevelService {
                         taskParamYaml = task.getTaskParamsYaml();
                     }
                     catch (YAMLException e) {
-                        log.error("#703.260 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.getMessage(), task.getParams());
-                        final String es = S.f("#703.260 Task #%s has broken params yaml and will be skipped", task.id);
+                        log.error("703.260 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.getMessage(), task.getParams());
+                        final String es = S.f("703.260 Task #%s has broken params yaml and will be skipped", task.id);
                         taskFinishingTxService.finishWithErrorWithTx(task.id, es);
                         if (log.isInfoEnabled()) stat.notAllocatedReasons.add(es);
                         continue;
@@ -244,7 +244,7 @@ public class ExecContextTaskAssigningTopLevelService {
                             break;
                         case internal:
                             // all tasks with internal function will be processed in a different thread after registering in TaskQueue
-                            log.debug("#703.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
+                            log.debug("703.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
                             if (TaskProviderTopLevelService.registerInternalTask(execContextId, taskId, taskParamYaml)) {
                                 stat.allocated++;
                             }
@@ -259,7 +259,7 @@ public class ExecContextTaskAssigningTopLevelService {
             }
         }
         TaskProviderTopLevelService.lock(execContextId);
-        log.debug("#703.500 allocated {} of new taks in execContext #{}", stat.allocated, execContextId);
+        log.debug("703.500 allocated {} of new taks in execContext #{}", stat.allocated, execContextId);
 
         return stat;
     }
@@ -271,12 +271,12 @@ public class ExecContextTaskAssigningTopLevelService {
         try {
             TaskParamsYaml taskParamYaml = task.getTaskParamsYaml();
             if (taskParamYaml.task.context != EnumsApi.FunctionExecContext.internal) {
-                log.warn("#703.520 task #{} with IN_PROGRESS is there? Function: {}", task.id, taskParamYaml.task.function.code);
+                log.warn("703.520 task #{} with IN_PROGRESS is there? Function: {}", task.id, taskParamYaml.task.function.code);
             }
         }
         catch (Throwable th) {
-            log.warn("#703.540 Error parsing taskParamsYaml, error: " + th.getMessage());
-            log.warn("#703.560 task #{} with IN_PROGRESS is there?", task.id);
+            log.warn("703.540 Error parsing taskParamsYaml, error: " + th.getMessage());
+            log.warn("703.560 task #{} with IN_PROGRESS is there?", task.id);
         }
     }
 }
