@@ -104,7 +104,7 @@ public class TaskProviderUnassignedTaskService {
             Long coreId, ProcessorStatusYaml psy, CoreStatusYaml csy, boolean isAcceptOnlySigned, final DispatcherData.TaskQuotas currentQuotas) {
         TaskQueueSyncStaticService.checkWriteLockNotPresent();
 
-        if (TaskQueueSyncStaticService.getWithSync(TaskQueueService::isQueueEmpty)) {
+        if (TaskProviderTopLevelService.isQueueEmpty()) {
             return null;
         }
 

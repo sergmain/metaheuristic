@@ -32,6 +32,13 @@ public class TaskQueueSyncStaticService {
     private static final CommonSync<Integer> commonSync = new CommonSync<>();
     private static final Integer ID = 1;
 
+    private static ReentrantReadWriteLock.WriteLock getWriteLock() {
+        return commonSync.getWriteLock(ID);
+    }
+    private static ReentrantReadWriteLock.ReadLock getReadLock() {
+        return commonSync.getReadLock(ID);
+    }
+
     public static void checkWriteLockPresent() {
         if (!getWriteLock().isHeldByCurrentThread()) {
             throw new IllegalStateException("#975.020 Must be locked by WriteLock");
@@ -44,14 +51,6 @@ public class TaskQueueSyncStaticService {
         }
     }
 
-    private static ReentrantReadWriteLock.WriteLock getWriteLock() {
-        return commonSync.getWriteLock(ID);
-    }
-
-    private static ReentrantReadWriteLock.ReadLock getReadLock() {
-        return commonSync.getReadLock(ID);
-    }
-
     public static void getWithSyncVoid(Runnable runnable) {
         checkWriteLockNotPresent();
 
@@ -59,6 +58,18 @@ public class TaskQueueSyncStaticService {
         try {
             lock.lock();
             runnable.run();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public static <T> T getWithReadSync(Supplier<T> supplier) {
+        checkWriteLockNotPresent();
+
+        final ReentrantReadWriteLock.ReadLock lock = getReadLock();
+        try {
+            lock.lock();
+            return supplier.get();
         } finally {
             lock.unlock();
         }

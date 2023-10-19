@@ -74,18 +74,6 @@ public class ExecContextTaskResettingTopLevelService {
         resetTasksWithErrorEventThreadedPool.putToQueue(event);
     }
 
-/*
-    public void resetTasksWithErrorForRecovery() {
-//        final int activeCount = executor.getActiveCount();
-//        if (log.isDebugEnabled()) {
-//            final long completedTaskCount = executor.getCompletedTaskCount();
-//            final long taskCount = executor.getTaskCount();
-//            log.debug("resetTasksInQueue, active task in executor: {}, awaiting tasks: {}", activeCount, taskCount - completedTaskCount);
-//        }
-        resetTasksWithErrorEventThreadedPool.processEvent();
-    }
-*/
-
     @Async
     @EventListener
     public void resetTask(ResetTaskEvent event) {

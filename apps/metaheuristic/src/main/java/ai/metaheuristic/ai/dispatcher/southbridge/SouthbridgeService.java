@@ -30,8 +30,7 @@ import ai.metaheuristic.ai.dispatcher.keep_alive.KeepAliveTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
-import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
-import ai.metaheuristic.ai.dispatcher.task.TaskQueueSyncStaticService;
+import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.*;
@@ -271,8 +270,8 @@ public class SouthbridgeService {
         DispatcherData.TaskQuotas quotas = new DispatcherData.TaskQuotas(scpy.request.currentQuota);
 
         long startMills = System.currentTimeMillis();
-        final boolean queueEmpty = MetaheuristicThreadLocal.getExecutionStat().get("findTask -> isQueueEmpty()",
-                () -> TaskQueueSyncStaticService.getWithSync(TaskQueueService::isQueueEmpty));
+        final boolean queueEmpty = MetaheuristicThreadLocal.getExecutionStat()
+            .get("TaskProviderTopLevelService::isQueueEmpty()", TaskProviderTopLevelService::isQueueEmpty);
 
         ProcessorCommParamsYaml.ProcessorRequest request = scpy.request;
         DispatcherCommParamsYaml.DispatcherResponse response = lcpy.response;

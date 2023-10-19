@@ -19,8 +19,9 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
+import ai.metaheuristic.ai.dispatcher.event.InitVariablesTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.events.SetTaskExecStateTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.SetTaskExecStateInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -34,6 +35,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import static ai.metaheuristic.api.EnumsApi.TaskExecState.INIT;
 import static ai.metaheuristic.api.EnumsApi.TaskExecState.NONE;
 
 /**
@@ -88,6 +90,7 @@ public class TaskExecStateService {
             case SKIPPED:
             case NONE:
             case INIT:
+            case PRE_INIT:
             case CHECK_CACHE:
                 if (task.execState!=state.value) {
                     task.execState = state.value;
@@ -100,21 +103,24 @@ public class TaskExecStateService {
         if (state==NONE) {
             eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
         }
+        if (state==INIT) {
+            eventPublisher.publishEvent(new InitVariablesTxEvent(task.id));
+        }
 
-        final SetTaskExecStateTxEvent event = getSetTaskExecStateTxEvent(task);
-        eventPublisherService.publishSetTaskExecStateTxEvent(event);
+        final SetTaskExecStateInQueueTxEvent event = getSetTaskExecStateInQueueTxEvent(task);
+        eventPublisherService.publishSetTaskExecStateInQueueTxEvent(event);
         return task;
     }
 
-    private static SetTaskExecStateTxEvent getSetTaskExecStateTxEvent(TaskImpl task) {
-        final SetTaskExecStateTxEvent event;
+    private static SetTaskExecStateInQueueTxEvent getSetTaskExecStateInQueueTxEvent(TaskImpl task) {
+        final SetTaskExecStateInQueueTxEvent event;
         final EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.execState);
         if (execState== EnumsApi.TaskExecState.OK || execState== EnumsApi.TaskExecState.ERROR) {
             TaskParamsYaml taskParams = task.getTaskParamsYaml();
-            event = new SetTaskExecStateTxEvent(task.execContextId, task.id, execState, task.coreId, taskParams.task.context, taskParams.task.function.code);
+            event = new SetTaskExecStateInQueueTxEvent(task.execContextId, task.id, execState, task.coreId, taskParams.task.context, taskParams.task.function.code);
         }
         else {
-            event = new SetTaskExecStateTxEvent(task.execContextId, task.id, execState, task.coreId, null, null);
+            event = new SetTaskExecStateInQueueTxEvent(task.execContextId, task.id, execState, task.coreId, null, null);
         }
         return event;
     }

@@ -330,7 +330,7 @@ public class EnumsApi {
         SKIPPED(5, "Task was skipped"),
         CHECK_CACHE(6, "Task for checking cache"),
         ERROR_WITH_RECOVERY(7, "Task was finished with an error but will be re-run again"),
-        INIT(8, "Task marked for initing of variables"),
+        INIT(8, "Task marked for initializing of variables"),
         PRE_INIT(9, "Task was created, but init of variables postponed until all previous tasks will finish")
         ;
 

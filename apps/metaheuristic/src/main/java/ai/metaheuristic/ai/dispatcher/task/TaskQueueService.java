@@ -40,9 +40,12 @@ public class TaskQueueService {
         return taskQueue.getIterator();
     }
 
-    public static boolean isQueueEmpty() {
-        checkWriteLockPresent();
+    static boolean isQueueEmpty() {
         return taskQueue.isQueueEmpty();
+    }
+
+    static boolean isNeedToShrink() {
+        return taskQueue.isNeedToShrink();
     }
 
     public static void removeAll(List<TaskQueue.QueuedTask> forRemoving) {
@@ -65,11 +68,6 @@ public class TaskQueueService {
         return getWithSync(taskQueue::isQueueEmpty);
     }
 
-    public static boolean allocatedTaskMoreThan(int requiredNumberOfTasks) {
-        checkWriteLockNotPresent();
-        return getWithSync(() -> taskQueue.allocatedTaskMoreThan(requiredNumberOfTasks));
-    }
-
     public static void startTaskProcessing(StartTaskProcessingEvent event) {
         checkWriteLockPresent();
         taskQueue.startTaskProcessing(event.execContextId, event.taskId);
@@ -86,25 +84,11 @@ public class TaskQueueService {
     }
 
     @Nullable
-    public static TaskQueue.TaskGroup getFinishedTaskGroup(Long execContextId) {
-        checkWriteLockPresent();
-        return taskQueue.getFinishedTaskGroup(execContextId);
+    static TaskQueue.TaskGroup getTaskGroupForTransferring(Long execContextId) {
+        return taskQueue.getTaskGroupForTransferring(execContextId);
     }
 
-    @Nullable
-    public static TaskQueue.TaskGroup getTaskGroupForTransfering(Long execContextId) {
-        checkWriteLockPresent();
-        return taskQueue.getTaskGroupForTransfering(execContextId);
-    }
-
-    @Nullable
-    public static TaskQueue.AllocatedTask getTaskExecState(Long execContextId, Long taskId) {
-        checkWriteLockPresent();
-        return taskQueue.getTaskExecState(execContextId, taskId);
-    }
-
-    public static Map<Long, TaskQueue.AllocatedTask> getTaskExecStates(Long execContextId) {
-        checkWriteLockPresent();
+    static Map<Long, TaskQueue.AllocatedTask> getTaskExecStates(Long execContextId) {
         return taskQueue.getTaskExecStates(execContextId);
     }
 
@@ -113,13 +97,11 @@ public class TaskQueueService {
         taskQueue.deRegisterTask(event.execContextId, event.taskId);
     }
 
-    public static boolean allTaskGroupFinished(Long execContextId) {
-        checkWriteLockPresent();
+    static boolean allTaskGroupFinished(Long execContextId) {
         return taskQueue.allTaskGroupFinished(execContextId);
     }
 
     public static boolean alreadyRegistered(Long taskId) {
-        checkWriteLockPresent();
         return taskQueue.alreadyRegistered(taskId);
     }
 

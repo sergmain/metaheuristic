@@ -46,8 +46,7 @@ public class EventsBoundedToTx {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    // @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public void handleSetTaskExecStateTxEvent(SetTaskExecStateTxEvent event) {
+    public void handleSetTaskExecStateTxEvent(SetTaskExecStateInQueueTxEvent event) {
         log.debug("call EventsBoundedToTx.handleSetTaskExecStateTxEvent(execContextId:#{}, taskId:#{}, state:{})", event.execContextId, event.taskId, event.state);
         eventPublisher.publishEvent(event.to());
         if (event.state== EnumsApi.TaskExecState.OK || event.state== EnumsApi.TaskExecState.ERROR) {
@@ -60,7 +59,6 @@ public class EventsBoundedToTx {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    //@Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = CommonRollbackException.class)
     public void handleCheckTaskCanBeFinishedTxEvent(CheckTaskCanBeFinishedTxEvent event) {
         log.debug("call EventsBoundedToTx.handleCheckTaskCanBeFinishedTxEvent(execContextId:#{}, taskId:#{})", event.execContextId, event.taskId);
         eventPublisher.publishEvent(event.to());
@@ -69,77 +67,66 @@ public class EventsBoundedToTx {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    // @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleVariableUploadedTxEvent(VariableUploadedTxEvent event) {
         eventPublisher.publishEvent(event.to());
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    // @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleTaskCreatedTxEvent(TaskCreatedTxEvent event) {
         eventPublisher.publishEvent(event.to());
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    // @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleUpdateTaskExecStatesInGraphTxEvent(UpdateTaskExecStatesInGraphTxEvent event) {
         eventPublisher.publishEvent(event.to());
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    // @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleStartTaskProcessingTxEvent(StartTaskProcessingTxEvent event) {
         eventPublisher.publishEvent(event.to());
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    // @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleSetVariableReceivedTxEvent(SetVariableReceivedTxEvent event) {
         eventPublisher.publishEvent(event.to());
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    // @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleProcessDeletedExecContextTxEvent(ProcessDeletedExecContextTxEvent event) {
         eventPublisher.publishEvent(event.to());
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    // @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleTaskQueueCleanByExecContextIdTxEvent(TaskQueueCleanByExecContextIdTxEvent event) {
         eventPublisher.publishEvent(event.to());
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    // @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleDeleteExecContextTxEvent(DeleteExecContextTxEvent event) {
         eventPublisher.publishEvent(event.to());
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    // @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleDeleteExecContextInListTxEvent(DeleteExecContextInListTxEvent event) {
         eventPublisher.publishEvent(event.to());
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    // @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleUnAssignTaskTxEventAfterCommit(UnAssignTaskTxAfterCommitEvent event) {
         eventPublisher.publishEvent(event.to());
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    // @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleUnAssignTaskTxEventAfterCommit(FindUnassignedTasksAndRegisterInQueueTxEvent event) {
         eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueEvent());
     }
@@ -153,7 +140,6 @@ public class EventsBoundedToTx {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_ROLLBACK)
-    // @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleUnAssignTaskTxEvent(UnAssignTaskTxEvent event) {
         eventPublisher.publishEvent(event.to());
     }
@@ -162,7 +148,6 @@ public class EventsBoundedToTx {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
-    // @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleResourceCloseTxEvent(ResourceCloseTxEvent event) {
         eventPublisher.publishEvent(event.to());
         event.clean();

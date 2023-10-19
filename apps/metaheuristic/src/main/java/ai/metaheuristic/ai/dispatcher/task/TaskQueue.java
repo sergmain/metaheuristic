@@ -309,17 +309,7 @@ public class TaskQueue {
     }
 
     @Nullable
-    public TaskGroup getFinishedTaskGroup(Long execContextId) {
-        for (TaskGroup taskGroup : taskGroups) {
-            if (execContextId.equals(taskGroup.execContextId) && groupFinished(taskGroup)) {
-                return taskGroup;
-            }
-        }
-        return null;
-    }
-
-    @Nullable
-    public TaskGroup getTaskGroupForTransfering(Long execContextId) {
+    public TaskGroup getTaskGroupForTransferring(Long execContextId) {
         for (TaskGroup taskGroup : taskGroups) {
             if (execContextId.equals(taskGroup.execContextId) && groupReadyForTransfering(taskGroup)) {
                 return taskGroup;
@@ -628,17 +618,6 @@ public class TaskQueue {
         }
     }
 
-    public boolean allocatedTaskMoreThan(int requiredNumberOfTasks) {
-        int count = 0;
-        for (TaskGroup taskGroup : taskGroups) {
-            count += taskGroup.newTasks();
-            if (count>requiredNumberOfTasks) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public boolean isQueueEmpty() {
         for (TaskGroup taskGroup : taskGroups) {
             if (taskGroup.isNewTask()) {
@@ -646,6 +625,10 @@ public class TaskQueue {
             }
         }
         return true;
+    }
+
+    public boolean isNeedToShrink() {
+        return taskGroups.size()>minQueueSize;
     }
 
     public int groupCount() {

@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.event.events;
 
-import ai.metaheuristic.ai.dispatcher.event.events.CommonEvent;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.AllArgsConstructor;
 import org.springframework.lang.Nullable;
@@ -27,7 +26,7 @@ import org.springframework.lang.Nullable;
  * Time: 4:03 AM
  */
 @AllArgsConstructor
-public class SetTaskExecStateEvent implements CommonEvent {
+public class SetTaskExecStateInQueueEvent implements CommonEvent {
     public final Long execContextId;
     public final Long taskId;
     public final EnumsApi.TaskExecState state;

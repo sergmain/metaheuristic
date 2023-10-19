@@ -64,6 +64,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Date: 10/11/2020
  * Time: 5:38 AM
  */
+@SuppressWarnings("MethodMayBeStatic")
 @Service
 @Profile("dispatcher")
 @Slf4j
@@ -82,7 +83,12 @@ public class TaskProviderTopLevelService {
     private final TaskProviderUnassignedTaskService taskProviderUnassignedTaskTopLevelService;
     private final VariableTxService variableService;
 
+    // write to queue methods
+
     public void registerTask(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
+        if (alreadyRegistered(taskId)) {
+            return;
+        }
         TaskQueueSyncStaticService.getWithSyncVoid(()-> {
             if (TaskQueueService.alreadyRegistered(taskId)) {
                 return;
@@ -123,6 +129,9 @@ public class TaskProviderTopLevelService {
             return false;
         }
 
+        if (alreadyRegistered(task.id)) {
+            return false;
+        }
         return TaskQueueSyncStaticService.getWithSync(()-> {
             if (TaskQueueService.alreadyRegistered(task.id)) {
                 return false;
@@ -137,7 +146,6 @@ public class TaskProviderTopLevelService {
         TaskQueueService.addNewTask(queuedTask);
     }
 
-    @SuppressWarnings("MethodMayBeStatic")
     @Async
     @EventListener
     public void processDeletedExecContext(TaskQueueCleanByExecContextIdEvent event) {
@@ -148,7 +156,6 @@ public class TaskProviderTopLevelService {
         }
     }
 
-    @SuppressWarnings("MethodMayBeStatic")
     @Async
     @EventListener
     public void processStartTaskProcessing(StartTaskProcessingEvent event) {
@@ -159,7 +166,6 @@ public class TaskProviderTopLevelService {
         }
     }
 
-    @SuppressWarnings("MethodMayBeStatic")
     @Async
     @EventListener
     public void processUnAssignTaskEvent(UnAssignTaskEvent event) {
@@ -170,7 +176,6 @@ public class TaskProviderTopLevelService {
         }
     }
 
-    @SuppressWarnings("MethodMayBeStatic")
     @Async
     @EventListener
     public void deregisterTasksByExecContextId(DeregisterTasksByExecContextIdEvent event) {
@@ -185,29 +190,6 @@ public class TaskProviderTopLevelService {
         TaskQueueSyncStaticService.getWithSyncVoid(()->TaskQueueService.deRegisterTask(execContextId, taskId));
     }
 
-    @Nullable
-    public static TaskQueue.TaskGroup getFinishedTaskGroup(Long execContextId) {
-        return TaskQueueSyncStaticService.getWithSync(()-> TaskQueueService.getFinishedTaskGroup(execContextId));
-    }
-
-    @Nullable
-    public static TaskQueue.TaskGroup getTaskGroupForTransfering(Long execContextId) {
-        return TaskQueueSyncStaticService.getWithSync(()-> TaskQueueService.getTaskGroupForTransfering(execContextId));
-    }
-
-    public static boolean allTaskGroupFinished(Long execContextId) {
-        return TaskQueueSyncStaticService.getWithSync(()-> TaskQueueService.allTaskGroupFinished(execContextId));
-    }
-
-    @Nullable
-    public static TaskQueue.AllocatedTask getTaskExecState(Long execContextId, Long taskId) {
-        return TaskQueueSyncStaticService.getWithSync(()-> TaskQueueService.getTaskExecState(execContextId, taskId));
-    }
-
-    public static Map<Long, TaskQueue.AllocatedTask> getTaskExecStates(Long execContextId) {
-        return TaskQueueSyncStaticService.getWithSync(()-> TaskQueueService.getTaskExecStates(execContextId));
-    }
-
     public static void lock(Long execContextId) {
         TaskQueueSyncStaticService.getWithSyncVoid(()-> TaskQueueService.lock(execContextId));
     }
@@ -215,6 +197,41 @@ public class TaskProviderTopLevelService {
     public static boolean registerInternalTask(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
         return TaskQueueSyncStaticService.getWithSync(()-> registerInternalTaskWithoutSync(execContextId, taskId, taskParamYaml));
     }
+
+    public static void shrink() {
+        if (isNeedToShrink()) {
+            TaskQueueSyncStaticService.getWithSyncVoid(TaskQueueService::shrink);
+        }
+    }
+
+    // read from queue methods
+
+    public static boolean alreadyRegistered(Long taskId) {
+        return TaskQueueSyncStaticService.getWithReadSync(()-> TaskQueueService.alreadyRegistered(taskId));
+    }
+
+    @Nullable
+    public static TaskQueue.TaskGroup getTaskGroupForTransferring(Long execContextId) {
+        return TaskQueueSyncStaticService.getWithReadSync(()-> TaskQueueService.getTaskGroupForTransferring(execContextId));
+    }
+
+    public static boolean allTaskGroupFinished(Long execContextId) {
+        return TaskQueueSyncStaticService.getWithReadSync(()-> TaskQueueService.allTaskGroupFinished(execContextId));
+    }
+
+    public static Map<Long, TaskQueue.AllocatedTask> getTaskExecStates(Long execContextId) {
+        return TaskQueueSyncStaticService.getWithReadSync(()-> TaskQueueService.getTaskExecStates(execContextId));
+    }
+
+    public static boolean isQueueEmpty() {
+        return TaskQueueSyncStaticService.getWithReadSync(TaskQueueService::isQueueEmpty);
+    }
+
+    public static boolean isNeedToShrink() {
+        return TaskQueueSyncStaticService.getWithReadSync(TaskQueueService::isNeedToShrink);
+    }
+
+    // without syncs
 
     private static boolean registerInternalTaskWithoutSync(Long execContextId, Long taskId, TaskParamsYaml taskParamYaml) {
         if (TaskQueueService.alreadyRegistered(taskId)) {
@@ -226,7 +243,7 @@ public class TaskProviderTopLevelService {
 
     @Async
     @EventListener
-    public void setTaskExecStateInQueue(SetTaskExecStateEvent event) {
+    public void setTaskExecStateInQueue(SetTaskExecStateInQueueEvent event) {
         try {
             setTaskExecStateInQueue(event.execContextId, event.taskId, event.state);
         } catch (Throwable th) {

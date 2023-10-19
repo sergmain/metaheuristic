@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
-import ai.metaheuristic.ai.dispatcher.event.events.SetTaskExecStateTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.SetTaskExecStateInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTxService;
@@ -157,8 +157,8 @@ public class ExecContextTaskResettingService {
             VariableSyncService.getWithSyncVoidForCreation(output.id, ()-> variableTxService.resetVariable(execContext.id, output.id));
         }
 
-        eventPublisherService.publishSetTaskExecStateTxEvent(
-                new SetTaskExecStateTxEvent(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState), null, null, null));
+        eventPublisherService.publishSetTaskExecStateInQueueTxEvent(
+                new SetTaskExecStateInQueueTxEvent(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState), null, null, null));
 
         // we don't have to un-register task because it could un-register already de-registered task.
         // actual deregistering will be done via reconsiliationService

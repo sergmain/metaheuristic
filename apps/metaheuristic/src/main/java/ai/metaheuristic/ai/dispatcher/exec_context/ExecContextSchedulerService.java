@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.event.InitVariablesEvent;
 import ai.metaheuristic.ai.dispatcher.event.InitVariablesTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueSyncStaticService;
 import ai.metaheuristic.api.EnumsApi;
@@ -53,7 +54,7 @@ public class ExecContextSchedulerService {
         for (Long execContextId : execContextIds) {
             execContextTopLevelService.updateExecContextStatus(execContextId);
         }
-        TaskQueueSyncStaticService.getWithSyncVoid(TaskQueueService::shrink);
+        TaskProviderTopLevelService.shrink();
     }
 
     public void initTaskVariables() {
@@ -63,7 +64,7 @@ public class ExecContextSchedulerService {
             l.forEach(taskId->eventPublisher.publishEvent(new InitVariablesEvent(taskId)));
 
         }
-        TaskQueueSyncStaticService.getWithSyncVoid(TaskQueueService::shrink);
+        TaskProviderTopLevelService.shrink();
     }
 
 }

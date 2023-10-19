@@ -38,7 +38,7 @@ public class EventPublisherService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    public void publishSetTaskExecStateTxEvent(SetTaskExecStateTxEvent event) {
+    public void publishSetTaskExecStateInQueueTxEvent(SetTaskExecStateInQueueTxEvent event) {
         TxUtils.checkTxExists();
         eventPublisher.publishEvent(event);
     }

@@ -75,7 +75,7 @@ public class ExecContextTaskStateTxService {
         ExecContextGraphSyncService.checkWriteLockPresent(execContextGraphId);
         ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
 
-        TaskQueue.TaskGroup taskGroup = TaskProviderTopLevelService.getTaskGroupForTransfering(execContextId);
+        TaskQueue.TaskGroup taskGroup = TaskProviderTopLevelService.getTaskGroupForTransferring(execContextId);
         if (taskGroup==null) {
             return null;
         }

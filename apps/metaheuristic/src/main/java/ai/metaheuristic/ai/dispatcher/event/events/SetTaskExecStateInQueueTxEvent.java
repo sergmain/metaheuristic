@@ -26,7 +26,7 @@ import org.springframework.lang.Nullable;
  * Time: 4:03 AM
  */
 @AllArgsConstructor
-public class SetTaskExecStateTxEvent {
+public class SetTaskExecStateInQueueTxEvent {
     public final Long execContextId;
     public final Long taskId;
     public final EnumsApi.TaskExecState state;
@@ -37,7 +37,7 @@ public class SetTaskExecStateTxEvent {
     @Nullable
     public String funcCode;
 
-    public SetTaskExecStateEvent to() {
-        return new SetTaskExecStateEvent(execContextId, taskId, state, coreId, context, funcCode);
+    public SetTaskExecStateInQueueEvent to() {
+        return new SetTaskExecStateInQueueEvent(execContextId, taskId, state, coreId, context, funcCode);
     }
 }
