@@ -76,7 +76,7 @@ public class TestTaskParamYaml {
 
     private static TaskParamsYaml.InputVariable newVariable(String name, Long variableId) {
         TaskParamsYaml.InputVariable v1 = new TaskParamsYaml.InputVariable(
-                variableId, EnumsApi.VariableContext.local, name, EnumsApi.DataSourcing.dispatcher, null, null, null, null, false, false);
+                variableId, EnumsApi.VariableContext.local, name, EnumsApi.DataSourcing.dispatcher, null, null, null, null, false, false, null);
         return v1;
     }
 

@@ -32,7 +32,9 @@ import java.util.Map;
 
 /**
  * class TaskParamsYaml is for storing parameters of task in db table MH_TASK
- * AND for storing parameters internally at Processor side
+ * AND for storing parameters internally at Processor side.
+ *
+ * <br/>
  *
  * class TaskFileParamsYaml is being used for storing a parameters of task for function in a file, ie params-v1.yaml
  *
@@ -101,6 +103,10 @@ public class TaskParamsYaml implements BaseParams {
 
         // could variable be null
         private Boolean nullable;
+
+        // This field is used for creating a download link as extension
+        @Nullable
+        public String ext;
 
         public Boolean getNullable() {
             return nullable != null && nullable;
