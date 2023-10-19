@@ -75,11 +75,6 @@ public class GlobalVariableTopLevelService {
             try (InputStream is = file.getInputStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
                 dispatcherBlobStorage.storeGlobalVariableData(globalVariableId, bis, file.getSize());
             }
-/*
-            try (InputStream is = file.getInputStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-                globalVariableEntityManagerTxService.save(bis, file.getSize(), variable, originFilename);
-            }
-*/
         } catch (Throwable e) {
             String es = "#172.040 An error while saving data to file, " + e.getMessage();
             log.error(es, e);
@@ -104,10 +99,6 @@ public class GlobalVariableTopLevelService {
             try (InputStream is = new ByteArrayInputStream(bytes)) {
                 dispatcherBlobStorage.storeGlobalVariableData(globalVariableId, is, bytes.length);
             }
-
-            //            try (InputStream is = new ByteArrayInputStream(bytes)) {
-//                globalVariableEntityManagerTxService.save(is, bytes.length, variable, null);
-//            }
         } catch (Throwable e) {
             String es = "#172.055 An error while saving data to file, " + e.getMessage();
             log.error(es, e);

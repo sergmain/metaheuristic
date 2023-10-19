@@ -19,7 +19,8 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
-import ai.metaheuristic.ai.dispatcher.event.InitVariablesTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.ChangeTaskStateToInitForChildrenTasksTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.SetTaskExecStateInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
@@ -99,12 +100,14 @@ public class TaskExecStateService {
             default:
                 throw new IllegalStateException("#305.160 Right now it must be initialized somewhere else. state: " + state);
         }
-
         if (state==NONE) {
             eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
         }
         if (state==INIT) {
             eventPublisher.publishEvent(new InitVariablesTxEvent(task.id));
+        }
+        if (EnumsApi.TaskExecState.isFinishedState(state)) {
+            eventPublisher.publishEvent(new ChangeTaskStateToInitForChildrenTasksTxEvent(task.id));
         }
 
         final SetTaskExecStateInQueueTxEvent event = getSetTaskExecStateInQueueTxEvent(task);

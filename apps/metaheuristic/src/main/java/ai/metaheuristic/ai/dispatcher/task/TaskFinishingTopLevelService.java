@@ -73,6 +73,8 @@ public class TaskFinishingTopLevelService {
             case ERROR_WITH_RECOVERY:
             case OK:
             case SKIPPED:
+            case INIT:
+            case PRE_INIT:
                 // ---> This is a normal operation. do nothing
                 return;
 

@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
-import ai.metaheuristic.ai.dispatcher.event.InitVariablesEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInGraphTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;

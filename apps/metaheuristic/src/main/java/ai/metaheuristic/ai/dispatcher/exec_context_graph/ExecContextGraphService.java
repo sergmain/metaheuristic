@@ -387,12 +387,16 @@ public class ExecContextGraphService {
 
     public Set<ExecContextData.TaskVertex> findDirectDescendants(Long execContextGraphId, Long taskId) {
         ExecContextGraph execContextGraph = prepareExecContextGraph(execContextGraphId);
+        return findDirectDescendants(execContextGraph, taskId);
+    }
+
+    public static Set<ExecContextData.TaskVertex> findDirectDescendants(ExecContextGraph execContextGraph, Long taskId) {
         return readOnlyGraph(execContextGraph, graph -> {
             ExecContextData.TaskVertex vertex = graph.vertexSet()
-                    .stream()
-                    .filter(o -> taskId.equals(o.taskId))
-                    .findFirst().orElse(null);
-            if (vertex==null) {
+                .stream()
+                .filter(o -> taskId.equals(o.taskId))
+                .findFirst().orElse(null);
+            if (vertex == null) {
                 return Set.of();
             }
 

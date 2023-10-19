@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.dispatcher.event.InitVariablesEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesEvent;
 import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.commons.utils.threads.ThreadedPool;
 import lombok.RequiredArgsConstructor;

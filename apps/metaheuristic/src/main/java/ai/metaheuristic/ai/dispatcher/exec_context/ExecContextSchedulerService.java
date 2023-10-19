@@ -16,13 +16,10 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.event.InitVariablesEvent;
-import ai.metaheuristic.ai.dispatcher.event.InitVariablesTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
-import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
-import ai.metaheuristic.ai.dispatcher.task.TaskQueueSyncStaticService;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

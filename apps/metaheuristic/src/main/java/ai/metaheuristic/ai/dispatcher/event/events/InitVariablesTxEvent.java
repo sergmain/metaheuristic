@@ -14,13 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.event;
+package ai.metaheuristic.ai.dispatcher.event.events;
 
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.commons.utils.threads.EventWithId;
 import lombok.AllArgsConstructor;
-
-import java.util.List;
 
 /**
  * @author Sergio Lissner
@@ -28,11 +24,10 @@ import java.util.List;
  * Time: 8:59 PM
  */
 @AllArgsConstructor
-public class InitVariablesEvent implements EventWithId<Long> {
+public class InitVariablesTxEvent {
     public final Long taskId;
 
-    @Override
-    public Long getId() {
-        return taskId;
+    public InitVariablesEvent to() {
+        return new InitVariablesEvent(taskId);
     }
 }

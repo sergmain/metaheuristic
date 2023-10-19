@@ -62,7 +62,6 @@ public class EventsBoundedToTx {
     public void handleCheckTaskCanBeFinishedTxEvent(CheckTaskCanBeFinishedTxEvent event) {
         log.debug("call EventsBoundedToTx.handleCheckTaskCanBeFinishedTxEvent(execContextId:#{}, taskId:#{})", event.execContextId, event.taskId);
         eventPublisher.publishEvent(event.to());
-//        throw new CommonRollbackException();
     }
 
     @Async
@@ -131,8 +130,15 @@ public class EventsBoundedToTx {
         eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueEvent());
     }
 
+    @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleInitVariablesTxEventAfterCommit(InitVariablesTxEvent event) {
+        eventPublisher.publishEvent(event.to());
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleChangeTaskStateToInitForChildrenTasksTxEventAfterCommit(ChangeTaskStateToInitForChildrenTasksTxEvent event) {
         eventPublisher.publishEvent(event.to());
     }
 
