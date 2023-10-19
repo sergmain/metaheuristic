@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
+import ai.metaheuristic.ai.dispatcher.event.events.ChangeTaskStateToInitForChildrenTasksEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.ChangeTaskStateToInitForChildrenTasksTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskFinishWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
@@ -78,7 +79,7 @@ public class TaskStateService {
 
     @Async
     @EventListener
-    public void changeTaskStateToInitForChildrenTasksTxEvent(ChangeTaskStateToInitForChildrenTasksTxEvent event) {
+    public void changeTaskStateToInitForChildrenTasksTxEvent(ChangeTaskStateToInitForChildrenTasksEvent event) {
         TaskImpl task = taskRepository.findById(event.taskId).orElse(null);
         if (task==null) {
             return;
@@ -116,7 +117,8 @@ public class TaskStateService {
                 }
             }
             if (nextState) {
-                taskExecStateService.updateTaskExecStates(subTask.taskId, EnumsApi.TaskExecState.INIT);
+                TaskSyncService.getWithSyncVoid(subTask.taskId,
+                    ()-> taskExecStateService.updateTaskExecStates(subTask.taskId, EnumsApi.TaskExecState.INIT));
             }
         }
     }
