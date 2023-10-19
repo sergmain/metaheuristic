@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegiste
 import ai.metaheuristic.ai.dispatcher.event.events.SetTaskExecStateInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
@@ -54,7 +55,7 @@ public class TaskExecStateService {
     private final EventPublisherService eventPublisherService;
     private final ApplicationEventPublisher eventPublisher;
 
-    @Transactional
+    @Transactional(rollbackFor = CommonRollbackException.class)
     public void updateTaskExecStates(Long taskId, EnumsApi.TaskExecState execState) {
         TaskImpl task = taskRepository.findById(taskId).orElseThrow();
         updateTaskExecStates(task, execState, false);

@@ -19,8 +19,12 @@ package ai.metaheuristic.commons.yaml.task;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
+import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtilsV1;
+import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlV1;
+import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlV2;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import javax.annotation.Nonnull;
@@ -33,7 +37,7 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("DuplicatedCode")
 public class TaskParamsYamlUtilsV2
-        extends AbstractParamsYamlUtils<TaskParamsYamlV2, TaskParamsYaml, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<TaskParamsYamlV2, TaskParamsYaml, Void, TaskParamsYamlV1, TaskParamsYamlUtilsV1, TaskParamsYamlV2> {
 
     @Override
     public int getVersion() {
@@ -85,10 +89,13 @@ public class TaskParamsYamlUtilsV2
         return v;
     }
 
-    @Nonnull
+    @Nullable
     @Override
-    public Void downgradeTo(@Nonnull Void yaml) {
-        return null;
+    public TaskParamsYamlV1 downgradeTo(TaskParamsYamlV2 yaml) {
+        TaskParamsYamlV1 v1 = new TaskParamsYamlV1();
+
+
+        return v1;
     }
 
     private static TaskParamsYaml.FunctionConfig toUp(TaskParamsYamlV2.FunctionConfigV2 src) {
@@ -105,8 +112,8 @@ public class TaskParamsYamlUtilsV2
     }
 
     @Override
-    public Void prevUtil() {
-        return null;
+    public TaskParamsYamlUtilsV1 prevUtil() {
+        return (TaskParamsYamlUtilsV1) TaskParamsYamlUtils.UTILS.getForVersion(1);
     }
 
     @Override

@@ -22,8 +22,8 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.*;
@@ -44,8 +44,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.time.Duration;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
@@ -90,13 +93,28 @@ public class TestTaskRequest extends FeatureMethods {
         step_4(processorIdAndCoreIds);
     }
 
+
+
     private void step_2(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
 //        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
+
+        final AtomicReference<DispatcherCommParamsYaml.AssignedTask> tRef = new AtomicReference<>();
+        await()
+            .atLeast(Duration.ofMillis(500))
+            .atMost(Duration.ofSeconds(300))
+            .with()
+            .pollInterval(Duration.ofMillis(500))
+            .until(()-> {
+                final DispatcherCommParamsYaml.AssignedTask task = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
+                tRef.set(task);
+                return task!=null;
+            });
+
         // get a task for processing
-        DispatcherCommParamsYaml.AssignedTask t = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
-        assertNotNull(t);
+        //DispatcherCommParamsYaml.AssignedTask t = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
+        assertNotNull(tRef.get());
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
         ProcessorCommParamsYaml.ProcessorRequest req0 = processorComm0.request;
@@ -125,10 +143,10 @@ public class TestTaskRequest extends FeatureMethods {
 
         final DispatcherCommParamsYaml.AssignedTask assignedTask = response.cores.get(0).getAssignedTask();
         assertNotNull(assignedTask);
-        assertEquals(t.taskId, assignedTask.taskId);
+        assertEquals(tRef.get().taskId, assignedTask.taskId);
 
         storeConsoleResultAsOk(processorIdAndCoreIds);
-        final TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
+        final TaskImpl task = taskRepository.findById(tRef.get().taskId).orElse(null);
         assertNotNull(task);
 
         TaskParamsYaml tpy = task.getTaskParamsYaml();
@@ -145,7 +163,7 @@ public class TestTaskRequest extends FeatureMethods {
                                 execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
                                         getExecContextForTest().id, getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId)));
 
-        final TaskImpl task2 = taskRepository.findById(t.taskId).orElse(null);
+        final TaskImpl task2 = taskRepository.findById(tRef.get().taskId).orElse(null);
         assertNotNull(task2);
         assertTrue(task2.completed!=0);
 
