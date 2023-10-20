@@ -68,7 +68,8 @@ public class CacheUtils {
         return fullKey;
     }
 
-    private static void collectChecksums(TaskParamsYaml tpy, Function<Long, Long> variableBlobIdRefFunc, Function<Long, String> variableAsStringFunc, Function<Long, InputStream> variableAsStreamFunc, Function<Long, InputStream> globalVariableAsStreamFunc, CacheData.FullKey fullKey) {
+    private static void collectChecksums(TaskParamsYaml tpy, Function<Long, Long> variableBlobIdRefFunc, Function<Long, String> variableAsStringFunc,
+                                         Function<Long, InputStream> variableAsStreamFunc, Function<Long, InputStream> globalVariableAsStreamFunc, CacheData.FullKey fullKey) {
         for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
             if (input.context==global) {
                 fullKey.inputs.add(getSha256Length(input.id, globalVariableAsStreamFunc));
@@ -133,21 +134,10 @@ public class CacheUtils {
             try (InputStream is = streamFunction.apply(variableId)) {
                 return getSha256PlusLength(is);
             }
-/*
-            Blob blob = streamFunction.apply(variableId);
-            if (blob==null) {
-                String es = S.f("#611.320 Data for variableId #%d wasn't found", variableId);
-                log.warn(es);
-                throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
-            }
-            try (InputStream is = blob.getBinaryStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-                return getSha256PlusLength(bis);
-            }
-*/
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Throwable e) {
-            String es = "#611.340 Error while storing data to file";
+            String es = "181.040 Error while storing data to file";
             log.error(es, e);
             throw new VariableCommonException(es, variableId);
         }
@@ -171,7 +161,7 @@ public class CacheUtils {
             key = new CacheData.Sha256PlusLength(sha256, keyAsStr.length()).asString();
         }
         catch (IOException e) {
-            log.error("609.040 Error while preparing a cache key, task will be processed without cached data", e);
+            log.error("181.080 Error while preparing a cache key, task will be processed without cached data", e);
         }
         return key==null ? null : new CacheData.SimpleKey(key, keyAsStr);
     }

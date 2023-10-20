@@ -99,7 +99,7 @@ public class CacheTxService {
         CacheProcess cacheProcess = cacheProcessRepository.findByKeySha256Length(key.key());
 
         if (cacheProcess != null) {
-            log.info("#611.200 process {} was already cached", tpy.task.processCode);
+            log.info("611.020 process {} was already cached", tpy.task.processCode);
             return;
         }
 
@@ -115,7 +115,7 @@ public class CacheTxService {
 
             Variable v = variableRepository.findByIdAsSimple(output.id);
             if (v==null) {
-                throw new VariableCommonException("#611.040 ExecContext is broken, variable #"+output.id+" wasn't found", output.id);
+                throw new VariableCommonException("611.040 ExecContext is broken, variable #"+output.id+" wasn't found", output.id);
             }
             if (v.nullified) {
                 generalBlobTxService.createEmptyCacheVariable(cacheProcess.id, output.name);
@@ -126,7 +126,7 @@ public class CacheTxService {
             try {
                 tempFile = Files.createTempFile(globals.dispatcherTempPath, "var-" + output.id + "-", Consts.BIN_EXT);
             } catch (IOException e) {
-                String es = "#611.060 Error: " + e;
+                String es = "611.060 Error: " + e;
                 log.error(es, e);
                 throw new VariableCommonException(es, output.id);
             }
@@ -137,7 +137,7 @@ public class CacheTxService {
             try {
                 is = Files.newInputStream(tempFile); bis = new BufferedInputStream(is, 0x8000);
             } catch (IOException e) {
-                String es = "#611.080 Error: " + e;
+                String es = "611.080 Error: " + e;
                 log.error(es, e);
                 eventPublisher.publishEvent(new ResourceCloseTxEvent(tempFile));
                 throw new VariableCommonException(es, output.id);
@@ -155,7 +155,6 @@ public class CacheTxService {
         }
     }
 
-//    @Transactional(readOnly = true)
     public CacheData.FullKey getKey(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
         return CacheUtils.getKey(tpy, function.params, variableTopLevelService::variableBlobIdRef,
                 variableTxService::getVariableBlobDataAsString,

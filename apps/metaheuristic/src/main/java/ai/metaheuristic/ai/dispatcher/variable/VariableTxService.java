@@ -28,10 +28,10 @@ import ai.metaheuristic.ai.dispatcher.event.events.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.SetVariableReceivedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskCreatedTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
+import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobService;
 import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
 import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -39,11 +39,11 @@ import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
@@ -87,10 +87,10 @@ public class VariableTxService {
     private static final UploadResult OK_UPLOAD_RESULT = new UploadResult(Enums.UploadVariableStatus.OK, null);
 
     private final VariableRepository variableRepository;
-    private final GlobalVariableRepository globalVariableRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final EventPublisherService eventPublisherService;
     private final ExecContextCache execContextCache;
+    private final GeneralBlobService generalBlobService;
     private final GeneralBlobTxService generalBlobTxService;
     private final DispatcherBlobStorage dispatcherBlobStorage;
 
@@ -98,10 +98,10 @@ public class VariableTxService {
             InputStream is, long size, String variable, @Nullable String filename,
             Long execContextId, String taskContextId, EnumsApi.VariableType type) {
         if (S.b(variable)) {
-            throw new ExecContextCommonException("697.040 Wrong format of sourceCode, input variable for source code isn't specified");
+            throw new ExecContextCommonException("171.040 Wrong format of sourceCode, input variable for source code isn't specified");
         }
         if (size==0) {
-            throw new IllegalStateException("#171.600 Variable can't be of zero length");
+            throw new IllegalStateException("171.080 Variable can't be of zero length");
         }
         TxUtils.checkTxExists();
 
@@ -128,11 +128,11 @@ public class VariableTxService {
         VariableSyncService.checkWriteLockPresent(data.id);
 
         if (size==0) {
-            throw new IllegalStateException("171.690 Variable can't be with zero length");
+            throw new IllegalStateException("171.120 Variable can't be with zero length");
         }
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        data.variableBlobId = generalBlobTxService.createVariableIfNotExist(data.variableBlobId);
+        data.variableBlobId = generalBlobService.createVariableIfNotExist(data.variableBlobId);
         dispatcherBlobStorage.storeVariableData(data.variableBlobId, is, size);
 
         data.inited = true;
@@ -146,7 +146,7 @@ public class VariableTxService {
         VariableSyncService.checkWriteLockPresent(variableId);
 
         if (size==0) {
-            throw new IllegalStateException("171.720 Variable can't be with zero length");
+            throw new IllegalStateException("171.160 Variable can't be with zero length");
         }
         TxUtils.checkTxExists();
 
@@ -155,7 +155,7 @@ public class VariableTxService {
         data.filename = filename;
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        data.variableBlobId = generalBlobTxService.createVariableIfNotExist(data.variableBlobId);
+        data.variableBlobId = generalBlobService.createVariableIfNotExist(data.variableBlobId);
         dispatcherBlobStorage.storeVariableData(data.variableBlobId, is, size);
 
         data.inited = true;
@@ -168,21 +168,21 @@ public class VariableTxService {
     public void initInputVariableWithNull(Long execContextId, ExecContextParamsYaml execContextParamsYaml, int varIndex) {
         if (execContextParamsYaml.variables.inputs.size()<varIndex+1) {
             throw new ExecContextCommonException(
-                    S.f("697.020 varIndex is bigger than number of input variables. varIndex: %s, number: %s",
+                    S.f("171.200 varIndex is bigger than number of input variables. varIndex: %s, number: %s",
                             varIndex, execContextParamsYaml.variables.inputs.size()));
         }
         final ExecContextParamsYaml.Variable variable = execContextParamsYaml.variables.inputs.get(varIndex);
         if (!variable.getNullable()) {
-            throw new ExecContextCommonException(S.f("697.025 sourceCode %s, input variable %s must be declared as nullable to be set as null",
+            throw new ExecContextCommonException(S.f("171.240 sourceCode %s, input variable %s must be declared as nullable to be set as null",
                     execContextParamsYaml.sourceCodeUid, variable.name));
         }
         String inputVariable = variable.name;
         if (S.b(inputVariable)) {
-            throw new ExecContextCommonException("697.040 Wrong format of sourceCode, input variable for source code isn't specified");
+            throw new ExecContextCommonException("171.280 Wrong format of sourceCode, input variable for source code isn't specified");
         }
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
-            log.warn("697.060 ExecContext #{} wasn't found", execContextId);
+            log.warn("171.320 ExecContext #{} wasn't found", execContextId);
         }
         createInitializedWithNull(inputVariable, execContextId, Consts.TOP_LEVEL_CONTEXT_ID );
     }
@@ -208,7 +208,7 @@ public class VariableTxService {
             resourceCloseTxEvent.add(is);
             update(is, Files.size(file), variable);
         } catch (IOException e) {
-            throw new InternalFunctionException(system_error, "#697.180 Can't open file   "+ file.normalize());
+            throw new InternalFunctionException(system_error, "171.360 Can't open file   "+ file.normalize());
         }
     }
 
@@ -237,15 +237,15 @@ public class VariableTxService {
         if (outputVariable.context == EnumsApi.VariableContext.local) {
             variable = variableRepository.findById(outputVariable.id).orElse(null);
             if (variable == null) {
-                throw new InternalFunctionException(variable_not_found, "697.140 Variable not found for id #" + outputVariable.id);
+                throw new InternalFunctionException(variable_not_found, "171.400 Variable not found for id #" + outputVariable.id);
             }
             return variable;
         }
         else if (outputVariable.context == EnumsApi.VariableContext.global) {
-            throw new InternalFunctionException(global_variable_is_immutable, "697.160 Can't store data in a global variable " + outputVariable.name);
+            throw new InternalFunctionException(global_variable_is_immutable, "171.430 Can't store data in a global variable " + outputVariable.name);
         }
         else if (outputVariable.context == EnumsApi.VariableContext.array) {
-            throw new InternalFunctionException(general_error, "697.165 variable as array not supported yet " + outputVariable.name);
+            throw new InternalFunctionException(general_error, "171.460 variable as array not supported yet " + outputVariable.name);
         }
         throw new IllegalStateException();
     }
@@ -273,7 +273,7 @@ public class VariableTxService {
         Variable v = getVariableNotNull(variableId);
 
         if (!execContextId.equals(v.execContextId)) {
-            final String es = "#171.060 Task #"+taskId+" has the different execContextId than variable #"+variableId+", " +
+            final String es = "171.490 Task #"+taskId+" has the different execContextId than variable #"+variableId+", " +
                     "task execContextId: "+execContextId+", var execContextId: "+v.execContextId;
             log.warn(es);
             throw new VariableCommonException(es, variableId);
@@ -293,7 +293,7 @@ public class VariableTxService {
         Variable v = getVariableNotNull(variableId);
 
         if (!execContextId.equals(v.execContextId)) {
-            final String es = "#171.120 the different execContextId than variable #"+variableId+", " +
+            final String es = "171.520 the different execContextId than variable #"+variableId+", " +
                     "task execContextId: #"+execContextId+", var execContextId: #"+v.execContextId;
             log.warn(es);
             throw new VariableCommonException(es, variableId);
@@ -419,7 +419,7 @@ public class VariableTxService {
             return null;
         }
         if (vars.size()>1) {
-            throw new SourceCodeException("171.360 Too many variable '"+variable+"', actual count: " + vars.size());
+            throw new SourceCodeException("171.550 Too many variable '"+variable+"', actual count: " + vars.size());
         }
         return vars.get(0);
     }
@@ -484,7 +484,7 @@ public class VariableTxService {
 
         final String data = getVariableDataAsString(v.variableBlobId, false);
         if (S.b(data)) {
-            final String es = "171.390 Variable data wasn't found, variableId: " + variableId;
+            final String es = "171.580 Variable data wasn't found, variableId: " + variableId;
             log.warn(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }
@@ -495,7 +495,7 @@ public class VariableTxService {
     public String getVariableBlobDataAsString(Long variableBlobId) {
         final String data = getVariableDataAsString(variableBlobId, false);
         if (S.b(data)) {
-            final String es = "#171.390 Variable data wasn't found, variableBlobId: " + variableBlobId;
+            final String es = "171.610 Variable data wasn't found, variableBlobId: " + variableBlobId;
             log.warn(es);
             throw new VariableDataNotFoundException(variableBlobId, EnumsApi.VariableContext.local, es);
         }
@@ -506,10 +506,10 @@ public class VariableTxService {
     private String getVariableDataAsString(@Nullable Long variableBlobId, boolean nullable) {
         if (variableBlobId==null) {
             if (nullable) {
-                log.info("#171.420 Variable #{} is nullable and current value is null", variableBlobId);
+                log.info("171.640 Variable #{} is nullable and current value is null", variableBlobId);
                 return null;
             }
-            final String es = "#171.450 Variable data wasn't found, variableBlobId: " + variableBlobId;
+            final String es = "171.670 Variable data wasn't found, variableBlobId: " + variableBlobId;
             log.warn(es);
             throw new VariableDataNotFoundException(null, EnumsApi.VariableContext.local, es);
         }
@@ -520,7 +520,7 @@ public class VariableTxService {
                 try {
                     IOUtils.copy(is, baos);
                 } catch (IOException e) {
-                    String es = "171.550 "+e;
+                    String es = "171.700 "+e;
                     log.error(es, e);
                     throw new VariableCommonException(es, variableBlobId);
                 }
@@ -531,10 +531,10 @@ public class VariableTxService {
             Blob blob = variableBlobRepository.getDataAsStreamById(variableBlobId);
             if (blob==null) {
                 if (nullable) {
-                    log.info("#171.420 Variable #{} is nullable and current value is null", variableBlobId);
+                    log.info("171.420 Variable #{} is nullable and current value is null", variableBlobId);
                     return null;
                 }
-                final String es = "#171.450 Variable data wasn't found, variableBlobId: " + variableBlobId;
+                final String es = "171.450 Variable data wasn't found, variableBlobId: " + variableBlobId;
                 log.warn(es);
                 throw new VariableDataNotFoundException(variableBlobId, EnumsApi.VariableContext.local, es);
             }
@@ -546,8 +546,9 @@ public class VariableTxService {
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Throwable th) {
-            log.error("#171.480", th);
-            throw new VariableCommonException("#171.510 Error: " + th.getMessage(), variableBlobId);
+            final String es = "171.720 Error: " + th.getMessage();
+            log.error(es, th);
+            throw new VariableCommonException(es, variableBlobId);
         }
     }
 
@@ -562,7 +563,7 @@ public class VariableTxService {
 
         for (Variable variable : variables) {
             if (variable.nullified) {
-                log.info("#993.215 Variable #{} {} is null", variable.id, variable.name);
+                log.info("171.740 Variable #{} {} is null", variable.id, variable.name);
                 continue;
             }
             Path file = mappingFunc.apply(variable);
@@ -582,7 +583,7 @@ public class VariableTxService {
     private Variable getVariableNotNull(Long variableId) {
         Variable v = variableRepository.findByIdAsSimple(variableId);
         if (v==null) {
-            String es = "171.535 Variable #" + variableId + " wasn't found";
+            String es = "171.760 Variable #" + variableId + " wasn't found";
             log.warn(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }
@@ -610,7 +611,7 @@ public class VariableTxService {
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Exception e) {
-            String es = "171.570 Error while storing data to file";
+            String es = "171.780 Error while storing data to file";
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
@@ -632,7 +633,7 @@ public class VariableTxService {
                 try {
                     IOUtils.copy(is, baos);
                 } catch (IOException e) {
-                    String es = "171.550 "+e;
+                    String es = "171.800 "+e;
                     log.error(es, e);
                     throw new VariableCommonException(es, variableId);
                 }
@@ -641,7 +642,7 @@ public class VariableTxService {
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Exception e) {
-            String es = "171.570 Error while storing data to file";
+            String es = "171.820 Error while storing data to file";
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
@@ -650,7 +651,7 @@ public class VariableTxService {
     private Long getVariableBlobIdNotNull(Long variableId) {
         Variable v = variableRepository.findByIdReadOnly(variableId);
         if (v==null || v.variableBlobId==null) {
-            String es = "171.540 Variable #" + variableId + " wasn't found";
+            String es = "171.840 Variable #" + variableId + " wasn't found";
             log.warn(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }
@@ -680,7 +681,7 @@ public class VariableTxService {
             String contextId = Boolean.TRUE.equals(variable.parentContext) ? VariableUtils.getParentContext(taskParamsYaml.task.taskContextId) : taskParamsYaml.task.taskContextId;
             if (S.b(contextId)) {
                 throw new IllegalStateException(
-                        S.f("#171.630 (S.b(contextId)), process code: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
+                        S.f("171.860 (S.b(contextId)), process code: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
                                 p.processCode, variable.context, p.internalContextId, execContextId));
             }
 

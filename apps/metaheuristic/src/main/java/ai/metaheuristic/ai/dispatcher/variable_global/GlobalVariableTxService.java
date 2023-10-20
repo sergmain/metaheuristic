@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.variable_global;
 
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
@@ -42,7 +41,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Optional;
 
@@ -53,14 +51,13 @@ import java.util.Optional;
 public class GlobalVariableTxService {
 
     private final GlobalVariableRepository globalVariableRepository;
-    private final Globals globals;
     private final DispatcherBlobStorage dispatcherBlobStorage;
 
     @Transactional(readOnly = true)
     public String getVariableDataAsString(Long variableId) {
         final String data = getVariableDataAsString(variableId, false);
         if (S.b(data)) {
-            final String es = "#089.023 Variable data wasn't found, variableId: " + variableId;
+            final String es = "089.040 Variable data wasn't found, variableId: " + variableId;
             log.warn(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }
@@ -75,35 +72,17 @@ public class GlobalVariableTxService {
                 try {
                     IOUtils.copy(is, baos);
                 } catch (IOException e) {
-                    String es = "171.550 "+e;
+                    String es = "089.080 "+e;
                     log.error(es, e);
                     throw new VariableCommonException(es, variableId);
                 }
             });
             return baos.toString(StandardCharsets.UTF_8);
-/*
-            Blob blob = globalVariableRepository.getDataAsStreamById(variableId);
-            if (blob==null) {
-                if (nullable) {
-                    log.info("#089.025 Variable #{} is nullable and current value is null", variableId);
-                    return null;
-                }
-                else {
-                    final String es = "#089.027 Variable data wasn't found, variableId: " + variableId;
-                    log.warn(es);
-                    throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
-                }
-            }
-            try (InputStream is = blob.getBinaryStream()) {
-                String s = IOUtils.toString(is, StandardCharsets.UTF_8);
-                return s;
-            }
-*/
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Throwable th) {
-            log.error("#089.028", th);
-            throw new VariableCommonException("#089.029 Error: " + th.getMessage(), variableId);
+            log.error("089.0120", th);
+            throw new VariableCommonException("089.140 Error: " + th.getMessage(), variableId);
         }
     }
 
@@ -118,8 +97,8 @@ public class GlobalVariableTxService {
 /*
             Blob blob = globalVariableRepository.getDataAsStreamById(variableId);
             if (blob==null) {
-                log.warn("#089.030 Binary data for variableId {} wasn't found", variableId);
-                throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.global, "#089.040 Binary data wasn't found, variableId: " + variableId);
+                log.warn("089.030 Binary data for variableId {} wasn't found", variableId);
+                throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.global, "089.040 Binary data wasn't found, variableId: " + variableId);
             }
             try (InputStream is = blob.getBinaryStream()) {
                 DirUtils.copy(is, trgFile);
@@ -128,7 +107,7 @@ public class GlobalVariableTxService {
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Exception e) {
-            String es = "#089.050 Error while storing binary data";
+            String es = "089.160 Error while storing binary data";
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }

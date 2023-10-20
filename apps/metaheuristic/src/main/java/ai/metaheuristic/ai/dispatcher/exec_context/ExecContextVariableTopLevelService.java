@@ -34,6 +34,7 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
@@ -70,14 +71,14 @@ public class ExecContextVariableTopLevelService {
         TxUtils.checkTxNotExists();
 
         if (taskId==null) {
-            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR,"#440.020 taskId is null" );
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR,"440.020 taskId is null" );
         }
         if (variableId==null) {
-            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR,"#440.040 variableId is null" );
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR,"440.040 variableId is null" );
         }
         Long execContextId = taskRepository.getExecContextId(taskId);
         if (execContextId==null) {
-            final String es = "#440.060 Task "+taskId+" is obsolete and was already deleted";
+            final String es = "440.060 Task "+taskId+" is obsolete and was already deleted";
             log.warn(es);
             return new UploadResult(Enums.UploadVariableStatus.TASK_NOT_FOUND, es);
         }
@@ -92,23 +93,23 @@ public class ExecContextVariableTopLevelService {
             if (log.isDebugEnabled()) {
                 TaskImpl t = taskRepository.findByIdReadOnly(taskId);
                 if (t==null) {
-                    log.debug("#440.080 uploadVariable(), task #{} wasn't found", taskId);
+                    log.debug("440.080 uploadVariable(), task #{} wasn't found", taskId);
                 }
                 else {
-                    log.debug("#440.100 uploadVariable(), task id: #{}, ver: {}, task: {}", t.id, t.version, t);
+                    log.debug("440.100 uploadVariable(), task id: #{}, ver: {}, task: {}", t.id, t.version, t);
                 }
             }
-            final String es = "#440.120 can't store the result, need to try again. Error: " + th.getMessage();
+            final String es = "440.120 can't store the result, need to try again. Error: " + th.getMessage();
             log.error(es);
             return new UploadResult(Enums.UploadVariableStatus.PROBLEM_WITH_LOCKING, es);
         }
         catch (VariableCommonException th) {
-            final String es = "#440.140 can't store the result, unrecoverable error with data. Error: " + th.getMessage();
+            final String es = "440.140 can't store the result, unrecoverable error with data. Error: " + th.getMessage();
             log.error(es, th);
             return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, es);
         }
         catch (Throwable th) {
-            final String error = "#440.160 can't store the result, Error: " + th.getMessage();
+            final String error = "440.160 can't store the result, Error: " + th.getMessage();
             log.error(error, th);
             return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, error);
         }
@@ -118,24 +119,24 @@ public class ExecContextVariableTopLevelService {
         TxUtils.checkTxNotExists();
 
         if (file==null) {
-            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, "#440.180 file in null");
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, "440.180 file in null");
         }
         if (file.getSize()==0) {
-            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, "#440.182 file has zero length");
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, "440.182 file has zero length");
         }
         String originFilename = file.getOriginalFilename();
         if (StringUtils.isBlank(originFilename)) {
-            return new UploadResult(Enums.UploadVariableStatus.FILENAME_IS_BLANK, "#440.200 name of uploaded file is blank");
+            return new UploadResult(Enums.UploadVariableStatus.FILENAME_IS_BLANK, "440.200 name of uploaded file is blank");
         }
         if (taskId==null) {
-            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR,"#440.220 taskId is null" );
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR,"440.220 taskId is null" );
         }
         if (variableId==null) {
-            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR,"#440.240 variableId is null" );
+            return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR,"440.240 variableId is null" );
         }
         Long execContextId = taskRepository.getExecContextId(taskId);
         if (execContextId==null) {
-            final String es = "#440.260 Task "+taskId+" is obsolete and was already deleted";
+            final String es = "440.260 Task "+taskId+" is obsolete and was already deleted";
             log.warn(es);
             return new UploadResult(Enums.UploadVariableStatus.TASK_NOT_FOUND, es);
         }
@@ -146,14 +147,13 @@ public class ExecContextVariableTopLevelService {
         try {
             tempDir = DirUtils.createMhTempPath("upload-variable-");
             if (tempDir==null || !Files.isDirectory(tempDir)) {
-                final String location = System.getProperty("java.io.tmpdir");
-                return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, "#440.280 can't create temporary directory in " + location);
+                return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, "440.280 can't create temporary directory in " + SystemUtils.JAVA_IO_TMPDIR);
             }
 
             UploadResult uploadResult = VariableSyncService.getWithSync(variableId, () -> {
                 Variable v = variableRepository.findByIdAsSimple(variableId);
                 if (v == null) {
-                    return new UploadResult(Enums.UploadVariableStatus.VARIABLE_NOT_FOUND, "#440.285 variable #" + variableId + " wasn't found");
+                    return new UploadResult(Enums.UploadVariableStatus.VARIABLE_NOT_FOUND, "440.285 variable #" + variableId + " wasn't found");
                 }
                 if (v.inited) {
                     return OK_UPLOAD_RESULT;
@@ -162,7 +162,7 @@ public class ExecContextVariableTopLevelService {
                     variableService.storeVariable(bis, file.getSize(), execContextId, taskId, variableId);
                     return OK_UPLOAD_RESULT;
                 } catch (Throwable th) {
-                    final String error = "#440.290 can't store the result, Error: " + th.getMessage();
+                    final String error = "440.290 can't store the result, Error: " + th.getMessage();
                     log.error(error, th);
                     return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, error);
                 }
@@ -175,16 +175,16 @@ public class ExecContextVariableTopLevelService {
                 uploadResult = TaskSyncService.getWithSync(taskId, () -> taskVariableTopLevelService.updateStatusOfVariable(taskId, variableId));
             }
             catch (ObjectOptimisticLockingFailureException th) {
-                log.warn("#440.295 ObjectOptimisticLockingFailureException while updating the status of variable #{}, will try again", variableId);
+                log.warn("440.295 ObjectOptimisticLockingFailureException while updating the status of variable #{}, will try again", variableId);
                 uploadResult = TaskSyncService.getWithSync(taskId, () -> taskVariableTopLevelService.updateStatusOfVariable(taskId, variableId));
             }
             if (log.isDebugEnabled()) {
                 TaskImpl t = taskRepository.findByIdReadOnly(taskId);
                 if (t==null) {
-                    log.debug("#440.300 uploadVariable(), task #{} wasn't found", taskId);
+                    log.debug("440.300 uploadVariable(), task #{} wasn't found", taskId);
                 }
                 else {
-                    log.debug("#440.320 uploadVariable(), task id: #{}, ver: {}, task: {}", t.id, t.version, t);
+                    log.debug("440.320 uploadVariable(), task id: #{}, ver: {}, task: {}", t.id, t.version, t);
                 }
             }
             return uploadResult;
@@ -193,23 +193,23 @@ public class ExecContextVariableTopLevelService {
             if (log.isDebugEnabled()) {
                 TaskImpl t = taskRepository.findByIdReadOnly(taskId);
                 if (t==null) {
-                    log.debug("#440.340 uploadVariable(), task #{} wasn't found", taskId);
+                    log.debug("440.340 uploadVariable(), task #{} wasn't found", taskId);
                 }
                 else {
-                    log.debug("#440.360 uploadVariable(), task id: #{}, ver: {}, task: {}", t.id, t.version, t);
+                    log.debug("440.360 uploadVariable(), task id: #{}, ver: {}, task: {}", t.id, t.version, t);
                 }
             }
-            final String es = "#440.380 can't store the result, need to try again. Error: " + th.getMessage();
+            final String es = "440.380 can't store the result, need to try again. Error: " + th.getMessage();
             log.error(es, th);
             return new UploadResult(Enums.UploadVariableStatus.PROBLEM_WITH_LOCKING, es);
         }
         catch (VariableSavingException th) {
-            final String es = "#440.400 can't store the result, unrecoverable error with data. Error: " + th.getMessage();
+            final String es = "440.400 can't store the result, unrecoverable error with data. Error: " + th.getMessage();
             log.error(es, th);
             return new UploadResult(Enums.UploadVariableStatus.UNRECOVERABLE_ERROR, es);
         }
         catch (Throwable th) {
-            final String error = "#440.420 can't store the result, Error: " + th.getMessage();
+            final String error = "440.420 can't store the result, Error: " + th.getMessage();
             log.error(error, th);
             return new UploadResult(Enums.UploadVariableStatus.GENERAL_ERROR, error);
         }

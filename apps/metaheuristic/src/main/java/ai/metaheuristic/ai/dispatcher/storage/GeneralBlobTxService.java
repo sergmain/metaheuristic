@@ -72,20 +72,6 @@ public class GeneralBlobTxService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Long createVariableIfNotExist(@Nullable Long variableBlobId) {
-        VariableBlob variableBlob = null;
-        if (variableBlobId!=null) {
-            variableBlob = variableBlobRepository.findById(variableBlobId).orElse(null);
-        }
-
-        if (variableBlob==null) {
-            return createEmptyVariable();
-        }
-
-        return variableBlob.id;
-    }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Long createEmptyGlobalVariable(String variable, @Nullable String filename) {
         GlobalVariable data = new GlobalVariable();
         data.name = variable;

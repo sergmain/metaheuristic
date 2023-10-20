@@ -163,12 +163,12 @@ public class TaskCheckCachingService {
                     () -> taskCheckCachingTxService.checkCaching(event.execContextId, event.taskId, prepareData.cacheProcess));
 
         } catch (InvalidateCacheProcessException e) {
-            log.error("#610.200 caught InvalidateCacheProcessException, {}", e.getMessage());
+            log.error("610.200 caught InvalidateCacheProcessException, {}", e.getMessage());
             try {
                 TaskSyncService.getWithSyncVoid(e.taskId,
                         () -> taskCheckCachingTxService.invalidateCacheItemAndSetTaskToNone(e.execContextId, e.taskId, e.cacheProcessId));
             } catch (Throwable th) {
-                log.error("#610.300 error while invalidating task #"+e.taskId, th);
+                log.error("610.300 error while invalidating task #"+e.taskId, th);
             }
         }
     }
@@ -182,7 +182,7 @@ public class TaskCheckCachingService {
             return PREPARE_DATA_NONE;
         }
         if (task.execState!=EnumsApi.TaskExecState.CHECK_CACHE.value) {
-            log.info("#609.010 task #{} was already checked for cached variables", taskId);
+            log.info("610.330 task #{} was already checked for cached variables", taskId);
             return PREPARE_DATA_NONE;
         }
 
@@ -204,7 +204,7 @@ public class TaskCheckCachingService {
         TaskParamsYaml tpy = task.getTaskParamsYaml();
         ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
         if (p==null) {
-            log.warn("609.023 Process {} wasn't found", tpy.task.processCode);
+            log.warn("610.360 Process {} wasn't found", tpy.task.processCode);
             return null;
         }
         CacheData.FullKey fullKey;
@@ -212,7 +212,7 @@ public class TaskCheckCachingService {
             log.debug("start cacheService.getKey(), execContextId: {}, task: {}", task.execContextId, task.id);
             fullKey = cacheService.getKey(tpy, p.function);
         } catch (VariableCommonException e) {
-            log.warn("609.025 ExecContext: #{}, VariableCommonException: {}", task.execContextId, e.getAdditionalInfo());
+            log.warn("610.390 ExecContext: #{}, VariableCommonException: {}", task.execContextId, e.getAdditionalInfo());
             return null;
         }
         log.debug("done cacheService.getKey(), execContextId: {}, task: {}", task.execContextId, task.id);

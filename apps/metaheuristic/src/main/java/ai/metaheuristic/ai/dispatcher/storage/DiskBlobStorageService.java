@@ -113,8 +113,11 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
             }
             Path dataPath = path.resolve(id + Consts.BIN_EXT);
             try (OutputStream os = Files.newOutputStream(dataPath); BufferedOutputStream bos = new BufferedOutputStream(os)) {
-                IOUtils.copyLarge(is, os);
+                IOUtils.copyLarge(is, bos);
+                bos.flush();
             }
+
+            int i=0;
         }
     }
 
@@ -122,7 +125,7 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
     private final FunctionDataRepository functionDataRepository;
     private final CacheVariableRepository cacheVariableRepository;
     private final VariableRepository variableRepository;
-    private final GeneralBlobTxService generalBlobTxService;
+    private final GeneralBlobService generalBlobService;
     private final GlobalVariableRepository globalVariableRepository;
 
     private DataStorage dataStorageVariable;
@@ -165,7 +168,7 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
             return;
         }
 
-        trg.variableBlobId = generalBlobTxService.createVariableIfNotExist(trg.variableBlobId);
+        trg.variableBlobId = generalBlobService.createVariableIfNotExist(trg.variableBlobId);
         if (trg.variableBlobId==null) {
             throw new IllegalStateException("(trg.variableBlobId==null)");
         }
@@ -203,7 +206,7 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
     public void storeGlobalVariableData(Long globalVariableId, InputStream is, long size) throws IOException {
         GlobalVariable globalVariable = globalVariableRepository.findById(globalVariableId).orElse(null);
         if (globalVariable==null) {
-            throw new VariableCommonException("174.080 globalVariable not found", globalVariableId);
+            throw new VariableCommonException("176.160 globalVariable not found", globalVariableId);
         }
         globalVariable.uploadTs = new Timestamp(System.currentTimeMillis());
         GlobalVariable result = globalVariableRepository.save(globalVariable);
@@ -214,7 +217,7 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
     public void accessFunctionData(String functionCode, Consumer<InputStream> processBlobDataFunc) throws IOException {
         Long functionId = functionDataRepository.findIdByCode(functionCode);
         if (functionId == null) {
-            throw new FunctionDataErrorException(functionCode, "176.300 error");
+            throw new FunctionDataErrorException(functionCode, "176.200 error");
         }
         dataStorageFunction.accessData(functionId, processBlobDataFunc);
     }
@@ -232,7 +235,7 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
         dataStorageCacheVariable.storeData(cacheVariableId, is, size);
         CacheVariable cacheVariable = cacheVariableRepository.findById(cacheVariableId).orElse(null);
         if (cacheVariable==null) {
-            throw new FunctionDataNotFoundException("id#"+cacheVariableId, "174.200 cacheVariable not found");
+            throw new FunctionDataNotFoundException("id#"+cacheVariableId, "176.240 cacheVariable not found");
         }
         cacheVariable.createdOn = System.currentTimeMillis();
         cacheVariable.nullified = false;

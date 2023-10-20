@@ -147,7 +147,7 @@ public class SourceCodeTxService {
     }
 
     // TODO p3 2023-10-17 do we need Transaction for validating?
-    //  Transaction is needed because dispatcherParamsTopLevelService.registerSourceCode(sourceCode);
+    //  Transaction is needed because of dispatcherParamsTopLevelService.registerSourceCode(sourceCode);
     @Transactional
     public SourceCodeApiData.SourceCodeResult validateSourceCode(Long sourceCodeId, DispatcherContext context) {
         final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);

@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.storage.CacheVariableDatabaseStorageService;
 import ai.metaheuristic.ai.dispatcher.storage.DatabaseBlobPersistService;
+import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobService;
 import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
@@ -63,7 +64,7 @@ import java.sql.Timestamp;
 public class VariableDefaultDatabaseService implements VariableDatabaseSpecificService {
 
     private final Globals globals;
-    private final GeneralBlobTxService generalBlobTxService;
+    private final GeneralBlobService generalBlobService;
     private final ApplicationEventPublisher eventPublisher;
     private final DatabaseBlobPersistService databaseBlobPersistService;
     private final VariableRepository variableRepository;
@@ -90,7 +91,7 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
             throw e;
         } catch (Exception e) {
             eventPublisher.publishEvent(new ResourceCloseTxEvent(tempFile));
-            String es = "#173.040 Error while storing data to file";
+            String es = "173.040 Error while storing data to file";
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
@@ -103,7 +104,7 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
         VariableSyncService.checkWriteLockPresent(variableId);
 
         if (size==0) {
-            throw new IllegalStateException("171.720 Variable can't be with zero length");
+            throw new IllegalStateException("173.080 Variable can't be with zero length");
         }
         TxUtils.checkTxExists();
 
@@ -112,7 +113,7 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
         data.filename = filename;
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        data.variableBlobId = generalBlobTxService.createVariableIfNotExist(data.variableBlobId);
+        data.variableBlobId = generalBlobService.createVariableIfNotExist(data.variableBlobId);
         databaseBlobPersistService.storeVariable(data.variableBlobId, is, size);
 
         data.inited = true;
@@ -124,7 +125,7 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
     private Variable getVariableNotNull(Long variableId) {
         Variable v = variableRepository.findByIdAsSimple(variableId);
         if (v==null) {
-            String es = "171.535 Variable #" + variableId + " wasn't found";
+            String es = "173.120 Variable #" + variableId + " wasn't found";
             log.warn(es);
             throw new VariableDataNotFoundException(variableId, EnumsApi.VariableContext.local, es);
         }

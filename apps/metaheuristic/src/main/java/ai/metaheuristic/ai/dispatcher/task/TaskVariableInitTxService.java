@@ -113,7 +113,7 @@ public class TaskVariableInitTxService {
         final Long execContextId = task.execContextId;
         ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParams.task.processCode);
         if (p==null) {
-            log.warn("#171.240 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
+            log.warn("179.040 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
             return null;
         }
 
@@ -130,13 +130,13 @@ public class TaskVariableInitTxService {
             String contextId = Boolean.TRUE.equals(v.parentContext) ? VariableUtils.getParentContext(taskContextId) : taskContextId;
             if (S.b(contextId)) {
                 throw new TaskCreationException(
-                        S.f("#171.270 (S.b(contextId)), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                        S.f("179.080 (S.b(contextId)), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
                                 v.name, v.context, taskContextId, execContextId));
             }
             Object[] variable = variableTxService.findVariableInAllInternalContexts(allParentTaskContextIds, v.name, execContextId);
             if (variable==null) {
                 throw new TaskCreationException(
-                        S.f("#171.300 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                        S.f("179.120 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
                                 v.name, v.context, taskContextId, execContextId));
             }
             iv.id = (Long)variable[0];
@@ -146,7 +146,7 @@ public class TaskVariableInitTxService {
             SimpleGlobalVariable variable = globalVariableRepository.findIdByName(v.name);
             if (variable==null) {
                 throw new TaskCreationException(
-                        S.f("#171.330 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                        S.f("179.160 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
                                 v.name, v.context, taskContextId, execContextId));
             }
             iv.id = variable.id;
@@ -165,14 +165,14 @@ public class TaskVariableInitTxService {
     private List<String> getAllParentTaskContextIds(TaskImpl task, List<Long> parentTaskIds, String taskContextId, ExecContextImpl ec) {
         ExecContextGraph ecg = execContextGraphCache.findById(ec.execContextGraphId);
         if (ecg==null) {
-            log.error("171.265 can't find ExecContextGraph #" + ec.execContextGraphId);
+            log.error("179.200 can't find ExecContextGraph #" + ec.execContextGraphId);
             return null;
         }
         Set<String> set = new HashSet<>();
         for (Long parentTaskId : parentTaskIds) {
             ExecContextData.TaskVertex vertex = ExecContextGraphService.findVertexByTaskId(ecg, parentTaskId);
             if (vertex==null) {
-                throw new RuntimeException("171.267 vertex wasn't found for task #" + task.id);
+                throw new RuntimeException("179.240 vertex wasn't found for task #" + task.id);
             }
             set.add(vertex.taskContextId);
             Set<ExecContextData.TaskVertex> setTemp = ExecContextGraphService.findAncestors(ecg, vertex);

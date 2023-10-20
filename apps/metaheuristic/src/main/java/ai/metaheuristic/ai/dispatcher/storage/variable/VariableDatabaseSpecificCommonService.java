@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobService;
 import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
@@ -45,6 +46,7 @@ import java.util.function.BiConsumer;
 public class VariableDatabaseSpecificCommonService {
 
     private final VariableRepository variableRepository;
+    private final GeneralBlobService generalBlobService;
     private final GeneralBlobTxService generalBlobTxService;
     private final CacheVariableRepository cacheVariableRepository;
 
@@ -62,7 +64,7 @@ public class VariableDatabaseSpecificCommonService {
             return;
         }
 
-        trg.variableBlobId = generalBlobTxService.createVariableIfNotExist(trg.variableBlobId);
+        trg.variableBlobId = generalBlobService.createVariableIfNotExist(trg.variableBlobId);
 /*
         if (trg.variableBlobId==null) {
             trg.variableBlobId = variableBlobTxService.createVariableIfNotExist(null);
