@@ -62,7 +62,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.commons.utils.ArtifactCommonUtils.normalizeCode;
 import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Element;
 import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Scheme;
 
@@ -203,7 +202,7 @@ public class FunctionService {
             }
         }
         if (allIds.size()!=result.size()) {
-            throw new IllegalStateException("(allIds.size()!=result.size())");
+            throw new IllegalStateException("295.040 (allIds.size()!=result.size())");
         }
         return result;
     }
@@ -258,14 +257,20 @@ public class FunctionService {
         log.info("Start deleting function with id: {}", id );
         if (checkReplicationMode  && globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#424.005 Can't delete function while 'replicated' mode of asset is active");
+                    "295.060 Can't delete function while 'replicated' mode of asset is active");
         }
         final Function function = functionCache.findById(id);
         if (function == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#424.010 function wasn't found, functionId: " + id);
+                    "295.080 function wasn't found, functionId: " + id);
         }
         functionTxService.deleteFunction(function.getId(), function.getCode());
+        try {
+            deleteResourceDirForFunction(function.getCode());
+        } catch (IOException e) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                "295.120 Can't delete resource dir for function "+function.getCode());
+        }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -273,7 +278,7 @@ public class FunctionService {
         try {
             Path yamlConfigFile = srcDir.resolve(CommonConsts.FUNCTION_YAML);
             if (Files.notExists(yamlConfigFile)) {
-                String es = S.f("295.080 File '%s' wasn't found in dir %s", CommonConsts.FUNCTION_YAML, srcDir.normalize());
+                String es = S.f("295.140 File '%s' wasn't found in dir %s", CommonConsts.FUNCTION_YAML, srcDir.normalize());
                 status.addErrorMessage(es);
                 log.error(es);
                 return;
@@ -294,7 +299,7 @@ public class FunctionService {
             status.addErrorMessage(e.getMessage());
         }
         catch(Throwable th) {
-            final String es = "295.240 Error " + th.getClass().getName() + " while uploading functions from bundle: " + th.getMessage();
+            final String es = "295.200 Error " + th.getClass().getName() + " while uploading functions from bundle: " + th.getMessage();
             log.error(es, th);
             status.addErrorMessage(es);
         }
@@ -315,7 +320,7 @@ public class FunctionService {
         if (function !=null) {
             FunctionConfigYaml cfg = function.getFunctionConfigYaml();
             final String checksumInfo = getChecksumInfo(functionConfigYaml, cfg);
-            final String es = S.f("295.220 Function %s was already uploaded. Checksum %s", function.code, checksumInfo);
+            final String es = S.f("295.240 Function %s was already uploaded. Checksum %s", function.code, checksumInfo);
             status.addInfoMessage(es);
             return;
         }
@@ -327,14 +332,14 @@ public class FunctionService {
             return;
         }
         if (S.b(functionConfigYaml.system.archive)) {
-            final String es = S.f("295.220 Config yaml for function %s is broken, field system or system.archive is empty ", functionConfig.code);
+            final String es = S.f("295.260 Config yaml for function %s is broken, field system or system.archive is empty ", functionConfig.code);
             status.addErrorMessage(es);
             return;
         }
         String sum=null;
         Path file = srcDir.resolve(functionConfigYaml.system.archive);
         if (Files.notExists(file)) {
-            final String es = "295.160 Function has broken functionConfigYaml.system.archive, file not found " + file;
+            final String es = "295.300 Function has broken functionConfigYaml.system.archive, file not found " + file;
             status.addErrorMessage(es);
             log.warn(es+" Temp dir: " + srcDir.normalize());
             return;
@@ -345,7 +350,7 @@ public class FunctionService {
             final EnumsApi.HashAlgo hashAlgo = EnumsApi.HashAlgo.SHA256WithSignature;
 
             if (functionConfigYaml.system.checksumMap.keySet().stream().noneMatch(o->o==hashAlgo)) {
-                String es = S.f("295.100 Global isFunctionSignatureRequired==true but function %s isn't signed with HashAlgo.SHA256WithSignature", functionConfig.code);
+                String es = S.f("295.320 Global isFunctionSignatureRequired==true but function %s isn't signed with HashAlgo.SHA256WithSignature", functionConfig.code);
                 status.addErrorMessage(es);
                 log.error(es);
                 return;
@@ -356,14 +361,14 @@ public class FunctionService {
                     .map(Map.Entry::getValue).orElse(null);
 
             if (S.b(data)) {
-                String es = S.f("295.120 Global isFunctionSignatureRequired==true but function %s has empty SHA256WithSignature value", functionConfig.code);
+                String es = S.f("295.340 Global isFunctionSignatureRequired==true but function %s has empty SHA256WithSignature value", functionConfig.code);
                 status.addErrorMessage(es);
                 log.warn(es);
                 return;
             }
             ChecksumAndSignatureData.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureUtils.parse(data);
             if (S.b(checksumWithSignature.checksum) || S.b(checksumWithSignature.signature)) {
-                String es = S.f("295.140 Global isFunctionSignatureRequired==true but function %s has empty checksum or signature", functionConfig.code);
+                String es = S.f("295.360 Global isFunctionSignatureRequired==true but function %s has empty checksum or signature", functionConfig.code);
                 status.addErrorMessage(es);
                 log.warn(es);
                 return;
@@ -382,7 +387,7 @@ public class FunctionService {
                     break;
             }
             if (!checksumWithSignature.checksum.equals(sum)) {
-                String es = S.f("295.180 Function %s has wrong checksum", functionConfig.code);
+                String es = S.f("295.380 Function %s has wrong checksum", functionConfig.code);
                 status.addErrorMessage(es);
                 log.warn(es);
                 return;
@@ -394,7 +399,7 @@ public class FunctionService {
 
             if (st!= EnumsApi.SignatureState.correct) {
                 if (!checksumWithSignature.checksum.equals(sum)) {
-                    String es = S.f("295.200 Function %s has wrong signature", functionConfig.code);
+                    String es = S.f("295.400 Function %s has wrong signature", functionConfig.code);
                     status.addErrorMessage(es);
                     log.warn(es);
                     return;
@@ -408,7 +413,7 @@ public class FunctionService {
         }
     }
 
-    private void deleteResourceDirForFunction(String functionCode) throws IOException {
+    public void deleteResourceDirForFunction(String functionCode) throws IOException {
         Path baseFunctionDir = ArtifactUtils.prepareFunctionPath(globals.dispatcherResourcesPath);
         String functionCodeAsNormal = ArtifactCommonUtils.normalizeCode(functionCode);
         Path p = baseFunctionDir.resolve(functionCodeAsNormal);
@@ -462,7 +467,7 @@ public class FunctionService {
                 FunctionConfigYaml temp = function.getFunctionConfigYaml();
                 functionConfig = TaskParamsUtils.toFunctionConfig(temp);
             } else {
-                log.warn("295.040 Can't find function for code {}", functionDef.getCode());
+                log.warn("295.440 Can't find function for code {}", functionDef.getCode());
             }
         }
         return functionConfig;
@@ -530,7 +535,7 @@ public class FunctionService {
     public String getFunctionConfig(HttpServletResponse response, String functionCode) throws IOException {
         Function function = findByCode(functionCode);
         if (function ==null) {
-            log.warn("#442.140 Function {} wasn't found", functionCode);
+            log.warn("295.460 Function {} wasn't found", functionCode);
             response.sendError(HttpServletResponse.SC_GONE);
             return "";
         }
@@ -542,12 +547,12 @@ public class FunctionService {
     public Map<EnumsApi.HashAlgo, String> getFunctionChecksum(HttpServletResponse response, String functionCode) throws IOException {
         Function function = findByCode(functionCode);
         if (function ==null) {
-            log.warn("#442.100 Function {} wasn't found", functionCode);
+            log.warn("295.480 Function {} wasn't found", functionCode);
             response.sendError(HttpServletResponse.SC_GONE);
             return Map.of();
         }
         FunctionConfigYaml sc = function.getFunctionConfigYaml();
-        log.info("#442.120 Send checksum {} for function {}", sc.system!=null ? sc.system.checksumMap : null, sc.function.getCode());
+        log.info("295.500 Send checksum {} for function {}", sc.system!=null ? sc.system.checksumMap : null, sc.function.getCode());
         return sc.system == null ? Map.of() : sc.system.checksumMap;
     }
 
