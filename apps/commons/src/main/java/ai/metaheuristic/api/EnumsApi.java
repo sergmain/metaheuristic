@@ -415,7 +415,7 @@ public class EnumsApi {
         not_supported_os,
         asset_error,
         download_error(true, 10*60*1000, true), // recheck every 10 minutes
-        function_config_error(true, 10*60*1000, true),
+        function_config_error(false, 10*60*1000, true),
         io_error,
         dispatcher_config_error,
         signature_wrong,

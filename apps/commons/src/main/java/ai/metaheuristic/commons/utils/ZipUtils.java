@@ -31,6 +31,7 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -376,18 +377,8 @@ public class ZipUtils {
                         log.debug("'\t\t\tcopy content of zip entry to file {}", destinationPath);
                     }
                     try (InputStream inputStream = zipFile.getInputStream(zipEntry)) {
-                        try (SeekableByteChannel outChannel = Files.newByteChannel(destinationPath, EnumSet.of(CREATE, WRITE, READ, TRUNCATE_EXISTING))) {
-                            int n;
-                            int count = 0;
-                            byte[] bytes = new byte[BUFFER_SIZE];
-                            while ((n=inputStream.read(bytes))!=-1) {
-                                final ByteBuffer buffer = ByteBuffer.wrap(bytes, 0, n);
-                                outChannel.write(buffer);
-                                count += n;
-                            }
-                            //noinspection unused
-                            int total = count;
-                        }
+//                        transferData(inputStream, destinationPath);
+                        transferDataSimple(inputStream, destinationPath);
                     }
                 }
             }
@@ -397,6 +388,25 @@ public class ZipUtils {
             log.error("Unzipping error", th);
             throw new UnzipArchiveException("Unzip failed, error: " + th.getMessage(), th);
         }
+    }
+
+    private static void transferData(InputStream inputStream, Path destinationPath) throws IOException {
+        try (SeekableByteChannel outChannel = Files.newByteChannel(destinationPath, EnumSet.of(CREATE, WRITE, READ, TRUNCATE_EXISTING))) {
+            int n;
+            int count = 0;
+            byte[] bytes = new byte[BUFFER_SIZE];
+            while ((n= inputStream.read(bytes))!=-1) {
+                final ByteBuffer buffer = ByteBuffer.wrap(bytes, 0, n);
+                outChannel.write(buffer);
+                count += n;
+            }
+            //noinspection unused
+            int total = count;
+        }
+    }
+
+    private static void transferDataSimple(InputStream inputStream, Path destinationPath) throws IOException {
+        Files.copy(inputStream, destinationPath, StandardCopyOption.REPLACE_EXISTING);
     }
 
     public static List<String> listNameOfEntries(Path archivePath) {

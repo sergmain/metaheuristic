@@ -71,10 +71,23 @@ public class ArtifactCommonUtils {
     }
 
     public static String normalizeCode(String code) {
-
         if (StringUtils.containsWhitespace(code)) {
             throw new IllegalStateException("Code can't contain any whitespace char");
         }
-        return code.replace(':', '_');
+        final String replaced = code.replace(':', '_');
+        int count=0;
+        for (int i = replaced.length() - 1; i >= 0; i--) {
+            final char c = replaced.charAt(i);
+            if (c=='.') {
+                count++;
+            }
+            else {
+                break;
+            }
+        }
+        if (count==replaced.length()) {
+            throw new IllegalStateException("function code contains only '.' chars");
+        }
+        return count==0 ? replaced : replaced.substring(0, replaced.length()-count);
     }
 }

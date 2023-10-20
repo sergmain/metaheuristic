@@ -103,15 +103,15 @@ public class TaskAssetPreparer {
                 ProcessorAndCoreData.DispatcherUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl);
                 if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(dispatcherUrl, task.execContextId)) {
                     processorTaskService.delete(core, task.taskId);
-                    log.info("#951.010 orphan task was deleted, taskId: #{}, url: {}, execContextId: {}", task.taskId, task.dispatcherUrl, task.execContextId);
-                    log.info("#951.015  registered execContexts: {}", currentExecState.getExecContextsNormalized(dispatcherUrl));
+                    log.info("951.010 orphan task was deleted, taskId: #{}, url: {}, execContextId: {}", task.taskId, task.dispatcherUrl, task.execContextId);
+                    log.info("951.015  registered execContexts: {}", currentExecState.getExecContextsNormalized(dispatcherUrl));
                 }
             });
 
             // find all tasks which weren't finished and resources aren't prepared yet
             List<ProcessorCoreTask> tasks = processorTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(core, false);
             if (tasks.size()>1) {
-                log.warn("#951.020 There is more than one task: {}", tasks.stream().map(ProcessorCoreTask::getTaskId).collect(Collectors.toList()));
+                log.warn("951.020 There is more than one task: {}", tasks.stream().map(ProcessorCoreTask::getTaskId).collect(Collectors.toList()));
             }
 
             for (ProcessorCoreTask task : tasks) {
@@ -137,11 +137,11 @@ public class TaskAssetPreparer {
             return null;
         }
         if (S.b(task.dispatcherUrl)) {
-            log.error("#951.040 dispatcherUrl for task {} is blank", task.getTaskId());
+            log.error("951.040 dispatcherUrl for task {} is blank", task.getTaskId());
             return null;
         }
         if (S.b(task.getParams())) {
-            log.error("#951.060 Params for task {} is blank", task.getTaskId());
+            log.error("951.060 Params for task {} is blank", task.getTaskId());
             return null;
         }
 
@@ -150,7 +150,7 @@ public class TaskAssetPreparer {
 
         final MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.metadataParams.processorStateByDispatcherUrl(core);
         if (processorState.processorId==null || S.b(processorState.sessionId)) {
-            log.warn("#951.070 processor {} with dispatcher {} isn't ready", core.coreCode, core.dispatcherUrl.url);
+            log.warn("951.070 processor {} with dispatcher {} isn't ready", core.coreCode, core.dispatcherUrl.url);
             return null;
         }
 
@@ -158,7 +158,7 @@ public class TaskAssetPreparer {
 
         if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(core.dispatcherUrl, task.execContextId)) {
             processorTaskService.delete(core, task.taskId);
-            log.info("#951.080 Deleted orphan task {}", task);
+            log.info("951.080 Deleted orphan task {}", task);
             return null;
         }
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.UTILS.to(task.getParams());
@@ -189,7 +189,7 @@ public class TaskAssetPreparer {
 
         // update the status of task if everything is prepared
         if (isAllReady.get()) {
-            log.info("#951.140 All assets were prepared for task #{}, dispatcher: {}", task.taskId, task.dispatcherUrl);
+            log.info("951.140 All assets were prepared for task #{}, dispatcher: {}", task.taskId, task.dispatcherUrl);
             processorTaskService.markAsAssetPrepared(core, task.taskId, true);
         }
         return null;
@@ -215,7 +215,7 @@ public class TaskAssetPreparer {
             }
             else {
                 if (functionState== EnumsApi.FunctionState.function_config_error || functionState== EnumsApi.FunctionState.download_error) {
-                    log.error("#951.170 The function {} has a state as {}, start re-downloading", functionConfig.code, functionState);
+                    log.error("951.170 The function {} has a state as {}, start re-downloading", functionConfig.code, functionState);
 
                     processorEnvironment.metadataParams.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none);
 
@@ -229,7 +229,7 @@ public class TaskAssetPreparer {
                                     taskId, core.dispatcherUrl.url, functionConfig.code));
                 }
                 if (functionState!= EnumsApi.FunctionState.ready) {
-                    log.warn("#951.180 Function {} has broken state as {}", functionConfig.code, functionState);
+                    log.warn("951.180 Function {} has broken state as {}", functionConfig.code, functionState);
                 }
                 return functionState == EnumsApi.FunctionState.ready;
             }

@@ -22,6 +22,7 @@ import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.data.replication.ReplicationApiData;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.TaskParamsUtils;
@@ -83,7 +84,8 @@ public class ProcessorFunctionUtils {
             Response response = HttpClientExecutor.getExecutor(assetManager.url, assetManager.username, assetManager.password).execute(request);
             String yaml = response.returnContent().asString(StandardCharsets.UTF_8);
 
-            functionConfigStatus.functionConfig = TaskParamsUtils.toFunctionConfig(FunctionConfigYamlUtils.UTILS.to(yaml));
+            final FunctionConfigYaml functionConfigYaml = FunctionConfigYamlUtils.UTILS.to(yaml);
+            functionConfigStatus.functionConfig = TaskParamsUtils.toFunctionConfig(functionConfigYaml);
             functionConfigStatus.status = ConfigStatus.ok;
 
         } catch (HttpResponseException e) {

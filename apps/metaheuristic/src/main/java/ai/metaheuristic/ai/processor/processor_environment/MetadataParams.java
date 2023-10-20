@@ -89,9 +89,9 @@ public class MetadataParams {
 
         public FunctionConfigAndStatus(@Nullable TaskParamsYaml.FunctionConfig functionConfig, @Nullable MetadataParamsYaml.Function setFunctionState, AssetFile assetFile) {
             this.functionConfig = functionConfig;
-            this.status = setFunctionState;
             this.assetFile = assetFile;
             this.contentIsInline = false;
+            this.status = setFunctionState;
         }
     }
 
@@ -160,9 +160,9 @@ public class MetadataParams {
             String yaml = Files.readString(metadataFile, StandardCharsets.UTF_8);
             metadata = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
         } catch (org.yaml.snakeyaml.reader.ReaderException e) {
-            log.error("#815.020 Bad data in " + metadataFile.toAbsolutePath());
+            log.error("815.020 Bad data in " + metadataFile.toAbsolutePath());
         } catch (Throwable e) {
-            log.error("#815.040 Error", e);
+            log.error("815.040 Error", e);
         }
     }
 
@@ -225,7 +225,7 @@ public class MetadataParams {
         try {
             return syncFunctionStatusInternal(assetManagerUrl, assetManager, functionCode);
         } catch (Throwable th) {
-            log.error("#815.080 Error in syncFunctionStatus()", th);
+            log.error("815.080 Error in syncFunctionStatus()", th);
             return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.io_error));
         }
     }
@@ -238,7 +238,7 @@ public class MetadataParams {
             return null;
         }
         if (status.sourcing!= EnumsApi.FunctionSourcing.dispatcher) {
-            log.warn("#811.010 Function {} can't be downloaded from {} because a sourcing isn't 'dispatcher'.", functionCode, assetManagerUrl.url);
+            log.warn("815.090 Function {} can't be downloaded from {} because a sourcing isn't 'dispatcher'.", functionCode, assetManagerUrl.url);
             return null;
         }
         if (status.state == EnumsApi.FunctionState.ready) {
@@ -262,7 +262,7 @@ public class MetadataParams {
         setChecksumMap(assetManagerUrl, functionCode, functionConfig.checksumMap);
 
         if (S.b(functionConfig.file)) {
-            log.error("#815.100 name of file for function {} is blank and content of function is blank too", functionCode);
+            log.error("815.100 name of file for function {} is blank and content of function is blank too", functionCode);
             return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.function_config_error));
         }
 
@@ -495,7 +495,7 @@ public class MetadataParams {
 
     public void setProcessorIdAndSessionId(DispatcherUrl dispatcherUrl, String processorIdStr, String sessionId) {
         if (StringUtils.isBlank(processorIdStr)) {
-            throw new IllegalStateException("#815.180 processorId is null");
+            throw new IllegalStateException("815.180 processorId is null");
         }
         Long processorId = Long.parseLong(processorIdStr);
 
@@ -569,7 +569,7 @@ public class MetadataParams {
     @Nullable
     public MetadataParamsYaml.Function setFunctionState(final AssetManagerUrl assetManagerUrl, String functionCode, EnumsApi.FunctionState functionState) {
         if (S.b(functionCode)) {
-            throw new IllegalStateException("#815.240 functionCode is null");
+            throw new IllegalStateException("815.240 functionCode is null");
         }
         try {
             writeLock.lock();
@@ -594,7 +594,7 @@ public class MetadataParams {
         try {
             writeLock.lock();
             if (S.b(functionCode)) {
-                throw new IllegalStateException("#815.240 functionCode is null");
+                throw new IllegalStateException("815.260 functionCode is null");
             }
             MetadataParamsYaml.Function status = metadata.functions.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
             if (status == null) {
@@ -613,7 +613,7 @@ public class MetadataParams {
 
     public void setChecksumMap(final AssetManagerUrl assetManagerUrl, String functionCode, @Nullable Map<EnumsApi.HashAlgo, String> checksumMap) {
         if (S.b(functionCode)) {
-            throw new IllegalStateException("#815.240 functionCode is null");
+            throw new IllegalStateException("815.280 functionCode is null");
         }
         if (checksumMap==null) {
             return;
@@ -635,7 +635,7 @@ public class MetadataParams {
 
     public void setChecksumAndSignatureStatus(final AssetManagerUrl assetManagerUrl, String functionCode, CheckSumAndSignatureStatus checkSumAndSignatureStatus) {
         if (S.b(functionCode)) {
-            throw new IllegalStateException("#815.240 functionCode is null");
+            throw new IllegalStateException("815.300 functionCode is null");
         }
         try {
             writeLock.lock();
@@ -658,7 +658,7 @@ public class MetadataParams {
 
     private boolean removeFunction(final String assetManagerUrl, String functionCode) {
         if (S.b(functionCode)) {
-            throw new IllegalStateException("#815.280 functionCode is empty");
+            throw new IllegalStateException("815.320 functionCode is empty");
         }
         try {
             writeLock.lock();
@@ -676,7 +676,7 @@ public class MetadataParams {
 
     public void setFunctionDownloadStatus(final AssetManagerUrl assetManagerUrl, String functionCode, EnumsApi.FunctionSourcing sourcing, EnumsApi.FunctionState functionState) {
         if (S.b(functionCode)) {
-            throw new IllegalStateException("#815.360 functionCode is empty");
+            throw new IllegalStateException("815.360 functionCode is empty");
         }
         try {
             writeLock.lock();
@@ -742,7 +742,7 @@ public class MetadataParams {
     @SuppressWarnings("unused")
     public void setSessionId(DispatcherUrl dispatcherUrl, String sessionId) {
         if (StringUtils.isBlank(sessionId)) {
-            throw new IllegalStateException("#815.400 sessionId is null");
+            throw new IllegalStateException("815.400 sessionId is null");
         }
         try {
             writeLock.lock();
@@ -757,7 +757,7 @@ public class MetadataParams {
     private void updateMetadataFile() {
         final Path metadataFile =  processorPath.resolve(Consts.METADATA_YAML_FILE_NAME);
         if (Files.exists(metadataFile)) {
-            log.trace("#815.420 Metadata file exists. Make backup");
+            log.trace("815.420 Metadata file exists. Make backup");
             Path yamlFileBak = processorPath.resolve(Consts.METADATA_YAML_BAK_FILE_NAME);
             Files.deleteIfExists(yamlFileBak);
             Files.move(metadataFile, yamlFileBak);
@@ -768,24 +768,24 @@ public class MetadataParams {
             Files.writeString(metadataFile, data, StandardCharsets.UTF_8);
             String check = Files.readString(metadataFile, StandardCharsets.UTF_8);
             if (!check.equals(data)) {
-                log.error("#815.440 Metadata was persisted with an error, content is different, size - expected: {}, actual: {}, Processor will be closed", data.length(), check.length());
+                log.error("815.440 Metadata was persisted with an error, content is different, size - expected: {}, actual: {}, Processor will be closed", data.length(), check.length());
                 throw new TerminateApplicationException();
             }
         } catch (Throwable th) {
-            log.error("#815.460 Fatal error, Processor will be closed", th);
+            log.error("815.460 Fatal error, Processor will be closed", th);
             throw new TerminateApplicationException();
         }
     }
 
     private void restoreFromBackup() {
-        log.info("#815.480 Trying to restore previous state of metadata.yaml");
+        log.info("815.480 Trying to restore previous state of metadata.yaml");
         try {
             Path yamlFileBak = processorPath.resolve(Consts.METADATA_YAML_BAK_FILE_NAME);
             String content = Files.readString(yamlFileBak, StandardCharsets.UTF_8);
             Path yamlFile = processorPath.resolve(Consts.METADATA_YAML_FILE_NAME);
             Files.writeString(yamlFile, content, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            log.error("#815.500 restoring of metadata.yaml from backup was failed. Processor will be stopped.");
+            log.error("815.500 restoring of metadata.yaml from backup was failed. Processor will be stopped.");
             throw new TerminateApplicationException();
         }
 
