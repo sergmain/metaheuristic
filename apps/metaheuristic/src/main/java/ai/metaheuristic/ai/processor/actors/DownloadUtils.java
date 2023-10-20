@@ -22,24 +22,26 @@ import org.apache.commons.io.FileUtils;
 import org.apache.hc.core5.http.Header;
 import org.springframework.lang.Nullable;
 
-import java.io.File;
-import java.io.FileDescriptor;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import static java.nio.file.StandardOpenOption.*;
 
 /**
  * @author Serge
  * Date: 8/23/2019
  * Time: 5:46 PM
  */
-class DownloadUtils {
-    static boolean isChunkConsistent(File partFile, Header[] headers) {
+public class DownloadUtils {
+
+    static boolean isChunkConsistent(Path partFile, Header[] headers) throws IOException {
         String sizeAsStr = getHeader(headers, Consts.HEADER_MH_CHUNK_SIZE);
         if (sizeAsStr==null || sizeAsStr.isBlank()) {
             return true;
         }
         long expectedSize = Long.parseLong(sizeAsStr);
-        return partFile.length()==expectedSize;
+        return Files.size(partFile)==expectedSize;
     }
 
     static boolean isLastChunk(Header[] headers) {
@@ -54,6 +56,19 @@ class DownloadUtils {
             }
         }
         return null;
+    }
+
+    public static void combineParts(AssetFile assetFile, Path tempFile, int idx) throws IOException {
+        try (OutputStream fos = Files.newOutputStream(tempFile, CREATE, TRUNCATE_EXISTING, WRITE, SYNC); BufferedOutputStream bos = new BufferedOutputStream(fos, 1_000_000)) {
+            for (int i = 0; i <= idx; i++) {
+                Path p = Path.of(assetFile.file.toAbsolutePath() + "." + i + ".tmp");
+                if (Files.size(p)==0) {
+                    continue;
+                }
+                Files.copy(p, bos);
+            }
+            bos.flush();
+        }
     }
 
     public static void combineParts(AssetFile assetFile, File tempFile, int idx) throws IOException {

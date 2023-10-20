@@ -44,11 +44,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.UUID;
 
 @Service
@@ -154,7 +155,8 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
 
             String mask = assetFile.file.getFileName().toString() + ".%s.tmp";
             // TODO 2023-06-26 re-write with nio
-            File dir = assetFile.file.toFile().getParentFile();
+//            File dir = assetFile.file.toFile().getParentFile();
+            Path dir = assetFile.file.getParent();
             Enums.VariableState resourceState = Enums.VariableState.none;
             int idx = 0;
             do {
@@ -173,7 +175,8 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
 
                     Response response = HttpClientExecutor.getExecutor(
                             task.core.dispatcherUrl.url, task.dispatcher.restUsername, task.dispatcher.restPassword).execute(request);
-                    File partFile = new File(dir, String.format(mask, idx));
+//                    File partFile = new File(dir, String.format(mask, idx));
+                    Path partFile = dir.resolve(String.format(mask, idx));
                     final HttpResponse httpResponse = response.returnResponse();
                     if (!(httpResponse instanceof ClassicHttpResponse classicHttpResponse)) {
                         throw new IllegalStateException("(!(httpResponse instanceof ClassicHttpResponse classicHttpResponse))");
@@ -209,7 +212,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                         return;
                     }
 
-                    try (FileOutputStream out = new FileOutputStream(partFile)) {
+                    try (OutputStream out = Files.newOutputStream(partFile)) {
                         classicHttpResponse.getEntity().writeTo(out);
                     }
                     final Header[] headers = httpResponse.getHeaders();
@@ -222,7 +225,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                         resourceState = Enums.VariableState.ok;
                         break;
                     }
-                    if (partFile.length()==0) {
+                    if (Files.size(partFile)==0) {
                         resourceState = Enums.VariableState.ok;
                         break;
                     }

@@ -33,6 +33,7 @@ import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
+import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
@@ -54,13 +55,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.UUID;
 
 @Service
@@ -130,12 +132,19 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
             if (functionDownloadStatus.state.needDownload) {
                 try {
 
-                    File functionTempFile = new File(assetFile.file.toAbsolutePath() + ".tmp");
 
                     final String targetUrl = assetManager.url + Consts.REST_ASSET_URL + "/function";
 
-                    String mask = assetFile.file.getFileName().toString() + ".%s.tmp";
-                    File dir = assetFile.file.toFile().getParentFile();
+                    final String filename = assetFile.file.getFileName().toString();
+                    String mask = filename + ".%s.tmp";
+//                    File dir = assetFile.file.toFile().getParentFile();
+                    Path parentDir = assetFile.file.getParent();
+                    Path downloadDir = parentDir.resolve("download");
+                    Files.createDirectories(downloadDir);
+                    Path runtimeDir = parentDir.resolve("runtime");
+                    Files.createDirectories(runtimeDir);
+                    Path functionZip = parentDir.resolve(filename + Consts.ZIP_EXT);
+
                     EnumsApi.FunctionState functionState = EnumsApi.FunctionState.none;
                     int idx = 0;
                     do {
@@ -153,7 +162,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                             RestUtils.addHeaders(request);
 
                             Response response = HttpClientExecutor.getExecutor(assetManager.url, assetManager.username, assetManager.password).execute(request);
-                            File partFile = new File(dir, String.format(mask, idx));
+                            Path partFile = downloadDir.resolve(String.format(mask, idx));
 
                             final HttpResponse httpResponse = response.returnResponse();
                             if (!(httpResponse instanceof ClassicHttpResponse classicHttpResponse)) {
@@ -183,7 +192,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                                 break;
                             }
 
-                            try (final FileOutputStream out = new FileOutputStream(partFile)) {
+                            try (final OutputStream out = Files.newOutputStream(partFile)) {
                                 final HttpEntity entity = classicHttpResponse.getEntity();
                                 if (entity != null) {
                                     entity.writeTo(out);
@@ -202,7 +211,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                                 functionState = EnumsApi.FunctionState.ok;
                                 break;
                             }
-                            if (partFile.length() == 0) {
+                            if (Files.size(partFile)==0) {
                                 functionState = EnumsApi.FunctionState.ok;
                                 break;
                             }
@@ -271,15 +280,17 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                         continue;
                     }
 
-                    DownloadUtils.combineParts(assetFile, functionTempFile, idx);
-
+                    DownloadUtils.combineParts(assetFile, functionZip, idx);
+                    ZipUtils.unzipFolder(functionZip, runtimeDir);
+/*
                     try {
-                        Files.move(functionTempFile.toPath(), assetFile.file);
+                        Files.move(functionZip, assetFile.file);
                     }
                     catch (IOException e) {
-                        log.warn("#811.138 Can't rename file {} to file {}", functionTempFile.getPath(), assetFile.file);
+                        log.warn("#811.138 Can't rename file {} to file {}", functionZip, assetFile.file);
                         return;
                     }
+*/
                 } catch (HttpResponseException e) {
                     logError(functionCode, e);
                 } catch (SocketTimeoutException e) {
