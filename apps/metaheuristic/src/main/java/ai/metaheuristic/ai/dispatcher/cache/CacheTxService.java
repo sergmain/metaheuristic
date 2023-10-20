@@ -126,7 +126,7 @@ public class CacheTxService {
             try {
                 tempFile = Files.createTempFile(globals.dispatcherTempPath, "var-" + output.id + "-", Consts.BIN_EXT);
             } catch (IOException e) {
-                String es = "#611.060 Error: " + e.getMessage();
+                String es = "#611.060 Error: " + e;
                 log.error(es, e);
                 throw new VariableCommonException(es, output.id);
             }
@@ -137,7 +137,7 @@ public class CacheTxService {
             try {
                 is = Files.newInputStream(tempFile); bis = new BufferedInputStream(is, 0x8000);
             } catch (IOException e) {
-                String es = "#611.080 Error: " + e.getMessage();
+                String es = "#611.080 Error: " + e;
                 log.error(es, e);
                 eventPublisher.publishEvent(new ResourceCloseTxEvent(tempFile));
                 throw new VariableCommonException(es, output.id);

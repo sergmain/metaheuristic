@@ -44,13 +44,10 @@ public class DownloadUtilsTest {
         Path p2 = temp.resolve("s.txt.1.tmp");
         Files.writeString(p2, s2);
 
-        AssetFile assetFile = new AssetFile();
-        assetFile.file = temp.resolve("s.txt");
-
         Path r = temp.resolve("s-result.txt");
 
 
-        DownloadUtils.combineParts(assetFile, r, 1);
+        DownloadUtils.combineParts( temp.resolve("s.txt"), r, 1);
 
 
         String s = Files.readString(r);

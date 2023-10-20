@@ -58,10 +58,10 @@ public class DownloadUtils {
         return null;
     }
 
-    public static void combineParts(AssetFile assetFile, Path tempFile, int idx) throws IOException {
+    public static void combineParts(Path partBaseFile, Path tempFile, int idx) throws IOException {
         try (OutputStream fos = Files.newOutputStream(tempFile, CREATE, TRUNCATE_EXISTING, WRITE, SYNC); BufferedOutputStream bos = new BufferedOutputStream(fos, 1_000_000)) {
             for (int i = 0; i <= idx; i++) {
-                Path p = Path.of(assetFile.file.toAbsolutePath() + "." + i + ".tmp");
+                Path p = Path.of(partBaseFile.toAbsolutePath() + "." + i + ".tmp");
                 if (Files.size(p)==0) {
                     continue;
                 }

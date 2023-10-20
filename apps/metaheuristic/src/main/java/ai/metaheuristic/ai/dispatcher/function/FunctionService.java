@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.data.BundleData;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
+import ai.metaheuristic.ai.utils.ArtifactUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -41,6 +42,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +62,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static ai.metaheuristic.commons.utils.ArtifactCommonUtils.normalizeCode;
 import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Element;
 import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Scheme;
 
@@ -305,6 +308,8 @@ public class FunctionService {
             return;
         }
 
+        deleteResourceDirForFunction(functionConfig.code);
+
         Function function = functionRepository.findByCode(functionConfig.code);
         // the function was already uploaded
         if (function !=null) {
@@ -400,6 +405,15 @@ public class FunctionService {
         FunctionConfigYaml scy = functionConfigYaml;
         try (InputStream is = Files.newInputStream(file); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
             functionTxService.persistFunction(scy, bis, Files.size(file));
+        }
+    }
+
+    private void deleteResourceDirForFunction(String functionCode) throws IOException {
+        Path baseFunctionDir = ArtifactUtils.prepareFunctionPath(globals.dispatcherResourcesPath);
+        String functionCodeAsNormal = ArtifactCommonUtils.normalizeCode(functionCode);
+        Path p = baseFunctionDir.resolve(functionCodeAsNormal);
+        if (Files.exists(p)) {
+            PathUtils.deleteDirectory(p);
         }
     }
 

@@ -75,7 +75,7 @@ public class GlobalVariableTxService {
                 try {
                     IOUtils.copy(is, baos);
                 } catch (IOException e) {
-                    String es = "171.550 "+e.getMessage();
+                    String es = "171.550 "+e;
                     log.error(es, e);
                     throw new VariableCommonException(es, variableId);
                 }

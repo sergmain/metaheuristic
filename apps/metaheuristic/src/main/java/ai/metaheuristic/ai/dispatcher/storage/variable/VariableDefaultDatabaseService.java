@@ -78,7 +78,7 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
             tempFile = Files.createTempFile(globals.dispatcherTempPath, "var-" + srcVariable.id + "-", Consts.BIN_EXT);
         }
         catch (IOException e) {
-            throw new BreakFromLambdaException(e.getMessage());
+            throw new BreakFromLambdaException(e.toString());
         }
         InputStream is;
         try {

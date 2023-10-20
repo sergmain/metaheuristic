@@ -54,7 +54,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.ConnectException;
@@ -280,7 +279,8 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                         continue;
                     }
 
-                    DownloadUtils.combineParts(assetFile, functionZip, idx);
+                    Path partBase = downloadDir.resolve(filename);
+                    DownloadUtils.combineParts(partBase, functionZip, idx);
                     ZipUtils.unzipFolder(functionZip, runtimeDir);
 /*
                     try {

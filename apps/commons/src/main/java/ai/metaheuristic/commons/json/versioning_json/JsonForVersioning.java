@@ -55,7 +55,7 @@ public class JsonForVersioning {
             return versionValue==null ? ConstsApi.PARAMS_VERSION_1 : new ParamsVersion(Integer.valueOf(versionValue));
         }
         catch (IOException e) {
-            throw new ParamsProcessingException("Error: " + e.getMessage(), e);
+            throw new ParamsProcessingException("Error: " + e, e);
         }
     }
 

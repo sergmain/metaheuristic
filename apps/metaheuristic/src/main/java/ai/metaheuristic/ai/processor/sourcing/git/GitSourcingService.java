@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
+import ai.metaheuristic.ai.utils.ArtifactUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -27,6 +28,7 @@ import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -101,7 +103,7 @@ public class GitSourcingService {
 
     private static AssetFile prepareFunctionDir(final Path resourceDir, String functionCode) {
         final AssetFile assetFile = new AssetFile();
-        final Path trgDir = resourceDir.resolve(EnumsApi.DataType.function.toString());
+        final Path trgDir = ArtifactUtils.prepareFunctionPath(resourceDir);
         log.info("Target dir: {}, exist: {}", trgDir.toAbsolutePath(), Files.exists(trgDir));
         if (Files.notExists(trgDir)) {
             try {
@@ -215,7 +217,8 @@ public class GitSourcingService {
         Path repoDir = functionDir.resolve("git");
         SystemProcessLauncher.ExecResult result;
         try {
-            Files.deleteIfExists(repoDir);
+//            Files.deleteIfExists(repoDir);
+            PathUtils.deleteDirectory(repoDir);
         }
         catch (IOException e) {
             //

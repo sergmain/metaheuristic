@@ -214,7 +214,7 @@ public class SouthbridgeService {
             resource.entity = new ResponseEntity<>(new InputStreamResource(realInputStream), headers, HttpStatus.OK);
             return resource;
         } catch (IOException e) {
-            throw new CommonIOErrorWithDataException("Error: " + e.getMessage());
+            throw new CommonIOErrorWithDataException("Error: " + e);
         }
     }
 

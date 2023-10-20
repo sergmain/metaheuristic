@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.utils.asset;
 
+import ai.metaheuristic.ai.utils.ArtifactUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
@@ -113,7 +114,7 @@ public class AssetUtils {
     @SneakyThrows
     public static AssetFile prepareFunctionFile(Path baseDir, String functionCode, @Nullable String resourceFilename) {
 
-        Path baseFunctionDir = baseDir.resolve(EnumsApi.DataType.function.toString());
+        Path baseFunctionDir = ArtifactUtils.prepareFunctionPath(baseDir);
 
         final String resId = ArtifactCommonUtils.normalizeCode(functionCode);
         final Path resDir = baseFunctionDir.resolve(resId);

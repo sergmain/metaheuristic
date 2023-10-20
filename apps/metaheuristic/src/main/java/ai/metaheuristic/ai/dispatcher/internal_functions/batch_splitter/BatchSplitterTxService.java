@@ -130,7 +130,7 @@ public class BatchSplitterTxService {
                         });
             }
         } catch (IOException e) {
-            String es = "#995.310 An error while saving data to file, " + e.getMessage();
+            String es = "#995.310 An error while saving data to file, " + e;
             log.error(es, e);
             throw new BatchResourceProcessingException(es);
         }

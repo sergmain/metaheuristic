@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.data.GitData;
 import ai.metaheuristic.ai.mhbp.data.KbData;
+import ai.metaheuristic.ai.utils.ArtifactUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -127,7 +128,7 @@ public class LocalGitSourcingService {
 
     private static AssetFile prepareFunctionDir(final Path resourceDir, String functionCode) {
         final AssetFile assetFile = new AssetFile();
-        final Path trgDir = resourceDir.resolve(EnumsApi.DataType.function.toString());
+        final Path trgDir = ArtifactUtils.prepareFunctionPath(resourceDir);
         log.info("Target dir: {}, exist: {}", trgDir.toAbsolutePath(), Files.exists(trgDir) );
         if (Files.notExists(trgDir)) {
             try {
@@ -239,7 +240,8 @@ public class LocalGitSourcingService {
     public static ExecResult tryToRepairRepo(Path functionDir, KbData.KbGit git, GitData.GitContext gitContext) {
         Path repoDir = functionDir.resolve(Consts.REPO);
         ExecResult result;
-        Files.deleteIfExists(repoDir);
+        PathUtils.deleteDirectory(repoDir);
+        //Files.deleteIfExists(repoDir);
         if (Files.exists(repoDir)) {
             return new ExecResult(null,
                     false,

@@ -296,7 +296,7 @@ public class BatchTopLevelService {
                     return new BatchData.UploadingStatus("981.125 System error while preparing data. The sizes of files are different");
                 }
             } catch (IOException e) {
-                return new BatchData.UploadingStatus("981.140 Can't create a new temp file, " + e.getMessage());
+                return new BatchData.UploadingStatus("981.140 Can't create a new temp file, " + e);
             }
 
             if (ext.equals(ZIP_EXT)) {

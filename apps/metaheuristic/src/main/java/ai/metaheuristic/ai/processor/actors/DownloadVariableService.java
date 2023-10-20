@@ -43,7 +43,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.*;
@@ -134,15 +133,16 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
             final String uri = task.dispatcher.url + "/rest/v1/payload/resource/"+type+'/'+task.taskId+'/'+
                     UUID.randomUUID().toString().substring(0, 8) + '-' +task.core.processorId + '-' + task.taskId + '-' + URLEncoder.encode(task.variableId, StandardCharsets.UTF_8);
 
-
-            // TODO 2023-06-26 re-write with nio
-            File parentDir = assetFile.file.toFile().getParentFile();
+//            File parentDir = assetFile.file.toFile().getParentFile();
+            Path parentDir = assetFile.file.getParent();
             if (parentDir==null) {
                 es = "#810.020 Can't get parent dir for asset file " + assetFile.file.toAbsolutePath();
                 log.error(es);
                 processorTaskService.markAsFinishedWithError(task.core, task.taskId, es);
                 return;
             }
+            Path tempFile = Files.createTempFile(parentDir, "resource-", ".temp");
+/*
             File tempFile;
             try {
                 tempFile = File.createTempFile("resource-", ".temp", parentDir);
@@ -152,11 +152,12 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 processorTaskService.markAsFinishedWithError(task.core, task.taskId, es);
                 return;
             }
+*/
 
             String mask = assetFile.file.getFileName().toString() + ".%s.tmp";
             // TODO 2023-06-26 re-write with nio
 //            File dir = assetFile.file.toFile().getParentFile();
-            Path dir = assetFile.file.getParent();
+            Path dir = parentDir;
             Enums.VariableState resourceState = Enums.VariableState.none;
             int idx = 0;
             do {
@@ -284,13 +285,12 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 return;
             }
 
-            DownloadUtils.combineParts(assetFile, tempFile, idx);
-
+            DownloadUtils.combineParts(assetFile.file, tempFile, idx);
             try {
-                Files.move(tempFile.toPath(), assetFile.file);
+                Files.move(tempFile, assetFile.file);
             }
             catch (IOException e) {
-                log.warn("#810.060 Can't rename file {} to file {}", tempFile.getPath(), assetFile.file);
+                log.warn("#810.060 Can't rename file {} to file {}", tempFile, assetFile.file);
                 return;
             }
             log.info("Variable #{} was loaded", task.variableId);

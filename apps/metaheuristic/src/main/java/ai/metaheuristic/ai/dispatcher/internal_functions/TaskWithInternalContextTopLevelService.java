@@ -135,7 +135,7 @@ public class TaskWithInternalContextTopLevelService {
         }
         catch (IOException e) {
             log.error("#992.220 Error", e);
-            throw new InternalFunctionException(system_error, "#992.240 error: " + e.getMessage());
+            throw new InternalFunctionException(system_error, "#992.240 error: " + e);
         }
         finally {
             DirUtils.deletePathAsync(tempDir);
