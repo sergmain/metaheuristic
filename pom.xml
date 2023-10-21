@@ -33,7 +33,7 @@
     <modules>
         <module>apps/commons</module>
         <module>apps/metaheuristic</module>
-        <module>apps/package-function</module>
+        <module>apps/package-bundle</module>
         <module>apps/gen-keys</module>
         <module>apps/encrypt-password</module>
         <module>apps/sign-string</module>

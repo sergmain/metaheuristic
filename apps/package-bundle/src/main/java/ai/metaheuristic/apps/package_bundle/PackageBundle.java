@@ -83,8 +83,8 @@ public class PackageBundle implements CommandLineRunner {
 
         processFunctions(cfg);
         processCommonType(cfg, sourceCode, SourceCodeParamsYamlUtils.BASE_YAML_UTILS::to);
-        processCommonType(cfg, api, ApiAuthUtils.UTILS::to);
-        processCommonType(cfg, auth, ApiSchemeUtils.UTILS::to);
+        processCommonType(cfg, auth, ApiAuthUtils.UTILS::to);
+        processCommonType(cfg, api, ApiSchemeUtils.UTILS::to);
 
         createFinalZip(cfg);
     }
