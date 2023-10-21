@@ -26,7 +26,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.CorsConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -84,7 +83,7 @@ public class MultiHttpSecurityConfig {
     public SecurityFilterChain restFilterChain(HttpSecurity http) throws Exception {
         http
             .httpBasic(withDefaults())
-            .cors((r)->	new CorsConfigurer<>().configurationSource(corsConfigurationSource(globals.corsAllowedOrigins)))
+            .cors((r)->	r.configurationSource(corsConfigurationSource(globals.corsAllowedOrigins)))
             .sessionManagement((sessionManagement) -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests((requests) -> requests
                     .requestMatchers(OPTIONS).permitAll() // allow CORS option calls for Swagger UI
