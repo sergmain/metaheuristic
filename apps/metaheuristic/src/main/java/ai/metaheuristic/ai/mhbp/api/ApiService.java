@@ -17,12 +17,18 @@
 package ai.metaheuristic.ai.mhbp.api;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.mhbp.beans.Api;
+import ai.metaheuristic.ai.mhbp.beans.Auth;
 import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.utils.PageUtils;
+import ai.metaheuristic.commons.yaml.auth.ApiAuth;
+import ai.metaheuristic.commons.yaml.auth.ApiAuthUtils;
+import ai.metaheuristic.commons.yaml.scheme.ApiScheme;
+import ai.metaheuristic.commons.yaml.scheme.ApiSchemeUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +44,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
+
 /**
  * @author Sergio Lissner
  * Date: 4/11/2023
@@ -50,6 +58,7 @@ import java.util.stream.Collectors;
 public class ApiService {
 
     private final ApiRepository apiRepository;
+    private final ApiTxService apiTxService;
 
     public ApiData.Apis getApis(Pageable pageable, DispatcherContext context) {
         pageable = PageUtils.fixPageSize(20, pageable);
@@ -63,38 +72,6 @@ public class ApiService {
     public List<Api> getApisAllowedForCompany(DispatcherContext context) {
         List<Api> apis = apiRepository.findAllByCompanyUniqueId(context.getCompanyId());
         return apis;
-    }
-
-    @Transactional
-    public OperationStatusRest deleteApiById(Long apiId, DispatcherContext context) {
-        if (apiId==null) {
-            return OperationStatusRest.OPERATION_STATUS_OK;
-        }
-        Api api = apiRepository.findById(apiId).orElse(null);
-        if (api == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "217.050 API wasn't found, apiId: " + apiId, null);
-        }
-        if (api.companyId!=context.getCompanyId()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "217.100  apiId: " + apiId);
-        }
-
-        apiRepository.deleteById(apiId);
-        return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
-    @Transactional
-    public OperationStatusRest createApi(String name, String code, String scheme, DispatcherContext context) {
-        Api api = new Api();
-        api.name = name;
-        api.code = code;
-        api.setScheme(scheme);
-        api.companyId = context.getCompanyId();
-        api.accountId = context.getAccountId();
-
-        apiRepository.save(api);
-
-        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     public ApiData.Api getApiAsData(@Nullable Long apiId, DispatcherContext context) {
@@ -119,4 +96,13 @@ public class ApiService {
         }
         return api;
     }
+
+    public OperationStatusRest createApi(String yaml, DispatcherContext context) {
+        try {
+            return apiTxService.createApi(yaml, context);
+        } catch (CommonRollbackException e) {
+            return e.status==OK ? OperationStatusRest.OPERATION_STATUS_OK : new OperationStatusRest(e.status, e.error);
+        }
+    }
+
 }

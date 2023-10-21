@@ -23,7 +23,10 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.exceptions.BundleProcessingException;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
+import ai.metaheuristic.ai.mhbp.api.ApiService;
+import ai.metaheuristic.ai.mhbp.auth.AuthService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
@@ -44,6 +47,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -72,6 +76,8 @@ public class BundleService {
 
     private final FunctionService functionService;
     private final SourceCodeService sourceCodeService;
+    private final ApiService apiService;
+    private final AuthService authService;
 
     public BundleData.UploadingStatus uploadFromFile(final MultipartFile file, final DispatcherContext dispatcherContext) {
         if (Consts.ID_1.equals(dispatcherContext.getCompanyId())) {
@@ -140,14 +146,18 @@ public class BundleService {
         BundleData.UploadingStatus status = new BundleData.UploadingStatus();
 
         processFunctions(bundleCfgYaml, data, status);
-        processSourceCodes(bundleCfgYaml, data, status, dispatcherContext);
+        processCommonType(EnumsApi.BundleItemType.sourceCode, bundleCfgYaml, data, status, dispatcherContext, this::storeSourceCode);
+        processCommonType(EnumsApi.BundleItemType.api, bundleCfgYaml, data, status, dispatcherContext, apiService::createApi);
+        processCommonType(EnumsApi.BundleItemType.auth, bundleCfgYaml, data, status, dispatcherContext, authService::createAuth);
 
         return status;
     }
 
-    private void processSourceCodes(BundleCfgYaml bundleCfgYaml, Path data, BundleData.UploadingStatus status, DispatcherContext dispatcherContext) throws IOException {
+    private void processCommonType(EnumsApi.BundleItemType type, BundleCfgYaml bundleCfgYaml,
+                                   Path data, BundleData.UploadingStatus status, DispatcherContext dispatcherContext,
+                                   BiFunction<String, DispatcherContext, BaseDataClass> storeCommonTypeFunc) throws IOException {
         for (BundleCfgYaml.BundleConfig bundleConfig : bundleCfgYaml.bundleConfig) {
-            if (bundleConfig.type!= EnumsApi.BundleItemType.sourceCode) {
+            if (bundleConfig.type!= type) {
                 continue;
             }
             Path p = data.resolve(bundleConfig.path);
@@ -165,13 +175,17 @@ public class BundleService {
                         return FileVisitResult.CONTINUE;
                     }
                     String yaml = Files.readString(p);
-                    SourceCodeApiData.SourceCodeResult codeResult = sourceCodeService.createSourceCode(yaml, dispatcherContext.getCompanyId());
+                    BaseDataClass codeResult = storeCommonTypeFunc.apply(yaml, dispatcherContext);
                     status.addErrorMessages(codeResult.getErrorMessagesAsList());
                     status.addInfoMessages(codeResult.getInfoMessagesAsList());
                     return FileVisitResult.CONTINUE;
                 }
             });
         }
+    }
+
+    private SourceCodeApiData.SourceCodeResult storeSourceCode(String yaml, DispatcherContext dispatcherContext) {
+        return sourceCodeService.createSourceCode(yaml, dispatcherContext.getCompanyId());
     }
 
     private void processFunctions(BundleCfgYaml bundleCfgYaml, Path data, BundleData.UploadingStatus status) {

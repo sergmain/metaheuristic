@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.mhbp.rest;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.mhbp.auth.AuthService;
+import ai.metaheuristic.ai.mhbp.auth.AuthTxService;
 import ai.metaheuristic.ai.mhbp.data.AuthData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthRestController {
 
     private final AuthService authService;
+    private final AuthTxService authTxService;
     private final UserContextService userContextService;
 
     @GetMapping("/auths")
@@ -67,7 +69,7 @@ public class AuthRestController {
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
 
-        return authService.createAuth(code, params, context);
+        return authTxService.createAuth(code, params, context);
     }
 
     @PostMapping("/auth-edit-commit")
@@ -78,14 +80,14 @@ public class AuthRestController {
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
 
-        return authService.updateAuth(authId, params, context);
+        return authTxService.updateAuth(authId, params, context);
     }
 
     @PostMapping("/auth-delete-commit")
 //    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest deleteCommit(Long id, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return authService.deleteAuthById(id, context);
+        return authTxService.deleteAuthById(id, context);
     }
 
 }

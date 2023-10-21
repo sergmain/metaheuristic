@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.mhbp.rest;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
+import ai.metaheuristic.ai.mhbp.api.ApiTxService;
 import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,7 @@ import org.springframework.web.bind.annotation.*;
 public class ApiRestController {
 
     private final ApiService apiService;
+    private final ApiTxService apiTxService;
     private final UserContextService userContextService;
 
     @GetMapping("/apis")
@@ -68,7 +70,7 @@ public class ApiRestController {
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
 
-        return apiService.createApi(name, code, scheme, context);
+        return apiTxService.createApi(name, code, scheme, context);
     }
 /*
     @PostMapping("/evaluation-add-commit")
@@ -89,7 +91,7 @@ public class ApiRestController {
 //    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest deleteCommit(Long id, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return apiService.deleteApiById(id, context);
+        return apiTxService.deleteApiById(id, context);
     }
 
 }

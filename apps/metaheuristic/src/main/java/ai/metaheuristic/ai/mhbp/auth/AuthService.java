@@ -17,18 +17,18 @@
 package ai.metaheuristic.ai.mhbp.auth;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.mhbp.beans.Auth;
 import ai.metaheuristic.ai.mhbp.data.AuthData;
 import ai.metaheuristic.ai.mhbp.repositories.AuthRepository;
-import ai.metaheuristic.commons.yaml.auth.ApiAuth;
-import ai.metaheuristic.commons.yaml.auth.ApiAuthUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.utils.PageUtils;
+import ai.metaheuristic.commons.yaml.auth.ApiAuth;
+import ai.metaheuristic.commons.yaml.auth.ApiAuthUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -39,6 +39,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
 
 /**
  * @author Sergio Lissner
@@ -53,7 +55,7 @@ import java.util.stream.Collectors;
 public class AuthService {
 
     private final AuthRepository authRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final AuthTxService authTxService;
 
     public AuthData.Auths getAuths(Pageable pageable, DispatcherContext context) {
         pageable = PageUtils.fixPageSize(20, pageable);
@@ -62,38 +64,6 @@ public class AuthService {
         List<AuthData.SimpleAuth> list = auths.stream().map(AuthData.SimpleAuth::new).toList();
         var sorted = list.stream().sorted((o1, o2)->Long.compare(o2.id, o1.id)).collect(Collectors.toList());
         return new AuthData.Auths(new PageImpl<>(sorted, pageable, list.size()));
-    }
-
-    @Transactional
-    public OperationStatusRest deleteAuthById(Long authId, DispatcherContext context) {
-        if (authId==null) {
-            return OperationStatusRest.OPERATION_STATUS_OK;
-        }
-        Auth auth = authRepository.findById(authId).orElse(null);
-        if (auth == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "247.040 API wasn't found, authId: " + authId, null);
-        }
-        if (auth.companyId!=context.getCompanyId()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "247.080 authId: " + authId);
-        }
-
-        authRepository.deleteById(authId);
-        return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
-    @Transactional
-    public OperationStatusRest createAuth(String code, String params, DispatcherContext context) {
-        Auth auth = new Auth();
-        auth.code = code;
-        auth.setParams(params);
-        auth.companyId = context.getCompanyId();
-        auth.accountId = context.getAccountId();
-        auth.createdOn = System.currentTimeMillis();
-
-        authRepository.save(auth);
-
-        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     public AuthData.Auth getAuth(@Nullable Long authId, DispatcherContext context) {
@@ -110,19 +80,11 @@ public class AuthService {
         return new AuthData.Auth(new AuthData.SimpleAuth(auth));
     }
 
-    public OperationStatusRest updateAuth(Long authId, String params, DispatcherContext context) {
-        Auth auth = authRepository.findById(authId).orElse(null);
-        if (auth == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                "247.040 API wasn't found, authId: " + authId, null);
+    public OperationStatusRest createAuth(String yaml, DispatcherContext context) {
+        try {
+            return authTxService.createAuth(yaml, context);
+        } catch (CommonRollbackException e) {
+            return e.status==OK ? OperationStatusRest.OPERATION_STATUS_OK : new OperationStatusRest(e.status, e.error);
         }
-        if (auth.companyId!=context.getCompanyId()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "247.080 authId: " + authId);
-        }
-
-        ApiAuth apiAuth = ApiAuthUtils.UTILS.to(params);
-        auth.updateParams(apiAuth);
-
-        authRepository.save(auth);
-        return OperationStatusRest.OPERATION_STATUS_OK;    }
+    }
 }

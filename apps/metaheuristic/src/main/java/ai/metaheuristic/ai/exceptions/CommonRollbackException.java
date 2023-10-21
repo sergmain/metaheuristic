@@ -16,10 +16,30 @@
 
 package ai.metaheuristic.ai.exceptions;
 
+import ai.metaheuristic.api.EnumsApi;
+
+import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
+
 /**
  * @author Sergio Lissner
  * Date: 9/27/2023
  * Time: 7:58 AM
  */
 public class CommonRollbackException extends RuntimeException {
+    public final String error;
+    public final EnumsApi.OperationStatus status;
+
+    public CommonRollbackException() {
+        this.error = "no description for this error";
+        this.status = OK;
+    }
+
+    public CommonRollbackException(String error, EnumsApi.OperationStatus status) {
+        this.error = error;
+        this.status = status;
+    }
+
+    public static CommonRollbackException asOk() {
+        return new CommonRollbackException("ok", OK);
+    }
 }
