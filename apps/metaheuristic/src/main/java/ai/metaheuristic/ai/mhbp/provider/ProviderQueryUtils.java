@@ -16,9 +16,9 @@
 
 package ai.metaheuristic.ai.mhbp.provider;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.mhbp.data.ApiData;
-import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
+import ai.metaheuristic.commons.yaml.scheme.ApiScheme;
+import ai.metaheuristic.api.EnumsApi;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import org.apache.commons.codec.binary.Base64;
@@ -34,21 +34,21 @@ import java.util.Objects;
 public class ProviderQueryUtils {
 
     public static ApiData.ProcessedAnswerFromAPI processAnswerFromApi(ApiData.RawAnswerFromAPI rawAnswerFromAPI, ApiScheme.Response response) {
-        if (response.type==Enums.PromptResponseType.text) {
+        if (response.type== EnumsApi.PromptResponseType.text) {
             Objects.requireNonNull(rawAnswerFromAPI.raw());
             return new ApiData.ProcessedAnswerFromAPI(rawAnswerFromAPI, rawAnswerFromAPI.raw());
         }
-        if (response.type==Enums.PromptResponseType.json) {
+        if (response.type== EnumsApi.PromptResponseType.json) {
             Objects.requireNonNull(rawAnswerFromAPI.raw());
             DocumentContext jsonContext = JsonPath.parse(rawAnswerFromAPI.raw());
             String content = jsonContext.read(response.path);
             return new ApiData.ProcessedAnswerFromAPI(rawAnswerFromAPI, content);
         }
-        if (response.type==Enums.PromptResponseType.image) {
+        if (response.type== EnumsApi.PromptResponseType.image) {
             Objects.requireNonNull(rawAnswerFromAPI.bytes());
             return new ApiData.ProcessedAnswerFromAPI(rawAnswerFromAPI, null);
         }
-        if (response.type==Enums.PromptResponseType.image_base64) {
+        if (response.type== EnumsApi.PromptResponseType.image_base64) {
             Objects.requireNonNull(rawAnswerFromAPI.bytes());
             String base64 = new String(rawAnswerFromAPI.bytes(), StandardCharsets.UTF_8);
             DocumentContext jsonContext = JsonPath.parse(base64);

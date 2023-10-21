@@ -1,8 +1,8 @@
 version: 2
-code: simple-provider-localhost:1.0
+code: mh.simple-localhost:1.0
 scheme:
   auth:
-    code: simple
+    code: mh.simple
   request:
     type: get
     uri: http://localhost:8080/rest/v1/provider/simple/stub/question

@@ -16,9 +16,9 @@
 
 package ai.metaheuristic.mhbp.api;
 
-import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
-import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiSchemeUtils;
+import ai.metaheuristic.commons.yaml.scheme.ApiScheme;
+import ai.metaheuristic.commons.yaml.scheme.ApiSchemeUtils;
+import ai.metaheuristic.api.EnumsApi;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -26,9 +26,9 @@ import org.junit.jupiter.api.parallel.Execution;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import static ai.metaheuristic.ai.Enums.HttpMethodType.get;
-import static ai.metaheuristic.ai.Enums.HttpMethodType.post;
-import static ai.metaheuristic.ai.Enums.PromptPlace.uri;
+import static ai.metaheuristic.api.EnumsApi.HttpMethodType.get;
+import static ai.metaheuristic.api.EnumsApi.HttpMethodType.post;
+import static ai.metaheuristic.api.EnumsApi.PromptPlace.uri;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
@@ -52,8 +52,8 @@ public class ApiSchemeTest {
         assertEquals(post, as.scheme.request.type);
         assertEquals("https://api.openai.com/v1/completions", as.scheme.request.uri);
         assertNotNull(as.scheme.request.prompt);
-        final Enums.PromptPlace place = as.scheme.request.prompt.place;
-        assertEquals(Enums.PromptPlace.text, place);
+        final EnumsApi.PromptPlace place = as.scheme.request.prompt.place;
+        assertEquals(EnumsApi.PromptPlace.text, place);
         assertEquals("$prompt$", as.scheme.request.prompt.replace);
         assertEquals("""
                 {
@@ -68,7 +68,7 @@ public class ApiSchemeTest {
                 }
                 """, as.scheme.request.prompt.text);
 
-        assertEquals(Enums.PromptResponseType.json, as.scheme.response.type);
+        assertEquals(EnumsApi.PromptResponseType.json, as.scheme.response.type);
         assertEquals("$['choices'][0]['message']['content']", as.scheme.response.path);
     }
 
@@ -86,6 +86,6 @@ public class ApiSchemeTest {
         assertEquals(uri, as.scheme.request.prompt.place);
         assertEquals("q", as.scheme.request.prompt.param);
 
-        assertEquals(Enums.PromptResponseType.text, as.scheme.response.type);
+        assertEquals(EnumsApi.PromptResponseType.text, as.scheme.response.type);
     }
 }

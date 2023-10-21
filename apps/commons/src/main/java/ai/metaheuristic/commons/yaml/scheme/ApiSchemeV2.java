@@ -14,11 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mhbp.yaml.auth;
+package ai.metaheuristic.commons.yaml.scheme;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.commons.S;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,17 +27,14 @@ import org.springframework.lang.Nullable;
 
 @SuppressWarnings("FieldMayBeStatic")
 @Data
-public class ApiAuth implements BaseParams {
+public class ApiSchemeV2 implements BaseParams {
 
     public final int version=2;
 
     @Override
     public boolean checkIntegrity() {
-        if (auth.basic==null && auth.token==null) {
-            throw new CheckIntegrityFailedException("(api.basicAuth==null && api.tokenAuth==null)");
-        }
-        if (auth.token!=null && auth.token.token==null && auth.token.env==null && auth.token.key==null) {
-            throw new CheckIntegrityFailedException("(auth.token!=null && auth.token.token==null && auth.token.env==null && auth.token.key==null)");
+        if (scheme.auth==null || S.b(scheme.auth.code)) {
+            throw new CheckIntegrityFailedException("(scheme.auth==null || S.b(scheme.auth.code))");
         }
         return true;
     }
@@ -44,36 +42,47 @@ public class ApiAuth implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class BasicAuth {
-        public String username;
-        public String password;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class TokenAuth {
-        public Enums.TokenPlace place;
-        // this is a just anon token. it will be used in uri,
-        // i.e. https://api.weatherapi.com/v1/current.json?key=xxx&q=94103
-        public String token;
-        public String param;
-        public String env;
-        public String key;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Auth {
+    public static class AuthV2 {
         public String code;
-        public Enums.AuthType type;
-        @Nullable
-        public BasicAuth basic;
-
-        @Nullable
-        public TokenAuth token;
     }
 
-    public final Auth auth = new Auth();
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PromptV2 {
+        public EnumsApi.PromptPlace place;
+        public String param;
+        public String replace;
+        public String text;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RequestV2 {
+        public EnumsApi.HttpMethodType type;
+        public String uri;
+        public PromptV2 prompt;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ResponseV2 {
+        public EnumsApi.PromptResponseType type;
+        @Nullable
+        public String path;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SchemeV2 {
+        public AuthV2 auth;
+        public RequestV2 request;
+        public ResponseV2 response;
+    }
+
+    public String code;
+    public final SchemeV2 scheme = new SchemeV2();
 }

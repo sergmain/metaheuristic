@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.enhance_text.EnhanceTex
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.data.ChatData;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
-import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
+import ai.metaheuristic.commons.yaml.scheme.ApiScheme;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.api.EnumsApi;

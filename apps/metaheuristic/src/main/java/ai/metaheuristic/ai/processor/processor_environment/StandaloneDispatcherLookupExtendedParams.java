@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlV1;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 
 import static ai.metaheuristic.ai.Consts.STANDALONE_PORT_NUMBER;
@@ -58,7 +59,7 @@ public class StandaloneDispatcherLookupExtendedParams extends DispatcherLookupEx
 //        lookup.assetManagerUrl = "http://localhost:" + STANDALONE_PORT_NUMBER;
         lookup.disabled = false;
         lookup.lookupType = Enums.DispatcherLookupType.direct;
-        lookup.authType = Enums.AuthType.basic;
+        lookup.authType = EnumsApi.AuthType.basic;
         lookup.restUsername = Consts.REST_USER;
         lookup.restPassword = restPassword;
         lookup.taskProcessingTime = "";

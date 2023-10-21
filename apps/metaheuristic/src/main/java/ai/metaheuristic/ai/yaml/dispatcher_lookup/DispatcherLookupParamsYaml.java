@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.yaml.dispatcher_lookup;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -65,7 +66,7 @@ public class DispatcherLookupParamsYaml implements BaseParams {
         public String publicKey;
         @Nullable
         public Enums.DispatcherLookupType lookupType;
-        public Enums.AuthType authType;
+        public EnumsApi.AuthType authType;
 
         public String restUsername;
         public String restPassword;

@@ -17,8 +17,8 @@
 package ai.metaheuristic.ai.mhbp.api_keys;
 
 import ai.metaheuristic.ai.dispatcher.beans.Account;
-import ai.metaheuristic.ai.mhbp.yaml.auth.ApiAuth;
-import ai.metaheuristic.ai.mhbp.yaml.auth.ApiAuthUtils;
+import ai.metaheuristic.commons.yaml.auth.ApiAuth;
+import ai.metaheuristic.commons.yaml.auth.ApiAuthUtils;
 import ai.metaheuristic.ai.yaml.account.AccountParamsYaml;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;

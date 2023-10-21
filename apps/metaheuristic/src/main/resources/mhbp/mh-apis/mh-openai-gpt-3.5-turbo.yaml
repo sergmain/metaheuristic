@@ -1,8 +1,8 @@
 version: 2
-code: openai-gpt-3.5-turbo:1.0
+code: mh.openai-gpt-3.5-turbo:1.0
 scheme:
   auth:
-    code: openai
+    code: mh.openai
   request:
     type: post
     uri: https://api.openai.com/v1/chat/completions

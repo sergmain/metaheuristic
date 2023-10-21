@@ -16,11 +16,13 @@
 
 package ai.metaheuristic.ai.mhbp.yaml.auth;
 
-import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.yaml.auth.ApiAuth;
+import ai.metaheuristic.commons.yaml.auth.ApiAuthUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 
-import static ai.metaheuristic.ai.Enums.TokenPlace.header;
+import static ai.metaheuristic.api.EnumsApi.TokenPlace.header;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
@@ -49,7 +51,7 @@ public class ApiAuthUtilsTest {
         ApiAuth v = ApiAuthUtils.UTILS.to(yaml);
 
         assertEquals("openai", v.auth.code);
-        assertEquals(Enums.AuthType.token, v.auth.type);
+        assertEquals(EnumsApi.AuthType.token, v.auth.type);
         assertNotNull(v.auth.token);
         assertEquals(header, v.auth.token.place);
         assertEquals("$OPENAI_API_KEY$", v.auth.token.env);
@@ -71,7 +73,7 @@ public class ApiAuthUtilsTest {
         ApiAuth v = ApiAuthUtils.UTILS.to(yaml);
 
         assertEquals("openai", v.auth.code);
-        assertEquals(Enums.AuthType.token, v.auth.type);
+        assertEquals(EnumsApi.AuthType.token, v.auth.type);
         assertNotNull(v.auth.token);
         assertEquals(header, v.auth.token.place);
         assertEquals("OPENAI_API_KEY", v.auth.token.key);

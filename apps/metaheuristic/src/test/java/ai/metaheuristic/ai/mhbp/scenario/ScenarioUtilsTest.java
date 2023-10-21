@@ -21,8 +21,8 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter.Bat
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.data.ChatData;
-import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
-import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiSchemeUtils;
+import ai.metaheuristic.commons.yaml.scheme.ApiScheme;
+import ai.metaheuristic.commons.yaml.scheme.ApiSchemeUtils;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;

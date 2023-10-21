@@ -17,8 +17,8 @@
 package ai.metaheuristic.ai.mhbp.data;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.mhbp.yaml.auth.ApiAuth;
-import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
+import ai.metaheuristic.commons.yaml.auth.ApiAuth;
+import ai.metaheuristic.commons.yaml.scheme.ApiScheme;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -27,7 +27,6 @@ import org.springframework.data.domain.Slice;
 import org.springframework.lang.Nullable;
 
 import java.util.Collections;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -63,14 +62,14 @@ public class ApiData {
         public String name;
         public String code;
         public String description;
-        public Enums.AuthType authType;
+        public EnumsApi.AuthType authType;
         public String username;
         public String password;
         public String token;
         public String url;
         public String text;
 
-        public Enums.AuthType[] authTypes = Enums.AuthType.values();
+        public EnumsApi.AuthType[] authTypes = EnumsApi.AuthType.values();
     }
 
     @Data
@@ -125,11 +124,11 @@ public class ApiData {
 
     public record ProcessedAnswerFromAPI(RawAnswerFromAPI rawAnswerFromAPI, @Nullable String answer) {}
 
-    public record RawAnswerFromAPI(Enums.PromptResponseType type, @Nullable String raw, @Nullable byte[] bytes){
-        public RawAnswerFromAPI(Enums.PromptResponseType type, String raw) {
+    public record RawAnswerFromAPI(EnumsApi.PromptResponseType type, @Nullable String raw, @Nullable byte[] bytes){
+        public RawAnswerFromAPI(EnumsApi.PromptResponseType type, String raw) {
             this(type, raw, null);
         }
-        public RawAnswerFromAPI(Enums.PromptResponseType type, byte[] bytes) {
+        public RawAnswerFromAPI(EnumsApi.PromptResponseType type, byte[] bytes) {
             this(type, null, bytes);
         }
     }

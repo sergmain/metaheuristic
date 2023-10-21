@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.mhbp.beans;
 
-import ai.metaheuristic.ai.mhbp.yaml.auth.ApiAuth;
-import ai.metaheuristic.ai.mhbp.yaml.auth.ApiAuthUtils;
+import ai.metaheuristic.commons.yaml.auth.ApiAuth;
+import ai.metaheuristic.commons.yaml.auth.ApiAuthUtils;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

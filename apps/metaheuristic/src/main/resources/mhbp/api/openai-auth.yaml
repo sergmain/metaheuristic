@@ -1,7 +1,0 @@
-version: 1
-auth:
-  code: openai
-  type: token
-  token:
-    place: header
-    env: OPENAI_API_KEY

@@ -14,12 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mhbp.yaml.scheme;
+package ai.metaheuristic.commons.yaml.auth;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.commons.S;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,14 +26,17 @@ import org.springframework.lang.Nullable;
 
 @SuppressWarnings("FieldMayBeStatic")
 @Data
-public class ApiSchemeV2 implements BaseParams {
+public class ApiAuth implements BaseParams {
 
     public final int version=2;
 
     @Override
     public boolean checkIntegrity() {
-        if (scheme.auth==null || S.b(scheme.auth.code)) {
-            throw new CheckIntegrityFailedException("(scheme.auth==null || S.b(scheme.auth.code))");
+        if (auth.basic==null && auth.token==null) {
+            throw new CheckIntegrityFailedException("(api.basicAuth==null && api.tokenAuth==null)");
+        }
+        if (auth.token!=null && auth.token.token==null && auth.token.env==null && auth.token.key==null) {
+            throw new CheckIntegrityFailedException("(auth.token!=null && auth.token.token==null && auth.token.env==null && auth.token.key==null)");
         }
         return true;
     }
@@ -42,47 +44,36 @@ public class ApiSchemeV2 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class AuthV2 {
-        public String code;
+    public static class BasicAuth {
+        public String username;
+        public String password;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class PromptV2 {
-        public Enums.PromptPlace place;
+    public static class TokenAuth {
+        public EnumsApi.TokenPlace place;
+        // this is a just anon token. it will be used in uri,
+        // i.e. https://api.weatherapi.com/v1/current.json?key=xxx&q=94103
+        public String token;
         public String param;
-        public String replace;
-        public String text;
+        public String env;
+        public String key;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class RequestV2 {
-        public Enums.HttpMethodType type;
-        public String uri;
-        public PromptV2 prompt;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ResponseV2 {
-        public Enums.PromptResponseType type;
+    public static class Auth {
+        public String code;
+        public EnumsApi.AuthType type;
         @Nullable
-        public String path;
+        public BasicAuth basic;
+
+        @Nullable
+        public TokenAuth token;
     }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class SchemeV2 {
-        public AuthV2 auth;
-        public RequestV2 request;
-        public ResponseV2 response;
-    }
-
-    public String code;
-    public final SchemeV2 scheme = new SchemeV2();
+    public final Auth auth = new Auth();
 }

@@ -1,0 +1,7 @@
+version: 2
+auth:
+  code: mh.openai
+  token:
+    key: OPENAI_API_KEY
+    place: header
+  type: token

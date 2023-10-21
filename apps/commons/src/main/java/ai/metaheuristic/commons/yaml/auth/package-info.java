@@ -15,6 +15,6 @@
  */
 
 @ParametersAreNonnullByDefault
-package ai.metaheuristic.ai.mhbp.yaml.scheme;
+package ai.metaheuristic.commons.yaml.auth;
 
 import javax.annotation.ParametersAreNonnullByDefault;

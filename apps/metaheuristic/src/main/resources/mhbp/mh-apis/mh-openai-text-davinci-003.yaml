@@ -1,8 +1,8 @@
 version: 2
-code: openai-provider:1.0
+code: mh.openai-davinci-003:1.0
 scheme:
   auth:
-    code: openai
+    code: mh.openai
   request:
     type: post
     uri: https://api.openai.com/v1/completions

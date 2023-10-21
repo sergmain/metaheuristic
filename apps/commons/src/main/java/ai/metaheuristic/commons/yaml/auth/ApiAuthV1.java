@@ -14,10 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mhbp.yaml.auth;
+package ai.metaheuristic.commons.yaml.auth;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -53,7 +53,7 @@ public class ApiAuthV1 implements BaseParams  {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class TokenAuthV1 {
-        public Enums.TokenPlace place;
+        public EnumsApi.TokenPlace place;
         public String token;
         public String param;
         public String env;
@@ -64,7 +64,7 @@ public class ApiAuthV1 implements BaseParams  {
     @AllArgsConstructor
     public static class AuthV1 {
         public String code;
-        public Enums.AuthType type;
+        public EnumsApi.AuthType type;
 
         @Nullable
         public BasicAuthV1 basic;

@@ -43,7 +43,7 @@ import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioGroupRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioRepository;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
-import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
+import ai.metaheuristic.commons.yaml.scheme.ApiScheme;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;

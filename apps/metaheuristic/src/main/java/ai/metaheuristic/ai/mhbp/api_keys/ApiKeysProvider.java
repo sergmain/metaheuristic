@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.mhbp.api_keys;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
 import ai.metaheuristic.ai.mhbp.provider.ProviderData;
-import ai.metaheuristic.ai.mhbp.yaml.auth.ApiAuth;
+import ai.metaheuristic.commons.yaml.auth.ApiAuth;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

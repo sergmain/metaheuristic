@@ -166,8 +166,6 @@ public final class Enums {
 
     public enum DispatcherLookupType { direct, registry }
 
-    public enum AuthType { basic, token }
-
     public enum VariablesAs { permute, array; }
 
     public enum StringAsVariableSource { inline, variable; }
@@ -180,21 +178,6 @@ public final class Enums {
 
     public enum RequestType {text, video, audio }
     public enum ResponseType {text, bool, digit }
-
-    public enum TokenPlace { param, header }
-    public enum PromptPlace { uri, text }
-    public enum PromptResponseType {
-        json(false, false), text(false, false), image(true, false),
-        image_base64(true, true);
-
-        public final boolean binary;
-        public final boolean base64;
-        PromptResponseType(boolean binary, boolean base64) {
-            this.binary = binary;
-            this.base64 = base64;
-        }
-    }
-    public enum HttpMethodType { get, post }
 
     public enum QueryResultErrorType { cant_understand, common, server_error, query_too_long }
 

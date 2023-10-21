@@ -22,7 +22,7 @@ import javax.annotation.Nullable;
 
 public class EnumsApi {
 
-    public enum BundleItemType { function, sourceCode }
+    public enum BundleItemType { function, sourceCode, auth, api }
 
     public enum BatchMappingKey {id, name }
 
@@ -452,4 +452,23 @@ public class EnumsApi {
     }
 
 
+    public enum TokenPlace { param, header }
+
+    public enum PromptPlace { uri, text }
+
+    public enum PromptResponseType {
+        json(false, false), text(false, false), image(true, false),
+        image_base64(true, true);
+
+        public final boolean binary;
+        public final boolean base64;
+        PromptResponseType(boolean binary, boolean base64) {
+            this.binary = binary;
+            this.base64 = base64;
+        }
+    }
+
+    public enum AuthType { basic, token }
+
+    public enum HttpMethodType { get, post }
 }

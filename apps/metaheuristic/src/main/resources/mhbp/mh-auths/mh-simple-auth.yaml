@@ -1,6 +1,6 @@
 version: 1
 auth:
-  code: simple
+  code: mh.simple
   type: basic
   basic:
     username: q

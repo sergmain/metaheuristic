@@ -16,12 +16,9 @@
 
 package ai.metaheuristic.mhbp.openai;
 
-import ai.metaheuristic.ai.mhbp.data.ApiData;
-import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
-import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiSchemeUtils;
+import ai.metaheuristic.commons.yaml.scheme.ApiScheme;
+import ai.metaheuristic.commons.yaml.scheme.ApiSchemeUtils;
 import ai.metaheuristic.ww2003.image.ImageUtils;
-import com.google.common.base.CharMatcher;
-import com.google.common.io.BaseEncoding;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 import org.apache.commons.codec.binary.Base64;

@@ -17,15 +17,16 @@ package ai.metaheuristic.apps.package_bundle;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.ExitApplicationException;
 import ai.metaheuristic.commons.utils.*;
+import ai.metaheuristic.commons.yaml.auth.ApiAuthUtils;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYaml;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYamlUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
+import ai.metaheuristic.commons.yaml.scheme.ApiSchemeUtils;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.SystemUtils;
@@ -47,6 +48,9 @@ import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.function.Consumer;
+
+import static ai.metaheuristic.api.EnumsApi.BundleItemType.*;
 
 @SpringBootApplication
 public class PackageBundle implements CommandLineRunner {
@@ -76,14 +80,18 @@ public class PackageBundle implements CommandLineRunner {
 
     public static void runInternal(String... args) throws IOException, GeneralSecurityException, ParseException {
         Cfg cfg = initPackaging(args);
+
         processFunctions(cfg);
-        processSourceCodes(cfg);
+        processCommonType(cfg, sourceCode, SourceCodeParamsYamlUtils.BASE_YAML_UTILS::to);
+        processCommonType(cfg, api, ApiAuthUtils.UTILS::to);
+        processCommonType(cfg, auth, ApiSchemeUtils.UTILS::to);
+
         createFinalZip(cfg);
     }
 
-    private static void processSourceCodes(Cfg cfg) throws IOException {
+    private static void processCommonType(Cfg cfg, EnumsApi.BundleItemType type, Consumer<String> yamlCheckerFunc) throws IOException {
         for (BundleCfgYaml.BundleConfig bundleConfig : cfg.bundleCfg.bundleConfig) {
-            if (bundleConfig.type!= EnumsApi.BundleItemType.sourceCode) {
+            if (bundleConfig.type!=type) {
                 continue;
             }
             Path p = cfg.currDir.resolve(bundleConfig.path);
@@ -101,9 +109,27 @@ public class PackageBundle implements CommandLineRunner {
 //                throw new ExitApplicationException();
 //            }
 
-            prepareSourceCodes(tempPath, p);
+            processFilesForCommonType(tempPath, p, yamlCheckerFunc);
         }
+    }
 
+    private static void processFilesForCommonType(Path tempFuncPath, Path srcPath, Consumer<String> yamlCheckerFunc) throws IOException {
+        Files.walkFileTree(srcPath, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path p, BasicFileAttributes attrs) throws IOException {
+                if (Files.isDirectory(p) || CommonConsts.FUNCTION_YAML.equals(p.getFileName().toString())) {
+                    return FileVisitResult.CONTINUE;
+                }
+                String yaml = Files.readString(p);
+
+                // let's check that this yaml is actually SourceCode
+                yamlCheckerFunc.accept(yaml);
+
+                Path file = tempFuncPath.resolve(p.getFileName().toString());
+                Files.writeString(file, yaml);
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
     private static void createFinalZip(Cfg cfg) throws IOException {
@@ -178,7 +204,7 @@ public class PackageBundle implements CommandLineRunner {
 
     private static void processFunctions(Cfg cfg) throws IOException, GeneralSecurityException {
         for (BundleCfgYaml.BundleConfig bundleConfig : cfg.bundleCfg.bundleConfig) {
-            if (bundleConfig.type!= EnumsApi.BundleItemType.function) {
+            if (bundleConfig.type!= function) {
                 continue;
             }
             Path p = cfg.currDir.resolve(bundleConfig.path);
@@ -253,26 +279,6 @@ public class PackageBundle implements CommandLineRunner {
         ZipUtils.createZip(paths, zip);
         fcy.system.archive = zipName;
         return zip;
-    }
-
-    private static void prepareSourceCodes(Path tempFuncPath, Path srcPath) throws IOException {
-        Files.walkFileTree(srcPath, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
-            @Override
-            public FileVisitResult visitFile(Path p, BasicFileAttributes attrs) throws IOException {
-                if (Files.isDirectory(p) || CommonConsts.FUNCTION_YAML.equals(p.getFileName().toString())) {
-                    return FileVisitResult.CONTINUE;
-                }
-                String yaml = Files.readString(p);
-
-                // let's check that this yaml is actually SourceCode
-                //noinspection unused
-                SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
-
-                Path file = tempFuncPath.resolve(p.getFileName().toString());
-                Files.writeString(file, yaml);
-                return FileVisitResult.CONTINUE;
-            }
-        });
     }
 
     public record FunctionConfigAndFile(FunctionConfigYaml config, Path file) {}

@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.yaml.dispatcher_lookup;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.api.EnumsApi;
 import org.junit.jupiter.api.Test;
 
 import static ai.metaheuristic.ai.Consts.STANDALONE_PORT_NUMBER;
@@ -42,7 +43,7 @@ public class TestDispatcherLookupParamsYamlUtils {
 //        lookup.assetManagerUrl = "http://localhost:" + STANDALONE_PORT_NUMBER;
         lookup.disabled = false;
         lookup.lookupType = Enums.DispatcherLookupType.direct;
-        lookup.authType = Enums.AuthType.basic;
+        lookup.authType = EnumsApi.AuthType.basic;
         lookup.restUsername = Consts.REST_USER;
         lookup.restPassword = "123";
         lookup.taskProcessingTime = "";

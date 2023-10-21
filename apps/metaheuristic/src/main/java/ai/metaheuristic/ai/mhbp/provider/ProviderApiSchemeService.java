@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.mhbp.provider;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Auth;
@@ -25,9 +24,10 @@ import ai.metaheuristic.ai.mhbp.data.CommunicationData;
 import ai.metaheuristic.ai.mhbp.data.NluData;
 import ai.metaheuristic.ai.mhbp.repositories.AuthRepository;
 import ai.metaheuristic.ai.mhbp.api_keys.ApiKeysProvider;
-import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
+import ai.metaheuristic.commons.yaml.scheme.ApiScheme;
 import ai.metaheuristic.ai.utils.HttpUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import lombok.SneakyThrows;
@@ -97,15 +97,15 @@ public class ProviderApiSchemeService {
             throw new RuntimeException("can't build an URL");
         }
         List<NameValuePair> nvps = new ArrayList<>();
-        if (schemeAndParams.scheme.scheme.request.prompt.place==Enums.PromptPlace.uri) {
+        if (schemeAndParams.scheme.scheme.request.prompt.place== EnumsApi.PromptPlace.uri) {
             nvps.add(new BasicNameValuePair(schemeAndParams.scheme.scheme.request.prompt.param, info.text));
         }
 
-        if (schemeAndParams.auth.auth.type==Enums.AuthType.token) {
+        if (schemeAndParams.auth.auth.type== EnumsApi.AuthType.token) {
             if (schemeAndParams.auth.auth.token==null) {
                 throw new RuntimeException("(schemeAndParams.auth.auth.tokenAuth==null)");
             }
-            if (schemeAndParams.auth.auth.token.place!=Enums.TokenPlace.header) {
+            if (schemeAndParams.auth.auth.token.place!= EnumsApi.TokenPlace.header) {
                 nvps.add(new BasicNameValuePair(schemeAndParams.auth.auth.token.param, schemeAndParams.auth.auth.token.token));
             }
         }
@@ -132,16 +132,16 @@ public class ProviderApiSchemeService {
 
         final Request request;
         JsonStringEncoder encoder = JsonStringEncoder.getInstance();
-        if (schemeAndParams.scheme.scheme.request.type==Enums.HttpMethodType.post) {
+        if (schemeAndParams.scheme.scheme.request.type== EnumsApi.HttpMethodType.post) {
             request = Request.post(uri).connectTimeout(Timeout.ofSeconds(5)); //.socketTimeout(20000);
-            if (schemeAndParams.scheme.scheme.request.prompt.place==Enums.PromptPlace.text) {
+            if (schemeAndParams.scheme.scheme.request.prompt.place== EnumsApi.PromptPlace.text) {
                 String encoded = new String(encoder.quoteAsString(info.text));
                 String json = schemeAndParams.scheme.scheme.request.prompt.text.replace(schemeAndParams.scheme.scheme.request.prompt.replace, encoded);
                 StringEntity entity = new StringEntity(json, StandardCharsets.UTF_8);
                 request.body(entity);
             }
         }
-        else if (schemeAndParams.scheme.scheme.request.type==Enums.HttpMethodType.get) {
+        else if (schemeAndParams.scheme.scheme.request.type== EnumsApi.HttpMethodType.get) {
             request = Request.get(uri).connectTimeout(Timeout.ofSeconds(5)); //.socketTimeout(20000);
         }
         else {
@@ -156,7 +156,7 @@ public class ProviderApiSchemeService {
     public static ApiData.SchemeAndParamResult getData(ApiData.SchemeAndParams schemeAndParams, final Request request) {
         RestUtils.addHeaders(request);
         final Executor executor;
-        if (schemeAndParams.auth.auth.type==Enums.AuthType.basic) {
+        if (schemeAndParams.auth.auth.type== EnumsApi.AuthType.basic) {
             if (schemeAndParams.auth.auth.basic==null) {
                 return new ApiData.SchemeAndParamResult(schemeAndParams, "(schemeAndParams.params.api.basicAuth==null)", 0);
             }
@@ -166,7 +166,7 @@ public class ProviderApiSchemeService {
             if (schemeAndParams.auth.auth.token==null) {
                 return new ApiData.SchemeAndParamResult(schemeAndParams, "(schemeAndParams.auth.auth.token==null)", 0);
             }
-            if (schemeAndParams.auth.auth.token.place==Enums.TokenPlace.header) {
+            if (schemeAndParams.auth.auth.token.place== EnumsApi.TokenPlace.header) {
                 String token = schemeAndParams.tokenProviderFunc.get();
                 request.addHeader("Authorization", "Bearer " + token);
             }

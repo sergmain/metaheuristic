@@ -14,21 +14,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mhbp.yaml.auth;
+package ai.metaheuristic.commons.yaml.scheme;
 
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
 import java.util.Map;
 
-public class ApiAuthUtils {
+public class ApiSchemeUtils {
 
-    private static final ApiAuthUtilsV1 YAML_UTILS_V_1 = new ApiAuthUtilsV1();
-    private static final ApiAuthUtilsV2 YAML_UTILS_V_2 = new ApiAuthUtilsV2();
-    private static final ApiAuthUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+    private static final ApiSchemeUtilsV2 YAML_UTILS_V_2 = new ApiSchemeUtilsV2();
+    private static final ApiSchemeUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
 
-    public static final BaseYamlUtils<ApiAuth> UTILS = new BaseYamlUtils<>(
+    public static final BaseYamlUtils<ApiScheme> UTILS = new BaseYamlUtils<>(
             Map.of(
-                    1, YAML_UTILS_V_1,
                     2, YAML_UTILS_V_2
             ),
             DEFAULT_UTILS

@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.mhbp.beans;
 
-import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
-import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiSchemeUtils;
+import ai.metaheuristic.commons.yaml.scheme.ApiScheme;
+import ai.metaheuristic.commons.yaml.scheme.ApiSchemeUtils;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils.CommonThreadLocker;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

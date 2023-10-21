@@ -14,10 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.mhbp.yaml.scheme;
+package ai.metaheuristic.commons.yaml.scheme;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.commons.S;
 import lombok.AllArgsConstructor;
@@ -50,7 +50,7 @@ public class ApiScheme implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Prompt {
-        public Enums.PromptPlace place;
+        public EnumsApi.PromptPlace place;
         public String param;
         public String replace;
         public String text;
@@ -60,7 +60,7 @@ public class ApiScheme implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Request {
-        public Enums.HttpMethodType type;
+        public EnumsApi.HttpMethodType type;
         public String uri;
         public Prompt prompt;
     }
@@ -69,7 +69,7 @@ public class ApiScheme implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Response {
-        public Enums.PromptResponseType type;
+        public EnumsApi.PromptResponseType type;
         @Nullable
         public String path;
     }

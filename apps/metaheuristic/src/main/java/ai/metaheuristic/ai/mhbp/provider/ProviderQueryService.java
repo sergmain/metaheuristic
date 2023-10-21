@@ -32,7 +32,7 @@ import ai.metaheuristic.ai.mhbp.repositories.ChapterRepository;
 import ai.metaheuristic.ai.mhbp.repositories.EvaluationRepository;
 import ai.metaheuristic.ai.mhbp.session.SessionTxService;
 import ai.metaheuristic.ai.mhbp.yaml.answer.AnswerParams;
-import ai.metaheuristic.ai.mhbp.yaml.scheme.ApiScheme;
+import ai.metaheuristic.commons.yaml.scheme.ApiScheme;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import lombok.AllArgsConstructor;

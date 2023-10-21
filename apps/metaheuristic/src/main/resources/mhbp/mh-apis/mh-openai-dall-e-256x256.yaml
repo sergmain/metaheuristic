@@ -1,8 +1,8 @@
 version: 2
-code: openai-dall-e-256x256
+code: mh.openai-dall-e-256x256
 scheme:
   auth:
-    code: openai
+    code: mh.openai
   request:
     type: post
     uri: https://api.openai.com/v1/images/generations
