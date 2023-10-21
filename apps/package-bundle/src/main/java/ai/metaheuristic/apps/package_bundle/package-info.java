@@ -15,6 +15,6 @@
  */
 
 @ParametersAreNonnullByDefault
-package ai.metaheuristic.apps.package_function;
+package ai.metaheuristic.apps.package_bundle;
 
 import javax.annotation.ParametersAreNonnullByDefault;

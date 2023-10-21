@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.apps.package_function;
+package ai.metaheuristic.apps.package_bundle;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;

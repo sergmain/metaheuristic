@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.apps.package_function;
+package ai.metaheuristic.apps.package_bundle;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -49,16 +49,16 @@ import java.time.LocalDate;
 import java.util.*;
 
 @SpringBootApplication
-public class PackageFunction implements CommandLineRunner {
+public class PackageBundle implements CommandLineRunner {
 
     private final ApplicationContext appCtx;
 
-    public PackageFunction(ApplicationContext appCtx) {
+    public PackageBundle(ApplicationContext appCtx) {
         this.appCtx = appCtx;
     }
 
     public static void main(String[] args) {
-            SpringApplication.run(PackageFunction.class, args);
+            SpringApplication.run(PackageBundle.class, args);
         }
 
     public record Cfg(int version, @Nullable PrivateKey privateKey, Path workingDir, Path currDir,
@@ -292,7 +292,7 @@ public class PackageFunction implements CommandLineRunner {
         CommandLine cmd = parseArgs(args);
         String ver = cmd.getOptionValue("v");
         if (args.length==0 || S.b(ver)) {
-            System.out.println("PackageFunction -v 2 [-key <private key file>]");
+            System.out.println("PackageBundle -v 2 [-key <private key file>]");
             throw new ExitApplicationException();
         }
         int version = Integer.parseInt(ver);
