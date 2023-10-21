@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import static ai.metaheuristic.api.EnumsApi.OperationStatus.ERROR;
+import static ai.metaheuristic.api.EnumsApi.OperationStatus.INFO;
 
 /**
  * @author Sergio Lissner
@@ -84,7 +85,7 @@ public class AuthTxService {
         ApiAuth apiAuth = ApiAuthUtils.UTILS.to(yaml);
         Auth auth = authRepository.findByCode(apiAuth.auth.code);
         if (auth!=null) {
-            throw new CommonRollbackException("246.120 Auth with code'"+apiAuth.auth.code+"' already exist", ERROR);
+            throw new CommonRollbackException("246.120 Auth with code'"+apiAuth.auth.code+"' already exist", INFO);
         }
 
         auth = new Auth();

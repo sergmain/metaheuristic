@@ -26,16 +26,16 @@ import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
  * Time: 7:58 AM
  */
 public class CommonRollbackException extends RuntimeException {
-    public final String error;
+    public final String message;
     public final EnumsApi.OperationStatus status;
 
     public CommonRollbackException() {
-        this.error = "no description for this error";
+        this.message = "no description for this error";
         this.status = OK;
     }
 
-    public CommonRollbackException(String error, EnumsApi.OperationStatus status) {
-        this.error = error;
+    public CommonRollbackException(String message, EnumsApi.OperationStatus status) {
+        this.message = message;
         this.status = status;
     }
 

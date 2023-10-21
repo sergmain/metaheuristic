@@ -21,11 +21,8 @@ import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.mhbp.beans.Auth;
 import ai.metaheuristic.ai.mhbp.data.AuthData;
 import ai.metaheuristic.ai.mhbp.repositories.AuthRepository;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.utils.PageUtils;
-import ai.metaheuristic.commons.yaml.auth.ApiAuth;
-import ai.metaheuristic.commons.yaml.auth.ApiAuthUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +32,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -84,7 +80,11 @@ public class AuthService {
         try {
             return authTxService.createAuth(yaml, context);
         } catch (CommonRollbackException e) {
-            return e.status==OK ? OperationStatusRest.OPERATION_STATUS_OK : new OperationStatusRest(e.status, e.error);
+            return switch (e.status) {
+                case OK -> OperationStatusRest.OPERATION_STATUS_OK;
+                case ERROR -> new OperationStatusRest(e.status, e.message);
+                case INFO -> new OperationStatusRest(e.status, e.message, null);
+            };
         }
     }
 }

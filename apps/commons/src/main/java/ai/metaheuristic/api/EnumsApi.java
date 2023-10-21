@@ -238,7 +238,7 @@ public class EnumsApi {
 
     public enum DataType {variable, global_variable, function}
 
-    public enum OperationStatus {OK, ERROR}
+    public enum OperationStatus {OK, ERROR, INFO}
 
     public enum ExperimentTaskType {
         UNKNOWN(0), FIT(1), PREDICT(2);

@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import static ai.metaheuristic.api.EnumsApi.OperationStatus.ERROR;
+import static ai.metaheuristic.api.EnumsApi.OperationStatus.INFO;
 
 /**
  * @author Sergio Lissner
@@ -78,13 +79,13 @@ public class ApiTxService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = CommonRollbackException.class)
     public OperationStatusRest createApi(String yaml, DispatcherContext context) {
         ApiScheme apiScheme = ApiSchemeUtils.UTILS.to(yaml);
 
         Api api = apiRepository.findByApiCode(apiScheme.code);
         if (api!=null) {
-            throw new CommonRollbackException("216.080 Api scheme with code'"+apiScheme.code+"' already exist", ERROR);
+            throw new CommonRollbackException("216.080 Api scheme with code'"+apiScheme.code+"' already exist", INFO);
         }
 
         api = new Api();
