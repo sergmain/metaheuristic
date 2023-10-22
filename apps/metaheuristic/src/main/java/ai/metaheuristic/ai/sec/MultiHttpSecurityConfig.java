@@ -35,7 +35,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
-import static org.springframework.http.HttpMethod.OPTIONS;
+import static org.springframework.http.HttpHeaders.*;
+import static org.springframework.http.HttpMethod.*;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 /**
@@ -49,6 +50,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class MultiHttpSecurityConfig {
 
+    public static final String X_AUTH_TOKEN = "x-auth-token";
     private final Globals globals;
 //    private final CorsConfigurationSource corsConfigurationSource;
 
@@ -69,9 +71,9 @@ public class MultiHttpSecurityConfig {
     private static UrlBasedCorsConfigurationSource corsConfigurationSource(@Nullable List<String> corsAllowedOrigins) {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(corsAllowedOrigins);
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("authorization", "content-type", "x-auth-token"));
-        configuration.setExposedHeaders(List.of("x-auth-token", "Content-Disposition"));
+        configuration.setAllowedMethods(List.of(GET.name(), POST.name(), PUT.name(), PATCH.name(), DELETE.name(), OPTIONS.name()));
+        configuration.setAllowedHeaders(List.of(AUTHORIZATION, CONTENT_TYPE, X_AUTH_TOKEN));
+        configuration.setExposedHeaders(List.of(X_AUTH_TOKEN, CONTENT_DISPOSITION));
         // set max-age to 1 minute
 //        configuration.setMaxAge(60L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

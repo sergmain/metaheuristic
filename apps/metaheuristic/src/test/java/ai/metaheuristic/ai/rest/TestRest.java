@@ -67,7 +67,7 @@ public class TestRest {
     @RestController
     public static class JsonTestController {
 
-        // This isn't the test
+        // This isn't the test, it's end-point for test
         // see testNearMessages() below
         @GetMapping("/rest/test/message")
         public NewMessage getMessage() {

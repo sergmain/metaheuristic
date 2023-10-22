@@ -168,7 +168,7 @@ public class ProviderApiSchemeService {
             }
             if (schemeAndParams.auth.auth.token.place== EnumsApi.TokenPlace.header) {
                 String token = schemeAndParams.tokenProviderFunc.get();
-                request.addHeader("Authorization", "Bearer " + token);
+                request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + token);
             }
             executor = Executor.newInstance();
         }
