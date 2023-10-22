@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.sec;
 
+import ai.metaheuristic.ai.Consts;
 import org.hamcrest.core.Every;
 import org.hamcrest.core.StringContains;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +41,8 @@ import org.springframework.web.context.WebApplicationContext;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
+import static org.hamcrest.core.Every.*;
+import static org.hamcrest.core.StringContains.*;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
@@ -96,8 +99,8 @@ public class MultiHttpSecurityConfigTest {
                 .header("Origin", "http://localhost:8080"))
             .andExpect(MockMvcResultMatchers.status().isOk())
             .andExpect(MockMvcResultMatchers.header().exists(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS))
-            .andExpect(MockMvcResultMatchers.header().stringValues(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS,
-                Every.everyItem(StringContains.containsStringIgnoringCase(HttpHeaders.CONTENT_DISPOSITION))));
+            .andExpect(MockMvcResultMatchers.header().stringValues(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, everyItem(containsStringIgnoringCase(HttpHeaders.CONTENT_DISPOSITION))))
+            .andExpect(MockMvcResultMatchers.header().stringValues(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, everyItem(containsStringIgnoringCase(Consts.X_AUTH_TOKEN))));
 
     }
 }

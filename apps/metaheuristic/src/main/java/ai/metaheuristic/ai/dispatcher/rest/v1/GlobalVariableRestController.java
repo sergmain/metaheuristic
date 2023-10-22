@@ -45,7 +45,7 @@ public class GlobalVariableRestController {
         return globalVariableTopLevelService.getGlobalVariables(pageable);
     }
 
-    @PostMapping(value = "/global-variable-upload-from-file", headers = ("content-type=multipart/*"), produces = "application/json", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @PostMapping(value = "/global-variable-upload-from-file", headers = ("content-type=multipart/*"), produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public OperationStatusRest createResourceFromFile(
             @RequestPart MultipartFile file,
             @RequestParam(name = "variable") String variable ) {
@@ -81,7 +81,7 @@ public class GlobalVariableRestController {
 
     // ============= Service methods =============
 
-    @PostMapping(value = "/store-initial-global-variable", headers = ("content-type=multipart/*"), produces = "application/json", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @PostMapping(value = "/store-initial-global-variable", headers = ("content-type=multipart/*"), produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public OperationStatusRest storeInitialResource(
             @RequestPart MultipartFile file,
             @SuppressWarnings("unused") @RequestParam(name = "code") String resourceCode,

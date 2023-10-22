@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.sec;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +51,6 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class MultiHttpSecurityConfig {
 
-    public static final String X_AUTH_TOKEN = "x-auth-token";
     private final Globals globals;
 //    private final CorsConfigurationSource corsConfigurationSource;
 
@@ -72,8 +72,8 @@ public class MultiHttpSecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(corsAllowedOrigins);
         configuration.setAllowedMethods(List.of(GET.name(), POST.name(), PUT.name(), PATCH.name(), DELETE.name(), OPTIONS.name()));
-        configuration.setAllowedHeaders(List.of(AUTHORIZATION, CONTENT_TYPE, X_AUTH_TOKEN));
-        configuration.setExposedHeaders(List.of(X_AUTH_TOKEN, CONTENT_DISPOSITION));
+        configuration.setAllowedHeaders(List.of(AUTHORIZATION, CONTENT_TYPE, Consts.X_AUTH_TOKEN));
+        configuration.setExposedHeaders(List.of(Consts.X_AUTH_TOKEN, CONTENT_DISPOSITION));
         // set max-age to 1 minute
 //        configuration.setMaxAge(60L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

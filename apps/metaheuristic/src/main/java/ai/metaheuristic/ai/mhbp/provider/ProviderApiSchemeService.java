@@ -44,6 +44,7 @@ import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -172,7 +173,7 @@ public class ProviderApiSchemeService {
             }
             executor = Executor.newInstance();
         }
-        request.addHeader("Content-Type", "application/json");
+        request.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
 
         Response response = executor.execute(request);
 

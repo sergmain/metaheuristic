@@ -32,6 +32,8 @@ import org.apache.hc.core5.net.URIBuilder;
 import org.apache.hc.core5.util.Timeout;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
 
 import java.io.IOException;
@@ -131,8 +133,8 @@ public class QueryOpenaiTest {
         request.body(new StringEntity(cfg.prompt, StandardCharsets.UTF_8));
 
         RestUtils.addHeaders(request);
-        request.addHeader("Content-Type", "application/json");
-        request.addHeader("Authorization", "Bearer " + key);
+        request.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + key);
         final Executor executor = Executor.newInstance();
 
         Response response = executor.execute(request);
@@ -156,7 +158,7 @@ public class QueryOpenaiTest {
                 .build();
         final Request request = Request.get(uri).connectTimeout(Timeout.ofSeconds(5));//.socketTimeout(20000);
 
-        request.addHeader("Authorization", "Bearer " + key);
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + key);
         final Executor executor = Executor.newInstance();
 
         Response response = executor.execute(request);
