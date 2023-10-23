@@ -20,28 +20,33 @@ import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.Metrics;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricsUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
+@Execution(CONCURRENT)
 public class TestMetricsYaml {
 
     @Test
     public void testUnmarshalling() {
-        String yaml = "comment: 'The last draw. num_of_intersected[0]: 0, n_total_intersected.sum(): 380,\n" +
-                "  adjustTo: 0.14285714285714285, intersected_sum_as_int: 54'\n" +
-                "values:\n" +
-                "  sum: 54\n" +
-                "  sum_6: 112\n" +
-                "  sum_7: 122\n" +
-                "  sum_8: 147\n" +
-                "  sum_9: 160\n" +
-                "  sum_norm: 380\n" +
-                "  sum_norm_6: 79\n" +
-                "  sum_norm_7: 86\n" +
-                "  sum_norm_8: 103\n" +
-                "  sum_norm_9: 112\n";
+        String yaml = """
+                comment: 'The last draw. num_of_intersected[0]: 0, n_total_intersected.sum(): 380,
+                  adjustTo: 0.14285714285714285, intersected_sum_as_int: 54'
+                values:
+                  sum: 54
+                  sum_6: 112
+                  sum_7: 122
+                  sum_8: 147
+                  sum_9: 160
+                  sum_norm: 380
+                  sum_norm_6: 79
+                  sum_norm_7: 86
+                  sum_norm_8: 103
+                  sum_norm_9: 112
+                """;
 
         MetricValues values = MetricsUtils.getMetricValues(yaml);
 

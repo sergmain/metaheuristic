@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.utils.RestUtils;
 import lombok.AllArgsConstructor;
 import org.apache.commons.io.IOUtils;
-import org.apache.hc.client5.http.fluent.Content;
 import org.apache.hc.client5.http.fluent.Executor;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
@@ -134,7 +133,7 @@ public class QueryOpenaiTest {
 
         RestUtils.addHeaders(request);
         request.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-        request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + key);
+        request.addHeader(HttpHeaders.AUTHORIZATION, Consts.BEARER + key);
         final Executor executor = Executor.newInstance();
 
         Response response = executor.execute(request);
@@ -158,7 +157,7 @@ public class QueryOpenaiTest {
                 .build();
         final Request request = Request.get(uri).connectTimeout(Timeout.ofSeconds(5));//.socketTimeout(20000);
 
-        request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + key);
+        request.addHeader(HttpHeaders.AUTHORIZATION, Consts.BEARER + key);
         final Executor executor = Executor.newInstance();
 
         Response response = executor.execute(request);

@@ -104,7 +104,7 @@ print(response["data"][0]["b64_json"][:50])
 
         RestUtils.addHeaders(request);
         request.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-        request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + key);
+        request.addHeader(HttpHeaders.AUTHORIZATION, Consts.BEARER + key);
         final Executor executor = Executor.newInstance();
 
         Response response = executor.execute(request);
@@ -128,7 +128,7 @@ print(response["data"][0]["b64_json"][:50])
                 .build();
         final Request request = Request.get(uri).connectTimeout(Timeout.ofSeconds(5));//.socketTimeout(20000);
 
-        request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + key);
+        request.addHeader(HttpHeaders.AUTHORIZATION, Consts.BEARER + key);
         final Executor executor = Executor.newInstance();
 
         Response response = executor.execute(request);

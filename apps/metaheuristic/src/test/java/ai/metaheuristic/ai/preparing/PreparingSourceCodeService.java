@@ -37,6 +37,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
+import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
@@ -57,12 +58,15 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.preparing.PreparingConsts.GLOBAL_TEST_VARIABLE;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -263,6 +267,19 @@ public class PreparingSourceCodeService {
         //execContextTaskAssigningTopLevelService.procesEvent();
 //        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContextId);
 
+        final AtomicReference<Boolean> tRef = new AtomicReference<>();
+        await()
+            .atLeast(Duration.ofMillis(500))
+            .atMost(Duration.ofSeconds(10))
+            .with()
+            .pollInterval(Duration.ofMillis(500))
+            .until(()-> {
+                final boolean isQueueEmpty = TaskProviderTopLevelService.allTaskGroupFinished(execContextId);;
+                tRef.set(isQueueEmpty);
+                return isQueueEmpty;
+            });
+
+/*
         boolean isQueueEmpty = true;
         for (int i = 0; i < 30; i++) {
             Thread.sleep(2_000);
@@ -272,6 +289,7 @@ public class PreparingSourceCodeService {
             }
         }
         assertTrue(isQueueEmpty);
+*/
     }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextForTest(PreparingData.PreparingSourceCodeData preparingSourceCodeData) {

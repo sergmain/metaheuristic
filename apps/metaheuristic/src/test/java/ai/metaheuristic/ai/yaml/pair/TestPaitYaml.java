@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
@@ -28,12 +29,14 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 7/30/2020
  * Time: 12:21 PM
  */
+@Execution(CONCURRENT)
 public class TestPaitYaml {
 
     @Data

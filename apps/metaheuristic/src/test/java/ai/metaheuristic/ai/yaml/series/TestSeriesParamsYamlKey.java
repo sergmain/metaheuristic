@@ -19,17 +19,20 @@ package ai.metaheuristic.ai.yaml.series;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 4/3/2021
  * Time: 8:36 PM
  */
+@Execution(CONCURRENT)
 public class TestSeriesParamsYamlKey {
 
     @Test

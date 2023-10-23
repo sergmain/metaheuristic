@@ -17,18 +17,31 @@
 package ai.metaheuristic.ai;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 3/5/2022
  * Time: 4:27 PM
  */
+@Execution(CONCURRENT)
 public class TestConsts {
 
     @Test
     public void testConsts() {
         assertTrue(Consts.DISPATCHER_REQUEST_PROCESSSING_MILLISECONDS < Consts.DISPATCHER_SOCKET_TIMEOUT_MILLISECONDS);
     }
+
+    @SuppressWarnings("ConstantValue")
+    @Test
+    public void test_bearer_with_space() {
+        assertTrue(Consts.BEARER.length()>1);
+        assertEquals(' ', Consts.BEARER.charAt(Consts.BEARER.length() - 1));
+    }
+
+
 }

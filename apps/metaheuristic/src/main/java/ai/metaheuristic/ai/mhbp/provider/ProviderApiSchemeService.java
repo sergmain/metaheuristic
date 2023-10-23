@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.mhbp.provider;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Auth;
@@ -169,7 +170,7 @@ public class ProviderApiSchemeService {
             }
             if (schemeAndParams.auth.auth.token.place== EnumsApi.TokenPlace.header) {
                 String token = schemeAndParams.tokenProviderFunc.get();
-                request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + token);
+                request.addHeader(HttpHeaders.AUTHORIZATION, Consts.BEARER + token);
             }
             executor = Executor.newInstance();
         }

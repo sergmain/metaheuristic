@@ -17,8 +17,6 @@
 package ai.metaheuristic.ai.sec;
 
 import ai.metaheuristic.ai.Consts;
-import org.hamcrest.core.Every;
-import org.hamcrest.core.StringContains;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +27,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.*;
 import org.springframework.security.test.context.support.WithUserDetails;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -41,8 +38,8 @@ import org.springframework.web.context.WebApplicationContext;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-import static org.hamcrest.core.Every.*;
-import static org.hamcrest.core.StringContains.*;
+import static org.hamcrest.core.Every.everyItem;
+import static org.hamcrest.core.StringContains.containsStringIgnoringCase;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
@@ -56,7 +53,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @ExtendWith(SpringExtension.class)
 @Import({SpringSecurityWebAuxTestConfig.class, MultiHttpSecurityConfigTest.JsonTestController .class})
 //@ActiveProfiles({"dispatcher", "mysql"})
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+//@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class MultiHttpSecurityConfigTest {
 
@@ -67,8 +64,7 @@ public class MultiHttpSecurityConfigTest {
 
     @RestController
     public static class JsonTestController {
-        // This isn't the test
-        // see testNearMessages() below
+        // This isn't the test, actual test is MultiHttpSecurityConfigTest.testApiEndpointWithCORSCustomHeader() below
         @GetMapping(value= "/rest/test/message", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
         public HttpEntity<String> downloadVariable() {
             HttpHeaders httpHeaders = new HttpHeaders();

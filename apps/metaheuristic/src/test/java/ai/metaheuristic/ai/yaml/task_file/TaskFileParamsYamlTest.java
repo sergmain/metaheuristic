@@ -21,14 +21,17 @@ import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlV2;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Sergio Lissner
  * Date: 8/23/2022
  * Time: 5:41 PM
  */
+@Execution(CONCURRENT)
 public class TaskFileParamsYamlTest {
 
     @Test

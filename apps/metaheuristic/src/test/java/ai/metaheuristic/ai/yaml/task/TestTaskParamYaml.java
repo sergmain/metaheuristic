@@ -23,15 +23,18 @@ import ai.metaheuristic.commons.utils.TaskParamsUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 //@ExtendWith(SpringExtension.class)
 //@SpringBootTest
+@Execution(CONCURRENT)
 public class TestTaskParamYaml {
 
     @Test

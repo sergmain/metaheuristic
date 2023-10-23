@@ -102,7 +102,7 @@ public class TestRestUploadFunction {
                 "file", "functions.zip", MediaType.APPLICATION_OCTET_STREAM.getType(),
                 bytes);
 
-        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.multipart("/rest/v1/dispatcher/function/function-upload-from-file")
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.multipart("/rest/v1/dispatcher/bundle/bundle-upload-from-file")
                 .file(functionFile)
                 .characterEncoding("UTF-8"))
                 .andExpect(status().isOk())

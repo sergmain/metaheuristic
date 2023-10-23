@@ -21,25 +21,31 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 2/1/2020
  * Time: 12:24 AM
  */
+@Execution(CONCURRENT)
 public class TestMapYaml {
 
-    private static final String Y = "variables:\n" +
-            "  inline:\n" +
-            "    mh.hyper-params:\n" +
-            "      RNN: [LSTM, GRU]\n" +
-            "      batches: '40'\n" +
-            "      seed: '42'\n" +
-            "      time_steps: '[15,30]'\n";
+    private static final String Y = """
+            variables:
+              inline:
+                mh.hyper-params:
+                  RNN: [LSTM, GRU]
+                  batches: '40'
+                  seed: '42'
+                  time_steps: '[15,30]'
+            """;
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -72,12 +78,13 @@ public class TestMapYaml {
         public final Map<String, String> metas = new HashMap<>();
     }
 
-    private static final String Y_02 =
-            "metas:\n" +
-            "      RNN: '[LSTM, GRU]'\n" +
-            "      batches: '40'\n" +
-            "      seed: '42'\n" +
-            "      time_steps: '[15,30]'\n";
+    private static final String Y_02 = """
+            metas:
+                  RNN: '[LSTM, GRU]'
+                  batches: '40'
+                  seed: '42'
+                  time_steps: '[15,30]'
+            """;
 
     @Test
     public void test_02() {

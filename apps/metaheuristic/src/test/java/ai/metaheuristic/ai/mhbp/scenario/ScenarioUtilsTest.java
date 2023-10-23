@@ -88,7 +88,7 @@ public class ScenarioUtilsTest {
         scenario.name = "Fruit production";
         scenario.setParams(yaml);
 
-        final ApiScheme apiScheme = ApiSchemeUtils.UTILS.to(IOUtils.resourceToString("/mhbp/api/simple-provider.yaml", StandardCharsets.UTF_8));
+        final ApiScheme apiScheme = ApiSchemeUtils.UTILS.to(IOUtils.resourceToString("/mhbp/mh-apis/mh-simple.yaml", StandardCharsets.UTF_8));
 
         // main function for testing
         SourceCodeParamsYaml sc = ScenarioUtils.to(getUid(scenario), scenario.getScenarioParams(), (code)-> apiScheme);

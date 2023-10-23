@@ -25,6 +25,7 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -40,8 +41,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 @SuppressWarnings("SameParameterValue")
+@Execution(CONCURRENT)
 public class TestYamlParser {
 
     private static Yaml init(Class<?> clazz) {

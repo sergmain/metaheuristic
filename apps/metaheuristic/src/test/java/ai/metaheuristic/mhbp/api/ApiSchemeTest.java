@@ -43,12 +43,12 @@ public class ApiSchemeTest {
 
     @Test
     public void test_openai() throws IOException {
-        String yaml  = IOUtils.resourceToString("/mhbp/api/openai-provider.yaml", StandardCharsets.UTF_8);
+        String yaml  = IOUtils.resourceToString("/mhbp/mh-apis/mh-openai-text-davinci-003.yaml", StandardCharsets.UTF_8);
 
         ApiScheme as = ApiSchemeUtils.UTILS.to(yaml);
 
-        assertEquals("openai-provider:1.0", as.code);
-        assertEquals("openai", as.scheme.auth.code);
+        assertEquals("mh.openai-davinci-003:1.0", as.code);
+        assertEquals("mh.openai", as.scheme.auth.code);
         assertEquals(post, as.scheme.request.type);
         assertEquals("https://api.openai.com/v1/completions", as.scheme.request.uri);
         assertNotNull(as.scheme.request.prompt);
@@ -74,12 +74,12 @@ public class ApiSchemeTest {
 
     @Test
     public void test_simple() throws IOException {
-        String yaml  = IOUtils.resourceToString("/mhbp/api/simple-provider.yaml", StandardCharsets.UTF_8);
+        String yaml  = IOUtils.resourceToString("/mhbp/mh-apis/mh-simple.yaml", StandardCharsets.UTF_8);
 
         ApiScheme as = ApiSchemeUtils.UTILS.to(yaml);
 
-        assertEquals("simple-provider-localhost:1.0", as.code);
-        assertEquals("simple", as.scheme.auth.code);
+        assertEquals("mh.simple-localhost:1.0", as.code);
+        assertEquals("mh.simple", as.scheme.auth.code);
         assertEquals(get, as.scheme.request.type);
         assertEquals("http://localhost:8080/rest/v1/provider/simple/stub/question", as.scheme.request.uri);
         assertNotNull(as.scheme.request.prompt);

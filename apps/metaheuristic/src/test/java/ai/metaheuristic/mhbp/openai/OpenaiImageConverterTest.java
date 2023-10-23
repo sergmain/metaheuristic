@@ -42,7 +42,7 @@ public class OpenaiImageConverterTest {
     @Test
     public void test_(@TempDir Path temp) throws IOException {
         String json = IOUtils.resourceToString("/mhbp/openai/variable-103813-image_of_oranges.json", StandardCharsets.UTF_8);
-        String apiYaml = IOUtils.resourceToString("/mhbp/api/openai-dall-e-256x256.yaml", StandardCharsets.UTF_8);
+        String apiYaml = IOUtils.resourceToString("/mhbp/mh-apis/mh-openai-dall-e-256x256.yaml", StandardCharsets.UTF_8);
 
         ApiScheme apiScheme = ApiSchemeUtils.UTILS.to(apiYaml);
 

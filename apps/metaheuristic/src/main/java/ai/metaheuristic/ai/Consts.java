@@ -194,4 +194,5 @@ public class Consts {
     public static final String UUID_ARG = "uuid=";
     public static final String ELECTRON_PATH = "electron";
     public static final String X_AUTH_TOKEN = "x-auth-token";
+    public static final String BEARER = "Bearer ";
 }
