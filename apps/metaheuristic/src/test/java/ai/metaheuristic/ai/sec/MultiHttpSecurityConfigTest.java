@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.sec;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.utils.HttpUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,9 +35,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.WebApplicationContext;
-
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 import static org.hamcrest.core.Every.everyItem;
 import static org.hamcrest.core.StringContains.containsStringIgnoringCase;
@@ -69,10 +67,7 @@ public class MultiHttpSecurityConfigTest {
         public HttpEntity<String> downloadVariable() {
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            // https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
-            // after adding 'attachment;' mh-angular must be fixed as well
-            httpHeaders.setContentDisposition(ContentDisposition.parse(
-                "filename*=UTF-8''" + URLEncoder.encode(NEW_NAME_XML, StandardCharsets.UTF_8)));
+            HttpUtils.setContentDisposition(httpHeaders, NEW_NAME_XML);
             HttpEntity<String> entity = new ResponseEntity<>(SOME_TEXT_DATA, httpHeaders, HttpStatus.OK);
             return entity;
         }

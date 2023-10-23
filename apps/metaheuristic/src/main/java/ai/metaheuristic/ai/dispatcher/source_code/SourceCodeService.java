@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.ArtifactUtils;
 import ai.metaheuristic.ai.utils.EnvServiceUtils;
+import ai.metaheuristic.ai.utils.HttpUtils;
 import ai.metaheuristic.commons.utils.*;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
@@ -61,7 +62,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -303,8 +303,7 @@ public class SourceCodeService {
 
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            httpHeaders.setContentDisposition(ContentDisposition.parse(
-                    "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8)));
+            HttpUtils.setContentDisposition(httpHeaders, filename);
             resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, Files.size(zipFile)), HttpStatus.OK);
             return resource;
         } catch (VariableDataNotFoundException e) {

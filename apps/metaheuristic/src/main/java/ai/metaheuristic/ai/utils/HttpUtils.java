@@ -18,9 +18,13 @@ package ai.metaheuristic.ai.utils;
 
 import org.apache.hc.client5.http.utils.URIUtils;
 import org.apache.hc.core5.http.HttpHost;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author Sergio Lissner
@@ -31,5 +35,13 @@ public class HttpUtils {
 
     public static HttpHost getHttpHost(String url) throws URISyntaxException {
         return URIUtils.extractHost(new URI(url));
+    }
+
+    public static void setContentDisposition(HttpHeaders httpHeaders, String filename) {
+        // https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
+        // after adding 'attachment;' mh-angular must be fixed as well
+        // TODO p5 2023-10-22 no need to add attachment; because code of MH is handle a Content-Disposition value
+        httpHeaders.setContentDisposition(ContentDisposition.parse(
+                "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8)));
     }
 }

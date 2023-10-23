@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.mhbp.rest;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
+import ai.metaheuristic.ai.utils.HttpUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -33,8 +34,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -148,12 +147,12 @@ public class StubProviderRestController {
 
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            httpHeaders.setContentDisposition(ContentDisposition.parse(
-                    "filename*=UTF-8''" + URLEncoder.encode(pathToImage.filename, StandardCharsets.UTF_8)));
+            HttpUtils.setContentDisposition(httpHeaders, pathToImage.filename);
 
             return new ResponseEntity<>(new ByteArrayResource(bytes), RestUtils.getHeader(httpHeaders, bytes.length), HttpStatus.OK);
         } catch (CommonErrorWithDataException | IOException e) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         }
     }
+
 }

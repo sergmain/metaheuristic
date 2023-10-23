@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.experiment.ExperimentService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentResultRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentTaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
+import ai.metaheuristic.ai.utils.HttpUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsJsonUtils;
@@ -260,8 +261,7 @@ public class ExperimentResultTopLevelService {
 
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            httpHeaders.setContentDisposition(ContentDisposition.parse(
-                    "filename*=UTF-8''experiment-result-"+experimentResultId+".zip"));
+            HttpUtils.setContentDisposition(httpHeaders, "experiment-result-" + experimentResultId + ".zip");
             resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, Files.size(zipFile)), HttpStatus.OK);
             return resource;
         }

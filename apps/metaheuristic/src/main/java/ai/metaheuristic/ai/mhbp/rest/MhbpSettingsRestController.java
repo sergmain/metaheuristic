@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.mhbp.rest;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.mhbp.settings.MhbpSettingsService;
+import ai.metaheuristic.ai.utils.HttpUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +34,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
@@ -69,13 +69,9 @@ public class MhbpSettingsRestController {
         final String backup = mhbpSettingsService.exportBackup();
 
         HttpHeaders httpHeaders = new HttpHeaders();
-//        httpHeaders.setContentType(new MediaType("application/text;charset=UTF-8"));
         httpHeaders.setContentType(new MediaType("application", "text", StandardCharsets.UTF_8));
-        // https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http
-        // after adding 'attachment;' mh-angular must be fixed as well
         String filename = S.f("backup-%s.yaml", LocalDate.now().toString() );
-        httpHeaders.setContentDisposition(ContentDisposition.parse(
-                "filename*=UTF-8''" + URLEncoder.encode(filename, StandardCharsets.UTF_8)));
+        HttpUtils.setContentDisposition(httpHeaders, filename);
 
         HttpEntity<String> entity = new ResponseEntity<>(backup, httpHeaders, HttpStatus.OK);
         return entity;
