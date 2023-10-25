@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.BaseDataClass;
+import ai.metaheuristic.api.data.SimpleSelectOption;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -35,6 +35,15 @@ public class FunctionData {
     public static class FunctionsResult extends BaseDataClass {
         public List<Function> functions;
         public EnumsApi.DispatcherAssetMode assetMode;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class SimpleFunctionResult extends BaseDataClass {
+        public Long id;
+        public String code;
+        public String type;
+        public String params;
     }
 
     @Data

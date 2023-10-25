@@ -29,6 +29,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
 import org.springframework.lang.Nullable;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 
@@ -163,6 +164,14 @@ public class SourceCodeApiData {
         public ExecContext execContext;
         public SourceCode sourceCode;
 
+        @JsonCreator
+        public ExecContextResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
+
         public ExecContextResult(List<String> errorMessages) {
             this.errorMessages = errorMessages;
         }
@@ -177,6 +186,17 @@ public class SourceCodeApiData {
         public ExecContextResult(SourceCode sourceCode, ExecContext execContext) {
             this.sourceCode = sourceCode;
             this.execContext = execContext;
+        }
+
+        public ExecContextResult(SourceCode sourceCode, ExecContext execContext, @Nullable List<String> infoMessages, @Nullable List<String> errorMessages) {
+            this.sourceCode = sourceCode;
+            this.execContext = execContext;
+            if (!CollectionUtils.isEmpty(infoMessages)) {
+                this.addInfoMessages(infoMessages);
+            }
+            if (!CollectionUtils.isEmpty(errorMessages)) {
+                this.addErrorMessages(errorMessages);
+            }
         }
     }
 

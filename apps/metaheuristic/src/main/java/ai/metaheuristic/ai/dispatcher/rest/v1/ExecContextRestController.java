@@ -111,7 +111,8 @@ public class ExecContextRestController {
         DispatcherContext context = userContextService.getContext(authentication);
         ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context.asUserExecContext(), true);
 
-        SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(execContextResult.sourceCode, execContextResult.execContext);
+        SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(
+            execContextResult.sourceCode, execContextResult.execContext, execContextResult.getInfoMessages(), execContextResult.getErrorMessages());
         return result;
     }
 

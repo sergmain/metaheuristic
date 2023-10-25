@@ -19,14 +19,13 @@ package ai.metaheuristic.ai.function;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataTxService;
-import ai.metaheuristic.ai.dispatcher.function.FunctionTxService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
-import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
-import ai.metaheuristic.api.ConstsApi;
+import ai.metaheuristic.ai.dispatcher.function.FunctionTxService;
+import ai.metaheuristic.ai.dispatcher.test.tx.TxTestingTopLevelService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
-import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -34,16 +33,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.lang.Nullable;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.io.ByteArrayInputStream;
 import java.util.Arrays;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -61,7 +57,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestFunctionService {
 
     public static final String TEST_FUNCTION = "test.function:1.0";
-    private static final String FUNCTION_PARAMS = "AAA";
+    public static final String FUNCTION_PARAMS = "AAA";
 
     @Autowired
     private FunctionTxService functionTxService;
@@ -70,7 +66,7 @@ public class TestFunctionService {
     private FunctionService functionTopLevelService;
 
     @Autowired
-    private FunctionRepository functionRepository;
+    private TxTestingTopLevelService txTestingTopLevelService;
 
     @Autowired
     private FunctionDataTxService functionDataService;
@@ -111,26 +107,13 @@ public class TestFunctionService {
         function = initFunction();
     }
 
-    private Function initFunction() {
-        long mills;
-        byte[] bytes = "some program code".getBytes();
-        Function f = functionRepository.findByCode(TEST_FUNCTION);
-        if (f == null) {
-            FunctionConfigYaml sc = new FunctionConfigYaml();
-            sc.function.code = TEST_FUNCTION;
-            sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-            sc.function.type = "test";
-            sc.function.env = "python-3";
-            sc.function.file = "predict-filename.txt";
-            sc.function.params = FUNCTION_PARAMS;
-            sc.function.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
+    @SneakyThrows
+    public Function initFunction() {
+        final String testFunction = TEST_FUNCTION;
+        final String file = "predict-filename.txt";
+        final String test = "test";
 
-            mills = System.currentTimeMillis();
-            log.info("Start functionRepository.save() #2");
-            f = functionTxService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
-
-            log.info("functionRepository.save() #2 was finished for {} milliseconds", System.currentTimeMillis() - mills);
-        }
+        final Function f = txTestingTopLevelService.getOrCreateFunction(testFunction, test, file);
         return f;
     }
 

@@ -126,6 +126,15 @@ public class FunctionService {
     private List<Pair<EnumsApi.FunctionSourcing, String>> functionInfosCache = null;
     private long mills = 0L;
 
+    @Nullable
+    public FunctionData.SimpleFunctionResult getFunction(String code) {
+        Function f = functionRepository.findByCode(code);
+        if (f==null) {
+            return null;
+        }
+        return new FunctionData.SimpleFunctionResult(f.id, f.code, f.type, f.getParams());
+    }
+
     public static class RefreshInfoAboutFunctionsEvent {}
 
     private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();

@@ -22,6 +22,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,6 +39,13 @@ public class FunctionRestController {
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA', 'MANAGER')")
     public FunctionData.FunctionsResult getFunctions() {
         return functionTopLevelService.getFunctions();
+    }
+
+    @Nullable
+    @GetMapping("/function/{code}")
+    @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA', 'MANAGER')")
+    public FunctionData.SimpleFunctionResult getFunctionByCode(@PathVariable String code) {
+        return functionTopLevelService.getFunction(code);
     }
 
     @GetMapping("/function-delete/{id}")

@@ -19,35 +19,30 @@ package ai.metaheuristic.ai.preparing;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
-import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
-import ai.metaheuristic.ai.dispatcher.function.FunctionTxService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
+import ai.metaheuristic.ai.dispatcher.test.tx.TxTestingTopLevelService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
-import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
-import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -63,14 +58,14 @@ import java.util.UUID;
 public class PreparingCoreInitService {
 
     private final ExperimentRepository experimentRepository;
-    private final FunctionTxService functionTxService;
-    private final FunctionRepository functionRepository;
+    private final TxTestingTopLevelService txTestingTopLevelService;
     private final ExperimentCache experimentCache;
     private final ProcessorTopLevelService processorTopLevelService;
     private final ProcessorTxService processorTransactionService;
     private final TxSupportForTestingService txSupportForTestingService;
     private final ProcessorCoreTxService processorCoreService;
 
+    @SneakyThrows
     public PreparingData.PreparingCodeData beforePreparingCore() {
         PreparingData.PreparingCodeData data = new PreparingData.PreparingCodeData();
 
@@ -125,54 +120,8 @@ public class PreparingCoreInitService {
         data.core2 = processorTransactionService.createProcessorCore(descriptionCore, csy2, data.processor.id);
 
         // Prepare functions
-        mills = System.currentTimeMillis();
-        byte[] bytes = "some program code".getBytes();
-
-        log.info("Start findByCode.save()");
-        Function function = functionRepository.findByCode(PreparingConsts.TEST_FIT_FUNCTION);
-        log.info("findByCode() was finished for {} milliseconds", System.currentTimeMillis() - mills);
-        if (function == null) {
-
-            FunctionConfigYaml sc = new FunctionConfigYaml();
-            sc.function.code = PreparingConsts.TEST_FIT_FUNCTION;
-            sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-            sc.function.env = "python-3";
-            sc.function.type = CommonConsts.FIT_TYPE;
-            sc.function.file = "fit-filename.txt";
-            sc.function.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
-
-            mills = System.currentTimeMillis();
-            log.info("Start functionRepository.save() #1");
-            function = functionTxService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
-            log.info("functionRepository.save() #1 was finished for {} milliseconds", System.currentTimeMillis() - mills);
-        }
-        data.fitFunction = function;
-
-        Function predictFunction = functionRepository.findByCode(PreparingConsts.TEST_PREDICT_FUNCTION);
-        if (predictFunction == null) {
-            predictFunction = new Function();
-            FunctionConfigYaml sc = new FunctionConfigYaml();
-            sc.function.code = PreparingConsts.TEST_PREDICT_FUNCTION;
-            sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-            sc.function.type = CommonConsts.PREDICT_TYPE;
-            sc.function.env = "python-3";
-            sc.function.file = "predict-filename.txt";
-            sc.function.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
-
-            predictFunction.setCode(PreparingConsts.TEST_PREDICT_FUNCTION);
-            predictFunction.setType(CommonConsts.PREDICT_TYPE);
-            predictFunction.updateParams(sc);
-
-            mills = System.currentTimeMillis();
-            log.info("Start functionRepository.save() #2");
-            functionTxService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
-            log.info("processorRepository.save() #2 was finished for {} milliseconds", System.currentTimeMillis() - mills);
-
-        }
-        data.predictFunction = predictFunction;
-
-
-        mills = System.currentTimeMillis();
+        data.fitFunction = txTestingTopLevelService.getOrCreateFunction(PreparingConsts.TEST_FIT_FUNCTION, CommonConsts.FIT_TYPE, "fit-filename.txt");
+        data.predictFunction = txTestingTopLevelService.getOrCreateFunction(PreparingConsts.TEST_PREDICT_FUNCTION, CommonConsts.PREDICT_TYPE, "predict-filename.txt");
 
         System.out.println("Was inited correctly");
 
