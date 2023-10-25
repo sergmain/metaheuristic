@@ -108,7 +108,7 @@ public class ExecContextTaskResettingTopLevelService {
 
         ExecContextTaskState execContextTaskState = execContextTaskStateRepository.findById(ec.execContextTaskStateId).orElse(null);
         if (execContextTaskState==null) {
-            log.error("#155.030 ExecContextTaskState wasn't found for execContext #{}", event.execContextId);
+            log.error("156.030 ExecContextTaskState wasn't found for execContext #{}", event.execContextId);
             return;
         }
         ExecContextTaskStateParamsYaml ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();

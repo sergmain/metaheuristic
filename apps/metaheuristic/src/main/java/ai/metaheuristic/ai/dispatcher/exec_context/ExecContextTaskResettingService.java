@@ -76,7 +76,7 @@ public class ExecContextTaskResettingService {
 
         ExecContextTaskState execContextTaskState = execContextTaskStateRepository.findById(ec.execContextTaskStateId).orElse(null);
         if (execContextTaskState==null) {
-            log.error("#155.030 ExecContextTaskState wasn't found for execContext #{}", execContextId);
+            log.error("155.030 ExecContextTaskState wasn't found for execContext #{}", execContextId);
             return;
         }
         ExecContextTaskStateParamsYaml ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
@@ -120,9 +120,9 @@ public class ExecContextTaskResettingService {
         TaskSyncService.checkWriteLockPresent(taskId);
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
-        log.info("#305.025 Start re-setting task #{}", taskId);
+        log.info("155.080 Start re-setting task #{}", taskId);
         if (task == null) {
-            String es = S.f("#320.020 Found a non-existed task, graph consistency for execContextId #%s is failed",
+            String es = S.f("155.120 Found a non-existed task, graph consistency for execContextId #%s is failed",
                     execContext.id);
             log.error(es);
             execContext.completedOn = System.currentTimeMillis();
@@ -133,7 +133,7 @@ public class ExecContextTaskResettingService {
         TaskParamsYaml taskParams = task.getTaskParamsYaml();
         final ExecContextParamsYaml.Process process = execContext.getExecContextParamsYaml().findProcess(taskParams.task.processCode);
         if (process==null) {
-            throw new BreakFromLambdaException("#375.080 Process '" + taskParams.task.processCode + "' wasn't found");
+            throw new BreakFromLambdaException("155.160 Process '" + taskParams.task.processCode + "' wasn't found");
         }
 
         task.setFunctionExecResults(null);
@@ -152,7 +152,7 @@ public class ExecContextTaskResettingService {
         taskTxService.save(task);
         for (TaskParamsYaml.OutputVariable output : taskParams.task.outputs) {
             if (output.context== EnumsApi.VariableContext.global) {
-                throw new IllegalStateException("(output.context== EnumsApi.VariableContext.global)");
+                throw new IllegalStateException("155.200 (output.context== EnumsApi.VariableContext.global)");
             }
             VariableSyncService.getWithSyncVoidForCreation(output.id, ()-> variableTxService.resetVariable(execContext.id, output.id));
         }
@@ -164,7 +164,7 @@ public class ExecContextTaskResettingService {
         // actual deregistering will be done via reconsiliationService
 //        eventPublisherService.publishUnAssignTaskTxEventAfterCommit(new UnAssignTaskTxAfterCommitEvent(task.execContextId, task.id));
 
-        log.info("#305.035 task #{} and its output variables were re-setted to initial state", taskId);
+        log.info("155.240 task #{} and its output variables were re-setted to initial state", taskId);
     }
 
 }

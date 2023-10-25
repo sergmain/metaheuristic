@@ -125,16 +125,16 @@ public class TaskWithInternalContextEventService {
         }
         catch (InternalFunctionException e) {
             if (e.result.processing != Enums.InternalFunctionProcessing.ok) {
-                log.error("#706.100 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}",
+                log.error("706.100 error type: {}, message: {}\n\tsourceCodeId: {}, execContextId: {}",
                         e.result.processing, e.result.error, event.sourceCodeId, event.execContextId);
-                final String console = "#706.130 Task #" + event.taskId + " was finished with status '" + e.result.processing + "', text of error: " + e.result.error;
+                final String console = "706.130 Task #" + event.taskId + " was finished with status '" + e.result.processing + "', text of error: " + e.result.error;
                 ExecContextSyncService.getWithSyncVoid(event.execContextId,
                         () -> TaskSyncService.getWithSyncVoid(event.taskId,
                                 () -> taskFinishingTxService.finishWithErrorWithTx(event.taskId, console)));
             }
         }
         catch (Throwable th) {
-            final String es = "#706.150 Error while processing the task #"+event.taskId+" with internal function. Error: " + th.getMessage() +
+            final String es = "706.150 Error while processing the task #"+event.taskId+" with internal function. Error: " + th.getMessage() +
                     ". Cause error: " + (th.getCause()!=null ? th.getCause().getMessage() : " is null.");
 
             log.error(es, th);
@@ -153,12 +153,12 @@ public class TaskWithInternalContextEventService {
         try {
             TaskImpl task = taskRepository.findByIdReadOnly(taskId);
             if (task==null) {
-                log.warn("#706.180 Task #{} with internal context doesn't exist", taskId);
+                log.warn("706.180 Task #{} with internal context doesn't exist", taskId);
                 return;
             }
 
             if (task.execState != EnumsApi.TaskExecState.IN_PROGRESS.value) {
-                log.error("#706.210 Task #"+task.id+" already in progress.");
+                log.error("706.210 Task #"+task.id+" already in progress.");
                 return;
             }
 
@@ -171,7 +171,7 @@ public class TaskWithInternalContextEventService {
                     p = new ExecContextParamsYaml.Process(Consts.MH_FINISH_FUNCTION, Consts.MH_FINISH_FUNCTION, Consts.TOP_LEVEL_CONTEXT_ID, function);
                 }
                 else {
-                    final String msg = "#706.240 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + simpleExecContext.execContextId;
+                    final String msg = "706.240 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + simpleExecContext.execContextId;
                     log.warn(msg);
                     throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.process_not_found, msg));
                 }
@@ -187,7 +187,7 @@ public class TaskWithInternalContextEventService {
                         (v) -> VariableSyncService.getWithSyncVoidForCreation(v.id,
                                 ()-> variableTxService.setVariableAsNull(v.id)));
                 if (obj!=null && !(obj instanceof Boolean)) {
-                    final String es = "#706.300 condition '" + p.condition + " has returned not boolean value but " + obj.getClass().getSimpleName();
+                    final String es = "706.300 condition '" + p.condition + " has returned not boolean value but " + obj.getClass().getSimpleName();
                     log.error(es);
                     throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken, es);
                 }

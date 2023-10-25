@@ -75,14 +75,14 @@ public class TaskExecStateService {
         TxUtils.checkTxExists();
         TaskSyncService.checkWriteLockPresent(task.id);
 
-        log.info("#305.140 set the state of Task #{} as {}, Processor #{}", task.id, state, task.coreId);
+        log.info("305.040 set the state of Task #{} as {}, Processor #{}", task.id, state, task.coreId);
         switch (state) {
             case ERROR:
             case ERROR_WITH_RECOVERY:
-                throw new IllegalStateException("#305.150 Must be set via ExecContextFSM.finishWithError()");
+                throw new IllegalStateException("305.080 Must be set via ExecContextFSM.finishWithError()");
             case OK:
                 if (task.execState==EnumsApi.TaskExecState.OK.value) {
-                    log.info("#305.045 Task #{} already has execState as OK", task.id);
+                    log.info("305.120 Task #{} already has execState as OK", task.id);
                 }
                 else {
                     task.execState = EnumsApi.TaskExecState.OK.value;
@@ -99,7 +99,7 @@ public class TaskExecStateService {
                 }
                 break;
             default:
-                throw new IllegalStateException("#305.160 Right now it must be initialized somewhere else. state: " + state);
+                throw new IllegalStateException("305.160 Right now it must be initialized somewhere else. state: " + state);
         }
         if (state==NONE) {
             eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
@@ -138,7 +138,7 @@ public class TaskExecStateService {
                 if (task != null) {
                     changeTaskState(task, t.state);
                 } else {
-                    log.error("305.180 Graph state is compromised, found task in graph but it doesn't exist in db");
+                    log.error("305.200 Graph state is compromised, found task in graph but it doesn't exist in db");
                 }
             });
         }
