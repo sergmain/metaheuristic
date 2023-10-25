@@ -19,6 +19,7 @@ package ai.metaheuristic.api.data.exec_context;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.task.TaskApiData;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -186,6 +187,34 @@ public class ExecContextApiData {
         @Nullable
         public final Long lastTaskFinished;
         public final int inProgressCount;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExecContextSimpleStateResult extends BaseDataClass {
+        public Long execContextId;
+        public EnumsApi.ExecContextState state;
+
+        public ExecContextSimpleStateResult(Long execContextId, EnumsApi.ExecContextState state) {
+            this.execContextId = execContextId;
+            this.state = state;
+        }
+
+        public ExecContextSimpleStateResult(String error) {
+            addErrorMessage(error);
+        }
+
+        public ExecContextSimpleStateResult(List<String> errors) {
+            addErrorMessages(errors);
+        }
+
+        @JsonCreator
+        public ExecContextSimpleStateResult(
+            @JsonProperty("errorMessages") @org.springframework.lang.Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @org.springframework.lang.Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     @Data

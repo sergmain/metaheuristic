@@ -322,4 +322,14 @@ public class ExecContextTopLevelService {
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
+
+    public ExecContextApiData.ExecContextSimpleStateResult getExecContextSimpleState(Long execContextId, DispatcherContext context) {
+        ExecContextImpl execContext = execContextCache.findById(execContextId, true);
+        if (execContext == null) {
+            String es = S.f("210.480 ExecContext #%s wasn't found", execContextId);
+            log.warn(es);
+            return new ExecContextApiData.ExecContextSimpleStateResult(es);
+        }
+        return new ExecContextApiData.ExecContextSimpleStateResult(execContextId, EnumsApi.ExecContextState.fromCode(execContext.state));
+    }
 }

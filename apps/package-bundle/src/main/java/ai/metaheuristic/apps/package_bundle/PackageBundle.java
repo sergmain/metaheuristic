@@ -219,6 +219,7 @@ public class PackageBundle implements CommandLineRunner {
 
             final FunctionConfigAndFile fcy = getFunctionConfigYaml(p);
             if (verify(fcy, p)) {
+                System.out.println("Error while verification was encountered.");
                 throw new ExitApplicationException();
             }
 
