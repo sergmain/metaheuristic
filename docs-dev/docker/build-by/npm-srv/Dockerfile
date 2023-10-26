@@ -11,7 +11,7 @@ RUN apk update && \
 # Create app directory
 RUN mkdir -p /app
 RUN cd /app && \
-    git clone -b release-v4.x --recursive https://github.com/sergmain/metaheuristic-angular.git
+    git clone -b release-v6.x --recursive https://github.com/sergmain/metaheuristic-angular.git
 
 # Install app dependencies
 WORKDIR /app/metaheuristic-angular

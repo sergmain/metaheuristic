@@ -56,6 +56,7 @@ import java.time.Duration;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Enums.ApiKeySourceDefinedBy.none;
 import static ai.metaheuristic.ai.MetaheuristicStatus.APP_UUID;
@@ -743,12 +744,19 @@ public class Globals {
 
     private static void logSystemEnvs() {
         log.info("Current system properties:");
-        System.getProperties().forEach( (o, o2) -> {
-            if (o instanceof String s && StringUtils.equalsAny(s, "java.class.path", "java.library.path", "line.separator")) {
+        Properties props = System.getProperties();
+        List<String> keys = props.keySet().stream()
+            .filter(o->o instanceof String)
+            .map(o->(String)o)
+            .sorted().collect(Collectors.toList());
+
+        for (String key : keys) {
+            if (StringUtils.equalsAny(key, "java.class.path", "java.library.path", "line.separator")) {
                 return;
             }
-            log.info("'\t{}: {}", o, o2);
-        });
+            Object v = props.get(key);
+            log.info("'\t{}: {}", key, v);
+        }
 
         log.info("Metaheuristic command-line params: ");
         log.info("\tapp_uuid: " + APP_UUID);

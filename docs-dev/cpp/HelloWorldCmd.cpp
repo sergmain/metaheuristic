@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 	if (argc > 1) {
 		std::cout << "HelloWorldCmd.exe already executed\n";
 		do {
-			std::cout << "Inpit '1' and then pres enter to continue...\n";
+			std::cout << "Input '1' and then pres enter to continue...\n";
 		} while (std::cin.get() != '1' );
 		exit(0);
 	}
@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
 //	startup(CA2W("Subprocess HelloWorldCmd.exe"), CA2W("Debug\\HelloWorldCmd.exe 111 222"));
 	startup(NULL, CA2W("HelloWorldCmd.exe 111 222"));
 
-	std::cout << "ok. Run excternal app";
+	std::cout << "ok. Run external app";
 
 }
 
