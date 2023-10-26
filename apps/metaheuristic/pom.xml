@@ -21,7 +21,7 @@
 
     <groupId>ai.metaheuristic</groupId>
     <artifactId>srv</artifactId>
-    <version>6.0.2-SNAPSHOT</version>
+    <version>6.0.3-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>ai.metaheuristic.srv</name>
@@ -46,7 +46,7 @@
         <dependency>
             <groupId>ai.metaheuristic</groupId>
             <artifactId>mh-commons</artifactId>
-            <version>6.0.2-SNAPSHOT</version>
+            <version>6.0.3-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -349,7 +349,18 @@
                 <configuration>
                     <mainClass>ai.metaheuristic.ai.MetaheuristicApplication</mainClass>
                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                        <configuration>
+                            <loaderImplementation>CLASSIC</loaderImplementation>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
+
             <plugin>
                 <!-- to check which libraries have new versions -->
                 <groupId>org.codehaus.mojo</groupId>
@@ -382,11 +393,13 @@
                     </configuration>
                     <dependencies>
                         <!--set up any dependencies for Liquibase to function in your environment for example, a database-specific plugin-->
+<!--
                         <dependency>
                             <groupId>com.h2database</groupId>
                             <artifactId>h2</artifactId>
                             <version>2.1.214</version>
                         </dependency>
+-->
                         <!-- https://mvnrepository.com/artifact/com.mysql/mysql-connector-j -->
                         <dependency>
                             <groupId>com.mysql</groupId>
