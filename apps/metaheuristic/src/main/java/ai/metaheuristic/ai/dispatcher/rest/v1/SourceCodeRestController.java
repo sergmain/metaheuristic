@@ -61,6 +61,13 @@ public class SourceCodeRestController {
         return sourceCodeTxService.getSourceCodes(pageable, false, context);
     }
 
+    @GetMapping("/simple-source-codes")
+    @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
+    public SourceCodeApiData.SimpleSourceCodesResult simpleSourceCodes(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        return sourceCodeTxService.getSimpleSourceCodes(false, context);
+    }
+
     @GetMapping("/source-codes-archived-only")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public SourceCodeApiData.SourceCodesResult sourceCodeArchivedOnly(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {

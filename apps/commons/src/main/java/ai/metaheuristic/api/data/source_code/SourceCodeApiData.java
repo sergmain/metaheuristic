@@ -61,7 +61,36 @@ public class SourceCodeApiData {
     }
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SimpleSourceCode {
+        public Long id;
+        public String uid;
+        public boolean valid;
+    }
+
+    @Data
     @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class SimpleSourceCodesResult extends BaseDataClass {
+        public List<SimpleSourceCode> items;
+
+        public SimpleSourceCodesResult(List<SimpleSourceCode> items) {
+            this.items = items;
+        }
+
+        @JsonCreator
+        public SimpleSourceCodesResult (
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
     public static class SourceCodesResult extends BaseDataClass {
         public Slice<SourceCode> items;
         public EnumsApi.DispatcherAssetMode assetMode;
@@ -74,6 +103,14 @@ public class SourceCodeApiData {
 
         private boolean isBatch(String uid) {
             return batches.contains(uid);
+        }
+
+        @JsonCreator
+        public SourceCodesResult (
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
         }
 
         public EnumsApi.SourceCodeType getType(String uid) {
@@ -208,6 +245,14 @@ public class SourceCodeApiData {
         public Long execContextId;
         public String sourceCodeUid;
         public String execState;
+
+        @JsonCreator
+        public ExecContextForDeletion (
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
 
         public ExecContextForDeletion(List<String> errorMessages) {
             this.errorMessages = errorMessages;

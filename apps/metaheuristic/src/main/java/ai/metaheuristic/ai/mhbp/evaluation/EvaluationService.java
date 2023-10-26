@@ -100,23 +100,23 @@ public class EvaluationService {
         Evaluation evaluation = evaluationRepository.findById(evaluationId).orElse(null);
         if (evaluation == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#565.150 Evaluation wasn't found, evaluationId: " + evaluationId, null);
+                    "567.150 Evaluation wasn't found, evaluationId: " + evaluationId, null);
         }
         if (evaluation.companyId!=context.getCompanyId()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#565.200 evaluationId: " + evaluationId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "567.200 evaluationId: " + evaluationId);
         }
         Api api = apiRepository.findById(evaluation.apiId).orElse(null);
         if (api==null || api.companyId!=context.getCompanyId()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#565.220 Reference to API is broken, evaluationId: " + evaluationId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "567.220 Reference to API is broken, evaluationId: " + evaluationId);
         }
         if (evaluation.chapterIds.isEmpty()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#565.240 Reference to KB is empty, evaluationId: " + evaluationId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "567.240 Reference to KB is empty, evaluationId: " + evaluationId);
         }
         for (String chapterIdStr : evaluation.chapterIds) {
             long chapterId = Long.parseLong(chapterIdStr);
             Chapter chapter = chapterRepository.findById(chapterId).orElse(null);
             if (chapter==null || (chapter.companyId!=context.getCompanyId() && chapter.companyId!=Consts.ID_1)) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#565.260 Reference to Chapter is broken, evaluationId: " + evaluationId);
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "567.260 Reference to Chapter is broken, evaluationId: " + evaluationId);
             }
         }
 
@@ -128,10 +128,10 @@ public class EvaluationService {
         Evaluation evaluation = evaluationRepository.findById(evaluationId).orElse(null);
         if (evaluation == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#565.150 Evaluation wasn't found, evaluationId: " + evaluationId, null);
+                    "567.150 Evaluation wasn't found, evaluationId: " + evaluationId, null);
         }
         if (evaluation.companyId!=context.getCompanyId()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#565.200 evaluationId: " + evaluationId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "567.200 evaluationId: " + evaluationId);
         }
         return evaluationTxService.deleteEvaluationById(evaluationId);
     }

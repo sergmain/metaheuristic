@@ -76,9 +76,9 @@ public class SourceCodeTxService {
                         }
                         return b;
                     } catch (YAMLException e) {
-                        log.error("#565.020 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #{}", sourceCode.getId());
-                        log.error("#565.025 Params:\n{}", sourceCode.getParams());
-                        log.error("#565.030 Error: {}", e.toString());
+                        log.error("565.020 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #{}", sourceCode.getId());
+                        log.error("565.025 Params:\n{}", sourceCode.getParams());
+                        log.error("565.030 Error: {}", e.toString());
                         return false;
                     }
                 }).collect(Collectors.toList());
@@ -95,6 +95,36 @@ public class SourceCodeTxService {
         sourceCodesResult.experiments = dispatcherParamsTopLevelService.getExperiments();
 
         return sourceCodesResult;
+    }
+
+    @Transactional(readOnly = true)
+    public SourceCodeApiData.SimpleSourceCodesResult getSimpleSourceCodes(boolean isArchive, DispatcherContext context) {
+        List<Long> sourceCodeIds = sourceCodeRepository.findAllIdsByOrderByIdDesc(context.getCompanyId());
+        AtomicInteger count = new AtomicInteger();
+
+        List<SourceCodeApiData.SimpleSourceCode> list = sourceCodeIds.stream()
+                .map(sourceCodeCache::findById)
+                .filter(Objects::nonNull)
+                .filter(sourceCode-> {
+                    try {
+                        SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
+                        boolean b = !scspy.internalParams.archived;
+                        b = isArchive != b;
+                        if (b) {
+                            count.incrementAndGet();
+                        }
+                        return b;
+                    } catch (YAMLException e) {
+                        log.error("565.040 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #{}", sourceCode.getId());
+                        log.error("565.045 Params:\n{}", sourceCode.getParams());
+                        log.error("565.050 Error: {}", e.toString());
+                        return false;
+                    }
+                })
+            .map(o->new SourceCodeApiData.SimpleSourceCode(o.id, o.uid, o.valid))
+            .collect(Collectors.toList());
+
+        return new SourceCodeApiData.SimpleSourceCodesResult(list);
     }
 
     @Transactional
@@ -114,12 +144,12 @@ public class SourceCodeTxService {
         }
         if (checkReplicationMode && globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#565.240 Can't delete a sourceCode while 'replicated' mode of asset is active");
+                    "565.240 Can't delete a sourceCode while 'replicated' mode of asset is active");
         }
         SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.OK,
-                    "#565.250 sourceCode wasn't found, sourceCodeId: " + sourceCodeId, null);
+                    "565.250 sourceCode wasn't found, sourceCodeId: " + sourceCodeId, null);
         }
         sourceCodeCache.deleteById(sourceCodeId);
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -152,7 +182,7 @@ public class SourceCodeTxService {
     public SourceCodeApiData.SourceCodeResult validateSourceCode(Long sourceCodeId, DispatcherContext context) {
         final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
-            String es = "#565.280 SourceCode wasn't found, sourceCodeId: " + sourceCodeId;
+            String es = "565.280 SourceCode wasn't found, sourceCodeId: " + sourceCodeId;
             return new SourceCodeApiData.SourceCodeResult(es,
                     new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR, es)
             );
@@ -197,27 +227,27 @@ public class SourceCodeTxService {
 /*    @Transactional
     public SourceCodeApiData.SourceCodeResult updateSourceCode(Long sourceCodeId, String sourceCodeYamlAsStr, DispatcherContext context) {
         if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
-            return new SourceCodeApiData.SourceCodeResult("#565.300 Can't update a sourceCode while 'replicated' mode of asset is active");
+            return new SourceCodeApiData.SourceCodeResult("565.300 Can't update a sourceCode while 'replicated' mode of asset is active");
         }
         SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
-            String es = "#565.320 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
+            String es = "565.320 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
             return new SourceCodeApiData.SourceCodeResult( es,
                     new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR, es));
         }
         if (StringUtils.isBlank(sourceCodeYamlAsStr)) {
-            return new SourceCodeApiData.SourceCodeResult("#565.340 sourceCode yaml is empty");
+            return new SourceCodeApiData.SourceCodeResult("565.340 sourceCode yaml is empty");
         }
 
         SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeYamlAsStr);
 
         final String code = ppy.source.uid;
         if (StringUtils.isBlank(code)) {
-            return new SourceCodeApiData.SourceCodeResult("#565.360 code of sourceCode is empty");
+            return new SourceCodeApiData.SourceCodeResult("565.360 code of sourceCode is empty");
         }
         SourceCode p = sourceCodeRepository.findByUidAndCompanyId(code, context.getCompanyId());
         if (p!=null && !p.getId().equals(sourceCode.getId())) {
-            return new SourceCodeApiData.SourceCodeResult("#565.380 sourceCode with such code already exists, code: " + code);
+            return new SourceCodeApiData.SourceCodeResult("565.380 sourceCode with such code already exists, code: " + code);
         }
         sourceCode.uid = code;
 
@@ -241,11 +271,11 @@ public class SourceCodeTxService {
     public OperationStatusRest archiveSourceCodeById(Long sourceCodeId, DispatcherContext context) {
         if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#565.400 Can't archive a sourceCode while 'replicated' mode of asset is active");
+                    "565.400 Can't archive a sourceCode while 'replicated' mode of asset is active");
         }
         SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.OK,"#565.420 sourceCode wasn't found, sourceCodeId: " + sourceCodeId, null);
+            return new OperationStatusRest(EnumsApi.OperationStatus.OK,"565.420 sourceCode wasn't found, sourceCodeId: " + sourceCodeId, null);
         }
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
         scspy.internalParams.archived = true;

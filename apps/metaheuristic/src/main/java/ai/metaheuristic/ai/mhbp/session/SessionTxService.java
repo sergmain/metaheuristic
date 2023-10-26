@@ -83,7 +83,7 @@ public class SessionTxService {
         Session sourceCode = sessionRepository.findById(sessionId).orElse(null);
         if (sourceCode == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.OK,
-                    "#565.250 session wasn't found, sessionId: " + sessionId, null);
+                    "566.200 session wasn't found, sessionId: " + sessionId, null);
         }
         sessionRepository.deleteById(sessionId);
         return OperationStatusRest.OPERATION_STATUS_OK;

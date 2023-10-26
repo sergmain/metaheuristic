@@ -90,10 +90,10 @@ public class SourceCodeService {
     public SourceCodeApiData.SourceCodeResult createSourceCode(String sourceCodeYamlAsStr, Long companyUniqueId) {
         try {
             if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
-                return new SourceCodeApiData.SourceCodeResult("560.085 Can't add a new sourceCode while 'replicated' mode of asset is active");
+                return new SourceCodeApiData.SourceCodeResult("560.030 Can't add a new sourceCode while 'replicated' mode of asset is active");
             }
             if (StringUtils.isBlank(sourceCodeYamlAsStr)) {
-                return new SourceCodeApiData.SourceCodeResult("560.090 sourceCode yaml is empty");
+                return new SourceCodeApiData.SourceCodeResult("560.060 sourceCode yaml is empty");
             }
 
             SourceCodeParamsYaml ppy;
@@ -101,7 +101,7 @@ public class SourceCodeService {
                 ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeYamlAsStr);
             }
             catch (WrongVersionOfParamsException e) {
-                String es = "560.110 An error parsing yaml: " + e.getMessage();
+                String es = "560.090 An error parsing yaml: " + e.getMessage();
                 log.error(es);
                 return new SourceCodeApiData.SourceCodeResult(es);
             } catch (CheckIntegrityFailedException e) {
@@ -119,7 +119,7 @@ public class SourceCodeService {
                 return sourceCodeTxService.createSourceCode(sourceCodeYamlAsStr, ppy, companyUniqueId);
             } catch (DataIntegrityViolationException e) {
                 final String error = ErrorUtils.getAllMessages(e, 1);
-                final String es = "560.155 data integrity error: " + error;
+                final String es = "560.150 data integrity error: " + error;
                 log.error(es, e);
                 return new SourceCodeApiData.SourceCodeResult(es);
             }
@@ -134,7 +134,7 @@ public class SourceCodeService {
     public SourceCodeApiData.SourceCodeResult getSourceCode(Long sourceCodeId, DispatcherContext context) {
         final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
-            String errorMessage = "#565.270 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
+            String errorMessage = "560.210 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
             return new SourceCodeApiData.SourceCodeResult(
                     errorMessage,
                     new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR, errorMessage));
@@ -146,7 +146,7 @@ public class SourceCodeService {
     public SourceCodeData.Development getSourceCodeDevs(Long sourceCodeId, DispatcherContext context) {
         final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
-            String errorMessage = "#565.270 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
+            String errorMessage = "560.240 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
             return new SourceCodeData.Development(errorMessage);
         }
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
@@ -183,12 +183,12 @@ public class SourceCodeService {
     private SourceCodeApiData.SourceCodeResult checkSourceCodeExist(SourceCodeParamsYaml ppy) {
         final String code = ppy.source.uid;
         if (StringUtils.isBlank(code)) {
-            return new SourceCodeApiData.SourceCodeResult("560.130 the code of sourceCode is empty");
+            return new SourceCodeApiData.SourceCodeResult("560.270 the code of sourceCode is empty");
         }
         SourceCode f = sourceCodeRepository.findByUid(code);
         if (f!=null) {
             final SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult();
-            result.addInfoMessage("560.150 the sourceCode with code " + code + " already exists");
+            result.addInfoMessage("560.300 the sourceCode with code " + code + " already exists");
             return result;
         }
         return null;
@@ -197,22 +197,22 @@ public class SourceCodeService {
     public OperationStatusRest uploadSourceCode(MultipartFile file, DispatcherContext context) {
         if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "560.280 Can't upload sourceCode while 'replicated' mode of asset is active");
+                    "560.330 Can't upload sourceCode while 'replicated' mode of asset is active");
         }
 
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "560.290 name of uploaded file is null");
+                    "560.360 name of uploaded file is null");
         }
         String ext = StrUtils.getExtension(originFilename);
         if (ext==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "560.310 file without extension, bad filename: " + originFilename);
+                    "560.390 file without extension, bad filename: " + originFilename);
         }
         if (!StringUtils.equalsAny(ext.toLowerCase(), YAML_EXT, YML_EXT)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "560.330 only '.yml' and '.yaml' files are supported, filename: " + originFilename);
+                    "560.420 only '.yml' and '.yaml' files are supported, filename: " + originFilename);
         }
 
         try {
@@ -224,7 +224,7 @@ public class SourceCodeService {
             try {
                 ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeYamlAsStr);
             } catch (WrongVersionOfParamsException e) {
-                String es = "560.340 An error parsing yaml: " + e.getMessage();
+                String es = "560.450 An error parsing yaml: " + e.getMessage();
                 log.error(es, e);
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
             }
@@ -241,9 +241,9 @@ public class SourceCodeService {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
         catch (Throwable e) {
-            log.error("560.370 Error", e);
+            log.error("560.480 Error", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "560.380 can't load source codes, Error: " + e.getMessage());
+                    "560.510 can't load source codes, Error: " + e.getMessage());
         }
     }
 
@@ -252,7 +252,7 @@ public class SourceCodeService {
         try {
             final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
             if (sourceCode == null) {
-                log.info("560.400 sourceCode wasn't found, sourceCodeId: {}", sourceCodeId);
+                log.info("560.540 sourceCode wasn't found, sourceCodeId: {}", sourceCodeId);
                 return resource;
             }
 
@@ -265,7 +265,7 @@ public class SourceCodeService {
 
             ExecContextParamsYaml.Process process = sourceCodeGraph.processes.stream().filter(o->o.processCode.equals(processCode)).findFirst().orElse(null);
             if (process == null) {
-                log.warn("560.420 process wasn't found, processCode: {}", processCode);
+                log.warn("560.570 process wasn't found, processCode: {}", processCode);
                 return resource;
             }
 
@@ -292,7 +292,7 @@ public class SourceCodeService {
             TaskParamsYaml tpy = asTaskParamsYaml(scpy, process, globalIds, localIds);
 
             if (createArtifactsDir(outputDir, tpy)) {
-                log.error("560.445 error creating artifact dir, processCode: {}", processCode);
+                log.error("560.600 error creating artifact dir, processCode: {}", processCode);
                 return resource;
             }
 
@@ -307,11 +307,11 @@ public class SourceCodeService {
             resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, Files.size(zipFile)), HttpStatus.OK);
             return resource;
         } catch (VariableDataNotFoundException e) {
-            log.error("560.460 Variable #{}, context: {}, {}", e.variableId, e.context, e.getMessage());
+            log.error("560.630 Variable #{}, context: {}, {}", e.variableId, e.context, e.getMessage());
             resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             return resource;
         } catch (Throwable th) {
-            log.error("560.480 General error", th);
+            log.error("560.660 General error", th);
             resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             return resource;
         }
