@@ -40,8 +40,6 @@ import org.springframework.context.annotation.*;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.concurrent.ConcurrentTaskExecutor;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -51,9 +49,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * User: Serg
@@ -67,13 +62,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class Config {
 
-    private final Globals globals;
-
     @SuppressWarnings("unused")
     private final SpringChecker springChecker;
 
     @Configuration
-//    @ComponentScan("ai.metaheuristic.ai.dispatcher")
     @EnableAsync
     public static class SpringAsyncConfig implements AsyncConfigurer {
     }
@@ -111,16 +103,6 @@ public class Config {
         };
     }
 
-/*
-    @Bean
-    public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
-        ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
-        log.info("Config.threadPoolTaskScheduler() will use {} as a number of threads for an schedulers", globals.threadNumber.getScheduler());
-        threadPoolTaskScheduler.setPoolSize(globals.threadNumber.getScheduler());
-        return threadPoolTaskScheduler;
-    }
-*/
-
     @Component
     @RequiredArgsConstructor(onConstructor_={@Autowired})
     public static class SpringChecker {
@@ -137,6 +119,9 @@ public class Config {
         @Value("${spring.profiles.active}")
         private String activeProfiles;
 
+        @Value("${spring.threads.virtual.enabled}")
+        private boolean virtualThreads;
+
         @PostConstruct
         public void init() {
             checkProfiles();
@@ -146,6 +131,7 @@ public class Config {
         private void logSpring() {
             log.warn("Spring properties:");
             log.warn("'\tserver host:port: {}:{}", serverHost, serverPort);
+            log.warn("'\tvirtual is enabled: {}", virtualThreads);
         }
 
         private void checkProfiles() {
