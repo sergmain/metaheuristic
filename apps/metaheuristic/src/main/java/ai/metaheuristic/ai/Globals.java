@@ -462,38 +462,6 @@ public class Globals {
         public String[] envTokens;
     }
 
-/*
-    public static class ThreadNumber {
-        private int scheduler = 10;
-        private int event =  Math.max(10, Runtime.getRuntime().availableProcessors()/2);
-        public int queryApi =  2;
-
-        public int getQueryApi() {
-            return EnvProperty.minMax( queryApi, 2, 100);
-        }
-
-        public void setQueryApi(int queryApi) {
-            this.queryApi = queryApi;
-        }
-
-        public int getScheduler() {
-            return EnvProperty.minMax( scheduler, 10, 32);
-        }
-
-        public int getEvent() {
-            return EnvProperty.minMax( event, 10, 32);
-        }
-
-        public void setScheduler(int scheduler) {
-            this.scheduler = scheduler;
-        }
-
-        public void setEvent(int event) {
-            this.event = event;
-        }
-    }
-*/
-
     public static class Standalone {
         public boolean active = false;
     }

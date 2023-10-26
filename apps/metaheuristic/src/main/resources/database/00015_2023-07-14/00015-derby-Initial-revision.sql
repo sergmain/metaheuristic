@@ -147,6 +147,7 @@ CREATE INDEX mh_account_company_id_idx
 CREATE UNIQUE INDEX mh_account_username_unq_idx
     ON mh_account (USERNAME);
 
+-- password is 123
 insert into mh_account
 (version, COMPANY_ID, is_acc_not_expired, is_not_locked, is_cred_not_expired, is_enabled, USERNAME, PASSWORD, PUBLIC_NAME, ROLES, CREATED_ON, UPDATED_ON)
 VALUES
@@ -156,10 +157,13 @@ VALUES
 1696034005027,
 1696034005027);
 
+-- password is 123
 insert into mh_account
 (version, COMPANY_ID, is_acc_not_expired, is_not_locked, is_cred_not_expired, is_enabled, USERNAME, PASSWORD, PUBLIC_NAME, ROLES, CREATED_ON, UPDATED_ON)
 VALUES
-(0, 2, true, true, true, true, 'qqq', '$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu', 'admin for company #1', 'ROLE_ADMIN', 1696034005027, 1696034005027);
+(0, 2, true, true, true, true,
+'qqq', '$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu',
+'admin for company #1', 'ROLE_ADMIN', 1696034005027, 1696034005027);
 
 
 CREATE TABLE mh_processor
