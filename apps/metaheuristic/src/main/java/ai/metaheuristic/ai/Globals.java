@@ -746,7 +746,7 @@ public class Globals {
         log.info("Current system properties:");
         Properties properties = System.getProperties();
         LinkedHashMap<String, String> collect = properties.entrySet().stream()
-            .collect(Collectors.toMap(k -> (String) k.getKey(), e -> (String) e.getValue()))
+            .collect(Collectors.toMap(k -> k.getKey()!=null ? k.getKey().toString() : "null", e -> e.getValue()!=null ? e.getValue().toString() : "null"))
             .entrySet().stream().sorted(Map.Entry.comparingByKey())
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
                 (oldValue, newValue) -> oldValue, LinkedHashMap::new));

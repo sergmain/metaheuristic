@@ -191,6 +191,7 @@ public class ExecContextApiData {
 
     @Data
     @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = false)
     public static class ExecContextSimpleStateResult extends BaseDataClass {
         public Long execContextId;
         public EnumsApi.ExecContextState state;
