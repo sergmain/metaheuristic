@@ -349,6 +349,7 @@
                 <configuration>
                     <mainClass>ai.metaheuristic.ai.MetaheuristicApplication</mainClass>
                 </configuration>
+<!--
                 <executions>
                     <execution>
                         <goals>
@@ -359,6 +360,7 @@
                         </configuration>
                     </execution>
                 </executions>
+-->
             </plugin>
 
             <plugin>
