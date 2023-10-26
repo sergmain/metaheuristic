@@ -39,6 +39,7 @@ public class FunctionData {
 
     @Data
     @AllArgsConstructor
+    @EqualsAndHashCode(callSuper = false)
     public static class SimpleFunctionResult extends BaseDataClass {
         public Long id;
         public String code;

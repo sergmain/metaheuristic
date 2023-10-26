@@ -744,19 +744,19 @@ public class Globals {
 
     private static void logSystemEnvs() {
         log.info("Current system properties:");
-        Properties props = System.getProperties();
-        List<String> keys = props.keySet().stream()
-            .filter(o->o instanceof String)
-            .map(o->(String)o)
-            .sorted().collect(Collectors.toList());
+        Properties properties = System.getProperties();
+        LinkedHashMap<String, String> collect = properties.entrySet().stream()
+            .collect(Collectors.toMap(k -> (String) k.getKey(), e -> (String) e.getValue()))
+            .entrySet().stream().sorted(Map.Entry.comparingByKey())
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                (oldValue, newValue) -> oldValue, LinkedHashMap::new));
 
-        for (String key : keys) {
-            if (StringUtils.equalsAny(key, "java.class.path", "java.library.path", "line.separator")) {
+        collect.forEach( (o, o2) -> {
+            if (o instanceof String s && StringUtils.equalsAny(s, "java.class.path", "java.library.path", "line.separator")) {
                 return;
             }
-            Object v = props.get(key);
-            log.info("'\t{}: {}", key, v);
-        }
+            log.info("'\t{}: {}", o, o2);
+        });
 
         log.info("Metaheuristic command-line params: ");
         log.info("\tapp_uuid: " + APP_UUID);
