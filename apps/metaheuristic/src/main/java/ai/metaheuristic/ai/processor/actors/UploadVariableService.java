@@ -54,7 +54,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,7 +66,6 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.UUID;
 
 @Service
 @Slf4j
@@ -242,6 +240,9 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             catch (java.net.UnknownHostException e) {
                 log.warn("311.077 java.net.UnknownHostException, {}", e.toString());
             }
+//            catch (SocketException e) {
+//                log.error("311.078 SocketException {}, err: {}" ;
+//            }
             catch (IOException e) {
                 log.error("311.080 IOException", e);
             }
