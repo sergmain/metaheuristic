@@ -110,7 +110,7 @@ public class TaskProviderUnassignedTaskService {
 
         // Environment of Processor must be initialized before getting any task
         if (psy.env==null) {
-            log.error("#317.070 Processor {} has empty env.yaml", coreId);
+            log.error("#317.070 Processor with core #{} has an empty env.yaml", coreId);
             return null;
         }
 

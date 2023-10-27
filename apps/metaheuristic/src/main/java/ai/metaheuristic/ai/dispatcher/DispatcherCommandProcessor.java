@@ -63,7 +63,7 @@ public class DispatcherCommandProcessor {
 
     public void process(ProcessorCommParamsYaml.ProcessorRequest request, DispatcherCommParamsYaml.DispatcherResponse response, long startMills) {
         if (request.processorCommContext==null || request.processorCommContext.processorId==null || S.b(request.processorCommContext.sessionId)) {
-            throw new IllegalStateException("#997.040 (scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId))");
+            throw new IllegalStateException("997.040 (scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId))");
         }
         MetaheuristicThreadLocal.getExecutionStat().exec("checkForMissingOutputResources()",
                 ()-> response.resendTaskOutputs = checkForMissingOutputResources(request));
@@ -79,7 +79,7 @@ public class DispatcherCommandProcessor {
 
     public void processCores(ProcessorCommParamsYaml.Core core, ProcessorCommParamsYaml.ProcessorRequest request, DispatcherCommParamsYaml.DispatcherResponse response, DispatcherData.TaskQuotas quotas, boolean queueEmpty) {
         if (request.processorCommContext==null || request.processorCommContext.processorId==null || S.b(request.processorCommContext.sessionId)) {
-            throw new IllegalStateException("#997.040 (scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId))");
+            throw new IllegalStateException("997.060 (scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId))");
         }
         DispatcherCommParamsYaml.AssignedTask assignedTask = MetaheuristicThreadLocal.getExecutionStat().get("processRequestTask()",
                 ()-> processRequestTask(core, request, quotas, queueEmpty));
@@ -105,7 +105,7 @@ public class DispatcherCommandProcessor {
             return;
         }
         if (request.processorCommContext==null) {
-            log.warn("#997.480 (request.processorCommContext==null)");
+            log.warn("997.080 (request.processorCommContext==null)");
             return;
         }
         for (ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus status : request.resendTaskOutputResourceResult.statuses) {
@@ -134,7 +134,7 @@ public class DispatcherCommandProcessor {
 
         if (core.coreId==null || request.processorCommContext ==null  || request.processorCommContext.processorId==null) {
             // we throw ISE cos all checks have to be made early
-            throw new IllegalStateException("#997.070 (core.coreId==null || request.processorCommContext ==null  || request.processorCommContext.processorId==null)");
+            throw new IllegalStateException("997.100 (core.coreId==null || request.processorCommContext ==null  || request.processorCommContext.processorId==null)");
         }
 
         DispatcherCommParamsYaml.AssignedTask assignedTask;
@@ -143,14 +143,16 @@ public class DispatcherCommandProcessor {
                 Arrays.stream(StringUtils.split(core.requestTask.taskIds, ", ")).map(Long::parseLong).collect(Collectors.toList());
 
         try {
+            log.info("997.110 Start finding task for assigning to core #{}", core.coreId);
             assignedTask = taskProviderService.findTask(core.coreId, core.requestTask.isAcceptOnlySigned(), quotas, taskIds, queueEmpty);
+            log.info("997.115 Result of finding task for core #{} is {}", core.coreId, assignedTask);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#997.520 ObjectOptimisticLockingFailureException", e);
-            log.error("#997.540 Lets try requesting a new task one more time");
+            log.error("997.120 ObjectOptimisticLockingFailureException", e);
+            log.error("997.140 Lets try requesting a new task one more time");
             try {
                 assignedTask = taskProviderService.findTask(core.coreId, core.requestTask.isAcceptOnlySigned(), quotas, taskIds, queueEmpty);
             } catch (ObjectOptimisticLockingFailureException e1) {
-                log.error("#997.460 ObjectOptimisticLockingFailureException again", e1);
+                log.error("997.160 ObjectOptimisticLockingFailureException again", e1);
                 assignedTask = null;
             }
         }
@@ -159,7 +161,7 @@ public class DispatcherCommandProcessor {
         }
 
         if (assignedTask!=null) {
-            log.info("#997.550 Assign task #{} to processor #{}, core #{}", assignedTask.getTaskId(), request.processorCommContext.processorId, core.coreId);
+            log.info("997.180 Assign task #{} to processor #{}, core #{}", assignedTask.getTaskId(), request.processorCommContext.processorId, core.coreId);
         }
         return assignedTask;
     }

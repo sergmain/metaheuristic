@@ -72,7 +72,7 @@ public class TaskCheckCachingTxService {
     public void invalidateCacheItemAndSetTaskToNone(Long execContextId, Long taskId, Long cacheProcessId) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
-            log.info("#609.020 ExecContext #{} doesn't exists", execContextId);
+            log.info("609.020 ExecContext #{} doesn't exists", execContextId);
             return;
         }
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
@@ -101,11 +101,11 @@ public class TaskCheckCachingTxService {
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            log.debug("#609.009 task #{} wasn't found", taskId);
+            log.debug("609.009 task #{} wasn't found", taskId);
             return CheckCachingStatus.task_not_found;
         }
         if (task.execState!=EnumsApi.TaskExecState.CHECK_CACHE.value) {
-            log.info("#609.010 task #{} was already checked for cached variables", taskId);
+            log.info("609.010 task #{} was already checked for cached variables", taskId);
             return CheckCachingStatus.isnt_check_cache_state;
         }
 
@@ -164,7 +164,7 @@ public class TaskCheckCachingTxService {
                     output.uploaded = true;
 
                 } catch (BreakFromLambdaException e) {
-                    log.warn("#609.160 error", e);
+                    log.warn("609.160 error", e);
                     throw new InvalidateCacheProcessException(execContextId, taskId, cacheProcess.id);
                 }
             }
@@ -187,7 +187,7 @@ public class TaskCheckCachingTxService {
             status = CheckCachingStatus.copied_from_cache;
         }
         else {
-            log.info("#609.080 cached data wasn't found for task #{}", taskId);
+            log.info("609.080 cached data wasn't found for task #{}", taskId);
             taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE);
             status = CheckCachingStatus.no_prev_cache;
         }
