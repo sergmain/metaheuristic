@@ -27,8 +27,8 @@ import ai.metaheuristic.ai.utils.HttpUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -54,14 +54,19 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.*;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.URI;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 @Service
@@ -80,6 +85,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
 
     private final Globals globals;
     private final ProcessorTaskService processorTaskService;
+    private static final Random R = new Random();
 
     private static UploadResult fromJson(String json) {
         try {
@@ -142,10 +148,10 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 continue;
             }
             if (task.nullified) {
-                log.info("Start reporting a variable #{} as null", task.variableId);
+                log.info("Start reporting a variable #{} as null to {}", task.variableId, task.getDispatcherUrl().url);
             }
             else {
-                log.info("Start uploading a variable #{} to server, resultDataFile: {}", task.variableId, task.file);
+                log.info("Start uploading a variable #{} to server {}, resultDataFile: {}", task.variableId, task.getDispatcherUrl().url, task.file);
             }
             Enums.UploadVariableStatus status = null;
             try {
@@ -153,18 +159,19 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
 
                 final Boolean readyForUploading = isVariableReadyForUploading(task.getDispatcherUrl().url, task.variableId, executor);
                 if (readyForUploading==null) {
-                    log.info("variable #{} in task #{} doesn't exist at dispathcer", task.variableId, task.taskId);
+                    log.info("variable #{} in task #{} doesn't exist at dispatcher", task.variableId, task.taskId);
                     processorTaskService.setVariableUploadedAndCompleted(task.core, task.taskId, finalTask.variableId);
                     continue;
                 }
                 if (!readyForUploading) {
-                    log.info("variable #{} in task #{} was aready inited", task.variableId, task.taskId);
+                    log.info("variable #{} in task #{} was already inited", task.variableId, task.taskId);
                     processorTaskService.setVariableUploadedAndCompleted(task.core, task.taskId, finalTask.variableId);
                     continue;
                 }
 
                 final String uploadRestUrl  = task.getDispatcherUrl().url + CommonConsts.REST_V1_URL + Consts.UPLOAD_REST_URL;
-                String randonPart = '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.core.processorId + '-' + task.taskId;
+                String randonPart = "/" + R.nextInt(100_000, 1_000_000) + '-' + task.core.processorId + '-' + task.taskId;
+//                String randonPart = '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.core.processorId + '-' + task.taskId;
                 final String uri = uploadRestUrl + randonPart;
 
                 final MultipartEntityBuilder builder = MultipartEntityBuilder.create()
