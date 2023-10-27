@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.data;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.AllArgsConstructor;
@@ -23,6 +24,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.Nullable;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -97,6 +101,22 @@ public class TaskData {
         public ProduceTaskResult(EnumsApi.TaskProducingStatus status, @Nullable String error) {
             this.status = status;
             this.error = error;
+        }
+    }
+
+    @NoArgsConstructor
+    public static class TaskSearching {
+        public  Enums.TaskSearchingStatus status = Enums.TaskSearchingStatus.found;
+        @Nullable
+        public TaskData.AssignedTask task = null;
+        public final Map<Long, Enums.TaskRejectingStatus> rejected = new HashMap<>();
+
+        public TaskSearching(@Nullable AssignedTask task) {
+            this.task = task;
+        }
+
+        public TaskSearching(Enums.TaskSearchingStatus status) {
+            this.status = status;
         }
     }
 

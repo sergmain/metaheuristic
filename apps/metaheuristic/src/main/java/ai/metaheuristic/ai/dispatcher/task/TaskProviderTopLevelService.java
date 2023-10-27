@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.QuotasData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
+import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.events.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessStateService;
@@ -41,8 +42,8 @@ import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,6 +83,7 @@ public class TaskProviderTopLevelService {
     private final ApplicationEventPublisher eventPublisher;
     private final TaskProviderUnassignedTaskService taskProviderUnassignedTaskTopLevelService;
     private final VariableTxService variableService;
+    private final DispatcherEventService dispatcherEventService;
 
     // write to queue methods
 
@@ -458,11 +460,20 @@ public class TaskProviderTopLevelService {
 
         // there isn't any lost task which could be assigned, let's find unassigned task
 
-        TaskData.AssignedTask result =
-                MetaheuristicThreadLocal.getExecutionStat().getNullable("getTaskAndAssignToProcessorInternal -> findUnassignedTaskAndAssign()",
+        TaskData.TaskSearching result =
+                MetaheuristicThreadLocal.getExecutionStat().get("getTaskAndAssignToProcessorInternal -> assignTaskToCore()",
                         ()-> taskProviderUnassignedTaskTopLevelService.findUnassignedTaskAndAssign(coreId, psy, csy, isAcceptOnlySigned, quotas));
 
-        return result;
+        if (log.isDebugEnabled()) {
+            log.debug("393.860 Result of searching task for core #{} is {}", coreId, result.status);
+            log.debug("393.861 tasks were rejected: {}", result.rejected);
+        }
+
+        if (result.task!=null) {
+            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, coreId, result.task.task.id, result.task.task.execContextId, null, null);
+        }
+
+        return result.task;
     }
 
 

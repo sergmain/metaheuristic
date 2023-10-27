@@ -60,9 +60,6 @@ public class TaskProviderUtils {
             params = TaskParamsYamlUtils.UTILS.toStringAsVersion(tpy, taskParamsVersion);
 
         } catch (DowngradeNotSupportedException e) {
-            // TODO 2020-09-26 there is a possible situation when a check in ExecContextFSM.findUnassignedTaskAndAssign() would be ok
-            //  but this one fails. that could occur because of prepareVariables(task);
-            //  need a better solution for checking
             log.warn("211.600 Task #{} can't be assigned to core #{} because it's too old, downgrade to required taskParams level {} isn't supported",
                     taskId, coreId, taskParamsVersion);
             return null;

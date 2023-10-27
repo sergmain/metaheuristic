@@ -19,10 +19,8 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.QuotasData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
-import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.events.RegisterTaskForCheckCachingEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
@@ -33,23 +31,25 @@ import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.ParamsVersion;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static ai.metaheuristic.ai.Enums.TaskRejectingStatus.*;
+import static ai.metaheuristic.ai.Enums.TaskSearchingStatus.*;
 
 /**
  * @author Serge
@@ -64,26 +64,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TaskProviderUnassignedTaskService {
 
     private final TaskProviderTransactionalService taskProviderTransactionalService;
-    private final DispatcherEventService dispatcherEventService;
     private final TaskRepository taskRepository;
     private final ExecContextStatusService execContextStatusService;
     private final TaskCheckCachingService taskCheckCachingTopLevelService;
-
-    @Nullable
-    public TaskData.AssignedTask findUnassignedTaskAndAssign(Long coreId, ProcessorStatusYaml psy, CoreStatusYaml csy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas) {
-        TxUtils.checkTxNotExists();
-
-        if (TaskQueueService.isQueueEmptyWithSync()) {
-            return null;
-        }
-
-        TaskData.AssignedTask task = findUnassignedTaskAndAssignInternal(coreId, psy, csy, isAcceptOnlySigned, quotas);
-
-        if (task!=null) {
-            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, coreId, task.task.id, task.task.execContextId, null, null);
-        }
-        return task;
-    }
 
     /**
      * this Map contains an AtomicLong which contains millisecond value which is specify how long to not use concrete processor
@@ -98,32 +81,30 @@ public class TaskProviderUnassignedTaskService {
         return bannedSince;
     }
 
-    @SuppressWarnings("TextBlockMigration")
-    @Nullable
-    private TaskData.AssignedTask findUnassignedTaskAndAssignInternal(
-            Long coreId, ProcessorStatusYaml psy, CoreStatusYaml csy, boolean isAcceptOnlySigned, final DispatcherData.TaskQuotas currentQuotas) {
+    public TaskData.TaskSearching findUnassignedTaskAndAssign(Long coreId, ProcessorStatusYaml psy, CoreStatusYaml csy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas currentQuotas) {
         TaskQueueSyncStaticService.checkWriteLockNotPresent();
+        TxUtils.checkTxNotExists();
 
         if (TaskProviderTopLevelService.isQueueEmpty()) {
-            return null;
+            return new TaskData.TaskSearching(queue_is_empty);
         }
 
         // Environment of Processor must be initialized before getting any task
         if (psy.env==null) {
-            log.error("#317.070 Processor with core #{} has an empty env.yaml", coreId);
-            return null;
+            log.error("317.070 Processor with core #{} has an empty env.yaml", coreId);
+            return new TaskData.TaskSearching(environment_is_empty);
         }
 
         AtomicLong longHolder = getBannedSince().computeIfAbsent(coreId, o -> new AtomicLong(0));
         if (longHolder.get() != 0 && System.currentTimeMillis() - longHolder.get() < TimeUnit.MINUTES.toMillis(30)) {
-            return null;
+            return new TaskData.TaskSearching(core_is_banned);
         }
 
         TaskQueue.AllocatedTask resultTask = null;
         List<TaskQueue.QueuedTask> forRemoving = new ArrayList<>();
 
         QuotasData.ActualQuota quota = null;
-        ExecContextData.ExecContextStates statuses = execContextStatusService.getExecContextStatuses();
+        TaskData.TaskSearching searching = new TaskData.TaskSearching();
         try {
             TaskQueue.GroupIterator iter = TaskQueueService.getIterator();
             while (iter.hasNext()) {
@@ -131,7 +112,7 @@ public class TaskProviderUnassignedTaskService {
                 try {
                     allocatedTask = iter.next();
                 } catch (NoSuchElementException e) {
-                    log.error("#317.035 TaskGroup was modified, this situation shouldn't be happened.");
+                    log.error("317.035 TaskGroup was modified, this situation shouldn't be happened.");
                     break;
                 }
                 TaskQueue.QueuedTask queuedTask = allocatedTask.queuedTask;
@@ -140,101 +121,115 @@ public class TaskProviderUnassignedTaskService {
                 // because internal tasks are processed by async events
                 // see ai.metaheuristic.ai.dispatcher.task.TaskProviderTransactionalService#registerInternalTask
                 if (queuedTask.execContext == EnumsApi.FunctionExecContext.internal) {
+                    searching.rejected.put(queuedTask.taskId, internal_task);
                     continue;
                 }
 
                 final EnumsApi.ExecContextState execContextState = execContextStatusService.getExecContextState(queuedTask.execContextId);
                 if ((execContextState == EnumsApi.ExecContextState.STOPPED || execContextState == EnumsApi.ExecContextState.FINISHED)) {
-                    log.warn("#317.036 task #{} in execContext #{} has a status as {}", queuedTask.taskId, queuedTask.execContextId, execContextState);
+                    log.warn("317.036 task #{} in execContext #{} has a status as {}", queuedTask.taskId, queuedTask.execContextId, execContextState);
                     forRemoving.add(queuedTask);
+                    searching.rejected.put(queuedTask.taskId, exec_context_stopped_or_finished);
                     continue;
                 }
 
                 if (queuedTask.task==null || queuedTask.taskParamYaml==null) {
                     // TODO 2021.03.14 this could happened when execContext is deleted while executing of task was active
-                    log.warn("#317.037 (queuedTask.task==null || queuedTask.taskParamYaml==null). shouldn't happened,\n" +
+                    log.warn("317.037 (queuedTask.task==null || queuedTask.taskParamYaml==null). shouldn't happened,\n" +
                                     "assigned: {}, state: {}\n" +
                                     "taskId: {}, queuedTask.execContext: {}\n" +
                                     "queuedTask.task is null: {}\n" +
                                     "queuedTask.taskParamYaml is null: {}",
                             allocatedTask.assigned, allocatedTask.state, queuedTask.taskId, queuedTask.execContext, queuedTask.task==null, queuedTask.taskParamYaml==null);
+                    searching.rejected.put(queuedTask.taskId, queued_task_or_params_is_null);
                     continue;
                 }
 
                 if (!execContextStatusService.isStarted(queuedTask.execContextId)) {
+                    searching.rejected.put(queuedTask.taskId, exec_context_not_started);
                     continue;
                 }
 
                 if (EnumsApi.TaskExecState.isFinishedState(queuedTask.task.execState)) {
-                    log.info("#317.040 task #{} already in a finished state as {}", queuedTask.taskId, queuedTask.task.execState);
+                    log.info("317.040 task #{} already in a finished state as {}", queuedTask.taskId, queuedTask.task.execState);
                     forRemoving.add(queuedTask);
+                    searching.rejected.put(queuedTask.taskId, task_was_finished);
                     continue;
                 }
 
                 if (queuedTask.task.execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     // this can happened because of async call of StartTaskProcessingTxEvent
-                    log.info("#317.045 task #{} already assigned for processing", queuedTask.taskId);
+                    log.info("317.045 task #{} already assigned for processing", queuedTask.taskId);
                     forRemoving.add(queuedTask);
+                    searching.rejected.put(queuedTask.taskId, task_in_progress_already);
                     continue;
                 }
 
                 if (queuedTask.task.execState==EnumsApi.TaskExecState.CHECK_CACHE.value) {
-                    log.error("#317.050 Task #{} with function '{}' is in state CHECK_CACHE",
+                    log.error("317.050 Task #{} with function '{}' is in state CHECK_CACHE",
                             queuedTask.task.getId(), queuedTask.taskParamYaml.task.function.code);
                     taskCheckCachingTopLevelService.putToQueue(new RegisterTaskForCheckCachingEvent(queuedTask.execContextId, queuedTask.taskId));
                     forRemoving.add(queuedTask);
+                    searching.rejected.put(queuedTask.taskId, task_for_cache_checking);
                     continue;
                 }
 
                 // check of git availability
                 if (TaskUtils.gitUnavailable(queuedTask.taskParamYaml.task, psy.gitStatusInfo.status != Enums.GitStatus.installed)) {
-                    log.warn("#317.060 Can't assign task #{} to core #{} because this processor doesn't correctly installed git, git status info: {}",
+                    log.warn("317.060 Can't assign task #{} to core #{} because this processor doesn't correctly installed git, git status info: {}",
                             coreId, queuedTask.task.getId(), psy.gitStatusInfo
                     );
+                    searching.rejected.put(queuedTask.taskId, git_required);
                     continue;
                 }
 
                 // check of tag
                 if (!CollectionUtils.checkTagAllowed(queuedTask.tag, csy.tags)) {
-                    log.debug("#317.077 Check of !CollectionUtils.checkTagAllowed(queuedTask.tag, psy.env.tags) was failed");
+                    log.debug("317.077 Check of !CollectionUtils.checkTagAllowed(queuedTask.tag, psy.env.tags) was failed");
+                    searching.rejected.put(queuedTask.taskId, tags_arent_allowed);
                     continue;
                 }
 
                 if (!S.b(queuedTask.taskParamYaml.task.function.env)) {
                     String interpreter = psy.env.getEnvs().get(queuedTask.taskParamYaml.task.function.env);
                     if (interpreter == null) {
-                        log.warn("#317.080 Can't assign task #{} to core #{} because this processor doesn't have defined interpreter for function's env {}",
+                        log.warn("317.080 Can't assign task #{} to core #{} because this processor doesn't have defined interpreter for function's env {}",
                                 queuedTask.task.getId(), coreId, queuedTask.taskParamYaml.task.function.env
                         );
                         longHolder.set(System.currentTimeMillis());
+                        searching.rejected.put(queuedTask.taskId, interpreter_is_undefined);
                         continue;
                     }
                 }
 
                 final List<EnumsApi.OS> supportedOS = FunctionCoreUtils.getSupportedOS(queuedTask.taskParamYaml.task.function.metas);
                 if (psy.os != null && !supportedOS.isEmpty() && !supportedOS.contains(psy.os)) {
-                    log.info("#317.100 Can't assign task #{} to core #{}, " +
+                    log.info("317.100 Can't assign task #{} to core #{}, " +
                                     "because this processor doesn't support required OS version. processor: {}, function: {}",
                             coreId, queuedTask.task.getId(), psy.os, supportedOS
                     );
                     longHolder.set(System.currentTimeMillis());
+                    searching.rejected.put(queuedTask.taskId, not_supported_operating_system);
                     continue;
                 }
 
                 if (isAcceptOnlySigned) {
                     if (queuedTask.taskParamYaml.task.function.checksumMap == null || queuedTask.taskParamYaml.task.function.checksumMap.keySet().stream().noneMatch(o -> o.isSigned)) {
-                        log.warn("#317.120 Function with code {} wasn't signed", queuedTask.taskParamYaml.task.function.getCode());
+                        log.warn("317.120 Function with code {} wasn't signed", queuedTask.taskParamYaml.task.function.getCode());
+                        searching.rejected.put(queuedTask.taskId, accept_only_signed);
                         continue;
                     }
                 }
                 if (notAllFunctionsReady(coreId, psy, queuedTask.taskParamYaml)) {
-                    log.debug("#317.123 Core #{} isn't ready to process task #{}", coreId, queuedTask.taskId);
+                    log.debug("317.123 Core #{} isn't ready to process task #{}", coreId, queuedTask.taskId);
+                    searching.rejected.put(queuedTask.taskId, functions_not_ready);
                     continue;
                 }
 
                 quota = QuotasUtils.getQuotaAmount(psy.env.quotas, queuedTask.tag);
 
                 if (!QuotasUtils.isEnough(psy.env.quotas, currentQuotas, quota)) {
+                    searching.rejected.put(queuedTask.taskId, not_enough_quotas);
                     continue;
                 }
 
@@ -243,19 +238,21 @@ public class TaskProviderUnassignedTaskService {
                 try {
                     ParamsVersion v = YamlForVersioning.getParamsVersion(queuedTask.task.getParams());
                     if (v.getActualVersion()!=psy.taskParamsVersion) {
-                        log.info("#317.138 check downgrading is possible, actual version: {}, required version: {}", v.getActualVersion(), psy.taskParamsVersion);
+                        log.info("317.138 check downgrading is possible, actual version: {}, required version: {}", v.getActualVersion(), psy.taskParamsVersion);
                         TaskParamsYaml tpy = queuedTask.task.getTaskParamsYaml();
                         //noinspection unused
                         String params = TaskParamsYamlUtils.UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
                     }
                 } catch (DowngradeNotSupportedException e) {
-                    log.warn("#317.140 Task #{} can't be assigned to core #{} because it's too old, downgrade to required taskParams level {} isn't supported",
+                    log.warn("317.140 Task #{} can't be assigned to core #{} because it's too old, downgrade to required taskParams level {} isn't supported",
                             queuedTask.task.id, coreId, psy.taskParamsVersion);
                     longHolder.set(System.currentTimeMillis());
+                    searching.rejected.put(queuedTask.taskId, downgrade_not_supported);
                     resultTask = null;
                 }
 
                 if (queuedTask.task.execState != EnumsApi.TaskExecState.NONE.value) {
+                    searching.rejected.put(queuedTask.taskId, task_must_be_in_none_state);
                     continue;
                 }
 
@@ -271,22 +268,22 @@ public class TaskProviderUnassignedTaskService {
         }
 
         if (resultTask == null) {
-            return null;
+            return new TaskData.TaskSearching(task_not_found);
         }
 
         if (resultTask.queuedTask.task == null) {
-            log.error("#317.160 (resultTask.queuedTask.task == null). shouldn't happened");
-            return null;
+            log.error("317.160 (resultTask.queuedTask.task == null). shouldn't happened");
+            return new TaskData.TaskSearching(illegal_state);
         }
 
         TaskImpl t = taskRepository.findById(resultTask.queuedTask.task.id).orElse(null);
         if (t==null) {
-            log.warn("#317.180 Can't assign task #{}, task doesn't exist", resultTask.queuedTask.task.id);
-            return null;
+            log.warn("317.180 Can't assign task #{}, task doesn't exist", resultTask.queuedTask.task.id);
+            return new TaskData.TaskSearching(task_doesnt_exist);
         }
         if (t.execState!= EnumsApi.TaskExecState.NONE.value) {
-            log.warn("#317.200 Can't assign task #{}, task state isn't NONE, actual: {}", t.id, EnumsApi.TaskExecState.from(t.execState));
-            return null;
+            log.warn("317.200 Can't assign task #{}, task state isn't NONE, actual: {}", t.id, EnumsApi.TaskExecState.from(t.execState));
+            return new TaskData.TaskSearching(task_isnt_in_none_state);
         }
         if (quota==null) {
             throw new IllegalStateException("(quota==null)");
@@ -294,8 +291,9 @@ public class TaskProviderUnassignedTaskService {
 
         final TaskQueue.AllocatedTask resultTaskFinal = resultTask;
         final QuotasData.ActualQuota quotaFinal = quota;
-        return TaskSyncService.getWithSyncNullable(resultTask.queuedTask.task.id,
-                ()->taskProviderTransactionalService.findUnassignedTaskAndAssign(coreId, currentQuotas, resultTaskFinal, quotaFinal));
+        return new TaskData.TaskSearching(
+            TaskSyncService.getWithSyncNullable(resultTask.queuedTask.task.id,
+                ()->taskProviderTransactionalService.assignTaskToCore(coreId, currentQuotas, resultTaskFinal, quotaFinal)));
     }
 
 
@@ -318,7 +316,7 @@ public class TaskProviderUnassignedTaskService {
                 .map(Map.Entry::getValue).orElse(null);
 
         if (state != EnumsApi.FunctionState.ready) {
-            log.debug("#317.240 function {} at processor #{} isn't ready, state: {}", functionConfig.code, processorId, state==null ? "'not prepared yet'" : state);
+            log.debug("317.240 function {} at processor #{} isn't ready, state: {}", functionConfig.code, processorId, state==null ? "'not prepared yet'" : state);
             result.set(true);
         }
     }

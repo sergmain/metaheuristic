@@ -35,7 +35,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -60,20 +59,20 @@ public class TaskProviderTransactionalService {
 
     @Nullable
     @Transactional
-    public TaskData.AssignedTask findUnassignedTaskAndAssign(
+    public TaskData.AssignedTask assignTaskToCore(
             Long coreId, final DispatcherData.TaskQuotas currentQuotas,
             final TaskQueue.AllocatedTask resultTask, final QuotasData.ActualQuota quota
     ) {
         checkWriteLockNotPresent();
         if (resultTask.queuedTask.task == null) {
-            throw new IllegalStateException("#317.100 (resultTask.queuedTask.task == null)");
+            throw new IllegalStateException("316.100 (resultTask.queuedTask.task == null)");
         }
 
         TaskSyncService.checkWriteLockPresent(resultTask.queuedTask.task.id);
 
         TaskImpl t = taskRepository.findById(resultTask.queuedTask.task.id).orElse(null);
         if (t==null) {
-            log.warn("#317.180 Can't assign task #{}, task doesn't exist", resultTask.queuedTask.task.id);
+            log.warn("316.180 Can't assign task #{}, task doesn't exist", resultTask.queuedTask.task.id);
             return null;
         }
 

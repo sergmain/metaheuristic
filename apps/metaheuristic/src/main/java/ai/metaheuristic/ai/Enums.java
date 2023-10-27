@@ -17,6 +17,17 @@ package ai.metaheuristic.ai;
 
 public final class Enums {
 
+    public enum TaskRejectingStatus {
+        internal_task, exec_context_not_started, exec_context_stopped_or_finished,
+        queued_task_or_params_is_null, task_was_finished, task_in_progress_already, task_for_cache_checking,
+        git_required, tags_arent_allowed, interpreter_is_undefined, not_supported_operating_system,
+        accept_only_signed, functions_not_ready, not_enough_quotas, downgrade_not_supported,
+        task_must_be_in_none_state
+    }
+
+    public enum TaskSearchingStatus {found, queue_is_empty, environment_is_empty, core_is_banned, task_not_found,
+        illegal_state, task_doesnt_exist, task_isnt_in_none_state}
+
     public enum ApiKeySourceDefinedBy { none, server, user }
 
     public enum ExecContextInitState {NONE, DELTA, FULL}
