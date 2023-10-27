@@ -272,22 +272,26 @@ public class TaskProviderUnassignedTaskService {
         }
 
         if (resultTask == null) {
-            return new TaskData.TaskSearching(task_not_found);
+            searching.status = task_not_found;
+            return searching;
         }
 
         if (resultTask.queuedTask.task == null) {
             log.error("317.160 (resultTask.queuedTask.task == null). shouldn't happened");
-            return new TaskData.TaskSearching(illegal_state);
+            searching.status = illegal_state;
+            return searching;
         }
 
         TaskImpl t = taskRepository.findById(resultTask.queuedTask.task.id).orElse(null);
         if (t==null) {
             log.warn("317.180 Can't assign task #{}, task doesn't exist", resultTask.queuedTask.task.id);
-            return new TaskData.TaskSearching(task_doesnt_exist);
+            searching.status = task_doesnt_exist;
+            return searching;
         }
         if (t.execState!= EnumsApi.TaskExecState.NONE.value) {
             log.warn("317.200 Can't assign task #{}, task state isn't NONE, actual: {}", t.id, EnumsApi.TaskExecState.from(t.execState));
-            return new TaskData.TaskSearching(task_isnt_in_none_state);
+            searching.status = task_isnt_in_none_state;
+            return searching;
         }
         if (quota==null) {
             throw new IllegalStateException("(quota==null)");
@@ -295,9 +299,15 @@ public class TaskProviderUnassignedTaskService {
 
         final TaskQueue.AllocatedTask resultTaskFinal = resultTask;
         final QuotasData.ActualQuota quotaFinal = quota;
-        return new TaskData.TaskSearching(
-            TaskSyncService.getWithSyncNullable(resultTask.queuedTask.task.id,
-                ()->taskProviderTransactionalService.assignTaskToCore(coreId, currentQuotas, resultTaskFinal, quotaFinal)));
+
+        searching.task = TaskSyncService.getWithSyncNullable(resultTask.queuedTask.task.id,
+            () -> taskProviderTransactionalService.assignTaskToCore(coreId, currentQuotas, resultTaskFinal, quotaFinal));
+
+        if (searching.task==null) {
+            searching.status = task_assigning_was_failed;
+        }
+
+        return searching;
     }
 
 

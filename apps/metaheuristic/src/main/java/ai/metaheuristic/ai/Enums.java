@@ -26,7 +26,7 @@ public final class Enums {
     }
 
     public enum TaskSearchingStatus {found, queue_is_empty, environment_is_empty, core_is_banned, task_not_found,
-        illegal_state, task_doesnt_exist, task_isnt_in_none_state, iterator_over_queue_is_empty}
+        illegal_state, task_doesnt_exist, task_isnt_in_none_state, iterator_over_queue_is_empty, task_assigning_was_failed}
 
     public enum ApiKeySourceDefinedBy { none, server, user }
 
