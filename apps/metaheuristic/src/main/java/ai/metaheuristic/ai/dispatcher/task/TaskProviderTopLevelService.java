@@ -466,7 +466,7 @@ public class TaskProviderTopLevelService {
 
         if (log.isDebugEnabled()) {
             log.debug("393.860 Result of searching task for core #{} is {}", coreId, result.status);
-            log.debug("393.861 tasks were rejected: {}", result.rejected);
+            log.debug("393.861   tasks were rejected: {}", result.rejected);
         }
 
         if (result.task!=null) {

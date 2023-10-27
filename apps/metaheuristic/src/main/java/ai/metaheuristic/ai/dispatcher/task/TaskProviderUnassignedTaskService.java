@@ -107,6 +107,10 @@ public class TaskProviderUnassignedTaskService {
         TaskData.TaskSearching searching = new TaskData.TaskSearching();
         try {
             TaskQueue.GroupIterator iter = TaskQueueService.getIterator();
+            if (!iter.hasNext()) {
+                return new TaskData.TaskSearching(iterator_over_queue_is_empty);
+            }
+
             while (iter.hasNext()) {
                 TaskQueue.AllocatedTask allocatedTask;
                 try {
