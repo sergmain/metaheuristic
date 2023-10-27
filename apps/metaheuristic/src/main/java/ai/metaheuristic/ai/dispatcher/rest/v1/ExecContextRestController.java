@@ -54,7 +54,7 @@ import org.springframework.web.bind.annotation.*;
  */
 
 // all urls in "/rest/v1/dispatcher/source-code" because of angular.
-// need change angular code too but not know
+// need to change an angular code too. but rn will like that
 @RequestMapping("/rest/v1/dispatcher/source-code")
 @RestController
 @Profile("dispatcher")
