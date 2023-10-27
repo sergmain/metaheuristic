@@ -40,13 +40,13 @@ public class DispatcherLookupParamsYaml implements BaseParams {
     public boolean checkIntegrity() {
         for (DispatcherLookup dispatcher : dispatchers) {
             if (S.b(dispatcher.assetManagerUrl)) {
-                throw new CheckIntegrityFailedException("dispatcher.assetManagerUrl is null in dispatcher " + dispatcher.url);
+                throw new CheckIntegrityFailedException("050.040 dispatcher.assetManagerUrl is null in dispatcher " + dispatcher.url);
             }
             boolean notFound = true;
             List<String> assetManagerUrls = new ArrayList<>();
             for (AssetManager assetManager : assetManagers) {
                 if (S.b(assetManager.url)) {
-                    throw new CheckIntegrityFailedException("assetManager.url is empty");
+                    throw new CheckIntegrityFailedException("050.080 assetManager.url is empty");
                 }
                 if (assetManager.url.equals(dispatcher.assetManagerUrl)) {
                     notFound = false;
@@ -56,7 +56,7 @@ public class DispatcherLookupParamsYaml implements BaseParams {
             }
             if (notFound) {
                 throw new CheckIntegrityFailedException(
-                    "Dispatcher has a broken url to assetManagerUrl, dispatcher.assetManagerUrl: " +
+                    "050.120 Dispatcher has a broken url to assetManagerUrl, dispatcher.assetManagerUrl: " +
                     dispatcher.assetManagerUrl+", actual: " +assetManagerUrls);
             }
         }
