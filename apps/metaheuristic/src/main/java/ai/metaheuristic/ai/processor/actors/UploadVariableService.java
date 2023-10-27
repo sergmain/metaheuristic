@@ -171,7 +171,6 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
 
                 final String uploadRestUrl  = task.getDispatcherUrl().url + CommonConsts.REST_V1_URL + Consts.UPLOAD_REST_URL;
                 String randonPart = "/" + R.nextInt(100_000, 1_000_000) + '-' + task.core.processorId + '-' + task.taskId;
-//                String randonPart = '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.core.processorId + '-' + task.taskId;
                 final String uri = uploadRestUrl + randonPart;
 
                 final MultipartEntityBuilder builder = MultipartEntityBuilder.create()
@@ -188,6 +187,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                         //  what is the problem with this state? Should we handle this state in more sophisticated way?
                         throw new IllegalStateException("#311.043 (task.file==null)");
                     }
+                    log.info("variable #{} has length {}", task.variableId, Files.size(task.file));
                     builder.addBinaryBody("file", task.file.toFile(), ContentType.APPLICATION_OCTET_STREAM, task.file.getFileName().toString());
                 }
                 HttpEntity entity = builder.build();
@@ -197,7 +197,13 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                         .body(entity);
 
                 log.info("Start uploading a variable to rest-server, {}", randonPart);
-                Response response = executor.execute(request);
+                Response response;
+                long mills = System.currentTimeMillis();
+                try {
+                    response = executor.execute(request);
+                } finally {
+                    log.info("executor.execute() took {} mills", System.currentTimeMillis() - mills);
+                }
                 String json = response.returnContent().asString(StandardCharsets.UTF_8);
                 UploadResult result = fromJson(json);
                 log.info("Server response: {}", result);
