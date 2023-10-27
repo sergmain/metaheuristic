@@ -136,14 +136,14 @@ public class SouthbridgeController {
         return entity;
     }
 
+    @SuppressWarnings("unused")
     @PostMapping("/upload/{random-part}")
     public UploadResult uploadVariable(
-            @Nullable MultipartFile file,
-            @SuppressWarnings("unused") @Nullable String processorId,
-            @Nullable Long taskId,
-            @Nullable Long variableId,
-            @Nullable Boolean nullified,
-            @SuppressWarnings("unused") @Nullable @PathVariable("random-part") String randomPart
+            MultipartFile file,
+            Long taskId,
+            Long variableId,
+            Boolean nullified,
+            @PathVariable("random-part") String randomPart
     ) {
         log.debug("uploadVariable(), taskId: #{}, variableId: {}", taskId, variableId);
         ArtifactCleanerAtDispatcher.setBusy();
@@ -161,9 +161,10 @@ public class SouthbridgeController {
     }
 
     /**
-     * return string as "true"/"false".
+     * return string as "true"/"false"/"null".
      *      "true" - if variable already inited or it doesn't exist
      *      "false" - variable isn't inited yet
+     *      "null" - variable not found
      *
      * @param variableId
      * @return

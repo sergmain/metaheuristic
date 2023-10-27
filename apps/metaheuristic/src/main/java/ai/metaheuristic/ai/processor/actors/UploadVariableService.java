@@ -192,9 +192,11 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 }
                 HttpEntity entity = builder.build();
 
-                Request request = Request.post(uri).connectTimeout(Timeout.ofSeconds(5))
+                Request request = Request.post(uri)
+                    .connectTimeout(Timeout.ofSeconds(5))
+                    .responseTimeout(Timeout.ofSeconds(60))
 //                        .socketTimeout(20000)
-                        .body(entity);
+                    .body(entity);
 
                 log.info("Start uploading a variable to rest-server, {}", randonPart);
                 Response response;
