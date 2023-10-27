@@ -19,6 +19,8 @@ package ai.metaheuristic.ai.yaml.dispatcher_lookup;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,12 +30,38 @@ import org.springframework.lang.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("FieldMayBeStatic")
 @Data
 @NoArgsConstructor
 public class DispatcherLookupParamsYaml implements BaseParams {
 
     public final int version=2;
+
+    @Override
+    public boolean checkIntegrity() {
+        for (DispatcherLookup dispatcher : dispatchers) {
+            if (S.b(dispatcher.assetManagerUrl)) {
+                throw new CheckIntegrityFailedException("dispatcher.assetManagerUrl is null in dispatcher " + dispatcher.url);
+            }
+            boolean notFound = true;
+            List<String> assetManagerUrls = new ArrayList<>();
+            for (AssetManager assetManager : assetManagers) {
+                if (S.b(assetManager.url)) {
+                    throw new CheckIntegrityFailedException("assetManager.url is empty");
+                }
+                if (assetManager.url.equals(dispatcher.assetManagerUrl)) {
+                    notFound = false;
+                    break;
+                }
+                assetManagerUrls.add(assetManager.url);
+            }
+            if (notFound) {
+                throw new CheckIntegrityFailedException(
+                    "Dispatcher has a broken url to assetManagerUrl, dispatcher.assetManagerUrl: " +
+                    dispatcher.assetManagerUrl+", actual: " +assetManagerUrls);
+            }
+        }
+        return BaseParams.super.checkIntegrity();
+    }
 
     @Data
     @NoArgsConstructor
