@@ -71,7 +71,7 @@ public class TaskExecStateService {
         }
     }
 
-    public TaskImpl changeTaskState(TaskImpl task, EnumsApi.TaskExecState state){
+    private TaskImpl changeTaskState(TaskImpl task, EnumsApi.TaskExecState state){
         TxUtils.checkTxExists();
         TaskSyncService.checkWriteLockPresent(task.id);
 
@@ -136,7 +136,8 @@ public class TaskExecStateService {
             TaskSyncService.getWithSyncVoid(t.taskId, () -> {
                 TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
                 if (task != null) {
-                    changeTaskState(task, t.state);
+                    updateTaskExecStates(task, t.state, false);
+                    taskRepository.save(task);
                 } else {
                     log.error("305.200 Graph state is compromised, found task in graph but it doesn't exist in db");
                 }
