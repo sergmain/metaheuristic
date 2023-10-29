@@ -111,7 +111,7 @@ public class DispatcherStatusService {
             s.append('\n');
         }
         String[][] tbl = asStringTable(execContextState.header, execContextState.lines);
-        StatusUtils.printTable(s::append, true, 50, false, tbl);
+        StatusUtils.printTable(s::append, true, 10, false, tbl);
 
         ExecContextApiData.ExecContextVariableStates varStates = ecvs.getExecContextVariableStateInfo();
         ExecContextTaskStateParamsYaml taskStateParams = ects.getExecContextTaskStateParamsYaml();
