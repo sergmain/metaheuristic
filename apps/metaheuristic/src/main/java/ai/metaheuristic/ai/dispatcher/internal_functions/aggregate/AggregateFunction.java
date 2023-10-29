@@ -231,7 +231,7 @@ public class AggregateFunction implements InternalFunction {
                 case text -> {
                     String text = variables.stream().map(v-> variableTxService.getVariableDataAsString(v.id)).collect(Collectors.joining("\n\n"));
                     VariableSyncService.getWithSyncVoidForCreation(outputVariable.id,
-                            ()-> variableTxService.storeStringInVariable(outputVariable, text));
+                            ()-> variableTxService.storeStringInVariable(simpleExecContext.execContextId, taskId, outputVariable, text));
                 }
                 case ww2003 -> {
                     Path ww2003File = tempDir.resolve("result-for-"+outputVariable.id+'-'+outputVariable.name+".xml");

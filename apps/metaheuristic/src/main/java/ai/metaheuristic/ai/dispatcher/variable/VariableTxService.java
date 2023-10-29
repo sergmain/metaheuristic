@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -27,9 +26,9 @@ import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.SetVariableReceivedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskCreatedTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.VariableUploadedTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
 import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobService;
 import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
@@ -83,8 +82,6 @@ import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 @Profile("dispatcher")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class VariableTxService {
-
-    private static final UploadResult OK_UPLOAD_RESULT = new UploadResult(Enums.UploadVariableStatus.OK, null);
 
     private final VariableRepository variableRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -142,7 +139,7 @@ public class VariableTxService {
     }
 
     @Transactional
-    public void storeData(InputStream is, long size, Long variableId, @Nullable String filename) {
+    public void storeData(Long taskId, InputStream is, long size, Long variableId, @Nullable String filename) {
         VariableSyncService.checkWriteLockPresent(variableId);
 
         if (size==0) {
@@ -162,6 +159,7 @@ public class VariableTxService {
         data.nullified = false;
 
         variableRepository.save(data);
+        eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, variableId, false));
     }
 
     @Transactional
@@ -213,12 +211,13 @@ public class VariableTxService {
     }
 
     @Transactional
-    public void storeStringInVariable(TaskParamsYaml.OutputVariable outputVariable, String value) {
+    public void storeStringInVariable(Long execContextId, Long taskId, TaskParamsYaml.OutputVariable outputVariable, String value) {
         Variable variable = findVariableInLocalContext(outputVariable);
 
         byte[] bytes = value.getBytes();
         InputStream is = new ByteArrayInputStream(bytes);
         update(is, bytes.length, variable);
+        eventPublisherService.publishVariableUploadedTxEvent(new VariableUploadedTxEvent(execContextId, taskId, variable.id, false));
     }
 
     @Transactional
@@ -262,8 +261,8 @@ public class VariableTxService {
 
     @Transactional
     public void setVariableAsNull(Long taskId, Long variableId) {
-        eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, variableId, true));
         setVariableAsNull(variableId);
+        eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, variableId, true));
     }
 
     @Transactional
@@ -306,8 +305,7 @@ public class VariableTxService {
         variableRepository.save(v);
     }
 
-    @Transactional
-    public void setVariableAsNull(Long variableId) {
+    private void setVariableAsNull(Long variableId) {
         VariableSyncService.checkWriteLockPresent(variableId);
 
         Variable v = getVariableNotNull(variableId);
@@ -591,23 +589,10 @@ public class VariableTxService {
     }
 
     public void storeToFile(Long variableId, Path trgFile) {
-        ///TxUtils.checkTxExists();
-
         final Long variableBlobId = getVariableBlobIdNotNull(variableId);
 
         try {
             dispatcherBlobStorage.accessVariableData(variableBlobId, (is)-> DirUtils.copy(is, trgFile));
-/*
-            Blob blob = variableBlobRepository.getDataAsStreamById(Objects.requireNonNull(variableBlobId));
-            if (blob==null) {
-                String es = "171.540 VariableBlob #"+ variableBlobId +" wasn't found";
-                log.warn(es);
-                throw new VariableDataNotFoundException(variableBlobId, EnumsApi.VariableContext.local, es);
-            }
-            try (InputStream is = blob.getBinaryStream()) {
-                DirUtils.copy(is, trgFile);
-            }
-*/
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Exception e) {
@@ -622,12 +607,6 @@ public class VariableTxService {
         final Long variableBlobId = getVariableBlobIdNotNull(variableId);
 
         try {
-//            Blob blob = variableBlobRepository.getDataAsStreamById(Objects.requireNonNull(variableBlobId));
-//            if (blob==null) {
-//                String es = "171.540 Variable #"+ variableBlobId +" wasn't found";
-//                log.warn(es);
-//                throw new VariableDataNotFoundException(variableBlobId, EnumsApi.VariableContext.local, es);
-//            }
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             dispatcherBlobStorage.accessVariableData(variableBlobId, (is)-> {
                 try {
@@ -730,9 +709,12 @@ public class VariableTxService {
     }
 
     @Transactional
-    public void updateWithTx(InputStream is, long size, Long variableId) {
+    public void updateWithTx(@Nullable Long taskId, InputStream is, long size, Long variableId) {
         Variable v = getVariableNotNull(variableId);
         update(is, size, v);
+        if (taskId!=null) {
+            eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, variableId, false));
+        }
     }
 
     @Transactional

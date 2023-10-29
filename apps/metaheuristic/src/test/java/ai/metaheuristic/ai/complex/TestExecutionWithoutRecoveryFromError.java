@@ -161,7 +161,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
         assertNull(simpleTask20);
     }
 
-    private void storeOutputVariable(String variableName, String variableData, String processCode) {
+    private void storeOutputVariable(Long taskId, String variableName, String variableData, String processCode) {
 
         Variable v = variableService.getVariable(
                 variableName, processCode, getExecContextForTest());
@@ -173,7 +173,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
         assertNotNull(variable);
 
         byte[] bytes = variableData.getBytes();
-        variableService.updateWithTx(new ByteArrayInputStream(bytes), bytes.length, variable.id);
+        variableService.updateWithTx(taskId, new ByteArrayInputStream(bytes), bytes.length, variable.id);
 
 
 
@@ -250,7 +250,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
             assertEquals(expectedState.value, task2.execState);
         }
         else {
-            storeOutputVariable("assembled-raw-output", "assembled-raw-output-result", taskParamsYaml.task.processCode);
+            storeOutputVariable(simpleTask.taskId, "assembled-raw-output", "assembled-raw-output-result", taskParamsYaml.task.processCode);
             storeExecResult(simpleTask);
             finishTask(task);
         }

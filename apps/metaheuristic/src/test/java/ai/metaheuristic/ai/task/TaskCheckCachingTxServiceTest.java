@@ -116,7 +116,7 @@ public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
 
 
         VariableSyncService.getWithSyncVoidForCreation(variableId,
-                ()-> variableTxService.storeStringInVariable(tpy.task.outputs.get(0), textWithUUID));
+                ()-> variableTxService.storeStringInVariable(getExecContextForTest().id, taskId, tpy.task.outputs.get(0), textWithUUID));
 
         ExecContextParamsYaml.Process p = getExecContextForTest().getExecContextParamsYaml().findProcess(tpy.task.processCode);
         assertNotNull(p);

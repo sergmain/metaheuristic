@@ -133,7 +133,7 @@ public class ApiCallService {
                 throw new InternalFunctionException(output_variable_not_found, "513.345 nn-raw output variable wasn't fount, all outputs: " + names);
             }
             VariableSyncService.getWithSyncVoid(outputVariable.id,
-                    () -> variableTxService.storeStringInVariable(outputVariable, answer.a().processedAnswer.answer()));
+                    () -> variableTxService.storeStringInVariable(simpleExecContext.execContextId, taskId, outputVariable, answer.a().processedAnswer.answer()));
 
 
             TaskParamsYaml.OutputVariable rawOutputVariable = taskParamsYaml.task.outputs.stream()
@@ -144,11 +144,11 @@ public class ApiCallService {
             if (rawOutputVariable!=null) {
                 if (S.b(answer.a().processedAnswer.rawAnswerFromAPI().raw())) {
                     VariableSyncService.getWithSyncVoid(rawOutputVariable.id,
-                            () -> variableTxService.setVariableAsNull(rawOutputVariable.id));
+                            () -> variableTxService.setVariableAsNull(taskId, rawOutputVariable.id));
                 }
                 else {
                     VariableSyncService.getWithSyncVoid(rawOutputVariable.id,
-                            () -> variableTxService.storeStringInVariable(rawOutputVariable, answer.a().processedAnswer.rawAnswerFromAPI().raw()));
+                            () -> variableTxService.storeStringInVariable(simpleExecContext.execContextId, taskId, rawOutputVariable, answer.a().processedAnswer.rawAnswerFromAPI().raw()));
                 }
             }
 

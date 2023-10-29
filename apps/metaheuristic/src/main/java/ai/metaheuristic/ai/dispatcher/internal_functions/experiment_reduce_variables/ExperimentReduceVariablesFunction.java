@@ -70,27 +70,27 @@ public class ExperimentReduceVariablesFunction implements InternalFunction {
         TxUtils.checkTxNotExists();
 
         if (taskParamsYaml.task.inputs.size()!=2) {
-            throw new InternalFunctionException(number_of_inputs_is_incorrect, "#983.020 there must be only two input variables, actual count: " + taskParamsYaml.task.inputs.size());
+            throw new InternalFunctionException(number_of_inputs_is_incorrect, "983.020 there must be only two input variables, actual count: " + taskParamsYaml.task.inputs.size());
         }
 
         if (taskParamsYaml.task.outputs.size()!=1) {
-            throw new InternalFunctionException(number_of_outputs_is_incorrect, "#983.040 only one output variable is supported, actual count: " + taskParamsYaml.task.outputs.size());
+            throw new InternalFunctionException(number_of_outputs_is_incorrect, "983.040 only one output variable is supported, actual count: " + taskParamsYaml.task.outputs.size());
         }
 
         LinkedHashMap<String, String> params = new LinkedHashMap<>();
         TaskParamsYaml.InputVariable filter = taskParamsYaml.task.inputs.stream().filter(o->"filter".equals(o.type)).findFirst().orElseThrow(
-                ()-> new InternalFunctionException(number_of_outputs_is_incorrect, "#983.060 input variable with 'filter' type wasn't found"));
+                ()-> new InternalFunctionException(number_of_outputs_is_incorrect, "983.060 input variable with 'filter' type wasn't found"));
 
         TaskParamsYaml.InputVariable input = taskParamsYaml.task.inputs.stream().filter(o->!"filter".equals(o.type)).findFirst().orElseThrow(
-                ()-> new InternalFunctionException(number_of_outputs_is_incorrect, "#983.080 input variable with actual values wasn't found"));
+                ()-> new InternalFunctionException(number_of_outputs_is_incorrect, "983.080 input variable with actual values wasn't found"));
 
         String filterValue = getValue(filter);
         if (S.b(filterValue)) {
-            throw new InternalFunctionException(variable_not_found, "#983.085 value of filter variable is blank");
+            throw new InternalFunctionException(variable_not_found, "983.085 value of filter variable is blank");
         }
         String inputValue = getValue(input);
         if (S.b(filterValue)) {
-            throw new InternalFunctionException(variable_not_found, "#983.090 value of input variable is blank");
+            throw new InternalFunctionException(variable_not_found, "983.090 value of input variable is blank");
         }
 
         InlineVariableUtils.NumberOfVariants filterOfVariants = InlineVariableUtils.getNumberOfVariants(filterValue);
@@ -99,7 +99,7 @@ public class ExperimentReduceVariablesFunction implements InternalFunction {
         String newValues = inputOfVariants.values.stream().filter(o->!filterOfVariants.values.contains(o)).collect(Collectors.joining(", ", "[", "]"));
 
         final TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
-        variableTxService.storeStringInVariable(outputVariable, newValues);
+        variableTxService.storeStringInVariable(simpleExecContext.execContextId, taskId, outputVariable, newValues);
     }
 
     @Nullable
@@ -114,7 +114,7 @@ public class ExperimentReduceVariablesFunction implements InternalFunction {
                 break;
             case array:
             default:
-                throw new NotImplementedException("#983.100 variable context isn't supported yet - "+ input.context);
+                throw new NotImplementedException("983.100 variable context isn't supported yet - "+ input.context);
         }
         return value;
     }

@@ -76,11 +76,11 @@ public class ReduceVariablesFunction implements InternalFunction {
         TxUtils.checkTxNotExists();
 
         if (taskParamsYaml.task.inputs.size()!=1) {
-            throw new InternalFunctionException(number_of_inputs_is_incorrect, "#961.040 there must be only one input variable, actual count: " + taskParamsYaml.task.inputs.size());
+            throw new InternalFunctionException(number_of_inputs_is_incorrect, "961.040 there must be only one input variable, actual count: " + taskParamsYaml.task.inputs.size());
         }
 
         if (taskParamsYaml.task.outputs.size()!=1) {
-            throw new InternalFunctionException(number_of_outputs_is_incorrect, "#961.080 only one output variable is supported, actual count: " + taskParamsYaml.task.outputs.size());
+            throw new InternalFunctionException(number_of_outputs_is_incorrect, "961.080 only one output variable is supported, actual count: " + taskParamsYaml.task.outputs.size());
         }
 
         TaskParamsYaml.InputVariable input = taskParamsYaml.task.inputs.get(0);
@@ -103,11 +103,11 @@ public class ReduceVariablesFunction implements InternalFunction {
         String filterValue = getValue(filter);
 
         if (S.b(filterValue)) {
-            throw new InternalFunctionException(variable_not_found, "#983.085 value of filter variable is blank");
+            throw new InternalFunctionException(variable_not_found, "#961.085 value of filter variable is blank");
         }
         String inputValue = getValue(input);
         if (S.b(filterValue)) {
-            throw new InternalFunctionException(variable_not_found, "#983.090 value of input variable is blank");
+            throw new InternalFunctionException(variable_not_found, "#961.090 value of input variable is blank");
         }
 
         InlineVariableUtils.NumberOfVariants filterOfVariants = InlineVariableUtils.getNumberOfVariants(filterValue);
@@ -124,7 +124,7 @@ public class ReduceVariablesFunction implements InternalFunction {
         String yaml = MetaUtils.getValue(taskParamsYaml.task.metas, "config");
         if (S.b(yaml)) {
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.meta_not_found,
-                            "#961.120 Meta 'config' wasn't found or empty, process: "+ taskParamsYaml.task.processCode);
+                            "961.120 Meta 'config' wasn't found or empty, process: "+ taskParamsYaml.task.processCode);
         }
 
         ReduceVariablesConfigParamsYaml config = ReduceVariablesConfigParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
@@ -138,12 +138,12 @@ public class ReduceVariablesFunction implements InternalFunction {
             Variable sv = variableService.findVariableInAllInternalContexts(byInstance.inputIs, taskContextId, execContextId);
             if (sv==null) {
                 throw new InternalFunctionException(Enums.InternalFunctionProcessing.meta_not_found,
-                                "#961.200 Input variable "+byInstance.inputIs+" wasn't found");
+                                "961.200 Input variable "+byInstance.inputIs+" wasn't found");
             }
             String content = variableService.getVariableDataAsString(sv.id);
             if (S.b(content)) {
                 throw new InternalFunctionException(Enums.InternalFunctionProcessing.meta_not_found,
-                        "#961.240 Input variable "+byInstance.inputIs+" is empty");
+                        "961.240 Input variable "+byInstance.inputIs+" is empty");
             }
             request.nullifiedVars.put(sv.name, Boolean.valueOf(content));
         }
@@ -163,7 +163,7 @@ public class ReduceVariablesFunction implements InternalFunction {
                 break;
             case array:
             default:
-                throw new NotImplementedException("#983.100 variable context isn't supported yet - "+ input.context);
+                throw new NotImplementedException("961.270 variable context isn't supported yet - "+ input.context);
         }
         return value;
     }

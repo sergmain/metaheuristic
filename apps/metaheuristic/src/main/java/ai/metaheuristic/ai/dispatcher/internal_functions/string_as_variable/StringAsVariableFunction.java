@@ -79,12 +79,12 @@ public class StringAsVariableFunction implements InternalFunction {
         TxUtils.checkTxNotExists();
 
         if (taskParamsYaml.task.inline==null) {
-            throw new InternalFunctionException(inline_not_found, "#513.200 inline is null");
+            throw new InternalFunctionException(inline_not_found, "513.200 inline is null");
         }
 
         String mappingStr = MetaUtils.getValue(taskParamsYaml.task.metas, MAPPING);
         if (S.b(mappingStr)) {
-            throw new InternalFunctionException(meta_not_found, "#513.300 meta '"+ MAPPING +"' wasn't found or it's blank");
+            throw new InternalFunctionException(meta_not_found, "513.300 meta '"+ MAPPING +"' wasn't found or it's blank");
         }
 
         Yaml yaml = YamlUtils.init(StringVariableData.Mapping.class);
@@ -116,6 +116,7 @@ public class StringAsVariableFunction implements InternalFunction {
                     break;
                 case variable:
                     String json = internalFunctionVariableService.getValueOfVariable(simpleExecContext.execContextId, taskContextId, keyName);
+                    //noinspection unchecked
                     Map<String, Object> mapObj = JsonUtils.getMapper().readValue(json, Map.class);
                     map = new HashMap<>();
                     mapObj.forEach((k,v)->map.put(k, v.toString()));
@@ -125,19 +126,19 @@ public class StringAsVariableFunction implements InternalFunction {
             }
 
             if (map==null) {
-                throw new InternalFunctionException(data_not_found, "#513.340 data wasn't found, key: "+keyName+", source: "+source+"");
+                throw new InternalFunctionException(data_not_found, "513.340 data wasn't found, key: "+keyName+", source: "+source);
             }
             String value = map.get(inlineAsVar.name);
             if (value==null) {
-                throw new InternalFunctionException(data_not_found, "#513.360 data for key '"+keyName+"' with name '"+inlineAsVar.name+"' wasn't found");
+                throw new InternalFunctionException(data_not_found, "513.360 data for key '"+keyName+"' with name '"+inlineAsVar.name+"' wasn't found");
             }
 
             TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.stream()
                     .filter(o->o.name.equals(inlineAsVar.output))
                     .findFirst()
-                    .orElseThrow(()->new InternalFunctionException(variable_not_found, "#513.380 output variable not found '"+inlineAsVar.output+"'"));
+                    .orElseThrow(()->new InternalFunctionException(variable_not_found, "513.380 output variable not found '"+inlineAsVar.output+"'"));
 
-            VariableSyncService.getWithSyncVoid(outputVariable.id, ()-> variableTxService.storeStringInVariable(outputVariable, value));
+            VariableSyncService.getWithSyncVoid(outputVariable.id, ()-> variableTxService.storeStringInVariable(simpleExecContext.execContextId, taskId, outputVariable, value));
         }
 
         //noinspection unused

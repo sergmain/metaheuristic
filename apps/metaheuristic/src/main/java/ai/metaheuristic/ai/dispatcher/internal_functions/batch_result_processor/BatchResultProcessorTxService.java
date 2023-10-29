@@ -233,7 +233,7 @@ public class BatchResultProcessorTxService {
 
         final long size = Files.size(zipFile);
         VariableSyncService.getWithSyncVoidForCreation(batchResultVar.id,
-                () -> variableTxService.storeData(fis, size, batchResultVar.id, originBatchFilename));
+                () -> variableTxService.storeData(taskId, fis, size, batchResultVar.id, originBatchFilename));
         eventPublisherService.publishVariableUploadedTxEvent(new VariableUploadedTxEvent(execContextId, taskId, batchResultVar.id, false));
     }
 
@@ -266,9 +266,9 @@ public class BatchResultProcessorTxService {
         eventPublisher.publishEvent(new ResourceCloseTxEvent(inputStream));
 
         VariableSyncService.getWithSyncVoidForCreation(batchStatusVar.id,
-                () -> variableTxService.storeData(inputStream, bytes.length, batchStatusVar.id, null));
-
-        eventPublisherService.publishVariableUploadedTxEvent(new VariableUploadedTxEvent(simpleExecContext.execContextId, taskId, batchStatusVar.id, false));
+                () -> variableTxService.storeData(taskId, inputStream, bytes.length, batchStatusVar.id, null));
+        // commented because event will be created in variableTxService.storeData()
+        //eventPublisherService.publishVariableUploadedTxEvent(new VariableUploadedTxEvent(simpleExecContext.execContextId, taskId, batchStatusVar.id, false));
     }
 
     /**

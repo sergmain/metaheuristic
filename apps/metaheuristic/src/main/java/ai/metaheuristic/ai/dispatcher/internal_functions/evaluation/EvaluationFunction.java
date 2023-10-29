@@ -79,24 +79,26 @@ public class EvaluationFunction implements InternalFunction {
         if (S.b(expression)) {
             throw new InternalFunctionException(
                     new InternalFunctionData.InternalFunctionProcessingResult( meta_not_found,
-                            "#503.300 meta '"+ EXPRESSION +"' wasn't found"));
+                            "503.030 meta '"+ EXPRESSION +"' wasn't found"));
         }
         SourceCodeImpl sourceCode = sourceCodeCache.findById(simpleExecContext.sourceCodeId);
         if (sourceCode==null) {
             throw new InternalFunctionException(
                     new InternalFunctionData.InternalFunctionProcessingResult(
-                            source_code_not_found,"#503.320 sourceCode #"+simpleExecContext.sourceCodeId+" wasn't found"));
+                            source_code_not_found,"503.060 sourceCode #"+simpleExecContext.sourceCodeId+" wasn't found"));
         }
 
         // in EvaluateExpressionLanguage.evaluate() we need only to use variableService.setVariableAsNull(v.id)
         // because mh.evaluate doesn't have any output variables
         Object obj = EvaluateExpressionLanguage.evaluate(
-                taskContextId, expression, simpleExecContext.execContextId,
-                this.internalFunctionVariableService, this.globalVariableService, this.variableTxService, variableRepository,
+            simpleExecContext.execContextId, taskId, taskContextId, expression,
+            this.internalFunctionVariableService, this.globalVariableService, this.variableTxService, variableRepository,
                 (v) -> VariableSyncService.getWithSyncVoidForCreation(v.id,
-                        ()-> variableTxService.setVariableAsNull(v.id)));
+                        ()-> variableTxService.setVariableAsNull(taskId, v.id)));
 
-        System.out.println("mh.evaluation, expression: "+expression+", result:" + obj);
+        if (log.isDebugEnabled()) {
+            log.debug("mh.evaluation, expression: {} result: {}", expression, obj);
+        }
         int i=0;
     }
 

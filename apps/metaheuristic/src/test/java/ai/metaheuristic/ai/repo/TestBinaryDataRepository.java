@@ -20,9 +20,8 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.api.EnumsApi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +30,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.ByteArrayInputStream;
@@ -41,16 +39,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-//@ActiveProfiles("dispatcher")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TestBinaryDataRepository {
 
     @Autowired
     private VariableTxService variableTxService;
-
-    @Autowired
-    private TxSupportForTestingService txSupportForTestingService;
 
     @Autowired
     private VariableRepository variableRepository;
@@ -86,7 +80,7 @@ public class TestBinaryDataRepository {
         final ByteArrayInputStream inputStream2 = new ByteArrayInputStream(bytes2);
         ExecContextSyncService.getWithSyncVoid(10L,
                 ()-> VariableSyncService.getWithSyncVoidForCreation(var2.id,
-                        ()-> variableTxService.updateWithTx(inputStream2, bytes2.length, var2.id)));
+                        ()-> variableTxService.updateWithTx(null, inputStream2, bytes2.length, var2.id)));
 
         final Variable var3 = variableRepository.findById(var2.getId()).orElse(null);
         assertNotNull(var3);

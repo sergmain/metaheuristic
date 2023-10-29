@@ -120,7 +120,7 @@ public class TaskWithInternalContextTopLevelService {
                 }
                 if (variableHolder.variable.nullified) {
                     VariableSyncService.getWithSyncVoidForCreation(output.id,
-                            ()->variableTxService.setVariableAsNull(output.id));
+                            ()->variableTxService.setVariableAsNull(task.id, output.id));
                 }
                 else {
                     Path tempFile = Files.createTempFile(tempDir, "output-", Consts.BIN_EXT);

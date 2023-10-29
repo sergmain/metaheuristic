@@ -307,7 +307,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(task32);
 
         TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.UTILS.to(simpleTask32.params);
-        storeOutputVariable(outputVariable, "feature-processing-result", taskParamsYaml.task.processCode);
+        storeOutputVariable(simpleTask32.taskId, outputVariable, "feature-processing-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask32);
 
         finishTask(task32);
@@ -395,13 +395,13 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertEquals(1, taskParamsYaml.task.inputs.size());
         assertEquals(1, taskParamsYaml.task.outputs.size());
 
-        storeOutputVariable("dataset-processing-output", "dataset-processing-output-result", taskParamsYaml.task.processCode);
+        storeOutputVariable(simpleTask20.taskId, "dataset-processing-output", "dataset-processing-output-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask20);
 
         finishTask(task3);
     }
 
-    private void storeOutputVariable(String variableName, String variableData, String processCode) {
+    private void storeOutputVariable(Long taskId, String variableName, String variableData, String processCode) {
 
         Variable v = variableService.getVariable(
                 variableName, processCode, getExecContextForTest());
@@ -413,7 +413,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(variable);
 
         byte[] bytes = variableData.getBytes();
-        VariableSyncService.getWithSyncVoidForCreation(variable.id, ()->variableService.updateWithTx(new ByteArrayInputStream(bytes), bytes.length, variable.id));
+        VariableSyncService.getWithSyncVoidForCreation(variable.id, ()->variableService.updateWithTx(taskId, new ByteArrayInputStream(bytes), bytes.length, variable.id));
 
 
 
@@ -472,7 +472,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertEquals(EnumsApi.VariableContext.local, outputVariable.context);
         assertNotNull(outputVariable.id);
 
-        storeOutputVariable("assembled-raw-output", "assembled-raw-output-result", taskParamsYaml.task.processCode);
+        storeOutputVariable(simpleTask.taskId, "assembled-raw-output", "assembled-raw-output-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask);
 
         finishTask(task);

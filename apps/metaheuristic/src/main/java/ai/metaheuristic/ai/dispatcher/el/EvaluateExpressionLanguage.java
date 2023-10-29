@@ -66,6 +66,7 @@ public class EvaluateExpressionLanguage {
 
     public static class MhEvalContext implements EvaluationContext {
         public final String taskContextId;
+        public final Long taskId;
         public final Long execContextId;
         public final InternalFunctionVariableService internalFunctionVariableService;
         public final GlobalVariableTxService globalVariableService;
@@ -73,12 +74,13 @@ public class EvaluateExpressionLanguage {
         public final VariableRepository variableRepository;
         public final Consumer<Variable> setAsNullFunction;
 
-        public MhEvalContext(String taskContextId, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
+        public MhEvalContext(String taskContextId, Long taskId, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
                              GlobalVariableTxService globalVariableService, VariableTxService variableTxService,
                              VariableRepository variableRepository,
                              Consumer<Variable> setAsNullFunction
                              ) {
             this.taskContextId = taskContextId;
+            this.taskId = taskId;
             this.execContextId = execContextId;
             this.internalFunctionVariableService = internalFunctionVariableService;
             this.globalVariableService = globalVariableService;
@@ -127,12 +129,12 @@ public class EvaluateExpressionLanguage {
                     if (variableHolderOutput.globalVariable!=null) {
                         throw new InternalFunctionException(
                                 new InternalFunctionData.InternalFunctionProcessingResult(system_error,
-                                        "#509.030 global variable '"+ name+"' can't be used as output variable"));
+                                        "509.030 global variable '"+ name+"' can't be used as output variable"));
                     }
                     if (variableHolderOutput.variable==null) {
                         throw new InternalFunctionException(
                                 new InternalFunctionData.InternalFunctionProcessingResult(system_error,
-                                        "#509.035 variable '"+ name+"' wasn't found"));
+                                        "509.060 variable '"+ name+"' wasn't found"));
                     }
 
                     if (newValue==null) {
@@ -156,7 +158,7 @@ public class EvaluateExpressionLanguage {
                         strValue = ""+newValue;
                     }
                     else {
-                        throw new InternalFunctionException(system_error, "#509.025 not supported type: " + newValue.getClass());
+                        throw new InternalFunctionException(system_error, "509.090 not supported type: " + newValue.getClass());
                     }
                     try {
                         if (variableHolderInput!=null) {
@@ -172,12 +174,12 @@ public class EvaluateExpressionLanguage {
                             bytes = strValue.getBytes();
                         }
                         else {
-                            throw new InternalFunctionException(system_error, "#509.025 not supported type: " + newValue.getClass());
+                            throw new InternalFunctionException(system_error, "509.120 not supported type: " + newValue.getClass());
                         }
 
                         try (InputStream is = new ByteArrayInputStream(bytes)) {
                             VariableSyncService.getWithSyncVoid(variableHolderOutput.variable.id,
-                                    ()-> variableTxService.storeData(is, bytes.length, variableHolderOutput.variable.id, null));
+                                    ()-> variableTxService.storeData(taskId, is, bytes.length, variableHolderOutput.variable.id, null));
                         }
                         variableHolderOutput.variable.inited = true;
                     }
@@ -185,7 +187,7 @@ public class EvaluateExpressionLanguage {
                         throw e;
                     }
                     catch (Throwable th) {
-                        final String es = "#509.055 error " + th.getMessage();
+                        final String es = "509.150 error " + th.getMessage();
                         log.error(es, th);
                         throw new InternalFunctionException(system_error, es);
                     }
@@ -200,7 +202,7 @@ public class EvaluateExpressionLanguage {
             try {
                 tempDir = DirUtils.createMhTempPath("mh-evaluation-");
                 if (tempDir == null) {
-                    throw new InternalFunctionException(system_error, "#509.050 can't create a temporary file");
+                    throw new InternalFunctionException(system_error, "509.180 can't create a temporary file");
                 }
                 Path tempFile = Files.createTempFile(tempDir, "input-", Consts.BIN_EXT);
                 if (variableHolderInput.globalVariable!=null) {
@@ -208,12 +210,12 @@ public class EvaluateExpressionLanguage {
                 } else if (variableHolderInput.variable!=null) {
                     variableTxService.storeToFileWithTx(variableHolderInput.variable.id, tempFile);
                 } else {
-                    throw new InternalFunctionException(system_error, "#509.052 both local and global variables are null");
+                    throw new InternalFunctionException(system_error, "509.210 both local and global variables are null");
                 }
                 try (InputStream is = Files.newInputStream(tempFile)) {
                     final long size = Files.size(tempFile);
                     VariableSyncService.getWithSyncVoid(variableHolderOutput.variable.id,
-                            ()-> variableTxService.updateWithTx(is, size, variableHolderOutput.variable.id));
+                            ()-> variableTxService.updateWithTx(taskId, is, size, variableHolderOutput.variable.id));
                 }
             } finally {
                 DirUtils.deletePathAsync(tempDir);
@@ -329,7 +331,7 @@ public class EvaluateExpressionLanguage {
                     if (leftOperand==null || rightOperand==null) {
                         throw new InternalFunctionException(
                                 new InternalFunctionData.InternalFunctionProcessingResult(system_error,
-                                        "#509.100 (leftOperand==null || rightOperand==null)"));
+                                        "509.240 (leftOperand==null || rightOperand==null)"));
                     }
                     Integer leftValue = getValueInteger(leftOperand);
                     Integer rightValue = getValueInteger(rightOperand);
@@ -417,7 +419,7 @@ public class EvaluateExpressionLanguage {
                     execContextId, taskContextId, name);
             if (holders.size()>1) {
                 throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken,
-                                "#509.160 Too many variables with the same name at top-level context, name: "+ name);
+                                "509.270 Too many variables with the same name at top-level context, name: "+ name);
             }
 
             VariableUtils.VariableHolder variableHolder = holders.get(0);
@@ -427,15 +429,15 @@ public class EvaluateExpressionLanguage {
 
     @Nullable
     public static Object evaluate(
-            String taskContextId, String expression, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
-            GlobalVariableTxService globalVariableService, VariableTxService variableService,
-            VariableRepository variableRepository, Consumer<Variable> setAsNullFunction
+        Long execContextId, Long taskId, String taskContextId, String expression, InternalFunctionVariableService internalFunctionVariableService,
+        GlobalVariableTxService globalVariableService, VariableTxService variableService,
+        VariableRepository variableRepository, Consumer<Variable> setAsNullFunction
     ) {
 
         ExpressionParser parser = new SpelExpressionParser();
 
         EvaluateExpressionLanguage.MhEvalContext mhEvalContext = new EvaluateExpressionLanguage.MhEvalContext(
-                taskContextId, execContextId, internalFunctionVariableService, globalVariableService, variableService,
+                taskContextId, taskId, execContextId, internalFunctionVariableService, globalVariableService, variableService,
                 variableRepository, setAsNullFunction);
 
         Expression exp = parser.parseExpression(expression);

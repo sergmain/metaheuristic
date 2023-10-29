@@ -103,7 +103,7 @@ public class EnhanceTextFunction implements InternalFunction {
 
         TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
         final String finalText = text;
-        VariableSyncService.getWithSyncVoid(outputVariable.id, ()-> variableTxService.storeStringInVariable(outputVariable, finalText));
+        VariableSyncService.getWithSyncVoid(outputVariable.id, ()-> variableTxService.storeStringInVariable(simpleExecContext.execContextId, taskId, outputVariable, finalText));
 
         eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
 

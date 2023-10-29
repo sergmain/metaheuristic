@@ -182,10 +182,10 @@ public class TaskWithInternalContextEventService {
                 // in EvaluateExpressionLanguage.evaluate() we need only to use variableService.setVariableAsNull(v.id)
                 // because mh.evaluate doesn't have any output variables
                 Object obj = EvaluateExpressionLanguage.evaluate(
-                        taskParamsYaml.task.taskContextId, p.condition, simpleExecContext.execContextId,
-                        internalFunctionVariableService, globalVariableService, variableTxService, variableRepository,
+                    simpleExecContext.execContextId, taskId, taskParamsYaml.task.taskContextId, p.condition,
+                    internalFunctionVariableService, globalVariableService, variableTxService, variableRepository,
                         (v) -> VariableSyncService.getWithSyncVoidForCreation(v.id,
-                                ()-> variableTxService.setVariableAsNull(v.id)));
+                                ()-> variableTxService.setVariableAsNull(taskId, v.id)));
                 if (obj!=null && !(obj instanceof Boolean)) {
                     final String es = "706.300 condition '" + p.condition + " has returned not boolean value but " + obj.getClass().getSimpleName();
                     log.error(es);

@@ -154,7 +154,7 @@ public class TaskCheckCachingTxService {
                 try {
                     VariableData.StoredVariable storedVariable = new VariableData.StoredVariable( ((Number)obj[0]).longValue(), (String)obj[1], Boolean.TRUE.equals(obj[2]));
                     if (storedVariable.nullified) {
-                        VariableSyncService.getWithSyncVoidForCreation(output.id, () -> variableService.setVariableAsNull(output.id));
+                        VariableSyncService.getWithSyncVoidForCreation(output.id, () -> variableService.setVariableAsNull(taskId, output.id));
                     }
                     else {
                         dispatcherBlobStorage.copyVariableData(storedVariable, output);

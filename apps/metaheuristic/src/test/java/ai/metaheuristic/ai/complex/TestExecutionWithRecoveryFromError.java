@@ -175,13 +175,13 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
         assertEquals(1, taskParamsYaml.task.inputs.size());
         assertEquals(1, taskParamsYaml.task.outputs.size());
 
-        storeOutputVariable("dataset-processing-output", "dataset-processing-output-result", taskParamsYaml.task.processCode);
+        storeOutputVariable(simpleTask20.taskId, "dataset-processing-output", "dataset-processing-output-result", taskParamsYaml.task.processCode);
         storeExecResult(simpleTask20);
 
         finishTask(task3);
     }
 
-    private void storeOutputVariable(String variableName, String variableData, String processCode) {
+    private void storeOutputVariable(Long taskId, String variableName, String variableData, String processCode) {
 
         Variable v = variableService.getVariable(
                 variableName, processCode, getExecContextForTest());
@@ -193,7 +193,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
         assertNotNull(variable);
 
         byte[] bytes = variableData.getBytes();
-        VariableSyncService.getWithSyncVoidForCreation(variable.id, ()->variableService.updateWithTx(new ByteArrayInputStream(bytes), bytes.length, variable.id));
+        VariableSyncService.getWithSyncVoidForCreation(variable.id, ()->variableService.updateWithTx(taskId, new ByteArrayInputStream(bytes), bytes.length, variable.id));
 
 
 
@@ -268,7 +268,7 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
             assertEquals(EnumsApi.TaskExecState.NONE.value, task2.execState);
         }
         else {
-            storeOutputVariable("assembled-raw-output", "assembled-raw-output-result", taskParamsYaml.task.processCode);
+            storeOutputVariable(simpleTask.taskId, "assembled-raw-output", "assembled-raw-output-result", taskParamsYaml.task.processCode);
             storeExecResult(simpleTask);
             finishTask(task);
         }
