@@ -28,8 +28,8 @@ import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -58,8 +58,8 @@ public class TaskFinishingTxService {
     private final TaskRepository taskRepository;
     private final TaskProviderTopLevelService taskProviderTopLevelService;
     private final EventPublisherService eventPublisherService;
-    private final TaskStateTxService taskStateTxService;
     private final ApplicationEventPublisher eventPublisher;
+    private final TaskExecStateService taskExecStateService;
 
     @Transactional
     public void finishAsOkAndStoreVariable(Long taskId, ExecContextParamsYaml ecpy) {
@@ -85,7 +85,7 @@ public class TaskFinishingTxService {
 
         eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, taskId));
 
-        taskStateTxService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK, true);
+        taskExecStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK, true);
 
         if (store) {
             TaskParamsYaml tpy = task.getTaskParamsYaml();

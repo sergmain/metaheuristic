@@ -61,12 +61,12 @@ public class TaskCheckCachingTxService {
 
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
-    private final TaskStateTxService taskStateService;
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheVariableRepository cacheVariableRepository;
     private final VariableTxService variableService;
     private final EventPublisherService eventPublisherService;
     private final DispatcherBlobStorage dispatcherBlobStorage;
+    private final TaskExecStateService taskExecStateService;
 
     @Transactional
     public void invalidateCacheItemAndSetTaskToNone(Long execContextId, Long taskId, Long cacheProcessId) {
@@ -81,7 +81,7 @@ public class TaskCheckCachingTxService {
         }
 
         invalidateCacheItemInternal(cacheProcessId);
-        taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE);
+        taskExecStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE, false);
     }
 
     @Transactional
@@ -178,17 +178,18 @@ public class TaskCheckCachingTxService {
             task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
             task.setResultReceived(1);
 
-            task.execState = EnumsApi.TaskExecState.OK.value;
-
-            task.setCompleted(1);
-            task.setCompletedOn(System.currentTimeMillis());
+//            task.setCompleted(1);
+//            task.setCompletedOn(System.currentTimeMillis());
+//            task.execState = EnumsApi.TaskExecState.OK.value;
+//            taskExecStateService.changeTaskState(task, EnumsApi.TaskExecState.OK);
+            taskExecStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK, true);
 
             taskRepository.save(task);
             status = CheckCachingStatus.copied_from_cache;
         }
         else {
             log.info("609.080 cached data wasn't found for task #{}", taskId);
-            taskStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE);
+            taskExecStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE, false);
             status = CheckCachingStatus.no_prev_cache;
         }
         eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));

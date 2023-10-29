@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.task.TaskStateTxService;
+import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
@@ -43,8 +43,8 @@ public class ExecContextReconciliationService {
 
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
-    private final TaskStateTxService taskStateTxService;
     private final ExecContextTaskResettingService execContextTaskResettingService;
+    private final TaskExecStateService taskExecStateService;
 
     @Transactional
     public void finishReconciliation(ExecContextData.ReconciliationStatus status) {
@@ -74,7 +74,7 @@ public class ExecContextReconciliationService {
                     log.error("#307.200 task is null");
                     return;
                 }
-                taskStateTxService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK);
+                taskExecStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK, false);
             });
         }
     }
