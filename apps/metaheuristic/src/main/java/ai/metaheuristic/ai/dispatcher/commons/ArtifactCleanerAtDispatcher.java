@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.cache.CacheTxService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTxService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreTxService;
@@ -70,7 +70,7 @@ public class ArtifactCleanerAtDispatcher {
     private final FunctionRepository functionRepository;
     private final CacheProcessRepository cacheProcessRepository;
     private final CacheTxService cacheService;
-    private final ExecContextService execContextService;
+    private final ExecContextTxService execContextTxService;
     private final DispatcherEventRepository dispatcherEventRepository;
     private final FunctionDataRepository functionDataRepository;
     private final ProcessorRepository processorRepository;
@@ -315,7 +315,7 @@ public class ArtifactCleanerAtDispatcher {
                 }
                 log.info("510.450 Found orphan ExecContextGraph #{}", allExecContextGraphId);
                 try {
-                    execContextService.deleteOrphanExecContextGraph(allExecContextGraphId);
+                    execContextTxService.deleteOrphanExecContextGraph(allExecContextGraphId);
                 }
                 catch (Throwable th) {
                     log.warn("510.480 error while deleting ExecContextGraph #" + allExecContextGraphId);
@@ -338,7 +338,7 @@ public class ArtifactCleanerAtDispatcher {
                 }
                 log.info("510.540 Found orphan ExecContextTaskState #{}", allExecContextTaskStateId);
                 try {
-                    execContextService.deleteOrphanExecContextTaskState(allExecContextTaskStateId);
+                    execContextTxService.deleteOrphanExecContextTaskState(allExecContextTaskStateId);
                 }
                 catch (Throwable th) {
                     log.warn("510.570 error while deleting ExecContextTaskState #" + allExecContextTaskStateId);
@@ -361,7 +361,7 @@ public class ArtifactCleanerAtDispatcher {
                 }
                 log.info("510.630 Found orphan ExecContextVariableState #{}", allExecContextVariableStateId);
                 try {
-                    execContextService.deleteOrphanExecContextVariableState(allExecContextVariableStateId);
+                    execContextTxService.deleteOrphanExecContextVariableState(allExecContextVariableStateId);
                 }
                 catch (Throwable th) {
                     log.warn("510.660 error while deleting ExecContextVariableState " + allExecContextVariableStateId);
@@ -393,7 +393,7 @@ public class ArtifactCleanerAtDispatcher {
                 }
                 log.warn("execContextId #{} was deleted in db, clean up the cache", execContextId);
                 try {
-                    execContextService.deleteExecContextFromCache(execContextId);
+                    execContextTxService.deleteExecContextFromCache(execContextId);
                 }
                 catch (Throwable th) {
                     log.error("510.720 execContextService.deleteExecContextFromCache("+execContextId+")", th);

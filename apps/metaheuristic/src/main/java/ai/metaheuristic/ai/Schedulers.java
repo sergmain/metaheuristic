@@ -219,7 +219,7 @@ public class Schedulers {
                 return;
             }
 
-            log.info("Invoking ExecContextService.updateExecContextStatuses()");
+            log.info("Invoking ExecContextTxService.updateExecContextStatuses()");
             ArtifactCleanerAtDispatcher.setBusy();
             try {
                 execContextSchedulerService.updateExecContextStatuses();
@@ -238,7 +238,7 @@ public class Schedulers {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
             }
-            log.info("Invoking ExecContextService.initTaskVariables()");
+            log.info("Invoking ExecContextTxService.initTaskVariables()");
             ArtifactCleanerAtDispatcher.setBusy();
             try {
                 execContextSchedulerService.initTaskVariables();

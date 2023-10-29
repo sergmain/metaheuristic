@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTxService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
@@ -63,7 +63,7 @@ import org.springframework.web.bind.annotation.*;
 public class ExecContextRestController {
 
     private final ExecContextTopLevelService execContextTopLevelService;
-    private final ExecContextService execContextService;
+    private final ExecContextTxService execContextTxService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final UserContextService userContextService;
 
@@ -79,7 +79,7 @@ public class ExecContextRestController {
     public ExecContextApiData.ExecContextsResult execContexts(@PathVariable Long sourceCodeId,
                                                               @PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return execContextService.getExecContextsOrderByCreatedOnDesc(sourceCodeId, pageable, context);
+        return execContextTxService.getExecContextsOrderByCreatedOnDesc(sourceCodeId, pageable, context);
     }
 
     /**
@@ -149,7 +149,7 @@ public class ExecContextRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR')")
     public ExecContextApiData.ExecContextStateResult execContextsState(@PathVariable Long sourceCodeId, @PathVariable Long execContextId, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        ExecContextApiData.ExecContextStateResult execContextState = execContextTopLevelService.getExecContextState(sourceCodeId, execContextId, context, authentication);
+        ExecContextApiData.ExecContextStateResult execContextState = execContextTopLevelService.getExecContextState(sourceCodeId, execContextId, authentication);
         return execContextState;
     }
 
@@ -177,7 +177,7 @@ public class ExecContextRestController {
             Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         try {
-            CleanerInfo resource = execContextService.downloadVariable(execContextId, variableId, context.getCompanyId());
+            CleanerInfo resource = execContextTxService.downloadVariable(execContextId, variableId, context.getCompanyId());
             if (resource==null) {
                 return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             }

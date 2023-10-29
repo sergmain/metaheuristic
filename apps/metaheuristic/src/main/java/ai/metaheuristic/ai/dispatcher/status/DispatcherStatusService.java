@@ -18,8 +18,10 @@ package ai.metaheuristic.ai.dispatcher.status;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.*;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.ai.utils.StatusUtils;
 import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -29,12 +31,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
  * @author Sergio Lissner
@@ -53,6 +53,7 @@ public class DispatcherStatusService {
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final TaskRepository taskRepository;
+    private final ExecContextTopLevelService execContextTopLevelService;
 
     public String statusSourceCode(Long id, DispatcherContext context) {
         SourceCodeImpl sc = sourceCodeRepository.findById(id).orElse(null);
@@ -69,7 +70,7 @@ public class DispatcherStatusService {
         return s.toString();
     }
 
-    public String statusExecContext(Long id, DispatcherContext context) {
+    public String statusExecContext(Long id, DispatcherContext context, Authentication authentication) {
         ExecContextImpl ec = execContextRepository.findById(id).orElse(null);
         if (ec == null) {
             return "ExecContext with id #" + id + " wasn't found\n";
@@ -101,6 +102,16 @@ public class DispatcherStatusService {
             %s
             """, ecg.id, ecgParams.graph.indent(2)));
 
+        ExecContextApiData.ExecContextStateResult execContextState = execContextTopLevelService.getExecContextState(sc.id, ec.id, authentication);
+        if (execContextState.taskStateInfos!=null) {
+            s.append("Task count by TaskState\n");
+            for (ExecContextApiData.TaskStateInfo taskInfo : execContextState.taskStateInfos.taskInfos) {
+                s.append(S.f("%s: %d\n", taskInfo.execState, taskInfo.count));
+            }
+            s.append('\n');
+        }
+        String[][] tbl = asStringTable(execContextState.header, execContextState.lines);
+        StatusUtils.printTable(s::append, true, 50, false, tbl);
 
         ExecContextApiData.ExecContextVariableStates varStates = ecvs.getExecContextVariableStateInfo();
         ExecContextTaskStateParamsYaml taskStateParams = ects.getExecContextTaskStateParamsYaml();
@@ -132,7 +143,46 @@ public class DispatcherStatusService {
             }
         }
 
-        // print as text table - https://itsallbinary.com/java-printing-to-console-in-table-format-simple-code-with-flexible-width-left-align-header-separator-line/
         return s.toString();
     }
+
+    private static String[][] asStringTable(ExecContextApiData.ColumnHeader[] header, ExecContextApiData.LineWithState[] lines) {
+        String[][] ss = new String[lines.length + 1][header.length];
+        for (int i = 0; i < header.length; i++) {
+            ExecContextApiData.ColumnHeader h = header[i];
+            ss[0][i] = h.process+", " + h.functionCode;
+        }
+
+        for (int i = 0; i < lines.length; i++) {
+            ExecContextApiData.LineWithState l = lines[i];
+            for (int j = 0; j < l.cells.length; j++) {
+                
+/*
+                46170, OK
+                108431, var-processed-file-a
+                108432, var-processed-file-a1
+                108433, var-processed-file-b
+                108434, var-processing-status
+                108435, var-params-yaml
+                108436, var-item-mapping
+*/
+                ExecContextApiData.StateCell c = l.cells[j];
+                if (c.empty) {
+                    ss[i + 1][j] = "";
+                }
+                else {
+                    String s = "" + c.taskId+": "+ c.state+". ";
+                    if (CollectionUtils.isNotEmpty(c.outs)) {
+                        for (ExecContextApiData.VariableInfo out : c.outs) {
+                            s += ("["+out.id+':'+out.name+", init:"+out.inited+']');
+                        }
+                    }
+                    ss[i + 1][j] = s;
+                }
+            }
+        }
+        return ss;
+    }
+
+
 }

@@ -19,7 +19,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -51,7 +51,7 @@ public class ExperimentService {
     private final ExecContextCache execContextCache;
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
-    private final ExecContextService execContextService;
+    private final ExecContextTxService execContextTxService;
 
     @Transactional
     public OperationStatusRest addExperimentCommit(Long execContextId, String name, String code, String description) {
@@ -180,7 +180,7 @@ public class ExperimentService {
             }
             ExecContext ex = execContextCache.findById(experiment.execContextId, true);
             if (ex != null) {
-                OperationStatusRest operationStatusRest = execContextService.deleteExecContextById(experiment.execContextId, context);
+                OperationStatusRest operationStatusRest = execContextTxService.deleteExecContextById(experiment.execContextId, context);
                 if (operationStatusRest.isErrorMessages()) {
                     return operationStatusRest;
                 }

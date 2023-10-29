@@ -65,7 +65,7 @@ import java.util.List;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextTopLevelService {
 
-    private final ExecContextService execContextService;
+    private final ExecContextTxService execContextTxService;
     private final ExecContextRepository execContextRepository;
     private final ExecContextFSM execContextFSM;
     private final ExecContextCache execContextCache;
@@ -78,13 +78,13 @@ public class ExecContextTopLevelService {
 
     private static boolean isManagerRole(String role) {
         return switch (role) {
-            case "ROLE_ADMIN", "ROLE_DATA", "MANAGER", "OPERATOR" -> true;
+            case "ROLE_MAIN_ADMIN", "ROLE_ADMIN", "ROLE_DATA", "MANAGER", "OPERATOR" -> true;
             default -> false;
         };
     }
 
-    public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context, Authentication authentication) {
-        ExecContextApiData.RawExecContextStateResult raw = execContextService.getRawExecContextState(sourceCodeId, execContextId, context);
+    public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, Authentication authentication) {
+        ExecContextApiData.RawExecContextStateResult raw = execContextTxService.getRawExecContextState(sourceCodeId, execContextId);
         if (raw.isErrorMessages()) {
             return new ExecContextApiData.ExecContextStateResult(raw.getErrorMessagesAsList());
         }
@@ -142,7 +142,7 @@ public class ExecContextTopLevelService {
     }
 
     public SourceCodeApiData.ExecContextResult getExecContextExtended(Long execContextId) {
-        SourceCodeApiData.ExecContextResult result = execContextService.getExecContextExtended(execContextId);
+        SourceCodeApiData.ExecContextResult result = execContextTxService.getExecContextExtended(execContextId);
 
         if (result.isErrorMessages()) {
             return result;
@@ -150,7 +150,7 @@ public class ExecContextTopLevelService {
 
         if (!result.sourceCode.getId().equals(result.execContext.getSourceCodeId())) {
             ExecContextSyncService.getWithSyncVoid(execContextId,
-                    () -> execContextService.changeValidStatus(execContextId, false));
+                    () -> execContextTxService.changeValidStatus(execContextId, false));
             return new SourceCodeApiData.ExecContextResult("210.030 sourceCodeId doesn't match to execContext.sourceCodeId, " +
                     "sourceCodeId: " + result.execContext.getSourceCodeId() + ", execContext.sourceCodeId: " + result.execContext.getSourceCodeId());
         }
@@ -247,7 +247,7 @@ public class ExecContextTopLevelService {
         for (Long execContextId : execContextIds) {
             log.info("210.270 Found orphan execContext #{}", execContextId);
             try {
-                ExecContextSyncService.getWithSyncVoid(execContextId, ()-> execContextService.deleteExecContext(execContextId));
+                ExecContextSyncService.getWithSyncVoid(execContextId, ()-> execContextTxService.deleteExecContext(execContextId));
             }
             catch (Throwable th) {
                 log.error("210.300 execContextService.deleteExecContext("+execContextId+")", th);
@@ -259,18 +259,18 @@ public class ExecContextTopLevelService {
     @EventListener
     public void deleteExecContextById(DeleteExecContextInListEvent event) {
         for (Long execContextId : event.execContextIds) {
-            ExecContextSyncService.getWithSyncVoid(execContextId, ()-> execContextService.deleteExecContext(execContextId));
+            ExecContextSyncService.getWithSyncVoid(execContextId, ()-> execContextTxService.deleteExecContext(execContextId));
         }
     }
 
     @Async
     @EventListener
     public void deleteExecContextById(DeleteExecContextEvent event) {
-        ExecContextSyncService.getWithSyncVoid(event.execContextId, ()-> execContextService.deleteExecContext(event.execContextId));
+        ExecContextSyncService.getWithSyncVoid(event.execContextId, ()-> execContextTxService.deleteExecContext(event.execContextId));
     }
 
     public OperationStatusRest deleteExecContextById(Long execContextId, DispatcherContext context) {
-        return ExecContextSyncService.getWithSync(execContextId, ()-> execContextService.deleteExecContextById(execContextId, context));
+        return ExecContextSyncService.getWithSync(execContextId, ()-> execContextTxService.deleteExecContextById(execContextId, context));
     }
 
     public ExecContextApiData.TaskExecInfo getTaskExecInfo(Long sourceCodeId, Long execContextId, Long taskId) {

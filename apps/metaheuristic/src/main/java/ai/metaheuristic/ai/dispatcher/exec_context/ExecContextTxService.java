@@ -68,7 +68,7 @@ import static ai.metaheuristic.api.EnumsApi.OperationStatus;
 @Slf4j
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 @SuppressWarnings("UnusedReturnValue")
-public class ExecContextService {
+public class ExecContextTxService {
 
     private final Globals globals;
     private final ExecContextRepository execContextRepository;
@@ -104,18 +104,18 @@ public class ExecContextService {
     public SourceCodeApiData.ExecContextResult getExecContextExtended(Long execContextId) {
         ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext == null) {
-            return new SourceCodeApiData.ExecContextResult("#705.180 execContext wasn't found, execContextId: " + execContextId);
+            return new SourceCodeApiData.ExecContextResult("705.180 execContext wasn't found, execContextId: " + execContextId);
         }
         SourceCodeImpl sourceCode = sourceCodeCache.findById(execContext.getSourceCodeId());
         if (sourceCode == null) {
-            return new SourceCodeApiData.ExecContextResult("#705.200 sourceCode wasn't found, sourceCodeId: " + execContext.getSourceCodeId());
+            return new SourceCodeApiData.ExecContextResult("705.200 sourceCode wasn't found, sourceCodeId: " + execContext.getSourceCodeId());
         }
 
         SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(sourceCode, execContext);
         return result;
     }
 
-    public ExecContextApiData.RawExecContextStateResult getRawExecContextState(Long sourceCodeId, Long execContextId, DispatcherContext context) {
+    public ExecContextApiData.RawExecContextStateResult getRawExecContextState(Long sourceCodeId, Long execContextId) {
         TxUtils.checkTxNotExists();
 
         ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.dispatcher.asset.mode);
@@ -135,20 +135,6 @@ public class ExecContextService {
                 taskTxService.getExecStateOfTasks(execContextId)
         );
     }
-
-
-/*
-    public Map<Long, TaskApiData.TaskState> getExecStateOfTasks_old(Long execContextId) {
-        List<Object[]> list = taskRepository.findExecStateByExecContextId(execContextId);
-
-        Map<Long, TaskApiData.TaskState> states = new HashMap<>(list.size()+1);
-        for (Object[] o : list) {
-            TaskApiData.TaskState taskState = new TaskApiData.TaskState(o);
-            states.put(taskState.taskId, taskState);
-        }
-        return states;
-    }
-*/
 
     private void initInfoAboutSourceCode(Long sourceCodeId, ExecContextApiData.ExecContextsResult result) {
         SourceCodeImpl sc = sourceCodeCache.findById(sourceCodeId);
@@ -217,7 +203,7 @@ public class ExecContextService {
     public SourceCodeApiData.ExecContextForDeletion getExecContextExtendedForDeletion(Long execContextId, DispatcherContext context) {
         ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext == null) {
-            return new SourceCodeApiData.ExecContextForDeletion("#705.260 execContext wasn't found, execContextId: " + execContextId);
+            return new SourceCodeApiData.ExecContextForDeletion("705.260 execContext wasn't found, execContextId: " + execContextId);
         }
         ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
         SourceCodeApiData.ExecContextForDeletion result = new SourceCodeApiData.ExecContextForDeletion(execContext.sourceCodeId, execContext.id, ecpy.sourceCodeUid, EnumsApi.ExecContextState.from(execContext.state));
@@ -239,7 +225,7 @@ public class ExecContextService {
     private OperationStatusRest checkExecContext(Long execContextId, DispatcherContext context) {
         ExecContext wb = execContextCache.findById(execContextId, true);
         if (wb==null) {
-            return new OperationStatusRest(OperationStatus.ERROR, "#705.280 ExecContext wasn't found, execContextId: " + execContextId );
+            return new OperationStatusRest(OperationStatus.ERROR, "705.280 ExecContext wasn't found, execContextId: " + execContextId );
         }
         return null;
     }
@@ -255,7 +241,7 @@ public class ExecContextService {
 
             Path resultDir = DirUtils.createMhTempPath("prepare-file-processing-result-");
             if (resultDir==null) {
-                throw new RuntimeException("#705.290 can't create temp directory");
+                throw new RuntimeException("705.290 can't create temp directory");
             }
             resource.toClean.add(resultDir);
 
@@ -264,14 +250,14 @@ public class ExecContextService {
 
             SourceCodeImpl sc = sourceCodeCache.findById(execContext.sourceCodeId);
             if (sc==null) {
-                final String es = "#705.300 SourceCode wasn't found, sourceCodeId: " + execContext.sourceCodeId;
+                final String es = "705.300 SourceCode wasn't found, sourceCodeId: " + execContext.sourceCodeId;
                 log.warn(es);
                 return resource;
             }
 
             Variable v = variableRepository.findByIdAsSimple(variableId);
             if (v==null) {
-                final String es = "#705.330 Can't find variable #"+variableId;
+                final String es = "705.330 Can't find variable #"+variableId;
                 log.warn(es);
                 return resource;
             }
@@ -289,11 +275,11 @@ public class ExecContextService {
             resource.entity = new ResponseEntity<>(new FileSystemResource(varFile), RestUtils.getHeader(httpHeaders, Files.size(varFile)), HttpStatus.OK);
             return resource;
         } catch (VariableDataNotFoundException e) {
-            log.error("#705.350 Variable #{}, context: {}, {}", e.variableId, e.context, e.getMessage());
+            log.error("705.350 Variable #{}, context: {}, {}", e.variableId, e.context, e.getMessage());
             resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             return resource;
         } catch (Throwable th) {
-            log.error("#705.370 General error", th);
+            log.error("705.370 General error", th);
             resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             return resource;
         }

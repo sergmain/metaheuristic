@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.internal_function.permute_variables;
 
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTxService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
@@ -55,7 +55,7 @@ public class TestPermuteValuesOfVariables extends PreparingSourceCode {
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
-    @Autowired private ExecContextService execContextService;
+    @Autowired private ExecContextTxService execContextTxService;
     @Autowired private ExecContextStatusService execContextStatusService;
     @Autowired private ExecContextTaskStateService execContextTaskStateTopLevelService;
     @Autowired private ExecContextGraphTopLevelService execContextGraphTopLevelService;

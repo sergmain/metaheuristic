@@ -49,6 +49,6 @@ public class StatusRestController {
     @GetMapping("/exec-context/{id}")
     public String execContext(@PathVariable Long id, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        return dispatcherStatusService.statusExecContext(id, context);
+        return dispatcherStatusService.statusExecContext(id, context, authentication);
     }
 }

@@ -89,7 +89,7 @@ public class BatchTxService {
     private final BatchRepository batchRepository;
     private final VariableTxService variableService;
     private final DispatcherEventService dispatcherEventService;
-    private final ExecContextService execContextService;
+    private final ExecContextTxService execContextTxService;
     private final ExecContextFSM execContextFSM;
     private final ExecContextCache execContextCache;
     private final BatchHelperService batchHelperService;
@@ -228,7 +228,7 @@ public class BatchTxService {
     public OperationStatusRest deleteBatch(Long execContextId, Long companyUniqueId, Long batchId) {
         ExecContextSyncService.checkWriteLockPresent(execContextId);
 
-        execContextService.deleteExecContext(execContextId, companyUniqueId);
+        execContextTxService.deleteExecContext(execContextId, companyUniqueId);
         batchCache.deleteById(batchId);
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #" + batchId + " was deleted successfully.", null);
     }
