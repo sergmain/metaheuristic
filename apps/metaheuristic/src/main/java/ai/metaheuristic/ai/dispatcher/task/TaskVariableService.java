@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.VariableUploadedTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.southbridge.UploadResult;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -46,7 +45,6 @@ public class TaskVariableService {
 
     private final TaskRepository taskRepository;
     private final TaskTxService taskService;
-    private final VariableRepository variableRepository;
     private final EventPublisherService eventPublisherService;
 
     public static class UpdateStatusOfVariableException extends RuntimeException {
@@ -63,7 +61,7 @@ public class TaskVariableService {
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            final String es = "#441.020 Task "+taskId+" is obsolete and was already deleted";
+            final String es = "441.020 Task "+taskId+" is obsolete and was already deleted";
             log.warn(es);
             throw new UpdateStatusOfVariableException(new UploadResult(Enums.UploadVariableStatus.TASK_NOT_FOUND, es));
         }
@@ -74,7 +72,7 @@ public class TaskVariableService {
 
         if (status != Enums.UploadVariableStatus.OK) {
             throw new UpdateStatusOfVariableException(
-                    new UploadResult(status, "#441.080 can't update resultReceived field for task #"+ taskId+", variable #" +variableId));
+                    new UploadResult(status, "441.080 can't update resultReceived field for task #"+ taskId+", variable #" +variableId));
         }
     }
 
@@ -82,7 +80,7 @@ public class TaskVariableService {
         TxUtils.checkTxExists();
 
         if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
-            log.warn("#441.180 Task {} was reset, can't set new value to field resultReceived", task.id);
+            log.warn("441.180 Task {} was reset, can't set new value to field resultReceived", task.id);
             return Enums.UploadVariableStatus.TASK_WAS_RESET;
         }
         TaskParamsYaml tpy = task.getTaskParamsYaml();

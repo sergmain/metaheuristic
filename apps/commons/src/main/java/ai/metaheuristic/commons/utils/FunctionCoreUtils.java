@@ -38,31 +38,31 @@ public class FunctionCoreUtils {
 
     public static FunctionApiData.FunctionConfigStatus validate(FunctionConfigYaml.FunctionConfig functionConfig) {
         if ((functionConfig.file ==null || functionConfig.file.isBlank()) && (functionConfig.env ==null || functionConfig.env.isBlank())) {
-            return new FunctionApiData.FunctionConfigStatus(false, "#401.10 Fields 'file' and 'env' can't be null or empty both.");
+            return new FunctionApiData.FunctionConfigStatus(false, "401.010 Fields 'file' and 'env' can't be null or empty both.");
         }
         if (S.b(functionConfig.code)) {
-            return new FunctionApiData.FunctionConfigStatus(false, "#401.15 The field 'code' is blank: " + functionConfig.toString());
+            return new FunctionApiData.FunctionConfigStatus(false, "401.015 The field 'code' is blank: " + functionConfig);
         }
         if (S.b(functionConfig.type)) {
-            return new FunctionApiData.FunctionConfigStatus(false, "#401.17 The field 'type is blank: " + functionConfig.toString());
+            return new FunctionApiData.FunctionConfigStatus(false, "401.017 The field 'type is blank: " + functionConfig);
         }
         if (!StrUtils.isCodeOk(functionConfig.code)) {
-            return new FunctionApiData.FunctionConfigStatus(false, "#401.20 Function code has wrong chars: "+ functionConfig.code +", allowed only: " + StrUtils.ALLOWED_CHARS_IN_CODE_REGEXP);
+            return new FunctionApiData.FunctionConfigStatus(false, "401.020 Function code has wrong chars: "+ functionConfig.code +", allowed only: " + StrUtils.ALLOWED_CHARS_IN_CODE_REGEXP);
         }
         if (functionConfig.sourcing ==null) {
-            return new FunctionApiData.FunctionConfigStatus(false, "#401.25 Field 'sourcing' is absent");
+            return new FunctionApiData.FunctionConfigStatus(false, "401.025 Field 'sourcing' is absent");
         }
         switch (functionConfig.sourcing) {
             case dispatcher:
                 if (StringUtils.isBlank(functionConfig.file)) {
-                    return new FunctionApiData.FunctionConfigStatus(false, "#401.30 sourcing is 'dispatcher' but file is empty: " + functionConfig.toString());
+                    return new FunctionApiData.FunctionConfigStatus(false, "401.030 sourcing is 'dispatcher' but file is empty: " + functionConfig);
                 }
                 break;
             case processor:
                 break;
             case git:
                 if (functionConfig.git ==null) {
-                    return new FunctionApiData.FunctionConfigStatus(false, "#401.42 sourcing is 'git', but git info is absent");
+                    return new FunctionApiData.FunctionConfigStatus(false, "401.042 sourcing is 'git', but git info is absent");
                 }
                 break;
         }
@@ -106,7 +106,7 @@ public class FunctionCoreUtils {
                 return oss;
             }
             catch (IllegalArgumentException e) {
-                log.error("#311.001 Error parsing metadata with supported OS: " + meta, e);
+                log.error("401.200 Error parsing metadata with supported OS: " + meta, e);
                 return List.of();
             }
         }

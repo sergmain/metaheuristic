@@ -93,13 +93,13 @@ public class DispatcherVariableProvider implements VariableProvider {
                 case array:
                     return prepareArrayVariable(taskDir, variable);
                 default:
-                    es = "#810.007 Unknown context: " + variable.context+ ", variableId: " +  variable.id;
+                    es = "812.007 Unknown context: " + variable.context+ ", variableId: " +  variable.id;
                     log.error(es);
                     throw new BreakFromLambdaException(es);
             }
         }
         catch (WrongVersionOfParamsException e) {
-            String es = "#810.010 Error while processing task #"+task.getTaskId()+", variable #" + variable.id;
+            String es = "812.010 Error while processing task #"+task.getTaskId()+", variable #" + variable.id;
             log.error(es, e);
             throw new BreakFromLambdaException(e);
         }

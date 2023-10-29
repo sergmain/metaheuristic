@@ -46,7 +46,6 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/rest/v1/dispatcher/source-code")
 @Profile("dispatcher")
 @CrossOrigin
-//@CrossOrigin(origins="*", maxAge=3600)
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class SourceCodeRestController {
 

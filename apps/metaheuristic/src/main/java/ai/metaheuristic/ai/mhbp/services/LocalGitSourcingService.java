@@ -23,10 +23,10 @@ import ai.metaheuristic.ai.dispatcher.data.GitData;
 import ai.metaheuristic.ai.mhbp.data.KbData;
 import ai.metaheuristic.ai.utils.ArtifactUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
-import lombok.*;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -103,12 +103,12 @@ public class LocalGitSourcingService {
     public static GitData.GitStatusInfo getGitStatus(GitData.GitContext gitContext) {
         ExecResult result = execGitCmd(GIT_VERSION_CMD, gitContext);
         if (!result.ok) {
-            log.warn("#027.010 Error of getting git status");
+            log.warn("026.010 Error of getting git status");
             log.warn("\tresult.ok: {}",  result.ok);
             log.warn("\tresult.error: {}",  result.error);
             log.warn("\tresult.functionDir: {}", result.functionDir!=null ? result.functionDir.toAbsolutePath() : null);
             log.warn("\tresult.systemExecResult: {}",  result.systemExecResult);
-            return new GitData.GitStatusInfo(Enums.GitStatus.error, null, "#027.010 Error: " + result.error);
+            return new GitData.GitStatusInfo(Enums.GitStatus.error, null, "026.010 Error: " + result.error);
         }
 
         // at this point result.systemExecResult must be not null,
@@ -117,7 +117,7 @@ public class LocalGitSourcingService {
         if (result.systemExecResult.exitCode!=0) {
             return new GitData.GitStatusInfo(
                     Enums.GitStatus.not_found, null,
-                    "#027.013 Console: " + result.systemExecResult.console);
+                    "026.013 Console: " + result.systemExecResult.console);
         }
         return new GitData.GitStatusInfo(Enums.GitStatus.installed, getGitVersion(result.systemExecResult.console.toLowerCase()), null);
     }
@@ -136,7 +136,7 @@ public class LocalGitSourcingService {
             }
             catch (IOException e) {
                 assetFile.isError = true;
-                log.error("#027.030 Can't create function dir: {}", trgDir.toAbsolutePath());
+                log.error("026.030 Can't create function dir: {}", trgDir.toAbsolutePath());
                 return assetFile;
             }
         }
@@ -149,7 +149,7 @@ public class LocalGitSourcingService {
             }
             catch (IOException e) {
                 assetFile.isError = true;
-                log.error("#027.040 Can't create resource dir: {}", resDir.toAbsolutePath());
+                log.error("026.040 Can't create resource dir: {}", resDir.toAbsolutePath());
                 return assetFile;
             }
         }
@@ -162,7 +162,7 @@ public class LocalGitSourcingService {
 
         Path functionDir = resourceDir;
         Path repoDir = functionDir.resolve(Consts.REPO);
-        log.info("#027.070 Target dir: {}, exist: {}", repoDir.toAbsolutePath(), Files.exists(repoDir));
+        log.info("026.070 Target dir: {}, exist: {}", repoDir.toAbsolutePath(), Files.exists(repoDir));
 
         if (Files.exists(repoDir) && PathUtils.isEmpty(repoDir)) {
             Files.delete(repoDir);
@@ -170,15 +170,15 @@ public class LocalGitSourcingService {
 
         if (Files.notExists(repoDir)) {
             ExecResult result = execClone(functionDir, git, gitContext);
-            log.info("#027.080 Result of cloning repo: {}", result.toString());
+            log.info("026.080 Result of cloning repo: {}", result.toString());
             if (!result.ok || !result.systemExecResult.isOk()) {
                 result = tryToRepairRepo(functionDir, git, gitContext);
-                log.info("#027.090 Result of repairing of repo: {}", result.toString());
+                log.info("026.090 Result of repairing of repo: {}", result.toString());
                 return result;
             }
         }
         ExecResult result = execRevParse(repoDir, gitContext);
-        log.info("#027.100 Result of execRevParse: {}", result.toString());
+        log.info("026.100 Result of execRevParse: {}", result.toString());
         if (!result.ok) {
             return result;
         }
@@ -187,7 +187,7 @@ public class LocalGitSourcingService {
         }
         if (!"true".equals(result.systemExecResult.console.strip())) {
             result = tryToRepairRepo(repoDir, git, gitContext);
-            log.info("#027.110 Result of tryToRepairRepo: {}", result.toString());
+            log.info("026.110 Result of tryToRepairRepo: {}", result.toString());
             if (!result.ok) {
                 return result;
             }
@@ -197,7 +197,7 @@ public class LocalGitSourcingService {
         }
 
         result = execResetHardHead(repoDir, gitContext);
-        log.info("#027.120 Result of execResetHardHead: {}", result.toString());
+        log.info("026.120 Result of execResetHardHead: {}", result.toString());
         if (!result.ok) {
             return result;
         }
@@ -206,7 +206,7 @@ public class LocalGitSourcingService {
         }
 
         result = execCleanDF(repoDir, gitContext);
-        log.info("#027.130 Result of execCleanDF: {}", result.toString());
+        log.info("026.130 Result of execCleanDF: {}", result.toString());
         if (!result.ok) {
             return result;
         }
@@ -215,7 +215,7 @@ public class LocalGitSourcingService {
         }
 
         result = execPullOrigin(repoDir, git, gitContext);
-        log.info("#027.140 Result of execPullOrigin: {}", result.toString());
+        log.info("026.140 Result of execPullOrigin: {}", result.toString());
         if (!result.ok) {
             return result;
         }
@@ -224,14 +224,14 @@ public class LocalGitSourcingService {
         }
 
         result = execCheckoutRevision(repoDir, git, gitContext);
-        log.info("#027.150 Result of execCheckoutRevision: {}", result.toString());
+        log.info("026.150 Result of execCheckoutRevision: {}", result.toString());
         if (!result.ok) {
             return result;
         }
         if (!result.systemExecResult.isOk) {
             return new ExecResult(null,false, result.systemExecResult.console);
         }
-        log.info("#027.160 repoDir: {}, exist: {}", repoDir.toAbsolutePath(), Files.exists(repoDir));
+        log.info("026.160 repoDir: {}, exist: {}", repoDir.toAbsolutePath(), Files.exists(repoDir));
 
         return new ExecResult(repoDir, new FunctionApiData.SystemExecResult(null, true, 0, "" ), true, null);
     }
@@ -245,7 +245,7 @@ public class LocalGitSourcingService {
         if (Files.exists(repoDir)) {
             return new ExecResult(null,
                     false,
-                    "#027.170 can't prepare repo dir for function: " + repoDir.toAbsolutePath());
+                    "026.170 can't prepare repo dir for function: " + repoDir.toAbsolutePath());
         }
         result = execClone(functionDir, git, gitContext);
         return result;

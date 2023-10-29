@@ -93,6 +93,9 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
 //    @Transactional(readOnly = true)
     List<Long> findIdsBySourceCodeId(Long sourceCodeId);
 
+    @Query(value="select e from ExecContextImpl e where e.sourceCodeId=:sourceCodeId")
+    List<ExecContextImpl> findBySourceCodeId(Long sourceCodeId);
+
 //    @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.api.data.exec_context.ExecContextsListItem(" +
             "b.id, b.createdOn, b.valid, b.completedOn, b.state ) " +

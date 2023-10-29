@@ -100,7 +100,7 @@ public class DirUtils {
                     }
                     deletePathAsync(file);
                 } catch (Throwable th) {
-                    log.error("Error while cleaning resources", th);
+                    log.error("017.020 Error while cleaning resources", th);
                 }
             }
         }
@@ -122,7 +122,7 @@ public class DirUtils {
                     return newTempDir;
                 }
             } catch (IOException e) {
-                log.error(S.f("#017.040 Can't create temporary dir %s, attempt #%d, error: %s", newTempDir.normalize(), i, e.toString()));
+                log.error(S.f("017.040 Can't create temporary dir %s, attempt #%d, error: %s", newTempDir.normalize(), i, e.toString()));
             }
         }
         return null;
@@ -153,7 +153,7 @@ public class DirUtils {
         if (!currDir.exists()) {
             boolean isOk = currDir.mkdirs();
             if (!isOk) {
-                log.error("#017.020 can't make all directories for path: {}", currDir.getAbsolutePath());
+                log.error("017.060 can't make all directories for path: {}", currDir.getAbsolutePath());
                 return null;
             }
         }
@@ -191,7 +191,7 @@ public class DirUtils {
                     return newTempDir;
                 }
             } catch (IOException e) {
-                log.error(S.f("#017.040 Can't create temporary dir %s, attempt #%d, error: %s", newTempDir.getAbsolutePath(), i, e.toString()));
+                log.error(S.f("017.080 Can't create temporary dir %s, attempt #%d, error: %s", newTempDir.getAbsolutePath(), i, e.toString()));
             }
         }
         return null;
@@ -212,7 +212,7 @@ public class DirUtils {
                         deleteAsync(file);
                     }
                 } catch (Throwable th) {
-                    log.error("Error while cleaning resources", th);
+                    log.error("017.100 Error while cleaning resources", th);
                 }
             }
         }

@@ -49,17 +49,17 @@ public class SourceCodeParamsYaml implements BaseParams {
     @Override
     public boolean checkIntegrity() {
         if (source == null || S.b(source.uid) || source.processes == null) {
-            throw new CheckIntegrityFailedException("#608.020 (source == null || S.b(source.uid) || source.processes == null)");
+            throw new CheckIntegrityFailedException("608.020 (source == null || S.b(source.uid) || source.processes == null)");
         }
         if (source.uid.length()>250) {
-            throw new CheckIntegrityFailedException("#608.040 uid is too long. max 250 chars");
+            throw new CheckIntegrityFailedException("608.040 uid is too long. max 250 chars");
         }
         for (Process process : source.processes) {
             if (process.function ==null) {
-                throw new CheckIntegrityFailedException("#608.060 (process.function==null)");
+                throw new CheckIntegrityFailedException("608.060 (process.function==null)");
             }
             if (StringUtils.containsAny(process.tag, ',', ' ')) {
-                throw new CheckIntegrityFailedException("#608.080 process.tag can't contain comma or space and must be handled as single tag");
+                throw new CheckIntegrityFailedException("608.080 process.tag can't contain comma or space and must be handled as single tag");
             }
         }
         return true;

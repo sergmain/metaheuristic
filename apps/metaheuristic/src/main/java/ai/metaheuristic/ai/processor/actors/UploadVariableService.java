@@ -90,7 +90,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
             UploadResult result = mapper.readValue(json, UploadResult.class);
             return result;
         } catch (IOException e) {
-            throw new RuntimeException("#311.010 error", e);
+            throw new RuntimeException("311.010 error", e);
         }
     }
 
@@ -111,11 +111,11 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
 
             ProcessorCoreTask processorTask = processorTaskService.findByIdForCore(task.core, task.taskId);
             if (processorTask == null) {
-                log.info("#311.020 task was already cleaned or didn't exist, {}, #{}", task.getDispatcherUrl(), task.taskId);
+                log.info("311.020 task was already cleaned or didn't exist, {}, #{}", task.getDispatcherUrl(), task.taskId);
                 continue;
             }
             if (currentExecState.finishedOrDoesntExist(task.core.dispatcherUrl, processorTask.execContextId)) {
-                log.info("#311.021 ExecContext #{} for task #{} with variable #{} is finished or doesn't exist, url: {}",
+                log.info("311.021 ExecContext #{} for task #{} with variable #{} is finished or doesn't exist, url: {}",
                         processorTask.execContextId, task.taskId, finalTask.variableId, task.getDispatcherUrl());
                 processorTaskService.setVariableUploadedAndCompleted(task.core, finalTask.taskId, finalTask.variableId);
                 continue;
@@ -124,25 +124,25 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
 
             TaskParamsYaml.OutputVariable v = taskParamYaml.task.outputs.stream().filter(o->o.id.equals(finalTask.variableId)).findFirst().orElse(null);
             if (v==null) {
-                log.error("#311.022 outputVariable with variableId {} wasn't found.", finalTask.variableId);
+                log.error("311.022 outputVariable with variableId {} wasn't found.", finalTask.variableId);
                 processorTaskService.delete(task.core, task.taskId);
                 continue;
             }
             ProcessorCoreTask.OutputStatus outputStatus = processorTask.output.outputStatuses.stream().filter(o->o.variableId.equals(finalTask.variableId)).findFirst().orElse(null);
             if (outputStatus==null) {
-                log.error("#311.024 outputStatus for variableId {} wasn't found.", finalTask.variableId);
+                log.error("311.024 outputStatus for variableId {} wasn't found.", finalTask.variableId);
                 processorTaskService.delete(task.core, task.taskId);
                 continue;
             }
             if (outputStatus.uploaded) {
-                log.info("#311.030 resource was already uploaded, {}, #{}", task.getDispatcherUrl(), task.taskId);
+                log.info("311.030 resource was already uploaded, {}, #{}", task.getDispatcherUrl(), task.taskId);
                 continue;
             }
             if (v.sourcing!= EnumsApi.DataSourcing.dispatcher) {
-                throw new NotImplementedException("#311.032 Need to implement");
+                throw new NotImplementedException("311.032 Need to implement");
             }
             if (!task.nullified && (task.file==null || Files.notExists(task.file))) {
-                log.error("#311.040 File {} doesn't exist", task.file.toAbsolutePath());
+                log.error("311.040 File {} doesn't exist", task.file.toAbsolutePath());
                 continue;
             }
             if (task.nullified) {
@@ -183,7 +183,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                     if (task.file==null) {
                         // TODO 2020-11-26 in case that ai.metaheuristic.ai.processor.tasks.UploadVariableTask.file is @Nullable
                         //  what is the problem with this state? Should we handle this state in more sophisticated way?
-                        throw new IllegalStateException("#311.043 (task.file==null)");
+                        throw new IllegalStateException("311.043 (task.file==null)");
                     }
                     log.info("variable #{} has length {}", task.variableId, Files.size(task.file));
                     builder.addBinaryBody("file", task.file.toFile(), ContentType.APPLICATION_OCTET_STREAM, task.file.getFileName().toString());
@@ -209,16 +209,16 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                 log.info("Server response: {}", result);
 
                 if (result.status!= Enums.UploadVariableStatus.OK) {
-                    log.error("#311.050 Error uploading file, server's error : " + result.error);
+                    log.error("311.050 Error uploading file, server's error : " + result.error);
                 }
                 status = result.status;
 
             } catch (HttpResponseException e) {
                 if (e.getStatusCode()==401) {
-                    log.error("#311.055 Error uploading variable to server, code: 401, error: {}", e.getMessage());
+                    log.error("311.055 Error uploading variable to server, code: 401, error: {}", e.getMessage());
                 }
                 else if (e.getStatusCode()== 500) {
-                    log.error("#311.056 Server error, code: 500, error: {}", e.getMessage());
+                    log.error("311.056 Server error, code: 500, error: {}", e.getMessage());
                 }
                 else {
                     log.error("311.060 Error uploading variable to server, code: " + e.getStatusCode()+", " +
@@ -262,20 +262,20 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
                     case TASK_NOT_FOUND:
                     case UNRECOVERABLE_ERROR:
                         processorTaskService.delete(task.core, task.taskId);
-                        log.error("#311.100 server return status {}, this task will be deleted.", status);
+                        log.error("311.100 server return status {}, this task will be deleted.", status);
                         break;
                     case PROBLEM_WITH_LOCKING:
-                        log.warn("#311.110 problem with locking in DB at server side, {}", status);
+                        log.warn("311.110 problem with locking in DB at server side, {}", status);
                         repeat.add(task);
                         break;
                     case GENERAL_ERROR:
-                        log.warn("#311.120 general error at server side, {}", status);
+                        log.warn("311.120 general error at server side, {}", status);
                         repeat.add(task);
                         break;
                 }
             }
             else {
-                log.warn("#311.130 Error accessing rest-server. Assign task one more time.");
+                log.warn("311.130 Error accessing rest-server. Assign task one more time.");
                 repeat.add(task);
             }
         }

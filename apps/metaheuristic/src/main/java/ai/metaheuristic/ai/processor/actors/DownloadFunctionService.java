@@ -219,7 +219,7 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                                 functionState = EnumsApi.FunctionState.dispatcher_config_error;
                                 break;
                             } else if (e.getStatusCode() == HttpServletResponse.SC_BAD_GATEWAY) {
-                                final String es = String.format("#810.035 BAD_GATEWAY error while downloading " +
+                                final String es = String.format("811.035 BAD_GATEWAY error while downloading " +
                                         "a function #%s on assetManager srv %s. will try later again", task.functionCode, assetManager.url);
                                 log.warn(es);
                                 // do nothing and try later again

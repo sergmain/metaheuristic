@@ -91,6 +91,7 @@ public class MultiHttpSecurityConfig {
                     .requestMatchers(OPTIONS).permitAll() // allow CORS option calls for Swagger UI
                     .requestMatchers("/","/index.html", "/*.js", "/*.css", "/favicon.ico", "/assets/**","/resources/**", "/rest/login").permitAll()
                     .requestMatchers("/rest/v1/standalone/anon/**", "/rest/v1/dispatcher/anon/**").permitAll()
+                    .requestMatchers("/rest/v1/dispatcher/status/**").hasAuthority("ROLE_MAIN_ADMIN")
                     .requestMatchers("/rest/**").authenticated()
                     .anyRequest().denyAll()
             )

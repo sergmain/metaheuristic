@@ -71,7 +71,7 @@ public class TaskProducingService {
                 execContextParamsYaml.variables.inline, parentTaskIds, taskExecState);
         if (t == null) {
             return new TaskData.ProduceTaskResult(
-                    EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR, "#375.020 Unknown reason of error while task creation");
+                    EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR, "375.020 Unknown reason of error while task creation");
         }
 
         result.taskId = t.getId();
@@ -103,7 +103,7 @@ public class TaskProducingService {
         ExecContextParamsYaml execContextParamsYaml = executionContextData.execContextParamsYaml;
         List<ExecContextData.ProcessVertex> subProcesses = executionContextData.subProcesses;
         if (subProcesses.isEmpty()) {
-            log.info("#375.040 There isn't any subProcess");
+            log.info("375.040 There isn't any subProcess");
             return;
         }
 
@@ -111,7 +111,7 @@ public class TaskProducingService {
         ExecContextParamsYaml.Process process = executionContextData.process;
 
         if (process.logic!= EnumsApi.SourceCodeSubProcessLogic.sequential && process.logic!= EnumsApi.SourceCodeSubProcessLogic.and) {
-            throw new BreakFromLambdaException("#375.060 only the 'sequential' and 'and' logics are supported");
+            throw new BreakFromLambdaException("375.060 only the 'sequential' and 'and' logics are supported");
         }
 
         List<Long> parentTaskIds = List.of(parentTaskId);
@@ -122,7 +122,7 @@ public class TaskProducingService {
         for (ExecContextData.ProcessVertex subProcess : subProcesses) {
             final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(subProcess.process);
             if (p==null) {
-                throw new BreakFromLambdaException("#375.080 Process '" + subProcess.process + "' wasn't found");
+                throw new BreakFromLambdaException("375.080 Process '" + subProcess.process + "' wasn't found");
             }
 
             String actualProcessContextId;
@@ -133,18 +133,18 @@ public class TaskProducingService {
                 case sequential:
                     // all subProcesses must have the same processContextId
                     if (!subProcessContextId.equals(subProcess.processContextId)) {
-                        throw new BreakFromLambdaException("#375.100 Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
+                        throw new BreakFromLambdaException("375.100 Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
                     }
                     actualProcessContextId = currTaskContextId;
                     break;
                 default:
-                    throw new BreakFromLambdaException("#375.060 only the 'sequential' and 'and' logics are supported");
+                    throw new BreakFromLambdaException("375.060 only the 'sequential' and 'and' logics are supported");
             }
 
             t = createTaskHelper(simpleExecContext.execContextId, execContextParamsYaml, p, actualProcessContextId, inlines, List.of(parentTaskId), EnumsApi.TaskExecState.PRE_INIT);
 
             if (t==null) {
-                throw new BreakFromLambdaException("#375.120 Creation of task failed");
+                throw new BreakFromLambdaException("375.120 Creation of task failed");
             }
             final EnumsApi.TaskExecState targetState = EnumsApi.TaskExecState.from(t.execState);
             if (targetState.value!=t.execState) {
@@ -181,7 +181,7 @@ public class TaskProducingService {
         else {
             TaskParamsYaml.FunctionConfig fConfig = functionTopLevelService.getFunctionConfig(process.function);
             if (fConfig == null) {
-                log.error("#375.140 Function '{}' wasn't found", process.function.code);
+                log.error("375.140 Function '{}' wasn't found", process.function.code);
                 return null;
             }
             taskParams.task.function = fConfig;

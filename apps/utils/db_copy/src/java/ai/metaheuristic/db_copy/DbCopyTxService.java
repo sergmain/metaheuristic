@@ -61,8 +61,9 @@ public class DbCopyTxService {
     public void storeToFileFromPrimary(String code, Path trgFile) {
         Blob blob = primaryFunctionDataRepository.getDataAsStreamByCode(code);
         if (blob==null) {
-            log.warn("#088.010 Binary data for code {} wasn't found", code);
-            throw new RuntimeException("#088.010 Function data wasn't found, code: " + code);
+            String es = "088.010 Function data wasn't found, code: " + code;
+            log.warn(es);
+            throw new RuntimeException(es);
         }
         try (InputStream is = blob.getBinaryStream()) {
             DirUtils.copy(is, trgFile);

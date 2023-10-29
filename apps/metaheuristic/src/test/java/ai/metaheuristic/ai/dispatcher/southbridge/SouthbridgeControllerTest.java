@@ -95,17 +95,14 @@ public class SouthbridgeControllerTest {
             os.write(bytes);
             os.flush();
         }
-        final String uploadRestUrl  = "http://localhost:8080" + CommonConsts.REST_V1_URL + Consts.UPLOAD_REST_URL;
-        String randonPart = "/123-1-1";
-        final String uri = uploadRestUrl + randonPart;
+
+        // see ai.metaheuristic.ai.dispatcher.rest.v1.SimpleRestController.uploadToNull
+        final String uri = "http://localhost:8080/rest/v1/test/null";
 
         final MultipartEntityBuilder builder = MultipartEntityBuilder.create()
             .setMode(HttpMultipartMode.EXTENDED)
             .setCharset(StandardCharsets.UTF_8)
-            .addTextBody("processorId", "1")
-            .addTextBody("taskId", "1")
-            .addTextBody("variableId", "1")
-            .addTextBody("nullified", "false")
+            .addTextBody("length", ""+SIZE_FOR_UPLOADING)
             .addBinaryBody("file", tempFile.toFile(), ContentType.APPLICATION_OCTET_STREAM, "filename");
 
         HttpEntity entity = builder.build();
@@ -115,7 +112,7 @@ public class SouthbridgeControllerTest {
             .responseTimeout(Timeout.ofSeconds(60))
             .body(entity);
 
-        final Executor executor = HttpClientExecutor.getExecutor(uri, "data_rest", "123");
+        final Executor executor = HttpClientExecutor.getExecutor(uri);
 
         Response response = assertDoesNotThrow(()->executor.execute(request));
 

@@ -33,7 +33,6 @@ import java.util.List;
 @RequestMapping("/rest/v1/dispatcher/test")
 @Profile("dispatcher")
 @CrossOrigin
-//@CrossOrigin(origins="*", maxAge=3600)
 public class TestRestController {
 
     private static final List<String> FUNCTIONS = List.of("f-1", "f-2");

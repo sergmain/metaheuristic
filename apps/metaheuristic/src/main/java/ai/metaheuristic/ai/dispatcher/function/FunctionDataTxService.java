@@ -57,7 +57,7 @@ public class FunctionDataTxService {
         } catch (CommonErrorWithDataException e) {
             throw e;
         } catch (Throwable th) {
-            String es = "#088.020 Error while storing binary data, error: " + th.getMessage();
+            String es = "087.040 Error while storing binary data, error: " + th.getMessage();
             log.error(es, th);
             throw new FunctionDataErrorException(code, es);
         }
