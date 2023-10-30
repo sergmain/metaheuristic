@@ -111,17 +111,16 @@ public class ProviderQueryService {
 
     private void askQuestions(AtomicReference<Session> s, Api api, Stream<QuestionData.PromptWithAnswerWithChapterId> questions) throws InterruptedException {
         long mills = System.currentTimeMillis();
-        ConcurrentHashMap<Long, ChapterWithResults> chapterCache;
+        ConcurrentHashMap<Long, ChapterWithResults> chapterCache = new ConcurrentHashMap<>();
         long endMills;
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            chapterCache = new ConcurrentHashMap<>();
             AtomicInteger currTotalErrors = new AtomicInteger();
             final List<Future<?>> f = new ArrayList<>();
             questions.forEach(question -> {
                 Thread t = new Thread(() -> makeQuery(api, question, currTotalErrors, chapterCache), "ProviderQueryService-" + ThreadUtils.nextThreadNum());
                 f.add(executor.submit(t));
             });
-
+            // replace with CompletableFuture?
             ThreadUtils.waitTaskCompleted(f, 20);
             endMills = ThreadUtils.execStat(mills, f.size());
         }

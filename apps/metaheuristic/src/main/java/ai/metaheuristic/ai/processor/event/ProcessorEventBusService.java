@@ -31,6 +31,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -53,25 +54,30 @@ public class ProcessorEventBusService {
     private final ProcessorEnvironment processorEnvironment;
     private ActiveDispatchers activeDispatchers;
 
-    private ThreadPoolExecutor executor;
+    private final Map<String, ThreadPoolExecutor> executors = new HashMap<>();
 
     private boolean shutdown = false;
 
     @PostConstruct
     public void post() {
-        executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(Math.min(4, processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.size()));
         this.activeDispatchers = new ActiveDispatchers(processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap, "RoundRobin for KeepAlive", Enums.DispatcherSelectionStrategy.alphabet);
+        for (Map.Entry<ProcessorAndCoreData.DispatcherUrl, AtomicBoolean> entry : activeDispatchers.getActiveDispatchers().entrySet()) {
+            // TODO p5 2023-10-30 do we need to switch to a virtual threads?
+            executors.put(entry.getKey().url, (ThreadPoolExecutor) Executors.newFixedThreadPool(1));
+        }
     }
 
     @PreDestroy
     public void onExit() {
         shutdown = true;
-        executor.shutdownNow();
-        executor = null;
+        for (Map.Entry<ProcessorAndCoreData.DispatcherUrl, AtomicBoolean> entry : activeDispatchers.getActiveDispatchers().entrySet()) {
+            ThreadPoolExecutor executor = executors.get(entry.getKey().url);
+            executor.shutdownNow();
+            entry.getValue().set(false);
+        }
     }
 
     public void keepAlive(KeepAliveEvent event) {
-        // TODO 2023-08-27 p3 need to optimize
         if (shutdown) {
             return;
         }
@@ -81,14 +87,21 @@ public class ProcessorEventBusService {
                 log.info("Can't find any enabled dispatcher");
                 return;
             }
-            int activeCount = executor.getActiveCount();
-            if (activeCount >0) {
-                log.error("#047.020 executor has a not finished tasks, count: {}", activeCount);
-            }
             // TODO 2020-11-22 do we need to convert Set to List and sort it?
             // TODO 2021-11-10 actually, activeDispatchers.getActiveDispatchers() returns a map, which is unmodifiable LinkedHashMap
             //  so we don't need to sort this map.
             for (ProcessorAndCoreData.DispatcherUrl dispatcher : dispatchers.keySet()) {
+                ThreadPoolExecutor executor = executors.get(dispatcher.url);
+                if (executor==null) {
+                    log.error("047.090 ThreadPoolExecutor wasn't found, need to investigate");
+                    continue;
+                }
+                int activeCount = executor.getActiveCount();
+                if (activeCount >0) {
+                    log.warn("047.060 executor has a not finished tasks, count: {}", activeCount);
+                    continue;
+                }
+
                 Thread t = new Thread(() -> {
                     log.info("Call processorKeepAliveRequestor, url: {}", dispatcher.url);
                     try {
@@ -100,7 +113,7 @@ public class ProcessorEventBusService {
                 executor.submit(t);
             }
         } catch (Throwable th) {
-            log.error("Error, need to investigate ", th);
+            log.error("047.090 Error, need to investigate ", th);
         }
     }
 }

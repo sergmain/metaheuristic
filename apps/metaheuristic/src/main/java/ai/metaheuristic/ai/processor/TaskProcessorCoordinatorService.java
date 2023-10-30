@@ -58,7 +58,8 @@ public class TaskProcessorCoordinatorService {
         for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataParams.getAllEnabledRefsForCores()) {
             TaskProcessor taskProcessor = taskProcessors.computeIfAbsent( core.coreCode,
                     o -> new TaskProcessor(globals, processorTaskService, currentExecState, processorEnvironment, processorService, resourceProviderFactory, gitSourcingService));
-            new Thread(()-> taskProcessor.process(core), "task-processor-"+core.coreCode).start();
+            // new Thread(()-> taskProcessor.process(core), "task-processor-"+core.coreCode).start();
+            Thread.startVirtualThread(()-> taskProcessor.process(core));
         }
     }
 }

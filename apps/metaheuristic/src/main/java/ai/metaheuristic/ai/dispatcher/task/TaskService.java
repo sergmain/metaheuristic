@@ -120,6 +120,7 @@ public class TaskService {
     }
 
     public void processCheckForLostTaskEvent() {
+        // Don't change to virtual thread
         Thread t = new Thread(() -> {
             CheckForLostTaskEvent currEvent;
             while ((currEvent = pullFromQueue()) != null) {
