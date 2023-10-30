@@ -75,7 +75,7 @@ public class Schedulers {
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-            taskRegistrar.setScheduler(Executors.newVirtualThreadPerTaskExecutor());
+            taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
             taskRegistrar.addTriggerTask(this::artifactCleanerAtDispatcher, context -> getInstant(context, globals.dispatcher.timeout.getArtifactCleaner()));
         }
         public void artifactCleanerAtDispatcher() {
@@ -95,7 +95,7 @@ public class Schedulers {
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-            taskRegistrar.setScheduler(Executors.newVirtualThreadPerTaskExecutor());
+            taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
             taskRegistrar.addTriggerTask( this::updateBatchStatuses, context -> getInstant(context, globals.dispatcher.timeout.getUpdateBatchStatuses()));
         }
 
@@ -124,7 +124,7 @@ public class Schedulers {
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-            taskRegistrar.setScheduler(Executors.newVirtualThreadPerTaskExecutor());
+            taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
             taskRegistrar.addTriggerTask( this::garbageCollectionAtDispatcher, context -> getInstant(context, globals.dispatcher.timeout.getGc()));
         }
 
@@ -147,7 +147,7 @@ public class Schedulers {
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-            taskRegistrar.setScheduler(Executors.newVirtualThreadPerTaskExecutor());
+            taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
             taskRegistrar.addTriggerTask( this::syncReplication, context -> getInstant(context, globals.dispatcher.asset.getSyncTimeout()));
         }
 
@@ -371,7 +371,7 @@ public class Schedulers {
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-            taskRegistrar.setScheduler(Executors.newVirtualThreadPerTaskExecutor());
+            taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
             taskRegistrar.addTriggerTask( this::dispatcherRequester, context -> getInstant(context, globals.processor.timeout.getRequestDispatcher()));
         }
 
@@ -406,7 +406,7 @@ public class Schedulers {
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-            taskRegistrar.setScheduler(Executors.newVirtualThreadPerTaskExecutor());
+            taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
             taskRegistrar.addTriggerTask( this::taskAssigner, context -> getInstant(context, globals.processor.timeout.getTaskAssigner()));
         }
 
@@ -428,7 +428,7 @@ public class Schedulers {
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-            taskRegistrar.setScheduler(Executors.newVirtualThreadPerTaskExecutor());
+            taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
             taskRegistrar.addTriggerTask( this::taskProcessor, context -> getInstant(context, globals.processor.timeout.getTaskProcessor()));
         }
 
@@ -449,7 +449,7 @@ public class Schedulers {
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-            taskRegistrar.setScheduler(Executors.newVirtualThreadPerTaskExecutor());
+            taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
             taskRegistrar.addTriggerTask( this::downloadFunctionActor, context -> getInstant(context, globals.processor.timeout.getDownloadFunction()));
         }
 
@@ -470,7 +470,7 @@ public class Schedulers {
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-            taskRegistrar.setScheduler(Executors.newVirtualThreadPerTaskExecutor());
+            taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
             taskRegistrar.addTriggerTask( this::prepareFunctionForDownloading, context -> getInstant(context, globals.processor.timeout.getPrepareFunctionForDownloading()));
         }
 
@@ -491,7 +491,7 @@ public class Schedulers {
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-            taskRegistrar.setScheduler(Executors.newVirtualThreadPerTaskExecutor());
+            taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
             taskRegistrar.addTriggerTask( this::downloadVariableService, context -> getInstant(context, globals.processor.timeout.getDownloadResource()));
         }
 
@@ -512,7 +512,7 @@ public class Schedulers {
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-            taskRegistrar.setScheduler(Executors.newVirtualThreadPerTaskExecutor());
+            taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
             taskRegistrar.addTriggerTask( this::uploadResourceActor, context -> getInstant(context, globals.processor.timeout.getUploadResultResource()));
         }
 
@@ -533,7 +533,7 @@ public class Schedulers {
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-            taskRegistrar.setScheduler(Executors.newVirtualThreadPerTaskExecutor());
+            taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
             taskRegistrar.addTriggerTask( this::getDispatcherContextInfoActor, context -> getInstant(context, globals.processor.timeout.getDispatcherContextInfo()));
         }
 
@@ -554,7 +554,7 @@ public class Schedulers {
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-            taskRegistrar.setScheduler(Executors.newVirtualThreadPerTaskExecutor());
+            taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
             taskRegistrar.addTriggerTask( this::artifactCleaner, context -> getInstant(context, globals.processor.timeout.getArtifactCleaner()));
         }
 
