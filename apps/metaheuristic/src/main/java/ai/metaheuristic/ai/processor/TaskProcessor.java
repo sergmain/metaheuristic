@@ -424,7 +424,7 @@ public class TaskProcessor {
         return count;
     }
 
-    @SuppressWarnings({"WeakerAccess"})
+    @SuppressWarnings({"WeakerAccess", "UseBulkOperation"})
     // TODO 2019.05.02 implement unit-test for this method
     public FunctionApiData.SystemExecResult execFunction(
             ProcessorCoreTask task, Path taskDir, TaskParamsYaml taskParamYaml, Path systemDir, FunctionPrepareResult functionPrepareResult,

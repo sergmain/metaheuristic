@@ -207,7 +207,6 @@ public class TaskProducingService {
 
         TaskImpl task = new TaskImpl();
         task.execState = taskExecState.value;
-//        task.execState = EnumsApi.TaskExecState.PRE_INIT.value;
         task.execContextId = execContextId;
         task.updateParams(taskParams);
 

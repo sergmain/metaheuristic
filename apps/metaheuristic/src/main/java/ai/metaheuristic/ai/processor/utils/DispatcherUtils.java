@@ -27,8 +27,6 @@ import org.apache.hc.core5.util.TimeValue;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
-import static org.apache.hc.client5.http.config.RequestConfig.custom;
-
 /**
  * @author Serge
  * Date: 11/21/2020

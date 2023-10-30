@@ -158,7 +158,7 @@ public class ExecContextVariableTopLevelService {
                 if (v.inited) {
                     return OK_UPLOAD_RESULT;
                 }
-                try (final InputStream is = file.getInputStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
+                try (final InputStream is = file.getInputStream(); BufferedInputStream bis = new BufferedInputStream(is, 0x2000)) {
                     variableService.storeVariable(bis, file.getSize(), execContextId, taskId, variableId);
                     return OK_UPLOAD_RESULT;
                 } catch (Throwable th) {

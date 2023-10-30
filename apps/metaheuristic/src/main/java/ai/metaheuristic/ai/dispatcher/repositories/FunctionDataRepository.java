@@ -68,5 +68,6 @@ public interface FunctionDataRepository extends CrudRepository<FunctionData, Lon
     Long findIdByCode(String functionCode);
 
     @Modifying
+    @Transactional
     void deleteByFunctionCode(String functionCode);
 }

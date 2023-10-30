@@ -36,6 +36,7 @@ public interface VariableBlobRepository extends CrudRepository<VariableBlob, Lon
 
     @Nullable
     @Query(value="select vb.data from VariableBlob vb where vb.id=:id")
-    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
+//    @Transactional(propagation = Propagation.MANDATORY, readOnly = true)
+    @Transactional(readOnly = true)
     Blob getDataAsStreamById(Long id);
 }

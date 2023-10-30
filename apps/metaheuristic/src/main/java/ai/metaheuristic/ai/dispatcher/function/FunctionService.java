@@ -475,6 +475,7 @@ public class FunctionService {
             if (function != null) {
                 FunctionConfigYaml temp = function.getFunctionConfigYaml();
                 functionConfig = TaskParamsUtils.toFunctionConfig(temp);
+                functionConfig.params = produceFinalCommandLineParams(functionConfig.params, functionDef.getParams());
             } else {
                 log.warn("295.440 Can't find function for code {}", functionDef.getCode());
             }
