@@ -33,6 +33,7 @@ import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreTxService;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
+import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.commons.utils.JsonUtils;
@@ -45,6 +46,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
+
 /**
  * @author Serge
  * Date: 11/22/2020
@@ -54,7 +57,7 @@ import org.springframework.stereotype.Service;
 @Service
 @Profile("dispatcher")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class KeepAliveTopLevelService {
+public class KeepAliveService {
 
     public static final int MAX_REQUEST_PROCESSING_TIME = 12_000;
 
@@ -63,8 +66,8 @@ public class KeepAliveTopLevelService {
     private final FunctionService functionTopLevelService;
     private final ProcessorCache processorCache;
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
-    private final ProcessorTxService processorTransactionService;
-    private final ProcessorCoreTxService processorCoreService;
+    private final ProcessorTxService processorTxService;
+    private final ProcessorCoreTxService processorCoreTxService;
     private final ProcessorCoreCache processorCoreCache;
     private final ExecContextStatusService execContextStatusService;
 
@@ -107,8 +110,8 @@ public class KeepAliveTopLevelService {
             catch (JsonProcessingException e) {
                 json = req.toString();
             }
-            log.error("#446.220 Error while processing client's request, size: {}, ProcessorCommParamsYaml:\n{}", json.length(), json);
-            log.error("#446.230 Error", th);
+            log.error("446.040 Error while processing client's request, size: {}, ProcessorCommParamsYaml:\n{}", json.length(), json);
+            log.error("446.060 Error", th);
             resp.success = false;
             resp.msg = th.getMessage();
         }
@@ -127,9 +130,9 @@ public class KeepAliveTopLevelService {
 
         final Processor processor = processorCache.findById(processorRequest.processorCommContext.processorId);
         if (processor == null) {
-            log.warn("#446.140 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
+            log.warn("446.100 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
             // no need of syncing for creation of new Processor
-            DispatcherApiData.ProcessorSessionId processorSessionId = processorTransactionService.reassignProcessorId(remoteAddress, "Id was reassigned from " + processorRequest.processorCommContext.processorId);
+            DispatcherApiData.ProcessorSessionId processorSessionId = processorTxService.reassignProcessorId(remoteAddress, "Id was reassigned from " + processorRequest.processorCommContext.processorId);
             dispatcherResponse.reAssignedProcessorId = new KeepAliveResponseParamYaml.ReAssignedProcessorId(processorSessionId.processorId.toString(), processorSessionId.sessionId);
             return processorSessionId.processorId;
         }
@@ -161,29 +164,37 @@ public class KeepAliveTopLevelService {
 
     private DispatcherApiData.ProcessorSessionId checkProcessorIdSynced(CheckProcessorIdEvent event) {
         return ProcessorSyncService.getWithSync(event.processorId(),
-            () -> processorTransactionService.checkProcessorId(event.processorAndSessionStatus(), event.processorId(), event.remoteAddress()));
+            () -> processorTxService.checkProcessorId(event.processorAndSessionStatus(), event.processorId(), event.remoteAddress()));
     }
 
     private void processInfoAboutCores(Long processorId, KeepAliveRequestParamYaml req, long startMills, KeepAliveResponseParamYaml resp) {
         for (KeepAliveRequestParamYaml.Core core : req.cores) {
             if (core.coreId == null) {
-                resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(processorCoreService.createProcessorCore(processorId, core).id, core.coreCode));
+                resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(processorCoreTxService.createProcessorCore(processorId, core).id, core.coreCode));
                 continue;
             }
 
             final ProcessorCore processorCore = processorCoreCache.findById(core.coreId);
             if (processorCore == null || !processorCore.processorId.equals(processorId)) {
-                log.warn("#446.140 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
+                log.warn("446.140 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
                 // no need of syncing for creation of new Processor
-                resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(processorCoreService.createProcessorCore(processorId, core).id, core.coreCode));
+                resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(processorCoreTxService.createProcessorCore(processorId, core).id, core.coreCode));
                 continue;
             }
+            if (coreMetadataDifferent(core, processorCore.getCoreStatusYaml())) {
+                processorCoreTxService.updateCore(processorCore, core);
+            }
+
             resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(core.coreId, core.coreCode));
 
             if (System.currentTimeMillis() - startMills > MAX_REQUEST_PROCESSING_TIME) {
                 break;
             }
         }
+    }
+
+    public static boolean coreMetadataDifferent(KeepAliveRequestParamYaml.Core core, CoreStatusYaml coreStatusYaml) {
+        return !Objects.equals(core.coreDir, coreStatusYaml.currDir) || !Objects.equals(core.tags, coreStatusYaml.tags);
     }
 
 

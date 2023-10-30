@@ -197,7 +197,7 @@ public class TaskProviderUnassignedTaskService {
                 if (!S.b(queuedTask.taskParamYaml.task.function.env)) {
                     String interpreter = psy.env.getEnvs().get(queuedTask.taskParamYaml.task.function.env);
                     if (interpreter == null) {
-                        log.warn("317.080 Can't assign task #{} to core #{} because this processor doesn't have defined interpreter for function's env {}",
+                        log.error("317.080 Can't assign task #{} to core #{} because this processor doesn't have defined interpreter for function's env {}",
                                 queuedTask.task.getId(), coreId, queuedTask.taskParamYaml.task.function.env
                         );
                         longHolder.set(System.currentTimeMillis());

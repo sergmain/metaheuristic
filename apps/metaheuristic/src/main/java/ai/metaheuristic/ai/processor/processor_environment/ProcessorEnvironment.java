@@ -71,8 +71,8 @@ public class ProcessorEnvironment {
             final int taskConsoleOutputMaxLines = globals.processor.taskConsoleOutputMaxLines;
 
             if (defaultEnvYamlFile!=null && Files.notExists(defaultEnvYamlFile)) {
-                log.warn("#747.030 Processor's default yaml.yaml file doesn't exist: {}", defaultEnvYamlFile.toAbsolutePath());
-                throw new TerminateApplicationException("#747.014 Processor isn't configured, env.yaml is empty or doesn't exist");
+                log.warn("747.030 Processor's default yaml.yaml file doesn't exist: {}", defaultEnvYamlFile.toAbsolutePath());
+                throw new TerminateApplicationException("747.060 Processor isn't configured, env.yaml is empty or doesn't exist");
             }
             EnvYamlProvider envYamlProvider = null;
             if (globals.standalone.active) {

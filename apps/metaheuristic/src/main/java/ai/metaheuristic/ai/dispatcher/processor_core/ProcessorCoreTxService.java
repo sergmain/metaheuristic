@@ -68,4 +68,14 @@ public class ProcessorCoreTxService {
     public void deleteProcessorCoreById(Long id) {
         processorCoreRepository.deleteById(id);
     }
+
+    @Transactional
+    public void updateCore(ProcessorCore processorCore, KeepAliveRequestParamYaml.Core core) {
+        CoreStatusYaml status = processorCore.getCoreStatusYaml();
+        status.currDir = core.coreDir;
+        status.tags = core.tags;
+        processorCore.updateParams(status);
+
+        coreCache.save(processorCore);
+    }
 }

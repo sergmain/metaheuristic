@@ -26,7 +26,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskCommunicationEvent;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataTxService;
-import ai.metaheuristic.ai.dispatcher.keep_alive.KeepAliveTopLevelService;
+import ai.metaheuristic.ai.dispatcher.keep_alive.KeepAliveService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
@@ -86,7 +86,7 @@ public class SouthbridgeService {
     private final GlobalVariableTxService globalVariableService;
     private final FunctionDataTxService functionDataService;
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
-    private final KeepAliveTopLevelService keepAliveTopLevelService;
+    private final KeepAliveService keepAliveService;
     private final ApplicationEventPublisher eventPublisher;
     private final ProcessorCache processorCache;
     private final ProcessorTxService processorTransactionService;
@@ -221,7 +221,7 @@ public class SouthbridgeService {
     public String keepAlive(String data, String remoteAddress) {
         globals.state.awaitingForProcessor = false;
         KeepAliveRequestParamYaml karpy = KeepAliveRequestParamYamlUtils.BASE_YAML_UTILS.to(data);
-        KeepAliveResponseParamYaml response = keepAliveTopLevelService.processKeepAliveInternal(karpy, remoteAddress, System.currentTimeMillis());
+        KeepAliveResponseParamYaml response = keepAliveService.processKeepAliveInternal(karpy, remoteAddress, System.currentTimeMillis());
         String yaml = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.toString(response);
         log.info("444.194 keepAlive(), size of request yaml: {}, response yaml: {}", data.length(), yaml.length());
         return yaml;
