@@ -1,0 +1,3 @@
+- tasks after SKIPPED task aren't skipped too
+- add functionality for collecting info about reasons why tasks weren't assigned to cores
+-

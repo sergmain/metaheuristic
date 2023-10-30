@@ -352,7 +352,7 @@ CREATE TABLE mh_exec_context
     COMPANY_ID              NUMERIC(10, 0) NOT NULL,
     CREATED_ON              bigint         NOT NULL,
     COMPLETED_ON            bigint,
-    PARAMS                  LONG VARCHAR       NOT NULL,
+    PARAMS                  VARCHAR(256000)       NOT NULL,
     IS_VALID                BOOLEAN        default false not null,
     STATE                   smallint       not null default 0,
     CTX_GRAPH_ID            bigint NOT NULL,
@@ -377,7 +377,7 @@ CREATE TABLE mh_exec_context_graph
     VERSION             NUMERIC(5, 0) NOT NULL,
     EXEC_CONTEXT_ID     bigint default NULL,
     CREATED_ON          bigint not null,
-    PARAMS              LONG VARCHAR NOT NULL
+    PARAMS              VARCHAR(256000) NOT NULL
 );
 
 CREATE TABLE mh_exec_context_task_state
@@ -386,7 +386,7 @@ CREATE TABLE mh_exec_context_task_state
     VERSION             NUMERIC(5, 0) NOT NULL,
     EXEC_CONTEXT_ID     bigint default NULL,
     CREATED_ON          bigint not null,
-    PARAMS              LONG VARCHAR NOT NULL
+    PARAMS              VARCHAR(256000) NOT NULL
 );
 
 CREATE TABLE mh_exec_context_variable_state
@@ -407,7 +407,7 @@ CREATE TABLE mh_experiment_result
     DESCRIPTION     VARCHAR(250)  NOT NULL,
     CODE            VARCHAR(50)   NOT NULL,
     CREATED_ON      bigint        not null,
-    EXPERIMENT      LONG VARCHAR      NOT NULL
+    EXPERIMENT      VARCHAR(256000)      NOT NULL
 );
 
 CREATE TABLE mh_experiment_task
@@ -455,7 +455,7 @@ create table mh_heuristic
     VERSION         NUMERIC(5, 0)  NOT NULL,
     COMPANY_ID          NUMERIC(10, 0) NOT NULL,
     CREATED_ON      bigint         NOT NULL,
-    PARAMS          LONG VARCHAR,
+    PARAMS          VARCHAR(256000),
     IS_DELETED      BOOLEAN not null default false
 );
 
@@ -573,7 +573,7 @@ CREATE table mhbp_chat_log
     COMPANY_ID      NUMERIC(10, 0)  NOT NULL,
     ACCOUNT_ID      NUMERIC(10, 0)  NOT NULL,
     CREATED_ON      bigint          NOT NULL,
-    PARAMS          LONG VARCHAR not null
+    PARAMS          VARCHAR(256000) not null
 );
 
 CREATE table mhbp_part
@@ -659,7 +659,7 @@ CREATE table mhbp_scenario
     CREATED_ON          bigint          NOT NULL,
     NAME                VARCHAR(50)     NOT NULL,
     DESCRIPTION         VARCHAR(250)    NOT NULL,
-    PARAMS              LONG VARCHAR not null
+    PARAMS              VARCHAR(256000) not null
 );
 
 CREATE INDEX mhbp_scenario_account_id_scenario_group_id_idx

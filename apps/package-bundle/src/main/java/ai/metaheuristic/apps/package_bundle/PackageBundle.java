@@ -189,8 +189,14 @@ public class PackageBundle implements CommandLineRunner {
         return isError;
     }
 
-    private static BundleCfgYaml initBundleCfg(Path currDir) throws IOException {
-        Path bundleCfgPath = currDir.resolve(CommonConsts.BUNDLE_CFG_YAML);
+    private static BundleCfgYaml initBundleCfg(CommandLine cmd, Path currDir) throws IOException {
+        String bundleFilename = cmd.getOptionValue("b");
+        if (S.b(bundleFilename)) {
+            bundleFilename = CommonConsts.BUNDLE_CFG_YAML;
+        }
+        System.out.println("Effective bundle filename is " + bundleFilename);
+
+        Path bundleCfgPath = currDir.resolve(bundleFilename);
 
         if (Files.notExists(bundleCfgPath)) {
             System.out.printf("File %s wasn't found in path %s\n", CommonConsts.BUNDLE_CFG_YAML, currDir.toAbsolutePath());
@@ -299,7 +305,7 @@ public class PackageBundle implements CommandLineRunner {
         CommandLine cmd = parseArgs(args);
         String ver = cmd.getOptionValue("v");
         if (args.length==0 || S.b(ver)) {
-            System.out.println("PackageBundle -v 2 [-key <private key file>]");
+            System.out.println("PackageBundle -v 2 [-key <private key file>] [-b <bundle-filename>]");
             throw new ExitApplicationException();
         }
         int version = Integer.parseInt(ver);
@@ -314,7 +320,7 @@ public class PackageBundle implements CommandLineRunner {
             throw new ExitApplicationException();
         }
 
-        BundleCfgYaml bundleCfgYaml = initBundleCfg(currDir);
+        BundleCfgYaml bundleCfgYaml = initBundleCfg(cmd, currDir);
         System.out.println("\tcurrDir dir: " + currDir);
         System.out.println("\tworking dir: " + workingDir);
         Cfg cfg = new Cfg(version, privateKey, workingDir, currDir, bundleCfgYaml);
@@ -340,10 +346,15 @@ public class PackageBundle implements CommandLineRunner {
         Options options = new Options();
         Option versionOption = new Option("v", "version", true, "version of cli parameters");
         versionOption.setRequired(false);
+        options.addOption(versionOption);
+
         Option keyOption = new Option("key", "private-key", true, "Private key for signing content");
         keyOption.setRequired(false);
-        options.addOption(versionOption);
         options.addOption(keyOption);
+
+        Option bundleOption = new Option("b", "bundle", true, "Name of bundle file");
+        bundleOption.setRequired(false);
+        options.addOption(bundleOption);
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
