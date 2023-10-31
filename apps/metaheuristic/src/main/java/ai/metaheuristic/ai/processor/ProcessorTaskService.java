@@ -531,19 +531,18 @@ public class ProcessorTaskService {
                     .map(o -> new ProcessorCoreTask.OutputStatus(o.id, false))
                     .collect(Collectors.toCollection(() -> task.output.outputStatuses));
 
-            Path processorDir = processorPath.resolve(core.coreCode);
-            if (Files.notExists(processorDir)) {
-                Files.createDirectories(processorDir);
+            Path coreDir = processorPath.resolve(core.coreCode);
+            if (Files.notExists(coreDir)) {
+                Files.createDirectories(coreDir);
             }
-            Path processorTaskDir = processorDir.resolve(Consts.TASK_DIR);
+            Path coreTaskDir = coreDir.resolve(Consts.TASK_DIR);
 
-            Path dispatcherDir = processorTaskDir.resolve(processorEnvironment.metadataParams.processorStateByDispatcherUrl(core).dispatcherCode);
+            Path dispatcherDir = coreTaskDir.resolve(processorEnvironment.metadataParams.processorStateByDispatcherUrl(core).dispatcherCode);
             String path = DirUtils.getPoweredPath(assignedTask.taskId);
             Path taskDir = dispatcherDir.resolve(path);
             try {
                 if (Files.exists(taskDir)) {
                     try {
-//                        Files.deleteIfExists(taskDir);
                         PathUtils.deleteDirectory(taskDir);
                     } catch (IOException e) {
                         String es = "713.155 Error while deleting a task dir: " + taskDir.toAbsolutePath();

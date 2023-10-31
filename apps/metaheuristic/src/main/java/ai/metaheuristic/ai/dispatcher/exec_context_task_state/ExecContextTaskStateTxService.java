@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.exceptions.CommonRollbackException;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -81,11 +82,13 @@ public class ExecContextTaskStateTxService {
                 if (task==null) {
                     continue;
                 }
-                if (task.queuedTask.task==null){
-                    throw new IllegalStateException("(task.queuedTask.task==null)");
-                }
-                if (!task.queuedTask.execContextId.equals(task.queuedTask.task.execContextId)) {
-                    throw new IllegalStateException("(!task.queuedTask.execContextId.equals(task.queuedTask.task.execContextId))");
+                if (task.queuedTask.execContext != EnumsApi.FunctionExecContext.internal) {
+                    if (task.queuedTask.task == null) {
+                        throw new IllegalStateException("(task.queuedTask.task==null), need to investigate");
+                    }
+                    if (!task.queuedTask.execContextId.equals(task.queuedTask.task.execContextId)) {
+                        throw new IllegalStateException("(!task.queuedTask.execContextId.equals(task.queuedTask.task.execContextId))");
+                    }
                 }
                 if (task.queuedTask.taskParamYaml==null) {
                     throw new IllegalStateException("(task.queuedTask.taskParamYaml==null)");

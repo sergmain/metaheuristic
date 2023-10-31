@@ -25,6 +25,7 @@ import org.apache.hc.client5.http.fluent.Response;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.util.Timeout;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -42,6 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
  * Time: 9:59 PM
  */
 
+@Disabled("Those tests for manual testing")
 public class StatusRestControllerTest {
 
     @Test

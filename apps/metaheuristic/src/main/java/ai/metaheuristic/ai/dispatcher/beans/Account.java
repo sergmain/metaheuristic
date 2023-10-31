@@ -100,6 +100,7 @@ public class Account implements UserDetails, Serializable {
     @Column(name="UPDATED_ON")
     public long updatedOn;
 
+    // this field contains Authorities, not role. I.e. authority is "ROLE_" + role
     @Nullable
     public String roles;
 

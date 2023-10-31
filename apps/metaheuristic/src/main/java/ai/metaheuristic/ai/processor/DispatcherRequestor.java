@@ -102,10 +102,10 @@ public class DispatcherRequestor {
     private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
-    private static void withSync(Supplier<Void> function) {
+    private static void withSync(Runnable function) {
         writeLock.lock();
         try {
-            function.get();
+            function.run();
         } finally {
             writeLock.unlock();
         }
@@ -115,7 +115,6 @@ public class DispatcherRequestor {
         log.debug("775.015 DispatcherCommParamsYaml:\n{}", dispatcherYaml);
         withSync(() -> {
             processorCommandProcessor.processDispatcherCommParamsYaml(scpy, dispatcherUrl, dispatcherYaml);
-            return null;
         });
     }
 

@@ -44,6 +44,7 @@ public class ProcessorCommandProcessor {
 
     private final ProcessorService processorService;
     private final ProcessorEnvironment processorEnvironment;
+    private final TaskProcessorCoordinatorService taskProcessorCoordinatorService;
 
     // this method is synced outside
     public void processDispatcherCommParamsYaml(ProcessorCommParamsYaml pcpy, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
@@ -89,16 +90,17 @@ public class ProcessorCommandProcessor {
     }
 
     private void processAssignedTask(
-            ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.Core coreRequest) {
+        ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, DispatcherCommParamsYaml.Core coreRequest) {
 
-            if (coreRequest.assignedTask==null) {
-                return;
-            }
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataParams.getCoreRef(coreRequest.code, ref.dispatcherUrl);
-            if (core==null) {
-                return;
-            }
-            processorService.assignTasks(core, coreRequest.assignedTask);
+        if (coreRequest.assignedTask==null) {
+            return;
+        }
+        ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataParams.getCoreRef(coreRequest.code, ref.dispatcherUrl);
+        if (core==null) {
+            return;
+        }
+        processorService.assignTasks(core, coreRequest.assignedTask);
+        taskProcessorCoordinatorService.invokeTaskProcessingOnCore(core);
     }
 
     // processing at processor side

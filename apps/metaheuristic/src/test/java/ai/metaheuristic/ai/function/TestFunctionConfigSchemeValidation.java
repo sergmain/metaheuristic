@@ -46,7 +46,7 @@ public class TestFunctionConfigSchemeValidation {
     public void testOk() {
         String yaml = createYaml();
         String result = FUNCTION_CONFIG_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(yaml);
-        assertNull(result, result);
+        assertNull(result, "result: " + result + "\nyaml\n"+ yaml );
     }
 
     @Test

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.yaml;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYamlV1;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -53,17 +54,17 @@ public class TestDispatcherLookup {
     }
 
     @Test
-    public void test() {
-        DispatcherLookupParamsYaml ssc = new DispatcherLookupParamsYaml();
+    public void test_v1() {
+        DispatcherLookupParamsYamlV1 ssc = new DispatcherLookupParamsYamlV1();
 
-        DispatcherLookupParamsYaml.DispatcherLookup config = new DispatcherLookupParamsYaml.DispatcherLookup();
+        DispatcherLookupParamsYamlV1.DispatcherLookupV1 config = new DispatcherLookupParamsYamlV1.DispatcherLookupV1 ();
         config.url = "http://localhost:8080";
         config.signatureRequired = false;
         config.lookupType = Enums.DispatcherLookupType.direct;
 
         ssc.dispatchers.add(config);
 
-        config = new DispatcherLookupParamsYaml.DispatcherLookup();
+        config = new DispatcherLookupParamsYamlV1.DispatcherLookupV1();
         config.url = "https://host";
         config.signatureRequired = true;
         config.publicKey = "some-public-key";

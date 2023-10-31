@@ -53,7 +53,7 @@ public class TestYamlSchemeValidator {
              element3: env
            version: 1
            """;
-        assertNull(validator.validateStructureOfDispatcherYaml(cfg));
+        assertNull(validator.validateStructureOfDispatcherYaml(cfg), "RN this test isn't working because YamlSchemeValidator doesn't support yaml with more than one element at root");
     }
 
 

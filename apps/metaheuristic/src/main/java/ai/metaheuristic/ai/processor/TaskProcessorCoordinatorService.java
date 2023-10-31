@@ -56,10 +56,19 @@ public class TaskProcessorCoordinatorService {
         log.info("415.020 Start processing task by cores. taskProcessors.size(): {}", taskProcessors.size());
 
         for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataParams.getAllEnabledRefsForCores()) {
-            TaskProcessor taskProcessor = taskProcessors.computeIfAbsent( core.coreCode,
-                    o -> new TaskProcessor(globals, processorTaskService, currentExecState, processorEnvironment, processorService, resourceProviderFactory, gitSourcingService));
-            // new Thread(()-> taskProcessor.process(core), "task-processor-"+core.coreCode).start();
-            Thread.startVirtualThread(()-> taskProcessor.process(core));
+            invokeTaskProcessingOnCore(core);
         }
+    }
+
+    public void invokeTaskProcessingOnCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
+        TaskProcessor taskProcessor = taskProcessors.computeIfAbsent( core.coreCode,
+                o -> new TaskProcessor(globals, processorTaskService, currentExecState, processorEnvironment, processorService, resourceProviderFactory, gitSourcingService));
+        Thread.startVirtualThread(()-> {
+            try {
+                taskProcessor.process(core);
+            } catch (Throwable th) {
+                log.error("415.060 Error", th);
+            }
+        });
     }
 }

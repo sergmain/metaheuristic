@@ -38,7 +38,7 @@ public class SpringSecurityWebAuxTestConfig {
 
     public static class MyUserDetailsManager implements UserDetailsManager {
 
-        private Map<String, Account> users = new HashMap<>();
+        private final Map<String, Account> users = new HashMap<>();
 
         MyUserDetailsManager(Collection<Account> users) {
             for (Account user : users) {
@@ -93,6 +93,7 @@ public class SpringSecurityWebAuxTestConfig {
             account.setCredentialsNonExpired(true);
             account.setEnabled(true);
             account.setPassword("123");
+            account.setCompanyId(1L);
 
             account.setRoles("ROLE_SERVER_REST_ACCESS, ROLE_DATA");
             accounts.add(account);

@@ -68,6 +68,7 @@ import java.util.stream.Stream;
  * Date: 1/4/2021
  * Time: 9:07 AM
  */
+@SuppressWarnings("SimplifyStreamApiCallChains")
 @Slf4j
 public class TaskProcessor {
 
@@ -89,12 +90,12 @@ public class TaskProcessor {
     private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
 
-    private final AtomicInteger activeTaskProcessing = new AtomicInteger();
+    private static final AtomicInteger activeTaskProcessing = new AtomicInteger();
 
     private boolean processing = false;
 
-    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
     public TaskProcessor(Globals globals, ProcessorTaskService processorTaskService, CurrentExecState currentExecState,
                          ProcessorEnvironment processorEnvironment, ProcessorService processorService,
@@ -238,7 +239,7 @@ public class TaskProcessor {
             ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
 
             for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.task.preFunctions) {
-                result = prepareFunction(dispatcher, assetManagerUrl, processorState, preFunctionConfig);
+                result = prepareFunction(dispatcher, assetManagerUrl, preFunctionConfig);
                 if (result.isError) {
                     markFunctionAsFinishedWithPermanentError(core, task.taskId, result);
                     isNotReady = true;
@@ -254,7 +255,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            result = prepareFunction(dispatcher, assetManagerUrl, processorState, taskParamYaml.task.getFunction());
+            result = prepareFunction(dispatcher, assetManagerUrl, taskParamYaml.task.getFunction());
             if (result.isError) {
                 markFunctionAsFinishedWithPermanentError(core, task.taskId, result);
                 continue;
@@ -265,7 +266,7 @@ public class TaskProcessor {
             }
 
             for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.task.postFunctions) {
-                result = prepareFunction(dispatcher, assetManagerUrl, processorState, postFunctionConfig);
+                result = prepareFunction(dispatcher, assetManagerUrl, postFunctionConfig);
                 if (result.isError) {
                     markFunctionAsFinishedWithPermanentError(core, task.taskId, result);
                     isNotReady = true;
@@ -302,7 +303,7 @@ public class TaskProcessor {
                 continue;
             }
             try {
-                execAllFunctions(core, task, processorState, dispatcher, taskDir, taskParamYaml, artifactDir, systemDir, results);
+                execAllFunctions(core, task, processorState, dispatcher, taskDir, taskParamYaml, systemDir, results);
             }
             catch(ScheduleInactivePeriodException e) {
                 processorTaskService.resetTask(core, task.taskId);
@@ -324,7 +325,7 @@ public class TaskProcessor {
     private void execAllFunctions(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core,
                                   ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
                                   DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
-                                  Path taskDir, TaskParamsYaml taskParamYaml, Path artifactDir,
+                                  Path taskDir, TaskParamsYaml taskParamYaml,
                                   Path systemDir, FunctionPrepareResult[] results) {
         List<FunctionApiData.SystemExecResult> preSystemExecResult = new ArrayList<>();
         List<FunctionApiData.SystemExecResult> postSystemExecResult = new ArrayList<>();
@@ -570,9 +571,9 @@ public class TaskProcessor {
         return new FunctionApiData.SystemExecResult(function.code, true, 0, "");
     }
 
-    @SuppressWarnings({"WeakerAccess", "StatementWithEmptyBody"})
+    @SuppressWarnings({"WeakerAccess"})
     // TODO 2019.05.02 implement unit-test for this method
-    public FunctionPrepareResult prepareFunction(DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, MetadataParamsYaml.ProcessorSession processorState, TaskParamsYaml.FunctionConfig function) {
+    public FunctionPrepareResult prepareFunction(DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig function) {
         try {
             final MetadataParams metadataParams = processorEnvironment.metadataParams;
             if (function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
@@ -584,9 +585,9 @@ public class TaskProcessor {
             else if (function.sourcing== EnumsApi.FunctionSourcing.processor) {
                 return prepareWithSourcingAsProcessor(dispatcher, function);
             }
-            throw new IllegalStateException("100.540 Shouldn't get there");
+            throw new IllegalStateException("100.460 Shouldn't get there");
         } catch (Throwable th) {
-            String es = "100.540 System error: " + th.getMessage();
+            String es = "100.480 System error: " + th.getMessage();
             log.error(es, th);
             FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
             functionPrepareResult.function = function;
@@ -603,7 +604,7 @@ public class TaskProcessor {
 
         final FunctionApiData.SystemExecResult checksumAndSignature = verifyChecksumAndSignature(dispatcher.dispatcherLookup.signatureRequired, dispatcher.getPublicKey(), functionPrepareResult.function);
         if (!checksumAndSignature.isOk) {
-            log.warn("100.520 Function {} has a wrong checksum/signature, error: {}", functionPrepareResult.function.code, checksumAndSignature.console);
+            log.warn("100.500 Function {} has a wrong checksum/signature, error: {}", functionPrepareResult.function.code, checksumAndSignature.console);
             functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, checksumAndSignature.exitCode, checksumAndSignature.console);
             functionPrepareResult.isLoaded = false;
             functionPrepareResult.isError = true;
@@ -616,7 +617,7 @@ public class TaskProcessor {
         functionPrepareResult.function = function;
 
         if (S.b(functionPrepareResult.function.file)) {
-            String s = S.f("#100.480 Function %s has a blank file", functionPrepareResult.function.code);
+            String s = S.f("100.520 Function %s has a blank file", functionPrepareResult.function.code);
             log.warn(s);
             functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1, s);
             functionPrepareResult.isLoaded = false;
@@ -627,8 +628,14 @@ public class TaskProcessor {
         log.info("Root dir for function: " + resourceDir);
         SystemProcessLauncher.ExecResult result = gitSourcing.apply(resourceDir, functionPrepareResult.function);
         if (!result.ok) {
-            log.warn("#100.500 Function {} has a permanent error, {}", functionPrepareResult.function.code, result.error);
+            log.warn("100.540 Function {} has a permanent error, {}", functionPrepareResult.function.code, result.error);
             functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1, result.error);
+            functionPrepareResult.isLoaded = false;
+            functionPrepareResult.isError = true;
+            return functionPrepareResult;
+        }
+        if (result.functionDir==null) {
+            functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -777, "result.functionDir is null");
             functionPrepareResult.isLoaded = false;
             functionPrepareResult.isError = true;
             return functionPrepareResult;
@@ -647,7 +654,7 @@ public class TaskProcessor {
         functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
         // is this function prepared?
         if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
-            log.info("100.460 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
+            log.info("100.560 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
             functionPrepareResult.isLoaded = false;
 
             metadataParams.setFunctionDownloadStatus(assetManagerUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, EnumsApi.FunctionState.none);
