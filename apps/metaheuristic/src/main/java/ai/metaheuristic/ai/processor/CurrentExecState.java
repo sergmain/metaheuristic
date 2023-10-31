@@ -137,7 +137,7 @@ public class CurrentExecState {
                 case NONE -> EnumsApi.ExecContextState.UNKNOWN;
                 case DELTA -> map.getOrDefault(execContextId, EnumsApi.ExecContextState.UNKNOWN);
                 case FULL -> map.getOrDefault(execContextId, EnumsApi.ExecContextState.DOESNT_EXIST);
-                default -> throw new IllegalStateException("unknow state: " + state);
+                default -> throw new IllegalStateException("unknown state: " + state);
             };
 
         } finally {
@@ -152,6 +152,11 @@ public class CurrentExecState {
 
     public boolean finishedOrDoesntExist(DispatcherUrl dispatcherUrl, Long execContextId) {
         return !notFinishedAndExists(dispatcherUrl, execContextId);
+    }
+
+    public boolean finished(DispatcherUrl dispatcherUrl, Long execContextId) {
+        EnumsApi.ExecContextState currState = getState(dispatcherUrl, execContextId);
+        return currState==EnumsApi.ExecContextState.ERROR || currState==EnumsApi.ExecContextState.FINISHED;
     }
 
     boolean isState(DispatcherUrl dispatcherUrl, Long execContextId, EnumsApi.ExecContextState ... state) {

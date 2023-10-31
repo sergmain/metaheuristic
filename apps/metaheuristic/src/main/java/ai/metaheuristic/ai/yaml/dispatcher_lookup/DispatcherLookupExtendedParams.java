@@ -60,9 +60,6 @@ public abstract class DispatcherLookupExtendedParams {
             this.schedule = schedule;
             this.locker = this.dispatcherLookup.publicKey==null ? null : new ThreadUtils.CommonThreadLocker<>(() -> SecUtils.getPublicKey(this.dispatcherLookup.publicKey));
 
-//            String auth = dispatcherLookup.restUsername + ':' + dispatcherLookup.restPassword;
-//            byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.US_ASCII));
-//            this.authHeader = "Basic " + new String(encodedAuth);
             this.authHeader = "Basic " + HttpHeaders.encodeBasicAuth(dispatcherLookup.restUsername, dispatcherLookup.restPassword, StandardCharsets.US_ASCII);
         }
 

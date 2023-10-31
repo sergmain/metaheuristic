@@ -98,13 +98,18 @@ public class TaskAssetPreparer {
 
         for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataParams.getAllEnabledRefsForCores()) {
 
-            // delete all orphan tasks
             processorTaskService.findAllForCore(core).forEach(task -> {
                 ProcessorAndCoreData.DispatcherUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl);
+                // delete all orphan tasks
                 if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(dispatcherUrl, task.execContextId)) {
                     processorTaskService.delete(core, task.taskId);
                     log.info("951.010 orphan task was deleted, taskId: #{}, url: {}, execContextId: {}", task.taskId, task.dispatcherUrl, task.execContextId);
                     log.info("951.015  registered execContexts: {}", currentExecState.getExecContextsNormalized(dispatcherUrl));
+                }
+                // mark as Reported and Delivered for all finished ExecContexts
+                if (!task.isReported() && currentExecState.finished(core.dispatcherUrl, task.execContextId)) {
+                    processorTaskService.setReportedOn(core, task.taskId);
+                    processorTaskService.setDelivered(core, task.taskId);
                 }
             });
 

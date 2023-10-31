@@ -317,12 +317,12 @@ public class ProcessorTaskService {
     public List<ProcessorCoreTask> getForReporting(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
         try {
             ProcessorSyncHolder.readLock.lock();
-            Stream<ProcessorCoreTask> stream = findAllByFinishedOnIsNotNull(core);
-            List<ProcessorCoreTask> result = stream
-                    .filter(processorTask -> !processorTask.isReported() ||
-                            (!processorTask.isDelivered() &&
-                                    (processorTask.getReportedOn() == null || (System.currentTimeMillis() - processorTask.getReportedOn()) > 60_000)))
-                    .collect(Collectors.toList());
+            List<ProcessorCoreTask> result = getTasksForProcessorCore(core).values().stream()
+                .filter(o -> o.finishedOn != null)
+                .filter(processorTask -> !processorTask.isReported() ||
+                    (!processorTask.isDelivered() &&
+                        (processorTask.getReportedOn() == null || (System.currentTimeMillis() - processorTask.getReportedOn()) > 60_000)))
+                .collect(Collectors.toList());
             return result;
         } finally {
             ProcessorSyncHolder.readLock.unlock();
@@ -495,10 +495,6 @@ public class ProcessorTaskService {
         } finally {
             ProcessorSyncHolder.writeLock.unlock();
         }
-    }
-
-    private Stream<ProcessorCoreTask> findAllByFinishedOnIsNotNull(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
-        return getTasksForProcessorCore(core).values().stream().filter(o -> o.finishedOn != null);
     }
 
     @SneakyThrows
