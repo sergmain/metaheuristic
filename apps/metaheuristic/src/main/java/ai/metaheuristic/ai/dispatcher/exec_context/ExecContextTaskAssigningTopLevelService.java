@@ -129,6 +129,11 @@ public class ExecContextTaskAssigningTopLevelService {
         if (execContext == null) {
             return stat;
         }
+        // do nothing is execContext is finished or stopped
+        var execContextState = EnumsApi.ExecContextState.fromCode(execContext.state);
+        if (EnumsApi.ExecContextState.isFinishedState(execContextState) || execContextState== EnumsApi.ExecContextState.STOPPED) {
+            return stat;
+        }
 
         if (System.currentTimeMillis() - mills > 10_000) {
             eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
@@ -192,32 +197,32 @@ public class ExecContextTaskAssigningTopLevelService {
 
                 if (task.execState == EnumsApi.TaskExecState.INIT.value) {
                     eventPublisher.publishEvent(new InitVariablesEvent(task.id));
-                    if (log.isInfoEnabled()) stat.notAllocatedReasons.add("task #"+task.getId()+" task.execState == EnumsApi.TaskExecState.INIT");
+                    if (log.isInfoEnabled()) stat.notAllocatedReasons.add("703.410 task #"+task.getId()+" task.execState == EnumsApi.TaskExecState.INIT");
                     continue;
                 }
 
                 if (task.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
                     // cache will be checked via Schedulers.DispatcherSchedulers.processCheckCaching()
                     taskCheckCachingService.putToQueue(new RegisterTaskForCheckCachingEvent(execContextId, taskId));
-                    if (log.isInfoEnabled()) stat.notAllocatedReasons.add("task #"+task.getId()+" task.execState == EnumsApi.TaskExecState.CHECK_CACHE");
+                    if (log.isInfoEnabled()) stat.notAllocatedReasons.add("703.440 task #"+task.getId()+" task.execState == EnumsApi.TaskExecState.CHECK_CACHE");
                     continue;
                 }
 
                 if (task.execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     // this state is occur when the state in graph is NONE or CHECK_CACHE, and the state in DB is IN_PROGRESS
                     logDebugAboutTask(task);
-                    if (log.isInfoEnabled()) stat.notAllocatedReasons.add("task #"+task.getId()+" task.execState==EnumsApi.TaskExecState.IN_PROGRESS");
+                    if (log.isInfoEnabled()) stat.notAllocatedReasons.add("703.470 task #"+task.getId()+" task.execState==EnumsApi.TaskExecState.IN_PROGRESS");
                     continue;
                 }
 
                 if (task.execState==EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value) {
                     // this state is occur when the state in graph is NONE or CHECK_CACHE, and the state in DB is ERROR_WITH_RECOVERY
-                    if (log.isInfoEnabled()) stat.notAllocatedReasons.add("task #"+task.getId()+" task.execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY");
+                    if (log.isInfoEnabled()) stat.notAllocatedReasons.add("703.500 task #"+task.getId()+" task.execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY");
                     continue;
                 }
 
                 if (TaskQueueService.alreadyRegisteredWithSync(task.id)) {
-                    if (log.isInfoEnabled()) stat.notAllocatedReasons.add("task #"+task.getId()+" task is already registered");
+                    if (log.isInfoEnabled()) stat.notAllocatedReasons.add("703.530 task #"+task.getId()+" task is already registered");
                     continue;
                 }
 
@@ -227,8 +232,8 @@ public class ExecContextTaskAssigningTopLevelService {
                         taskParamYaml = task.getTaskParamsYaml();
                     }
                     catch (YAMLException e) {
-                        log.error("703.260 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.getMessage(), task.getParams());
-                        final String es = S.f("703.260 Task #%s has broken params yaml and will be skipped", task.id);
+                        log.error("703.560 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.getMessage(), task.getParams());
+                        final String es = S.f("703.590 Task #%s has broken params yaml and will be skipped", task.id);
                         taskFinishingTxService.finishWithErrorWithTx(task.id, es);
                         if (log.isInfoEnabled()) stat.notAllocatedReasons.add(es);
                         continue;
@@ -244,7 +249,7 @@ public class ExecContextTaskAssigningTopLevelService {
                             break;
                         case internal:
                             // all tasks with internal function will be processed in a different thread after registering in TaskQueue
-                            log.debug("703.300 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
+                            log.debug("703.620 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
                             if (TaskProviderTopLevelService.registerInternalTask(execContextId, taskId, taskParamYaml)) {
                                 stat.allocated++;
                             }
@@ -255,11 +260,11 @@ public class ExecContextTaskAssigningTopLevelService {
                     }
                     continue;
                 }
-                throw new IllegalStateException("not-handled task state: " + EnumsApi.TaskExecState.from(task.execState));
+                throw new IllegalStateException("703.640 not-handled task state: " + EnumsApi.TaskExecState.from(task.execState));
             }
         }
         TaskProviderTopLevelService.lock(execContextId);
-        log.debug("703.500 allocated {} of new taks in execContext #{}", stat.allocated, execContextId);
+        log.debug("703.670 allocated {} of new taks in execContext #{}", stat.allocated, execContextId);
 
         return stat;
     }
@@ -271,12 +276,12 @@ public class ExecContextTaskAssigningTopLevelService {
         try {
             TaskParamsYaml taskParamYaml = task.getTaskParamsYaml();
             if (taskParamYaml.task.context != EnumsApi.FunctionExecContext.internal) {
-                log.warn("703.520 task #{} with IN_PROGRESS is there? Function: {}", task.id, taskParamYaml.task.function.code);
+                log.warn("703.700 task #{} with IN_PROGRESS is there? Function: {}", task.id, taskParamYaml.task.function.code);
             }
         }
         catch (Throwable th) {
-            log.warn("703.540 Error parsing taskParamsYaml, error: " + th.getMessage());
-            log.warn("703.560 task #{} with IN_PROGRESS is there?", task.id);
+            log.warn("703.720 Error parsing taskParamsYaml, error: " + th.getMessage());
+            log.warn("703.740 task #{} with IN_PROGRESS is there?", task.id);
         }
     }
 }

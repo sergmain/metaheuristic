@@ -39,7 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class ExecContextReconciliationService {
+public class ExecContextReconciliationTxService {
 
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
@@ -58,7 +58,7 @@ public class ExecContextReconciliationService {
             return;
         }
         if (status.isNullState.get()) {
-            log.info("#307.180 Found non-created task, graph consistency is failed");
+            log.info("305.180 Found non-created task, graph consistency is failed");
             execContext.completedOn = System.currentTimeMillis();
             execContext.state = EnumsApi.ExecContextState.ERROR.code;
             return;
@@ -71,7 +71,7 @@ public class ExecContextReconciliationService {
             TaskSyncService.getWithSyncVoid(taskIsOkId, ()-> {
                 TaskImpl task = taskRepository.findById(taskIsOkId).orElse(null);
                 if (task==null) {
-                    log.error("#307.200 task is null");
+                    log.error("305.200 task is null");
                     return;
                 }
                 taskExecStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK, false);

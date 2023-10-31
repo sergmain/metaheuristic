@@ -56,6 +56,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.PublicKey;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -87,6 +88,8 @@ public class TaskProcessor {
     private final ProcessorService processorService;
     private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
+
+    private final AtomicInteger activeTaskProcessing = new AtomicInteger();
 
     private boolean processing = false;
 
@@ -453,8 +456,6 @@ public class TaskProcessor {
             cmd = new ArrayList<>();
         }
 
-        log.info("All systems are checked for the task #{}, lift off", task.taskId );
-
         FunctionApiData.SystemExecResult systemExecResult;
         try {
             switch (functionPrepareResult.function.sourcing) {
@@ -491,11 +492,17 @@ public class TaskProcessor {
                             EnumsApi.ExecContextState.DOESNT_EXIST, EnumsApi.ExecContextState.STOPPED, EnumsApi.ExecContextState.ERROR,
                             EnumsApi.ExecContextState.FINISHED);
 
-            // Exec function
-            systemExecResult = SystemProcessLauncher.execCommand(
-                    cmd, taskDir, consoleLogFile, taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
-                    globals.processor.taskConsoleOutputMaxLines, List.of(execContextDeletionCheck));
-
+            try {
+                activeTaskProcessing.incrementAndGet();
+                log.info("All systems are checked for the task #{}, lift off, active task processing: {}", task.taskId, activeTaskProcessing.get());
+                // Exec function
+                systemExecResult = SystemProcessLauncher.execCommand(
+                        cmd, taskDir, consoleLogFile, taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
+                        globals.processor.taskConsoleOutputMaxLines, List.of(execContextDeletionCheck));
+            }
+            finally {
+                activeTaskProcessing.decrementAndGet();
+            }
         }
         catch (ScheduleInactivePeriodException e) {
             throw e;

@@ -49,7 +49,7 @@ public class ExecContextFSM {
 
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
-    private final ExecContextReconciliationService execContextReconciliationService;
+    private final ExecContextReconciliationTxService execContextReconciliationTxService;
     private final EventPublisherService eventPublisherService;
 
     @Transactional
@@ -152,7 +152,7 @@ public class ExecContextFSM {
 
     public void updateExecContextStatus(Long execContextId, ExecContextData.ReconciliationStatus status) {
         ExecContextSyncService.checkWriteLockPresent(execContextId);
-        execContextReconciliationService.finishReconciliation(status);
+        execContextReconciliationTxService.finishReconciliation(status);
     }
 
     public List<Long> getAllByProcessorIdIsNullAndExecContextIdAndIdIn(Long execContextId, List<ExecContextData.TaskVertex> vertices, int page) {
