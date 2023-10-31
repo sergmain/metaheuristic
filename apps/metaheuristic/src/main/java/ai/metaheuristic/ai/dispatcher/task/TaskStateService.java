@@ -20,19 +20,13 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.ChangeTaskStateToInitForChildrenTasksEvent;
-import ai.metaheuristic.ai.dispatcher.event.events.ChangeTaskStateToInitForChildrenTasksTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskFinishWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
-import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
-import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
-import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +35,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -56,15 +49,10 @@ import java.util.Set;
 public class TaskStateService {
 
     private final TaskFinishingTxService taskFinishingTxService;
-    private final ExecContextGraphService execContextGraphService;
     private final ExecContextGraphCache execContextGraphCache;
-    private final VariableTxService variableTxService;
     private final ExecContextCache execContextCache;
-    private final TaskTxService taskTxService;
     private final TaskExecStateService taskExecStateService;
     private final TaskRepository taskRepository;
-    private final GlobalVariableRepository globalVariableRepository;
-    private final EventPublisherService eventPublisherService;
 
     @Async
     @EventListener
@@ -110,8 +98,9 @@ public class TaskStateService {
                     log.error("189.160 task #{} wasn't found", vertex.taskId);
                     continue;
                 }
-                if (!EnumsApi.TaskExecState.isFinishedState(t.execState)) {
-                    log.warn("189.200 task #{} has un-finished state", vertex.taskId);
+                EnumsApi.TaskExecState state = EnumsApi.TaskExecState.from(t.execState);
+                if (!EnumsApi.TaskExecState.isFinishedState(state)) {
+                    log.warn("189.200 parent task #{} of task #{} has an un-finished state: {}", vertex.taskId, subTask.taskId, state);
                     nextState = false;
                     break;
                 }
