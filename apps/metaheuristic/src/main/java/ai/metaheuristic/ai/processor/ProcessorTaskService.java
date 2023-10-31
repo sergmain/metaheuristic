@@ -361,6 +361,10 @@ public class ProcessorTaskService {
             if (task.isDelivered() && task.isReported()) {
                 continue;
             }
+            if (task.taskId==4788) {
+                log.warn("713.110 task #4788 task.isDelivered: {}, task.isReported: {}, execContextId: {}, execContext state: {}",
+                    task.isDelivered(), task.isReported(), task.execContextId, currentExecState.getState(core.dispatcherUrl, task.execContextId));
+            }
             final ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult result =
                     new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult(task.getTaskId(), task.getFunctionExecResult());
             processingResult.results.add(result);
