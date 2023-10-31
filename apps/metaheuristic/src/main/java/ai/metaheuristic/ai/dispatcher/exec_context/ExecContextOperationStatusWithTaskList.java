@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -35,7 +35,7 @@ import java.util.Set;
 @AllArgsConstructor
 public class ExecContextOperationStatusWithTaskList {
     public OperationStatusRest status;
-    public Set<ExecContextData.TaskWithState> childrenTasks = new HashSet<>();
+    public Set<TaskData.TaskWithState> childrenTasks = new HashSet<>();
 
     public ExecContextOperationStatusWithTaskList(OperationStatusRest status) {
         this.status = status;

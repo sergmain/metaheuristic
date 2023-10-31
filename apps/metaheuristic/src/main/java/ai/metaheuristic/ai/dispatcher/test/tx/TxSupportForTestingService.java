@@ -137,11 +137,11 @@ public class TxSupportForTestingService {
     }
 
     @Transactional
-    public ExecContextOperationStatusWithTaskList updateTaskExecState(Long execContextGraphId, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, String taskContextId) {
+    public ExecContextOperationStatusWithTaskList updateTaskExecState(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, String taskContextId) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        return execContextGraphService.updateTaskExecState(execContextGraphId, execContextTaskStateId, taskId, execState, taskContextId);
+        return execContextGraphService.updateTaskExecState(execContextDAC, execContextTaskStateId, taskId, execState, taskContextId);
     }
 
     @Transactional
@@ -242,8 +242,9 @@ public class TxSupportForTestingService {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
         ExecContextSyncService.checkWriteLockPresent(execContext.id);
-        OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(
-                execContext.execContextGraphId, execContext.execContextTaskStateId, parentTaskIds, taskIds, EnumsApi.TaskExecState.NONE);
+        ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(execContext.execContextGraphId, execContext.execContextTaskStateId);
+        OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(graphAndStates, parentTaskIds, taskIds, EnumsApi.TaskExecState.NONE);
+        execContextGraphService.save(graphAndStates);
         return osr;
     }
 

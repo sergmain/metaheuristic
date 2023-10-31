@@ -27,7 +27,6 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class TransferStateFromTaskQueueToExecContextEvent implements EventWithId<Long> {
     public final Long execContextId;
-    public final Long execContextGraphId;
     public final Long execContextTaskStateId;
 
     @Override

@@ -157,11 +157,8 @@ public class TestTaskRequest extends FeatureMethods {
             }
         });
         taskFinishingTopLevelService.checkTaskCanBeFinished(task.id);
-        TaskQueue.TaskGroup taskGroup =
-                ExecContextGraphSyncService.getWithSyncNullable(getExecContextForTest().execContextGraphId, ()->
-                        ExecContextTaskStateSyncService.getWithSyncNullable(getExecContextForTest().execContextTaskStateId, ()->
-                                execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
-                                        getExecContextForTest().id, getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId)));
+        ExecContextTaskStateSyncService.getWithSyncNullable(getExecContextForTest().execContextTaskStateId,
+            ()->execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(getExecContextForTest().id, getExecContextForTest().execContextTaskStateId));
 
         final TaskImpl task2 = taskRepository.findById(tRef.get().taskId).orElse(null);
         assertNotNull(task2);

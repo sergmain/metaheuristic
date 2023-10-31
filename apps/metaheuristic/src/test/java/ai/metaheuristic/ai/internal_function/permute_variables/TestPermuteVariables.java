@@ -99,11 +99,8 @@ public class TestPermuteVariables extends PreparingSourceCode {
         // mh.permute-variables
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
 
-        TaskQueue.TaskGroup taskGroup =
-                ExecContextGraphSyncService.getWithSync(getExecContextForTest().execContextGraphId, ()->
-                        ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId, ()->
-                                execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
-                                        getExecContextForTest().id, getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId)));
+        ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId,
+            ()->execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(getExecContextForTest().id, getExecContextForTest().execContextTaskStateId));
 
         // mh.permute-variables
         preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);

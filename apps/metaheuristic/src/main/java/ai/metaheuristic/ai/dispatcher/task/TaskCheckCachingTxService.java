@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.SetVariableReceivedTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInGraphTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInExecContextTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
@@ -192,7 +192,7 @@ public class TaskCheckCachingTxService {
             taskExecStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE, false);
             status = CheckCachingStatus.no_prev_cache;
         }
-        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
+        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInExecContextTxEvent(task.execContextId, task.id));
         return status;
     }
 

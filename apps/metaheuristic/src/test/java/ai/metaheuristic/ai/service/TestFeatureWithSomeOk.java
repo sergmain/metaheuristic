@@ -82,11 +82,8 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
         //preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
-        TaskQueue.TaskGroup taskGroup =
-                ExecContextGraphSyncService.getWithSync(getExecContextForTest().execContextGraphId, ()->
-                        ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId, ()->
-                                execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
-                                        getExecContextForTest().id, getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId)));
+        ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId,
+            ()->execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(getExecContextForTest().id, getExecContextForTest().execContextTaskStateId));
 
         DispatcherCommParamsYaml.AssignedTask assignedTask = getTaskAndAssignToProcessor_mustBeNewTask(processorIdAndCoreIds);
 

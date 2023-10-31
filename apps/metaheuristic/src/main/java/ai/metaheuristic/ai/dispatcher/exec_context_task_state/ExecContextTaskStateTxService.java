@@ -16,25 +16,27 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
+import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static ai.metaheuristic.api.EnumsApi.*;
@@ -56,12 +58,12 @@ public class ExecContextTaskStateTxService {
     private final EventPublisherService eventPublisherService;
 
     @Transactional
-    public OperationStatusRest updateTaskExecStatesInGraph(Long execContextGraphId, Long execContextTaskStateId, Long taskId, TaskExecState execState, String taskContextId) {
+    public OperationStatusRest updateTaskExecStatesInGraph(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, List<TaskData.TaskWithState> taskWithStates, String taskContextId) {
         ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
         TaskSyncService.checkWriteLockPresent(taskId);
 
         final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
-                execContextGraphId, execContextTaskStateId, taskId, execState, taskContextId);
+            execContextDAC, execContextTaskStateId, taskId, execState, taskContextId);
 
         taskExecStateService.updateTasksStateInDb(status);
         eventPublisherService.handleFindUnassignedTasksAndRegisterInQueueEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
@@ -69,33 +71,33 @@ public class ExecContextTaskStateTxService {
         return status.status;
     }
 
-    @Nullable
-    @Transactional
-    public TaskQueue.TaskGroup transferStateFromTaskQueueToExecContext(Long execContextId, Long execContextGraphId, Long execContextTaskStateId) {
-        ExecContextGraphSyncService.checkWriteLockPresent(execContextGraphId);
+    @Transactional(rollbackFor = CommonRollbackException.class)
+    public TaskQueue.TaskGroups transferStateFromTaskQueueToExecContext(ExecContextData.ExecContextDAC execContextDAC, Long execContextId, Long execContextTaskStateId) {
         ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
 
-        TaskQueue.TaskGroup taskGroup = TaskProviderTopLevelService.getTaskGroupForTransferring(execContextId);
-        if (taskGroup==null) {
-            return null;
+        TaskQueue.TaskGroups taskGroups = TaskProviderTopLevelService.getTaskGroupForTransferring(execContextId);
+        if (taskGroups.groups.isEmpty()) {
+            throw new CommonRollbackException();
         }
-        boolean found = false;
-        for (TaskQueue.AllocatedTask task : taskGroup.tasks) {
-            if (task==null) {
-                continue;
-            }
+        List<TaskData.TaskWithState> taskWithStates = new ArrayList<>(TaskQueue.GROUP_SIZE_DEFAULT * 10);
+        for (TaskQueue.TaskGroup group : taskGroups.groups1111) {
+            for (TaskQueue.AllocatedTask task : group.tasks) {
+                if (task==null) {
+                    continue;
+                }
 
-            if (task.queuedTask.taskParamYaml==null) {
-                throw new IllegalStateException("(task.queuedTask.taskParamYaml==null)");
-            }
-            String taskContextId = task.queuedTask.taskParamYaml.task.taskContextId;
-            final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
-                    execContextGraphId, execContextTaskStateId, task.queuedTask.taskId, task.state, taskContextId);
+                if (task.queuedTask.taskParamYaml==null) {
+                    throw new IllegalStateException("(task.queuedTask.taskParamYaml==null)");
+                }
 
-            taskExecStateService.updateTasksStateInDb(status);
-            found = true;
+                String taskContextId = task.queuedTask.taskParamYaml.task.taskContextId;
+                final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
+                    execContextDAC, execContextTaskStateId, task.queuedTask.taskId, task.state, taskContextId);
+
+                taskExecStateService.updateTasksStateInDb(status);
+            }
         }
-        return found ? taskGroup : null;
+        return taskGroups;
     }
 
     @Transactional

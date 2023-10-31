@@ -138,12 +138,9 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
 
         processScheduledTasks();
 
-        //noinspection unused
-        TaskQueue.TaskGroup taskGroup =
-                ExecContextGraphSyncService.getWithSync(getExecContextForTest().execContextGraphId, () ->
-                        ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId, () ->
-                                execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(
-                                        getExecContextForTest().id, getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId)));
+        ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId,
+            () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(getExecContextForTest().id, getExecContextForTest().execContextTaskStateId));
+
         processScheduledTasks();
     }
 

@@ -16,25 +16,19 @@
 
 package ai.metaheuristic.ai.dispatcher.event.events;
 
-import ai.metaheuristic.commons.utils.threads.EventWithId;
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 /**
  * @author Serge
- * Date: 12/18/2020
- * Time: 6:48 PM
+ * Date: 12/20/2020
+ * Time: 2:18 AM
  */
-@Data
 @AllArgsConstructor
-@EqualsAndHashCode(of = "taskId")
-public class UpdateTaskExecStatesInGraphEvent implements EventWithId<Long> {
+public class UpdateTaskExecStatesInExecContextTxEvent {
     public final Long execContextId;
     public final Long taskId;
 
-    @Override
-    public Long getId() {
-        return execContextId;
+    public UpdateTaskExecStatesInExecContextEvent to() {
+        return new UpdateTaskExecStatesInExecContextEvent(execContextId, taskId);
     }
 }

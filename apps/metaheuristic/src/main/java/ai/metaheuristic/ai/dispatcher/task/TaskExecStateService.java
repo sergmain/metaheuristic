@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.ChangeTaskStateToInitForChildrenTasksTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesTxEvent;
@@ -37,8 +37,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static ai.metaheuristic.api.EnumsApi.TaskExecState.INIT;
-import static ai.metaheuristic.api.EnumsApi.TaskExecState.NONE;
+import static ai.metaheuristic.api.EnumsApi.TaskExecState.*;
 
 /**
  * @author Serge
@@ -132,11 +131,15 @@ public class TaskExecStateService {
     public void updateTasksStateInDb(ExecContextOperationStatusWithTaskList status) {
         TxUtils.checkTxExists();
 
-        for (ExecContextData.TaskWithState t : status.childrenTasks) {
+        for (TaskData.TaskWithState t : status.childrenTasks) {
+            if (t.state!=SKIPPED) {
+                // rn only SKIPPED state must go here
+                throw new IllegalStateException("(t.state!=SKIPPED)");
+            }
             TaskSyncService.getWithSyncVoid(t.taskId, () -> {
                 TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
                 if (task != null) {
-                    updateTaskExecStates(task, t.state, false);
+                    updateTaskExecStates(task, t.state, true);
                     taskRepository.save(task);
                 } else {
                     log.error("305.200 Graph state is compromised, found task in graph but it doesn't exist in db");

@@ -74,7 +74,9 @@ public class BatchLineSplitterTxService {
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
     public Void createTasksTx(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml, Long numberOfLines, String content) {
         try {
-            createTasks(simpleExecContext, content, taskParamsYaml, taskId, numberOfLines);
+            ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId);
+            createTasks(simpleExecContext, graphAndStates, content, taskParamsYaml, taskId, numberOfLines);
+            execContextGraphService.save(graphAndStates);
         }
         catch (InternalFunctionException e) {
             throw e;
@@ -98,7 +100,8 @@ public class BatchLineSplitterTxService {
         return null;
     }
 
-    private void createTasks(ExecContextData.SimpleExecContext simpleExecContext, String content, TaskParamsYaml taskParamsYaml, Long taskId, Long numberOfLines) {
+    private void createTasks(ExecContextData.SimpleExecContext simpleExecContext, ExecContextData.GraphAndStates graphAndStates, String content, TaskParamsYaml taskParamsYaml, Long taskId, Long numberOfLines) {
+
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
             throw new InternalFunctionException(executionContextData.internalFunctionProcessingResult);
@@ -147,8 +150,7 @@ public class BatchLineSplitterTxService {
                 throw new BatchResourceProcessingException(es);
             }
             try {
-                taskProducingService.createTasksForSubProcesses(
-                        simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
+                taskProducingService.createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
 
             } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                 throw e;

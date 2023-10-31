@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.cache.CacheTxService;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.ChangeTaskStateToInitForChildrenTasksTxEvent;
-import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInGraphTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInExecContextTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
@@ -83,7 +83,7 @@ public class TaskFinishingTxService {
             return;
         }
 
-        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, taskId));
+        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInExecContextTxEvent(task.execContextId, taskId));
 
         taskExecStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK, true);
 
@@ -171,7 +171,7 @@ public class TaskFinishingTxService {
         task.setResultReceived(1);
         task = taskService.save(task);
 
-        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInGraphTxEvent(task.execContextId, task.id));
+        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInExecContextTxEvent(task.execContextId, task.id));
         eventPublisher.publishEvent(new ChangeTaskStateToInitForChildrenTasksTxEvent(task.id));
 
         taskProviderTopLevelService.setTaskExecStateInQueue(task.execContextId, task.id, targetState);

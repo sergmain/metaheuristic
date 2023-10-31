@@ -78,7 +78,7 @@ public class EventsBoundedToTx {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleUpdateTaskExecStatesInGraphTxEvent(UpdateTaskExecStatesInGraphTxEvent event) {
+    public void handleUpdateTaskExecStatesInGraphTxEvent(UpdateTaskExecStatesInExecContextTxEvent event) {
         eventPublisher.publishEvent(event.to());
     }
 

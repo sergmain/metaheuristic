@@ -16,11 +16,15 @@
 
 package ai.metaheuristic.ai.dispatcher.data;
 
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DirectedAcyclicGraph;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -32,6 +36,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @Slf4j
 public class ExecContextData {
+
+    public record GraphAndStates(ExecContextGraph graph, ExecContextTaskState states) {}
+
+    public record ExecContextDAC(Long execContextId, DirectedAcyclicGraph<TaskVertex, DefaultEdge> graph) {}
 
     public record UserExecContext(Long accountId, Long companyId) {}
 
@@ -74,15 +82,6 @@ public class ExecContextData {
     public static class AssignedTaskComplex {
         public Long execContextId;
         public Task task;
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @EqualsAndHashCode(of="taskId")
-    public static class TaskWithState {
-        public Long taskId;
-        public EnumsApi.TaskExecState state;
     }
 
     @Data

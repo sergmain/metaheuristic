@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.VariableUploadedTxEvent;
@@ -181,9 +182,9 @@ public class BatchResultProcessorTxService {
         storeGlobalBatchStatus(simpleExecContext, taskContextId, taskParamsYaml, zipDir, taskId);
 
         // key - taskContextId, value - ExecContextData.TaskWithState
-        Map<String, List<ExecContextData.TaskWithState>> vertices = execContextGraphService.findVerticesByTaskContextIds(
+        Map<String, List<TaskData.TaskWithState>> vertices = execContextGraphService.findVerticesByTaskContextIds(
                 simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId, prepared.keySet());
-        for (Map.Entry<String, List<ExecContextData.TaskWithState>> entry : vertices.entrySet()) {
+        for (Map.Entry<String, List<TaskData.TaskWithState>> entry : vertices.entrySet()) {
             boolean isOK = entry.getValue().stream().noneMatch(o->o.state!= EnumsApi.TaskExecState.OK);
             if (isOK) {
                 ItemWithStatusWithMapping item = prepared.get(entry.getKey());
@@ -475,8 +476,8 @@ public class BatchResultProcessorTxService {
         final BatchStatusProcessor bs = new BatchStatusProcessor();
         bs.ok = true;
 
-        List<ExecContextData.TaskWithState> taskVertices = execContextGraphService.getAllTasksTopologically(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId);
-        for (ExecContextData.TaskWithState taskVertex : taskVertices) {
+        List<TaskData.TaskWithState> taskVertices = execContextGraphService.getAllTasksTopologically(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId);
+        for (TaskData.TaskWithState taskVertex : taskVertices) {
             if (taskVertex.state== EnumsApi.TaskExecState.NONE || taskVertex.state== EnumsApi.TaskExecState.IN_PROGRESS) {
                 continue;
             }

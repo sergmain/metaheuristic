@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
@@ -58,11 +60,11 @@ public class TaskProducingService {
 
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParamsYaml.Process process,
-            ExecContextParamsYaml execContextParamsYaml, Long execContextId, Long execContextGraphId, Long execContextTaskStateId,
+            ExecContextParamsYaml execContextParamsYaml, Long execContextId, ExecContextData.GraphAndStates graphAndStates,
             List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState) {
         TxUtils.checkTxExists();
-        ExecContextGraphSyncService.checkWriteLockPresent(execContextGraphId);
-        ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
+        ExecContextGraphSyncService.checkWriteLockPresent(graphAndStates.graph().id);
+        ExecContextTaskStateSyncService.checkWriteLockPresent(graphAndStates.states().id);
 
         TaskData.ProduceTaskResult result = new TaskData.ProduceTaskResult();
 
@@ -81,7 +83,7 @@ public class TaskProducingService {
             log.info("(targetState.value!=t.execState)");
             throw new IllegalStateException("(targetState.value!=t.execState)");
         }
-        execContextGraphService.addNewTasksToGraph(execContextGraphId, execContextTaskStateId, parentTaskIds, taskWithContexts, targetState);
+        execContextGraphService.addNewTasksToGraph(graphAndStates, parentTaskIds, taskWithContexts, targetState);
 
         result.status = EnumsApi.TaskProducingStatus.OK;
         return result;
@@ -94,6 +96,7 @@ public class TaskProducingService {
      * @param lastIds
      */
     public void createTasksForSubProcesses(
+        ExecContextData.GraphAndStates graphAndStates,
             ExecContextData.SimpleExecContext simpleExecContext, InternalFunctionData.ExecutionContextData executionContextData,
             String currTaskContextId, Long parentTaskId, List<Long> lastIds) {
         TxUtils.checkTxExists();
@@ -116,7 +119,6 @@ public class TaskProducingService {
 
         List<Long> parentTaskIds = List.of(parentTaskId);
         String subProcessContextId = executionContextData.subProcesses.get(0).processContextId;
-
 
         TaskImpl t = null;
         for (ExecContextData.ProcessVertex subProcess : subProcesses) {
@@ -152,7 +154,7 @@ public class TaskProducingService {
                 throw new IllegalStateException("(targetState.value!=t.execState)");
             }
             List<TaskApiData.TaskWithContext> currTaskIds = List.of(new TaskApiData.TaskWithContext(t.getId(), actualProcessContextId));
-            execContextGraphService.addNewTasksToGraph(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId, parentTaskIds, currTaskIds, targetState);
+            execContextGraphService.addNewTasksToGraph(graphAndStates, parentTaskIds, currTaskIds, targetState);
             parentTaskIds = List.of(t.getId());
             subProcessContextId = subProcess.processContextId;
         }

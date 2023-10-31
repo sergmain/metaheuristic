@@ -83,8 +83,7 @@ public class TaskQueueService {
         return taskQueue.setTaskExecState(execContextId, taskId, state);
     }
 
-    @Nullable
-    static TaskQueue.TaskGroup getTaskGroupForTransferring(Long execContextId) {
+    static TaskQueue.TaskGroups getTaskGroupForTransferring(Long execContextId) {
         return taskQueue.getTaskGroupForTransferring(execContextId);
     }
 

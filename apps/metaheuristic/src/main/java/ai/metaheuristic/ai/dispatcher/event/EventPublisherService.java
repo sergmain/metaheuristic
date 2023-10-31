@@ -73,7 +73,7 @@ public class EventPublisherService {
         eventPublisher.publishEvent(event);
     }
 
-    public void publishUpdateTaskExecStatesInGraphTxEvent(UpdateTaskExecStatesInGraphTxEvent event) {
+    public void publishUpdateTaskExecStatesInGraphTxEvent(UpdateTaskExecStatesInExecContextTxEvent event) {
         TxUtils.checkTxExists();
         eventPublisher.publishEvent(event);
     }

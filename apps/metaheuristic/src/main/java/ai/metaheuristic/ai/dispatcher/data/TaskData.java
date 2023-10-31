@@ -19,10 +19,7 @@ package ai.metaheuristic.ai.dispatcher.data;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.api.EnumsApi;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.springframework.lang.Nullable;
 
 import java.util.HashMap;
@@ -132,5 +129,14 @@ public class TaskData {
         public final Long taskId;
         public final int triesWasMade;
         public final EnumsApi.TaskExecState targetState;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @EqualsAndHashCode(of="taskId")
+    public static class TaskWithState {
+        public Long taskId;
+        public EnumsApi.TaskExecState state;
     }
 }

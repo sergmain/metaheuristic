@@ -212,8 +212,7 @@ public class TaskProviderTopLevelService {
         return TaskQueueSyncStaticService.getWithReadSync(()-> TaskQueueService.alreadyRegistered(taskId));
     }
 
-    @Nullable
-    public static TaskQueue.TaskGroup getTaskGroupForTransferring(Long execContextId) {
+    public static TaskQueue.TaskGroups getTaskGroupForTransferring(Long execContextId) {
         return TaskQueueSyncStaticService.getWithReadSync(()-> TaskQueueService.getTaskGroupForTransferring(execContextId));
     }
 

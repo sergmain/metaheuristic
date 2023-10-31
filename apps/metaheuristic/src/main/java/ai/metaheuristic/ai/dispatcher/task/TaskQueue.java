@@ -65,8 +65,22 @@ public class TaskQueue {
         }
     }
 
-    private static final int GROUP_SIZE_DEFAULT = 10;
+    public static final int GROUP_SIZE_DEFAULT = 10;
     private static final int MIN_QUEUE_SIZE_DEFAULT = 5000;
+
+    public static final TaskGroups EMPTY = new TaskGroups();
+
+    public static class TaskGroups {
+        public final List<TaskGroup> groups = new ArrayList<>();
+        public void reset() {
+            for (TaskGroup group : groups) {
+                if (!groupReadyForTransferring(group)) {
+                    throw new IllegalStateException("(!groupReadyForTransferring(group))");
+                }
+                group.reset();
+            }
+        }
+    }
 
     @Slf4j
     public static class TaskGroup {
@@ -308,14 +322,14 @@ public class TaskQueue {
         this.groupSize = groupSize;
     }
 
-    @Nullable
-    public TaskGroup getTaskGroupForTransferring(Long execContextId) {
+    public TaskGroups getTaskGroupForTransferring(Long execContextId) {
+        TaskGroups groups = new TaskGroups();
         for (TaskGroup taskGroup : taskGroups) {
-            if (execContextId.equals(taskGroup.execContextId) && groupReadyForTransfering(taskGroup)) {
-                return taskGroup;
+            if (execContextId.equals(taskGroup.execContextId) && groupReadyForTransferring(taskGroup)) {
+                groups.groups.add(taskGroup);
             }
         }
-        return null;
+        return groups;
     }
 
     public boolean allTaskGroupFinished(Long execContextId) {
@@ -436,7 +450,7 @@ public class TaskQueue {
         return true;
     }
 
-    private static boolean groupReadyForTransfering(TaskGroup taskGroup) {
+    private static boolean groupReadyForTransferring(TaskGroup taskGroup) {
         for (AllocatedTask task : taskGroup.tasks) {
             if (task==null) {
                 continue;
