@@ -70,10 +70,11 @@ public class SubProcessesTxService {
         String currTaskContextId = ContextUtils.buildTaskContextId(subProcessContextId, "0");
 
         try {
+            ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId);
             taskProducingService.createTasksForSubProcesses(
-                    simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
+                graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
 
-            execContextGraphService.createEdges(simpleExecContext.execContextGraphId, lastIds, executionContextData.descendants);
+            execContextGraphService.createEdges(graphAndStates.graph(), lastIds, executionContextData.descendants);
 
         } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
             throw e;

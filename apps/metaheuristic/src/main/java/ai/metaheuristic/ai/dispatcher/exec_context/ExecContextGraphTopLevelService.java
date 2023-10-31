@@ -16,16 +16,12 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author Serge
@@ -39,25 +35,5 @@ import java.util.Set;
 public class ExecContextGraphTopLevelService {
 
     private final ExecContextGraphService execContextGraphService;
-
-    public List<ExecContextData.TaskVertex> findAll(Long execContextGraphId) {
-        return execContextGraphService.findAll(execContextGraphId);
-    }
-
-    public Set<ExecContextData.TaskVertex> findDescendants(Long execContextGraphId, Long taskId) {
-        return execContextGraphService.findDescendants(execContextGraphId, taskId);
-    }
-
-    public Set<ExecContextData.TaskVertex> findDirectDescendants(Long execContextGraphId, Long taskId) {
-        return execContextGraphService.findDirectDescendants(execContextGraphId, taskId);
-    }
-
-    public List<ExecContextData.TaskVertex> findAllForAssigning(Long execContextGraphId, Long execContextTaskStateId) {
-        return findAllForAssigning(execContextGraphId, execContextTaskStateId, false);
-    }
-
-    public List<ExecContextData.TaskVertex> findAllForAssigning(Long execContextGraphId, Long execContextTaskStateId, boolean includeForCaching) {
-        return execContextGraphService.findAllForAssigning(execContextGraphId, execContextTaskStateId, includeForCaching);
-    }
 
 }

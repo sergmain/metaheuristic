@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.dispatcher.event.events;
 
 import lombok.AllArgsConstructor;
 
+import java.util.List;
+
 /**
  * @author Serge
  * Date: 12/20/2020
@@ -26,9 +28,9 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class UpdateTaskExecStatesInExecContextTxEvent {
     public final Long execContextId;
-    public final Long taskId;
+    public final List<Long> taskIds;
 
     public UpdateTaskExecStatesInExecContextEvent to() {
-        return new UpdateTaskExecStatesInExecContextEvent(execContextId, taskId);
+        return new UpdateTaskExecStatesInExecContextEvent(execContextId, taskIds);
     }
 }

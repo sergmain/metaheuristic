@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
@@ -34,9 +34,9 @@ import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -65,7 +65,7 @@ public class PermuteVariablesFunction implements InternalFunction {
 
     private final PermuteVariablesService permuteVariablesAndInlinesTxService;
     private final InternalFunctionVariableService internalFunctionVariableService;
-    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
+    private final ExecContextGraphService execContextGraphService;
     private final VariableTxService variableService;
     private final InternalFunctionService internalFunctionService;
 
@@ -115,7 +115,7 @@ public class PermuteVariablesFunction implements InternalFunction {
             throw new InternalFunctionException(sub_process_not_found, "#987.040 there isn't any sub-process for process '"+executionContextData.process.processCode+"'");
         }
 
-        Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(simpleExecContext.execContextGraphId, taskId);
+        Set<ExecContextData.TaskVertex> descendants = execContextGraphService.findDescendants(simpleExecContext.execContextId, simpleExecContext.execContextGraphId, taskId);
         if (descendants.isEmpty()) {
             throw new InternalFunctionException(broken_graph_error, "#987.060 Graph for ExecContext #"+ simpleExecContext.execContextId +" is broken");
         }

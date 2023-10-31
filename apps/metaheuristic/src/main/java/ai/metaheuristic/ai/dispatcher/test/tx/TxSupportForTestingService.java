@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.batch.BatchCache;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
@@ -141,23 +142,23 @@ public class TxSupportForTestingService {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        return execContextGraphService.updateTaskExecState(execContextDAC, execContextTaskStateId, taskId, execState, taskContextId);
+        return execContextGraphService.updateTaskExecState(execContextDAC, execContextTaskStateId, List.of(new TaskData.TaskWithStateAndTaskContextId(taskId, execState, taskContextId)));
     }
 
     @Transactional
-    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasksWithTx(Long execContextGraphId, Long execContextTaskStateId, Long taskId) {
+    public ExecContextOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasksWithTx(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, Long taskId) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        return execContextGraphService.updateGraphWithResettingAllChildrenTasks(execContextGraphId, execContextTaskStateId, taskId);
+        return execContextGraphService.updateTaskStatesWithResettingAllChildrenTasks(execContextDAC, execContextTaskStateId, taskId);
     }
 
     @Transactional
-    public void setStateForAllChildrenTasksInternal(Long execContextGraphId, Long execContextTaskStateId, Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
+    public void setStateForAllChildrenTasksInternal(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        execContextGraphService.setStateForAllChildrenTasks(execContextGraphId, execContextTaskStateId, taskId, withTaskList, state);
+        execContextGraphService.setStateForAllChildrenTasks(execContextDAC, execContextTaskStateId, taskId, withTaskList, state);
     }
 
     @Transactional

@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
@@ -80,7 +81,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @Autowired private ExecContextCache execContextCache;
     @Autowired private TaskRepository taskRepository;
     @Autowired private ExecContextTaskStateService execContextTaskStateTopLevelService;
-    @Autowired private ExecContextGraphTopLevelService execContextGraphTopLevelService;
+    @Autowired private ExecContextGraphService execContextGraphService;
     @Autowired private TaskFinishingTopLevelService taskFinishingTopLevelService;
     @Autowired private ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     @Autowired private TaskVariableTopLevelService taskVariableTopLevelService;
@@ -227,7 +228,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
             assertEquals(14, taskIds.size());
 
-            Set<ExecContextData.TaskVertex> descendants = execContextGraphTopLevelService.findDescendants(getExecContextForTest().execContextGraphId, permuteTask.task.id);
+            Set<ExecContextData.TaskVertex> descendants = execContextGraphService.findDescendants(getExecContextForTest().id, getExecContextForTest().execContextGraphId, permuteTask.task.id);
             // there are:
             // 3 'test.fit.function:1.0' tasks,
             // 3 'test.predict.function:1.0' tasks
@@ -235,7 +236,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             // and 1 'mh.finish' task
             assertEquals(8, descendants.size());
 
-            descendants = execContextGraphTopLevelService.findDirectDescendants(getExecContextForTest().execContextGraphId, permuteTask.task.id);
+            descendants = execContextGraphService.findDirectDescendants(getExecContextForTest().execContextGraphId, permuteTask.task.id);
             // there are:
             // 3 'test.fit.function:1.0' tasks,
             // 1 'mh.aggregate-internal-context' task

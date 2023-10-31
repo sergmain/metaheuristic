@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
@@ -36,7 +37,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
@@ -52,7 +52,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-//@ActiveProfiles({"dispatcher", "mysql"})
 @Slf4j
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class TestGraph extends PreparingSourceCode {
@@ -61,6 +60,7 @@ public class TestGraph extends PreparingSourceCode {
     @Autowired private ExecContextCache execContextCache;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
     @Autowired private TestGraphService testGraphService;
+    @Autowired private ExecContextGraphService execContextGraphService;
 
     @Override
     public String getSourceCodeYamlAsString() {
@@ -106,7 +106,9 @@ public class TestGraph extends PreparingSourceCode {
                             assertEquals(1, leafs.size());
                             assertTrue(leafs.contains(new TaskVertex(4L, Consts.TOP_LEVEL_CONTEXT_ID)));
 
-                            txSupportForTestingService.updateTaskExecState(getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId, 1L, EnumsApi.TaskExecState.ERROR, Consts.TOP_LEVEL_CONTEXT_ID);
+                            txSupportForTestingService.updateTaskExecState(execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
+                                getExecContextForTest().execContextTaskStateId, 1L, EnumsApi.TaskExecState.ERROR, Consts.TOP_LEVEL_CONTEXT_ID);
+
                             setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
                             checkState(1L, EnumsApi.TaskExecState.ERROR);
                             checkState(2L, EnumsApi.TaskExecState.SKIPPED);
@@ -127,9 +129,12 @@ public class TestGraph extends PreparingSourceCode {
 
 
                             // reset all graph
-                            txSupportForTestingService.updateTaskExecState(getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId, 1L, EnumsApi.TaskExecState.NONE, Consts.TOP_LEVEL_CONTEXT_ID);
+                            txSupportForTestingService.updateTaskExecState(execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
+                                getExecContextForTest().execContextTaskStateId, 1L, EnumsApi.TaskExecState.NONE, Consts.TOP_LEVEL_CONTEXT_ID);
+
                             txSupportForTestingService.updateGraphWithResettingAllChildrenTasksWithTx(
-                                    getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId, 1L);
+                                execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
+                                getExecContextForTest().execContextTaskStateId, 1L);
 
                             setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
 

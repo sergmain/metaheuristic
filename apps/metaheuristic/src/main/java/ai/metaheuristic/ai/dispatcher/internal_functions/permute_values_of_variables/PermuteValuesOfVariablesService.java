@@ -64,6 +64,8 @@ public class PermuteValuesOfVariablesService {
 
         final AtomicInteger currTaskNumber = new AtomicInteger(0);
         final List<Long> lastIds = new ArrayList<>();
+        ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId);
+
         for (InlineVariable inlineVariable : inlineVariables) {
             try {
                 currTaskNumber.incrementAndGet();
@@ -74,8 +76,7 @@ public class PermuteValuesOfVariablesService {
                     variableService.createInputVariablesForSubProcess(
                             variableDataSource, simpleExecContext.execContextId, entry.getKey(), currTaskContextId, false);
                 }
-                taskProducingService.createTasksForSubProcesses(
-                        simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
+                taskProducingService.createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
 
             } catch (BreakFromLambdaException e) {
                 log.error(e.getMessage());
@@ -83,7 +84,7 @@ public class PermuteValuesOfVariablesService {
                         new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken, e.getMessage()));
             }
         }
-        execContextGraphService.createEdges(simpleExecContext.execContextGraphId, lastIds, descendants);
+        execContextGraphService.createEdges(graphAndStates.graph(), lastIds, descendants);
     }
 
 

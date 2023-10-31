@@ -20,9 +20,9 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
@@ -57,7 +57,6 @@ public abstract class PreparingSourceCode extends PreparingCore {
     @Autowired private PreparingSourceCodeInitService preparingSourceCodeInitService;
     @Autowired private Globals globals;
     @Autowired private ExecContextTaskStateRepository execContextTaskStateRepository;
-    @Autowired private ExecContextGraphTopLevelService execContextGraphTopLevelService;
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
     @Autowired private ExecContextCache execContextCache;
     @Autowired private ExecContextRepository execContextRepository;
@@ -65,6 +64,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
     @Autowired private ExecContextStatusService execContextStatusService;
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
     @Autowired private TxSupportForTestingService txSupportForTestingService;
+    @Autowired private ExecContextGraphService execContextGraphService;
 
     public SourceCodeImpl getSourceCode() {
         return preparingSourceCodeData.sourceCode;
@@ -146,7 +146,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
     public void step_0_0_produce_tasks_and_start() {
         step_0_0_produceTasks();
 
-        ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
+        ExecContextSyncService.getWithSyncNullable(getExecContextForTest().id, () -> {
 
             System.out.println("start txSupportForTestingService.toStarted()");
             txSupportForTestingService.toStarted(getExecContextForTest().id);
@@ -156,6 +156,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
             assertNotNull(gv);
 
             assertEquals(EnumsApi.ExecContextState.STARTED.code, getExecContextForTest().getState());
+            //noinspection ReturnOfNull
             return null;
         });
         System.out.println("start execContextStatusService.resetStatus()");
@@ -217,7 +218,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
         List<TaskImpl> tasks = taskRepositoryForTest.findByExecContextIdAsList(getExecContextForTest().id);
 
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(this.getExecContextForTest().id)));
-        List<ExecContextData.TaskVertex> taskVertices = execContextGraphTopLevelService.findAll(getExecContextForTest().execContextGraphId);
+        List<ExecContextData.TaskVertex> taskVertices = execContextGraphService.findAll(getExecContextForTest().execContextGraphId);
         assertEquals(tasks.size(), taskVertices.size());
 
         for (ExecContextData.TaskVertex taskVertex : taskVertices) {

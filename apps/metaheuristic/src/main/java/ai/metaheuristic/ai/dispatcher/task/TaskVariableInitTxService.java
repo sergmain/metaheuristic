@@ -101,7 +101,7 @@ public class TaskVariableInitTxService {
 
         taskRepository.save(task);
         taskExecStateService.updateTaskExecStates(task, paramsYaml.task.init.nextState, false);
-        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInExecContextTxEvent(task.execContextId, task.id));
+        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInExecContextTxEvent(task.execContextId, List.of(task.id)));
     }
 
     @Nullable

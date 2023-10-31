@@ -161,7 +161,7 @@ public class BatchLineSplitterTxService {
                 throw new BatchResourceProcessingException(es);
             }
         });
-        execContextGraphService.createEdges(simpleExecContext.execContextGraphId, lastIds, executionContextData.descendants);
+        execContextGraphService.createEdges(graphAndStates.graph(), lastIds, executionContextData.descendants);
     }
 
     private static class CustomLineIterator extends LineIterator {

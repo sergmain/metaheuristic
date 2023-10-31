@@ -263,7 +263,7 @@ public class TaskProviderTopLevelService {
             log.debug("393.400 task #{}, state: {}, result: {}", taskId, state, b);
             if (b) {
                 applicationEventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
-                        execContextId, execContext.execContextGraphId, execContext.execContextTaskStateId));
+                        execContextId, execContext.execContextTaskStateId));
             }
         });
     }

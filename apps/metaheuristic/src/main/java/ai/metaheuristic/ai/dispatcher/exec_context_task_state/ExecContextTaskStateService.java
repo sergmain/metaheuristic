@@ -16,35 +16,33 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.events.TransferStateFromTaskQueueToExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
-import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.threads.ThreadedPool;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import static ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService.importExecContextGraph;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Serge
@@ -92,32 +90,36 @@ public class ExecContextTaskStateService {
     }
 
     public void updateTaskExecStatesExecContext(UpdateTaskExecStatesInExecContextEvent event) {
+        ExecContextImpl ec = execContextCache.findById(event.execContextId, true);
+        if (ec==null) {
+            return;
+        }
+        final ExecContextData.ExecContextDAC execContextDAC = execContextGraphService.getExecContextDAC(event.execContextId, ec.execContextGraphId);
         try {
-            log.debug("call ExecContextTaskStateTopLevelService.updateTaskExecStatesExecContext({}, {})", event.execContextId, event.taskIds);
-            TaskImpl task = taskRepository.findByIdReadOnly(event.taskIds);
-            if (task==null) {
-                return;
-            }
-            TaskParamsYaml taskParams = task.getTaskParamsYaml();
-            if (!event.execContextId.equals(task.execContextId)) {
-                log.error("417.020 (!execContextId.equals(task.execContextId))");
-                return;
-            }
-            ExecContextImpl ec = execContextCache.findById(task.execContextId, true);
-            if (ec==null) {
-                return;
+            List<TaskData.TaskWithStateAndTaskContextId> taskWithStates = new ArrayList<>(event.taskIds.size()+10);
+            log.debug("call ExecContextTaskStateTopLevelService.updateTaskExecStatesExecContext({}, {})", event.execContextId, taskWithStates);
+            for (Long taskId : event.taskIds) {
+                TaskImpl task = taskRepository.findByIdReadOnly(taskId);
+                if (task==null) {
+                    continue;
+                }
+                if (!event.execContextId.equals(task.execContextId)) {
+                    log.error("417.020 (!execContextId.equals(task.execContextId))");
+                    continue;
+                }
+                TaskParamsYaml taskParams = task.getTaskParamsYaml();
+                taskWithStates.add(new TaskData.TaskWithStateAndTaskContextId(taskId, EnumsApi.TaskExecState.from(task.execState), taskParams.task.taskContextId));
             }
             ExecContextTaskStateSyncService.getWithSyncNullable(ec.execContextTaskStateId,
-                    () -> TaskSyncService.getWithSyncNullable(event.taskIds,
-                            () -> updateTaskExecStatesExecContext(ec.execContextTaskStateId, event.taskIds, EnumsApi.TaskExecState.from(task.execState), taskParams.task.taskContextId)));
+                            () -> updateTaskExecStatesExecContext(execContextDAC, ec.execContextTaskStateId, taskWithStates));
 
         } catch (Throwable th) {
             log.error("417.020 Error, need to investigate ", th);
         }
     }
 
-    private OperationStatusRest updateTaskExecStatesExecContext(Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState state, String taskContextId) {
-        return execContextTaskStateService.updateTaskExecStatesInGraph(execContextTaskStateId, taskId, state, taskContextId);
+    private OperationStatusRest updateTaskExecStatesExecContext(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, List<TaskData.TaskWithStateAndTaskContextId> taskWithStates) {
+        return execContextTaskStateService.updateTaskExecStatesInGraph(execContextDAC, execContextTaskStateId, taskWithStates);
     }
 
     public void transferStateFromTaskQueueToExecContext(TransferStateFromTaskQueueToExecContextEvent event) {
@@ -148,9 +150,7 @@ public class ExecContextTaskStateService {
             if (ec==null) {
                 return TaskQueue.EMPTY;
             }
-            ExecContextGraph execContextGraph = execContextGraphService.prepareExecContextGraph(ec.execContextGraphId);
-            DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = importExecContextGraph(execContextGraph.getExecContextGraphParamsYaml());
-            ExecContextData.ExecContextDAC execContextDAC = new ExecContextData.ExecContextDAC(execContextId, graph);
+            final ExecContextData.ExecContextDAC execContextDAC = execContextGraphService.getExecContextDAC(execContextId, ec.execContextGraphId);
 
             final TaskQueue.TaskGroups taskGroups = execContextTaskStateService.transferStateFromTaskQueueToExecContext(execContextDAC, execContextId, execContextTaskStateId);
             taskGroups.reset();

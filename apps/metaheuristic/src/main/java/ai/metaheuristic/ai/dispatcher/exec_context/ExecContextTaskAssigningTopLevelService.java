@@ -20,17 +20,17 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.*;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +61,7 @@ public class ExecContextTaskAssigningTopLevelService {
     private final Globals globals;
     private final ExecContextCache execContextCache;
     private final ExecContextFSM execContextFSM;
-    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
+    private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
     private final TaskCheckCachingService taskCheckCachingService;
     private final TaskFinishingTxService taskFinishingTxService;
@@ -136,14 +136,12 @@ public class ExecContextTaskAssigningTopLevelService {
         }
 
         if (System.currentTimeMillis() - mills > 10_000) {
-            eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
-                    execContextId, execContext.execContextGraphId, execContext.execContextTaskStateId));
+            eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(execContextId, execContext.execContextTaskStateId));
             mills = System.currentTimeMillis();
         }
 
         final List<ExecContextData.TaskVertex> vertices = ExecContextSyncService.getWithSync(execContextId,
-                () -> execContextGraphTopLevelService.findAllForAssigning(
-                        execContext.execContextGraphId, execContext.execContextTaskStateId, true));
+                () -> execContextGraphService.findAllForAssigning(execContext.execContextGraphId, execContext.execContextTaskStateId, true));
 
         stat.found = vertices.size();
         log.debug("703.140 found {} tasks for registering, execContextId: #{}", vertices.size(), execContextId);

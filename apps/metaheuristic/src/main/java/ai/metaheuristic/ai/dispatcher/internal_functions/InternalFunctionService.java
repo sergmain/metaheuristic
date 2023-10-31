@@ -19,8 +19,8 @@ package ai.metaheuristic.ai.dispatcher.internal_functions;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
@@ -50,7 +50,7 @@ import static ai.metaheuristic.ai.dispatcher.data.ExecContextData.*;
 public class InternalFunctionService {
 
     private final SourceCodeCache sourceCodeCache;
-    private final ExecContextGraphTopLevelService execContextGraphTopLevelService;
+    private final ExecContextGraphService execContextGraphService;
 
     public InternalFunctionData.ExecutionContextData getSubProcesses(SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml, Long taskId) {
         SourceCodeImpl sourceCode = sourceCodeCache.findById(simpleExecContext.sourceCodeId);
@@ -59,7 +59,7 @@ public class InternalFunctionService {
                     new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
                     "#994.200 sourceCode wasn't found, sourceCodeId: " + simpleExecContext.sourceCodeId));
         }
-        Set<TaskVertex> descendants = execContextGraphTopLevelService.findDirectDescendants(simpleExecContext.execContextGraphId, taskId);
+        Set<TaskVertex> descendants = execContextGraphService.findDirectDescendants(simpleExecContext.execContextGraphId, taskId);
         if (descendants.isEmpty()) {
             return new InternalFunctionData.ExecutionContextData(
                 new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,

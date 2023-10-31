@@ -233,16 +233,14 @@ public class PreparingSourceCodeService {
 
     @SneakyThrows
     public void findTaskForRegisteringInQueueAndWait(ExecContextImpl execContext) {
-        eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
-                execContext.id, execContext.execContextGraphId, execContext.execContextTaskStateId));
+        eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(execContext.id, execContext.execContextTaskStateId));
         Thread.sleep(500);
 
         execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
         //execContextTaskAssigningTopLevelService.procesEvent();
 
         Thread.sleep(500);
-        eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
-                execContext.id, execContext.execContextGraphId, execContext.execContextTaskStateId));
+        eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(execContext.id, execContext.execContextTaskStateId));
         Thread.sleep(500);
 //        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContext.id);
 

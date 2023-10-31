@@ -139,4 +139,14 @@ public class TaskData {
         public Long taskId;
         public EnumsApi.TaskExecState state;
     }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @EqualsAndHashCode(of="taskId")
+    public static class TaskWithStateAndTaskContextId {
+        public Long taskId;
+        public EnumsApi.TaskExecState state;
+        public String taskContextId;
+    }
 }

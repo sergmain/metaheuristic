@@ -100,6 +100,8 @@ public class BatchSplitterTxService {
         String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
                 taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
 
+        ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId);
+
         try {
             // do not remove try(Stream<Path>){}
             try (final Stream<Path> list = Files.list(srcDir)) {
@@ -115,8 +117,7 @@ public class BatchSplitterTxService {
                                 variableService.createInputVariablesForSubProcess(
                                         variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, true);
 
-                                taskProducingService.createTasksForSubProcesses(
-                                        simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
+                                taskProducingService.createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
 
                             }
                             catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
@@ -134,7 +135,8 @@ public class BatchSplitterTxService {
             log.error(es, e);
             throw new BatchResourceProcessingException(es);
         }
-        execContextGraphService.createEdges(simpleExecContext.execContextGraphId, lastIds, executionContextData.descendants);
+        execContextGraphService.createEdges(graphAndStates.graph(), lastIds, executionContextData.descendants);
+
         eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
     }
 

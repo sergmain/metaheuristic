@@ -41,6 +41,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
 
+import java.util.List;
+
 /**
  * @author Serge
  * Date: 12/17/2020
@@ -83,7 +85,7 @@ public class TaskFinishingTxService {
             return;
         }
 
-        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInExecContextTxEvent(task.execContextId, taskId));
+        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInExecContextTxEvent(task.execContextId, List.of(taskId)));
 
         taskExecStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK, true);
 
@@ -171,7 +173,7 @@ public class TaskFinishingTxService {
         task.setResultReceived(1);
         task = taskService.save(task);
 
-        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInExecContextTxEvent(task.execContextId, task.id));
+        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInExecContextTxEvent(task.execContextId, List.of(task.id)));
         eventPublisher.publishEvent(new ChangeTaskStateToInitForChildrenTasksTxEvent(task.id));
 
         taskProviderTopLevelService.setTaskExecStateInQueue(task.execContextId, task.id, targetState);

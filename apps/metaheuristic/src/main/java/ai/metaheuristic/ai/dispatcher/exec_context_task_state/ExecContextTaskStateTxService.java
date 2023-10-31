@@ -26,7 +26,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepositor
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
-import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
@@ -38,8 +37,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static ai.metaheuristic.api.EnumsApi.*;
 
 /**
  * @author Serge
@@ -58,12 +55,11 @@ public class ExecContextTaskStateTxService {
     private final EventPublisherService eventPublisherService;
 
     @Transactional
-    public OperationStatusRest updateTaskExecStatesInGraph(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, List<TaskData.TaskWithState> taskWithStates, String taskContextId) {
+    public OperationStatusRest updateTaskExecStatesInGraph(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, List<TaskData.TaskWithStateAndTaskContextId> taskWithStates) {
         ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
-        TaskSyncService.checkWriteLockPresent(taskId);
 
         final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
-            execContextDAC, execContextTaskStateId, taskId, execState, taskContextId);
+            execContextDAC, execContextTaskStateId, taskWithStates);
 
         taskExecStateService.updateTasksStateInDb(status);
         eventPublisherService.handleFindUnassignedTasksAndRegisterInQueueEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
@@ -79,24 +75,28 @@ public class ExecContextTaskStateTxService {
         if (taskGroups.groups.isEmpty()) {
             throw new CommonRollbackException();
         }
-        List<TaskData.TaskWithState> taskWithStates = new ArrayList<>(TaskQueue.GROUP_SIZE_DEFAULT * 10);
-        for (TaskQueue.TaskGroup group : taskGroups.groups1111) {
+        List<TaskData.TaskWithStateAndTaskContextId> taskWithStates = new ArrayList<>(TaskQueue.GROUP_SIZE_DEFAULT * 10);
+        for (TaskQueue.TaskGroup group : taskGroups.groups) {
             for (TaskQueue.AllocatedTask task : group.tasks) {
                 if (task==null) {
                     continue;
                 }
-
+                if (task.queuedTask.task==null){
+                    throw new IllegalStateException("(task.queuedTask.task==null)");
+                }
+                if (!task.queuedTask.execContextId.equals(task.queuedTask.task.execContextId)) {
+                    throw new IllegalStateException("(!task.queuedTask.execContextId.equals(task.queuedTask.task.execContextId))");
+                }
                 if (task.queuedTask.taskParamYaml==null) {
                     throw new IllegalStateException("(task.queuedTask.taskParamYaml==null)");
                 }
-
                 String taskContextId = task.queuedTask.taskParamYaml.task.taskContextId;
-                final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
-                    execContextDAC, execContextTaskStateId, task.queuedTask.taskId, task.state, taskContextId);
-
-                taskExecStateService.updateTasksStateInDb(status);
+                taskWithStates.add(new TaskData.TaskWithStateAndTaskContextId(task.queuedTask.taskId, task.state, taskContextId));
             }
         }
+        final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContextDAC, execContextTaskStateId, taskWithStates);
+
+        taskExecStateService.updateTasksStateInDb(status);
         return taskGroups;
     }
 

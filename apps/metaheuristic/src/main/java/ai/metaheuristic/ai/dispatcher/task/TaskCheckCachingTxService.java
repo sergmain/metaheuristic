@@ -192,7 +192,7 @@ public class TaskCheckCachingTxService {
             taskExecStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE, false);
             status = CheckCachingStatus.no_prev_cache;
         }
-        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInExecContextTxEvent(task.execContextId, task.id));
+        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInExecContextTxEvent(task.execContextId, List.of(task.id)));
         return status;
     }
 
