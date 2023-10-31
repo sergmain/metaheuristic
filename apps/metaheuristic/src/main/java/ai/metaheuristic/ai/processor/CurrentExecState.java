@@ -17,8 +17,6 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.api.EnumsApi;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +29,7 @@ import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 
+@SuppressWarnings("unused")
 @Component
 @Profile("processor")
 public class CurrentExecState {
