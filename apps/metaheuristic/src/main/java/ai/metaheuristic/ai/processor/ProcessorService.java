@@ -95,7 +95,7 @@ public class ProcessorService {
             status.ip = inetAddress.getHostAddress();
             status.host = inetAddress.getHostName();
         } catch (UnknownHostException e) {
-            log.error("#749.010 Error", e);
+            log.error("749.010 Error", e);
             status.addError(ExceptionUtils.getStackTrace(e));
         }
 
@@ -129,15 +129,15 @@ public class ProcessorService {
      */
     public void markAsDelivered(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, List<Long> ids) {
         for (Long taskId : ids) {
-            String coreCode = processorTaskService.findCoreCodeWithTaskId(taskId);
-            if (coreCode==null) {
-                continue;
+            List<String> coreCodes = processorTaskService.findCoreCodesWithTaskId(taskId);
+            for (String coreCode : coreCodes) {
+                ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataParams.getCoreRef(coreCode, ref.dispatcherUrl);
+                if (core==null) {
+                    continue;
+
+                }
+                processorTaskService.setDelivered(core, taskId);
             }
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataParams.getCoreRef(coreCode, ref.dispatcherUrl);
-            if (core==null) {
-                continue;
-            }
-            processorTaskService.setDelivered(core, taskId);
         }
     }
 
@@ -159,16 +159,19 @@ public class ProcessorService {
         }
         List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
         for (DispatcherCommParamsYaml.ResendTaskOutput output : response.resendTaskOutputs.resends) {
-            String coreCode = processorTaskService.findCoreCodeWithTaskId(output.taskId);
-            if (coreCode==null) {
-                continue;
+            List<String> coreCodes = processorTaskService.findCoreCodesWithTaskId(output.taskId);
+            if (coreCodes.size()>1) {
+                log.warn("749.030 Server needs to re-send task output but task #{} has allocated in more than one core, number of copies: {}",
+                    output.taskId, coreCodes.size());
             }
-            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataParams.getCoreRef(coreCode, ref.dispatcherUrl);
-            if (core==null) {
-                continue;
+            for (String coreCode : coreCodes) {
+                ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataParams.getCoreRef(coreCode, ref.dispatcherUrl);
+                if (core==null) {
+                    continue;
+                }
+                Enums.ResendTaskOutputResourceStatus status = resendTaskOutputResources(core, output.taskId, output.variableId);
+                statuses.add( new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(output.taskId, output.variableId, status));
             }
-            Enums.ResendTaskOutputResourceStatus status = resendTaskOutputResources(core, output.taskId, output.variableId);
-            statuses.add( new ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus(output.taskId, output.variableId, status));
         }
         return statuses;
     }
@@ -194,7 +197,7 @@ public class ProcessorService {
                 case git:
                 case inline:
                 default:
-                    throw new NotImplementedException("need to set 'uploaded' in params for this variableId");
+                    throw new NotImplementedException("749.060 need to set 'uploaded' in params for this variableId");
             }
             if (status!=Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED) {
                 return status;
@@ -208,9 +211,9 @@ public class ProcessorService {
 
         // is this variable prepared?
         if (assetFile.isError || !assetFile.isContent) {
-            log.warn("#749.040 Variable wasn't found. Considering that this task is broken, {}", assetFile);
+            log.warn("749.090 Variable wasn't found. Considering that this task is broken, {}", assetFile);
             processorTaskService.markAsFinishedWithError(core, taskId,
-                    "#749.050 Variable #"+outputVariable.id+" wasn't found. Considering that this task is broken");
+                    "749.120 Variable #"+outputVariable.id+" wasn't found. Considering that this task is broken");
 
             processorTaskService.setCompleted(core, taskId);
             return Enums.ResendTaskOutputResourceStatus.VARIABLE_NOT_FOUND;
@@ -264,7 +267,7 @@ public class ProcessorService {
             return result;
         }
         catch (VariableProviderException e) {
-            log.error("#749.070 Error", e);
+            log.error("749.150 Error", e);
             processorTaskService.markAsFinishedWithError(core, task.taskId, e.toString());
             result.isError = true;
             return result;
@@ -292,7 +295,7 @@ public class ProcessorService {
                 //noinspection unused
                 Path outputResourceFile = resourceProvider.getOutputVariableFromFile(core, taskDir, dispatcher, task, outputVariable);
             } catch (VariableProviderException e) {
-                final String msg = "#749.080 Error: " + e.getMessage();
+                final String msg = "749.180 Error: " + e.getMessage();
                 log.error(msg, e);
                 processorTaskService.markAsFinishedWithError(core, task.taskId, msg);
                 return false;

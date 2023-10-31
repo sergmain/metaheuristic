@@ -663,16 +663,15 @@ public class ProcessorTaskService {
         }
     }
 
-    @Nullable
-    public String findCoreCodeWithTaskId(Long taskId) {
+    public List<String> findCoreCodesWithTaskId(Long taskId) {
+        List<String> codes = new ArrayList<>();
         try {
             ProcessorSyncHolder.readLock.lock();
-
             for (Map.Entry<String, Map<DispatcherUrl, Map<Long, ProcessorCoreTask>>> entry : map.entrySet()) {
                 for (Map.Entry<DispatcherUrl, Map<Long, ProcessorCoreTask>> dispatcherUrlMapEntry : entry.getValue().entrySet()) {
                     for (Map.Entry<Long, ProcessorCoreTask> longProcessorCoreTaskEntry : dispatcherUrlMapEntry.getValue().entrySet()) {
                         if (longProcessorCoreTaskEntry.getKey().equals(taskId)) {
-                            return entry.getKey();
+                            codes.add(entry.getKey());
                         }
                     }
                 }
@@ -681,7 +680,7 @@ public class ProcessorTaskService {
         } finally {
             ProcessorSyncHolder.readLock.unlock();
         }
-        return null;
+        return codes;
     }
 
     public void delete(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, final Long taskId) {

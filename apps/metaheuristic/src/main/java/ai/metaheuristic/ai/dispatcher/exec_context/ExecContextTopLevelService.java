@@ -210,13 +210,13 @@ public class ExecContextTopLevelService {
         TaskImpl task = taskRepository.findByIdReadOnly(result.taskId);
         if (task == null) {
             log.warn("210.150 Reporting about non-existed task #{}", result.taskId);
-            return null;
+            return result.taskId;
         }
 
         ExecContextImpl execContext = execContextCache.findById(task.execContextId, true);
         if (execContext == null) {
             log.warn("210.180 Reporting about non-existed execContext #{}", task.execContextId);
-            return null;
+            return result.taskId;
         }
         if (task.execState == EnumsApi.TaskExecState.ERROR.value ||
                 task.execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value||
