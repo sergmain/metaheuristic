@@ -210,7 +210,7 @@ public class DispatcherRequestor {
                 String yaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(pcpy);
                 HttpEntity<String> request = new HttpEntity<>(yaml, headers);
 
-                log.debug("Start to request a dispatcher at {}, quotas: {}", url, r.currentQuota);
+                log.info("Start to request a dispatcher at {}, quotas: {}", url, r.currentQuota);
                 log.debug("ExchangeData:\n{}", yaml);
                 ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
                 String result = response.getBody();
