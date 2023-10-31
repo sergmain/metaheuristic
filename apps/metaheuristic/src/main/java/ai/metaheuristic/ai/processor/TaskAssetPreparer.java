@@ -107,7 +107,7 @@ public class TaskAssetPreparer {
                     log.info("951.060  registered execContexts: {}", currentExecState.getExecContextsNormalized(dispatcherUrl));
                 }
                 // mark as Reported and Delivered for all finished ExecContexts
-                if (!task.isReported() && currentExecState.finished(core.dispatcherUrl, task.execContextId)) {
+                if ((!task.isReported() || !task.isDelivered()) && currentExecState.finished(core.dispatcherUrl, task.execContextId)) {
                     log.info("951.090 Found not-reported and/or not-delivered task, taskId: #{}, url: {}, execContextId: {}", task.taskId, task.dispatcherUrl, task.execContextId);
                     processorTaskService.setReportedOn(core, task.taskId);
                     processorTaskService.setDelivered(core, task.taskId);
