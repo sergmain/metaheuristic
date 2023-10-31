@@ -203,6 +203,9 @@ public class ProcessorTaskService {
     }
 
     public void setReportedOn(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, long taskId) {
+        if (taskId==4788) {
+            throw new IllegalStateException("(taskId==4788)");
+        }
         try {
             ProcessorSyncHolder.writeLock.lock();
             log.info("713.065 setReportedOn({}, {})", core.dispatcherUrl, taskId);
@@ -246,6 +249,9 @@ public class ProcessorTaskService {
     }
 
     public void setDelivered(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId) {
+        if (taskId==4788) {
+            throw new IllegalStateException("(taskId==4788)");
+        }
         try {
             ProcessorSyncHolder.writeLock.lock();
 
