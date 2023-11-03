@@ -169,7 +169,6 @@ public class ExecContextRestController {
         return execContextState;
     }
 
-
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'OPERATOR', 'MANAGER')")
     @GetMapping(value= "/exec-context/{execContextId}/download-variable/{variableId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> downloadVariable(
@@ -187,6 +186,5 @@ public class ExecContextRestController {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         }
     }
-
 
 }

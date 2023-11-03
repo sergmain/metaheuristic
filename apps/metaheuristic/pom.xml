@@ -21,7 +21,7 @@
 
     <groupId>ai.metaheuristic</groupId>
     <artifactId>srv</artifactId>
-    <version>6.0.3.1-SNAPSHOT</version>
+    <version>6.0.4-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>ai.metaheuristic.srv</name>
@@ -30,7 +30,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.0-SNAPSHOT</version>
+        <version>3.2.0-RC2</version>
         <relativePath/>
     </parent>
 
@@ -46,7 +46,7 @@
         <dependency>
             <groupId>ai.metaheuristic</groupId>
             <artifactId>mh-commons</artifactId>
-            <version>6.0.3.1-SNAPSHOT</version>
+            <version>6.0.4-SNAPSHOT</version>
         </dependency>
 
         <dependency>
