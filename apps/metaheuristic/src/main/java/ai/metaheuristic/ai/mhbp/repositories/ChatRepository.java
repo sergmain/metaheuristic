@@ -39,5 +39,9 @@ public interface ChatRepository extends CrudRepository<Chat, Long> {
     @Transactional(readOnly = true)
     @Query(value= "select c.id from Chat c where c.accountId=:accountId")
     List<Long> findIds(Pageable pageable, Long accountId);
+
+    @Transactional(readOnly = true)
+    @Query(value= "select c.id from Chat c where c.accountId=:accountId")
+    List<Long> findIdsAll(Long accountId);
 }
 

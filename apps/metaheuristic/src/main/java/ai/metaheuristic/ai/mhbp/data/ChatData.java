@@ -43,6 +43,14 @@ public class ChatData {
     @NoArgsConstructor
     public static class ApiForCompany extends BaseDataClass {
         public List<ApiData.ApiUid> apis;
+
+        @JsonCreator
+        public ApiForCompany(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     @Data
@@ -62,6 +70,31 @@ public class ChatData {
 
         @JsonCreator
         public Chats(
+                @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+                @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
+    }
+
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class ChatsAll extends BaseDataClass {
+        public List<SimpleChat> chats;
+
+        public ChatsAll(List<SimpleChat> chats) {
+            this.chats = chats;
+        }
+
+        public ChatsAll(List<SimpleChat> chats, String error) {
+            this.chats = chats;
+            addErrorMessage(error);
+        }
+
+        @JsonCreator
+        public ChatsAll(
                 @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
                 @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
             this.errorMessages = errorMessages;

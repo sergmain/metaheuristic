@@ -82,6 +82,18 @@ public class ChatService {
         }
     }
 
+    public ChatData.ChatsAll getChatsAll(DispatcherContext context) {
+        try {
+            List<ChatData.SimpleChat> chats = chatRepository.findIdsAll(context.getAccountId()).stream()
+                    .map(this::to).toList();
+            return new ChatData.ChatsAll(chats);
+        }
+        catch (Throwable th) {
+            log.error("372.040 Error:", th);
+            return new ChatData.ChatsAll(List.of(), "Error: " + th.getMessage());
+        }
+    }
+
     private ChatData.SimpleChat to(Long id) {
         Chat chat = chatRepository.findById(id).orElseThrow();
         ChatParams params = chat.getChatParams();

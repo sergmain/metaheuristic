@@ -53,6 +53,13 @@ public class ChatRestController {
         return chats;
     }
 
+    @GetMapping("/chats-all")
+    public ChatData.ChatsAll chatsAll(Authentication authentication) {
+        DispatcherContext context = userContextService.getContext(authentication);
+        final ChatData.ChatsAll chats = chatService.getChatsAll(context);
+        return chats;
+    }
+
     @GetMapping("/chat/{chatId}")
     public ChatData.FullChat chat(@PathVariable Long chatId, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
