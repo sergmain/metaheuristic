@@ -1,0 +1,11 @@
+OAuth2
+
+- multi-layered authentication system that can manage logins and identity verifications for B2B clients as well as their own B2C customers.
+- Each B2B client will have a unique 'realm', encompassing their employees and their B2C user logins. 
+- implement role-based access controls and ensuring that authentication is specific to each B2B company within their respective realms.
+- login flow that is compatible with mobile, desktop, and web clients.
+
+
+=============
+
+SAML2
