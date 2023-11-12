@@ -46,58 +46,51 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@SuppressWarnings("unused")
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-public class TestEvaluationOfConditionVariables extends TestBaseEvaluation {
+public abstract class TestBaseEvaluation extends PreparingSourceCode {
 
-    @SneakyThrows
-    @Override
-    public String getSourceCodeYamlAsString() {
-        return IOUtils.resourceToString("/source_code/yaml/test-evaluation/test-evaluation-of-condition-1.yaml", StandardCharsets.UTF_8);
+    @Autowired public TxSupportForTestingService txSupportForTestingService;
+    @Autowired public TaskRepositoryForTest taskRepositoryForTest;
+    @Autowired public ExecContextTxService execContextTxService;
+    @Autowired public ExecContextStatusService execContextStatusService;
+    @Autowired public ExecContextTaskStateService execContextTaskStateTopLevelService;
+    @Autowired public ExecContextGraphTopLevelService execContextGraphTopLevelService;
+    @Autowired public ExecContextRepository execContextRepository;
+    @Autowired public PreparingSourceCodeService preparingSourceCodeService;
+    @Autowired public TaskVariableInitTxService taskVariableInitTxService;
+    @Autowired public ExecContextTaskStateService execContextTaskStateService;
+    @Autowired public TaskFinishingTxService taskFinishingTxService;
+    @Autowired public VariableService variableService;
+    @Autowired public VariableTxService variableTxService;
+
+    @AfterEach
+    public void afterTestSourceCodeService() {
+        System.out.println("Finished TestSourceCodeService.afterTestSourceCodeService()");
+        if (getExecContextForTest() !=null) {
+            ExecContextSyncService.getWithSyncNullable(getExecContextForTest().id,
+                    () -> txSupportForTestingService.deleteByExecContextId(getExecContextForTest().id));
+        }
     }
 
-    @Test
-    public void testEvaluation() {
-
-        System.out.println("start produceTasksForTest()");
-        preparingSourceCodeService.produceTasksForTest(getSourceCodeYamlAsString(), preparingSourceCodeData);
-
-        // ======================
-
-        System.out.println("start execContextStatusService.resetStatus()");
-        execContextStatusService.resetStatus();
-
-        Long taskId;
-
-        // mh.string-as-variable
-        taskId = initVariableEvents();
-        preparingSourceCodeService.findRegisterInternalTaskInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.waitUntilTaskFinished(taskId);
-
-        // mh.evaluation
-        taskId = initVariableEvents();
-        preparingSourceCodeService.findRegisterInternalTaskInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.waitUntilTaskFinished(taskId);
-
-        TaskImpl task = taskRepositoryForTest.findById(taskId).orElseThrow();
-        String value = variableTxService.getVariableDataAsString(task.getTaskParamsYaml().task.outputs.get(0).id);
-        assertEquals("false", value);
-
-        // mh.finish
-        taskId = initVariableEvents();
-        preparingSourceCodeService.findRegisterInternalTaskInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.waitUntilTaskFinished(taskId);
-
-        finalAssertions(3);
+    public Long initVariableEvents() {
+        List<Long> taskIds = getUnfinishedTaskVertices(getExecContextForTest());
+        Long forUpdating = null;
+        for (Long taskId : taskIds) {
+            try {
+                TaskSyncService.getWithSyncVoid(taskId, ()-> taskVariableInitTxService.intiVariables(new InitVariablesEvent(taskId)));
+                forUpdating = taskId;
+                break;
+            } catch (CommonRollbackException e) {
+                //
+            }
+        }
+        assertNotNull(forUpdating);
+        execContextTaskStateService.updateTaskExecStatesExecContext(new UpdateTaskExecStatesInExecContextEvent(getExecContextForTest().id, List.of(forUpdating)));
+        return forUpdating;
     }
-
 
 }

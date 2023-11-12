@@ -35,4 +35,4 @@ source:
         - name: resultVariable1
           nullable: true
       metas:
-        - expression: resultVariable1 = variable1 == variable1
+        - expression: resultVariable1 = variable1 != variable1

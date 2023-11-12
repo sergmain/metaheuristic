@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.internal_function.evaluation;
 
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTxService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
@@ -38,34 +39,18 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.charset.StandardCharsets;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @SuppressWarnings("unused")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-public class TestEvaluationVariables extends PreparingSourceCode {
-
-    @Autowired private TxSupportForTestingService txSupportForTestingService;
-    @Autowired private TaskRepositoryForTest taskRepositoryForTest;
-    @Autowired private ExecContextTxService execContextTxService;
-    @Autowired private ExecContextStatusService execContextStatusService;
-    @Autowired private ExecContextTaskStateService execContextTaskStateTopLevelService;
-    @Autowired private ExecContextGraphTopLevelService execContextGraphTopLevelService;
-    @Autowired private ExecContextRepository execContextRepository;
-    @Autowired private PreparingSourceCodeService preparingSourceCodeService;
+public class TestEvaluationVariables extends TestBaseEvaluation {
 
     @SneakyThrows
     @Override
     public String getSourceCodeYamlAsString() {
         return IOUtils.resourceToString("/source_code/yaml/test-evaluation/test-evaluation-1.yaml", StandardCharsets.UTF_8);
-    }
-
-    @AfterEach
-    public void afterTestSourceCodeService() {
-        System.out.println("Finished TestSourceCodeService.afterTestSourceCodeService()");
-        if (getExecContextForTest() !=null) {
-            ExecContextSyncService.getWithSyncNullable(getExecContextForTest().id,
-                    () -> txSupportForTestingService.deleteByExecContextId(getExecContextForTest().id));
-        }
     }
 
     @Test
@@ -79,14 +64,26 @@ public class TestEvaluationVariables extends PreparingSourceCode {
         System.out.println("start execContextStatusService.resetStatus()");
         execContextStatusService.resetStatus();
 
+        Long taskId;
+
         // mh.string-as-variable
-        preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
+        taskId = initVariableEvents();
+        preparingSourceCodeService.findRegisterInternalTaskInQueue(getExecContextForTest().id);
+        preparingSourceCodeService.waitUntilTaskFinished(taskId);
 
         // mh.evaluation
-        preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
+        taskId = initVariableEvents();
+        preparingSourceCodeService.findRegisterInternalTaskInQueue(getExecContextForTest().id);
+        preparingSourceCodeService.waitUntilTaskFinished(taskId);
+
+        TaskImpl task = taskRepositoryForTest.findById(taskId).orElseThrow();
+        String value = variableTxService.getVariableDataAsString(task.getTaskParamsYaml().task.outputs.get(0).id);
+        assertEquals("var1", value);
 
         // mh.finish
-        preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
+        taskId = initVariableEvents();
+        preparingSourceCodeService.findRegisterInternalTaskInQueue(getExecContextForTest().id);
+        preparingSourceCodeService.waitUntilTaskFinished(taskId);
 
         finalAssertions(3);
     }
