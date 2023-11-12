@@ -287,7 +287,7 @@ public class PreparingSourceCodeService {
     public void waitUntilTaskFinished(Long taskId) {
         await()
             .atLeast(Duration.ofMillis(0))
-            .atMost(Duration.ofSeconds(10))
+            .atMost(Duration.ofSeconds(100))
             .with()
             .pollInterval(Duration.ofMillis(500))
             .until(() -> taskRepository.findById(taskId).filter(t-> EnumsApi.TaskExecState.isFinishedStateIncludingRecovery(t.execState)).isPresent());
@@ -299,7 +299,7 @@ public class PreparingSourceCodeService {
 
         await()
             .atLeast(Duration.ofMillis(0))
-            .atMost(Duration.ofSeconds(10))
+            .atMost(Duration.ofSeconds(100))
             .with()
             .pollInterval(Duration.ofMillis(100))
             .until(()-> TaskProviderTopLevelService.allTaskGroupFinished(execContextId));

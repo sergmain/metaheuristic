@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.internal_function.evaluation;
 
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
@@ -29,6 +30,8 @@ import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskVariableInitTxService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
@@ -46,6 +49,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SuppressWarnings("unused")
@@ -65,6 +69,8 @@ public class TestEvaluationOfConditionVariables extends PreparingSourceCode {
     @Autowired private TaskVariableInitTxService taskVariableInitTxService;
     @Autowired private ExecContextTaskStateService execContextTaskStateService;
     @Autowired private TaskFinishingTxService taskFinishingTxService;
+    @Autowired private VariableService variableService;
+    @Autowired private VariableTxService variableTxService;
 
     @SneakyThrows
     @Override
@@ -103,6 +109,10 @@ public class TestEvaluationOfConditionVariables extends PreparingSourceCode {
         taskId = initVariableEvents();
         preparingSourceCodeService.findRegisterInternalTaskInQueue(getExecContextForTest().id);
         preparingSourceCodeService.waitUntilTaskFinished(taskId);
+
+        TaskImpl task = taskRepositoryForTest.findById(taskId).orElseThrow();
+        String value = variableTxService.getVariableDataAsString(task.getTaskParamsYaml().task.outputs.get(0).id);
+        assertEquals("true", value);
 
         // mh.finish
         taskId = initVariableEvents();
