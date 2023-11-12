@@ -53,7 +53,7 @@ public class MultiTenantedQueueTest {
     @Test
     public void test() {
         System.out.println("init queue");
-        MultiTenantedQueue<Long, Event> queue = new MultiTenantedQueue<>(100, ConstsApi.DURATION_NONE, true, null);
+        MultiTenantedQueue<Long, Event> queue = new MultiTenantedQueue<>(100, ConstsApi.DURATION_NONE, true, null, MultiTenantedQueueTest::process);
 
         try {
 
@@ -87,7 +87,7 @@ public class MultiTenantedQueueTest {
 
             System.out.println("process queue");
 
-            queue.processPoolOfExecutors(5L, MultiTenantedQueueTest::process);
+            queue.processPoolOfExecutors(5L);
             Thread.sleep(100);
 
             QueueWithThread<Event> twe5 = queue.queue.get(5L);
@@ -95,7 +95,7 @@ public class MultiTenantedQueueTest {
             assertNotNull(twe5.thread);
             assertEquals(1, twe5.size());
 
-            queue.processPoolOfExecutors(10L, MultiTenantedQueueTest::process);
+            queue.processPoolOfExecutors(10L);
             Thread.sleep(100);
 
             QueueWithThread<Event> twe10 = queue.queue.get(10L);
@@ -111,7 +111,7 @@ public class MultiTenantedQueueTest {
             id = 5L;
             Thread.sleep(1000);
 
-            queue.processPoolOfExecutors(5L, MultiTenantedQueueTest::process);
+            queue.processPoolOfExecutors(5L);
             Thread.sleep(100);
 
             twe5 = queue.queue.get(5L);
@@ -137,7 +137,7 @@ public class MultiTenantedQueueTest {
             id = 10L;
             Thread.sleep(1000);
 
-            queue.processPoolOfExecutors(5L, MultiTenantedQueueTest::process);
+            queue.processPoolOfExecutors(5L);
 
 
             System.out.println("Final check that everything has been completed");

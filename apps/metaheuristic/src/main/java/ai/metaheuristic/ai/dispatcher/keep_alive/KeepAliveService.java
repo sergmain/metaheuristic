@@ -75,7 +75,7 @@ public class KeepAliveService {
 
     @PostConstruct
     public void init() {
-        this.checkProcessorIdEventPool = new ThreadedPool<>("CheckProcessorIdEvent-", 100, false, true,
+        this.checkProcessorIdEventPool = new ThreadedPool<>("CheckProcessorIdEvent-", 100, true,
                 this::checkProcessorIdSynced, ConstsApi.DURATION_NONE);
     }
 

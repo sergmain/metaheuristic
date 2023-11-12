@@ -82,7 +82,7 @@ public class ExecContextTaskAssigningTopLevelService {
     }
 
     private final MultiTenantedQueue<Long, FindUnassignedTasksAndRegisterInQueueEvent> MULTI_TENANTED_QUEUE =
-        new MultiTenantedQueue<>(2, ConstsApi.SECONDS_1, true, null);
+        new MultiTenantedQueue<>(2, ConstsApi.SECONDS_1, true, null, this::findUnassignedTasksAndRegisterInQueue);
 
     @PreDestroy
     public void onExit() {
@@ -90,7 +90,7 @@ public class ExecContextTaskAssigningTopLevelService {
     }
 
     public void putToQueue(final FindUnassignedTasksAndRegisterInQueueEvent event) {
-        MULTI_TENANTED_QUEUE.putToQueue(event, this::findUnassignedTasksAndRegisterInQueue);
+        MULTI_TENANTED_QUEUE.putToQueue(event);
     }
 
     @Async

@@ -64,6 +64,7 @@ public class PreparingCoreInitService {
     private final ProcessorTxService processorTransactionService;
     private final TxSupportForTestingService txSupportForTestingService;
     private final ProcessorCoreTxService processorCoreService;
+    private final TaskWithInternalContextEventService taskWithInternalContextEventService;
 
     @SneakyThrows
     public PreparingData.PreparingCodeData beforePreparingCore() {
@@ -173,7 +174,7 @@ public class PreparingCoreInitService {
             deleteProcessor(preparingCodeData.processor);
         }
 
-        TaskWithInternalContextEventService.clearQueue();
+        taskWithInternalContextEventService.clearQueue();
         System.out.println("afterPreparingCore() Was finished correctly");
         log.info("after() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 

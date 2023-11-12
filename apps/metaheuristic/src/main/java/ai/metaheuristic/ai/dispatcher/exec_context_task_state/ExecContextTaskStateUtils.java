@@ -21,7 +21,10 @@ import ai.metaheuristic.api.EnumsApi;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static ai.metaheuristic.api.EnumsApi.*;
 
 /**
  * @author Sergio Lissner
@@ -35,23 +38,23 @@ public class ExecContextTaskStateUtils {
     }
 
     public static List<Long> getUnfinishedTaskVertices(ExecContextTaskStateParamsYaml params) {
-        return geTaskVertices(params, EnumsApi.TaskExecState.NONE, EnumsApi.TaskExecState.IN_PROGRESS, EnumsApi.TaskExecState.CHECK_CACHE);
+        return geTaskVertices(params, (o)->!TaskExecState.isFinishedStateIncludingRecovery(o));
     }
 
     public static List<Long> getFinishedTaskVertices(ExecContextTaskStateParamsYaml params) {
-        return geTaskVertices(params, EnumsApi.TaskExecState.OK, EnumsApi.TaskExecState.ERROR, EnumsApi.TaskExecState.ERROR_WITH_RECOVERY, EnumsApi.TaskExecState.SKIPPED);
+        return geTaskVertices(params, TaskExecState::isFinishedStateIncludingRecovery);
     }
 
-    public static List<Long> geTaskVertices(ExecContextTaskStateParamsYaml params, EnumsApi.TaskExecState... taskExecStates) {
+    public static List<Long> geTaskVertices(ExecContextTaskStateParamsYaml params, Function<TaskExecState, Boolean> checkStateFunc) {
         return params.states.entrySet()
                 .stream()
-                .filter(o -> isState(o.getValue(), taskExecStates))
+                .filter(o -> checkStateFunc.apply(o.getValue()))
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
     }
 
-    public static boolean isState(EnumsApi.TaskExecState state, EnumsApi.TaskExecState... taskExecStates) {
-        for (EnumsApi.TaskExecState taskExecState : taskExecStates) {
+    public static boolean isState(TaskExecState state, TaskExecState... taskExecStates) {
+        for (TaskExecState taskExecState : taskExecStates) {
             if (state==taskExecState) {
                 return true;
             }

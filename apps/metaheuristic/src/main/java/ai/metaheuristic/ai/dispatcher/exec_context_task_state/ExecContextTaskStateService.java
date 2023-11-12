@@ -62,10 +62,10 @@ public class ExecContextTaskStateService {
 
 
     private final ThreadedPool<Long, TransferStateFromTaskQueueToExecContextEvent> threadedPoolMap =
-        new ThreadedPool<>("TransferStateFromTaskQueueToExecContext-", 2, true, false, this::transferStateFromTaskQueueToExecContext, ConstsApi.DURATION_NONE );
+        new ThreadedPool<>("TransferStateFromTaskQueueToExecContext-", 2, false, this::transferStateFromTaskQueueToExecContext, ConstsApi.DURATION_NONE );
 
     private final ThreadedPool<Long, UpdateTaskExecStatesInExecContextEvent> updateTaskExecStatesInGraphEventThreadedPool =
-        new ThreadedPool<>("UpdateTaskExecStatesInGraph-", 100, false, false, this::updateTaskExecStatesExecContext, ConstsApi.SECONDS_5);
+        new ThreadedPool<>("UpdateTaskExecStatesInGraph-", 100, false, this::updateTaskExecStatesExecContext, ConstsApi.SECONDS_5);
 
     @PreDestroy
     public void onExit() {
@@ -90,6 +90,9 @@ public class ExecContextTaskStateService {
     }
 
     public void updateTaskExecStatesExecContext(UpdateTaskExecStatesInExecContextEvent event) {
+        if (event.taskIds.isEmpty()) {
+            return;
+        }
         ExecContextImpl ec = execContextCache.findById(event.execContextId, true);
         if (ec==null) {
             return;

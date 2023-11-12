@@ -23,7 +23,6 @@ import ai.metaheuristic.ai.dispatcher.event.events.ResetTasksWithErrorEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
@@ -116,8 +115,8 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
         System.out.println("start step_1_1_register_function_statuses()");
         preparingSourceCodeService.step_1_1_register_function_statuses(processorIdAndCoreIds, preparingSourceCodeData, preparingCodeData);
 
-        //System.out.println("start findInternalTaskForRegisteringInQueue()");
-        //preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+        //System.out.println("start findTaskForRegisteringInQueue()");
+        //preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #1");
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
@@ -126,8 +125,8 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
         step_AssembledRaw(processorIdAndCoreIds, true, EnumsApi.TaskExecState.ERROR);
         Thread.sleep(5_000);
 
-        System.out.println("start findInternalTaskForRegisteringInQueue() #2");
-        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+        System.out.println("start findTaskForRegisteringInQueue() #2");
+        preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
 
         step_DatasetProcessing(processorIdAndCoreIds);
 

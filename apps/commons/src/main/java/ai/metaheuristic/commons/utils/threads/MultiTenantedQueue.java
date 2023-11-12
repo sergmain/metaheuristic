@@ -18,6 +18,7 @@ package ai.metaheuristic.commons.utils.threads;
 
 import ai.metaheuristic.commons.S;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
 import java.time.Duration;
@@ -25,18 +26,21 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * @author Sergio Lissner
  * Date: 9/21/2023
  * Time: 2:11 PM
  */
+@Slf4j
 public class MultiTenantedQueue<T, P extends EventWithId<T>> {
 
     public final int maxCapacity;
     public final long postProcessingDelay;
     public final boolean checkForDouble;
     public final String namePrefix;
+    public final Consumer<P> processFunc;
 
     public final LinkedHashMap<T, QueueWithThread<P>> queue;
 
@@ -44,11 +48,15 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
     private final ReentrantReadWriteLock.ReadLock queueReadLock = queueLock.readLock();
     private final ReentrantReadWriteLock.WriteLock queueWriteLock = queueLock.writeLock();
 
+    @Nullable
+    private Supplier<Boolean> processSuspenderFunc = null;
+
     // if maxCapacity==-1 then max size is unbound
-    public MultiTenantedQueue(int maxCapacity, Duration postProcessingDelay, boolean checkForDouble, @Nullable String namePrefix) {
+    public MultiTenantedQueue(int maxCapacity, Duration postProcessingDelay, boolean checkForDouble, @Nullable String namePrefix, Consumer<P> processFunc) {
         this.maxCapacity = maxCapacity;
         this.checkForDouble = checkForDouble;
-        this.namePrefix = S.b(namePrefix) ? "virtual-tread-" : namePrefix;
+        this.namePrefix = S.b(namePrefix) ? "v-tread-" : namePrefix;
+        this.processFunc = processFunc;
 
         if (maxCapacity == -1) {
             queue = new LinkedHashMap<>() {
@@ -67,9 +75,17 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
         this.postProcessingDelay = postProcessingDelay.toMillis();
     }
 
-    public void putToQueue(final P event, Consumer<P> eventConsumer) {
+    public void registerProcessSuspender(Supplier<Boolean> processSuspenderFunc) {
+        this.processSuspenderFunc = processSuspenderFunc;
+    }
+
+    public void deRegisterProcessSuspender() {
+        this.processSuspenderFunc = null;
+    }
+
+    public void putToQueue(final P event) {
         putToQueueInternal(event);
-        processPoolOfExecutors(event.getId(), eventConsumer);
+        processPoolOfExecutors(event.getId());
     }
 
     public void clearQueue() {
@@ -92,7 +108,7 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
         }
     }
 
-    public void processPoolOfExecutors(T id, Consumer<P> eventConsumer) {
+    public void processPoolOfExecutors(T id) {
         queueReadLock.lock();
         try {
             QueueWithThread<P> twe = queue.get(id);
@@ -105,6 +121,9 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
 
         queueWriteLock.lock();
         try {
+            if (processSuspenderFunc!=null && processSuspenderFunc.get()) {
+                return;
+            }
             QueueWithThread<P> twe = queue.get(id);
             // there is nothing for processing or processing is active rn
             if (twe == null || twe.isEmpty() || twe.thread != null) {
@@ -113,8 +132,12 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
 
             twe.thread = Thread.ofVirtual().name(namePrefix + ThreadUtils.nextThreadNum()).start(() -> {
                 try {
-                    process(id, eventConsumer);
-                } finally {
+                    process(id, processFunc);
+                }
+                catch(Throwable th) {
+                    log.error("Error", th);
+                }
+                finally {
                     twe.thread = null;
                 }
             });
@@ -139,16 +162,9 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
     }
 
     public void putToQueueInternal(final P event) {
-        QueueWithThread<P> q;
         queueWriteLock.lock();
         try {
-            q = queue.get(event.getId());
-            if (q!=null) {
-                q.add(event);
-            }
-            else {
-                queue.computeIfAbsent(event.getId(), (o) -> new QueueWithThread<>(this.checkForDouble, event));
-            }
+            queue.computeIfAbsent(event.getId(), (o) -> new QueueWithThread<>(this.checkForDouble)).add(event);
         } finally {
             queueWriteLock.unlock();
         }
@@ -163,6 +179,23 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
                 return null;
             }
             return twe.pollFirst();
+        } finally {
+            queueReadLock.unlock();
+        }
+    }
+
+    public boolean isNotEmpty(T id) {
+        return !isEmpty(id);
+    }
+
+    public boolean isEmpty(T id) {
+        queueReadLock.lock();
+        try {
+            final QueueWithThread<P> twe = queue.get(id);
+            if (twe == null) {
+                return true;
+            }
+            return twe.isEmpty();
         } finally {
             queueReadLock.unlock();
         }

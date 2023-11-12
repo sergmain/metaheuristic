@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateUtils;
+import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
@@ -37,18 +38,17 @@ import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
-import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
-import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
+import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +62,6 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.preparing.PreparingConsts.GLOBAL_TEST_VARIABLE;
@@ -84,6 +83,7 @@ public class PreparingSourceCodeService {
     private final CompanyRepository companyRepository;
     private final ExecContextRepository execContextRepository;
     private final TaskRepositoryForTest taskRepositoryForTest;
+    private final TaskRepository taskRepository;
     private final SourceCodeTxService sourceCodeTxService;
     private final GlobalVariableTxService globalVariableService;
     private final TxSupportForTestingService txSupportForTestingService;
@@ -95,6 +95,7 @@ public class PreparingSourceCodeService {
     private final ExecContextTaskAssigningTopLevelService execContextTaskAssigningTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
     private final ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
+    private final TaskWithInternalContextEventService taskWithInternalContextEventService;
 
     public void cleanUp(String sourceCodeUid) {
         SourceCode sc = sourceCodeRepository.findByUid(sourceCodeUid);
@@ -260,34 +261,48 @@ public class PreparingSourceCodeService {
     }
 
     @SneakyThrows
-    public void findInternalTaskForRegisteringInQueue(Long execContextId) {
+    public void findRegisterInternalTaskInQueue(Long execContextId) {
+        taskWithInternalContextEventService.MULTI_TENANTED_QUEUE.registerProcessSuspender(() -> true);
         execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
-        //execContextTaskAssigningTopLevelService.procesEvent();
-//        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(execContextId);
 
-        final AtomicReference<Boolean> tRef = new AtomicReference<>();
         await()
-            .atLeast(Duration.ofMillis(500))
+            .atLeast(Duration.ofMillis(0))
             .atMost(Duration.ofSeconds(10))
             .with()
             .pollInterval(Duration.ofMillis(500))
-            .until(()-> {
-                final boolean isQueueEmpty = TaskProviderTopLevelService.allTaskGroupFinished(execContextId);;
-                tRef.set(isQueueEmpty);
-                return isQueueEmpty;
-            });
+            .until(() -> taskWithInternalContextEventService.MULTI_TENANTED_QUEUE.isNotEmpty(execContextId));
 
-/*
-        boolean isQueueEmpty = true;
-        for (int i = 0; i < 30; i++) {
-            Thread.sleep(2_000);
-            isQueueEmpty = TaskProviderTopLevelService.allTaskGroupFinished(execContextId);
-            if (isQueueEmpty) {
-                break;
-            }
-        }
-        assertTrue(isQueueEmpty);
-*/
+        taskWithInternalContextEventService.MULTI_TENANTED_QUEUE.deRegisterProcessSuspender();
+        taskWithInternalContextEventService.MULTI_TENANTED_QUEUE.processPoolOfExecutors(execContextId);
+
+        await()
+            .atLeast(Duration.ofMillis(0))
+            .atMost(Duration.ofSeconds(10))
+            .with()
+            .pollInterval(Duration.ofMillis(100))
+            .until(() -> taskWithInternalContextEventService.MULTI_TENANTED_QUEUE.isEmpty(execContextId));
+    }
+
+    @SneakyThrows
+    public void waitUntilTaskFinished(Long taskId) {
+        await()
+            .atLeast(Duration.ofMillis(0))
+            .atMost(Duration.ofSeconds(10))
+            .with()
+            .pollInterval(Duration.ofMillis(500))
+            .until(() -> taskRepository.findById(taskId).filter(t-> EnumsApi.TaskExecState.isFinishedStateIncludingRecovery(t.execState)).isPresent());
+    }
+
+    @SneakyThrows
+    public void findTaskForRegisteringInQueue(Long execContextId) {
+        execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
+
+        await()
+            .atLeast(Duration.ofMillis(0))
+            .atMost(Duration.ofSeconds(10))
+            .with()
+            .pollInterval(Duration.ofMillis(100))
+            .until(()-> TaskProviderTopLevelService.allTaskGroupFinished(execContextId));
     }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextForTest(PreparingData.PreparingSourceCodeData preparingSourceCodeData) {

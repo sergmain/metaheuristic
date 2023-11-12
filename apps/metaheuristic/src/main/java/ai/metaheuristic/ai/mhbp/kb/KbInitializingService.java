@@ -43,7 +43,7 @@ public class KbInitializingService {
 
     public KbInitializingService(@Autowired KbService kbService) {
         this.kbService = kbService;
-        this.initKbEventThreadedPool = new ThreadedPool<>("KbInitializingService-", 50, true, false, kbService::processInitKbEvent, ConstsApi.DURATION_NONE );
+        this.initKbEventThreadedPool = new ThreadedPool<>("KbInitializingService-", 50, false, kbService::processInitKbEvent, ConstsApi.DURATION_NONE );
     }
 
     @PreDestroy

@@ -54,9 +54,8 @@ public class QueueWithThread<T> {
     private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
     private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
-    public QueueWithThread(boolean checkForDouble, T event) {
+    public QueueWithThread(boolean checkForDouble) {
         this.checkForDouble = checkForDouble;
-        this.add(event);
     }
 
     public int size() {

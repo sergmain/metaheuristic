@@ -146,6 +146,9 @@ public class ProcessorTaskService {
 
     private Void processTaskDir(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Path taskDir, Path taskGroupDir, DispatcherUrl dispatcherUrl) {
         try {
+            if (!Thread.currentThread().isVirtual()) {
+                throw new IllegalStateException("(!Thread.currentThread().isVirtual())");
+            }
             String groupDirName = taskGroupDir.getFileName().toString();
             String name = taskDir.getFileName().toString();
             long taskId = Long.parseLong(groupDirName) * DigitUtils.DIV + Long.parseLong(name);

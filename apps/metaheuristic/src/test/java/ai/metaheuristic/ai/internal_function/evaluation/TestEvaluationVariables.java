@@ -41,7 +41,6 @@ import java.nio.charset.StandardCharsets;
 @SuppressWarnings("unused")
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-//@ActiveProfiles({"dispatcher", "mysql"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class TestEvaluationVariables extends PreparingSourceCode {
 
@@ -81,13 +80,13 @@ public class TestEvaluationVariables extends PreparingSourceCode {
         execContextStatusService.resetStatus();
 
         // mh.string-as-variable
-        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
 
         // mh.evaluation
-        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
 
         // mh.finish
-        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
 
         finalAssertions(3);
     }

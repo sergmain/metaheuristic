@@ -116,8 +116,8 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
         System.out.println("start step_1_1_register_function_statuses()");
         preparingSourceCodeService.step_1_1_register_function_statuses(processorIdAndCoreIds, preparingSourceCodeData, preparingCodeData);
 
-        //System.out.println("start findInternalTaskForRegisteringInQueue()");
-        //preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+        //System.out.println("start findTaskForRegisteringInQueue()");
+        //preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #1");
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());

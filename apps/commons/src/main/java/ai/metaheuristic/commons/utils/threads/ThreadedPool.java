@@ -36,15 +36,12 @@ import java.util.function.Consumer;
 @Slf4j
 public class ThreadedPool<I, T extends EventWithId<I>> {
 
-    private final Consumer<T> process;
-
     private boolean shutdown = false;
 
     private final MultiTenantedQueue<I, T> queue;
 
-    public ThreadedPool(String namePrefix, int maxThreadInPool, boolean immediateProcessing, boolean checkForDouble, Consumer<T> process, Duration postProcessingDelay) {
-        this.queue = new MultiTenantedQueue<>(maxThreadInPool, postProcessingDelay, checkForDouble, namePrefix);
-        this.process = process;
+    public ThreadedPool(String namePrefix, int maxThreadInPool, boolean checkForDouble, Consumer<T> process, Duration postProcessingDelay) {
+        this.queue = new MultiTenantedQueue<>(maxThreadInPool, postProcessingDelay, checkForDouble, namePrefix, process);
     }
 
     public boolean isShutdown() {
@@ -60,6 +57,6 @@ public class ThreadedPool<I, T extends EventWithId<I>> {
         if (shutdown) {
             return;
         }
-        queue.putToQueue(event, process);
+        queue.putToQueue(event);
     }
 }

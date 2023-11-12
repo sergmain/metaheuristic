@@ -364,6 +364,10 @@ public class EnumsApi {
             return state== TaskExecState.OK.value || state== TaskExecState.ERROR.value || state== TaskExecState.SKIPPED.value;
         }
 
+        public static boolean isFinishedStateIncludingRecovery(TaskExecState state) {
+            return isFinishedStateIncludingRecovery(state.value);
+        }
+
         public static boolean isFinishedStateIncludingRecovery(int state) {
             return state== TaskExecState.OK.value || state== TaskExecState.ERROR_WITH_RECOVERY.value || state== TaskExecState.ERROR.value || state== TaskExecState.SKIPPED.value;
         }

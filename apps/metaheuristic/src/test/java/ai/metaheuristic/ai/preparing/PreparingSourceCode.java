@@ -190,7 +190,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     public void finalAssertions(int expectedNumberOfTasks) {
         // try execute mh.finish if it hasn't yet
-        preparingSourceCodeService.findInternalTaskForRegisteringInQueue(getExecContextForTest().id);
+        preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
 
         ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, () -> {
             verifyGraphIntegrity();

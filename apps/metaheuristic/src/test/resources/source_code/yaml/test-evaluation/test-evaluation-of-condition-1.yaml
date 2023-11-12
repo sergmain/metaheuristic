@@ -1,0 +1,38 @@
+version: 4
+source:
+  clean: false
+  strictNaming: true
+  instances: 1
+  uid: test-evaluation-1.0
+  variables:
+    globals:
+      - attention1
+    inline:
+      keys:
+        variable1: 'var1'
+  processes:
+    - code: mh.string-as-variable1
+      name: mh.string-as-variable1
+      function:
+        code: mh.string-as-variable
+        context: internal
+      metas:
+        - mapping: |+
+            mapping:
+              - group: keys
+                name: variable1
+                output: variable1
+      outputs:
+        - name: variable1
+          ext: .txt
+
+    - code: mh.evaluation5
+      name: mh.evaluation5
+      function:
+        code: mh.evaluation
+        context: internal
+      outputs:
+        - name: resultVariable1
+          nullable: true
+      metas:
+        - expression: resultVariable1 = variable1 == variable1
