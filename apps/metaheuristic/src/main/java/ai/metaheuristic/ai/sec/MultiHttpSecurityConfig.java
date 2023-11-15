@@ -93,6 +93,7 @@ public class MultiHttpSecurityConfig {
                     .requestMatchers("/rest/v1/standalone/anon/**", "/rest/v1/dispatcher/anon/**").permitAll()
                     .requestMatchers("/rest/v1/dispatcher/status/**").hasAuthority("ROLE_MAIN_ADMIN")
                     .requestMatchers("/rest/**").authenticated()
+                    .requestMatchers("/ws/**").authenticated()
                     .anyRequest().denyAll()
             )
             .csrf(AbstractHttpConfigurer::disable)

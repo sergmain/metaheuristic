@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.long_running.LongRunningTopLevelService;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingService;
 import ai.metaheuristic.ai.dispatcher.thread.DeadLockDetector;
+import ai.metaheuristic.ai.functions.ChatClient;
 import ai.metaheuristic.ai.processor.*;
 import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
 import ai.metaheuristic.ai.processor.actors.DownloadVariableService;
@@ -62,6 +63,18 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Schedulers {
+
+    @Service
+    @EnableScheduling
+    @Slf4j
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
+    public static class WebsocketScheduler {
+
+        @Scheduled(initialDelay = 1_000, fixedDelay = 20_000)
+        public static void client() {
+            ChatClient.client();
+        }
+    }
 
     private static Instant getInstant(TriggerContext context, Duration duration) {
         return Optional.ofNullable(context.lastCompletion()).orElseGet(Instant::now).plus(duration);

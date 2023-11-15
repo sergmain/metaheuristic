@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.dispatcher.repositories.RefToDispatcherRepositories;
+import ai.metaheuristic.ai.functions.MyChatHandler;
 import ai.metaheuristic.ai.mhbp.repositories.RefToMhbpRepositories;
 import ai.metaheuristic.ai.utils.SpringHelpersUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInterceptor;
@@ -38,6 +39,7 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.*;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
@@ -45,6 +47,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.socket.WebSocketHandler;
+import org.springframework.web.socket.config.annotation.*;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -61,6 +65,31 @@ import java.util.List;
 @EnableConfigurationProperties(Globals.class)
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class Config {
+
+    @Configuration
+    @EnableWebSocketMessageBroker
+    public static class MHWebSocketMessageBrokerConfigurer implements WebSocketMessageBrokerConfigurer {
+
+        @Override
+        public void configureMessageBroker(MessageBrokerRegistry config) {
+            config.enableSimpleBroker("/chat");
+            config.setApplicationDestinationPrefixes("/ws/");
+        }
+
+        @Override
+        public void registerStompEndpoints(StompEndpointRegistry registry) {
+            registry.addEndpoint("/ws/test"); // This will allow you to use ws://localhost:8080/test to establish websocket connection
+            registry.addEndpoint("/ws/test").withSockJS(); // This will allow you to use http://localhost:8080/test to establish websocket connection
+        }
+    }
+
+    @Configuration
+    @EnableWebSocket
+    public static class MHWebSocketConfigurer implements WebSocketConfigurer {
+        public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+            registry.addHandler(new MyChatHandler(), "/chat-1");
+        }
+    }
 
     @SuppressWarnings("unused")
     private final SpringChecker springChecker;
