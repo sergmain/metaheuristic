@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.functions;
+package ai.metaheuristic.ai.functions.ws;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

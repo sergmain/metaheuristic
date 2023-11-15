@@ -14,11 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.functions;
+package ai.metaheuristic.ai.functions.ws;
 
 import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
-import jakarta.websocket.server.ServerEndpoint;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -30,10 +29,10 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * Date: 11/14/2023
  * Time: 7:25 PM
  */
-@ServerEndpoint(
-    value="/chat/{username}",
-    decoders = ChatMessageDecoder.class,
-    encoders = ChatMessageEncoder.class )
+//@ServerEndpoint(
+//    value="/chat/{username}",
+//    decoders = ChatMessageDecoder.class,
+//    encoders = ChatMessageEncoder.class )
 public class ChatEndpoint {
 
     private Session session;

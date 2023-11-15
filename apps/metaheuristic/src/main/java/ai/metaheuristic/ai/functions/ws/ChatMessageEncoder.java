@@ -14,32 +14,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.functions;
+package ai.metaheuristic.ai.functions.ws;
 
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV3;
 import ai.metaheuristic.commons.yaml.YamlUtils;
-import jakarta.websocket.DecodeException;
-import jakarta.websocket.Decoder;
+import jakarta.websocket.Encoder;
 import jakarta.websocket.EndpointConfig;
+import org.yaml.snakeyaml.Yaml;
 
 /**
  * @author Sergio Lissner
  * Date: 11/14/2023
- * Time: 7:35 PM
+ * Time: 7:31 PM
  */
-public class ChatMessageDecoder implements Decoder.Text<ChatMessage> {
+public class ChatMessageEncoder implements Encoder.Text<ChatMessage> {
 
 //    private static Gson gson = new Gson();
 
     @Override
-    public ChatMessage decode(String s) {
-//        return gson.fromJson(s, Message.class);
-        return YamlUtils.init(ChatMessage.class).load(s);
-    }
-
-    @Override
-    public boolean willDecode(String s) {
-        return (s != null);
+    public String encode(ChatMessage message) {
+        Yaml inited = YamlUtils.init(ChatMessage.class);
+        return YamlUtils.toString(message, inited);
     }
 
     @Override

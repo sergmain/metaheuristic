@@ -14,22 +14,39 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.functions;
+package ai.metaheuristic.ai.functions.ws;
 
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
-import org.springframework.web.socket.handler.TextWebSocketHandler;
+import ai.metaheuristic.commons.yaml.YamlUtils;
+import jakarta.websocket.Decoder;
+import jakarta.websocket.EndpointConfig;
 
 /**
  * @author Sergio Lissner
  * Date: 11/14/2023
- * Time: 8:05 PM
+ * Time: 7:35 PM
  */
-public class MyChatHandler extends TextWebSocketHandler {
+public class ChatMessageDecoder implements Decoder.Text<ChatMessage> {
+
+//    private static Gson gson = new Gson();
 
     @Override
-    public void handleTextMessage(WebSocketSession session, TextMessage message) {
-        System.out.println(message.toString());
+    public ChatMessage decode(String s) {
+//        return gson.fromJson(s, Message.class);
+        return YamlUtils.init(ChatMessage.class).load(s);
     }
 
+    @Override
+    public boolean willDecode(String s) {
+        return (s != null);
+    }
+
+    @Override
+    public void init(EndpointConfig endpointConfig) {
+        // Custom initialization logic
+    }
+
+    @Override
+    public void destroy() {
+        // Close resources
+    }
 }

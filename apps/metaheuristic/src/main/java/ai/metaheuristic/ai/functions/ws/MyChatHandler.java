@@ -14,36 +14,31 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.functions;
+package ai.metaheuristic.ai.functions.ws;
 
-import ai.metaheuristic.commons.yaml.YamlUtils;
-import jakarta.websocket.EncodeException;
-import jakarta.websocket.Encoder;
-import jakarta.websocket.EndpointConfig;
-import org.yaml.snakeyaml.Yaml;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.handler.TextWebSocketHandler;
+
+import java.io.IOException;
 
 /**
  * @author Sergio Lissner
  * Date: 11/14/2023
- * Time: 7:31 PM
+ * Time: 8:05 PM
  */
-public class ChatMessageEncoder implements Encoder.Text<ChatMessage> {
+public class MyChatHandler extends TextWebSocketHandler {
 
-//    private static Gson gson = new Gson();
-
-    @Override
-    public String encode(ChatMessage message) {
-        Yaml inited = YamlUtils.init(ChatMessage.class);
-        return YamlUtils.toString(message, inited);
-    }
+    public static final ChatMessageDecoder decoder = new ChatMessageDecoder();
 
     @Override
-    public void init(EndpointConfig endpointConfig) {
-        // Custom initialization logic
+    public void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
+        System.out.println(message.toString());
+
+        String payload = message.getPayload();
+        ChatMessage m = decoder.decode(payload);
+        session.sendMessage(new TextMessage("Hi " + m.getFrom() + " how may we help you?"));
+
     }
 
-    @Override
-    public void destroy() {
-        // Close resources
-    }
 }
