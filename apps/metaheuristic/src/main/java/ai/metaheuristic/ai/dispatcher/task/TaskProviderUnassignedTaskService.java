@@ -324,10 +324,13 @@ public class TaskProviderUnassignedTaskService {
     }
 
     private static void notAllFunctionsReadyInternal(Long processorId, ProcessorStatusYaml status, TaskParamsYaml.FunctionConfig functionConfig, AtomicBoolean result) {
+        EnumsApi.FunctionState state = status.functions.get(functionConfig.code);
+/*
         EnumsApi.FunctionState state = status.functions.entrySet().stream()
                 .filter(o->o.getKey().equals(functionConfig.code))
                 .findFirst()
                 .map(Map.Entry::getValue).orElse(null);
+*/
 
         if (state != EnumsApi.FunctionState.ready) {
             log.debug("317.240 function {} at processor #{} isn't ready, state: {}", functionConfig.code, processorId, state==null ? "'not prepared yet'" : state);

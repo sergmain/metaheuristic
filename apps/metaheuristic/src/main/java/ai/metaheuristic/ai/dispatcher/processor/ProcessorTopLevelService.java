@@ -75,7 +75,7 @@ public class ProcessorTopLevelService {
     // TODO 2020-12-23 20 seconds because ....
     public static final long PROCESSOR_TIMEOUT = TimeUnit.SECONDS.toMillis(140);
 
-    private static Map<String, EnumsApi.FunctionState> parsetToMapOfStates(KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
+    private static Map<String, EnumsApi.FunctionState> parseToMapOfStates(KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
         Map<String, EnumsApi.FunctionState> map = new HashMap<>();
         for (Map.Entry<EnumsApi.FunctionState, String> entry : functionDownloadStatus.statuses.entrySet()) {
             String[] names = entry.getValue().split(",");
@@ -125,7 +125,7 @@ public class ProcessorTopLevelService {
 
         final boolean processorStatusDifferent = isProcessorStatusDifferent(psy, status);
 
-        Map<String, EnumsApi.FunctionState> mapOfFunctionStates = parsetToMapOfStates(functionDownloadStatus);
+        Map<String, EnumsApi.FunctionState> mapOfFunctionStates = parseToMapOfStates(functionDownloadStatus);
         final boolean processorFunctionDownloadStatusDifferent = isProcessorFunctionDownloadStatusDifferent(psy, mapOfFunctionStates);
 
         if (processorStatusDifferent || processorFunctionDownloadStatusDifferent) {

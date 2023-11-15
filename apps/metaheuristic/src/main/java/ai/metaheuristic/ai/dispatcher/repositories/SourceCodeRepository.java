@@ -24,7 +24,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -33,6 +32,11 @@ import java.util.List;
 @Transactional
 @Profile("dispatcher")
 public interface SourceCodeRepository extends CrudRepository<SourceCodeImpl, Long> {
+
+    @Nullable
+    @Transactional(readOnly = true)
+    @Query(value="select e from SourceCodeImpl e where e.id=:sourceCodeId")
+    SourceCodeImpl findByIdNullable(Long sourceCodeId);
 
     @Override
     @Modifying

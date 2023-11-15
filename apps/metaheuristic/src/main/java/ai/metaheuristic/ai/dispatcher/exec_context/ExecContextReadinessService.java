@@ -33,7 +33,6 @@ import ai.metaheuristic.commons.utils.threads.ThreadedPool;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -87,13 +86,16 @@ public class ExecContextReadinessService {
     @SuppressWarnings("unused")
     @Async
     @EventListener
-    @SneakyThrows
     public void processSessionEvent(StartProcessReadinessEvent event) {
-        final List<Long> ids = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.STARTED.code);
-        log.info("Started execContextIds: " + ids);
-        execContextReadinessStateService.addAll(ids);
-        for (Long notReadyExecContextId : ids) {
-            startProcessReadinessEventThreadedPool.putToQueue(new ExecContextReadinessEvent(notReadyExecContextId));
+        try {
+            final List<Long> ids = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.STARTED.code);
+            log.info("Started execContextIds: " + ids);
+            execContextReadinessStateService.addAll(ids);
+            for (Long notReadyExecContextId : ids) {
+                startProcessReadinessEventThreadedPool.putToQueue(new ExecContextReadinessEvent(notReadyExecContextId));
+            }
+        } catch (Throwable th) {
+            log.error("Error in async", th);
         }
     }
 
