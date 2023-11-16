@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.functions.FunctionRepositoryRequestor;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import lombok.Data;
@@ -48,6 +49,7 @@ public class DispatcherRequestorHolderService {
     public static class Requesters {
         public final DispatcherRequestor dispatcherRequestor;
         public final ProcessorKeepAliveRequestor processorKeepAliveRequestor;
+        public final FunctionRepositoryRequestor functionRepositoryRequestor;
     }
     public final Map<DispatcherUrl, Requesters> dispatcherRequestorMap = new HashMap<>();
 
@@ -71,7 +73,9 @@ public class DispatcherRequestorHolderService {
             final ProcessorKeepAliveRequestor keepAliveRequestor = new ProcessorKeepAliveRequestor(
                     dispatcher.dispatcherUrl, globals, processorService, processorKeepAliveProcessor, processorEnvironment);
 
-            dispatcherRequestorMap.put(dispatcher.dispatcherUrl, new Requesters(requestor, keepAliveRequestor));
+            final FunctionRepositoryRequestor functionRepositoryRequestor = new FunctionRepositoryRequestor(dispatcher.dispatcherUrl, globals, processorEnvironment);
+
+            dispatcherRequestorMap.put(dispatcher.dispatcherUrl, new Requesters(requestor, keepAliveRequestor, functionRepositoryRequestor));
         }
     }
 

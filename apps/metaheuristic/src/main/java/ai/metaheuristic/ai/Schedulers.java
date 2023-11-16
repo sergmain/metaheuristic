@@ -585,7 +585,7 @@ public class Schedulers {
                 return;
             }
             log.info("Request Function repository");
-            functionRepositoryProcessorService.requestFunctionRepository();
+            processorEventBusService.interactWithFunctionRepository();
         }
     }
 

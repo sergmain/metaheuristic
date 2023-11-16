@@ -55,6 +55,7 @@ public class ProcessorEventBusService {
     private ActiveDispatchers activeDispatchers;
 
     private final Map<String, ThreadPoolExecutor> executors = new HashMap<>();
+    private final Map<String, ThreadPoolExecutor> functionExecutors = new HashMap<>();
 
     private boolean shutdown = false;
 
@@ -63,7 +64,9 @@ public class ProcessorEventBusService {
         this.activeDispatchers = new ActiveDispatchers(processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap, "RoundRobin for KeepAlive", Enums.DispatcherSelectionStrategy.alphabet);
         for (Map.Entry<ProcessorAndCoreData.DispatcherUrl, AtomicBoolean> entry : activeDispatchers.getActiveDispatchers().entrySet()) {
             // TODO p5 2023-10-30 do we need to switch to a virtual threads?
+            // TODO p0 2023-11-16 yes, it needs to be switched to virtual threads
             executors.put(entry.getKey().url, (ThreadPoolExecutor) Executors.newFixedThreadPool(1));
+            functionExecutors.put(entry.getKey().url, (ThreadPoolExecutor) Executors.newFixedThreadPool(1));
         }
     }
 
@@ -84,7 +87,7 @@ public class ProcessorEventBusService {
         try {
             Map<ProcessorAndCoreData.DispatcherUrl, AtomicBoolean> dispatchers = activeDispatchers.getActiveDispatchers();
             if (dispatchers.isEmpty()) {
-                log.info("Can't find any enabled dispatcher");
+                log.info("047.030 Can't find any enabled dispatcher");
                 return;
             }
             // TODO 2020-11-22 do we need to convert Set to List and sort it?
@@ -93,12 +96,12 @@ public class ProcessorEventBusService {
             for (ProcessorAndCoreData.DispatcherUrl dispatcher : dispatchers.keySet()) {
                 ThreadPoolExecutor executor = executors.get(dispatcher.url);
                 if (executor==null) {
-                    log.error("047.090 ThreadPoolExecutor wasn't found, need to investigate");
+                    log.error("047.060 ThreadPoolExecutor wasn't found, need to investigate");
                     continue;
                 }
                 int activeCount = executor.getActiveCount();
                 if (activeCount >0) {
-                    log.warn("047.060 executor has a not finished tasks, count: {}", activeCount);
+                    log.warn("047.090 executor has a not finished tasks, count: {}", activeCount);
                     continue;
                 }
 
@@ -107,13 +110,50 @@ public class ProcessorEventBusService {
                     try {
                         dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).processorKeepAliveRequestor.proceedWithRequest();
                     } catch (Throwable th) {
-                        log.error("ProcessorEventBusService.keepAlive()", th);
+                        log.error("047.120 ProcessorEventBusService.keepAlive()", th);
                     }
                 }, "ProcessorEventBusService-" + ThreadUtils.nextThreadNum());
                 executor.submit(t);
             }
         } catch (Throwable th) {
-            log.error("047.090 Error, need to investigate ", th);
+            log.error("047.150 Error, need to investigate ", th);
+        }
+    }
+
+    public void interactWithFunctionRepository() {
+        if (shutdown) {
+            return;
+        }
+        try {
+            Map<ProcessorAndCoreData.DispatcherUrl, AtomicBoolean> dispatchers = activeDispatchers.getActiveDispatchers();
+            if (dispatchers.isEmpty()) {
+                log.info("047.180 Can't find any enabled dispatcher");
+                return;
+            }
+            for (ProcessorAndCoreData.DispatcherUrl dispatcher : dispatchers.keySet()) {
+                ThreadPoolExecutor executor = functionExecutors.get(dispatcher.url);
+                if (executor==null) {
+                    log.error("047.210 interactWithFunctionRepository wasn't found, need to investigate");
+                    continue;
+                }
+                int activeCount = executor.getActiveCount();
+                if (activeCount >0) {
+                    log.warn("047.240 executor has a not finished tasks, count: {}", activeCount);
+                    continue;
+                }
+
+                Thread t = new Thread(() -> {
+                    log.info("Call interactWithFunctionRepository, url: {}", dispatcher.url);
+                    try {
+                        dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).functionRepositoryRequestor.requestFunctionRepository();
+                    } catch (Throwable th) {
+                        log.error("047.270 ProcessorEventBusService.interactWithFunctionRepository()", th);
+                    }
+                }, "ProcessorEventBusService-" + ThreadUtils.nextThreadNum());
+                executor.submit(t);
+            }
+        } catch (Throwable th) {
+            log.error("047.300 Error, need to investigate ", th);
         }
     }
 }
