@@ -14,22 +14,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.functions;
+package ai.metaheuristic.ai.functions.communication;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
+import ai.metaheuristic.api.data.BaseParams;
+import lombok.Data;
 
 /**
  * @author Sergio Lissner
- * Date: 11/14/2023
- * Time: 11:20 PM
+ * Date: 11/15/2023
+ * Time: 7:08 PM
  */
-@Slf4j
-@Service
-@Profile("processor")
-@RequiredArgsConstructor(onConstructor_={@Autowired})
-public class FunctionProcessorService {
+@Data
+public class FunctionRepositoryResponseParams implements BaseParams {
+
+    public final int version=1;
+
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
 }

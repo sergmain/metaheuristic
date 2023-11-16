@@ -16,13 +16,25 @@
 
 package ai.metaheuristic.ai.utils;
 
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.client5.http.ConnectTimeoutException;
 import org.apache.hc.client5.http.fluent.Request;
-import org.springframework.http.HttpHeaders;
+import org.springframework.http.*;
 import org.springframework.lang.Nullable;
+import org.springframework.web.client.*;
 
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.springframework.http.HttpStatus.*;
+
+@Slf4j
 public class RestUtils {
 
     public static void putNoCacheHeaders(Map<String, String> map) {
@@ -51,5 +63,74 @@ public class RestUtils {
         header.setPragma("no-cache");
 
         return header;
+    }
+
+    @Nullable
+    public static String makeRequest(RestTemplate restTemplate, String url, String requestContent, String authHeader, String serverRestUrl) {
+        String result = null;
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set(HttpHeaders.AUTHORIZATION, authHeader);
+
+            HttpEntity<String> request = new HttpEntity<>(requestContent, headers);
+
+            log.debug("ExchangeData:\n{}", requestContent);
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
+            result = response.getBody();
+            log.debug("ExchangeData from dispatcher:\n{}", result);
+        } catch (HttpClientErrorException e) {
+            int value = e.getStatusCode().value();
+            if (value==UNAUTHORIZED.value() || value==FORBIDDEN.value() || value==NOT_FOUND.value()) {
+                log.error("775.070 Error {} accessing url {}", e.getStatusCode().value(), serverRestUrl);
+            }
+            else {
+                throw e;
+            }
+        } catch (ResourceAccessException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof SocketException) {
+                log.error("775.090 Connection error: url: {}, err: {}", url, cause.getMessage());
+            }
+            else if (cause instanceof UnknownHostException) {
+                log.error("775.093 Host unreachable, url: {}, error: {}", serverRestUrl, cause.getMessage());
+            }
+            else if (cause instanceof ConnectTimeoutException) {
+                log.warn("775.095 Connection timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
+            }
+            else if (cause instanceof SocketTimeoutException) {
+                log.warn("775.097 Socket timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
+            }
+            else if (cause instanceof SSLPeerUnverifiedException) {
+                log.error("775.098 SSL certificate mismatched, url: {}, error: {}", serverRestUrl, cause.getMessage());
+            }
+            else if (cause instanceof SSLException) {
+                log.error("775.098 SSL error, url: {}, error: {}", serverRestUrl, cause.getMessage());
+            }
+            else {
+                log.error("775.100 Error, url: " + url, e);
+            }
+            return null;
+        } catch (RestClientException e) {
+            if (e instanceof HttpStatusCodeException httpStatusCodeException && httpStatusCodeException.getStatusCode().value()>=500 && httpStatusCodeException.getStatusCode().value()<600 ) {
+                int errorCode = httpStatusCodeException.getStatusCode().value();
+                if (errorCode==503) {
+                    log.warn("775.110 Error accessing url: {}, error: 503 Service Unavailable", url);
+                }
+                else if (errorCode==502) {
+                    log.warn("775.112 Error accessing url: {}, error: 502 Bad Gateway", url);
+                }
+                else {
+                    log.error("775.117 Error accessing url: {}, error: {}", url, e.getMessage());
+                }
+            }
+            else {
+                log.error("775.120 Error accessing url: {}", url);
+                log.error("775.125 Stacktrace", e);
+            }
+            return null;
+        }
+        return result;
     }
 }

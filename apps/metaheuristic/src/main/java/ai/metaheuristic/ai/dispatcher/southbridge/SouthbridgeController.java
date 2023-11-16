@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextVariableTopLevelService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
+import ai.metaheuristic.ai.functions.FunctionRepositoryDispatcherService;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
@@ -56,6 +57,21 @@ public class SouthbridgeController {
 
     private final SouthbridgeService serverService;
     private final ExecContextVariableTopLevelService execContextVariableTopLevelService;
+    private final FunctionRepositoryDispatcherService functionRepositoryDispatcherService;
+
+    @PostMapping("/function/{random-part}")
+    public String processFunctions(
+            HttpServletRequest request, HttpServletResponse response,
+            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
+            @Nullable @RequestBody String data
+            ) throws IOException {
+        log.debug("keepAlive(), data: {}", data);
+        if (S.b(data)) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return "";
+        }
+        return functionRepositoryDispatcherService.processRequest(data, request.getRemoteAddr());
+    }
 
     @PostMapping("/srv-v2/{random-part}")
     public String processRequestWithAuth(
@@ -83,6 +99,8 @@ public class SouthbridgeController {
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             @Nullable @RequestBody String data
     ) throws IOException {
+        // there isn't ArtifactCleanerAtDispatcher.setBusy() because /keep-alive is requesting constantly
+        //  but /srv-v2 only when there is task for processing
         log.debug("keepAlive(), data: {}", data);
         if (S.b(data)) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);

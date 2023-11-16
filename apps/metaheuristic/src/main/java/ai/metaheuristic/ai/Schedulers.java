@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.long_running.LongRunningTopLevelService;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingService;
 import ai.metaheuristic.ai.dispatcher.thread.DeadLockDetector;
+import ai.metaheuristic.ai.functions.FunctionRepositoryProcessorService;
 import ai.metaheuristic.ai.processor.*;
 import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
 import ai.metaheuristic.ai.processor.actors.DownloadVariableService;
@@ -313,22 +314,6 @@ public class Schedulers {
             execContextStatusService.resetStatus();
         }
 
-/*
-        @Scheduled(initialDelay = 15_000, fixedDelay = 11_000 )
-        public void resetTasksWithErrorForRecovery() {
-            if (globals.testing || !globals.dispatcher.enabled) {
-                return;
-            }
-            ArtifactCleanerAtDispatcher.setBusy();
-            try {
-                execContextTaskResettingTopLevelService.resetTasksWithErrorForRecovery();
-            }
-            finally {
-                ArtifactCleanerAtDispatcher.notBusy();
-            }
-        }
-*/
-
         @Scheduled(initialDelay = 15_000, fixedDelay = 5_000 )
         public void processCheckCaching() {
             if (globals.testing || !globals.dispatcher.enabled) {
@@ -343,22 +328,6 @@ public class Schedulers {
             }
         }
 
-/*
-        @Scheduled(initialDelay = 15_000, fixedDelay = 1_000 )
-        public void processUpdateTaskExecStatesInGraph() {
-            if (globals.testing || !globals.dispatcher.enabled) {
-                return;
-            }
-            ArtifactCleanerAtDispatcher.setBusy();
-            try {
-                execContextTaskStateTopLevelService.processUpdateTaskExecStatesInGraph();
-            }
-            finally {
-                ArtifactCleanerAtDispatcher.notBusy();
-            }
-        }
-*/
-
         @Scheduled(initialDelay = 25_000, fixedDelay = 15_000 )
         public void updateStateForLongRunning() {
             if (globals.testing || !globals.dispatcher.enabled) {
@@ -367,6 +336,8 @@ public class Schedulers {
             longRunningTopLevelService.updateStateForLongRunning();
         }
     }
+
+    // processor's schedulers
 
     @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
     @Profile("processor")
@@ -579,7 +550,6 @@ public class Schedulers {
         }
     }
 
-    // Processor schedulers
     @SuppressWarnings({"FieldCanBeLocal", "DuplicatedCode"})
     @Service
     @EnableScheduling
@@ -590,6 +560,7 @@ public class Schedulers {
 
         private final Globals globals;
         private final ProcessorEventBusService processorEventBusService;
+        private final FunctionRepositoryProcessorService functionRepositoryProcessorService;
 
         // this scheduler is being run at the processor side
 
@@ -604,7 +575,21 @@ public class Schedulers {
             log.info("Send keepAliveEvent");
             processorEventBusService.keepAlive(new KeepAliveEvent());
         }
+
+        @Scheduled(initialDelay = 10_000, fixedDelay = 1_000)
+        public void requestFunctionRepository() {
+            if (globals.testing) {
+                return;
+            }
+            if (!globals.processor.enabled) {
+                return;
+            }
+            log.info("Request Function repository");
+            functionRepositoryProcessorService.requestFunctionRepository();
+        }
     }
+
+    // standalone's schedulers
 
     @Service
     @EnableScheduling

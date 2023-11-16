@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
+import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -31,25 +32,16 @@ import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.commons.CommonConsts;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.client5.http.ConnectTimeoutException;
-import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.web.client.*;
 
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
-import static org.springframework.http.HttpStatus.*;
 
 /**
  * User: Serg
@@ -73,7 +65,7 @@ public class DispatcherRequestor {
 
     private final RestTemplate restTemplate;
     private final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher;
-    private final String serverRestUrl;
+    private final String dispatcherRestUrl;
     private static final Random R = new Random();
 
     public DispatcherRequestor(DispatcherUrl dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService, ProcessorService processorService, MetadataParams metadataService, CurrentExecState currentExecState, DispatcherLookupExtendedParams dispatcherLookupExtendedService, ProcessorCommandProcessor processorCommandProcessor) {
@@ -93,7 +85,7 @@ public class DispatcherRequestor {
         if (dispatcher == null) {
             throw new IllegalStateException("775.010 Can't find dispatcher config for url " + dispatcherUrl);
         }
-        serverRestUrl = dispatcherUrl.url + CommonConsts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
+        dispatcherRestUrl = dispatcherUrl.url + CommonConsts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
     }
 
     private long lastRequestForMissingResources = 0;
@@ -198,86 +190,28 @@ public class DispatcherRequestor {
                 return;
             }
 
-//            final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8);
-            final String url = serverRestUrl + '/' + R.nextInt(100_000, 1_000_000);
-            try {
-                // TODO 2021-02-18 refactor as a common method and replace in ProcessorKeepAliveRequestor too
-                HttpHeaders headers = new HttpHeaders();
-                headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-                headers.setContentType(MediaType.APPLICATION_JSON);
-                headers.set(HttpHeaders.AUTHORIZATION, dispatcher.authHeader);
+            final String url = dispatcherRestUrl + '/' + R.nextInt(100_000, 1_000_000);
+            String yaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(pcpy);
 
-                String yaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(pcpy);
-                HttpEntity<String> request = new HttpEntity<>(yaml, headers);
+            log.info("Start to request a dispatcher at {}, quotas: {}", url, r.currentQuota);
 
-                log.info("Start to request a dispatcher at {}, quotas: {}", url, r.currentQuota);
-                log.debug("ExchangeData:\n{}", yaml);
-                ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
-                String result = response.getBody();
-                log.debug("ExchangeData from dispatcher:\n{}", result);
-                if (result == null) {
-                    log.warn("775.050 Dispatcher returned null as a result");
-                    return;
-                }
-                DispatcherCommParamsYaml dispatcherYaml = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(result);
+            final String result = RestUtils.makeRequest(restTemplate, url, yaml, dispatcher.authHeader, dispatcherRestUrl);
 
-                if (!dispatcherYaml.success) {
-                    log.error("775.060 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
-                    return;
-                }
-                processDispatcherCommParamsYaml(pcpy, dispatcherUrl, dispatcherYaml);
-
-            } catch (HttpClientErrorException e) {
-                int value = e.getStatusCode().value();
-                if (value==UNAUTHORIZED.value() || value==FORBIDDEN.value() || value==NOT_FOUND.value()) {
-                    log.error("775.070 Error {} accessing url {}", e.getStatusCode().value(), serverRestUrl);
-                }
-                else {
-                    throw e;
-                }
-            } catch (ResourceAccessException e) {
-                Throwable cause = e.getCause();
-                if (cause instanceof SocketException) {
-                    log.error("775.090 Connection error: url: {}, err: {}", url, cause.getMessage());
-                }
-                else if (cause instanceof UnknownHostException) {
-                    log.error("775.093 Host unreachable, url: {}, error: {}", serverRestUrl, cause.getMessage());
-                }
-                else if (cause instanceof ConnectTimeoutException) {
-                    log.warn("775.095 Connection timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
-                }
-                else if (cause instanceof SocketTimeoutException) {
-                    log.warn("775.097 Socket timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
-                }
-                else if (cause instanceof SSLPeerUnverifiedException) {
-                    log.error("775.098 SSL certificate mismatched, url: {}, error: {}", serverRestUrl, cause.getMessage());
-                }
-                else if (cause instanceof SSLException) {
-                    log.error("775.098 SSL error, url: {}, error: {}", serverRestUrl, cause.getMessage());
-                }
-                else {
-                    log.error("775.100 Error, url: " + url, e);
-                }
-            } catch (RestClientException e) {
-                if (e instanceof HttpStatusCodeException httpStatusCodeException && httpStatusCodeException.getStatusCode().value()>=500 && httpStatusCodeException.getStatusCode().value()<600 ) {
-                    int errorCode = httpStatusCodeException.getStatusCode().value();
-                    if (errorCode==503) {
-                        log.warn("775.110 Error accessing url: {}, error: 503 Service Unavailable", url);
-                    }
-                    else if (errorCode==502) {
-                        log.warn("775.112 Error accessing url: {}, error: 502 Bad Gateway", url);
-                    }
-                    else {
-                        log.error("775.117 Error accessing url: {}, error: {}", url, e.getMessage());
-                    }
-                }
-                else {
-                    log.error("775.120 Error accessing url: {}", url);
-                    log.error("775.125 Stacktrace", e);
-                }
+            if (result == null) {
+                log.warn("775.050 Dispatcher returned null as a result");
+                return;
             }
+            DispatcherCommParamsYaml dispatcherYaml = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(result);
+
+            if (!dispatcherYaml.success) {
+                log.error("775.060 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
+                return;
+            }
+            processDispatcherCommParamsYaml(pcpy, dispatcherUrl, dispatcherYaml);
+
+
         } catch (Throwable e) {
-            log.error("775.130 Error in fixedDelay(), url: {}, error: {}", serverRestUrl, e.getMessage());
+            log.error("775.130 Error in fixedDelay(), url: {}, error: {}", dispatcherRestUrl, e.getMessage());
         }
     }
 

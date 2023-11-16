@@ -44,7 +44,7 @@ import java.util.*;
 @Service
 @Profile("dispatcher")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class FunctionDispatcherService {
+public class FunctionRepositoryDispatcherService {
 
     private final SourceCodeRepository sourceCodeRepository;
     private final ExecContextRepository execContextRepository;
@@ -54,6 +54,10 @@ public class FunctionDispatcherService {
 
     private Map<String, Set<Long>> functionReadiness = new HashMap<>();
     private Set<String> activeFunctions = new HashSet<>();
+
+    public String processRequest(String data, String remoteAddr) {
+        return null;
+    }
 
     public boolean isProcessorReady(String funcCode, Long processorId) {
         Set<Long> set = functionReadiness.get(funcCode);
