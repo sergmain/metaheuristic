@@ -33,4 +33,7 @@ public class FunctionRepositoryResponseParams implements BaseParams {
     public boolean checkIntegrity() {
         return true;
     }
+
+    public boolean success;
+
 }

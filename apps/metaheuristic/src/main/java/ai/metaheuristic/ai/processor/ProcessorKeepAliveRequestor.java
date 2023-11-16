@@ -57,6 +57,7 @@ public class ProcessorKeepAliveRequestor {
     private final ProcessorKeepAliveProcessor processorKeepAliveProcessor;
     private final ProcessorEnvironment processorEnvironment;
 
+    // TODO p5 2023-11-16 do we need to move this to Utils class?
     private static final HttpComponentsClientHttpRequestFactory REQUEST_FACTORY = DispatcherUtils.getHttpRequestFactory();
 
     private final RestTemplate restTemplate;

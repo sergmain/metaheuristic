@@ -26,12 +26,12 @@ import java.util.Map;
  * Time: 7:09 PM
  */
 public class FunctionRepositoryRequestParamsUtils {
-    private static final FunctionRepositoryRequestParamsUtilsV1 YAML_UTILS_V_1 = new FunctionRepositoryRequestParamsUtilsV1();
-    private static final FunctionRepositoryRequestParamsUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+    private static final FunctionRepositoryRequestParamsUtilsV1 UTILS_V_1 = new FunctionRepositoryRequestParamsUtilsV1();
+    private static final FunctionRepositoryRequestParamsUtilsV1 DEFAULT_UTILS = UTILS_V_1;
 
-    public static final BaseYamlUtils<FunctionRepositoryRequestParams> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseYamlUtils<FunctionRepositoryRequestParams> UTILS = new BaseYamlUtils<>(
         Map.of(
-            1, YAML_UTILS_V_1
+            1, UTILS_V_1
         ),
         DEFAULT_UTILS
     );

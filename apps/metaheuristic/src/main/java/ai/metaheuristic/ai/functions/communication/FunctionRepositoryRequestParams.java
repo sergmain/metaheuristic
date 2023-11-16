@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.functions.communication;
 
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.Data;
+import org.springframework.lang.Nullable;
 
 /**
  * @author Sergio Lissner
@@ -34,5 +35,8 @@ public class FunctionRepositoryRequestParams implements BaseParams {
         return true;
     }
 
+
+    @Nullable
+    public Long processorId;
 
 }

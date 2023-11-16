@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.functions.FunctionRepositoryProcessorService;
 import ai.metaheuristic.ai.functions.FunctionRepositoryRequestor;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
@@ -61,7 +62,8 @@ public class DispatcherRequestorHolderService {
         CurrentExecState currentExecState,
         ProcessorCommandProcessor processorCommandProcessor,
         ProcessorKeepAliveProcessor processorKeepAliveProcessor,
-        ProcessorEnvironment processorEnvironment
+        ProcessorEnvironment processorEnvironment,
+        FunctionRepositoryProcessorService functionRepositoryProcessorService
     ) {
 
         for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedParams.DispatcherLookupExtended> entry : processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
@@ -73,7 +75,7 @@ public class DispatcherRequestorHolderService {
             final ProcessorKeepAliveRequestor keepAliveRequestor = new ProcessorKeepAliveRequestor(
                     dispatcher.dispatcherUrl, globals, processorService, processorKeepAliveProcessor, processorEnvironment);
 
-            final FunctionRepositoryRequestor functionRepositoryRequestor = new FunctionRepositoryRequestor(dispatcher.dispatcherUrl, globals, processorEnvironment);
+            final FunctionRepositoryRequestor functionRepositoryRequestor = new FunctionRepositoryRequestor(dispatcher.dispatcherUrl, globals, processorEnvironment, functionRepositoryProcessorService);
 
             dispatcherRequestorMap.put(dispatcher.dispatcherUrl, new Requesters(requestor, keepAliveRequestor, functionRepositoryRequestor));
         }

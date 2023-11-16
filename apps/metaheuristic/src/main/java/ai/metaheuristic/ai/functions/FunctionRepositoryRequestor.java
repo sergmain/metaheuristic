@@ -16,27 +16,64 @@
 
 package ai.metaheuristic.ai.functions;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParams;
+import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParamsUtils;
+import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParams;
+import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParamsUtils;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
+import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
+import ai.metaheuristic.ai.utils.RestUtils;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
+import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.converter.StringHttpMessageConverter;
+import org.springframework.web.client.RestTemplate;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Random;
 
 /**
  * @author Sergio Lissner
  * Date: 11/16/2023
  * Time: 12:49 AM
  */
+// TODO p5 2023-11-16 combine with ProcessorKeepAliveRequestor ?
 @Slf4j
 public class FunctionRepositoryRequestor {
 
-    private final ProcessorAndCoreData.DispatcherUrl dispatcherUrl;
     private final Globals globals;
-    private final ProcessorEnvironment processorEnvironment;
+    private final FunctionRepositoryProcessorService functionRepositoryProcessorService;
 
-    public FunctionRepositoryRequestor(ProcessorAndCoreData.DispatcherUrl dispatcherUrl, Globals globals, ProcessorEnvironment processorEnvironment) {
+    private final ProcessorAndCoreData.DispatcherUrl dispatcherUrl;
+    private final ProcessorEnvironment processorEnvironment;
+    // TODO p5 2023-11-16 do we need to move this to Utils class?
+    private static final HttpComponentsClientHttpRequestFactory REQUEST_FACTORY = DispatcherUtils.getHttpRequestFactory();
+    private final RestTemplate restTemplate;
+    private final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher;
+    private final String dispatcherRestUrl;
+
+    private static final Random R = new Random();
+
+    public FunctionRepositoryRequestor(
+        ProcessorAndCoreData.DispatcherUrl dispatcherUrl, Globals globals,
+        ProcessorEnvironment processorEnvironment, FunctionRepositoryProcessorService functionRepositoryProcessorService) {
         this.dispatcherUrl = dispatcherUrl;
         this.globals = globals;
         this.processorEnvironment = processorEnvironment;
+        this.functionRepositoryProcessorService = functionRepositoryProcessorService;
+        this.restTemplate = new RestTemplate(REQUEST_FACTORY);
+        this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
+        this.dispatcher = this.processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+        if (this.dispatcher == null) {
+            throw new IllegalStateException("776.010 Can't find dispatcher config for url " + dispatcherUrl);
+        }
+
+        this.dispatcherRestUrl = dispatcherUrl.url + CommonConsts.REST_V1_URL + Consts.FUNCTION_REPOSITORY_REST_URL;
     }
 
     public void requestFunctionRepository() {
@@ -47,40 +84,15 @@ public class FunctionRepositoryRequestor {
             return;
         }
 
-/*
         try {
             FunctionRepositoryRequestParams frrp = new FunctionRepositoryRequestParams();
-
-
-            final MetadataParamsYaml.ProcessorSession processorSession = processorEnvironment.metadataParams.getProcessorSession(dispatcherUrl);
-            final Long processorId = processorSession.processorId;
-            final String sessionId = processorSession.sessionId;
-
-            if (processorId == null || sessionId == null) {
-                frrp.processor.processorCommContext = null;
+            MetadataParamsYaml.ProcessorSession processorSession = processorEnvironment.metadataParams.getProcessorSession(dispatcherUrl);
+            if (processorSession!=null) {
+                frrp.processorId = processorSession.processorId;
             }
-            else {
-                frrp.processor.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
-            }
-
-            Set<ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef> cores = processorEnvironment.metadataParams.getAllCoresForDispatcherUrl(dispatcherUrl);
-            for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : cores) {
-                String coreDir = globals.processorPath.resolve(core.coreCode).toString();
-                Long coreId = core.coreId;
-                String coreCode = core.coreCode;
-                String tags = processorEnvironment.envParams.getTags(core.coreCode);
-
-                frrp.cores.add(new KeepAliveRequestParamYaml.Core(coreDir, coreId, coreCode, tags));
-            }
-
-            final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
-                processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
-
-            ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
-            frrp.functions.statuses.putAll(processorEnvironment.metadataParams.getAsFunctionDownloadStatuses(assetManagerUrl));
 
             final String url = dispatcherRestUrl + '/' + R.nextInt(100_000, 1_000_000);
-            String yaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(frrp);
+            String yaml = FunctionRepositoryRequestParamsUtils.UTILS.toString(frrp);
 
             final String result = RestUtils.makeRequest(restTemplate, url, yaml, dispatcher.authHeader, dispatcherRestUrl);
 
@@ -88,18 +100,17 @@ public class FunctionRepositoryRequestor {
                 log.warn("776.050 Dispatcher returned null as a result");
                 return;
             }
-            KeepAliveResponseParamYaml responseParamYaml = KeepAliveResponseParamYamlUtils.BASE_YAML_UTILS.to(result);
+            FunctionRepositoryResponseParams responseParams = FunctionRepositoryResponseParamsUtils.UTILS.to(result);
 
-            if (!responseParamYaml.success) {
+            if (!responseParams.success) {
                 log.error("776.060 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
                 return;
             }
-            processorKeepAliveProcessor.processKeepAliveResponseParamYaml(dispatcherUrl, responseParamYaml);
+            functionRepositoryProcessorService.processFunctionRepositoryResponseParams(dispatcherUrl, responseParams);
 
         } catch (Throwable e) {
-            log.error("776.130 Error in fixedDelay(), dispatcher url: {}, error: {}", dispatcherRestUrl, e.getMessage());
+            log.error("776.130 Error in requestFunctionRepository(), dispatcher url: {}, error: {}", dispatcherRestUrl, e.getMessage());
         }
-*/
     }
 
 

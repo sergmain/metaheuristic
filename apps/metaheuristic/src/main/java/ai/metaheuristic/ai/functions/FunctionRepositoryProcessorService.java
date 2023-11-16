@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.functions;
 
+import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParams;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.utils.RestUtils;
@@ -45,4 +46,7 @@ import java.util.Set;
 public class FunctionRepositoryProcessorService {
 
 
+    public void processFunctionRepositoryResponseParams(ProcessorAndCoreData.DispatcherUrl dispatcherUrl, FunctionRepositoryResponseParams responseParams) {
+
+    }
 }
