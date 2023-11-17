@@ -121,9 +121,6 @@ public class ProcessorKeepAliveRequestor {
             final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
                     processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
-            ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
-            karpy.functions.statuses.putAll(processorEnvironment.metadataParams.getAsFunctionDownloadStatuses(assetManagerUrl));
-
             final String url = dispatcherRestUrl + '/' + R.nextInt(100_000, 1_000_000);
             String yaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(karpy);
 

@@ -58,14 +58,11 @@ public class ProcessorEnvironment {
         this.appCtx = appCtx;
         this.additionalCustomUserDetails = additionalCustomUserDetails;
 
-//    @PostConstruct
-//    public void init() {
         if (!globals.processor.enabled) {
             return;
         }
 
         try {
-            final Path processorPath = globals.processorPath;
             final Path defaultDispatcherYamlFile = globals.processor.defaultDispatcherYamlFile;
             final Path defaultEnvYamlFile = globals.processor.defaultEnvYamlFile;
             final int taskConsoleOutputMaxLines = globals.processor.taskConsoleOutputMaxLines;
@@ -81,18 +78,18 @@ public class ProcessorEnvironment {
             else if (defaultEnvYamlFile!=null) {
                 envYamlProvider = new FileEnvYamlProvider(defaultEnvYamlFile);
             }
-            init(processorPath, envYamlProvider, defaultDispatcherYamlFile, taskConsoleOutputMaxLines);
+            init(envYamlProvider, defaultDispatcherYamlFile, taskConsoleOutputMaxLines);
         }
         catch (TerminateApplicationException e) {
             System.exit(SpringApplication.exit(appCtx, () -> -500));
         }
     }
 
-    public void init(Path processorPath, @Nullable EnvYamlProvider envYamlProvider, @Nullable Path defaultDispatcherYamlFile, int taskConsoleOutputMaxLines) {
-        envParams.init(processorPath, envYamlProvider, taskConsoleOutputMaxLines, !globals.standalone.active);
+    public void init(@Nullable EnvYamlProvider envYamlProvider, @Nullable Path defaultDispatcherYamlFile, int taskConsoleOutputMaxLines) {
+        envParams.init(globals.processorPath, envYamlProvider, taskConsoleOutputMaxLines, !globals.standalone.active);
         dispatcherLookupExtendedService = globals.standalone.active
                 ? new StandaloneDispatcherLookupExtendedParams(additionalCustomUserDetails.restUserPassword)
-                : new FileDispatcherLookupExtendedParams(processorPath, defaultDispatcherYamlFile);
-        metadataParams = new MetadataParams(processorPath, envParams, dispatcherLookupExtendedService);
+                : new FileDispatcherLookupExtendedParams(globals.processorPath, defaultDispatcherYamlFile);
+        metadataParams = new MetadataParams(globals.processorPath, envParams, dispatcherLookupExtendedService);
     }
 }

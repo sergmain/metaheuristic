@@ -16,9 +16,9 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.functions.FunctionRepositoryProcessorService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProviderFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +41,7 @@ public class TaskProcessorCoordinatorService {
     private final ProcessorEnvironment processorEnvironment;
     private final ProcessorService processorService;
     private final VariableProviderFactory resourceProviderFactory;
-    private final GitSourcingService gitSourcingService;
+    private final FunctionRepositoryProcessorService functionRepositoryProcessorService;
 
     // key -coreCode, value
     private final Map<String, TaskProcessor> taskProcessors = new HashMap<>();
@@ -61,8 +61,8 @@ public class TaskProcessorCoordinatorService {
     }
 
     public void invokeTaskProcessingOnCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
-        TaskProcessor taskProcessor = taskProcessors.computeIfAbsent( core.coreCode,
-                o -> new TaskProcessor(globals, processorTaskService, currentExecState, processorEnvironment, processorService, resourceProviderFactory, gitSourcingService));
+        TaskProcessor taskProcessor = taskProcessors.computeIfAbsent(core.coreCode,
+                o -> new TaskProcessor(globals, processorTaskService, currentExecState, processorEnvironment, processorService, resourceProviderFactory, functionRepositoryProcessorService));
         Thread.startVirtualThread(()-> {
             try {
                 taskProcessor.process(core);

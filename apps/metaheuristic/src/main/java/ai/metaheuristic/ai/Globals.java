@@ -516,6 +516,7 @@ public class Globals {
     public Path dispatcherStorageFunctionsPath;
     public Path dispatcherStorageCacheVariablessPath;
     public Path processorPath;
+    public Path processorResourcesPath;
 
     public EnumsApi.OS os = EnumsApi.OS.unknown;
 
@@ -548,6 +549,8 @@ public class Globals {
         }
 
         if (processor.enabled) {
+            processorResourcesPath = processorPath.resolve(Consts.RESOURCES_DIR);
+            Files.createDirectories(processorResourcesPath);
 
             // TODO 2019.04.26 right now the change of ownership is disabled
             //  but maybe will be required in future

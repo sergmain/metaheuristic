@@ -134,10 +134,12 @@ public class KeepAliveRequestParamYaml implements BaseParams {
         }
     }
 
+/*
     @Data
     public static class FunctionDownloadStatuses {
         public final Map<EnumsApi.FunctionState, String> statuses = new HashMap<>();
     }
+*/
 
     @Data
     @NoArgsConstructor
@@ -170,6 +172,8 @@ public class KeepAliveRequestParamYaml implements BaseParams {
 
     public final Processor processor = new Processor();
     public final List<Core> cores = new ArrayList<>();
+/*
     public final FunctionDownloadStatuses functions = new FunctionDownloadStatuses();
+*/
 
 }

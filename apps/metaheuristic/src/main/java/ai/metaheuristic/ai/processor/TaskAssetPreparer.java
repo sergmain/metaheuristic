@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.functions.DownloadFunctionService;
+import ai.metaheuristic.ai.functions.FunctionRepositoryProcessorService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.event.AssetPreparingForProcessorTaskEvent;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
@@ -60,6 +61,7 @@ public class TaskAssetPreparer {
     private final ProcessorEnvironment processorEnvironment;
     private final ProcessorService processorService;
     private final ApplicationEventPublisher eventPublisher;
+    private final FunctionRepositoryProcessorService functionRepositoryProcessorService;
 
     public static class TaskAssetPreparingSync {
         private static final CommonSync<String> commonSync = new CommonSync<>();
@@ -207,7 +209,7 @@ public class TaskAssetPreparer {
             TaskParamsYaml.FunctionConfig functionConfig, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, Long taskId) {
 
         if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-            final MetadataParamsYaml.Function functionDownloadStatuses = processorEnvironment.metadataParams.getFunctionDownloadStatuses(assetManagerUrl, functionConfig.code);
+            final FunctionRepositoryProcessorService.Function functionDownloadStatuses = functionRepositoryProcessorService.getFunctionDownloadStatuses(assetManagerUrl, functionConfig.code);
             if (functionDownloadStatuses==null) {
                 return false;
             }
@@ -223,7 +225,7 @@ public class TaskAssetPreparer {
                 if (functionState== EnumsApi.FunctionState.function_config_error || functionState== EnumsApi.FunctionState.download_error) {
                     log.error("951.360 The function {} has a state as {}, start re-downloading", functionConfig.code, functionState);
 
-                    processorEnvironment.metadataParams.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none);
+                    functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none);
 
                     downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired));
                     return true;

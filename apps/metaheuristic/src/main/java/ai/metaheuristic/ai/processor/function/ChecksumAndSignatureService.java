@@ -48,26 +48,5 @@ public class ChecksumAndSignatureService {
 
     private final ProcessorEnvironment processorEnvironment;
 
-    public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
-            ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager asset,
-            String functionCode, ChecksumAndSignatureData.ChecksumWithSignatureInfo checksumState, Path functionFile) throws IOException {
 
-        try (InputStream fis = Files.newInputStream(functionFile)) {
-            return getCheckSumAndSignatureStatus(assetManagerUrl, asset, functionCode, checksumState, fis);
-        }
-    }
-
-    public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
-            ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager asset,
-            String functionCode, ChecksumAndSignatureData.ChecksumWithSignatureInfo checksumState, InputStream is) {
-
-        CheckSumAndSignatureStatus status;
-        final PublicKey publicKey = asset.publicKey!=null ? ProcessorUtils.createPublicKey(asset) : null;
-        status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(
-                "Asset url: "+ assetManagerUrl.url +", function: "+functionCode, is, publicKey,
-                checksumState.originChecksumWithSignature, checksumState.hashAlgo);
-
-        processorEnvironment.metadataParams.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, status);
-        return status;
-    }
 }

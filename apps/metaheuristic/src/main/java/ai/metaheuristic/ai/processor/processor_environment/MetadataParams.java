@@ -31,7 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,7 +52,6 @@ public class MetadataParams {
     private final EnvParams envParams;
     private final DispatcherLookupExtendedParams dispatcherLookupExtendedService;
     private final Path processorPath;
-    private final Path processorResourcesPath;
 
     private MetadataParamsYaml metadata = null;
 
@@ -64,9 +62,6 @@ public class MetadataParams {
     @SneakyThrows
     public MetadataParams(Path processorPath, EnvParams envParams, DispatcherLookupExtendedParams dispatcherLookupExtendedService) {
         this.processorPath = processorPath;
-        this.processorResourcesPath = processorPath.resolve(Consts.RESOURCES_DIR);
-        Files.createDirectories(processorResourcesPath);
-
         this.envParams = envParams;
         this.dispatcherLookupExtendedService = dispatcherLookupExtendedService;
 
@@ -133,7 +128,6 @@ public class MetadataParams {
 
     private void fixProcessorCodes() {
         final List<String> codes = envParams.getEnvParamsYaml().cores.stream().map(o -> o.code).collect(Collectors.toList());
-
         fixProcessorCodes(codes, metadata.processorSessions);
     }
 
@@ -186,21 +180,24 @@ public class MetadataParams {
         try {
             readLock.lock();
             MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(ref.dispatcherUrl.url);
+            if (processorState.dispatcherCode!=null) {
+                return processorState;
+            }
+        } finally {
+            readLock.unlock();
+        }
+
+        try {
+            writeLock.lock();
+            MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(ref.dispatcherUrl.url);
             // fix for wrong metadata.yaml data
             if (processorState.dispatcherCode == null) {
-                try {
-                    readLock.unlock();
-                    writeLock.lock();
-                    processorState.dispatcherCode = asEmptyProcessorState(ref.dispatcherUrl).dispatcherCode;
-                    updateMetadataFile();
-                } finally {
-                    writeLock.unlock();
-                    readLock.lock();
-                }
+                processorState.dispatcherCode = asEmptyProcessorState(ref.dispatcherUrl).dispatcherCode;
+                updateMetadataFile();
             }
             return processorState;
         } finally {
-            readLock.unlock();
+            writeLock.unlock();
         }
     }
 
@@ -286,14 +283,14 @@ public class MetadataParams {
     }
 
     public Set<ProcessorCoreAndProcessorIdAndDispatcherUrlRef> getAllEnabledRefsForCores() {
-        return getAllRefsForCores(this::selectEnabledDispathcersFunc);
+        return getAllRefsForCores(this::selectEnabledDispatchersFunc);
     }
 
     public Set<ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef> getAllEnabledRefs() {
-        return getAllRefs(this::selectEnabledDispathcersFunc);
+        return getAllRefs(this::selectEnabledDispatchersFunc);
     }
 
-    private boolean selectEnabledDispathcersFunc(DispatcherUrl dispatcherUrl) {
+    private boolean selectEnabledDispatchersFunc(DispatcherUrl dispatcherUrl) {
         final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher = dispatcherLookupExtendedService.getDispatcher(dispatcherUrl);
         return dispatcher != null && !dispatcher.dispatcherLookup.disabled;
     }
@@ -449,6 +446,7 @@ public class MetadataParams {
         }
     }
 
+/*
     private void restoreFromBackup() {
         log.info("815.480 Trying to restore previous state of metadata.yaml");
         try {
@@ -461,6 +459,7 @@ public class MetadataParams {
             throw new TerminateApplicationException();
         }
     }
+*/
 
     private static MetadataParamsYaml.ProcessorSession asEmptyProcessorState(DispatcherUrl dispatcherUrl) {
         MetadataParamsYaml.ProcessorSession processorState = new MetadataParamsYaml.ProcessorSession();
@@ -485,7 +484,7 @@ public class MetadataParams {
     }
 
     @SneakyThrows
-    public Path prepareBaseDir(AssetManagerUrl assetManagerUrl) {
+    public static Path prepareBaseDir(Path processorResourcesPath, AssetManagerUrl assetManagerUrl) {
         Path dir = processorResourcesPath.resolve(asCode(assetManagerUrl));
         if (Files.notExists(dir)) {
             //noinspection unused
