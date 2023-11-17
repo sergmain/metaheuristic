@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.processor.actors.AbstractTaskQueue;
 import ai.metaheuristic.ai.processor.actors.DownloadUtils;
 import ai.metaheuristic.ai.processor.actors.GetDispatcherContextInfoService;
 import ai.metaheuristic.ai.processor.actors.QueueProcessor;
-import ai.metaheuristic.ai.processor.function.ChecksumAndSignatureService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
@@ -36,11 +35,11 @@ import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
-import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -77,7 +76,6 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
 
     private final Globals globals;
     private final ProcessorEnvironment processorEnvironment;
-    private final ChecksumAndSignatureService checksumAndSignatureService;
     private final GetDispatcherContextInfoService getDispatcherContextInfoService;
     private final FunctionRepositoryProcessorService functionRepositoryProcessorService;
 
@@ -307,7 +305,8 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
 
             CheckSumAndSignatureStatus status;
             try {
-                status = functionRepositoryProcessorService.getCheckSumAndSignatureStatus(assetManagerUrl, assetManager, functionCode, state, functionZip);
+                status = ChecksumAndSignatureUtils.getCheckSumAndSignatureStatus(assetManagerUrl, assetManager, functionCode, state, functionZip);
+                functionRepositoryProcessorService.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, status);
             } catch (IOException e) {
                 log.error("811.185 Error in getCheckSumAndSignatureStatus(),functionCode: {},  assetManager file {}, error: {}",
                         functionCode, assetFile.getFile().toAbsolutePath(), e.toString());

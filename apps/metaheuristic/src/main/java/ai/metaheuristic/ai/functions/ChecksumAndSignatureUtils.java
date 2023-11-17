@@ -14,20 +14,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.processor.function;
+package ai.metaheuristic.ai.functions;
 
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
-import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.utils.ProcessorUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,13 +34,20 @@ import java.security.PublicKey;
  * Date: 1/1/2021
  * Time: 4:18 PM
  */
-@Slf4j
-@Service
-@Profile("processor")
-@RequiredArgsConstructor(onConstructor_={@Autowired})
-public class ChecksumAndSignatureService {
+public class ChecksumAndSignatureUtils {
 
-    private final ProcessorEnvironment processorEnvironment;
+    public static CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
+        ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager asset,
+        String functionCode, ChecksumAndSignatureData.ChecksumWithSignatureInfo checksumState, Path functionFile) throws IOException {
 
+        try (InputStream is = Files.newInputStream(functionFile)) {
+            CheckSumAndSignatureStatus status;
+            final PublicKey publicKey = asset.publicKey!=null ? ProcessorUtils.createPublicKey(asset) : null;
+            status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(
+                "Asset url: "+ assetManagerUrl.url +", function: "+functionCode, is, publicKey,
+                checksumState.originChecksumWithSignature, checksumState.hashAlgo);
 
+            return status;
+        }
+    }
 }

@@ -21,14 +21,12 @@ import ai.metaheuristic.ai.core.SystemProcessLauncher;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParams;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParams;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
-import ai.metaheuristic.ai.processor.function.ProcessorFunctionUtils;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.utils.ProcessorUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
-import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -509,30 +507,6 @@ public class FunctionRepositoryProcessorService {
             }
         }
         return new FunctionApiData.SystemExecResult(function.code, true, 0, "");
-    }
-
-
-    public CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
-        ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager asset,
-        String functionCode, ChecksumAndSignatureData.ChecksumWithSignatureInfo checksumState, Path functionFile) throws IOException {
-
-        try (InputStream fis = Files.newInputStream(functionFile)) {
-            return getCheckSumAndSignatureStatus(assetManagerUrl, asset, functionCode, checksumState, fis);
-        }
-    }
-
-    private CheckSumAndSignatureStatus getCheckSumAndSignatureStatus(
-        ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager asset,
-        String functionCode, ChecksumAndSignatureData.ChecksumWithSignatureInfo checksumState, InputStream is) {
-
-        CheckSumAndSignatureStatus status;
-        final PublicKey publicKey = asset.publicKey!=null ? ProcessorUtils.createPublicKey(asset) : null;
-        status = ChecksumWithSignatureUtils.verifyChecksumAndSignature(
-            "Asset url: "+ assetManagerUrl.url +", function: "+functionCode, is, publicKey,
-            checksumState.originChecksumWithSignature, checksumState.hashAlgo);
-
-        setChecksumAndSignatureStatus(assetManagerUrl, functionCode, status);
-        return status;
     }
 
     private static Map<String, EnumsApi.FunctionState> parseToMapOfStates( FunctionRepositoryData.FunctionDownloadStatuses functionDownloadStatus) {

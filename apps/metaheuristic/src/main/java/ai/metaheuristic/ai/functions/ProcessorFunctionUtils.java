@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.processor.function;
+package ai.metaheuristic.ai.functions;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
