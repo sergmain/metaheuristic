@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingServi
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
@@ -49,7 +50,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.dispatcher.processor.ProcessorUtils.isProcessorFunctionDownloadStatusDifferent;
 import static ai.metaheuristic.ai.dispatcher.processor.ProcessorUtils.isProcessorStatusDifferent;
 
 @Slf4j
@@ -75,17 +75,6 @@ public class ProcessorTopLevelService {
     // TODO 2020-12-23 20 seconds because ....
     public static final long PROCESSOR_TIMEOUT = TimeUnit.SECONDS.toMillis(140);
 
-    private static Map<String, EnumsApi.FunctionState> parseToMapOfStates(KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus) {
-        Map<String, EnumsApi.FunctionState> map = new HashMap<>();
-        for (Map.Entry<EnumsApi.FunctionState, String> entry : functionDownloadStatus.statuses.entrySet()) {
-            String[] names = entry.getValue().split(",");
-            for (String name : names) {
-                map.put(name, entry.getKey());
-            }
-        }
-        return map;
-    }
-
     public ProcessorData.ProcessorResult getProcessor(Long id) {
         Processor processor = processorCache.findById(id);
         if (processor==null) {
@@ -108,7 +97,7 @@ public class ProcessorTopLevelService {
     }
 
     public void processKeepAliveData(
-            KeepAliveRequestParamYaml.Processor processorRequest, KeepAliveRequestParamYaml.FunctionDownloadStatuses functionDownloadStatus,
+            KeepAliveRequestParamYaml.Processor processorRequest,
             final Processor processor) {
 
         if (processorRequest.processorCommContext ==null || processorRequest.processorCommContext.processorId==null) {
@@ -122,20 +111,22 @@ public class ProcessorTopLevelService {
             return;
         }
         ProcessorStatusYaml psy = processor.getProcessorStatusYaml();
-
         final boolean processorStatusDifferent = isProcessorStatusDifferent(psy, status);
-
+/*
         Map<String, EnumsApi.FunctionState> mapOfFunctionStates = parseToMapOfStates(functionDownloadStatus);
         final boolean processorFunctionDownloadStatusDifferent = isProcessorFunctionDownloadStatusDifferent(psy, mapOfFunctionStates);
 
         if (processorStatusDifferent || processorFunctionDownloadStatusDifferent) {
-
-
-            ProcessorSyncService.getWithSyncVoid(processorId,
-                    () -> processorTransactionService.processKeepAliveData(
-                            processorId, status, mapOfFunctionStates, psy,
-                            processorStatusDifferent, processorFunctionDownloadStatusDifferent));
-
+*/
+        if (processorStatusDifferent) {
+            try {
+                ProcessorSyncService.getWithSyncVoid(processorId,
+                        () -> processorTransactionService.processKeepAliveData(
+                                processorId, status, psy,
+                                processorStatusDifferent));
+            } catch (CommonRollbackException e) {
+                //
+            }
         }
     }
 

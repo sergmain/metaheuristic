@@ -35,12 +35,10 @@ public class TestMetadataYaml {
         MetadataParamsYaml m = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
 
         assertNotNull(m);
-        assertNotNull(m.getMetadata());
         assertNotNull(m.getProcessorSessions());
         assertTrue(m.processorSessions.containsKey("http://localhost:8080"));
         assertTrue(m.processorSessions.containsKey("http://host"));
 
-        assertEquals(1, m.getMetadata().size());
         final MetadataParamsYaml.ProcessorSession ps1 = m.processorSessions.get("http://localhost:8080");
         assertNotNull(ps1);
 
@@ -62,9 +60,7 @@ public class TestMetadataYaml {
         assertNotNull(yaml);
         MetadataParamsYaml m = MetadataParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
         assertNotNull(m);
-        assertNotNull(m.metadata);
         assertNotNull(m.processorSessions);
-        assertEquals(0, m.metadata.size());
     }
 
     @Test

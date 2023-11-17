@@ -201,7 +201,9 @@ public class PreparingSourceCodeService {
         assertEquals(preparingCodeData.processor.getId(), processorIdAndCoreIds.processorId);
 
         KeepAliveRequestParamYaml karpy = new KeepAliveRequestParamYaml();
+/*
         karpy.functions.statuses.put(EnumsApi.FunctionState.ready, asListOfReady(preparingSourceCodeData.getF1(), preparingSourceCodeData.getF2(), preparingSourceCodeData.getF3(), preparingSourceCodeData.getF4(), preparingSourceCodeData.getF5(), preparingCodeData.getFitFunction(), preparingCodeData.getPredictFunction()));
+*/
 
         KeepAliveRequestParamYaml.Processor pr = karpy.processor;
         pr.processorCode = ConstsApi.DEFAULT_PROCESSOR_CODE;

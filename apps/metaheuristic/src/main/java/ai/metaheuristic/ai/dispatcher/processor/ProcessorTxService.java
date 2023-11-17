@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
+import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
@@ -41,9 +42,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
-import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -101,7 +100,7 @@ public class ProcessorTxService {
 
         Processor processor = processorCache.findById(processorId);
         if (processor==null) {
-            String es = "#807.040 Can't find Processor #" + processorId;
+            String es = "807.040 Can't find Processor #" + processorId;
             log.warn(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
@@ -135,7 +134,7 @@ public class ProcessorTxService {
 
         Processor processor = processorCache.findById(processorId);
         if (processor==null) {
-            log.warn("#807.045 Can't find Processor #{}", processorId);
+            log.warn("807.045 Can't find Processor #{}", processorId);
             return;
         }
         ProcessorStatusYaml psy = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(processor.getStatus());
@@ -200,7 +199,7 @@ public class ProcessorTxService {
         ProcessorSyncService.checkWriteLockPresent(processorId);
         Processor s = processorCache.findById(processorId);
         if (s==null) {
-            return new ProcessorData.ProcessorResult("#807.060 processor wasn't found, processorId: " + processorId);
+            return new ProcessorData.ProcessorResult("807.060 processor wasn't found, processorId: " + processorId);
         }
         s.description = desc;
         ProcessorData.ProcessorResult r = new ProcessorData.ProcessorResult(processorCache.save(s));
@@ -212,7 +211,7 @@ public class ProcessorTxService {
         ProcessorSyncService.checkWriteLockPresent(id);
         Processor processor = processorCache.findById(id);
         if (processor == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#807.080 Processor wasn't found, processorId: " + id);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "807.080 Processor wasn't found, processorId: " + id);
         }
         processorCache.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -223,17 +222,16 @@ public class ProcessorTxService {
         ProcessorSyncService.checkWriteLockPresent(id);
         ProcessorCore core = processorCoreRepository.findById(id).orElse(null);
         if (core == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#807.082 ProcessorCore wasn't found, processorCoreId: " + id);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "807.082 ProcessorCore wasn't found, processorCoreId: " + id);
         }
         processorCoreRepository.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = {CommonRollbackException.class, IllegalStateException.class})
     public void processKeepAliveData(
             Long processorId, KeepAliveRequestParamYaml.ProcessorStatus status,
-            Map<String, EnumsApi.FunctionState> functionDownloadStatuses,
-            ProcessorStatusYaml psy, final boolean processorStatusDifferent, final boolean processorFunctionDownloadStatusDifferent) {
+            ProcessorStatusYaml psy, final boolean processorStatusDifferent) {
 
         ProcessorSyncService.checkWriteLockPresent(processorId);
 
@@ -262,20 +260,23 @@ public class ProcessorTxService {
             psy.os = (status.os == null ? EnumsApi.OS.unknown : status.os);
             psy.currDir = status.currDir;
         }
+/*
         if (processorFunctionDownloadStatusDifferent) {
             psy.functions.clear();
             psy.functions.putAll(functionDownloadStatuses);
         }
 
         if (processorStatusDifferent || processorFunctionDownloadStatusDifferent) {
+*/
+        if (processorStatusDifferent) {
             processor.updatedOn = System.currentTimeMillis();
             processor.updateParams(psy);
             try {
-                log.debug("#807.120 Save new processor status, processor: {}", processor);
+                log.debug("807.120 Save new processor status, processor: {}", processor);
                 processorCache.save(processor);
             } catch (ObjectOptimisticLockingFailureException e) {
                 log.warn("""
-                            #807.140 ObjectOptimisticLockingFailureException was encountered
+                            807.140 ObjectOptimisticLockingFailureException was encountered
                             new processor:
                             {}
                             db processor
@@ -283,8 +284,8 @@ public class ProcessorTxService {
             }
         }
         else {
-            log.debug("#807.160 Processor status is equal to the status stored in db");
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            log.debug("807.160 Processor status is equal to the status stored in db");
+            throw new CommonRollbackException();
         }
     }
 
@@ -317,7 +318,7 @@ public class ProcessorTxService {
         ProcessorStatusYaml ss = processor.getProcessorStatusYaml();
         final long diff = millis - ss.sessionCreatedOn;
         log.debug("""
-                        #807.200 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),
+                        807.200 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),
                         '    processor.version: {}, millis: {}, ss.sessionCreatedOn: {}, diff: {}, SESSION_UPDATE_TIMEOUT: {},
                         '    processor.status:
                         {},

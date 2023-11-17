@@ -17,10 +17,14 @@
 package ai.metaheuristic.ai.functions;
 
 import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.Data;
 import org.springframework.lang.Nullable;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Sergio Lissner
@@ -28,6 +32,12 @@ import org.springframework.lang.Nullable;
  * Time: 5:38 PM
  */
 public class FunctionRepositoryData {
+
+    @Data
+    public static class FunctionDownloadStatuses {
+        public final Map<EnumsApi.FunctionState, String> statuses = new HashMap<>();
+    }
+
     @Data
     public static class FunctionPrepareResult {
         public TaskParamsYaml.FunctionConfig function;

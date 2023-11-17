@@ -102,9 +102,6 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
         r.status.os = EnumsApi.OS.any;
         r.status.currDir = "/home";
 
-        req.functions.statuses.put(EnumsApi.FunctionState.none, "code1");
-        req.functions.statuses.put(EnumsApi.FunctionState.checksum_wrong, "code2");
-
         r.processorCommContext = new ProcessorCommContextV3(11L, "session-11");
 
         CoreV3 core1 = new CoreV3("/dir-core1", 21L, "core-code1", "core-tags1");
@@ -158,13 +155,6 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
         assertEquals(2, kar.processor.status.taskParamsVersion);
         assertEquals(EnumsApi.OS.any, kar.processor.status.os);
         assertEquals("/home", kar.processor.status.currDir);
-
-        assertNotNull(kar.functions.statuses);
-        assertEquals(2, kar.functions.statuses.size());
-        assertTrue(kar.functions.statuses.containsKey(EnumsApi.FunctionState.none));
-        assertEquals("code1", kar.functions.statuses.get(EnumsApi.FunctionState.none));
-        assertTrue(kar.functions.statuses.containsKey(EnumsApi.FunctionState.checksum_wrong));
-        assertEquals("code2", kar.functions.statuses.get(EnumsApi.FunctionState.checksum_wrong));
 
         assertNotNull(kar.processor.processorCommContext);
         assertEquals(11L, kar.processor.processorCommContext.processorId);
@@ -228,13 +218,6 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
         assertEquals(2, karV3.processor.status.taskParamsVersion);
         assertEquals(EnumsApi.OS.any, karV3.processor.status.os);
         assertEquals("/home", karV3.processor.status.currDir);
-
-        assertNotNull(karV3.functions.statuses);
-        assertEquals(2, karV3.functions.statuses.size());
-        assertTrue(karV3.functions.statuses.containsKey(EnumsApi.FunctionState.none));
-        assertEquals("code1", karV3.functions.statuses.get(EnumsApi.FunctionState.none));
-        assertTrue(karV3.functions.statuses.containsKey(EnumsApi.FunctionState.checksum_wrong));
-        assertEquals("code2", karV3.functions.statuses.get(EnumsApi.FunctionState.checksum_wrong));
 
         assertNotNull(karV3.processor.processorCommContext);
         assertEquals(11L, karV3.processor.processorCommContext.processorId);

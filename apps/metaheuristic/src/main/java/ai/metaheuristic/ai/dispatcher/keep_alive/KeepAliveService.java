@@ -152,7 +152,7 @@ public class KeepAliveService {
             }
         }
         log.debug("Start processing commands");
-        processorTopLevelService.processKeepAliveData(processorRequest, req.functions, processor);
+        processorTopLevelService.processKeepAliveData(processorRequest, processor);
 
         //      keepAliveCommandProcessor.processLogRequest(processorRequest.processorCommContext.processorId, dispatcherResponse);
 

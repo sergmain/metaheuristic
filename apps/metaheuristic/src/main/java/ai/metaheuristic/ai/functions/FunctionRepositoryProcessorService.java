@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.utils.ProcessorUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
+import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -533,5 +534,20 @@ public class FunctionRepositoryProcessorService {
         setChecksumAndSignatureStatus(assetManagerUrl, functionCode, status);
         return status;
     }
+
+    private static Map<String, EnumsApi.FunctionState> parseToMapOfStates( FunctionRepositoryData.FunctionDownloadStatuses functionDownloadStatus) {
+        Map<String, EnumsApi.FunctionState> map = new HashMap<>();
+        for (Map.Entry<EnumsApi.FunctionState, String> entry : functionDownloadStatus.statuses.entrySet()) {
+            String[] names = entry.getValue().split(",");
+            for (String name : names) {
+                map.put(name, entry.getKey());
+            }
+        }
+        return map;
+    }
+
+/*
+    Map<String, EnumsApi.FunctionState> mapOfFunctionStates = parseToMapOfStates(functionDownloadStatus);
+*/
 
 }
