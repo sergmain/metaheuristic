@@ -576,7 +576,7 @@ public class Schedulers {
             processorEventBusService.keepAlive(new KeepAliveEvent());
         }
 
-        @Scheduled(initialDelay = 10_000, fixedDelay = 1_000)
+        @Scheduled(initialDelay = 1_000, fixedDelay = 1_000)
         public void requestFunctionRepository() {
             if (globals.testing) {
                 return;

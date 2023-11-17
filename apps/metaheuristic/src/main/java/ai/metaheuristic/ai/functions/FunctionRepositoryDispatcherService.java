@@ -20,6 +20,11 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParams;
+import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParamsUtils;
+import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParams;
+import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParamsUtils;
+import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -30,16 +35,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
+import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 /**
  * @author Sergio Lissner
  * Date: 11/14/2023
  * Time: 11:20 PM
  */
+@SuppressWarnings("BooleanMethodIsAlwaysInverted")
 @Slf4j
 @Service
 @Profile("dispatcher")
@@ -50,13 +59,59 @@ public class FunctionRepositoryDispatcherService {
     private final ExecContextRepository execContextRepository;
     private final ApplicationEventPublisher eventPublisher;
 
-    //    private final ApplicationEventPublisher eventPublisher;
+    // private final ApplicationEventPublisher eventPublisher;
 
-    private Map<String, Set<Long>> functionReadiness = new HashMap<>();
-    private Set<String> activeFunctions = new HashSet<>();
+    // key - function code, value - list of processorIds
+    private final Map<String, Set<Long>> functionReadiness = new HashMap<>();
+    private final Set<String> activeFunctions = new HashSet<>();
+
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+
+    public Set<String> getActiveFunctionCode(@Nullable Long processorId) {
+        readLock.lock();
+        try {
+            if (processorId==null) {
+                return new HashSet<>(activeFunctions);
+            }
+            else {
+                return activeFunctions.stream().filter(c->{
+                    Set<Long> ids = functionReadiness.get(c);
+                    return ids==null || !ids.contains(processorId);
+                }).collect(Collectors.toSet());
+            }
+        } finally {
+            readLock.unlock();
+        }
+    }
 
     public String processRequest(String data, String remoteAddr) {
-        return null;
+        FunctionRepositoryRequestParams p = FunctionRepositoryRequestParamsUtils.UTILS.to(data);
+        FunctionRepositoryResponseParams r = new FunctionRepositoryResponseParams();
+        registerReadyFunctionCodesOnProcessor(p);
+
+        r.functionCodes = getActiveFunctionCode(p.processorId);
+
+        String response = FunctionRepositoryResponseParamsUtils.UTILS.toString(r);
+        return response;
+    }
+
+    private void registerReadyFunctionCodesOnProcessor(FunctionRepositoryRequestParams p) {
+        if (p.processorId==null || CollectionUtils.isEmpty(p.functionCodes)) {
+            return;
+        }
+        writeLock.lock();
+        try {
+            for (String functionCode : p.functionCodes) {
+                if (!activeFunctions.contains(functionCode)) {
+                    continue;
+                }
+                functionReadiness.computeIfAbsent(functionCode, (o)-> new HashSet<>()).add(p.processorId);
+            }
+        } finally {
+            writeLock.unlock();
+        }
     }
 
     public boolean isProcessorReady(String funcCode, Long processorId) {

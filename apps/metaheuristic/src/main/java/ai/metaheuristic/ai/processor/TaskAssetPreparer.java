@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.functions.DownloadFunctionService;
+import ai.metaheuristic.ai.functions.FunctionRepositoryData;
 import ai.metaheuristic.ai.functions.FunctionRepositoryProcessorService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.event.AssetPreparingForProcessorTaskEvent;
@@ -209,7 +210,7 @@ public class TaskAssetPreparer {
             TaskParamsYaml.FunctionConfig functionConfig, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, Long taskId) {
 
         if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-            final FunctionRepositoryProcessorService.Function functionDownloadStatuses = functionRepositoryProcessorService.getFunctionDownloadStatuses(assetManagerUrl, functionConfig.code);
+            final FunctionRepositoryData.Function functionDownloadStatuses = functionRepositoryProcessorService.getFunctionDownloadStatuses(assetManagerUrl, functionConfig.code);
             if (functionDownloadStatuses==null) {
                 return false;
             }

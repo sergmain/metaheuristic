@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.functions;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.exceptions.ProtocolIllegalStateException;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParams;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParamsUtils;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParams;
@@ -25,6 +26,7 @@ import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponsePar
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
+import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
@@ -98,12 +100,19 @@ public class FunctionRepositoryRequestor {
             }
             FunctionRepositoryRequestParams immediateResponse = functionRepositoryProcessorService.processFunctionRepositoryResponseParams(dispatcherUrl, responseParams);
             if (processorSession!=null && immediateResponse!=null) {
-                final FunctionRepositoryResponseParams responseParams1 = makeQuery(immediateResponse);
+                final FunctionRepositoryResponseParams p = makeQuery(immediateResponse);
+                if (isNotEmpty(p)) {
+                    throw new ProtocolIllegalStateException("778.050 isNotEmpty(p)");
+                }
             }
 
         } catch (Throwable e) {
             log.error("778.060 Error in requestFunctionRepository(), dispatcher url: {}, error: {}", dispatcherRestUrl, e.getMessage());
         }
+    }
+
+    public static boolean isNotEmpty(@Nullable FunctionRepositoryResponseParams p) {
+        return p!=null && CollectionUtils.isNotEmpty(p.functionCodes);
     }
 
     @Nullable

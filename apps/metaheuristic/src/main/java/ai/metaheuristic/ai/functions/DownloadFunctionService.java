@@ -108,12 +108,12 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 continue;
             }
 
-            FunctionRepositoryProcessorService.FunctionConfigAndStatus functionConfigAndStatus = functionRepositoryProcessorService.syncFunctionStatus(assetManagerUrl, assetManager, functionCode);
+            FunctionRepositoryData.FunctionConfigAndStatus functionConfigAndStatus = functionRepositoryProcessorService.syncFunctionStatus(assetManagerUrl, assetManager, functionCode);
             if (functionConfigAndStatus==null) {
                 continue;
             }
 
-            FunctionRepositoryProcessorService.Function functionDownloadStatus = functionConfigAndStatus.status;
+            FunctionRepositoryData.Function functionDownloadStatus = functionConfigAndStatus.status;
             if (functionDownloadStatus==null) {
                 continue;
             }

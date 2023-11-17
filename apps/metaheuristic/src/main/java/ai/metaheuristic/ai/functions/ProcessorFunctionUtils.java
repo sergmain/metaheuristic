@@ -23,11 +23,9 @@ import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.data.replication.ReplicationApiData;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.TaskParamsUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.HttpResponseException;
 import org.apache.hc.client5.http.fluent.Request;
@@ -52,25 +50,13 @@ public class ProcessorFunctionUtils {
 
     public enum ConfigStatus {ok, error, not_found}
 
-    @Data
-    public static class DownloadedFunctionConfigStatus {
-        public TaskParamsYaml.FunctionConfig functionConfig;
-        public ConfigStatus status;
-    }
+    public static FunctionRepositoryData.DownloadedFunctionConfigStatus downloadFunctionConfig(DispatcherLookupParamsYaml.AssetManager assetManager, String functionCode) {
 
-    @Data
-    public static class DownloadedFunctionConfigsStatus {
-        public ReplicationApiData.FunctionConfigsReplication functionConfigs;
-        public ConfigStatus status;
-    }
-
-    public static DownloadedFunctionConfigStatus downloadFunctionConfig(DispatcherLookupParamsYaml.AssetManager assetManager, String functionCode) {
-
-        // 999 - fake processorId for backward compatibility
-        final String functionConfigUrl = assetManager.url + Consts.REST_ASSET_URL + "/function-config/999";
+        // 99999 - fake processorId for backward compatibility
+        final String functionConfigUrl = assetManager.url + Consts.REST_ASSET_URL + "/function-config/99999";
         final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8);
 
-        final DownloadedFunctionConfigStatus functionConfigStatus = new DownloadedFunctionConfigStatus();
+        final FunctionRepositoryData.DownloadedFunctionConfigStatus functionConfigStatus = new FunctionRepositoryData.DownloadedFunctionConfigStatus();
         functionConfigStatus.status = ConfigStatus.error;
         try {
             final URI uri = new URIBuilder(functionConfigUrl + randomPartUri)
@@ -107,7 +93,7 @@ public class ProcessorFunctionUtils {
                 log.error("813.280 HttpResponseException", e);
             }
         } catch (SocketTimeoutException e) {
-            log.error("813.300 SocketTimeoutException: {}, function: {}, assetManagerUrl: {}", e.toString(), functionCode, assetManager.url);
+            log.error("813.300 SocketTimeoutException: {}, function: {}, assetManagerUrl: {}", e.getMessage(), functionCode, assetManager.url);
         } catch (IOException e) {
             log.error(S.f("813.320 IOException, function: %s, assetManagerUrl: %s",functionCode, assetManager.url), e);
         } catch (Throwable th) {
@@ -116,14 +102,14 @@ public class ProcessorFunctionUtils {
         return functionConfigStatus;
     }
 
-    public static DownloadedFunctionConfigsStatus downloadFunctionConfigs(
+    public static FunctionRepositoryData.DownloadedFunctionConfigsStatus downloadFunctionConfigs(
             String dispatcherUrl,
             DispatcherLookupParamsYaml.AssetManager asset, String processorId) {
 
         final String functionConfigsUrl = asset.url + Consts.REST_ASSET_URL + "/function-configs/" + processorId;
         final String randomPartUri =  '/' + UUID.randomUUID().toString().substring(0, 8);
 
-        final DownloadedFunctionConfigsStatus functionConfigStatus = new DownloadedFunctionConfigsStatus();
+        final FunctionRepositoryData.DownloadedFunctionConfigsStatus functionConfigStatus = new FunctionRepositoryData.DownloadedFunctionConfigsStatus();
         functionConfigStatus.status = ConfigStatus.error;
         try {
             final Request request = Request.get(functionConfigsUrl + randomPartUri).connectTimeout(Timeout.ofSeconds(5)); //.socketTimeout(20000);
@@ -156,7 +142,7 @@ public class ProcessorFunctionUtils {
             }
         }
         catch (SocketTimeoutException e) {
-            log.error("813.460 SocketTimeoutException: {}, dispatcher: {}, assetManagerUrl: {}", e.toString(), dispatcherUrl, asset.url);
+            log.error("813.460 SocketTimeoutException: {}, dispatcher: {}, assetManagerUrl: {}", e.getMessage(), dispatcherUrl, asset.url);
         }
         catch (IOException e) {
             log.error(S.f("813.480 IOException, dispatcher: %s, assetManagerUrl: %s", dispatcherUrl, asset.url), e);

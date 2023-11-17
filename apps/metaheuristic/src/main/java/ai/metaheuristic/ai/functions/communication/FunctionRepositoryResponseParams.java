@@ -38,7 +38,7 @@ public class FunctionRepositoryResponseParams implements BaseParams {
         return true;
     }
 
-
+    // list of function codes which must to be prepared and ready
     @Nullable
     @JsonInclude(value= JsonInclude.Include.NON_NULL)
     public Set<String> functionCodes = null;

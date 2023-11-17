@@ -137,7 +137,7 @@ public class ProcessorEventBusService {
                     continue;
                 }
                 int activeCount = executor.getActiveCount();
-                if (activeCount >0) {
+                if (activeCount>0) {
                     log.warn("047.240 executor has a not finished tasks, count: {}", activeCount);
                     continue;
                 }

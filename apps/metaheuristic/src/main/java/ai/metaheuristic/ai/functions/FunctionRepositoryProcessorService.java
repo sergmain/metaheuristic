@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
-import ai.metaheuristic.ai.processor.utils.ProcessorUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
@@ -38,9 +37,6 @@ import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -50,8 +46,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.PublicKey;
@@ -74,49 +68,7 @@ public class FunctionRepositoryProcessorService {
     private final ProcessorEnvironment processorEnvironment;
     private final GitSourcingService gitSourcingService;
 
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class Function {
-        public EnumsApi.FunctionState state;
-        public String code;
-        public String assetManagerUrl;
-        public EnumsApi.FunctionSourcing sourcing;
-
-        public EnumsApi.ChecksumState checksum = EnumsApi.ChecksumState.not_yet;
-        public EnumsApi.SignatureState signature = EnumsApi.SignatureState.not_yet;
-
-        public final Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
-        public long lastCheck = 0;
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class FunctionConfigAndStatus {
-        @Nullable
-        public final TaskParamsYaml.FunctionConfig functionConfig;
-        @Nullable
-        public final Function status;
-        @Nullable
-        public final AssetFile assetFile;
-        public final boolean contentIsInline;
-
-        public FunctionConfigAndStatus(@Nullable Function status) {
-            this.functionConfig = null;
-            this.assetFile = null;
-            this.contentIsInline = false;
-            this.status = status;
-        }
-
-        public FunctionConfigAndStatus(@Nullable TaskParamsYaml.FunctionConfig functionConfig, @Nullable Function setFunctionState, AssetFile assetFile) {
-            this.functionConfig = functionConfig;
-            this.assetFile = assetFile;
-            this.contentIsInline = false;
-            this.status = setFunctionState;
-        }
-    }
-
-    private List<Function> functions = new ArrayList<>();
+    private List<FunctionRepositoryData.Function> functions = new ArrayList<>();
 
     @Nullable
     public FunctionRepositoryRequestParams processFunctionRepositoryResponseParams(ProcessorAndCoreData.DispatcherUrl dispatcherUrl, FunctionRepositoryResponseParams responseParams) {
@@ -129,7 +81,7 @@ public class FunctionRepositoryProcessorService {
     }
 
 
-    public List<Function> registerNewFunctionCode(ProcessorAndCoreData.DispatcherUrl dispatcherUrl, Map<EnumsApi.FunctionSourcing, String> infos) {
+    public List<FunctionRepositoryData.Function> registerNewFunctionCode(ProcessorAndCoreData.DispatcherUrl dispatcherUrl, Map<EnumsApi.FunctionSourcing, String> infos) {
         final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
             processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
 
@@ -145,7 +97,7 @@ public class FunctionRepositoryProcessorService {
 
         boolean isChanged = false;
         for (Pair<EnumsApi.FunctionSourcing, String> info : list) {
-            Function status = functions.stream()
+            FunctionRepositoryData.Function status = functions.stream()
                 .filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(info.getValue()))
                 .findFirst().orElse(null);
             if (status==null || status.state == EnumsApi.FunctionState.not_found) {
@@ -155,7 +107,7 @@ public class FunctionRepositoryProcessorService {
         }
 
         // set state to FunctionState.not_found if function doesn't exist at Dispatcher any more
-        for (Function status : functions) {
+        for (FunctionRepositoryData.Function status : functions) {
             if (status.assetManagerUrl.equals(assetManagerUrl.url) && list.stream().filter(i-> i.getValue().equals(status.code)).findFirst().orElse(null)==null) {
                 setFunctionDownloadStatusInternal(assetManagerUrl, status.code, status.sourcing, EnumsApi.FunctionState.not_found);
                 isChanged = true;
@@ -168,11 +120,11 @@ public class FunctionRepositoryProcessorService {
     }
 
     @Nullable
-    public Function setFunctionState(final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode, EnumsApi.FunctionState functionState) {
+    public FunctionRepositoryData.Function setFunctionState(final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode, EnumsApi.FunctionState functionState) {
         if (S.b(functionCode)) {
             throw new IllegalStateException("815.240 functionCode is null");
         }
-        Function status = functions.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
+        FunctionRepositoryData.Function status = functions.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
         if (status == null) {
             return null;
         }
@@ -189,7 +141,7 @@ public class FunctionRepositoryProcessorService {
         if (S.b(functionCode)) {
             throw new IllegalStateException("815.260 functionCode is null");
         }
-        Function status = functions.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
+        FunctionRepositoryData.Function status = functions.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
         if (status == null) {
             return;
         }
@@ -207,7 +159,7 @@ public class FunctionRepositoryProcessorService {
         if (checksumMap==null) {
             return;
         }
-        Function status = functions.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
+        FunctionRepositoryData.Function status = functions.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
         if (status == null) {
             return;
         }
@@ -219,7 +171,7 @@ public class FunctionRepositoryProcessorService {
         if (S.b(functionCode)) {
             throw new IllegalStateException("815.300 functionCode is null");
         }
-        Function status = functions.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
+        FunctionRepositoryData.Function status = functions.stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
         if (status == null) {
             return;
         }
@@ -236,7 +188,7 @@ public class FunctionRepositoryProcessorService {
         if (S.b(functionCode)) {
             throw new IllegalStateException("815.320 functionCode is empty");
         }
-        List<Function> statuses = functions.stream().filter(o->!(o.assetManagerUrl.equals(assetManagerUrl) && o.code.equals(functionCode))).collect(Collectors.toList());
+        List<FunctionRepositoryData.Function> statuses = functions.stream().filter(o->!(o.assetManagerUrl.equals(assetManagerUrl) && o.code.equals(functionCode))).collect(Collectors.toList());
         if (statuses.size()!= functions.size()) {
             functions.clear();
             functions.addAll(statuses);
@@ -254,7 +206,7 @@ public class FunctionRepositoryProcessorService {
 
     // it could be null if this function was deleted
     @Nullable
-    public Function getFunctionDownloadStatuses(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode) {
+    public FunctionRepositoryData.Function getFunctionDownloadStatuses(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode) {
         return functions.stream()
             .filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(functionCode))
             .findFirst().orElse(null);
@@ -274,9 +226,9 @@ public class FunctionRepositoryProcessorService {
     }
 
     private void setFunctionDownloadStatusInternal(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String code, EnumsApi.FunctionSourcing sourcing, EnumsApi.FunctionState functionState) {
-        Function status = functions.stream().filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(code)).findFirst().orElse(null);
+        FunctionRepositoryData.Function status = functions.stream().filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(code)).findFirst().orElse(null);
         if (status == null) {
-            status = new Function(
+            status = new FunctionRepositoryData.Function(
                 EnumsApi.FunctionState.none, code, assetManagerUrl.url, sourcing,
                 EnumsApi.ChecksumState.not_yet, EnumsApi.SignatureState.not_yet, System.currentTimeMillis());
             functions.add(status);
@@ -285,13 +237,13 @@ public class FunctionRepositoryProcessorService {
         status.lastCheck = System.currentTimeMillis();
     }
 
-    public List<Function> getStatuses() {
+    public List<FunctionRepositoryData.Function> getStatuses() {
         return Collections.unmodifiableList(functions);
     }
 
     private void markAllAsUnverified() {
-        List<Function> forRemoving = new ArrayList<>();
-        for (Function status : functions) {
+        List<FunctionRepositoryData.Function> forRemoving = new ArrayList<>();
+        for (FunctionRepositoryData.Function status : functions) {
             if (status.sourcing!= EnumsApi.FunctionSourcing.dispatcher) {
                 continue;
             }
@@ -302,24 +254,24 @@ public class FunctionRepositoryProcessorService {
             status.checksum = EnumsApi.ChecksumState.not_yet;
             status.signature = EnumsApi.SignatureState.not_yet;
         }
-        for (Function status : forRemoving) {
+        for (FunctionRepositoryData.Function status : forRemoving) {
             removeFunction(status.assetManagerUrl, status.code);
         }
     }
 
     @Nullable
-    public FunctionConfigAndStatus syncFunctionStatus(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager assetManager, final String functionCode) {
+    public FunctionRepositoryData.FunctionConfigAndStatus syncFunctionStatus(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager assetManager, final String functionCode) {
         try {
             return syncFunctionStatusInternal(assetManagerUrl, assetManager, functionCode);
         } catch (Throwable th) {
             log.error("815.080 Error in syncFunctionStatus()", th);
-            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.io_error));
+            return new FunctionRepositoryData.FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.io_error));
         }
     }
 
     @Nullable
-    private FunctionConfigAndStatus syncFunctionStatusInternal(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager assetManager, String functionCode) {
-        Function status = getFunctionDownloadStatuses(assetManagerUrl, functionCode);
+    private FunctionRepositoryData.FunctionConfigAndStatus syncFunctionStatusInternal(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager assetManager, String functionCode) {
+        FunctionRepositoryData.Function status = getFunctionDownloadStatuses(assetManagerUrl, functionCode);
 
         if (status == null) {
             return null;
@@ -330,16 +282,16 @@ public class FunctionRepositoryProcessorService {
         }
         if (status.state == EnumsApi.FunctionState.ready) {
             if (status.checksum!= EnumsApi.ChecksumState.not_yet && status.signature!= EnumsApi.SignatureState.not_yet) {
-                return new FunctionConfigAndStatus(status);
+                return new FunctionRepositoryData.FunctionConfigAndStatus(status);
             }
             setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.none);
         }
 
-        ProcessorFunctionUtils.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus =
+        FunctionRepositoryData.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus =
             ProcessorFunctionUtils.downloadFunctionConfig(assetManager, functionCode);
 
         if (downloadedFunctionConfigStatus.status==ProcessorFunctionUtils.ConfigStatus.error) {
-            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.function_config_error));
+            return new FunctionRepositoryData.FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.function_config_error));
         }
         if (downloadedFunctionConfigStatus.status==ProcessorFunctionUtils.ConfigStatus.not_found) {
             removeFunction(assetManagerUrl, functionCode);
@@ -350,24 +302,22 @@ public class FunctionRepositoryProcessorService {
 
         if (S.b(functionConfig.file)) {
             log.error("815.100 name of file for function {} is blank and content of function is blank too", functionCode);
-            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.function_config_error));
+            return new FunctionRepositoryData.FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.function_config_error));
         }
 
         Path baseFunctionDir = MetadataParams.prepareBaseDir(globals.processorResourcesPath, assetManagerUrl);
 
         final AssetFile assetFile = AssetUtils.prepareFunctionFile(baseFunctionDir, status.code, functionConfig.file);
         if (assetFile.isError) {
-            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error));
+            return new FunctionRepositoryData.FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error));
         }
         if (!assetFile.isContent) {
-            return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.none), assetFile);
+            return new FunctionRepositoryData.FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.none), assetFile);
         }
 
-        return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.ok), assetFile);
+        return new FunctionRepositoryData.FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.ok), assetFile);
     }
 
-    @SuppressWarnings({"WeakerAccess"})
-    // TODO 2019.05.02 implement unit-test for this method
     public FunctionRepositoryData.FunctionPrepareResult prepareFunction(DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig function) {
         try {
             final MetadataParams metadataParams = processorEnvironment.metadataParams;

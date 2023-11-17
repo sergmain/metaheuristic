@@ -14,37 +14,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.functions.communication;
-
-import ai.metaheuristic.api.data.BaseParams;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Data;
-import org.springframework.lang.Nullable;
-
-import java.util.List;
+package ai.metaheuristic.ai.exceptions;
 
 /**
  * @author Sergio Lissner
- * Date: 11/15/2023
- * Time: 7:08 PM
+ * Date: 11/16/2023
+ * Time: 9:51 PM
  */
-@Data
-public class FunctionRepositoryRequestParams implements BaseParams {
-
-    public final int version=1;
-
-    @Override
-    public boolean checkIntegrity() {
-        return true;
+public class ProtocolIllegalStateException extends RuntimeException {
+    public ProtocolIllegalStateException(String message) {
+        super(message);
     }
-
-    @Nullable
-    @JsonInclude(value= JsonInclude.Include.NON_NULL)
-    public Long processorId;
-
-    // list of function codes which are ready
-    @Nullable
-    @JsonInclude(value= JsonInclude.Include.NON_NULL)
-    public List<String> functionCodes = null;
-
 }

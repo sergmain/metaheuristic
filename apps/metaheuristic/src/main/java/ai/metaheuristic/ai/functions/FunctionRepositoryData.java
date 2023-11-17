@@ -19,8 +19,11 @@ package ai.metaheuristic.ai.functions;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.api.data.replication.ReplicationApiData;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 
 import java.util.HashMap;
@@ -46,5 +49,59 @@ public class FunctionRepositoryData {
         public FunctionApiData.SystemExecResult systemExecResult;
         public boolean isLoaded = true;
         public boolean isError = false;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Function {
+        public EnumsApi.FunctionState state;
+        public String code;
+        public String assetManagerUrl;
+        public EnumsApi.FunctionSourcing sourcing;
+
+        public EnumsApi.ChecksumState checksum = EnumsApi.ChecksumState.not_yet;
+        public EnumsApi.SignatureState signature = EnumsApi.SignatureState.not_yet;
+
+        public final Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
+        public long lastCheck = 0;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class FunctionConfigAndStatus {
+        @Nullable
+        public final TaskParamsYaml.FunctionConfig functionConfig;
+        @Nullable
+        public final Function status;
+        @Nullable
+        public final AssetFile assetFile;
+        public final boolean contentIsInline;
+
+        public FunctionConfigAndStatus(@Nullable Function status) {
+            this.functionConfig = null;
+            this.assetFile = null;
+            this.contentIsInline = false;
+            this.status = status;
+        }
+
+        public FunctionConfigAndStatus(@Nullable TaskParamsYaml.FunctionConfig functionConfig, @Nullable Function setFunctionState, AssetFile assetFile) {
+            this.functionConfig = functionConfig;
+            this.assetFile = assetFile;
+            this.contentIsInline = false;
+            this.status = setFunctionState;
+        }
+    }
+
+    @Data
+    public static class DownloadedFunctionConfigStatus {
+        public TaskParamsYaml.FunctionConfig functionConfig;
+        public ProcessorFunctionUtils.ConfigStatus status;
+    }
+
+    @Data
+    public static class DownloadedFunctionConfigsStatus {
+        public ReplicationApiData.FunctionConfigsReplication functionConfigs;
+        public ProcessorFunctionUtils.ConfigStatus status;
     }
 }
