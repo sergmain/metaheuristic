@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.long_running.LongRunningTopLevelService;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingService;
 import ai.metaheuristic.ai.dispatcher.thread.DeadLockDetector;
+import ai.metaheuristic.ai.functions.FunctionRepositoryDispatcherService;
 import ai.metaheuristic.ai.functions.FunctionRepositoryProcessorService;
 import ai.metaheuristic.ai.processor.*;
 import ai.metaheuristic.ai.functions.DownloadFunctionService;
@@ -195,6 +196,7 @@ public class Schedulers {
         private final ApplicationEventPublisher eventPublisher;
         private final ExecContextStatusService execContextStatusService;
         private final ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
+        private final FunctionRepositoryDispatcherService functionRepositoryDispatcherService;
 
         // Dispatcher schedulers with fixed delay
 
@@ -334,6 +336,14 @@ public class Schedulers {
                 return;
             }
             longRunningTopLevelService.updateStateForLongRunning();
+        }
+
+        @Scheduled(initialDelay = 15_000, fixedDelay = 15_000 )
+        public void collectActiveFunctionCodes() {
+            if (globals.testing || !globals.dispatcher.enabled) {
+                return;
+            }
+            functionRepositoryDispatcherService.collectActiveFunctionCodes();
         }
     }
 

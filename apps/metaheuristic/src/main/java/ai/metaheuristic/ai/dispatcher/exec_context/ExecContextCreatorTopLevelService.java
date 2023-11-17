@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
+import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -70,6 +71,9 @@ public class ExecContextCreatorTopLevelService {
                         ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContextAndStart(
                                 sourceCodeId, context, isStart, rootAndParent);
                         return result;
+                    }
+                    catch (CommonRollbackException e) {
+                        return new ExecContextCreatorService.ExecContextCreationResult(e.messages);
                     }
                     catch (ExecContextTooManyInstancesException e) {
                         String es = S.f("#562.105 Too many instances of SourceCode '%s', max allowed: %d, current count: %d", e.sourceCodeUid, e.max, e.curr);

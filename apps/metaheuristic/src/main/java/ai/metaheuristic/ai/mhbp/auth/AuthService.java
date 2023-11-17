@@ -36,8 +36,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
-
 /**
  * @author Sergio Lissner
  * Date: 4/13/2023
@@ -82,8 +80,8 @@ public class AuthService {
         } catch (CommonRollbackException e) {
             return switch (e.status) {
                 case OK -> OperationStatusRest.OPERATION_STATUS_OK;
-                case ERROR -> new OperationStatusRest(e.status, e.message);
-                case INFO -> new OperationStatusRest(e.status, e.message, null);
+                case ERROR -> new OperationStatusRest(e.status, e.messages);
+                case INFO -> new OperationStatusRest(e.status, e.messages, null);
             };
         }
     }

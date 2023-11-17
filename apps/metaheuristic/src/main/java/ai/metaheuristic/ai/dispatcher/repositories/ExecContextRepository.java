@@ -30,7 +30,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 @Repository
@@ -73,7 +72,10 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
     @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
     List<Long> findAllStartedIds();
 
-    @Query(value="select e.id from ExecContextImpl e where e.state=:execState")
+    @Query(value="select sc.id from ExecContextImpl e, SourceCodeImpl sc where e.sourceCodeId=sc.id and e.state=:execState")
+    List<Long> findAllSourceCodeIdsByExecState(int execState);
+
+    @Query(value="select sc.id from ExecContextImpl e, SourceCodeImpl sc where e.sourceCodeId=sc.id and e.state=:execState")
     List<Long> findIdsByExecState(int execState);
 
 /*

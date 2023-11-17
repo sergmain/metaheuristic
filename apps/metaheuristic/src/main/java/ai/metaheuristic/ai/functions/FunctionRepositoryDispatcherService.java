@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.functions;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.event.events.RegisterFunctionCodesForStartedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParams;
@@ -140,20 +141,82 @@ public class FunctionRepositoryDispatcherService {
     @EventListener
     public void activateFunctions(SourceCodeParamsYaml sc) {
         Set<String> funcCodes = collectFunctionCodes(sc);
+        registerCodes(funcCodes, false);
+    }
+
+    private void registerCodes(Set<String> funcCodes, boolean clean) {
         for (String funcCode : funcCodes) {
-            activeFunctions.add(funcCode);
-            functionReadiness.computeIfAbsent(funcCode, (o)->new HashSet<>());
+            writeLock.lock();
+            try {
+                activeFunctions.add(funcCode);
+                functionReadiness.computeIfAbsent(funcCode, (o)->new HashSet<>());
+            } finally {
+                writeLock.unlock();
+            }
+        }
+        if (clean) {
+            List<String> forDeletion = new ArrayList<>(100);
+            readLock.lock();
+            try {
+                for (String activeFunction : activeFunctions) {
+                    if (!funcCodes.contains(activeFunction)) {
+                        forDeletion.add(activeFunction);
+                    }
+                }
+            } finally {
+                readLock.unlock();
+            }
+            if (!forDeletion.isEmpty()) {
+                writeLock.lock();
+                try {
+                    for (String funcCode : forDeletion) {
+                        activeFunctions.remove(funcCode);
+                        functionReadiness.remove(funcCode);
+                    }
+                } finally {
+                    writeLock.unlock();
+                }
+            }
         }
     }
 
-//    @Async
-//    @EventListener
-//    public void deactivateFunctions(SourceCodeParamsYaml sc) {
-//    }
+    @Async
+    @EventListener
+    public void registerFunctionCodesForStartedExecContext(RegisterFunctionCodesForStartedExecContextEvent event) {
+        Set<String> funcCodes = collectFunctionCodes(event.sc());
+        registerCodes(funcCodes, false);
+    }
 
-    private Set<String> collectFunctionCodes(SourceCodeParamsYaml sc) {
+    private static Set<String> collectFunctionCodes(SourceCodeParamsYaml sc) {
+        Set<String> codes = new HashSet<>();
+        if (sc.source.processes!=null) {
+            for (SourceCodeParamsYaml.Process process : sc.source.processes) {
+                collectFunctionCodesForProcess(codes, process);
+            }
+        }
+        return codes;
+    }
 
-        return Set.of();
+    public static void collectFunctionCodesForProcess(Set<String> codes, SourceCodeParamsYaml.Process process) {
+        if (process.function !=null) {
+            codes.add(process.function.code);
+        }
+        if (process.preFunctions !=null) {
+            for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.preFunctions) {
+                codes.add(snDef.code);
+            }
+        }
+        if (process.postFunctions !=null) {
+            for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.postFunctions) {
+                codes.add(snDef.code);
+            }
+        }
+
+        if (process.subProcesses!=null) {
+            for (SourceCodeParamsYaml.Process subProcess : process.subProcesses.processes) {
+                collectFunctionCodesForProcess(codes, subProcess);
+            }
+        }
     }
 
     public void updateActiveFunctions(Set<String> funcCodes) {
@@ -161,14 +224,10 @@ public class FunctionRepositoryDispatcherService {
     }
 
     public void collectActiveFunctionCodes() {
-        List<Long> execContextIds = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.STARTED.code);
+        List<Long> sourceCodeIds = execContextRepository.findAllSourceCodeIdsByExecState(EnumsApi.ExecContextState.STARTED.code);
         Set<String> funcCodes = new HashSet<>();
-        for (Long execContextId : execContextIds) {
-            ExecContextImpl ec = execContextRepository.findByIdNullable(execContextId);
-            if (ec==null) {
-                continue;
-            }
-            SourceCodeImpl sc = sourceCodeRepository.findByIdNullable(ec.sourceCodeId);
+        for (Long sourceCodeId : sourceCodeIds) {
+            SourceCodeImpl sc = sourceCodeRepository.findByIdNullable(sourceCodeId);
             if (sc==null) {
                 continue;
             }
@@ -176,6 +235,7 @@ public class FunctionRepositoryDispatcherService {
             SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
             funcCodes.addAll(collectFunctionCodes(scpy));
         }
+        registerCodes(funcCodes, true);
     }
 
 }

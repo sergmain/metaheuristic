@@ -18,6 +18,9 @@ package ai.metaheuristic.ai.exceptions;
 
 import ai.metaheuristic.api.EnumsApi;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
 
 /**
@@ -26,16 +29,21 @@ import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
  * Time: 7:58 AM
  */
 public class CommonRollbackException extends RuntimeException {
-    public final String message;
+    public final List<String> messages = new ArrayList<>();
     public final EnumsApi.OperationStatus status;
 
     public CommonRollbackException() {
-        this.message = "no description for this error";
+        this.messages.add("no description for this error");
         this.status = OK;
     }
 
     public CommonRollbackException(String message, EnumsApi.OperationStatus status) {
-        this.message = message;
+        this.messages.add(message);
+        this.status = status;
+    }
+
+    public CommonRollbackException(List<String> messages, EnumsApi.OperationStatus status) {
+        this.messages.addAll(messages);
         this.status = status;
     }
 

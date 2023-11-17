@@ -142,6 +142,12 @@ public class EventsBoundedToTx {
         eventPublisher.publishEvent(event.to());
     }
 
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleRegisterFunctionCodesForStartedExecContextEvent(RegisterFunctionCodesForStartedExecContextTxEvent event) {
+        eventPublisher.publishEvent(event.to());
+    }
+
     // TransactionPhase.AFTER_ROLLBACK
 
     @Async

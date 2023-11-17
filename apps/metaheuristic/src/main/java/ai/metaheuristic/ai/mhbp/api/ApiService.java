@@ -94,8 +94,8 @@ public class ApiService {
         } catch (CommonRollbackException e) {
             return switch (e.status) {
                 case OK -> OperationStatusRest.OPERATION_STATUS_OK;
-                case ERROR -> new OperationStatusRest(e.status, e.message);
-                case INFO -> new OperationStatusRest(e.status, e.message, null);
+                case ERROR -> new OperationStatusRest(e.status, e.messages);
+                case INFO -> new OperationStatusRest(e.status, e.messages, null);
             };
         }
     }

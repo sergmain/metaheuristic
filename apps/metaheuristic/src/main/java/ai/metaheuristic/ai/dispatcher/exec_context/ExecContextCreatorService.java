@@ -29,7 +29,9 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
+import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
+import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
@@ -54,6 +56,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static ai.metaheuristic.api.EnumsApi.OperationStatus.ERROR;
 
 /**
  * @author Serge
@@ -100,7 +104,7 @@ public class ExecContextCreatorService {
         }
     }
 
-    @Transactional
+    @Transactional(rollbackFor = {CommonRollbackException.class, ExecContextTooManyInstancesException.class} )
     public ExecContextCreationResult createExecContextAndStart(
             Long sourceCodeId, ExecContextData.UserExecContext context, boolean isStart, @Nullable ExecContextData.RootAndParent rootAndParent) {
 
@@ -108,20 +112,26 @@ public class ExecContextCreatorService {
 
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, context.companyId());
         if (sourceCodesForCompany.isErrorMessages()) {
-            return new ExecContextCreationResult("#562.060 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
-                    "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + context.companyId());
+            throw new CommonRollbackException(
+                "#562.060 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
+                    "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + context.companyId(), ERROR);
         }
         SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
         if (sourceCode==null) {
-            return new ExecContextCreationResult("#562.080 Error creating execContext: " +
-                    "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + context.companyId());
+            throw new CommonRollbackException(
+                "#562.080 Error creating execContext: " +
+                    "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + context.companyId(), ERROR);
         }
         final ExecContextCreationResult creationResult = createExecContext(sourceCode, context, rootAndParent);
-        if (!isStart || creationResult.isErrorMessages()) {
-            return creationResult;
+
+        if (!isStart && CollectionUtils.isNotEmpty(creationResult.getErrorMessages())) {
+            throw new CommonRollbackException(creationResult.getErrorMessages(), ERROR);
         }
 
         produceTasksForExecContextInternal(sourceCode, creationResult);
+        if (CollectionUtils.isNotEmpty(creationResult.getErrorMessages())) {
+            throw new CommonRollbackException(creationResult.getErrorMessages(), ERROR);
+        }
         return creationResult;
     }
 
@@ -165,7 +175,7 @@ public class ExecContextCreatorService {
         // validate the sourceCode
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
         if (sourceCodeValidation.status.status != EnumsApi.SourceCodeValidateStatus.OK) {
-            return new ExecContextCreationResult(sourceCodeValidation.getErrorMessagesAsList());
+            throw new CommonRollbackException(sourceCodeValidation.getErrorMessagesAsList(), ERROR);
         }
 
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
@@ -183,7 +193,7 @@ public class ExecContextCreatorService {
                 EnumsApi.SourceCodeLang.yaml, scspy.source, () -> String.valueOf(contextId.incrementAndGet()));
 
         if (ExecContextProcessGraphService.anyError(sourceCodeGraph)) {
-            return new ExecContextCreationResult("#562.120 processGraph is broken");
+            throw new CommonRollbackException("#562.120 processGraph is broken", ERROR);
         }
 
         ExecContextImpl execContext = createExecContext(sourceCode, context, sourceCodeGraph, rootAndParent);

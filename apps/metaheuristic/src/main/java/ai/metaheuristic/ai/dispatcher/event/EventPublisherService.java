@@ -114,4 +114,9 @@ public class EventPublisherService {
             eventPublisher.publishEvent(event);
         }
     }
+
+    public void publishRegisterFunctionCodesForStartedExecContextTxEvent(RegisterFunctionCodesForStartedExecContextTxEvent event) {
+        TxUtils.checkTxExists();
+        eventPublisher.publishEvent(event);
+    }
 }
