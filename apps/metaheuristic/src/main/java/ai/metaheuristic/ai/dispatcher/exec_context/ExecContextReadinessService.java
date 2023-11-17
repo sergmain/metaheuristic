@@ -29,7 +29,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskApiData;
-import ai.metaheuristic.commons.utils.threads.ThreadedPool;
+import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -67,11 +67,11 @@ public class ExecContextReadinessService {
     private final ExecContextRepository execContextRepository;
     private final ExecContextReadinessStateService execContextReadinessStateService;
 
-    private ThreadedPool<Long, ExecContextReadinessEvent> startProcessReadinessEventThreadedPool;
+    private MultiTenantedQueue<Long, ExecContextReadinessEvent> startProcessReadinessEventThreadedPool;
 
     @PostConstruct
     public void init() {
-        startProcessReadinessEventThreadedPool = new ThreadedPool<>(100, ConstsApi.DURATION_NONE, false, "ExecContextReadinessService-", (event) -> {
+        startProcessReadinessEventThreadedPool = new MultiTenantedQueue<>(100, ConstsApi.DURATION_NONE, false, "ExecContextReadinessService-", (event) -> {
             prepare(event.getId());
             execContextReadinessStateService.remove(event.getId());
         });

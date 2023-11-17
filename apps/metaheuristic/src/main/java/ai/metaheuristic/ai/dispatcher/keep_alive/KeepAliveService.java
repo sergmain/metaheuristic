@@ -36,7 +36,7 @@ import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.commons.utils.JsonUtils;
-import ai.metaheuristic.commons.utils.threads.ThreadedPool;
+import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -69,11 +69,11 @@ public class KeepAliveService {
     private final ProcessorCoreCache processorCoreCache;
     private final ExecContextStatusService execContextStatusService;
 
-    private ThreadedPool<Long, CheckProcessorIdEvent> checkProcessorIdEventPool;
+    private MultiTenantedQueue<Long, CheckProcessorIdEvent> checkProcessorIdEventPool;
 
     @PostConstruct
     public void init() {
-        this.checkProcessorIdEventPool = new ThreadedPool<>(100, ConstsApi.DURATION_NONE, true, "CheckProcessorIdEvent-",
+        this.checkProcessorIdEventPool = new MultiTenantedQueue<>(100, ConstsApi.DURATION_NONE, true, "CheckProcessorIdEvent-",
                 this::checkProcessorIdSynced);
     }
 

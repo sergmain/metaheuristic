@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.mhbp.kb;
 
 import ai.metaheuristic.ai.mhbp.events.InitKbEvent;
 import ai.metaheuristic.api.ConstsApi;
-import ai.metaheuristic.commons.utils.threads.ThreadedPool;
+import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,11 +39,11 @@ public class KbInitializingService {
 
     public final KbService kbService;
 
-    private final ThreadedPool<Long, InitKbEvent> initKbEventThreadedPool;
+    private final MultiTenantedQueue<Long, InitKbEvent> initKbEventThreadedPool;
 
     public KbInitializingService(@Autowired KbService kbService) {
         this.kbService = kbService;
-        this.initKbEventThreadedPool = new ThreadedPool<>(50, ConstsApi.DURATION_NONE, false, "KbInitializingService-", kbService::processInitKbEvent);
+        this.initKbEventThreadedPool = new MultiTenantedQueue<>(50, ConstsApi.DURATION_NONE, false, "KbInitializingService-", kbService::processInitKbEvent);
     }
 
     @PreDestroy

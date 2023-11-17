@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.mhbp.provider;
 
 import ai.metaheuristic.ai.mhbp.events.EvaluateProviderEvent;
 import ai.metaheuristic.api.ConstsApi;
-import ai.metaheuristic.commons.utils.threads.ThreadedPool;
+import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,12 +39,12 @@ public class ProcessSessionOfEvaluationService {
 
     public final ProviderQueryService providerQueryService;
 
-    private final ThreadedPool<Long, EvaluateProviderEvent> evaluateProviderEventThreadedPool;
+    private final MultiTenantedQueue<Long, EvaluateProviderEvent> evaluateProviderEventThreadedPool;
 
     public ProcessSessionOfEvaluationService(@Autowired ProviderQueryService providerQueryService) {
         this.providerQueryService = providerQueryService;
         this.evaluateProviderEventThreadedPool =
-                new ThreadedPool<>(10, ConstsApi.DURATION_NONE, true, "ProcessSessionOfEvaluationService-", providerQueryService::evaluateProvider);
+                new MultiTenantedQueue<>(10, ConstsApi.DURATION_NONE, true, "ProcessSessionOfEvaluationService-", providerQueryService::evaluateProvider);
     }
 
     @PreDestroy

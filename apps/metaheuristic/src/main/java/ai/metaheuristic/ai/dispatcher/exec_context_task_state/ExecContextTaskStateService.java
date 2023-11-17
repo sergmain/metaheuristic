@@ -30,7 +30,7 @@ import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.commons.utils.threads.ThreadedPool;
+import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -61,11 +61,11 @@ public class ExecContextTaskStateService {
     private final ExecContextGraphService execContextGraphService;
 
 
-    private final ThreadedPool<Long, TransferStateFromTaskQueueToExecContextEvent> threadedPoolMap =
-        new ThreadedPool<>(2, ConstsApi.DURATION_NONE, false, "TransferStateFromTaskQueueToExecContext-", this::transferStateFromTaskQueueToExecContext);
+    private final MultiTenantedQueue<Long, TransferStateFromTaskQueueToExecContextEvent> threadedPoolMap =
+        new MultiTenantedQueue<>(2, ConstsApi.DURATION_NONE, false, "TransferStateFromTaskQueueToExecContext-", this::transferStateFromTaskQueueToExecContext);
 
-    private final ThreadedPool<Long, UpdateTaskExecStatesInExecContextEvent> updateTaskExecStatesInGraphEventThreadedPool =
-        new ThreadedPool<>(100, ConstsApi.SECONDS_5, false, "UpdateTaskExecStatesInGraph-", this::updateTaskExecStatesExecContext);
+    private final MultiTenantedQueue<Long, UpdateTaskExecStatesInExecContextEvent> updateTaskExecStatesInGraphEventThreadedPool =
+        new MultiTenantedQueue<>(100, ConstsApi.SECONDS_5, false, "UpdateTaskExecStatesInGraph-", this::updateTaskExecStatesExecContext);
 
     @PreDestroy
     public void onExit() {

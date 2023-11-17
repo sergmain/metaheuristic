@@ -30,8 +30,8 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
-import ai.metaheuristic.commons.utils.threads.ThreadedPool;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,8 +60,8 @@ public class ExecContextTaskResettingTopLevelService {
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextCache execContextCache;
 
-    private final ThreadedPool<Long, ResetTasksWithErrorEvent> resetTasksWithErrorEventThreadedPool =
-            new ThreadedPool<>(100, ConstsApi.SECONDS_10, false, "ExecContextTaskResetting-", this::resetTasksWithErrorForRecovery);
+    private final MultiTenantedQueue<Long, ResetTasksWithErrorEvent> resetTasksWithErrorEventThreadedPool =
+            new MultiTenantedQueue<>(100, ConstsApi.SECONDS_10, false, "ExecContextTaskResetting-", this::resetTasksWithErrorForRecovery);
 
     @PreDestroy
     public void onExit() {
