@@ -195,21 +195,25 @@ public class TestMetadataParamsYaml {
         String s = IOUtils.resourceToString("/metadata/metadata-v3.yaml", StandardCharsets.UTF_8);
         assertFalse(S.b(s));
 
-        final AbstractParamsYamlUtils forVersion = MetadataParamsYamlUtils.BASE_YAML_UTILS.getForVersion(4);
-        assertNotNull(forVersion);
-        MetadataParamsYamlV4 metadata = (MetadataParamsYamlV4) forVersion.to(s);
-        assertNotNull(metadata);
-        assertNotNull(metadata.processorSessions);
-        assertFalse(metadata.processorSessions.isEmpty());
-        assertEquals(2, metadata.processorSessions.size());
-        assertTrue(metadata.processorSessions.containsKey("http://localhost:8080"));
-        MetadataParamsYamlV4.ProcessorSessionV4 dispatcher8080 = metadata.processorSessions.get("http://localhost:8080");
+        final AbstractParamsYamlUtils forVersion3 = MetadataParamsYamlUtils.BASE_YAML_UTILS.getForVersion(3);
+        assertNotNull(forVersion3);
+        MetadataParamsYamlUtilsV3 v3 = (MetadataParamsYamlUtilsV3)forVersion3;
+        MetadataParamsYamlV3 pV3 = v3.to(s);
+
+        var pV4 = v3.upgradeTo(pV3);
+
+        assertNotNull(pV4);
+        assertNotNull(pV4.processorSessions);
+        assertFalse(pV4.processorSessions.isEmpty());
+        assertEquals(2, pV4.processorSessions.size());
+        assertTrue(pV4.processorSessions.containsKey("http://localhost:8080"));
+        MetadataParamsYamlV4.ProcessorSessionV4 dispatcher8080 = pV4.processorSessions.get("http://localhost:8080");
         assertNotNull(dispatcher8080);
         assertEquals("localhost-8080", dispatcher8080.dispatcherCode);
         assertEquals(209, dispatcher8080.processorId);
         assertEquals("sessionId-11", dispatcher8080.sessionId);
 
-        MetadataParamsYamlV4.ProcessorSessionV4 dispatcher8888 = metadata.processorSessions.get("https://localhost:8888");
+        MetadataParamsYamlV4.ProcessorSessionV4 dispatcher8888 = pV4.processorSessions.get("https://localhost:8888");
         assertNotNull(dispatcher8888);
         assertEquals("localhost-8888", dispatcher8888.dispatcherCode);
         assertEquals(42, dispatcher8888.processorId);

@@ -108,6 +108,7 @@ public class SpringSecurityWebAuxTestConfig {
             account.setCredentialsNonExpired(true);
             account.setEnabled(true);
             account.setPassword("123");
+            account.setCompanyId(2L);
 
             account.setRoles("ROLE_SERVER_REST_ACCESS, ROLE_ADMIN");
             accounts.add(account);
@@ -136,6 +137,7 @@ public class SpringSecurityWebAuxTestConfig {
             account.setCredentialsNonExpired(true);
             account.setEnabled(true);
             account.setPassword("123");
+            account.setCompanyId(1L);
 
             account.setRoles("ROLE_ASSET_REST_ACCESS");
             accounts.add(account);
