@@ -45,10 +45,8 @@ public class FunctionRepositoryRequestParamsUtilsV1
     public FunctionRepositoryRequestParams upgradeTo(@NonNull FunctionRepositoryRequestParamsV1 src) {
         src.checkIntegrity();
         FunctionRepositoryRequestParams trg = new FunctionRepositoryRequestParams();
-//        trg.createdOn = src.createdOn;
-//        trg.code=src.code;
-//        trg.name=src.name;
-//        trg.description=src.description;
+        trg.processorId = src.processorId;
+        trg.functionCodes = src.functionCodes;
 
         trg.checkIntegrity();
         return trg;

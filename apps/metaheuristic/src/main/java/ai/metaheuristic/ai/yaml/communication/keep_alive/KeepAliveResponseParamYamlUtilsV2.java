@@ -21,8 +21,6 @@ import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.stream.Collectors;
-
 /**
  * @author Serge
  * Date: 10/03/2019
@@ -52,7 +50,6 @@ public class KeepAliveResponseParamYamlUtilsV2 extends
             t.dispatcherInfo.chunkSize = v2.dispatcherInfo.chunkSize;
             t.dispatcherInfo.processorCommVersion = v2.dispatcherInfo.processorCommVersion;
         }
-        t.functions.infos.putAll(v2.functions.infos);
         t.execContextStatus.statuses.putAll(v2.execContextStatus.statuses);
 
         KeepAliveResponseParamYaml.DispatcherResponse response = t.response;

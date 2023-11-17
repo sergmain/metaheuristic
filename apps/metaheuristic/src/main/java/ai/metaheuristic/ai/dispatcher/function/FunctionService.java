@@ -122,9 +122,11 @@ public class FunctionService {
     private final FunctionTxService functionTxService;
     private final ApplicationEventPublisher eventPublisher;
 
+/*
     private static final long FUNCTION_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(30);
     private List<Pair<EnumsApi.FunctionSourcing, String>> functionInfosCache = null;
     private long mills = 0L;
+*/
 
     @Nullable
     public FunctionData.SimpleFunctionResult getFunction(String code) {
@@ -135,10 +137,13 @@ public class FunctionService {
         return new FunctionData.SimpleFunctionResult(f.id, f.code, f.type, f.getParams());
     }
 
+/*
     public static class RefreshInfoAboutFunctionsEvent {}
 
     private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+*/
 
+/*
     public Map<EnumsApi.FunctionSourcing, String> toMapOfFunctionInfos() {
         Map<EnumsApi.FunctionSourcing, List<String>> map = new HashMap<>();
         for (Pair<EnumsApi.FunctionSourcing, String> pair : getFunctionInfos()) {
@@ -150,7 +155,9 @@ public class FunctionService {
         }
         return result;
     }
+*/
 
+/*
     public List<Pair<EnumsApi.FunctionSourcing, String>> getFunctionInfos() {
         final ReentrantReadWriteLock.ReadLock readLock = rwl.readLock();
         final ReentrantReadWriteLock.WriteLock writeLock = rwl.writeLock();
@@ -185,7 +192,9 @@ public class FunctionService {
 
         return functionInfosCache;
     }
+*/
 
+/*
     private final LinkedHashMap<Long, Pair<EnumsApi.FunctionSourcing, String>> sourcingInfoCache = new LinkedHashMap<>(1000) {
         protected boolean removeEldestEntry(Map.Entry<Long, Pair<EnumsApi.FunctionSourcing, String>> entry) {
             return this.size()>700;
@@ -215,8 +224,9 @@ public class FunctionService {
         }
         return result;
     }
+*/
 
-    @SuppressWarnings("unused")
+/*
     @Async
     @EventListener
     public void handleRefreshInfoAboutFunctionsEvent(RefreshInfoAboutFunctionsEvent event) {
@@ -231,6 +241,7 @@ public class FunctionService {
             rwl.writeLock().unlock();
         }
     }
+*/
 
     public static String produceFinalCommandLineParams(@Nullable String functionConfigParams, @Nullable String functionDefParams) {
         String s;
@@ -355,7 +366,7 @@ public class FunctionService {
         }
 
         if (globals.dispatcher.functionSignatureRequired) {
-            // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing right noww
+            // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing right now
             final EnumsApi.HashAlgo hashAlgo = EnumsApi.HashAlgo.SHA256WithSignature;
 
             if (functionConfigYaml.system.checksumMap.keySet().stream().noneMatch(o->o==hashAlgo)) {

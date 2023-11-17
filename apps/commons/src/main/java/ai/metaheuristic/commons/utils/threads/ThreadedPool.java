@@ -16,16 +16,9 @@
 
 package ai.metaheuristic.commons.utils.threads;
 
-import ai.metaheuristic.api.ConstsApi;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nullable;
 import java.time.Duration;
-import java.util.LinkedList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 /**
@@ -34,29 +27,9 @@ import java.util.function.Consumer;
  * Time: 6:07 PM
  */
 @Slf4j
-public class ThreadedPool<I, T extends EventWithId<I>> {
+public class ThreadedPool<I, T extends EventWithId<I>> extends MultiTenantedQueue<I, T> {
 
-    private boolean shutdown = false;
-
-    private final MultiTenantedQueue<I, T> queue;
-
-    public ThreadedPool(String namePrefix, int maxThreadInPool, boolean checkForDouble, Consumer<T> process, Duration postProcessingDelay) {
-        this.queue = new MultiTenantedQueue<>(maxThreadInPool, postProcessingDelay, checkForDouble, namePrefix, process);
-    }
-
-    public boolean isShutdown() {
-        return shutdown;
-    }
-
-    public void shutdown() {
-        shutdown = true;
-        queue.clearQueue();
-    }
-
-    public void putToQueue(final T event) {
-        if (shutdown) {
-            return;
-        }
-        queue.putToQueue(event);
+    public ThreadedPool(int maxThreadInPool, Duration postProcessingDelay, boolean checkForDouble, String namePrefix, Consumer<T> process) {
+        super(maxThreadInPool, postProcessingDelay, checkForDouble, namePrefix, process);
     }
 }

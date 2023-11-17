@@ -44,7 +44,7 @@ public class ProcessSessionOfEvaluationService {
     public ProcessSessionOfEvaluationService(@Autowired ProviderQueryService providerQueryService) {
         this.providerQueryService = providerQueryService;
         this.evaluateProviderEventThreadedPool =
-                new ThreadedPool<>("ProcessSessionOfEvaluationService-", 10, true, providerQueryService::evaluateProvider, ConstsApi.DURATION_NONE);
+                new ThreadedPool<>(10, ConstsApi.DURATION_NONE, true, "ProcessSessionOfEvaluationService-", providerQueryService::evaluateProvider);
     }
 
     @PreDestroy

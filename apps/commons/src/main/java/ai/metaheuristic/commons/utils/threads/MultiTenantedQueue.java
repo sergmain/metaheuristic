@@ -51,7 +51,15 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
     @Nullable
     private Supplier<Boolean> processSuspenderFunc = null;
 
+    protected boolean shutdown = false;
+
+    // It doesn't matter which maxCapacity is,
+    // because all tasks in MultiTenantedQueue are executed in one-threaded way
+    // i.e. one active task per <T> type
+
     // if maxCapacity==-1 then max size is unbound
+    // maxCapacity - is about a size of queue when all tasks processed and it's a time to shrink a queue
+    // because this implementation is based on virtual thread there isn't upper limit of number of tasks in queue
     public MultiTenantedQueue(int maxCapacity, Duration postProcessingDelay, boolean checkForDouble, @Nullable String namePrefix, Consumer<P> processFunc) {
         this.maxCapacity = maxCapacity;
         this.checkForDouble = checkForDouble;
@@ -75,6 +83,15 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
         this.postProcessingDelay = postProcessingDelay.toMillis();
     }
 
+    public void shutdown() {
+        shutdown = true;
+        clearQueue();
+    }
+
+    public boolean isShutdown() {
+        return shutdown;
+    }
+
     public void registerProcessSuspender(Supplier<Boolean> processSuspenderFunc) {
         this.processSuspenderFunc = processSuspenderFunc;
     }
@@ -84,6 +101,9 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
     }
 
     public void putToQueue(final P event) {
+        if (shutdown) {
+            return;
+        }
         putToQueueInternal(event);
         processPoolOfExecutors(event.getId());
     }

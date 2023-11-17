@@ -45,12 +45,6 @@ public class KeepAliveResponseParamYaml implements BaseParams {
 
     @Data
     @NoArgsConstructor
-    public static class Functions {
-        public final Map<EnumsApi.FunctionSourcing, String> infos = new HashMap<>();
-    }
-
-    @Data
-    @NoArgsConstructor
     public static class ExecContextStatus {
         // key - stae of execContext, value - comma-separated list of execContextId
         public final Map<EnumsApi.ExecContextState, String> statuses = new HashMap<>();
@@ -136,7 +130,6 @@ public class KeepAliveResponseParamYaml implements BaseParams {
     }
 
     public final DispatcherResponse response = new DispatcherResponse();
-    public final Functions functions = new Functions();
     public ExecContextStatus execContextStatus = new ExecContextStatus();
     public DispatcherInfo dispatcherInfo;
 

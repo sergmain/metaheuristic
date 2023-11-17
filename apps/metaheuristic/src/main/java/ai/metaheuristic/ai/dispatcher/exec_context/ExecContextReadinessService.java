@@ -71,10 +71,10 @@ public class ExecContextReadinessService {
 
     @PostConstruct
     public void init() {
-        startProcessReadinessEventThreadedPool = new ThreadedPool<>("ExecContextReadinessService-", 100, false, (event) -> {
+        startProcessReadinessEventThreadedPool = new ThreadedPool<>(100, ConstsApi.DURATION_NONE, false, "ExecContextReadinessService-", (event) -> {
             prepare(event.getId());
             execContextReadinessStateService.remove(event.getId());
-        }, ConstsApi.DURATION_NONE);
+        });
     }
 
     @PreDestroy

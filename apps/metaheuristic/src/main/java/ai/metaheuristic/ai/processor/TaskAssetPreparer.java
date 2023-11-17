@@ -17,7 +17,7 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
-import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
+import ai.metaheuristic.ai.functions.DownloadFunctionService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.event.AssetPreparingForProcessorTaskEvent;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;

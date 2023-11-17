@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.api.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * @author Serge
  * Date: 6/17/2019
@@ -24,6 +26,7 @@ package ai.metaheuristic.api.data;
 public interface BaseParams {
     int getVersion();
 
+    @JsonIgnore
     default boolean checkIntegrity() {
         return true;
     }

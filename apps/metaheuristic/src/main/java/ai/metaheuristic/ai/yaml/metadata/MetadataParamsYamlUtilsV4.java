@@ -30,35 +30,35 @@ import java.util.stream.Collectors;
  * Date: 5/1/2022
  * Time: 6:16 PM
  */
-public class MetadataParamsYamlUtilsV3
-        extends AbstractParamsYamlUtils<MetadataParamsYamlV3, MetadataParamsYamlV4, MetadataParamsYamlUtilsV4, Void, Void, Void> {
+public class MetadataParamsYamlUtilsV4
+        extends AbstractParamsYamlUtils<MetadataParamsYamlV4, MetadataParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 3;
+        return 4;
     }
 
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(MetadataParamsYamlV3.class);
+        return YamlUtils.init(MetadataParamsYamlV4.class);
     }
 
     @NonNull
     @Override
-    public MetadataParamsYamlV4 upgradeTo(@NonNull MetadataParamsYamlV3 src) {
+    public MetadataParamsYaml upgradeTo(@NonNull MetadataParamsYamlV4 src) {
         src.checkIntegrity();
-        MetadataParamsYamlV4 trg = new MetadataParamsYamlV4();
+        MetadataParamsYaml trg = new MetadataParamsYaml();
         if (trg.processorSessions==null) {
             throw new IllegalStateException("(trg.processorSessions==null)");
         }
         if (src.processorSessions!=null) {
-            for (Map.Entry<String, MetadataParamsYamlV3.ProcessorSessionV3> entry : src.processorSessions.entrySet()) {
-                final MetadataParamsYamlV3.ProcessorSessionV3 psV3 = entry.getValue();
-                MetadataParamsYamlV4.ProcessorSessionV4 value = new MetadataParamsYamlV4.ProcessorSessionV4(psV3.dispatcherCode, psV3.processorId, psV3.sessionId);
-                value.cores.putAll(psV3.cores);
+            for (Map.Entry<String, MetadataParamsYamlV4.ProcessorSessionV4> entry : src.processorSessions.entrySet()) {
+                final MetadataParamsYamlV4.ProcessorSessionV4 psV4 = entry.getValue();
+                MetadataParamsYaml.ProcessorSession value = new MetadataParamsYaml.ProcessorSession(psV4.dispatcherCode, psV4.processorId, psV4.sessionId);
+                value.cores.putAll(psV4.cores);
 
-                psV3.quotas.stream().map(MetadataParamsYamlUtilsV3::toQuota).collect(Collectors.toCollection(() -> value.quotas));
+                psV4.quotas.stream().map(MetadataParamsYamlUtilsV4::toQuota).collect(Collectors.toCollection(() -> value.quotas));
 
                 trg.processorSessions.put(entry.getKey(), value);
             }
@@ -68,8 +68,8 @@ public class MetadataParamsYamlUtilsV3
         return trg;
     }
 
-    private static MetadataParamsYamlV4.QuotaV4 toQuota(MetadataParamsYamlV3.QuotaV3 sV3) {
-        return new MetadataParamsYamlV4.QuotaV4(sV3.taskId, sV3.tag, sV3.quota);
+    private static MetadataParamsYaml.Quota toQuota(MetadataParamsYamlV4.QuotaV4 sV3) {
+        return new MetadataParamsYaml.Quota(sV3.taskId, sV3.tag, sV3.quota);
     }
 
     @NonNull
@@ -79,8 +79,8 @@ public class MetadataParamsYamlUtilsV3
     }
 
     @Override
-    public MetadataParamsYamlUtilsV4 nextUtil() {
-        return (MetadataParamsYamlUtilsV4) MetadataParamsYamlUtils.BASE_YAML_UTILS.getForVersion(4);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -89,17 +89,17 @@ public class MetadataParamsYamlUtilsV3
     }
 
     @Override
-    public String toString(@NonNull MetadataParamsYamlV3 yaml) {
+    public String toString(@NonNull MetadataParamsYamlV4 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public MetadataParamsYamlV3 to(@NonNull String s) {
+    public MetadataParamsYamlV4 to(@NonNull String s) {
         if (S.b(s)) {
-            return new MetadataParamsYamlV3();
+            return new MetadataParamsYamlV4();
         }
-        final MetadataParamsYamlV3 p = getYaml().load(s);
+        final MetadataParamsYamlV4 p = getYaml().load(s);
         return p;
     }
 }

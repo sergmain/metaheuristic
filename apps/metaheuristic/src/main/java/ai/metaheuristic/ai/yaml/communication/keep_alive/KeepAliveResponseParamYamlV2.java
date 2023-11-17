@@ -38,17 +38,6 @@ public class KeepAliveResponseParamYamlV2 implements BaseParams {
 
     public final int version=2;
 
-    @Override
-    public boolean checkIntegrity() {
-        return true;
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class FunctionsV2 {
-        public final Map<EnumsApi.FunctionSourcing, String> infos = new HashMap<>();
-    }
-
     @Data
     @NoArgsConstructor
     public static class ExecContextStatusV2 {
@@ -131,7 +120,6 @@ public class KeepAliveResponseParamYamlV2 implements BaseParams {
     }
 
     public final DispatcherResponseV2 response = new DispatcherResponseV2();
-    public final FunctionsV2 functions = new FunctionsV2();
     public final ExecContextStatusV2 execContextStatus = new ExecContextStatusV2();
     public DispatcherInfoV2 dispatcherInfo;
 

@@ -32,6 +32,7 @@ import ai.metaheuristic.commons.CommonConsts;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
+import org.springframework.lang.Nullable;
 import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
@@ -70,7 +71,7 @@ public class FunctionRepositoryRequestor {
         this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
         this.dispatcher = this.processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
         if (this.dispatcher == null) {
-            throw new IllegalStateException("776.010 Can't find dispatcher config for url " + dispatcherUrl);
+            throw new IllegalStateException("778.030 Can't find dispatcher config for url " + dispatcherUrl);
         }
 
         this.dispatcherRestUrl = dispatcherUrl.url + CommonConsts.REST_V1_URL + Consts.FUNCTION_REPOSITORY_REST_URL;
@@ -91,26 +92,38 @@ public class FunctionRepositoryRequestor {
                 frrp.processorId = processorSession.processorId;
             }
 
-            final String url = dispatcherRestUrl + '/' + R.nextInt(100_000, 1_000_000);
-            String yaml = FunctionRepositoryRequestParamsUtils.UTILS.toString(frrp);
-
-            final String result = RestUtils.makeRequest(restTemplate, url, yaml, dispatcher.authHeader, dispatcherRestUrl);
-
-            if (result == null) {
-                log.warn("776.050 Dispatcher returned null as a result");
+            final FunctionRepositoryResponseParams responseParams = makeQuery(frrp);
+            if (responseParams == null) {
                 return;
             }
-            FunctionRepositoryResponseParams responseParams = FunctionRepositoryResponseParamsUtils.UTILS.to(result);
-
-            if (!responseParams.success) {
-                log.error("776.060 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
-                return;
+            FunctionRepositoryRequestParams immediateResponse = functionRepositoryProcessorService.processFunctionRepositoryResponseParams(dispatcherUrl, responseParams);
+            if (processorSession!=null && immediateResponse!=null) {
+                final FunctionRepositoryResponseParams responseParams1 = makeQuery(immediateResponse);
             }
-            functionRepositoryProcessorService.processFunctionRepositoryResponseParams(dispatcherUrl, responseParams);
 
         } catch (Throwable e) {
-            log.error("776.130 Error in requestFunctionRepository(), dispatcher url: {}, error: {}", dispatcherRestUrl, e.getMessage());
+            log.error("778.060 Error in requestFunctionRepository(), dispatcher url: {}, error: {}", dispatcherRestUrl, e.getMessage());
         }
+    }
+
+    @Nullable
+    private FunctionRepositoryResponseParams makeQuery(FunctionRepositoryRequestParams frrp) {
+        final String url = dispatcherRestUrl + '/' + R.nextInt(100_000, 1_000_000);
+        String yaml = FunctionRepositoryRequestParamsUtils.UTILS.toString(frrp);
+
+        final String result = RestUtils.makeRequest(restTemplate, url, yaml, dispatcher.authHeader, dispatcherRestUrl);
+
+        if (result == null) {
+            log.warn("778.090 Dispatcher returned null as a result");
+            return null;
+        }
+        FunctionRepositoryResponseParams responseParams = FunctionRepositoryResponseParamsUtils.UTILS.to(result);
+
+        if (!responseParams.success) {
+            log.error("778.120 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
+            return null;
+        }
+        return responseParams;
     }
 
 

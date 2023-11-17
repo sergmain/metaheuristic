@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.event.events.CheckProcessorIdEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
-import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorSyncService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
@@ -63,7 +62,6 @@ public class KeepAliveService {
 
     private final Globals globals;
     private final ProcessorTopLevelService processorTopLevelService;
-    private final FunctionService functionTopLevelService;
     private final ProcessorCache processorCache;
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
     private final ProcessorTxService processorTxService;
@@ -75,12 +73,11 @@ public class KeepAliveService {
 
     @PostConstruct
     public void init() {
-        this.checkProcessorIdEventPool = new ThreadedPool<>("CheckProcessorIdEvent-", 100, true,
-                this::checkProcessorIdSynced, ConstsApi.DURATION_NONE);
+        this.checkProcessorIdEventPool = new ThreadedPool<>(100, ConstsApi.DURATION_NONE, true, "CheckProcessorIdEvent-",
+                this::checkProcessorIdSynced);
     }
 
     private void initDispatcherInfo(KeepAliveResponseParamYaml keepAliveResponse) {
-        keepAliveResponse.functions.infos.putAll(functionTopLevelService.toMapOfFunctionInfos());
         keepAliveResponse.execContextStatus = execContextStatusService.toExecContextStatus();
         keepAliveResponse.dispatcherInfo = new KeepAliveResponseParamYaml.DispatcherInfo(globals.dispatcher.chunkSize.toBytes(), Consts.PROCESSOR_COMM_VERSION);
     }

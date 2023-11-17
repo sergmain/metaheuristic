@@ -35,7 +35,7 @@ import static java.nio.file.StandardOpenOption.*;
  */
 public class DownloadUtils {
 
-    static boolean isChunkConsistent(Path partFile, Header[] headers) throws IOException {
+    public static boolean isChunkConsistent(Path partFile, Header[] headers) throws IOException {
         String sizeAsStr = getHeader(headers, Consts.HEADER_MH_CHUNK_SIZE);
         if (sizeAsStr==null || sizeAsStr.isBlank()) {
             return true;
@@ -44,7 +44,7 @@ public class DownloadUtils {
         return Files.size(partFile)==expectedSize;
     }
 
-    static boolean isLastChunk(Header[] headers) {
+    public static boolean isLastChunk(Header[] headers) {
         return "true".equals(getHeader(headers, Consts.HEADER_MH_IS_LAST_CHUNK));
     }
 

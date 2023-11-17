@@ -23,9 +23,14 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+/**
+ * @author Serge
+ * Date: 5/1/2022
+ * Time: 6:09 PM
+ */
 @Data
 @NoArgsConstructor
-public class MetadataParamsYaml implements BaseParams {
+public class MetadataParamsYamlV4 implements BaseParams {
 
     public final int version=4;
 
@@ -33,7 +38,7 @@ public class MetadataParamsYaml implements BaseParams {
     @NoArgsConstructor
     @ToString
     @AllArgsConstructor
-    public static class ProcessorSession {
+    public static class ProcessorSessionV4 {
         public String dispatcherCode;
         @Nullable
         public Long processorId;
@@ -43,32 +48,24 @@ public class MetadataParamsYaml implements BaseParams {
         // key - code of Core, value - coreId
         public final LinkedHashMap<String, Long> cores = new LinkedHashMap<>();
 
-        public final List<Quota> quotas = new ArrayList<>();
+        public final List<QuotaV4> quotas = new ArrayList<>();
     }
 
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
     @EqualsAndHashCode(of={"taskId"})
-    public static class Quota {
+    public static class QuotaV4 {
         public Long taskId;
         @Nullable
         public String tag;
         public int quota;
     }
 
-//procesorSessions:
-//  http://localhost:8080:
-//    dispatcherCode: localhost-8080
-//    processorId: '3410'
-//    sessionId: 4266a35f-290d-49b8-83cc-c75913598719-4f020c95-0283-455a-9467-0a76bbaba796
-//    cores:
-//      proc-01: '3410'
-//      proc-02: '3410'
-
     /**
-     * key  - a url of dispatcher
+     * key  - a code of dispatcher (i.e. normalized url of dispatcher)
      * value - ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml.ProcessorSession
      */
-    public LinkedHashMap<String, ProcessorSession> processorSessions = new LinkedHashMap<>();
+    @Nullable
+    public LinkedHashMap<String, ProcessorSessionV4> processorSessions = new LinkedHashMap<>();
 }

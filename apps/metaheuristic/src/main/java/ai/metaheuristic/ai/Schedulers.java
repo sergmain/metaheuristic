@@ -30,7 +30,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingService;
 import ai.metaheuristic.ai.dispatcher.thread.DeadLockDetector;
 import ai.metaheuristic.ai.functions.FunctionRepositoryProcessorService;
 import ai.metaheuristic.ai.processor.*;
-import ai.metaheuristic.ai.processor.actors.DownloadFunctionService;
+import ai.metaheuristic.ai.functions.DownloadFunctionService;
 import ai.metaheuristic.ai.processor.actors.DownloadVariableService;
 import ai.metaheuristic.ai.processor.actors.GetDispatcherContextInfoService;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;

@@ -42,7 +42,7 @@ public class TaskVariableInitService {
     private final TaskVariableInitTxService taskVariableInitTxService;
 
     private final ThreadedPool<Long, InitVariablesEvent> threadedPool =
-            new ThreadedPool<>("InitVariablesEvent-", -1, true, this::intiVariables, Duration.ZERO);
+            new ThreadedPool<>(-1, Duration.ZERO, true, "InitVariablesEvent-", this::intiVariables);
 
     @Async
     @EventListener
