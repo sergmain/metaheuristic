@@ -57,7 +57,7 @@ import static ai.metaheuristic.ai.functions.FunctionEnums.DownloadPriority.NORMA
 public class TaskAssetPreparer {
 
     private final Globals globals;
-    private final DownloadFunctionService downloadFunctionActor;
+    private final DownloadFunctionService downloadFunctionService;
     private final CurrentExecState currentExecState;
     private final ProcessorTaskService processorTaskService;
     private final ProcessorEnvironment processorEnvironment;
@@ -220,7 +220,7 @@ public class TaskAssetPreparer {
 
             final EnumsApi.FunctionState functionState = functionDownloadStatuses.state;
             if (functionState == EnumsApi.FunctionState.none) {
-                downloadFunctionActor.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
+                downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
                 return false;
             }
             else {
@@ -229,7 +229,7 @@ public class TaskAssetPreparer {
 
                     functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none);
 
-                    downloadFunctionActor.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
+                    downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
                     return true;
                 }
                 else if (functionState== EnumsApi.FunctionState.dispatcher_config_error) {

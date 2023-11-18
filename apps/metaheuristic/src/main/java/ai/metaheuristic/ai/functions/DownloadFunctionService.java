@@ -89,7 +89,6 @@ public class DownloadFunctionService {
         downloadFunctionQueue.putToQueue(task);
     }
 
-    @SuppressWarnings("Duplicates")
     public void downloadFunction(DownloadFunctionTask task) {
         if (globals.testing) {
             return;

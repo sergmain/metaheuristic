@@ -15,11 +15,11 @@ metadata:
 functions:
   - code: test.function:1.0
     assetManagerUrl: http://localhost:8080
-    state: signature_not_found
+    state: signature_wrong
     sourcing: dispatcher
   - code: test.function:1.0
     assetManagerUrl: https://localhost:8888
-    state: signature_not_found
+    state: signature_wrong
     sourcing: dispatcher
   - code: function-01:1.1
     assetManagerUrl: http://localhost:8080

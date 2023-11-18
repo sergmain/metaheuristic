@@ -12,12 +12,12 @@ metadata:
     statuses:
     - code: test.function:1.0
       dispatcherUrl: http://localhost:8080
-      functionState: signature_not_found
+      functionState: signature_wrong
       sourcing: dispatcher
       verified: true
     - code: test.function:1.0
       dispatcherUrl: https://localhost:8888
-      functionState: signature_not_found
+      functionState: signature_wrong
       sourcing: dispatcher
       verified: false
     - code: function-01:1.1

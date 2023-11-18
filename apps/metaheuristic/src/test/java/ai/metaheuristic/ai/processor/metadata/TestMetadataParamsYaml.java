@@ -78,7 +78,7 @@ public class TestMetadataParamsYaml {
             status = fdsy.statuses.get(0);
             assertEquals("test.function:1.0", status.code);
             assertEquals("http://localhost:8080", status.dispatcherUrl);
-            assertEquals(EnumsApi.FunctionState.signature_not_found, status.functionState);
+            assertEquals(EnumsApi.FunctionState.signature_wrong, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.dispatcher, status.sourcing);
             assertTrue(status.verified);
         }
@@ -86,7 +86,7 @@ public class TestMetadataParamsYaml {
             status = fdsy.statuses.get(1);
             assertEquals("test.function:1.0", status.code);
             assertEquals("https://localhost:8888", status.dispatcherUrl);
-            assertEquals(EnumsApi.FunctionState.signature_not_found, status.functionState);
+            assertEquals(EnumsApi.FunctionState.signature_wrong, status.functionState);
             assertEquals(EnumsApi.FunctionSourcing.dispatcher, status.sourcing);
             assertFalse(status.verified);
         }
@@ -157,14 +157,14 @@ public class TestMetadataParamsYaml {
             status = statuses.get(0);
             assertEquals("test.function:1.0", status.code);
             assertEquals("http://localhost:8080", status.assetManagerUrl);
-            assertEquals(EnumsApi.FunctionState.signature_not_found, status.state);
+            assertEquals(EnumsApi.FunctionState.signature_wrong, status.state);
             assertEquals(EnumsApi.FunctionSourcing.dispatcher, status.sourcing);
         }
         {
             status = statuses.get(1);
             assertEquals("test.function:1.0", status.code);
             assertEquals("https://localhost:8888", status.assetManagerUrl);
-            assertEquals(EnumsApi.FunctionState.signature_not_found, status.state);
+            assertEquals(EnumsApi.FunctionState.signature_wrong, status.state);
             assertEquals(EnumsApi.FunctionSourcing.dispatcher, status.sourcing);
         }
         {

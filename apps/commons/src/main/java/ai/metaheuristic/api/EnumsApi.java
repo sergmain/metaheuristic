@@ -415,22 +415,27 @@ public class EnumsApi {
         // function is ready for executing
         ready,
 
-        not_found,
-        not_supported_os,
-        asset_error,
+        not_found(true),
+        not_supported_os(true),
+        asset_error(true),
         download_error(true, 10*60*1000, true), // recheck every 10 minutes
         function_config_error(false, 10*60*1000, true),
-        io_error,
-        dispatcher_config_error,
-        signature_wrong,
-        checksum_wrong,
-        // not used anymore, left there for backward compatibility
-        signature_not_found;
+        io_error(true),
+        dispatcher_config_error(true),
+        signature_wrong(true),
+        checksum_wrong(true);
 
         public boolean needVerification = false;
         public long recheckPeriod = 0;
         public boolean needDownload = false;
+        // is this function failed permanently?
+        public boolean failed = false;
+
         FunctionState() {
+        }
+
+        FunctionState(boolean failed) {
+            this.failed = failed;
         }
 
         FunctionState(boolean needVerification, long recheckPeriod, boolean needDownload) {
