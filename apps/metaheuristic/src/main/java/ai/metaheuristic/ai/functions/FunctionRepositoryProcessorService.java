@@ -290,10 +290,10 @@ public class FunctionRepositoryProcessorService {
         FunctionRepositoryData.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus =
             ProcessorFunctionUtils.downloadFunctionConfig(assetManager, functionCode);
 
-        if (downloadedFunctionConfigStatus.status==ProcessorFunctionUtils.ConfigStatus.error) {
+        if (downloadedFunctionConfigStatus.status== FunctionEnums.ConfigStatus.error) {
             return new FunctionRepositoryData.FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.function_config_error));
         }
-        if (downloadedFunctionConfigStatus.status==ProcessorFunctionUtils.ConfigStatus.not_found) {
+        if (downloadedFunctionConfigStatus.status== FunctionEnums.ConfigStatus.not_found) {
             removeFunction(assetManagerUrl, functionCode);
             return null;
         }
@@ -327,9 +327,6 @@ public class FunctionRepositoryProcessorService {
             else if (function.sourcing== EnumsApi.FunctionSourcing.git) {
                 return prepareWithSourcingAsGit(globals.processorResourcesPath, assetManagerUrl, function, metadataParams, gitSourcingService::prepareFunction);
             }
-            else if (function.sourcing== EnumsApi.FunctionSourcing.processor) {
-                return prepareWithSourcingAsProcessor(dispatcher, function);
-            }
             throw new IllegalStateException("100.460 Shouldn't get there");
         } catch (Throwable th) {
             String es = "100.480 System error: " + th.getMessage();
@@ -341,20 +338,6 @@ public class FunctionRepositoryProcessorService {
             functionPrepareResult.isError = true;
             return functionPrepareResult;
         }
-    }
-
-    private static FunctionRepositoryData.FunctionPrepareResult prepareWithSourcingAsProcessor(DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, TaskParamsYaml.FunctionConfig function) {
-        FunctionRepositoryData.FunctionPrepareResult functionPrepareResult = new FunctionRepositoryData.FunctionPrepareResult();
-        functionPrepareResult.function = function;
-
-        final FunctionApiData.SystemExecResult checksumAndSignature = verifyChecksumAndSignature(dispatcher.dispatcherLookup.signatureRequired, dispatcher.getPublicKey(), functionPrepareResult.function);
-        if (!checksumAndSignature.isOk) {
-            log.warn("100.500 Function {} has a wrong checksum/signature, error: {}", functionPrepareResult.function.code, checksumAndSignature.console);
-            functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, checksumAndSignature.exitCode, checksumAndSignature.console);
-            functionPrepareResult.isLoaded = false;
-            functionPrepareResult.isError = true;
-        }
-        return functionPrepareResult;
     }
 
     private static FunctionRepositoryData.FunctionPrepareResult prepareWithSourcingAsGit(Path processorResourcesPath, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig function, MetadataParams metadataParams, BiFunction<Path, TaskParamsYaml.FunctionConfig, SystemProcessLauncher.ExecResult> gitSourcing) {

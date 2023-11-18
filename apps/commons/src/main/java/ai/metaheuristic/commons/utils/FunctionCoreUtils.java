@@ -58,8 +58,6 @@ public class FunctionCoreUtils {
                     return new FunctionApiData.FunctionConfigStatus(false, "401.030 sourcing is 'dispatcher' but file is empty: " + functionConfig);
                 }
                 break;
-            case processor:
-                break;
             case git:
                 if (functionConfig.git ==null) {
                     return new FunctionApiData.FunctionConfigStatus(false, "401.042 sourcing is 'git', but git info is absent");

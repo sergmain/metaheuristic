@@ -64,7 +64,7 @@ public class TestTaskParamsYaml {
 
         final TaskParamsYamlV1.FunctionConfigV1 preFunction = new TaskParamsYamlV1.FunctionConfigV1();
         preFunction.code = "pre-function-code";
-        preFunction.sourcing = EnumsApi.FunctionSourcing.processor;
+        preFunction.sourcing = EnumsApi.FunctionSourcing.dispatcher;
         ty.preFunctions.add(preFunction);
 
         final TaskParamsYamlV1.FunctionConfigV1 function = new TaskParamsYamlV1.FunctionConfigV1();
@@ -118,7 +118,7 @@ public class TestTaskParamsYaml {
 
         assertEquals(1, tpy.task.preFunctions.size());
         assertEquals("pre-function-code", tpy.task.preFunctions.get(0).code);
-        assertEquals(EnumsApi.FunctionSourcing.processor, tpy.task.preFunctions.get(0).sourcing);
+        assertEquals(EnumsApi.FunctionSourcing.dispatcher, tpy.task.preFunctions.get(0).sourcing);
 
         assertEquals("function-code", tpy.task.function.code);
         assertEquals(EnumsApi.FunctionSourcing.git, tpy.task.function.sourcing);

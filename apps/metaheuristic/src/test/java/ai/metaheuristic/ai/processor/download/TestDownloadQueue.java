@@ -16,10 +16,11 @@
 
 package ai.metaheuristic.ai.processor.download;
 
+import ai.metaheuristic.ai.functions.FunctionRepositoryData;
 import ai.metaheuristic.ai.processor.actors.AbstractTaskQueue;
-import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
 import org.junit.jupiter.api.Test;
 
+import static ai.metaheuristic.ai.functions.FunctionEnums.DownloadPriority.NORMAL;
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.AssetManagerUrl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -30,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class TestDownloadQueue {
 
-    private static class TestQueue extends AbstractTaskQueue<DownloadFunctionTask> {
+    private static class TestQueue extends AbstractTaskQueue<FunctionRepositoryData.DownloadFunctionTask> {
 
     }
 
@@ -38,19 +39,19 @@ public class TestDownloadQueue {
     public void test() {
         TestQueue testQueue = new TestQueue();
 
-        DownloadFunctionTask task1 = new DownloadFunctionTask("function-1", new AssetManagerUrl("url2"), false);
+        FunctionRepositoryData.DownloadFunctionTask task1 = new FunctionRepositoryData.DownloadFunctionTask("function-1", new AssetManagerUrl("url2"), false, NORMAL);
 
         testQueue.add(task1);
         assertEquals(1, testQueue.queueSize());
 
-        DownloadFunctionTask task2 = new DownloadFunctionTask("function-1", new AssetManagerUrl("url2"), false);
+        FunctionRepositoryData.DownloadFunctionTask task2 = new FunctionRepositoryData.DownloadFunctionTask("function-1", new AssetManagerUrl("url2"), false, NORMAL);
 
         testQueue.add(task2);
         assertEquals(1, testQueue.queueSize());
 
-        DownloadFunctionTask task3 = new DownloadFunctionTask("function-2", new AssetManagerUrl("url2"), false);
+        FunctionRepositoryData.DownloadFunctionTask task3 = new FunctionRepositoryData.DownloadFunctionTask("function-2", new AssetManagerUrl("url2"), false, NORMAL);
 
-        DownloadFunctionTask task4 = new DownloadFunctionTask("function-1", new AssetManagerUrl("url2-1"), false);
+        FunctionRepositoryData.DownloadFunctionTask task4 = new FunctionRepositoryData.DownloadFunctionTask("function-1", new AssetManagerUrl("url2-1"), false, NORMAL);
 
         testQueue.add(task3);
         testQueue.add(task4);

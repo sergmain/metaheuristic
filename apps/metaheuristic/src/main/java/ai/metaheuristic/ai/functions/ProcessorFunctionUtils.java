@@ -40,6 +40,8 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
+import static ai.metaheuristic.ai.functions.FunctionEnums.*;
+
 /**
  * @author Serge
  * Date: 10/6/2019
@@ -47,8 +49,6 @@ import java.util.UUID;
  */
 @Slf4j
 public class ProcessorFunctionUtils {
-
-    public enum ConfigStatus {ok, error, not_found}
 
     public static FunctionRepositoryData.DownloadedFunctionConfigStatus downloadFunctionConfig(DispatcherLookupParamsYaml.AssetManager assetManager, String functionCode) {
 

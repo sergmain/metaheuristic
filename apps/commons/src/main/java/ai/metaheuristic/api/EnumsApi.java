@@ -120,7 +120,7 @@ public class EnumsApi {
         // function will be downloaded from dispatcher
         dispatcher(1),
         // function already has been deployed locally at processor
-        processor(2),
+        // processor(2), --> not used anymore. function.yaml must be re-written according with bundle structure
         // function will be downloaded from git
         git(3);
 
@@ -137,7 +137,7 @@ public class EnumsApi {
                     //noinspection
                     return dispatcher;
                 case 2:
-                    return processor;
+                    throw new IllegalStateException("not used anymore.");
                 case 3:
                     return git;
                 default:

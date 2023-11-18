@@ -50,9 +50,6 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
             throw new CheckIntegrityFailedException("sourcing==null");
         }
         List<String> errors = new ArrayList<>();
-        if (function.sourcing==EnumsApi.FunctionSourcing.processor && S.b(function.file) && S.b(function.env)) {
-            errors.add(S.f("function %s has a sourcing as %s but content, file, and env are empty", function.code, function.sourcing));
-        }
         if (function.sourcing==EnumsApi.FunctionSourcing.dispatcher && S.b(function.file)) {
             errors.add(S.f("function %s has a sourcing as %s but file are empty", function.code, function.sourcing));
         }

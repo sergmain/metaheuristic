@@ -166,7 +166,7 @@ public class PreparingSourceCodeInitService {
         sc.function.type = functionCode + "-type";
         sc.function.file = "some-file";
         sc.function.env = "env-for-test-function";
-        sc.function.sourcing = EnumsApi.FunctionSourcing.processor;
+        sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
 
 //  metas:
 //  - mh.task-params-version: '2'

@@ -23,7 +23,6 @@ import ai.metaheuristic.ai.functions.FunctionRepositoryProcessorService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.event.AssetPreparingForProcessorTaskEvent;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
-import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
@@ -48,6 +47,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import static ai.metaheuristic.ai.functions.FunctionEnums.DownloadPriority.NORMAL;
 
 @Service
 @Slf4j
@@ -219,7 +220,7 @@ public class TaskAssetPreparer {
 
             final EnumsApi.FunctionState functionState = functionDownloadStatuses.state;
             if (functionState == EnumsApi.FunctionState.none) {
-                downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired));
+                downloadFunctionActor.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
                 return false;
             }
             else {
@@ -228,7 +229,7 @@ public class TaskAssetPreparer {
 
                     functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none);
 
-                    downloadFunctionActor.add(new DownloadFunctionTask(functionConfig.code, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired));
+                    downloadFunctionActor.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
                     return true;
                 }
                 else if (functionState== EnumsApi.FunctionState.dispatcher_config_error) {

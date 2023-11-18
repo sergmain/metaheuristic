@@ -18,16 +18,14 @@ package ai.metaheuristic.ai.functions;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.data.DispatcherData;
+import ai.metaheuristic.ai.functions.FunctionEnums.DownloadPriority;
 import ai.metaheuristic.ai.processor.DispatcherContextInfoHolder;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
-import ai.metaheuristic.ai.processor.actors.AbstractTaskQueue;
 import ai.metaheuristic.ai.processor.actors.DownloadUtils;
 import ai.metaheuristic.ai.processor.actors.GetDispatcherContextInfoService;
-import ai.metaheuristic.ai.processor.actors.QueueProcessor;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
-import ai.metaheuristic.ai.processor.tasks.DownloadFunctionTask;
 import ai.metaheuristic.ai.processor.tasks.GetDispatcherContextInfoTask;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
@@ -39,6 +37,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
+import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -65,22 +64,33 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.UUID;
+
+import static ai.metaheuristic.ai.functions.FunctionEnums.DownloadPriority.NORMAL;
+import static ai.metaheuristic.ai.functions.FunctionRepositoryData.*;
 
 @SuppressWarnings("unused")
 @Service
 @Slf4j
 @Profile("processor")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionTask> implements QueueProcessor {
+public class DownloadFunctionService {
 
     private final Globals globals;
     private final ProcessorEnvironment processorEnvironment;
     private final GetDispatcherContextInfoService getDispatcherContextInfoService;
     private final FunctionRepositoryProcessorService functionRepositoryProcessorService;
 
+    private final MultiTenantedQueue<DownloadPriority, DownloadFunctionTask> downloadFunctionQueue =
+        new MultiTenantedQueue<>(100, Duration.ZERO, true, "download-function-", this::downloadFunction);
+
+    public void addTask(DownloadFunctionTask task) {
+        downloadFunctionQueue.putToQueue(task);
+    }
+
     @SuppressWarnings("Duplicates")
-    public void process() {
+    public void downloadFunction(DownloadFunctionTask task) {
         if (globals.testing) {
             return;
         }
@@ -88,247 +98,244 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
             return;
         }
 
-        DownloadFunctionTask task;
-        while((task = poll())!=null) {
-            final String functionCode = task.functionCode;
+        final String functionCode = task.functionCode;
 
-            final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = task.assetManagerUrl;
-            final DispatcherLookupParamsYaml.AssetManager assetManager = processorEnvironment.dispatcherLookupExtendedService.getAssetManager(assetManagerUrl);
-            if (assetManager==null) {
-                log.error("811.007 assetManager server wasn't found for url {}", assetManagerUrl.url);
-                continue;
-            }
+        final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = task.assetManagerUrl;
+        final DispatcherLookupParamsYaml.AssetManager assetManager = processorEnvironment.dispatcherLookupExtendedService.getAssetManager(assetManagerUrl);
+        if (assetManager==null) {
+            log.error("811.007 assetManager server wasn't found for url {}", assetManagerUrl.url);
+            return;
+        }
 
-            final DispatcherData.DispatcherContextInfo contextInfo = DispatcherContextInfoHolder.getCtx(assetManagerUrl);
+        final DispatcherData.DispatcherContextInfo contextInfo = DispatcherContextInfoHolder.getCtx(assetManagerUrl);
 
-            // process only if dispatcher has already sent its config
-            if (contextInfo==null || contextInfo.chunkSize==null) {
-                log.warn("811.009 Asset dispatcher {} wasn't initialized yet, chunkSize is  undefined", assetManagerUrl.url);
-                getDispatcherContextInfoService.add(new GetDispatcherContextInfoTask(assetManagerUrl));
-                continue;
-            }
+        // process only if dispatcher has already sent its config
+        if (contextInfo==null || contextInfo.chunkSize==null) {
+            log.warn("811.009 Asset dispatcher {} wasn't initialized yet, chunkSize is  undefined", assetManagerUrl.url);
+            getDispatcherContextInfoService.add(new GetDispatcherContextInfoTask(assetManagerUrl));
+            return;
+        }
 
-            FunctionRepositoryData.FunctionConfigAndStatus functionConfigAndStatus = functionRepositoryProcessorService.syncFunctionStatus(assetManagerUrl, assetManager, functionCode);
-            if (functionConfigAndStatus==null) {
-                continue;
-            }
+        FunctionConfigAndStatus functionConfigAndStatus = functionRepositoryProcessorService.syncFunctionStatus(assetManagerUrl, assetManager, functionCode);
+        if (functionConfigAndStatus==null) {
+            return;
+        }
 
-            FunctionRepositoryData.Function functionDownloadStatus = functionConfigAndStatus.status;
-            if (functionDownloadStatus==null) {
-                continue;
-            }
+        Function functionDownloadStatus = functionConfigAndStatus.status;
+        if (functionDownloadStatus==null) {
+            return;
+        }
 
-            if (!functionDownloadStatus.state.needVerification) {
-                log.warn("811.013 Function {} from {} was already processed and has a state {}.", functionCode, assetManager.url, functionDownloadStatus.state);
-                continue;
-            }
+        if (!functionDownloadStatus.state.needVerification) {
+            log.warn("811.013 Function {} from {} was already processed and has a state {}.", functionCode, assetManager.url, functionDownloadStatus.state);
+            return;
+        }
 
-            final AssetFile assetFile = functionConfigAndStatus.assetFile;
-            if (assetFile==null) {
-                throw new IllegalStateException("(assetFile==null)");
-            }
-            TaskParamsYaml.FunctionConfig functionConfig = functionConfigAndStatus.functionConfig;
-            if (functionConfig == null) {
-                throw new IllegalStateException("(functionConfig == null)");
-            }
+        final AssetFile assetFile = functionConfigAndStatus.assetFile;
+        if (assetFile==null) {
+            throw new IllegalStateException("(assetFile==null)");
+        }
+        TaskParamsYaml.FunctionConfig functionConfig = functionConfigAndStatus.functionConfig;
+        if (functionConfig == null) {
+            throw new IllegalStateException("(functionConfig == null)");
+        }
 
-            String functionZipFilename = ArtifactCommonUtils.normalizeCode(functionConfig.code) + Consts.ZIP_EXT;
-            String mask = functionZipFilename + ".%s.tmp";
-            Path parentDir = assetFile.file.getParent();
-            Path downloadDir = parentDir.getParent().resolve(parentDir.getFileName().toString()+"-download");
-            Path functionZip = downloadDir.resolve(functionZipFilename);
+        String functionZipFilename = ArtifactCommonUtils.normalizeCode(functionConfig.code) + Consts.ZIP_EXT;
+        String mask = functionZipFilename + ".%s.tmp";
+        Path parentDir = assetFile.file.getParent();
+        Path downloadDir = parentDir.getParent().resolve(parentDir.getFileName().toString()+"-download");
+        Path functionZip = downloadDir.resolve(functionZipFilename);
 
-            if (functionDownloadStatus.state.needDownload) {
-                try {
-                    Files.createDirectories(downloadDir);
-                    Files.createDirectories(parentDir);
+        if (functionDownloadStatus.state.needDownload) {
+            try {
+                Files.createDirectories(downloadDir);
+                Files.createDirectories(parentDir);
 
-                    EnumsApi.FunctionState functionState = EnumsApi.FunctionState.none;
-                    int idx = 0;
-                    final String targetUrl = assetManager.url + Consts.REST_ASSET_URL + "/function";
-                    do {
-                        final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8);
-                        try {
+                EnumsApi.FunctionState functionState = EnumsApi.FunctionState.none;
+                int idx = 0;
+                final String targetUrl = assetManager.url + Consts.REST_ASSET_URL + "/function";
+                do {
+                    final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8);
+                    try {
 
-                            final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8)
-                                    .addParameter("code", task.functionCode)
-                                    .addParameter("chunkSize", contextInfo.chunkSize.toString())
-                                    .addParameter("chunkNum", Integer.toString(idx));
+                        final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8)
+                                .addParameter("code", task.functionCode)
+                                .addParameter("chunkSize", contextInfo.chunkSize.toString())
+                                .addParameter("chunkNum", Integer.toString(idx));
 
-                            final Request request = Request.get(builder.build()).connectTimeout(Timeout.ofSeconds(5));
-                                    //.socketTimeout(20000);
+                        final Request request = Request.get(builder.build()).connectTimeout(Timeout.ofSeconds(5));
+                                //.socketTimeout(20000);
 
-                            RestUtils.addHeaders(request);
+                        RestUtils.addHeaders(request);
 
-                            Response response = HttpClientExecutor.getExecutor(assetManager.url, assetManager.username, assetManager.password).execute(request);
-                            Path partFile = downloadDir.resolve(String.format(mask, idx));
+                        Response response = HttpClientExecutor.getExecutor(assetManager.url, assetManager.username, assetManager.password).execute(request);
+                        Path partFile = downloadDir.resolve(String.format(mask, idx));
 
-                            final HttpResponse httpResponse = response.returnResponse();
-                            if (!(httpResponse instanceof ClassicHttpResponse classicHttpResponse)) {
-                                throw new IllegalStateException("(!(httpResponse instanceof ClassicHttpResponse classicHttpResponse))");
-                            }
-                            final int statusCode = classicHttpResponse.getCode();
-                            if (statusCode == HttpStatus.UNPROCESSABLE_ENTITY.value()) {
-                                final String es = S.f("811.047 Function %s can't be downloaded, assetManager manager %s was mis-configure. Reason: Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions", task.functionCode, assetManager.url);
-                                log.error(es);
-                                functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.dispatcher_config_error);
-                                functionState = EnumsApi.FunctionState.dispatcher_config_error;
-                                break;
-                            }
-                            else if (statusCode == HttpStatus.GONE.value()) {
-                                final String es = S.f("811.048 Function %s was deleted at assetManager manager %s.", task.functionCode, assetManager.url);
-                                log.error(es);
-                                // do not delete this function code because it can be received from dispatcher, so it'll be created constantly, if deleted
-                                functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.not_found);
-                                functionState = EnumsApi.FunctionState.not_found;
-                                break;
-                            }
-                            else if (statusCode != HttpStatus.OK.value()) {
-                                final String es = S.f("811.050 Function %s can't be downloaded from assetManager manager %s, status code: %d", task.functionCode, assetManager.url, statusCode);
-                                log.error(es);
-                                functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.download_error);
-                                functionState = EnumsApi.FunctionState.download_error;
-                                break;
-                            }
+                        final HttpResponse httpResponse = response.returnResponse();
+                        if (!(httpResponse instanceof ClassicHttpResponse classicHttpResponse)) {
+                            throw new IllegalStateException("(!(httpResponse instanceof ClassicHttpResponse classicHttpResponse))");
+                        }
+                        final int statusCode = classicHttpResponse.getCode();
+                        if (statusCode == HttpStatus.UNPROCESSABLE_ENTITY.value()) {
+                            final String es = S.f("811.047 Function %s can't be downloaded, assetManager manager %s was mis-configure. Reason: Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions", task.functionCode, assetManager.url);
+                            log.error(es);
+                            functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.dispatcher_config_error);
+                            functionState = EnumsApi.FunctionState.dispatcher_config_error;
+                            break;
+                        }
+                        else if (statusCode == HttpStatus.GONE.value()) {
+                            final String es = S.f("811.048 Function %s was deleted at assetManager manager %s.", task.functionCode, assetManager.url);
+                            log.error(es);
+                            // do not delete this function code because it can be received from dispatcher, so it'll be created constantly, if deleted
+                            functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.not_found);
+                            functionState = EnumsApi.FunctionState.not_found;
+                            break;
+                        }
+                        else if (statusCode != HttpStatus.OK.value()) {
+                            final String es = S.f("811.050 Function %s can't be downloaded from assetManager manager %s, status code: %d", task.functionCode, assetManager.url, statusCode);
+                            log.error(es);
+                            functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.download_error);
+                            functionState = EnumsApi.FunctionState.download_error;
+                            break;
+                        }
 
-                            try (final OutputStream out = Files.newOutputStream(partFile)) {
-                                final HttpEntity entity = classicHttpResponse.getEntity();
-                                if (entity != null) {
-                                    entity.writeTo(out);
-                                } else {
-                                    log.warn("811.055 http entity is null");
-                                }
-                            }
-                            final Header[] headers = httpResponse.getHeaders();
-                            if (!DownloadUtils.isChunkConsistent(partFile, headers)) {
-                                log.error("811.060 error while downloading chunk of function {}, size is different", functionCode);
-                                functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.download_error);
-                                functionState = EnumsApi.FunctionState.download_error;
-                                break;
-                            }
-                            if (DownloadUtils.isLastChunk(headers)) {
-                                functionState = EnumsApi.FunctionState.ok;
-                                break;
-                            }
-                            if (Files.size(partFile)==0) {
-                                functionState = EnumsApi.FunctionState.ok;
-                                break;
-                            }
-                        } catch (HttpResponseException e) {
-                            if (e.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY.value()) {
-                                final String es = S.f("811.065 Function %s can't be downloaded, assetManager manager %s was mis-configured", task.functionCode, assetManager.url);
-                                log.warn(es);
-                                functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.dispatcher_config_error);
-                                functionState = EnumsApi.FunctionState.dispatcher_config_error;
-                                break;
-                            } else if (e.getStatusCode() == HttpServletResponse.SC_BAD_GATEWAY) {
-                                final String es = String.format("811.035 BAD_GATEWAY error while downloading " +
-                                        "a function #%s on assetManager srv %s. will try later again", task.functionCode, assetManager.url);
-                                log.warn(es);
-                                // do nothing and try later again
-                                return;
-                            } else if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
-                                final String es = S.f("811.070 Function %s wasn't found on assetManager manager %s", task.functionCode, assetManager.url);
-                                log.warn(es);
-                                // do not delete this function code because it can be received from dispatcher, so it'll be created constantly, if deleted
-                                functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.not_found);
-                                functionState = EnumsApi.FunctionState.not_found;
-                                break;
-                            } else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE) {
-                                final String es = S.f("811.080 Unknown error with a function %s on assetManager manager %s", task.functionCode, assetManager.url);
-                                log.warn(es);
-                                functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.download_error);
-                                functionState = EnumsApi.FunctionState.download_error;
-                                break;
-                            } else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
-                                final String es = S.f("811.090 Unknown error with a resource %s on assetManager manager %s", task.functionCode, assetManager.url);
-                                log.warn(es);
-                                functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.download_error);
-                                functionState = EnumsApi.FunctionState.download_error;
-                                break;
+                        try (final OutputStream out = Files.newOutputStream(partFile)) {
+                            final HttpEntity entity = classicHttpResponse.getEntity();
+                            if (entity != null) {
+                                entity.writeTo(out);
                             } else {
-                                final String es = S.f("811.091 Unknown error with a resource %s on assetManager manager %s, dispatcher %s", task.functionCode, assetManager.url);
-                                log.warn(es);
-                                functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.download_error);
-                                functionState = EnumsApi.FunctionState.download_error;
-                                break;
+                                log.warn("811.055 http entity is null");
                             }
                         }
-                        // work around for handling a burst access to assetManager server
-                        //noinspection BusyWait
-                        Thread.sleep(50);
-                        idx++;
-                    } while (idx < 1000);
-                    if (functionState == EnumsApi.FunctionState.none) {
-                        log.error("811.100 something wrong, is file too big or chunkSize too small? chunkSize: {}", contextInfo.chunkSize);
-                        continue;
+                        final Header[] headers = httpResponse.getHeaders();
+                        if (!DownloadUtils.isChunkConsistent(partFile, headers)) {
+                            log.error("811.060 error while downloading chunk of function {}, size is different", functionCode);
+                            functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.download_error);
+                            functionState = EnumsApi.FunctionState.download_error;
+                            break;
+                        }
+                        if (DownloadUtils.isLastChunk(headers)) {
+                            functionState = EnumsApi.FunctionState.ok;
+                            break;
+                        }
+                        if (Files.size(partFile)==0) {
+                            functionState = EnumsApi.FunctionState.ok;
+                            break;
+                        }
+                    } catch (HttpResponseException e) {
+                        if (e.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY.value()) {
+                            final String es = S.f("811.065 Function %s can't be downloaded, assetManager manager %s was mis-configured", task.functionCode, assetManager.url);
+                            log.warn(es);
+                            functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.dispatcher_config_error);
+                            functionState = EnumsApi.FunctionState.dispatcher_config_error;
+                            break;
+                        } else if (e.getStatusCode() == HttpServletResponse.SC_BAD_GATEWAY) {
+                            final String es = String.format("811.035 BAD_GATEWAY error while downloading " +
+                                    "a function #%s on assetManager srv %s. will try later again", task.functionCode, assetManager.url);
+                            log.warn(es);
+                            // do nothing and try later again
+                            return;
+                        } else if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
+                            final String es = S.f("811.070 Function %s wasn't found on assetManager manager %s", task.functionCode, assetManager.url);
+                            log.warn(es);
+                            // do not delete this function code because it can be received from dispatcher, so it'll be created constantly, if deleted
+                            functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.not_found);
+                            functionState = EnumsApi.FunctionState.not_found;
+                            break;
+                        } else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE) {
+                            final String es = S.f("811.080 Unknown error with a function %s on assetManager manager %s", task.functionCode, assetManager.url);
+                            log.warn(es);
+                            functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.download_error);
+                            functionState = EnumsApi.FunctionState.download_error;
+                            break;
+                        } else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
+                            final String es = S.f("811.090 Unknown error with a resource %s on assetManager manager %s", task.functionCode, assetManager.url);
+                            log.warn(es);
+                            functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.download_error);
+                            functionState = EnumsApi.FunctionState.download_error;
+                            break;
+                        } else {
+                            final String es = S.f("811.091 Unknown error with a resource %s on assetManager manager %s, dispatcher %s", task.functionCode, assetManager.url);
+                            log.warn(es);
+                            functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.download_error);
+                            functionState = EnumsApi.FunctionState.download_error;
+                            break;
+                        }
                     }
-                    else if (functionState == EnumsApi.FunctionState.download_error) {
-                        log.warn("811.110 function {} will be downloaded later, state: {}", functionCode, functionState);
-                        functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.download_error);
-                        continue;
-                    }
-                    else if (functionState == EnumsApi.FunctionState.dispatcher_config_error) {
-                        log.warn("811.111 function {} can't be downloaded, state: {}", functionCode, functionState);
-                        functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.dispatcher_config_error);
-                        continue;
-                    }
-                    else if (functionState == EnumsApi.FunctionState.not_found) {
-                        log.warn("811.112 function {} can't be downloaded, state: {}", functionCode, functionState);
-                        functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.not_found);
-                        continue;
-                    }
-
-                    DownloadUtils.combineParts(functionZip, functionZip, idx);
-                    ZipUtils.unzipFolder(functionZip, parentDir);
-
-                    int i=0;
-                } catch (HttpResponseException e) {
-                    logError(functionCode, e);
-                } catch (SocketTimeoutException e) {
-                    log.error("811.140 SocketTimeoutException: {}", e.toString());
-                } catch (ConnectException e) {
-                    log.error("811.143 ConnectException: {}", e.toString());
-                } catch (IOException e) {
-                    log.error("811.150 IOException", e);
-                } catch (URISyntaxException e) {
-                    log.error("811.160 URISyntaxException", e);
-                } catch (Throwable th) {
-                    log.error("811.165 Throwable", th);
+                    // work around for handling a burst access to assetManager server
+                    //noinspection BusyWait
+                    Thread.sleep(50);
+                    idx++;
+                } while (idx < 1000);
+                if (functionState == EnumsApi.FunctionState.none) {
+                    log.error("811.100 something wrong, is file too big or chunkSize too small? chunkSize: {}", contextInfo.chunkSize);
+                    return;
                 }
-            }
-            if (Files.notExists(assetFile.file)) {
-                log.error("811.180 assetManager file {} is missing", assetFile.file.toAbsolutePath());
-                continue;
-            }
-            ChecksumAndSignatureData.ChecksumWithSignatureInfo state = MetadataParams.prepareChecksumWithSignature(functionConfigAndStatus.functionConfig);
+                else if (functionState == EnumsApi.FunctionState.download_error) {
+                    log.warn("811.110 function {} will be downloaded later, state: {}", functionCode, functionState);
+                    functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.download_error);
+                    return;
+                }
+                else if (functionState == EnumsApi.FunctionState.dispatcher_config_error) {
+                    log.warn("811.111 function {} can't be downloaded, state: {}", functionCode, functionState);
+                    functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.dispatcher_config_error);
+                    return;
+                }
+                else if (functionState == EnumsApi.FunctionState.not_found) {
+                    log.warn("811.112 function {} can't be downloaded, state: {}", functionCode, functionState);
+                    functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.not_found);
+                    return;
+                }
 
-            CheckSumAndSignatureStatus status;
-            try {
-                status = ChecksumAndSignatureUtils.getCheckSumAndSignatureStatus(assetManagerUrl, assetManager, functionCode, state, functionZip);
-                functionRepositoryProcessorService.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, status);
+                DownloadUtils.combineParts(functionZip, functionZip, idx);
+                ZipUtils.unzipFolder(functionZip, parentDir);
+
+                int i=0;
+            } catch (HttpResponseException e) {
+                logError(functionCode, e);
+            } catch (SocketTimeoutException e) {
+                log.error("811.140 SocketTimeoutException: {}", e.toString());
+            } catch (ConnectException e) {
+                log.error("811.143 ConnectException: {}", e.toString());
             } catch (IOException e) {
-                log.error("811.185 Error in getCheckSumAndSignatureStatus(),functionCode: {},  assetManager file {}, error: {}",
-                        functionCode, assetFile.getFile().toAbsolutePath(), e.toString());
-                functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.io_error);
-                continue;
+                log.error("811.150 IOException", e);
+            } catch (URISyntaxException e) {
+                log.error("811.160 URISyntaxException", e);
+            } catch (Throwable th) {
+                log.error("811.165 Throwable", th);
             }
+        }
+        if (Files.notExists(assetFile.file)) {
+            log.error("811.180 assetManager file {} is missing", assetFile.file.toAbsolutePath());
+            return;
+        }
+        ChecksumAndSignatureData.ChecksumWithSignatureInfo state = MetadataParams.prepareChecksumWithSignature(functionConfigAndStatus.functionConfig);
 
-            if (status.checksum != EnumsApi.ChecksumState.wrong && status.signature != EnumsApi.SignatureState.wrong) {
-                functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.ready);
-            } else {
-                if (status.checksum== EnumsApi.ChecksumState.wrong) {
-                    functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.checksum_wrong);
-                }
-                else {
-                    functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.signature_wrong);
-                }
-                try {
-                    Files.deleteIfExists(assetFile.file);
-                }
-                catch (IOException e) {
-                    //
-                }
+        CheckSumAndSignatureStatus status;
+        try {
+            status = ChecksumAndSignatureUtils.getCheckSumAndSignatureStatus(assetManagerUrl, assetManager, functionCode, state, functionZip);
+            functionRepositoryProcessorService.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, status);
+        } catch (IOException e) {
+            log.error("811.185 Error in getCheckSumAndSignatureStatus(),functionCode: {},  assetManager file {}, error: {}",
+                    functionCode, assetFile.getFile().toAbsolutePath(), e.toString());
+            functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.io_error);
+            return;
+        }
+
+        if (status.checksum != EnumsApi.ChecksumState.wrong && status.signature != EnumsApi.SignatureState.wrong) {
+            functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.ready);
+        } else {
+            if (status.checksum== EnumsApi.ChecksumState.wrong) {
+                functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.checksum_wrong);
+            }
+            else {
+                functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.signature_wrong);
+            }
+            try {
+                Files.deleteIfExists(assetFile.file);
+            }
+            catch (IOException e) {
+                //
             }
         }
     }
@@ -348,18 +355,15 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
                 }
 
                 DispatcherData.DispatcherContextInfo contextInfo = DispatcherContextInfoHolder.getCtx(assetManagerUrl);
-
                 if (contextInfo==null) {
                     log.info("811.190 contextInfo for asset manager {} wasn't found, function: {}", o.assetManagerUrl, o.code);
                     getDispatcherContextInfoService.add(new GetDispatcherContextInfoTask(assetManagerUrl));
                     return;
                 }
-
                 if (contextInfo.chunkSize==null) {
                     log.info("811.195 (dispatcher.config.chunkSize==null), dispatcherUrl: {}", o.assetManagerUrl);
                     return;
                 }
-
                 log.info("Create new DownloadFunctionTask for downloading function {} from {}, chunk size: {}",
                         o.code, o.assetManagerUrl, contextInfo.chunkSize);
 
@@ -369,11 +373,12 @@ public class DownloadFunctionService extends AbstractTaskQueue<DownloadFunctionT
 
                 boolean signatureRequired = dispatcher==null ? (asset.publicKey != null) : dispatcher.dispatcherLookup.signatureRequired;
 
-                DownloadFunctionTask functionTask = new DownloadFunctionTask(o.code, assetManagerUrl, signatureRequired);
-                add(functionTask);
+                DownloadFunctionTask functionTask = new DownloadFunctionTask(o.code, assetManagerUrl, signatureRequired, NORMAL);
+                downloadFunctionQueue.putToQueue(functionTask);
             }
-            else if (o.sourcing== EnumsApi.FunctionSourcing.processor) {
-                functionRepositoryProcessorService.setFunctionFromProcessorAsReady(assetManagerUrl, o.code);
+            else //if (o.sourcing== EnumsApi.FunctionSourcing.git)
+            {
+                throw new IllegalStateException("Not implemented yet");
             }
         });
     }

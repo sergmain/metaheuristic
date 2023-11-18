@@ -449,15 +449,6 @@ public class TaskProcessor {
                     }
                     cmd.add(functionPrepareResult.functionAssetFile.file.toAbsolutePath().toString());
                     break;
-                case processor:
-                    if (!S.b(functionPrepareResult.function.file)) {
-                        //noinspection UseBulkOperation
-                        Arrays.stream(StringUtils.split(functionPrepareResult.function.file)).forEachOrdered(cmd::add);
-                    }
-                    else {
-                        log.warn("100.325 How?");
-                    }
-                    break;
                 default:
                     throw new IllegalStateException("100.330 Unknown sourcing: "+ functionPrepareResult.function.sourcing );
             }

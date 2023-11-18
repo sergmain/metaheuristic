@@ -30,13 +30,16 @@ import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.data.replication.ReplicationApiData;
 import ai.metaheuristic.commons.CommonConsts;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.*;
+import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
+import ai.metaheuristic.commons.utils.Checksum;
+import ai.metaheuristic.commons.utils.FunctionCoreUtils;
+import ai.metaheuristic.commons.utils.TaskParamsUtils;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -44,19 +47,22 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
@@ -400,7 +406,6 @@ public class FunctionService {
                         sum = Checksum.getChecksum(hashAlgo, inputStream);
                     }
                     break;
-                case processor:
                 case git:
                     String s = FunctionCoreUtils.getDataForChecksumForConfigOnly(functionConfig);
                     sum = Checksum.getChecksum(hashAlgo, new ByteArrayInputStream(s.getBytes()));

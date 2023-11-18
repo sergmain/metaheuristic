@@ -16,13 +16,17 @@
 
 package ai.metaheuristic.ai.functions;
 
+import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
+import ai.metaheuristic.ai.processor.tasks.ProcessorRestTask;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.replication.ReplicationApiData;
+import ai.metaheuristic.commons.utils.threads.EventWithId;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 
@@ -35,6 +39,20 @@ import java.util.Map;
  * Time: 5:38 PM
  */
 public class FunctionRepositoryData {
+
+    @AllArgsConstructor
+    @EqualsAndHashCode(of = {"functionCode", "assetManagerUrl"})
+    public static class DownloadFunctionTask implements EventWithId<FunctionEnums.DownloadPriority> {
+        public final String functionCode;
+        public final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl;
+        public final boolean signatureRequired;
+        public final FunctionEnums.DownloadPriority priority;
+
+        @Override
+        public FunctionEnums.DownloadPriority getId() {
+            return priority;
+        }
+    }
 
     @Data
     public static class FunctionDownloadStatuses {
@@ -96,12 +114,12 @@ public class FunctionRepositoryData {
     @Data
     public static class DownloadedFunctionConfigStatus {
         public TaskParamsYaml.FunctionConfig functionConfig;
-        public ProcessorFunctionUtils.ConfigStatus status;
+        public FunctionEnums.ConfigStatus status;
     }
 
     @Data
     public static class DownloadedFunctionConfigsStatus {
         public ReplicationApiData.FunctionConfigsReplication functionConfigs;
-        public ProcessorFunctionUtils.ConfigStatus status;
+        public FunctionEnums.ConfigStatus status;
     }
 }

@@ -13,18 +13,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.processor.tasks;
 
-import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+package ai.metaheuristic.ai.functions;
 
-@Data
-@AllArgsConstructor
-@EqualsAndHashCode(of = {"functionCode", "assetManagerUrl"}, callSuper = false)
-public class DownloadFunctionTask extends ProcessorRestTask {
-    public final String functionCode;
-    public final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl;
-    public final boolean signatureRequired;
+/**
+ * @author Sergio Lissner
+ * Date: 11/17/2023
+ * Time: 5:25 PM
+ */
+public class FunctionEnums {
+
+    public enum ConfigStatus {ok, error, not_found}
+
+    public enum DownloadPriority { NORMAL, HIGH }
 }

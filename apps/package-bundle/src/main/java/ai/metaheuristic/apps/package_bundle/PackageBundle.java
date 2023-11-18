@@ -182,9 +182,8 @@ public class PackageBundle implements CommandLineRunner {
                 }
             }
         }
-        else if (function.sourcing== EnumsApi.FunctionSourcing.processor) {
-            // we don't need any checks here because all checks
-            // will be made in ai.metaheuristic.commons.yaml.function.FunctionConfigYaml.checkIntegrity
+        else if (function.sourcing==EnumsApi.FunctionSourcing.git) {
+            throw new IllegalStateException("git sourcing isn't implemented");
         }
         return isError;
     }
@@ -245,12 +244,11 @@ public class PackageBundle implements CommandLineRunner {
     private static void calcChecksum(Path zippedFunction, FunctionConfigYaml config, Cfg cfg) throws IOException, GeneralSecurityException {
         FunctionConfigYaml.FunctionConfig functionConfig = config.function;
         String sum;
-        if (functionConfig.sourcing== EnumsApi.FunctionSourcing.processor ||
-            functionConfig.sourcing== EnumsApi.FunctionSourcing.git) {
+        if (functionConfig.sourcing== EnumsApi.FunctionSourcing.git) {
             String s = FunctionCoreUtils.getDataForChecksumForConfigOnly(functionConfig);
             sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, new ByteArrayInputStream(s.getBytes()));
         }
-        else if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
+        else if (functionConfig.sourcing==EnumsApi.FunctionSourcing.dispatcher) {
             try (InputStream fis = Files.newInputStream(zippedFunction)) {
                 sum = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, fis);
             }

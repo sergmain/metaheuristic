@@ -436,27 +436,6 @@ public class Schedulers {
 
     @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
     @Profile("processor")
-    public static class DownloadFunctionActorSchedulingConfig implements SchedulingConfigurer {
-        private final Globals globals;
-        private final DownloadFunctionService downloadFunctionActor;
-
-        @Override
-        public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-            taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
-            taskRegistrar.addTriggerTask( this::downloadFunctionActor, context -> getInstant(context, globals.processor.timeout.getDownloadFunction()));
-        }
-
-        public void downloadFunctionActor() {
-            if (globals.testing || !globals.processor.enabled) {
-                return;
-            }
-            log.info("Run downloadFunctionActor.process()");
-            downloadFunctionActor.process();
-        }
-    }
-
-    @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
-    @Profile("processor")
     public static class PrepareFunctionForDownloadingSchedulingConfig implements SchedulingConfigurer {
         private final Globals globals;
         private final DownloadFunctionService downloadFunctionActor;
