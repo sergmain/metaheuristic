@@ -106,13 +106,16 @@ public class AssetController {
         return functionTopLevelService.getFunctionChecksum(response, code);
     }
 
+/*
     @GetMapping("/function-configs/{random-part}")
     public ReplicationApiData.FunctionConfigsReplication functionConfigs(
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
     ) {
         return functionTopLevelService.getFunctionConfigs();
     }
+*/
 
+/*
     @PostMapping("/function-config/{random-part}")
     public String functionConfigPost(
             HttpServletResponse response,
@@ -127,14 +130,10 @@ public class AssetController {
         }
         return functionTopLevelService.getFunctionConfig(response, code);
     }
+*/
 
-    @GetMapping("/function-config/{processorId}/{random-part}")
-    public String functionConfigGet(
-            HttpServletResponse response,
-            @SuppressWarnings("unused") @PathVariable("processorId") String processorId,
-            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
-            @Nullable String code
-    ) throws IOException {
+    @GetMapping("/function-config")
+    public String functionConfigGet(HttpServletResponse response, @Nullable String code) throws IOException {
         if (S.b(code)) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return "";

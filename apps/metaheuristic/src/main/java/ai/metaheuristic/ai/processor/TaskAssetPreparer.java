@@ -211,7 +211,7 @@ public class TaskAssetPreparer {
             TaskParamsYaml.FunctionConfig functionConfig, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, Long taskId) {
 
         if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-            final FunctionRepositoryData.Function functionDownloadStatuses = functionRepositoryProcessorService.getFunctionDownloadStatuses(assetManagerUrl, functionConfig.code);
+            final FunctionRepositoryData.DownloadStatus functionDownloadStatuses = FunctionRepositoryProcessorService.getFunctionDownloadStatus(assetManagerUrl, functionConfig.code);
             if (functionDownloadStatuses==null) {
                 return false;
             }
@@ -243,6 +243,9 @@ public class TaskAssetPreparer {
                 }
                 return functionState == EnumsApi.FunctionState.ready;
             }
+        }
+        else if (functionConfig.sourcing== EnumsApi.FunctionSourcing.git) {
+            throw new IllegalStateException("Not implemented yet");
         }
         return true;
     }

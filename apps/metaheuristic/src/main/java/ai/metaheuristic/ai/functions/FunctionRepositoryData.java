@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.functions;
 
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
-import ai.metaheuristic.ai.processor.tasks.ProcessorRestTask;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
@@ -72,10 +71,10 @@ public class FunctionRepositoryData {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Function {
+    public static class DownloadStatus {
         public EnumsApi.FunctionState state;
         public String code;
-        public String assetManagerUrl;
+        public ProcessorAndCoreData.AssetManagerUrl assetManagerUrl;
         public EnumsApi.FunctionSourcing sourcing;
 
         public EnumsApi.ChecksumState checksum = EnumsApi.ChecksumState.not_yet;
@@ -91,19 +90,19 @@ public class FunctionRepositoryData {
         @Nullable
         public final TaskParamsYaml.FunctionConfig functionConfig;
         @Nullable
-        public final Function status;
+        public final DownloadStatus status;
         @Nullable
         public final AssetFile assetFile;
         public final boolean contentIsInline;
 
-        public FunctionConfigAndStatus(@Nullable Function status) {
+        public FunctionConfigAndStatus(@Nullable DownloadStatus status) {
             this.functionConfig = null;
             this.assetFile = null;
             this.contentIsInline = false;
             this.status = status;
         }
 
-        public FunctionConfigAndStatus(@Nullable TaskParamsYaml.FunctionConfig functionConfig, @Nullable Function setFunctionState, AssetFile assetFile) {
+        public FunctionConfigAndStatus(@Nullable TaskParamsYaml.FunctionConfig functionConfig, @Nullable DownloadStatus setFunctionState, AssetFile assetFile) {
             this.functionConfig = functionConfig;
             this.assetFile = assetFile;
             this.contentIsInline = false;

@@ -53,8 +53,9 @@ public class ProcessorFunctionUtils {
     public static FunctionRepositoryData.DownloadedFunctionConfigStatus downloadFunctionConfig(DispatcherLookupParamsYaml.AssetManager assetManager, String functionCode) {
 
         // 99999 - fake processorId for backward compatibility
-        final String functionConfigUrl = assetManager.url + Consts.REST_ASSET_URL + "/function-config/99999";
-        final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8);
+        final String functionConfigUrl = assetManager.url + Consts.REST_ASSET_URL + "/function-config";
+//        final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8);
+        final String randomPartUri = "";
 
         final FunctionRepositoryData.DownloadedFunctionConfigStatus functionConfigStatus = new FunctionRepositoryData.DownloadedFunctionConfigStatus();
         functionConfigStatus.status = ConfigStatus.error;
@@ -102,6 +103,7 @@ public class ProcessorFunctionUtils {
         return functionConfigStatus;
     }
 
+/*
     public static FunctionRepositoryData.DownloadedFunctionConfigsStatus downloadFunctionConfigs(
             String dispatcherUrl,
             DispatcherLookupParamsYaml.AssetManager asset, String processorId) {
@@ -152,5 +154,6 @@ public class ProcessorFunctionUtils {
         }
         return functionConfigStatus;
     }
+*/
 
 }

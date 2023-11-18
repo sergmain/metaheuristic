@@ -38,7 +38,6 @@ import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -120,7 +119,7 @@ public class DownloadFunctionService {
             return;
         }
 
-        Function functionDownloadStatus = functionConfigAndStatus.status;
+        DownloadStatus functionDownloadStatus = functionConfigAndStatus.status;
         if (functionDownloadStatus==null) {
             return;
         }
@@ -134,12 +133,8 @@ public class DownloadFunctionService {
         if (assetFile==null) {
             throw new IllegalStateException("(assetFile==null)");
         }
-        TaskParamsYaml.FunctionConfig functionConfig = functionConfigAndStatus.functionConfig;
-        if (functionConfig == null) {
-            throw new IllegalStateException("(functionConfig == null)");
-        }
 
-        String functionZipFilename = ArtifactCommonUtils.normalizeCode(functionConfig.code) + Consts.ZIP_EXT;
+        String functionZipFilename = ArtifactCommonUtils.normalizeCode(task.functionCode) + Consts.ZIP_EXT;
         String mask = functionZipFilename + ".%s.tmp";
         Path parentDir = assetFile.file.getParent();
         Path downloadDir = parentDir.getParent().resolve(parentDir.getFileName().toString()+"-download");
@@ -308,12 +303,12 @@ public class DownloadFunctionService {
             log.error("811.180 assetManager file {} is missing", assetFile.file.toAbsolutePath());
             return;
         }
-        ChecksumAndSignatureData.ChecksumWithSignatureInfo state = MetadataParams.prepareChecksumWithSignature(functionConfigAndStatus.functionConfig);
+        ChecksumAndSignatureData.ChecksumWithSignatureInfo state = MetadataParams.prepareChecksumWithSignature(functionConfigAndStatus.functionConfig.checksumMap);
 
         CheckSumAndSignatureStatus status;
         try {
             status = ChecksumAndSignatureUtils.getCheckSumAndSignatureStatus(assetManagerUrl, assetManager, functionCode, state, functionZip);
-            functionRepositoryProcessorService.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, status);
+            FunctionRepositoryProcessorService.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, status);
         } catch (IOException e) {
             log.error("811.185 Error in getCheckSumAndSignatureStatus(),functionCode: {},  assetManager file {}, error: {}",
                     functionCode, assetFile.getFile().toAbsolutePath(), e.toString());

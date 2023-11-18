@@ -131,23 +131,23 @@ public class MetadataParams {
         fixProcessorCodes(codes, metadata.processorSessions);
     }
 
-    public static ChecksumWithSignatureInfo prepareChecksumWithSignature(TaskParamsYaml.FunctionConfig functionConfig) {
+    public static ChecksumWithSignatureInfo prepareChecksumWithSignature(@Nullable Map<EnumsApi.HashAlgo, String> checksumMap) {
 
         ChecksumWithSignatureInfo checksumWithSignatureInfo = new ChecksumWithSignatureInfo();
 
         // check requirements of signature
-        if (functionConfig.checksumMap==null) {
+        if (checksumMap==null) {
             return checksumWithSignatureInfo;
         }
 
         // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing
-        Map.Entry<EnumsApi.HashAlgo, String> entry = functionConfig.checksumMap.entrySet().stream()
+        Map.Entry<EnumsApi.HashAlgo, String> entry = checksumMap.entrySet().stream()
                 .filter(o -> o.getKey() == EnumsApi.HashAlgo.SHA256WithSignature)
                 .findFirst()
                 .orElse(null);
 
         if (entry==null || S.b(entry.getValue())) {
-            entry = functionConfig.checksumMap.entrySet().stream().findFirst().orElse(null);
+            entry = checksumMap.entrySet().stream().findFirst().orElse(null);
         }
 
         if (entry==null || S.b(entry.getValue())) {
