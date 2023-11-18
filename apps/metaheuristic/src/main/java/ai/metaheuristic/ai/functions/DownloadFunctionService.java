@@ -293,7 +293,7 @@ public class DownloadFunctionService {
                     }
                     // work around for handling a burst access to assetManager server
                     //noinspection BusyWait
-                    Thread.sleep(50);
+                    //Thread.sleep(50);
                     idx++;
                 } while (idx < 1000);
                 if (functionState == EnumsApi.FunctionState.none) {

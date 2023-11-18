@@ -38,6 +38,11 @@ public interface SourceCodeRepository extends CrudRepository<SourceCodeImpl, Lon
     @Query(value="select e from SourceCodeImpl e where e.id=:sourceCodeId")
     SourceCodeImpl findByIdNullable(Long sourceCodeId);
 
+    @Nullable
+    @Transactional(readOnly = true)
+    @Query(value="select sc from SourceCodeImpl sc, ExecContextImpl e where e.id=:execContextId and e.sourceCodeId=sc.id")
+    SourceCodeImpl findByIdExecContextId(Long execContextId);
+
     @Override
     @Modifying
     @Query(value="delete from SourceCodeImpl t where t.id=:id")

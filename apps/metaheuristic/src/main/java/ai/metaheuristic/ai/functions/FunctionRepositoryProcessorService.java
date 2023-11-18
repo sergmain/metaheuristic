@@ -170,12 +170,10 @@ public class FunctionRepositoryProcessorService {
         if (S.b(functionCode)) {
             throw new IllegalStateException("816.240 functionCode is null");
         }
-        FunctionRepositoryData.DownloadStatus status = getFunctionDownloadStatus(assetManagerUrl, functionCode);
+//        FunctionRepositoryData.DownloadStatus status = getFunctionDownloadStatus(assetManagerUrl, functionCode);
+        final FunctionRepositoryData.DownloadStatus status = new FunctionRepositoryData.DownloadStatus(functionState, functionCode, assetManagerUrl, EnumsApi.FunctionSourcing.dispatcher);
+        functions.computeIfAbsent(assetManagerUrl, (o)->new ConcurrentHashMap<>()).put(functionCode, status);
 //        FunctionRepositoryData.Function status = functions.values().stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
-        if (status == null) {
-            return null;
-        }
-        status.state = functionState;
 /*
         if (status.state.needVerification) {
             status.checksum= EnumsApi.ChecksumState.not_yet;

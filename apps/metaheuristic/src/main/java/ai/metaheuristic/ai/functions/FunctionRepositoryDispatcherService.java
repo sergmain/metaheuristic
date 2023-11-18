@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponsePar
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -183,10 +184,23 @@ public class FunctionRepositoryDispatcherService {
         }
     }
 
+    @SuppressWarnings("DataFlowIssue")
     @Async
     @EventListener
     public void registerFunctionCodesForStartedExecContext(RegisterFunctionCodesForStartedExecContextEvent event) {
-        Set<String> funcCodes = collectFunctionCodes(event.sc());
+        final SourceCodeParamsYaml params;
+        if (event.sc()!=null) {
+            params = event.sc();
+        }
+        else {
+            final SourceCodeImpl sc = sourceCodeRepository.findByIdExecContextId(event.execContextId());
+            if (sc==null) {
+                return;
+            }
+            SourceCodeStoredParamsYaml scspy = sc.getSourceCodeStoredParamsYaml();
+            params = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+        }
+        Set<String> funcCodes = collectFunctionCodes(params);
         registerCodes(funcCodes, false);
     }
 
@@ -201,17 +215,21 @@ public class FunctionRepositoryDispatcherService {
     }
 
     public static void collectFunctionCodesForProcess(Set<String> codes, SourceCodeParamsYaml.Process process) {
-        if (process.function !=null) {
+        if (process.function !=null && process.function.context==EnumsApi.FunctionExecContext.external) {
             codes.add(process.function.code);
         }
         if (process.preFunctions !=null) {
             for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.preFunctions) {
-                codes.add(snDef.code);
+                if (snDef.context==EnumsApi.FunctionExecContext.external) {
+                    codes.add(snDef.code);
+                }
             }
         }
         if (process.postFunctions !=null) {
             for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.postFunctions) {
-                codes.add(snDef.code);
+                if (snDef.context==EnumsApi.FunctionExecContext.external) {
+                    codes.add(snDef.code);
+                }
             }
         }
 
