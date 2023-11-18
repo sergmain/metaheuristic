@@ -31,7 +31,6 @@ import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
-import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -100,7 +99,7 @@ public class FunctionRepositoryRequestor {
             if (responseParams == null) {
                 return;
             }
-            FunctionRepositoryRequestParams immediateResponse = functionRepositoryProcessorService.processFunctionRepositoryResponseParams(processorEnvironment, dispatcherUrl, responseParams);
+            FunctionRepositoryRequestParams immediateResponse = functionRepositoryProcessorService.processFunctionRepositoryResponseParams(processorEnvironment, dispatcherUrl, responseParams, frrp.processorId);
             if (processorSession!=null && immediateResponse!=null) {
                 final FunctionRepositoryResponseParams p = makeQuery(immediateResponse);
                 if (isNotEmpty(p)) {
