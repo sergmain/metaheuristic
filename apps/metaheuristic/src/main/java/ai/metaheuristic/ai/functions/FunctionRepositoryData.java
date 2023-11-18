@@ -59,6 +59,8 @@ public class FunctionRepositoryData {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class FunctionPrepareResult {
         public TaskParamsYaml.FunctionConfig function;
         @Nullable

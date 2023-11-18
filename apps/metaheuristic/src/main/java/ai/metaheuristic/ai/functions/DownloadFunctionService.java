@@ -30,7 +30,6 @@ import ai.metaheuristic.ai.processor.tasks.GetDispatcherContextInfoTask;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
-import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
@@ -68,9 +67,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.UUID;
 
-import static ai.metaheuristic.ai.functions.FunctionEnums.DownloadPriority.NORMAL;
 import static ai.metaheuristic.ai.functions.FunctionRepositoryData.*;
-import static ai.metaheuristic.api.EnumsApi.FunctionState.*;
 
 @SuppressWarnings("unused")
 @Service
@@ -99,13 +96,15 @@ public class DownloadFunctionService {
             return;
         }
 
+        // created for easier debugging
         final String functionCode = task.functionCode;
+        final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = task.assetManagerUrl;
+
         if (FunctionRepositoryProcessorService.getFunctionDownloadStatus(task.assetManagerUrl, task.functionCode)!=null) {
             // already downloaded
             return;
         }
 
-        final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = task.assetManagerUrl;
         final DispatcherLookupParamsYaml.AssetManager assetManager = processorEnvironment.dispatcherLookupExtendedService.getAssetManager(assetManagerUrl);
         if (assetManager==null) {
             log.error("811.007 assetManager server wasn't found for url {}", assetManagerUrl.url);
@@ -131,26 +130,31 @@ public class DownloadFunctionService {
         }
 */
 
-
+/*
         FunctionConfigAndStatus functionConfigAndStatus = functionRepositoryProcessorService.syncFunctionStatus(assetManagerUrl, assetManager, functionCode);
         if (functionConfigAndStatus==null) {
             return;
         }
+*/
 
-        DownloadStatus functionDownloadStatus = functionConfigAndStatus.status;
-        if (functionDownloadStatus==null) {
+        DownloadStatus functionDownloadStatus = FunctionRepositoryProcessorService.getFunctionDownloadStatus(assetManagerUrl, functionCode);
+        if (functionDownloadStatus!=null) {
             return;
         }
 
+/*
         if (!functionDownloadStatus.state.needVerification) {
             log.warn("811.013 Function {} from {} was already processed and has a state {}.", functionCode, assetManager.url, functionDownloadStatus.state);
             return;
         }
+*/
 
+/*
         final AssetFile assetFile = functionConfigAndStatus.assetFile;
         if (assetFile==null) {
             throw new IllegalStateException("(assetFile==null)");
         }
+*/
 
         String functionZipFilename = ArtifactCommonUtils.normalizeCode(task.functionCode) + Consts.ZIP_EXT;
         String mask = functionZipFilename + ".%s.tmp";
@@ -158,7 +162,8 @@ public class DownloadFunctionService {
         Path downloadDir = parentDir.getParent().resolve(parentDir.getFileName().toString()+"-download");
         Path functionZip = downloadDir.resolve(functionZipFilename);
 
-        if (functionDownloadStatus.state.needDownload) {
+//        if (functionDownloadStatus.state.needDownload)
+        {
             try {
                 Files.createDirectories(downloadDir);
                 Files.createDirectories(parentDir);
@@ -204,7 +209,7 @@ public class DownloadFunctionService {
                             break;
                         }
                         else if (statusCode != HttpStatus.OK.value()) {
-                            final String es = S.f("811.050 Function %s can't be downloaded from assetManager manager %s, status code: %d", task.functionCode, assetManager.url, statusCode);
+                            final String es = S.f("811.050 Function %s can't be downloaded from assetManager manager %s, checkSumAndSignatureStatus code: %d", task.functionCode, assetManager.url, statusCode);
                             log.error(es);
                             functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.download_error);
                             functionState = EnumsApi.FunctionState.download_error;
@@ -321,12 +326,12 @@ public class DownloadFunctionService {
             log.error("811.180 assetManager file {} is missing", assetFile.file.toAbsolutePath());
             return;
         }
-        ChecksumAndSignatureData.ChecksumWithSignatureInfo state = MetadataParams.prepareChecksumWithSignature(functionConfigAndStatus.functionConfig.checksumMap);
+        ChecksumAndSignatureData.ChecksumWithSignatureInfo state = MetadataParams.prepareChecksumWithSignature(status.functionConfig.checksumMap);
 
-        CheckSumAndSignatureStatus status;
+        CheckSumAndSignatureStatus checkSumAndSignatureStatus;
         try {
-            status = ChecksumAndSignatureUtils.getCheckSumAndSignatureStatus(assetManagerUrl, assetManager, functionCode, state, functionZip);
-            FunctionRepositoryProcessorService.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, status);
+            checkSumAndSignatureStatus = ChecksumAndSignatureUtils.getCheckSumAndSignatureStatus(assetManagerUrl, assetManager, functionCode, state, functionZip);
+            FunctionRepositoryProcessorService.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, checkSumAndSignatureStatus);
         } catch (IOException e) {
             log.error("811.185 Error in getCheckSumAndSignatureStatus(),functionCode: {},  assetManager file {}, error: {}",
                     functionCode, assetFile.getFile().toAbsolutePath(), e.toString());
@@ -334,10 +339,10 @@ public class DownloadFunctionService {
             return;
         }
 
-        if (status.checksum != EnumsApi.ChecksumState.wrong && status.signature != EnumsApi.SignatureState.wrong) {
+        if (checkSumAndSignatureStatus.checksum != EnumsApi.ChecksumState.wrong && checkSumAndSignatureStatus.signature != EnumsApi.SignatureState.wrong) {
             functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.ready);
         } else {
-            if (status.checksum== EnumsApi.ChecksumState.wrong) {
+            if (checkSumAndSignatureStatus.checksum== EnumsApi.ChecksumState.wrong) {
                 functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.checksum_wrong);
             }
             else {
