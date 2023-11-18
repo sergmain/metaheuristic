@@ -112,7 +112,7 @@ public class AssetUtils {
     }
 
     @SneakyThrows
-    public static AssetFile prepareFunctionFile(Path baseDir, String functionCode, @Nullable String resourceFilename) {
+    public static AssetFile prepareFunctionAssetFile(Path baseDir, String functionCode, @Nullable String resourceFilename) {
 
         Path baseFunctionDir = ArtifactUtils.prepareFunctionPath(baseDir);
 

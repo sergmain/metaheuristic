@@ -18,14 +18,15 @@ package ai.metaheuristic.ai.functions;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
-import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
-import ai.metaheuristic.api.data.replication.ReplicationApiData;
-import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.TaskParamsUtils;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.HttpResponseException;
 import org.apache.hc.client5.http.fluent.Request;
@@ -33,14 +34,15 @@ import org.apache.hc.client5.http.fluent.Response;
 import org.apache.hc.core5.net.URIBuilder;
 import org.apache.hc.core5.util.Timeout;
 
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.UUID;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import static ai.metaheuristic.ai.functions.FunctionEnums.*;
+import static ai.metaheuristic.ai.functions.FunctionEnums.ConfigStatus;
+import static ai.metaheuristic.ai.functions.FunctionRepositoryData.*;
 
 /**
  * @author Serge
@@ -50,14 +52,39 @@ import static ai.metaheuristic.ai.functions.FunctionEnums.*;
 @Slf4j
 public class ProcessorFunctionUtils {
 
-    public static FunctionRepositoryData.DownloadedFunctionConfigStatus downloadFunctionConfig(DispatcherLookupParamsYaml.AssetManager assetManager, String functionCode) {
+    @AllArgsConstructor
+    @EqualsAndHashCode(of = {"url", "functionCode"})
+    public static class AssetManagerUrlAndFunctionCode {
+        public final String url;
+        public final String functionCode;
+    }
+
+    private static final LinkedHashMap<AssetManagerUrlAndFunctionCode, DownloadedFunctionConfigStatus> CACHE = new LinkedHashMap<>() {
+        protected boolean removeEldestEntry(Map.Entry<AssetManagerUrlAndFunctionCode, DownloadedFunctionConfigStatus> entry) {
+            return size()>100;
+        }
+    };
+
+    public static DownloadedFunctionConfigStatus downloadFunctionConfig(DispatcherLookupParamsYaml.AssetManager assetManager, String functionCode) {
+        final AssetManagerUrlAndFunctionCode key = new AssetManagerUrlAndFunctionCode(assetManager.url, functionCode);
+        DownloadedFunctionConfigStatus status = CACHE.get(key);
+        if (status!=null && status.status!=ConfigStatus.error) {
+            return status;
+        }
+        final DownloadedFunctionConfigStatus downloadedFunctionConfigStatus = downloadFunctionConfigInternal(assetManager, functionCode);
+        CACHE.put(key, downloadedFunctionConfigStatus);
+
+        return downloadedFunctionConfigStatus;
+    }
+
+    private static DownloadedFunctionConfigStatus downloadFunctionConfigInternal(DispatcherLookupParamsYaml.AssetManager assetManager, String functionCode) {
 
         // 99999 - fake processorId for backward compatibility
         final String functionConfigUrl = assetManager.url + Consts.REST_ASSET_URL + "/function-config";
 //        final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8);
         final String randomPartUri = "";
 
-        final FunctionRepositoryData.DownloadedFunctionConfigStatus functionConfigStatus = new FunctionRepositoryData.DownloadedFunctionConfigStatus();
+        final DownloadedFunctionConfigStatus functionConfigStatus = new DownloadedFunctionConfigStatus();
         functionConfigStatus.status = ConfigStatus.error;
         try {
             final URI uri = new URIBuilder(functionConfigUrl + randomPartUri)

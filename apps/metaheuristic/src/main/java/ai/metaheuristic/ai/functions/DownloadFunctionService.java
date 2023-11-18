@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.tasks.GetDispatcherContextInfoTask;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -53,6 +54,7 @@ import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -68,6 +70,7 @@ import java.util.UUID;
 
 import static ai.metaheuristic.ai.functions.FunctionEnums.DownloadPriority.NORMAL;
 import static ai.metaheuristic.ai.functions.FunctionRepositoryData.*;
+import static ai.metaheuristic.api.EnumsApi.FunctionState.*;
 
 @SuppressWarnings("unused")
 @Service
@@ -97,6 +100,10 @@ public class DownloadFunctionService {
         }
 
         final String functionCode = task.functionCode;
+        if (FunctionRepositoryProcessorService.getFunctionDownloadStatus(task.assetManagerUrl, task.functionCode)!=null) {
+            // already downloaded
+            return;
+        }
 
         final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = task.assetManagerUrl;
         final DispatcherLookupParamsYaml.AssetManager assetManager = processorEnvironment.dispatcherLookupExtendedService.getAssetManager(assetManagerUrl);
@@ -105,14 +112,25 @@ public class DownloadFunctionService {
             return;
         }
 
-        final DispatcherData.DispatcherContextInfo contextInfo = DispatcherContextInfoHolder.getCtx(assetManagerUrl);
-
-        // process only if dispatcher has already sent its config
-        if (contextInfo==null || contextInfo.chunkSize==null) {
-            log.warn("811.009 Asset dispatcher {} wasn't initialized yet, chunkSize is  undefined", assetManagerUrl.url);
-            getDispatcherContextInfoService.add(new GetDispatcherContextInfoTask(assetManagerUrl));
+        final DispatcherData.DispatcherContextInfo contextInfo = getDispatcherContextInfo(assetManagerUrl);
+        if (contextInfo == null) {
             return;
         }
+
+        DownloadedFunctionConfigStatus status = ProcessorFunctionUtils.downloadFunctionConfig(assetManager, functionCode);
+        Path baseFunctionDir = MetadataParams.prepareBaseDir(globals.processorResourcesPath, assetManagerUrl);
+
+        final AssetFile assetFile = AssetUtils.prepareFunctionAssetFile(baseFunctionDir, functionCode, status.functionConfig.file);
+        if (assetFile.isError) {
+            log.error("AssetFile error creation for function " + functionCode + " encountered");
+            return;
+        }
+/*
+        if (!assetFile.isContent) {
+            return new FunctionRepositoryData.FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, none), assetFile);
+        }
+*/
+
 
         FunctionConfigAndStatus functionConfigAndStatus = functionRepositoryProcessorService.syncFunctionStatus(assetManagerUrl, assetManager, functionCode);
         if (functionConfigAndStatus==null) {
@@ -334,7 +352,20 @@ public class DownloadFunctionService {
         }
     }
 
-    public void prepareFunctionForDownloading() {
+    @Nullable
+    private DispatcherData.DispatcherContextInfo getDispatcherContextInfo(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl) {
+        final DispatcherData.DispatcherContextInfo contextInfo = DispatcherContextInfoHolder.getCtx(assetManagerUrl);
+
+        // process only if dispatcher has already sent its config
+        if (contextInfo==null || contextInfo.chunkSize==null) {
+            log.warn("811.009 Asset dispatcher {} wasn't initialized yet, chunkSize is  undefined", assetManagerUrl.url);
+            getDispatcherContextInfoService.add(new GetDispatcherContextInfoTask(assetManagerUrl));
+            return null;
+        }
+        return contextInfo;
+    }
+
+/*    public void prepareFunctionForDownloading() {
         functionRepositoryProcessorService.getStatuses().forEach(o -> {
             ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(o.assetManagerUrl);
             if (o.sourcing== EnumsApi.FunctionSourcing.dispatcher && o.state.needVerification) {
@@ -375,7 +406,7 @@ public class DownloadFunctionService {
                 throw new IllegalStateException("Not implemented yet");
             }
         });
-    }
+    }*/
 
     private static void logError(String functionCode, HttpResponseException e) {
         if (e.getStatusCode()== HttpServletResponse.SC_GONE) {

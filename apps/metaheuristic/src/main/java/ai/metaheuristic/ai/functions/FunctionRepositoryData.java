@@ -76,12 +76,6 @@ public class FunctionRepositoryData {
         public String code;
         public ProcessorAndCoreData.AssetManagerUrl assetManagerUrl;
         public EnumsApi.FunctionSourcing sourcing;
-
-        public EnumsApi.ChecksumState checksum = EnumsApi.ChecksumState.not_yet;
-        public EnumsApi.SignatureState signature = EnumsApi.SignatureState.not_yet;
-
-        public final Map<EnumsApi.HashAlgo, String> checksumMap = new HashMap<>();
-        public long lastCheck = 0;
     }
 
     @Data

@@ -143,7 +143,8 @@ public class FunctionRepositoryProcessorService {
                 .findFirst().orElse(null);
 */
             if (status==null || status.state == not_found) {
-                setFunctionDownloadStatusInternal(assetManagerUrl, info.getValue(), info.getKey(), none);
+                removeFunction(assetManagerUrl, info.getValue());
+//                setFunctionDownloadStatusInternal(assetManagerUrl, info.getValue(), info.getKey(), none);
                 isChanged = true;
             }
         }
@@ -238,11 +239,11 @@ public class FunctionRepositoryProcessorService {
         map.remove(functionCode);
     }
 
-    public void setFunctionDownloadStatus(final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode, EnumsApi.FunctionSourcing sourcing, FunctionState functionState) {
+    public void setFunctionDownloadStatus(final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode, EnumsApi.FunctionSourcing sourcing, FunctionState functionState, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher) {
         if (S.b(functionCode)) {
             throw new IllegalStateException("816.360 functionCode is empty");
         }
-        setFunctionDownloadStatusInternal(assetManagerUrl, functionCode, sourcing, functionState);
+        setFunctionDownloadStatusInternal(assetManagerUrl, functionCode, sourcing, functionState, dispatcher);
 //        updateMetadataFile();
     }
 
@@ -258,7 +259,7 @@ public class FunctionRepositoryProcessorService {
         return infos;
     }
 
-    private void setFunctionDownloadStatusInternal(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode, EnumsApi.FunctionSourcing sourcing, FunctionState functionState) {
+    private void setFunctionDownloadStatusInternal(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode, EnumsApi.FunctionSourcing sourcing, FunctionState functionState, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher) {
         FunctionRepositoryData.DownloadStatus status = getFunctionDownloadStatus(assetManagerUrl, functionCode);
 //        FunctionRepositoryData.DownloadStatus status = functions.values().stream().filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(functionCode)).findFirst().orElse(null);
         if (status == null) {
@@ -273,10 +274,13 @@ public class FunctionRepositoryProcessorService {
         status.lastCheck = System.currentTimeMillis();
     }
 
+/*
     public Collection<FunctionRepositoryData.DownloadStatus> getStatuses() {
         return Collections.unmodifiableCollection(functions.values());
     }
+*/
 
+/*
     private static void markAllAsUnverified() {
         List<FunctionRepositoryData.DownloadStatus> forRemoving = new ArrayList<>();
         for (FunctionRepositoryData.DownloadStatus status : functions.values()) {
@@ -294,6 +298,7 @@ public class FunctionRepositoryProcessorService {
             removeFunction(status.assetManagerUrl, status.code);
         }
     }
+*/
 
     @Nullable
     public FunctionRepositoryData.FunctionConfigAndStatus syncFunctionStatus(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager assetManager, final String functionCode) {
@@ -343,7 +348,7 @@ public class FunctionRepositoryProcessorService {
 
         Path baseFunctionDir = MetadataParams.prepareBaseDir(globals.processorResourcesPath, assetManagerUrl);
 
-        final AssetFile assetFile = AssetUtils.prepareFunctionFile(baseFunctionDir, status.code, functionConfig.file);
+        final AssetFile assetFile = AssetUtils.prepareFunctionAssetFile(baseFunctionDir, status.code, functionConfig.file);
         if (assetFile.isError) {
             return new FunctionRepositoryData.FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, asset_error));
         }
@@ -358,7 +363,7 @@ public class FunctionRepositoryProcessorService {
         try {
             final MetadataParams metadataParams = processorEnvironment.metadataParams;
             if (function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-                return prepareWithSourcingAsDispatcher(assetManagerUrl, function, globals);
+                return prepareWithSourcingAsDispatcher(assetManagerUrl, function, globals, dispatcher);
             }
             else if (function.sourcing== EnumsApi.FunctionSourcing.git) {
                 return prepareWithSourcingAsGit(globals.processorResourcesPath, assetManagerUrl, function, metadataParams, gitSourcingService::prepareFunction);
@@ -411,19 +416,19 @@ public class FunctionRepositoryProcessorService {
     }
 
     private FunctionRepositoryData.FunctionPrepareResult prepareWithSourcingAsDispatcher(
-        ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig function, Globals Globals
-    ) {
+        ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig function, Globals Globals,
+        DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher) {
         FunctionRepositoryData.FunctionPrepareResult functionPrepareResult = new FunctionRepositoryData.FunctionPrepareResult();
         functionPrepareResult.function = function;
 
         final Path baseResourceDir = MetadataParams.prepareBaseDir(Globals.processorResourcesPath, assetManagerUrl);
-        functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
+        functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionAssetFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
         // is this function prepared?
         if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
             log.info("100.560 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
             functionPrepareResult.isLoaded = false;
 
-            setFunctionDownloadStatus(assetManagerUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, none);
+            setFunctionDownloadStatus(assetManagerUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, none, dispatcher);
         }
         return functionPrepareResult;
     }

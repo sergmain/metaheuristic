@@ -126,7 +126,7 @@ public class SouthbridgeService {
         BiConsumer<String, Path> dataSaver;
         switch (binaryType) {
             case function:
-                assetFile = AssetUtils.prepareFunctionFile(globals.dispatcherResourcesPath, dataId, null);
+                assetFile = AssetUtils.prepareFunctionAssetFile(globals.dispatcherResourcesPath, dataId, null);
                 if (assetFile.isError) {
                     String es = "444.100 Function with id " + dataId + " is broken";
                     log.error(es);

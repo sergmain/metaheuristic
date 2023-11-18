@@ -434,6 +434,7 @@ public class Schedulers {
         }
     }
 
+/*
     @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
     @Profile("processor")
     public static class PrepareFunctionForDownloadingSchedulingConfig implements SchedulingConfigurer {
@@ -454,6 +455,7 @@ public class Schedulers {
             downloadFunctionActor.prepareFunctionForDownloading();
         }
     }
+*/
 
     @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
     @Profile("processor")
