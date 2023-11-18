@@ -27,7 +27,7 @@ import org.yaml.snakeyaml.Yaml;
  * Time: 7:09 PM
  */
 public class FunctionRepositoryResponseParamsUtilsV1
-    extends AbstractParamsYamlUtils<FunctionRepositoryRequestParamsV1, FunctionRepositoryRequestParams, Void, Void, Void, Void> {
+    extends AbstractParamsYamlUtils<FunctionRepositoryResponseParamsV1, FunctionRepositoryResponseParams, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -37,18 +37,17 @@ public class FunctionRepositoryResponseParamsUtilsV1
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(FunctionRepositoryRequestParamsV1.class);
+        return YamlUtils.init(FunctionRepositoryResponseParamsV1.class);
     }
 
     @NonNull
     @Override
-    public FunctionRepositoryRequestParams upgradeTo(@NonNull FunctionRepositoryRequestParamsV1 src) {
+    public FunctionRepositoryResponseParams upgradeTo(@NonNull FunctionRepositoryResponseParamsV1 src) {
         src.checkIntegrity();
-        FunctionRepositoryRequestParams trg = new FunctionRepositoryRequestParams();
-//        trg.createdOn = src.createdOn;
-//        trg.code=src.code;
-//        trg.name=src.name;
-//        trg.description=src.description;
+
+        FunctionRepositoryResponseParams trg = new FunctionRepositoryResponseParams();
+        trg.success = src.success;
+        trg.functionCodes = src.functionCodes;
 
         trg.checkIntegrity();
         return trg;
@@ -71,14 +70,14 @@ public class FunctionRepositoryResponseParamsUtilsV1
     }
 
     @Override
-    public String toString(@NonNull FunctionRepositoryRequestParamsV1 yaml) {
+    public String toString(@NonNull FunctionRepositoryResponseParamsV1 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public FunctionRepositoryRequestParamsV1 to(@NonNull String s) {
-        final FunctionRepositoryRequestParamsV1 p = getYaml().load(s);
+    public FunctionRepositoryResponseParamsV1 to(@NonNull String s) {
+        final FunctionRepositoryResponseParamsV1 p = getYaml().load(s);
         return p;
     }
 

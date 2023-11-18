@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.functions;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.event.events.RegisterFunctionCodesForStartedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
@@ -90,9 +89,13 @@ public class FunctionRepositoryDispatcherService {
     public String processRequest(String data, String remoteAddr) {
         FunctionRepositoryRequestParams p = FunctionRepositoryRequestParamsUtils.UTILS.to(data);
         FunctionRepositoryResponseParams r = new FunctionRepositoryResponseParams();
+        r.success = true;
         registerReadyFunctionCodesOnProcessor(p);
 
-        r.functionCodes = getActiveFunctionCode(p.processorId);
+        final Set<String> activeFunctionCodes = getActiveFunctionCode(p.processorId);
+        if (CollectionUtils.isNotEmpty(activeFunctionCodes)) {
+            r.functionCodes = new ArrayList<>(activeFunctionCodes);
+        }
 
         String response = FunctionRepositoryResponseParamsUtils.UTILS.toString(r);
         return response;

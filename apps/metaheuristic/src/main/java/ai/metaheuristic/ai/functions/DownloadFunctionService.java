@@ -52,8 +52,10 @@ import org.apache.hc.core5.net.URIBuilder;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.Nullable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -86,6 +88,16 @@ public class DownloadFunctionService {
 
     public void addTask(DownloadFunctionTask task) {
         downloadFunctionQueue.putToQueue(task);
+    }
+
+    @Async
+    @EventListener
+    public void processAssetPreparing(FunctionRepositoryData.DownloadFunctionTask event) {
+        try {
+            addTask(event);
+        } catch (Throwable th) {
+            log.error("951.004 Error, need to investigate ", th);
+        }
     }
 
     public void downloadFunction(DownloadFunctionTask task) {

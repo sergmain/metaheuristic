@@ -43,6 +43,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -73,7 +74,7 @@ public class FunctionRepositoryProcessorService {
     private final Globals globals;
     private final ProcessorEnvironment processorEnvironment;
     private final GitSourcingService gitSourcingService;
-    private final DownloadFunctionService downloadFunctionService;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     // key - assetManagerUrl, value - Map with key - function code, value - FunctionRepositoryData.Function
@@ -102,7 +103,8 @@ public class FunctionRepositoryProcessorService {
 //                        codesFailed.add(functionCode);
                     }
                 }
-                downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionCode, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, HIGH));
+                eventPublisher.publishEvent(new FunctionRepositoryData.DownloadFunctionTask(functionCode, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, HIGH));
+//                downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionCode, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, HIGH));
             }
         }
         if (processorId!=null && !codesReady.isEmpty()) {
@@ -274,7 +276,8 @@ public class FunctionRepositoryProcessorService {
 
             status = new FunctionRepositoryData.DownloadStatus(none, functionCode, assetManagerUrl, sourcing);
 
-            downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionCode, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
+            eventPublisher.publishEvent(new FunctionRepositoryData.DownloadFunctionTask(functionCode, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
+            //downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionCode, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
         }
         status.state = functionState;
 /*

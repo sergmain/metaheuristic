@@ -17,7 +17,11 @@
 package ai.metaheuristic.ai.functions.communication;
 
 import ai.metaheuristic.api.data.BaseParams;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
+import org.springframework.lang.Nullable;
+
+import java.util.List;
 
 /**
  * @author Sergio Lissner
@@ -33,4 +37,12 @@ public class FunctionRepositoryResponseParamsV1 implements BaseParams {
     public boolean checkIntegrity() {
         return true;
     }
+
+    // list of function codes which must to be prepared and ready
+    @Nullable
+    @JsonInclude(value= JsonInclude.Include.NON_NULL)
+    public List<String> functionCodes = null;
+
+    public boolean success;
+
 }

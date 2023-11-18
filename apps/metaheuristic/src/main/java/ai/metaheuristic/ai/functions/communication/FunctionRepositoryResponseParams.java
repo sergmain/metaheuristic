@@ -21,7 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import org.springframework.lang.Nullable;
 
-import java.util.Set;
+import java.util.List;
+
 
 /**
  * @author Sergio Lissner
@@ -41,7 +42,7 @@ public class FunctionRepositoryResponseParams implements BaseParams {
     // list of function codes which must to be prepared and ready
     @Nullable
     @JsonInclude(value= JsonInclude.Include.NON_NULL)
-    public Set<String> functionCodes = null;
+    public List<String> functionCodes = null;
 
     public boolean success;
 
