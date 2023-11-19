@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -121,6 +122,7 @@ public class ExecContextTaskAssigningTopLevelService {
     private long mills = 0L;
     @SuppressWarnings("SizeReplaceableByIsEmpty")
     private UnassignedTasksStat findUnassignedTasksAndRegisterInQueueInternal(Long execContextId) {
+        TxUtils.checkTxNotExists();
 
         UnassignedTasksStat stat = new UnassignedTasksStat();
 
@@ -147,7 +149,7 @@ public class ExecContextTaskAssigningTopLevelService {
         log.debug("703.140 found {} tasks for registering, execContextId: #{}", vertices.size(), execContextId);
 
         if (vertices.isEmpty()) {
-            execContextTaskResettingTopLevelService.handleEvaluateProviderEvent(new ResetTasksWithErrorEvent(execContextId));
+            execContextTaskResettingTopLevelService.handleResetTasksWithErrorEvent(new ResetTasksWithErrorEvent(execContextId));
             return stat;
         }
 

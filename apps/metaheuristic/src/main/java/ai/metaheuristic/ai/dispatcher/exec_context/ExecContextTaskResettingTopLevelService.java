@@ -61,7 +61,7 @@ public class ExecContextTaskResettingTopLevelService {
     private final ExecContextCache execContextCache;
 
     private final MultiTenantedQueue<Long, ResetTasksWithErrorEvent> resetTasksWithErrorEventThreadedPool =
-            new MultiTenantedQueue<>(100, ConstsApi.SECONDS_10, false, "ExecContextTaskResetting-", this::resetTasksWithErrorForRecovery);
+            new MultiTenantedQueue<>(100, ConstsApi.SECONDS_10, true, "ExecContextTaskResetting-", this::resetTasksWithErrorForRecovery);
 
     @PreDestroy
     public void onExit() {
@@ -70,7 +70,7 @@ public class ExecContextTaskResettingTopLevelService {
 
     @Async
     @EventListener
-    public void handleEvaluateProviderEvent(ResetTasksWithErrorEvent event) {
+    public void handleResetTasksWithErrorEvent(ResetTasksWithErrorEvent event) {
         resetTasksWithErrorEventThreadedPool.putToQueue(event);
     }
 

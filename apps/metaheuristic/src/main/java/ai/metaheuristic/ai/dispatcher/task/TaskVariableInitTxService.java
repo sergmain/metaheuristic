@@ -92,10 +92,7 @@ public class TaskVariableInitTxService {
 
         List<String> allParentTaskContextIds = getAllParentTaskContextIds(task, paramsYaml.task.init.parentTaskIds, paramsYaml.task.taskContextId, ec);
         if (allParentTaskContextIds!=null) {
-            TaskImpl t = prepareVariables(ec.getExecContextParamsYaml(), task, allParentTaskContextIds);
-            if (t!=null) {
-                task = taskTxService.save(t);
-            }
+            prepareVariables(ec.getExecContextParamsYaml(), task, allParentTaskContextIds);
         }
         task.execState = paramsYaml.task.init.nextState.value;
 
@@ -104,8 +101,7 @@ public class TaskVariableInitTxService {
         eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInExecContextTxEvent(task.execContextId, List.of(task.id)));
     }
 
-    @Nullable
-    private TaskImpl prepareVariables(ExecContextParamsYaml execContextParamsYaml, TaskImpl task, List<String> allParentTaskContextIds) {
+    private void prepareVariables(ExecContextParamsYaml execContextParamsYaml, TaskImpl task, List<String> allParentTaskContextIds) {
         TxUtils.checkTxExists();
 
         TaskParamsYaml taskParams = task.getTaskParamsYaml();
@@ -114,14 +110,14 @@ public class TaskVariableInitTxService {
         ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParams.task.processCode);
         if (p==null) {
             log.warn("179.040 can't find process '"+taskParams.task.processCode+"' in execContext with Id #"+ execContextId);
-            return null;
+            return;
         }
 
         p.inputs.stream()
                 .map(v -> toInputVariable(allParentTaskContextIds, v, taskParams.task.taskContextId, execContextId))
                 .collect(Collectors.toCollection(()->taskParams.task.inputs));
 
-        return variableTxService.initOutputVariables(execContextId, task, p, taskParams);
+        variableTxService.initOutputVariables(execContextId, task, p, taskParams);
     }
 
     private TaskParamsYaml.InputVariable toInputVariable(List<String> allParentTaskContextIds, ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {

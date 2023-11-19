@@ -42,7 +42,7 @@ public class TaskVariableInitService {
     private final TaskVariableInitTxService taskVariableInitTxService;
 
     private final MultiTenantedQueue<Long, InitVariablesEvent> threadedPool =
-            new MultiTenantedQueue<>(-1, Duration.ZERO, true, "InitVariablesEvent-", this::intiVariables);
+            new MultiTenantedQueue<>(10, Duration.ZERO, true, "InitVariablesEvent-", this::intiVariables);
 
     @Async
     @EventListener

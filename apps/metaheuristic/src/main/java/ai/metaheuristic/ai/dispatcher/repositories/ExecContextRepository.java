@@ -75,7 +75,7 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
     @Query(value="select sc.id from ExecContextImpl e, SourceCodeImpl sc where e.sourceCodeId=sc.id and e.state=:execState")
     List<Long> findAllSourceCodeIdsByExecState(int execState);
 
-    @Query(value="select sc.id from ExecContextImpl e, SourceCodeImpl sc where e.sourceCodeId=sc.id and e.state=:execState")
+    @Query(value="select e.id from ExecContextImpl e where e.state=:execState")
     List<Long> findIdsByExecState(int execState);
 
 /*

@@ -185,6 +185,7 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
         queueWriteLock.lock();
         try {
             queue.computeIfAbsent(event.getId(), (o) -> new QueueWithThread<>(this.checkForDouble)).add(event);
+            int i=0;
         } finally {
             queueWriteLock.unlock();
         }

@@ -653,7 +653,7 @@ public class VariableTxService {
     }
 
 
-    public TaskImpl initOutputVariables(Long execContextId, TaskImpl task, ExecContextParamsYaml.Process p, TaskParamsYaml taskParamsYaml) {
+    public void initOutputVariables(Long execContextId, TaskImpl task, ExecContextParamsYaml.Process p, TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxExists();
 
         for (ExecContextParamsYaml.Variable variable : p.outputs) {
@@ -687,8 +687,6 @@ public class VariableTxService {
                         taskParamsYaml.task.outputs.stream().map(o -> new ExecContextApiData.VariableInfo(o.id, o.name, o.context, o.ext)).collect(Collectors.toList())));
 
         eventPublisherService.publishTaskCreatedTxEvent(event);
-
-        return task;
     }
 
     public Variable createUninitialized(String variable, Long execContextId, String taskContextId) {

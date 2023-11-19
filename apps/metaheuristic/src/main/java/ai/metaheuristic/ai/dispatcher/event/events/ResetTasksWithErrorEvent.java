@@ -26,7 +26,7 @@ import lombok.EqualsAndHashCode;
  * Time: 12:41 AM
  */
 @AllArgsConstructor
-@EqualsAndHashCode
+@EqualsAndHashCode(of= {"execContextId"})
 public class ResetTasksWithErrorEvent implements EventWithId<Long> {
     public final Long execContextId;
 
