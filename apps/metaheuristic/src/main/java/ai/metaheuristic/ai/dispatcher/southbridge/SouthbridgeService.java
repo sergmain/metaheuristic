@@ -231,7 +231,7 @@ public class SouthbridgeService {
         ProcessorCommParamsYaml scpy = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.to(data);
         DispatcherCommParamsYaml lcpy = processRequestInternal(remoteAddress, scpy);
         String yaml = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.toString(lcpy);
-        log.info("444.196 processRequest(), size of yaml: {}", yaml.length());
+        log.info("444.210 processRequest(), size of request yaml: {}, response yaml: {}", data.length(), yaml.length());
         return yaml;
     }
 

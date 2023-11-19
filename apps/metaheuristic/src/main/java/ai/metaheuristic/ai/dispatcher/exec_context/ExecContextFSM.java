@@ -110,15 +110,6 @@ public class ExecContextFSM {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest execContextTargetState(ExecContextImpl execContext, EnumsApi.ExecContextState execState, Long companyUniqueId) {
-        TxUtils.checkTxExists();
-        ExecContextSyncService.checkWriteLockPresent(execContext.id);
-
-        execContext.setState(execState.code);
-        execContextCache.save(execContext);
-        return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
     private void toStateWithCompletion(ExecContextImpl execContext, EnumsApi.ExecContextState state) {
         if (execContext.state != state.code) {
             execContext.setCompletedOn(System.currentTimeMillis());

@@ -85,10 +85,6 @@ public abstract class FeatureMethods extends PreparingExperiment {
         assertNotNull(getExecContextForTest());
         assertEquals(EnumsApi.ExecContextState.NONE.code, getExecContextForTest().getState());
         ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, () -> {
-            EnumsApi.TaskProducingStatus producingStatus = txSupportForTestingService.toProducing(getExecContextForTest().id);
-            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
-            assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
-            assertEquals(EnumsApi.ExecContextState.PRODUCING.code, getExecContextForTest().getState());
 
             List<Object[]> tasks01 = taskRepositoryForTest.findByExecContextId(result.execContext.id);
             assertTrue(tasks01.isEmpty());

@@ -675,22 +675,26 @@ public class ProcessorTaskService {
     public void delete(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, final Long taskId) {
         MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.metadataParams.processorStateByDispatcherUrl(core);
 
+        final Path processorDir = processorPath.resolve(core.coreCode);
+        final Path processorTaskDir = processorDir.resolve(Consts.TASK_DIR);
+        final Path dispatcherDir = processorTaskDir.resolve(processorState.dispatcherCode);
+        final Path taskDir = DirUtils.getPoweredPath(dispatcherDir, taskId);
+
         try {
             ProcessorSyncHolder.writeLock.lock();
             processorEnvironment.metadataParams.removeQuota(core.dispatcherUrl.url, taskId);
-            final Path processorDir = processorPath.resolve(core.coreCode);
-            final Path processorTaskDir = processorDir.resolve(Consts.TASK_DIR);
-            final Path dispatcherDir = processorTaskDir.resolve(processorState.dispatcherCode);
-
-            final Path taskDir = DirUtils.getPoweredPath(dispatcherDir, taskId);
             try {
                 if (Files.exists(taskDir)) {
                     deleteDir(taskDir, "delete dir in ProcessorTaskService.delete()");
                 }
                 Map<Long, ProcessorCoreTask> mapTask = getTasksForProcessorCore(core);
-                log.debug("Does task present in map before deleting: {}", mapTask.containsKey(taskId));
+                if (log.isDebugEnabled()) {
+                    log.debug("Does task present in map before deleting: {}", mapTask.containsKey(taskId));
+                }
                 mapTask.remove(taskId);
-                log.debug("Does task present in map after deleting: {}", mapTask.containsKey(taskId));
+                if (log.isDebugEnabled()) {
+                    log.debug("Does task present in map after deleting: {}", mapTask.containsKey(taskId));
+                }
             } catch (java.lang.NoClassDefFoundError th) {
                 log.error("713.580 Error deleting task {}, {}", taskId, th.getMessage());
             } catch (Throwable th) {

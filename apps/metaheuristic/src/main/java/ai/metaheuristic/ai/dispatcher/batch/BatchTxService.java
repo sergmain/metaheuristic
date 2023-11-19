@@ -159,23 +159,16 @@ public class BatchTxService {
         }
 
         Batch b = createBatch(sourceCode, execContextId, dispatcherContext);
-
         BatchUtils.changeStateToPreparing(b);
 
-        // start producing new tasks
-        OperationStatusRest operationStatus = execContextFSM.execContextTargetState(execContext, EnumsApi.ExecContextState.PRODUCING, dispatcherContext.getCompanyId());
-
-        if (operationStatus.isErrorMessages()) {
-            throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
-        }
         SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContext);
 
         if (result.sourceCodeValidationResult.status!= EnumsApi.SourceCodeValidateStatus.OK) {
             throw new BatchResourceProcessingException(result.sourceCodeValidationResult.error);
         }
 
-        if (result.taskProducingStatus!= EnumsApi.TaskProducingStatus.OK) {
-            throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
+        if (result.taskProducingStatus!=EnumsApi.TaskProducingStatus.OK) {
+            throw new BatchResourceProcessingException("Task producing and starting error: " + result.taskProducingStatus);
         }
 
         changeStateToProcessing(b);

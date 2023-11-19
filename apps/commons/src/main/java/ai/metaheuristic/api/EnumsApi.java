@@ -262,8 +262,8 @@ public class EnumsApi {
         ERROR(-2),          // some error in configuration
         UNKNOWN(-1),        // unknown state
         NONE(0),            // just created execContext
-        PRODUCING(1),       // producing was just started
-        NOT_USED_ANYMORE(2),        // former 'PRODUCED' status
+        NOT_USED_ANYMORE_1(1),       // producing was just started
+        NOT_USED_ANYMORE_2(2),        // former 'PRODUCED' status
         STARTED(3),         // started
         STOPPED(4),         // stopped
         FINISHED(5),        // finished
@@ -282,8 +282,8 @@ public class EnumsApi {
                         //noinspection
                         UNKNOWN;
                 case 0 -> NONE;
-                case 1 -> PRODUCING;
-                case 2 -> NOT_USED_ANYMORE;
+                case 1 -> NOT_USED_ANYMORE_1;
+                case 2 -> NOT_USED_ANYMORE_2;
                 case 3 -> STARTED;
                 case 4 -> STOPPED;
                 case 5 -> FINISHED;

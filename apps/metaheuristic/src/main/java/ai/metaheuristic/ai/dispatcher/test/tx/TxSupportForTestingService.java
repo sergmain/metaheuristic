@@ -217,23 +217,6 @@ public class TxSupportForTestingService {
     }
 
     @Transactional
-    public EnumsApi.TaskProducingStatus toProducing(Long execContextId) {
-        if (!globals.testing) {
-            throw new IllegalStateException("Only for testing");
-        }
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
-        if (execContext==null) {
-            return EnumsApi.TaskProducingStatus.EXEC_CONTEXT_NOT_FOUND_ERROR;
-        }
-        if (execContext.state == EnumsApi.ExecContextState.PRODUCING.code) {
-            return EnumsApi.TaskProducingStatus.OK;
-        }
-        execContext.setState(EnumsApi.ExecContextState.PRODUCING.code);
-        execContextCache.save(execContext);
-        return EnumsApi.TaskProducingStatus.OK;
-    }
-
-    @Transactional
     public OperationStatusRest addTasksToGraphWithTx(Long execContextId, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");

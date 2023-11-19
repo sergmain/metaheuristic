@@ -149,17 +149,6 @@ public class ExperimentTopLevelService {
      * this method is for using in command-line
      *
      * @param experimentCode
-     * @param companyUniqueId
-     * @return
-     */
-    public OperationStatusRest produceTasks(String experimentCode, Long companyUniqueId) {
-        return changeExecStateTo(experimentCode, EnumsApi.ExecContextState.PRODUCING, companyUniqueId);
-    }
-
-    /**
-     * this method is for using in command-line
-     *
-     * @param experimentCode
      * @return
      */
     public EnumsApi.ExecContextState getExperimentProcessingStatus(String experimentCode) {

@@ -109,12 +109,6 @@ public class ExperimentRestController {
 
     // only for command-line. there aren't equal methods in ExperimentController and won't be
 
-    @PostMapping("/produce-tasks")
-    public OperationStatusRest produceTasks(String experimentCode, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
-        return experimentTopLevelService.produceTasks(experimentCode, context.getCompanyId());
-    }
-
     @PostMapping("/start-processing-of-tasks")
     public OperationStatusRest startProcessingOfTasks(String experimentCode, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);

@@ -329,11 +329,10 @@ public class PreparingSourceCodeService {
             assertEquals(EnumsApi.ExecContextState.NONE.code, preparingSourceCodeData.getExecContextForTest().getState());
 
 
-            EnumsApi.TaskProducingStatus producingStatus = txSupportForTestingService.toProducing(preparingSourceCodeData.getExecContextForTest().id);
-            assertEquals(EnumsApi.TaskProducingStatus.OK, producingStatus);
             preparingSourceCodeData.setExecContextForTest(Objects.requireNonNull(execContextCache.findById(preparingSourceCodeData.getExecContextForTest().id)));
             assertNotNull(preparingSourceCodeData.getExecContextForTest());
-            assertEquals(EnumsApi.ExecContextState.PRODUCING.code, preparingSourceCodeData.getExecContextForTest().getState());
+
+            assertEquals(EnumsApi.ExecContextState.STARTED.code, preparingSourceCodeData.getExecContextForTest().getState());
             ExecContextGraphSyncService.getWithSyncVoid(preparingSourceCodeData.getExecContextForTest().execContextGraphId, ()->
                     ExecContextTaskStateSyncService.getWithSyncVoid(preparingSourceCodeData.getExecContextForTest().execContextTaskStateId, ()-> {
                         txSupportForTestingService.produceAndStartAllTasks(preparingSourceCodeData.getSourceCode(), result.execContext.id);
