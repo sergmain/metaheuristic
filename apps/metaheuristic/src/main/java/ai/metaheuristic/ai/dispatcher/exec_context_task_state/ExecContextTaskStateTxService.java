@@ -55,7 +55,7 @@ public class ExecContextTaskStateTxService {
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final EventPublisherService eventPublisherService;
 
-    @Transactional
+    @Transactional(rollbackFor = CommonRollbackException.class)
     public OperationStatusRest updateTaskExecStatesInGraph(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, List<TaskData.TaskWithStateAndTaskContextId> taskWithStates) {
         ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
 

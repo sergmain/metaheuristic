@@ -16,13 +16,14 @@
 
 package ai.metaheuristic.commons.utils.threads;
 
-import ai.metaheuristic.api.ConstsApi;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.lang.Nullable;
+
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -53,7 +54,7 @@ public class MultiTenantedQueueTest {
     @Test
     public void test() {
         System.out.println("init queue");
-        MultiTenantedQueue<Long, Event> queue = new MultiTenantedQueue<>(100, ConstsApi.DURATION_NONE, true, null, MultiTenantedQueueTest::process);
+        MultiTenantedQueue<Long, Event> queue = new MultiTenantedQueue<>(100, Duration.ZERO, true, null, MultiTenantedQueueTest::process);
 
         try {
 

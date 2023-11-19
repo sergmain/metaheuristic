@@ -26,7 +26,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
@@ -41,6 +40,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -71,7 +71,7 @@ public class ExecContextReadinessService {
 
     @PostConstruct
     public void init() {
-        startProcessReadinessEventThreadedPool = new MultiTenantedQueue<>(100, ConstsApi.DURATION_NONE, false, "ExecContextReadinessService-", (event) -> {
+        startProcessReadinessEventThreadedPool = new MultiTenantedQueue<>(100, Duration.ZERO, false, "ExecContextReadinessService-", (event) -> {
             prepare(event.getId());
             execContextReadinessStateService.remove(event.getId());
         });

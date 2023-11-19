@@ -136,11 +136,35 @@ public class DownloadFunctionService {
             log.error("AssetFile error creation for function " + functionCode + " encountered");
             return;
         }
-/*
-        if (!assetFile.isContent) {
-            return new FunctionRepositoryData.FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, none), assetFile);
+
+        String functionZipFilename = ArtifactCommonUtils.normalizeCode(task.functionCode) + Consts.ZIP_EXT;
+        String mask = functionZipFilename + ".%s.tmp";
+        Path parentDir = assetFile.file.getParent();
+        Path downloadDir = parentDir.getParent().resolve(parentDir.getFileName().toString()+"-download");
+        Path functionZip = downloadDir.resolve(functionZipFilename);
+
+        ChecksumAndSignatureData.ChecksumWithSignatureInfo checksum = MetadataParams.prepareChecksumWithSignature(status.functionConfig.checksumMap);
+
+        if (assetFile.isContent) {
+            try {
+                CheckSumAndSignatureStatus checkSumAndSignatureStatus = ChecksumAndSignatureUtils.getCheckSumAndSignatureStatus(assetManagerUrl, assetManager, functionCode, checksum, functionZip);
+                FunctionRepositoryProcessorService.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, checkSumAndSignatureStatus);
+                if (checkSumAndSignatureStatus.checksum != EnumsApi.ChecksumState.wrong && checkSumAndSignatureStatus.signature != EnumsApi.SignatureState.wrong) {
+                    log.info("Previous instance of function {} was found, checksum: {}, signature: {}", functionCode, checkSumAndSignatureStatus.checksum, checkSumAndSignatureStatus.signature);
+                    functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.ready);
+                    return;
+                }
+
+            } catch (IOException e) {
+                log.warn("Checksum verification for function {} was failed with an error: {}", functionCode, e.getMessage());
+            }
+            try {
+                Files.deleteIfExists(assetFile.file);
+            }
+            catch (IOException e) {
+                //
+            }
         }
-*/
 
 /*
         FunctionConfigAndStatus functionConfigAndStatus = functionRepositoryProcessorService.syncFunctionStatus(assetManagerUrl, assetManager, functionCode);
@@ -168,11 +192,6 @@ public class DownloadFunctionService {
         }
 */
 
-        String functionZipFilename = ArtifactCommonUtils.normalizeCode(task.functionCode) + Consts.ZIP_EXT;
-        String mask = functionZipFilename + ".%s.tmp";
-        Path parentDir = assetFile.file.getParent();
-        Path downloadDir = parentDir.getParent().resolve(parentDir.getFileName().toString()+"-download");
-        Path functionZip = downloadDir.resolve(functionZipFilename);
 
 //        if (functionDownloadStatus.state.needDownload)
         {
@@ -338,11 +357,9 @@ public class DownloadFunctionService {
             log.error("811.180 assetManager file {} is missing", assetFile.file.toAbsolutePath());
             return;
         }
-        ChecksumAndSignatureData.ChecksumWithSignatureInfo state = MetadataParams.prepareChecksumWithSignature(status.functionConfig.checksumMap);
-
         CheckSumAndSignatureStatus checkSumAndSignatureStatus;
         try {
-            checkSumAndSignatureStatus = ChecksumAndSignatureUtils.getCheckSumAndSignatureStatus(assetManagerUrl, assetManager, functionCode, state, functionZip);
+            checkSumAndSignatureStatus = ChecksumAndSignatureUtils.getCheckSumAndSignatureStatus(assetManagerUrl, assetManager, functionCode, checksum, functionZip);
             FunctionRepositoryProcessorService.setChecksumAndSignatureStatus(assetManagerUrl, functionCode, checkSumAndSignatureStatus);
         } catch (IOException e) {
             log.error("811.185 Error in getCheckSumAndSignatureStatus(),functionCode: {},  assetManager file {}, error: {}",

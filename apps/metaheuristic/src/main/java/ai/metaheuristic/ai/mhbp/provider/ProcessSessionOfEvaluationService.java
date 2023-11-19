@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.mhbp.provider;
 
 import ai.metaheuristic.ai.mhbp.events.EvaluateProviderEvent;
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +25,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
 
 /**
  * @author Sergio Lissner
@@ -44,7 +45,7 @@ public class ProcessSessionOfEvaluationService {
     public ProcessSessionOfEvaluationService(@Autowired ProviderQueryService providerQueryService) {
         this.providerQueryService = providerQueryService;
         this.evaluateProviderEventThreadedPool =
-                new MultiTenantedQueue<>(10, ConstsApi.DURATION_NONE, true, "ProcessSessionOfEvaluationService-", providerQueryService::evaluateProvider);
+                new MultiTenantedQueue<>(10, Duration.ZERO, true, "ProcessSessionOfEvaluationService-", providerQueryService::evaluateProvider);
     }
 
     @PreDestroy

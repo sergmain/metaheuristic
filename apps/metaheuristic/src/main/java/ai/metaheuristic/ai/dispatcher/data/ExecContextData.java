@@ -39,7 +39,8 @@ public class ExecContextData {
 
     public record GraphAndStates(ExecContextGraph graph, ExecContextTaskState states) {}
 
-    public record ExecContextDAC(Long execContextId, DirectedAcyclicGraph<TaskVertex, DefaultEdge> graph) {}
+    public record ExecContextDAC(Long execContextId, DirectedAcyclicGraph<TaskVertex, DefaultEdge> graph,
+                                 Integer version) {}
 
     public record UserExecContext(Long accountId, Long companyId) {}
 

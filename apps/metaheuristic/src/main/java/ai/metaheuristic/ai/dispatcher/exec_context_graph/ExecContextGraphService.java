@@ -48,6 +48,7 @@ import org.jgrapht.traverse.TopologicalOrderIterator;
 import org.jgrapht.util.SupplierUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -732,8 +733,12 @@ public class ExecContextGraphService {
 
     public ExecContextData.ExecContextDAC getExecContextDAC(Long execContextId, Long execContextGraphId) {
         ExecContextGraph execContextGraph = prepareExecContextGraph(execContextGraphId);
+        return getExecContextDAC(execContextId, execContextGraph);
+    }
+
+    public static ExecContextData.ExecContextDAC getExecContextDAC(Long execContextId, ExecContextGraph execContextGraph) {
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = importExecContextGraph(execContextGraph.getExecContextGraphParamsYaml());
-        ExecContextData.ExecContextDAC execContextDAC = new ExecContextData.ExecContextDAC(execContextId, graph);
+        ExecContextData.ExecContextDAC execContextDAC = new ExecContextData.ExecContextDAC(execContextId, graph, execContextGraph.version);
         return execContextDAC;
     }
 }

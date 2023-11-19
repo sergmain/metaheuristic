@@ -60,7 +60,6 @@ public class ConstsApi {
 
     public static final String DEFAULT_PROCESSOR_CODE = "processor-01";
 
-    public static final Duration DURATION_NONE = Duration.ofSeconds(0);
     public static final Duration SECONDS_1 = Duration.ofSeconds(1);
     public static final Duration SECONDS_3 = Duration.ofSeconds(3);
     public static final Duration SECONDS_5 = Duration.ofSeconds(5);

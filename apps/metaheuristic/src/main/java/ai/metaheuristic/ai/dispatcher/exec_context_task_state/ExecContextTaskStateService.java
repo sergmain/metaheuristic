@@ -16,8 +16,11 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context_task_state;
 
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.events.TransferStateFromTaskQueueToExecContextEvent;
@@ -27,7 +30,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.ai.exceptions.CommonRollbackException;
-import ai.metaheuristic.api.ConstsApi;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
@@ -41,8 +44,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Duration;
+import java.util.*;
 
 /**
  * @author Serge
@@ -62,10 +65,10 @@ public class ExecContextTaskStateService {
 
 
     private final MultiTenantedQueue<Long, TransferStateFromTaskQueueToExecContextEvent> threadedPoolMap =
-        new MultiTenantedQueue<>(2, ConstsApi.DURATION_NONE, false, "TransferStateFromTaskQueueToExecContext-", this::transferStateFromTaskQueueToExecContext);
+        new MultiTenantedQueue<>(2, Duration.ZERO, false, "TransferStateFromTaskQueueToExecContext-", this::transferStateFromTaskQueueToExecContext);
 
     private final MultiTenantedQueue<Long, UpdateTaskExecStatesInExecContextEvent> updateTaskExecStatesInGraphEventThreadedPool =
-        new MultiTenantedQueue<>(100, ConstsApi.SECONDS_5, false, "UpdateTaskExecStatesInGraph-", this::updateTaskExecStatesExecContext);
+        new MultiTenantedQueue<>(100, Duration.ZERO, false, "UpdateTaskExecStatesInGraph-", this::updateTaskExecStatesExecContext);
 
     @PreDestroy
     public void onExit() {
@@ -101,6 +104,8 @@ public class ExecContextTaskStateService {
         try {
             List<TaskData.TaskWithStateAndTaskContextId> taskWithStates = new ArrayList<>(event.taskIds.size()+10);
             log.debug("call ExecContextTaskStateTopLevelService.updateTaskExecStatesExecContext({}, {})", event.execContextId, taskWithStates);
+            ExecContextTaskState execContextTaskState = execContextGraphService.prepareExecContextTaskState(ec.execContextTaskStateId);
+            ExecContextTaskStateParamsYaml ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
             for (Long taskId : event.taskIds) {
                 TaskImpl task = taskRepository.findByIdReadOnly(taskId);
                 if (task==null) {
@@ -110,13 +115,24 @@ public class ExecContextTaskStateService {
                     log.error("417.020 (!execContextId.equals(task.execContextId))");
                     continue;
                 }
+                final EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(task.execState);
+                if (ectspy.states.get(taskId)==taskExecState) {
+                    log.warn("Task #{} was already updated to state {}", taskId, taskExecState);
+                    continue;
+                }
                 TaskParamsYaml taskParams = task.getTaskParamsYaml();
-                taskWithStates.add(new TaskData.TaskWithStateAndTaskContextId(taskId, EnumsApi.TaskExecState.from(task.execState), taskParams.task.taskContextId));
+                taskWithStates.add(new TaskData.TaskWithStateAndTaskContextId(taskId, taskExecState, taskParams.task.taskContextId));
             }
-            ExecContextTaskStateSyncService.getWithSyncNullable(ec.execContextTaskStateId,
-                            () -> updateTaskExecStatesExecContext(execContextDAC, ec.execContextTaskStateId, taskWithStates));
+            if (!taskWithStates.isEmpty()) {
+                ExecContextTaskStateSyncService.getWithSyncNullable(ec.execContextTaskStateId,
+                    () -> updateTaskExecStatesExecContext(execContextDAC, ec.execContextTaskStateId, taskWithStates));
+            }
 
-        } catch (Throwable th) {
+        }
+        catch (CommonRollbackException e) {
+            //
+        }
+        catch (Throwable th) {
             log.error("417.020 Error, need to investigate ", th);
         }
     }

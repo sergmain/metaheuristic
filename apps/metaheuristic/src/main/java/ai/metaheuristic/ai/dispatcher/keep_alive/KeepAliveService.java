@@ -33,7 +33,6 @@ import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreTxService;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
-import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
@@ -45,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.Objects;
 
 /**
@@ -73,7 +73,7 @@ public class KeepAliveService {
 
     @PostConstruct
     public void init() {
-        this.checkProcessorIdEventPool = new MultiTenantedQueue<>(100, ConstsApi.DURATION_NONE, true, "CheckProcessorIdEvent-",
+        this.checkProcessorIdEventPool = new MultiTenantedQueue<>(100, Duration.ZERO, true, "CheckProcessorIdEvent-",
                 this::checkProcessorIdSynced);
     }
 
