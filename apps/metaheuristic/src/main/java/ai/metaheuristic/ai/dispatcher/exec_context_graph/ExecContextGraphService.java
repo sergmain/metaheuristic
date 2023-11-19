@@ -36,6 +36,7 @@ import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jgrapht.alg.util.Pair;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.jgrapht.nio.Attribute;
@@ -207,29 +208,46 @@ public class ExecContextGraphService {
         return importExecContextGraph(execContextGraph.getExecContextGraphParamsYaml());
     }
 
-    @SneakyThrows
     public static DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> importExecContextGraph(ExecContextGraphParamsYaml wpy) {
+        return importExecContextGraph(wpy.graph);
+    }
+
+    private static final DOTImporter<ExecContextData.TaskVertex, DefaultEdge> DOT_IMPORTER = new DOTImporter<>();
+    static {
+        // https://stackoverflow.com/questions/60461351/import-graph-with-1-4-0
+        DOT_IMPORTER.setVertexFactory(ExecContextGraphService::getTaskVertexFactory);
+        DOT_IMPORTER.addVertexAttributeConsumer(ExecContextGraphService::getVertexAttributeConsumer);
+    }
+
+    @SneakyThrows
+    public static DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> importExecContextGraph(String graphAsString) {
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = new DirectedAcyclicGraph<>(
                 ExecContextData.TaskVertex::new, SupplierUtil.DEFAULT_EDGE_SUPPLIER, false);
 
         // https://stackoverflow.com/questions/60461351/import-graph-with-1-4-0
-        DOTImporter<ExecContextData.TaskVertex, DefaultEdge> importer = new DOTImporter<>();
-        importer.setVertexFactory(id->new ExecContextData.TaskVertex(Long.parseLong(id)));
-        importer.addVertexAttributeConsumer(((vertex, attribute) -> {
-            switch(vertex.getSecond()) {
-                case TASK_CONTEXT_ID_ATTR:
-                    vertex.getFirst().taskContextId = attribute.getValue();
-                    break;
-                case "ID":
-                    // do nothing
-                    break;
-                default:
-                    log.error("Unknown attribute in task graph, attr: " + vertex.getSecond()+", attr value: " + attribute.getValue());
-            }
-        }));
+//        DOTImporter<ExecContextData.TaskVertex, DefaultEdge> importer = new DOTImporter<>();
+//        importer.setVertexFactory(ExecContextGraphService::getTaskVertexFactory);
+//        importer.addVertexAttributeConsumer((ExecContextGraphService::getVertexAttributeConsumer));
 
-        importer.importGraph(graph, new StringReader(wpy.graph));
+        DOT_IMPORTER.importGraph(graph, new StringReader(graphAsString));
         return graph;
+    }
+
+    private static void getVertexAttributeConsumer(Pair<ExecContextData.TaskVertex, String> vertex, Attribute attribute) {
+        switch(vertex.getSecond()) {
+            case TASK_CONTEXT_ID_ATTR:
+                vertex.getFirst().taskContextId = attribute.getValue();
+                break;
+            case "ID":
+                // do nothing
+                break;
+            default:
+                log.error("Unknown attribute in task graph, attr: " + vertex.getSecond()+", attr value: " + attribute.getValue());
+        }
+    }
+
+    private static ExecContextData.TaskVertex getTaskVertexFactory(String id) {
+        return new ExecContextData.TaskVertex(Long.parseLong(id));
     }
 
     /**
@@ -538,10 +556,22 @@ public class ExecContextGraphService {
 
     public List<ExecContextData.TaskVertex> findAllRootVertices(Long execContextGraphId) {
         ExecContextGraph execContextGraph = prepareExecContextGraph(execContextGraphId);
-        return readOnlyGraph(execContextGraph,
-                graph -> graph.vertexSet().stream()
-                        .filter( v -> graph.incomingEdgesOf(v).isEmpty() )
-                        .collect(Collectors.toList()));
+        return readOnlyGraph(execContextGraph, ExecContextGraphService::findAllRootVertices);
+    }
+
+    public static List<ExecContextData.TaskVertex> findAllRootVertices(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph) {
+        return graph.vertexSet().stream()
+            .filter(v -> graph.incomingEdgesOf(v).isEmpty())
+            .collect(Collectors.toList());
+    }
+
+    public boolean verifyGraph(Long execContextGraphId) {
+        ExecContextGraph execContextGraph = prepareExecContextGraph(execContextGraphId);
+        return readOnlyGraph(execContextGraph, ExecContextGraphService::verifyGraph);
+    }
+
+    public static boolean verifyGraph(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph) {
+        return ExecContextGraphService.findAllRootVertices(graph).size()<2;
     }
 
     private static boolean isParentFullyProcessed(

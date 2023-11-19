@@ -22,6 +22,7 @@ import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jgrapht.alg.util.Pair;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.jgrapht.nio.Attribute;
@@ -58,24 +59,26 @@ public class ExecContextProcessGraphService {
     private static final String PROCESS_NAME_ATTR = "process";
     private static final String PROCESS_CONTEXT_ID_NAME_ATTR = "process_context_id";
 
-    public static final DOTImporter<ExecContextData.ProcessVertex, DefaultEdge> DOT_IMPORTER = new DOTImporter<>();
+    private static final DOTImporter<ExecContextData.ProcessVertex, DefaultEdge> DOT_IMPORTER = new DOTImporter<>();
     static {
         // https://stackoverflow.com/questions/60461351/import-graph-with-1-4-0
-        DOT_IMPORTER.addVertexAttributeConsumer(((vertex, attribute) -> {
-            switch (vertex.getSecond()) {
-                case PROCESS_NAME_ATTR:
-                    vertex.getFirst().process = attribute.getValue();
-                    break;
-                case PROCESS_CONTEXT_ID_NAME_ATTR:
-                    vertex.getFirst().processContextId = attribute.getValue();
-                    break;
-                case "ID":
-                    // do nothing
-                    break;
-                default:
-                    log.error("Unknown attribute in process graph, attr: " + vertex.getSecond() + ", attr value: " + attribute.getValue());
-            }
-        }));
+        DOT_IMPORTER.addVertexAttributeConsumer((ExecContextProcessGraphService::getVertexAttributeConsumer));
+    }
+
+    private static void getVertexAttributeConsumer(Pair<ExecContextData.ProcessVertex, String> vertex, Attribute attribute) {
+        switch (vertex.getSecond()) {
+            case PROCESS_NAME_ATTR:
+                vertex.getFirst().process = attribute.getValue();
+                break;
+            case PROCESS_CONTEXT_ID_NAME_ATTR:
+                vertex.getFirst().processContextId = attribute.getValue();
+                break;
+            case "ID":
+                // do nothing
+                break;
+            default:
+                log.error("Unknown attribute in process graph, attr: " + vertex.getSecond() + ", attr value: " + attribute.getValue());
+        }
     }
 
     public static String asString(DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph) {

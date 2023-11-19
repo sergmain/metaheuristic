@@ -48,47 +48,41 @@ public class ExecContextCreatorTopLevelService {
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(String sourceCodeUid, ExecContextData.UserExecContext context) {
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeByUid(sourceCodeUid, context.companyId());
         if (sourceCodesForCompany.isErrorMessages()) {
-            return new ExecContextCreatorService.ExecContextCreationResult("#563.020 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
+            return new ExecContextCreatorService.ExecContextCreationResult("563.020 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
                     "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + context.companyId());
         }
         SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
         if (sourceCode==null) {
-            return new ExecContextCreatorService.ExecContextCreationResult("#563.040 Error creating execContext: " +
+            return new ExecContextCreatorService.ExecContextCreationResult("563.040 Error creating execContext: " +
                     "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + context.companyId());
         }
-        return createExecContextAndStart(sourceCode.id, context, true);
-    }
-
-    public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(Long sourceCodeId, ExecContextData.UserExecContext context, boolean isStart) {
-        return createExecContextAndStart(sourceCodeId, context, isStart, null);
+        return createExecContextAndStart(sourceCode.id, context, true, null);
     }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(
-            Long sourceCodeId, ExecContextData.UserExecContext context, boolean isStart, @Nullable ExecContextData.RootAndParent rootAndParent) {
-        return SourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
-                () -> {
-                    try {
-                        ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContextAndStart(
-                                sourceCodeId, context, isStart, rootAndParent);
-                        return result;
-                    }
-                    catch (CommonRollbackException e) {
-                        return new ExecContextCreatorService.ExecContextCreationResult(e.messages);
-                    }
-                    catch (ExecContextTooManyInstancesException e) {
-                        String es = S.f("#562.105 Too many instances of SourceCode '%s', max allowed: %d, current count: %d", e.sourceCodeUid, e.max, e.curr);
-                        log.warn(es);
-                        ExecContextCreatorService.ExecContextCreationResult result = new ExecContextCreatorService.ExecContextCreationResult(es);
-                        result.addInfoMessage(es);
-                        return result;
-                    }
-                    catch (Throwable th) {
-                        String es = "#562.110 Error adding new execContext: " + th.getMessage();
-                        log.error(es, th);
-                        final ExecContextCreatorService.ExecContextCreationResult r = new ExecContextCreatorService.ExecContextCreationResult(es);
-                        return r;
-                    }
-                });
+            Long sourceCodeId, ExecContextData.UserExecContext context, boolean isProduceTasks, @Nullable ExecContextData.RootAndParent rootAndParent) {
+        final ExecContextCreatorService.ExecContextCreationResult withSyncForCreation = SourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
+            () -> {
+                try {
+                    ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContextAndStart(
+                        sourceCodeId, context, isProduceTasks, rootAndParent);
+                    return result;
+                } catch (CommonRollbackException e) {
+                    return new ExecContextCreatorService.ExecContextCreationResult(e.messages);
+                } catch (ExecContextTooManyInstancesException e) {
+                    String es = S.f("563.105 Too many instances of SourceCode '%s', max allowed: %d, current count: %d", e.sourceCodeUid, e.max, e.curr);
+                    log.warn(es);
+                    ExecContextCreatorService.ExecContextCreationResult result = new ExecContextCreatorService.ExecContextCreationResult(es);
+                    result.addInfoMessage(es);
+                    return result;
+                } catch (Throwable th) {
+                    String es = "563.110 Error adding new execContext: " + th.getMessage();
+                    log.error(es, th);
+                    final ExecContextCreatorService.ExecContextCreationResult r = new ExecContextCreatorService.ExecContextCreationResult(es);
+                    return r;
+                }
+            });
+        return withSyncForCreation;
     }
 
 

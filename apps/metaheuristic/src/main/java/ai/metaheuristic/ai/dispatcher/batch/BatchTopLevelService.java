@@ -24,12 +24,14 @@ import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
@@ -103,6 +105,7 @@ public class BatchTopLevelService {
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final BatchHelperService batchHelperService;
     private final VariableTxService variableTxService;
+    private final ExecContextGraphService execContextGraphService;
 
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_ENTRY_SIZE_FUNCTION = BatchTopLevelService::isZipEntitySizeOk;
@@ -313,13 +316,21 @@ public class BatchTopLevelService {
             if (sc==null) {
                 return new BatchData.UploadingStatus("981.165 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
             }
-            ExecContextCreatorService.ExecContextCreationResult creationResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, dispatcherContext.asUserExecContext(), false);
+            ExecContextData.UserExecContext context = dispatcherContext.asUserExecContext();
+
+            // we must postpone a creation of tasks until input variable for SourceCode/ExecContext will be initialized
+            ExecContextCreatorService.ExecContextCreationResult creationResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context, false, null);
             if (creationResult.isErrorMessages()) {
                 return new BatchData.UploadingStatus("981.180 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
             }
+            boolean verifyGraph = execContextGraphService.verifyGraph(creationResult.execContext.execContextGraphId);
+            if (!verifyGraph) {
+                return new BatchData.UploadingStatus("981.185 Graph is broken");
+            }
+
             final ExecContextParamsYaml execContextParamsYaml = creationResult.execContext.getExecContextParamsYaml();
             ExecContextParamsYaml.Variable variable = execContextParamsYaml.variables.inputs.get(0);
-            try(InputStream is = Files.newInputStream(tempFile)) {
+            try (InputStream is = Files.newInputStream(tempFile)) {
                 variableTxService.createInitializedTx(is, file.getSize(), variable.name, originFilename, creationResult.execContext.id, Consts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.zip);
             }
             final BatchData.UploadingStatus uploadingStatus;
@@ -328,6 +339,11 @@ public class BatchTopLevelService {
                             ExecContextTaskStateSyncService.getWithSync(creationResult.execContext.execContextTaskStateId, ()->
                                     batchTxService.createBatchForFile(
                                             sc, creationResult.execContext.id, dispatcherContext))));
+
+            verifyGraph = execContextGraphService.verifyGraph(creationResult.execContext.execContextGraphId);
+            if (!verifyGraph) {
+                return new BatchData.UploadingStatus("981.200 Graph is broken");
+            }
             return uploadingStatus;
         }
         catch (ExecContextTooManyInstancesException e) {

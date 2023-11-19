@@ -106,25 +106,34 @@ public class ExecContextCreatorService {
 
     @Transactional(rollbackFor = {CommonRollbackException.class, ExecContextTooManyInstancesException.class} )
     public ExecContextCreationResult createExecContextAndStart(
-            Long sourceCodeId, ExecContextData.UserExecContext context, boolean isStart, @Nullable ExecContextData.RootAndParent rootAndParent) {
+            Long sourceCodeId, ExecContextData.UserExecContext context, boolean isProduceTasks, @Nullable ExecContextData.RootAndParent rootAndParent) {
 
         SourceCodeSyncService.checkWriteLockPresent(sourceCodeId);
 
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, context.companyId());
         if (sourceCodesForCompany.isErrorMessages()) {
             throw new CommonRollbackException(
-                "#562.060 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
+                "562.060 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
                     "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + context.companyId(), ERROR);
         }
         SourceCodeImpl sourceCode = sourceCodesForCompany.items.isEmpty() ? null : (SourceCodeImpl) sourceCodesForCompany.items.get(0);
         if (sourceCode==null) {
             throw new CommonRollbackException(
-                "#562.080 Error creating execContext: " +
-                    "sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + context.companyId(), ERROR);
+                "562.080 Error creating execContext: sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + context.companyId(), ERROR);
         }
         final ExecContextCreationResult creationResult = createExecContext(sourceCode, context, rootAndParent);
 
-        if (!isStart && CollectionUtils.isNotEmpty(creationResult.getErrorMessages())) {
+        if (!isProduceTasks) {
+            return creationResult;
+        }
+
+        SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
+        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+        if (scpy.source.variables!=null && !scpy.source.variables.inputs.isEmpty()) {
+            throw new IllegalStateException("562.120 Tasks can't be created with execContext because SourceCode has input variable(s). Task must be created after initializing SourceCode input variables.");
+        }
+
+        if (CollectionUtils.isNotEmpty(creationResult.getErrorMessages())) {
             throw new CommonRollbackException(creationResult.getErrorMessages(), ERROR);
         }
 
@@ -150,16 +159,17 @@ public class ExecContextCreatorService {
         TxUtils.checkTxExists();
         ExecContextSyncService.getWithSyncVoidForCreation(creationResult.execContext.id, () ->
                 ExecContextGraphSyncService.getWithSyncVoidForCreation(creationResult.execContext.execContextGraphId, ()->
-                        ExecContextTaskStateSyncService.getWithSyncVoidForCreation(creationResult.execContext.execContextTaskStateId, () -> {
-                            SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(
+                        ExecContextTaskStateSyncService.getWithSyncVoidForCreation(creationResult.execContext.execContextTaskStateId,
+                            () -> {
+                                SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(
                                     sourceCode, creationResult.execContext);
-                            if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK) {
-                                creationResult.addErrorMessage(result.sourceCodeValidationResult.error);
-                            }
-                            if (result.taskProducingStatus != EnumsApi.TaskProducingStatus.OK) {
-                                creationResult.addErrorMessage("562.100 Error while producing new tasks " + result.taskProducingStatus);
-                            }
-                        })));
+                                if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK) {
+                                    creationResult.addErrorMessage(result.sourceCodeValidationResult.error);
+                                }
+                                if (result.taskProducingStatus != EnumsApi.TaskProducingStatus.OK) {
+                                    creationResult.addErrorMessage("562.150 Error while producing new tasks " + result.taskProducingStatus);
+                                }
+                            })));
     }
 
     /**
@@ -193,7 +203,7 @@ public class ExecContextCreatorService {
                 EnumsApi.SourceCodeLang.yaml, scspy.source, () -> String.valueOf(contextId.incrementAndGet()));
 
         if (ExecContextProcessGraphService.anyError(sourceCodeGraph)) {
-            throw new CommonRollbackException("#562.120 processGraph is broken", ERROR);
+            throw new CommonRollbackException("562.180 processGraph is broken", ERROR);
         }
 
         ExecContextImpl execContext = createExecContext(sourceCode, context, sourceCodeGraph, rootAndParent);

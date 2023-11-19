@@ -143,7 +143,7 @@ public class ProcessorEventBusService {
                 }
 
                 Thread t = new Thread(() -> {
-                    log.info("Call interactWithFunctionRepository, url: {}", dispatcher.url);
+                    // log.info("Call interactWithFunctionRepository, url: {}", dispatcher.url);
                     try {
                         dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).functionRepositoryRequestor.requestFunctionRepository();
                     } catch (Throwable th) {
