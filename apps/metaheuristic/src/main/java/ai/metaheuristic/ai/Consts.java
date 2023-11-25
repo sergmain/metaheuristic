@@ -19,7 +19,6 @@ package ai.metaheuristic.ai;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.commons.CommonConsts;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
@@ -178,7 +177,6 @@ public class Consts {
 
     public static final String GIT_PATH = "git";
 
-    public static final String REPO = "repo";
     public static final String BRANCH_MAIN = "main";
     public static final String COMMIT_ORIGIN = "origin";
 

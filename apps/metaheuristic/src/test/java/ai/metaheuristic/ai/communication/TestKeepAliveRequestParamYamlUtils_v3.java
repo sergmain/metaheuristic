@@ -16,8 +16,7 @@
 
 package ai.metaheuristic.ai.communication;
 
-import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtilsV3;
@@ -91,7 +90,7 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
                         new QuotaV3("tag2", 25, false)),
                 23, 4, true));
 
-        r.status.gitStatusInfo = new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown, "ver1", "no-error");
+        r.status.gitStatusInfo = new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.unknown, "ver1", "no-error");
         r.status.schedule = "schedule1";
 
         r.status.ip = "192.168.0.17";
@@ -140,7 +139,7 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
 
         assertNotNull(kar.processor.status.gitStatusInfo);
 
-        assertEquals(Enums.GitStatus.unknown, kar.processor.status.gitStatusInfo.status);
+        assertEquals(EnumsApi.GitStatus.unknown, kar.processor.status.gitStatusInfo.status);
         assertEquals("ver1", kar.processor.status.gitStatusInfo.version);
         assertEquals("no-error", kar.processor.status.gitStatusInfo.error);
 
@@ -202,7 +201,7 @@ public class TestKeepAliveRequestParamYamlUtils_v3 {
 
         assertNotNull(karV3.processor.status.gitStatusInfo);
 
-        assertEquals(Enums.GitStatus.unknown, karV3.processor.status.gitStatusInfo.status);
+        assertEquals(EnumsApi.GitStatus.unknown, karV3.processor.status.gitStatusInfo.status);
         assertEquals("ver1", karV3.processor.status.gitStatusInfo.version);
         assertEquals("no-error", karV3.processor.status.gitStatusInfo.error);
 

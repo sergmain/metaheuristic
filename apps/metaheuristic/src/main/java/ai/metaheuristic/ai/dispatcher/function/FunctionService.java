@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.dispatcher.data.BundleData;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
-import ai.metaheuristic.ai.utils.ArtifactUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -446,7 +445,7 @@ public class FunctionService {
     }
 
     public void deleteResourceDirForFunction(String functionCode) throws IOException {
-        Path baseFunctionDir = ArtifactUtils.prepareFunctionPath(globals.dispatcherResourcesPath);
+        Path baseFunctionDir = ArtifactCommonUtils.prepareFunctionPath(globals.dispatcherResourcesPath);
         String functionCodeAsNormal = ArtifactCommonUtils.normalizeCode(functionCode);
         Path p = baseFunctionDir.resolve(functionCodeAsNormal);
         if (Files.exists(p)) {

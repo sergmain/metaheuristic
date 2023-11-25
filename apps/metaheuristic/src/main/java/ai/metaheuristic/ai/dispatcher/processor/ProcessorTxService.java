@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.exceptions.CommonRollbackException;
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
@@ -167,7 +167,7 @@ public class ProcessorTxService {
     public DispatcherApiData.ProcessorSessionId getNewProcessorId() {
         String sessionId = createNewSessionId();
         ProcessorStatusYaml psy = new ProcessorStatusYaml(new TreeMap<>(), null,
-                new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
+                new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.unknown),
                 "", sessionId, System.currentTimeMillis(), "", "", null, false,
                 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
 
@@ -305,7 +305,7 @@ public class ProcessorTxService {
     public DispatcherApiData.ProcessorSessionId reassignProcessorId(@Nullable String remoteAddress, @Nullable String description) {
         String sessionId = ProcessorTxService.createNewSessionId();
         ProcessorStatusYaml psy = new ProcessorStatusYaml(new TreeMap<>(), null,
-                new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
+                new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),
                 Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false, 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
         Processor p = createProcessor(description, remoteAddress, psy);

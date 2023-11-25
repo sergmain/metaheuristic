@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.processor.actors;
 
-import ai.metaheuristic.ai.utils.asset.AssetFile;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

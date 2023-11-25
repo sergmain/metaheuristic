@@ -16,12 +16,11 @@
 
 package ai.metaheuristic.ai.processor.complex;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
@@ -43,7 +42,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -152,7 +150,7 @@ public class TestRegisterProcessor {
 
         final KeepAliveRequestParamYaml.ProcessorStatus ss = new KeepAliveRequestParamYaml.ProcessorStatus (
                 new KeepAliveRequestParamYaml.Env(),
-                new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown, null, null),
+                new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.unknown, null, null),
                 "0:00 - 23:59",
                 "[unknown]", "[unknown]", false,
                 1, EnumsApi.OS.unknown, null, null);

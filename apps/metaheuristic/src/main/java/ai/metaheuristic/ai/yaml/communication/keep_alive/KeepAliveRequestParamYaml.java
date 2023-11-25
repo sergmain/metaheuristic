@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.communication.keep_alive;
 
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
@@ -26,7 +26,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -111,7 +110,7 @@ public class KeepAliveRequestParamYaml implements BaseParams {
     // ReportProcessor
     public static class ProcessorStatus {
         public Env env;
-        public GitSourcingService.GitStatusInfo gitStatusInfo;
+        public GtiUtils.GitStatusInfo gitStatusInfo;
         public String schedule;
         public String ip;
         public String host;

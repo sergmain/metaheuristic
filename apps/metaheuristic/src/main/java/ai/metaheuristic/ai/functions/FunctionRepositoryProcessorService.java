@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.functions;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.core.SystemProcessLauncher;
+import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParams;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParams;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.CollectionUtils;
-import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;

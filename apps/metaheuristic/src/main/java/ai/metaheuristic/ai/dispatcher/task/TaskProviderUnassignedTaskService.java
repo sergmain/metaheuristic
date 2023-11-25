@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.QuotasData;
@@ -179,7 +178,7 @@ public class TaskProviderUnassignedTaskService {
                 }
 
                 // check of git availability
-                if (TaskUtils.gitUnavailable(queuedTask.taskParamYaml.task, psy.gitStatusInfo.status != Enums.GitStatus.installed)) {
+                if (TaskUtils.gitUnavailable(queuedTask.taskParamYaml.task, psy.gitStatusInfo.status != EnumsApi.GitStatus.installed)) {
                     log.warn("317.060 Can't assign task #{} to core #{} because this processor doesn't correctly installed git, git status info: {}",
                             coreId, queuedTask.task.getId(), psy.gitStatusInfo
                     );

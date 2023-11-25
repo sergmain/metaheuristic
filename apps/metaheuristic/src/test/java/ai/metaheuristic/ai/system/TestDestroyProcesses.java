@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.system;
 
-import ai.metaheuristic.ai.core.SystemProcessLauncher;
+import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;

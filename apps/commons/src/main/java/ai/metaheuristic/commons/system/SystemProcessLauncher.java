@@ -13,9 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.core;
+package ai.metaheuristic.commons.system;
 
-import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
+import ai.metaheuristic.commons.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.commons.dispatcher_schedule.ExtendedTimePeriod;

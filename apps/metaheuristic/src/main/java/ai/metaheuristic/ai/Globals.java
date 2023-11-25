@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.core.SystemProcessLauncher;
+import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.ai.dispatcher.data.KbData;
 import ai.metaheuristic.ai.exceptions.GlobalConfigurationException;
 import ai.metaheuristic.ai.utils.EnvProperty;

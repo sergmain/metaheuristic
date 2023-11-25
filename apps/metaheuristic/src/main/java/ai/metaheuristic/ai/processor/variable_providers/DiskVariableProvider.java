@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.exceptions.VariableProviderException;
 import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
-import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;

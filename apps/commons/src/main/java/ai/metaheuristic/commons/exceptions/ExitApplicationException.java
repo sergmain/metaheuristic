@@ -24,4 +24,8 @@ package ai.metaheuristic.commons.exceptions;
 public class ExitApplicationException extends RuntimeException {
     public ExitApplicationException() {
     }
+
+    public ExitApplicationException(String message) {
+        System.out.println(message);
+    }
 }

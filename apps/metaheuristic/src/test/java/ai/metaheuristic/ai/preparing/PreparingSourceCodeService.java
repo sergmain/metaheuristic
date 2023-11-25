@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.preparing;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
@@ -37,7 +36,7 @@ import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
@@ -216,7 +215,7 @@ public class PreparingSourceCodeService {
 
         pr.status = new KeepAliveRequestParamYaml.ProcessorStatus(
                 env,
-                new GitSourcingService.GitStatusInfo(Enums.GitStatus.installed, "Git 1.0.0", null),
+                new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.installed, "Git 1.0.0", null),
                 "0:00 - 23:59",
                 "[unknown]", "[unknown]", true,
                 1, EnumsApi.OS.unknown, "/users/yyy", null);

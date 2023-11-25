@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.processor_status;
 
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.*;
@@ -85,7 +85,7 @@ public class ProcessorStatusYamlV1 implements BaseParams {
     public List<DownloadStatusV1> downloadStatuses = new ArrayList<>();
 
     public EnvV1 env;
-    public GitSourcingService.GitStatusInfo gitStatusInfo;
+    public GtiUtils.GitStatusInfo gitStatusInfo;
     public String schedule;
     public String sessionId;
 

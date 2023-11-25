@@ -28,7 +28,7 @@ import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.tasks.GetDispatcherContextInfoTask;
 import ai.metaheuristic.ai.utils.RestUtils;
-import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.EnumsApi;

@@ -99,7 +99,7 @@ public class FunctionConfigYamlTest {
         sc.params = "sc.params";
         sc.env = "sc.env";
         sc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-        sc.git = new GitInfo("repo", "branch", "commit");
+        sc.git = new GitInfo("repo", "branch", "commit", null);
         assertNotNull(sc.metas);
         sc.metas.add(Map.of("key1", "value1"));
         sc.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
@@ -118,7 +118,7 @@ public class FunctionConfigYamlTest {
         sc.function.params = "sc.params";
         sc.function.env = "sc.env";
         sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-        sc.function.git = new GitInfo("repo", "branch", "commit");
+        sc.function.git = new GitInfo("repo", "branch", "commit", null);
         Objects.requireNonNull(sc.function.metas).add(Map.of("key1", "value1"));
         sc.function.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
 

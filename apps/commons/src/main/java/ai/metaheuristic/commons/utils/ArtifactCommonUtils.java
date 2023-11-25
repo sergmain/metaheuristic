@@ -21,6 +21,8 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import org.apache.commons.lang3.StringUtils;
 
+import java.nio.file.Path;
+
 /**
  * @author Sergio Lissner
  * Date: 8/23/2022
@@ -89,5 +91,9 @@ public class ArtifactCommonUtils {
             throw new IllegalStateException("function code contains only '.' chars");
         }
         return count==0 ? replaced : replaced.substring(0, replaced.length()-count);
+    }
+
+    public static Path prepareFunctionPath(Path basePath) {
+        return basePath.resolve(EnumsApi.DataType.function.toString());
     }
 }

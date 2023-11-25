@@ -67,7 +67,7 @@ public class KbParamsUtilsV1 extends
         if (v1==null) {
             return null;
         }
-        KbParams.Git g = new KbParams.Git(v1.repo, v1.branch, v1.commit);
+        KbParams.Git g = new KbParams.Git(v1.repo, v1.branch, v1.commit, null);
         v1.kbPaths.stream().map(KbParamsUtilsV1::toKbPath).collect(Collectors.toCollection(()->g.kbPaths));
         return g;
     }

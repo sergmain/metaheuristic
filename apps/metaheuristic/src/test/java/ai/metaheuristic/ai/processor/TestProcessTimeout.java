@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.processor;
 
-import ai.metaheuristic.ai.core.SystemProcessLauncher;
+import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;

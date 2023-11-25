@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.functions;
 
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
-import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.replication.ReplicationApiData;

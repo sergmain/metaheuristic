@@ -14,9 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.data;
+package ai.metaheuristic.api.data;
 
-import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.*;
 
 /**
@@ -39,11 +39,11 @@ public class GitData {
     @AllArgsConstructor
     @EqualsAndHashCode(of={"status", "version", "error"})
     public static class GitStatusInfo {
-        public Enums.GitStatus status;
+        public EnumsApi.GitStatus status;
         public String version;
         public String error;
 
-        public GitStatusInfo(Enums.GitStatus status) {
+        public GitStatusInfo(EnumsApi.GitStatus status) {
             this.status = status;
         }
 

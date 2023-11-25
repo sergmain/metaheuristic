@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.processor.ProcessorTaskService;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
 import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
 import ai.metaheuristic.ai.utils.RestUtils;
-import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.api.EnumsApi;

@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.core.SystemProcessLauncher;
-import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
+import ai.metaheuristic.commons.system.SystemProcessLauncher;
+import ai.metaheuristic.commons.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.ai.functions.FunctionRepositoryData;
 import ai.metaheuristic.ai.functions.FunctionRepositoryProcessorService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;

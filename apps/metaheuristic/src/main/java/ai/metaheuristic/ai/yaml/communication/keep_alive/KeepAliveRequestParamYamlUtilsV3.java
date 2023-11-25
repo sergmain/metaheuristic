@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.communication.keep_alive;
 
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -67,7 +67,7 @@ public class KeepAliveRequestParamYamlUtilsV3 extends
                     t.processor.status.errors = src.processor.status.errors;
                 }
                 if (src.processor.status.gitStatusInfo!=null) {
-                    t.processor.status.gitStatusInfo = new GitSourcingService.GitStatusInfo(
+                    t.processor.status.gitStatusInfo = new GtiUtils.GitStatusInfo(
                             src.processor.status.gitStatusInfo.status, src.processor.status.gitStatusInfo.version, src.processor.status.gitStatusInfo.error); ;
                 }
 

@@ -17,9 +17,9 @@
 package ai.metaheuristic.ai.mhbp.services;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.core.SystemProcessLauncher;
-import ai.metaheuristic.ai.mhbp.data.KbData;
+import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
+import ai.metaheuristic.api.sourcing.GitInfo;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -30,7 +30,7 @@ import org.springframework.stereotype.Service;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static ai.metaheuristic.ai.dispatcher.data.GitData.GitContext;
+import static ai.metaheuristic.api.data.GitData.GitContext;
 import static ai.metaheuristic.ai.mhbp.services.LocalGitSourcingService.prepareRepo;
 
 /**
@@ -51,12 +51,12 @@ public class LocalGitRepoService {
         gitPath = globals.getHome().resolve("git");
     }
 
-    public SystemProcessLauncher.ExecResult initGitRepo(KbData.KbGit git) {
+    public SystemProcessLauncher.ExecResult initGitRepo(GitInfo git) {
         return initGitRepo(git, gitPath, new GitContext(60L, globals.mhbp.max.consoleOutputLines));
     }
 
     @SneakyThrows
-    public static SystemProcessLauncher.ExecResult initGitRepo(KbData.KbGit git, Path gitPath, GitContext gitContext) {
+    public static SystemProcessLauncher.ExecResult initGitRepo(GitInfo git, Path gitPath, GitContext gitContext) {
         String url = git.getRepo();
         String code = MetadataParams.asCode(url);
         Path p = gitPath.resolve(code);

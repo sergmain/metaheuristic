@@ -16,9 +16,8 @@
 
 package ai.metaheuristic.ai.processor;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorUtils;
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -79,7 +78,7 @@ public class TestStaticProcessorTransactionService {
     public void test() {
         ProcessorStatusYaml psy = new ProcessorStatusYaml();
 
-        GitSourcingService.GitStatusInfo gitStatusInfoAsNull = new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown, null, null);
+        GtiUtils.GitStatusInfo gitStatusInfoAsNull = new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.unknown, null, null);
 
         psy.gitStatusInfo= gitStatusInfoAsNull;
         psy.schedule="0:00 - 23:59";
@@ -94,7 +93,7 @@ public class TestStaticProcessorTransactionService {
 
         final KeepAliveRequestParamYaml.ProcessorStatus ss = new KeepAliveRequestParamYaml.ProcessorStatus (
                 new KeepAliveRequestParamYaml.Env(),
-                new GitSourcingService.GitStatusInfo(Enums.GitStatus.installed, "Git 1.0.0", null),
+                new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.installed, "Git 1.0.0", null),
                 "0:00 - 23:59",
                 "[unknown]", "[unknown]",  true,
                 1, EnumsApi.OS.unknown, "/users/yyy", null);
@@ -106,7 +105,7 @@ public class TestStaticProcessorTransactionService {
         ss.currDir = "/users/xxx";
         assertTrue(ProcessorUtils.isProcessorStatusDifferent(psy, ss), S.f("ss1:\n%s\n\nss:\n%s", psy, ss));
 
-        psy.gitStatusInfo=new GitSourcingService.GitStatusInfo(Enums.GitStatus.installed, "Git 1.0.0", null);
+        psy.gitStatusInfo=new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.installed, "Git 1.0.0", null);
         assertFalse(ProcessorUtils.isProcessorStatusDifferent(psy, ss), S.f("ss1:\n%s\n\nss:\n%s", psy, ss));
 
 

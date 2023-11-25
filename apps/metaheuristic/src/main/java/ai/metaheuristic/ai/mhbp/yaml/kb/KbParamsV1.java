@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.mhbp.yaml.kb;
 
+import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.api.data.BaseParams;
@@ -49,13 +50,15 @@ public class KbParamsV1 implements BaseParams  {
         public String data;
     }
 
-    @Data
     @NoArgsConstructor
-    @AllArgsConstructor
-    public static class GitV1 {
-        public String repo;
-        public String branch;
-        public String commit;
+    public static class GitV1 extends GitInfo {
+        public GitV1(String repo, String branch, String commit, @Nullable String path) {
+            super(repo, branch, commit, path);
+        }
+
+        //        public String repo;
+        //        public String branch;
+        //        public String commit;
         public final List<KbPathV1> kbPaths = new ArrayList<>();
     }
 

@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.processor.variable_providers;
 
 import ai.metaheuristic.ai.processor.data.ProcessorData;
-import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;

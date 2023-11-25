@@ -105,7 +105,7 @@ public class TestFunctionConfigSchemeValidation {
         cfg.params = "params";
         cfg.env = "env";
         cfg.sourcing = EnumsApi.FunctionSourcing.dispatcher;
-        cfg.git = new GitInfo("repo", "branch", "commit");
+        cfg.git = new GitInfo("repo", "branch", "commit", null);
         cfg.metas.add(Map.of("meta-key", "meta-value"));
         cfg.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
 

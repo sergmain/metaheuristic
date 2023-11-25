@@ -39,6 +39,7 @@ public class ExecData {
         public String console;
     }
 
+/*
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -49,4 +50,5 @@ public class ExecData {
         public String branch;
         public String commit;
     }
+*/
 }

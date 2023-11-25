@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.processor.processor_environment;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.core.SystemProcessLauncher;
+import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.ai.exceptions.TerminateApplicationException;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;

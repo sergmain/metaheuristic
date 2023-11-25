@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.communication.keep_alive;
 
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
@@ -97,7 +97,7 @@ public class KeepAliveRequestParamYamlV2 implements BaseParams {
     @AllArgsConstructor
     public static class ReportProcessorV2 {
         public EnvV2 env;
-        public GitSourcingService.GitStatusInfo gitStatusInfo;
+        public GtiUtils.GitStatusInfo gitStatusInfo;
         public String schedule;
         public String sessionId;
 

@@ -16,8 +16,7 @@
 
 package ai.metaheuristic.ai.communication;
 
-import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlUtilsV1;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYamlV1;
@@ -106,7 +105,7 @@ public class TestKeepAliveRequestParamYamlUtils_v1_v2 {
         r.processor.env.mirrors.putAll(Map.of("mirror-key1", "mirror-value1", "mirror-key2", "mirror-value2"));
         r.processor.env.disk.addAll(List.of(new KeepAliveRequestParamYamlV1.DiskStorageV1("code1", "path1"), new KeepAliveRequestParamYamlV1.DiskStorageV1("code2", "path2")));
 
-        r.processor.gitStatusInfo = new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown, "ver1", "no-error");
+        r.processor.gitStatusInfo = new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.unknown, "ver1", "no-error");
         r.processor.schedule = "schedule1";
         r.processor.sessionId = "sessionId-42";
         r.processor.sessionCreatedOn = 13;
@@ -149,7 +148,7 @@ public class TestKeepAliveRequestParamYamlUtils_v1_v2 {
 
         assertNotNull(kar2.requests.get(0).processor.gitStatusInfo);
 
-        assertEquals(Enums.GitStatus.unknown, kar2.requests.get(0).processor.gitStatusInfo.status);
+        assertEquals(EnumsApi.GitStatus.unknown, kar2.requests.get(0).processor.gitStatusInfo.status);
         assertEquals("ver1", kar2.requests.get(0).processor.gitStatusInfo.version);
         assertEquals("no-error", kar2.requests.get(0).processor.gitStatusInfo.error);
 

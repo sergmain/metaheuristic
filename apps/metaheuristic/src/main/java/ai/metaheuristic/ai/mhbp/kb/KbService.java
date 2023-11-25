@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.mhbp.kb;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.core.SystemProcessLauncher;
+import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.beans.Chapter;
 import ai.metaheuristic.ai.mhbp.beans.Kb;
@@ -123,7 +123,7 @@ public class KbService {
         if (v1==null) {
             return null;
         }
-        KbParams.Git g = new KbParams.Git(v1.repo, v1.branch, v1.commit);
+        KbParams.Git g = new KbParams.Git(v1.repo, v1.branch, v1.commit, null);
         v1.kbPaths.stream().map(KbService::toKbPath).collect(Collectors.toCollection(()->g.kbPaths));
         return g;
     }

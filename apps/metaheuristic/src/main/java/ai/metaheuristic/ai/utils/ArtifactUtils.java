@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import ai.metaheuristic.commons.utils.FileSystemUtils;
@@ -87,10 +86,5 @@ public class ArtifactUtils {
 
         t.checkIntegrity();
         return t;
-    }
-
-
-    public static Path prepareFunctionPath(Path basePath) {
-        return basePath.resolve(EnumsApi.DataType.function.toString());
     }
 }

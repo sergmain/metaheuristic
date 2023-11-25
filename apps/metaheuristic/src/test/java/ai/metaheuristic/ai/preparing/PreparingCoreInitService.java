@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
@@ -29,7 +28,7 @@ import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxTestingTopLevelService;
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -90,7 +89,7 @@ public class PreparingCoreInitService {
         envYaml.getEnvs().put("env-function-05:1.1", "python.exe" );
 
         ProcessorStatusYaml ss = new ProcessorStatusYaml(new TreeMap<>(), envYaml,
-                new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "",
+                new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.not_found), "",
                 ""+ UUID.randomUUID(), System.currentTimeMillis(),
                 Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false,
                 TaskParamsYamlUtils.UTILS.getDefault().getVersion(), EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);

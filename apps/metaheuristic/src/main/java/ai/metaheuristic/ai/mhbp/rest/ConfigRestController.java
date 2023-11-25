@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.mhbp.rest;
 
-import ai.metaheuristic.ai.dispatcher.data.GitData;
+import ai.metaheuristic.api.data.GitData;
 import ai.metaheuristic.ai.mhbp.services.LocalGitSourcingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -16,15 +16,14 @@
 
 package ai.metaheuristic.ai.yaml;
 
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYamlUtils;
+import ai.metaheuristic.api.EnumsApi;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -65,7 +64,7 @@ sessionId: e7af5f04-7123-487d-a7af-39224ee9c6fa-b42407fd-b953-454e-82e9-7384a0c3
 */
 
         assertNotNull(ss.gitStatusInfo);
-        assertEquals(Enums.GitStatus.installed, ss.gitStatusInfo.status);
+        assertEquals(EnumsApi.GitStatus.installed, ss.gitStatusInfo.status);
         assertEquals("2.21.0.windows.1", ss.gitStatusInfo.version);
         assertEquals("workingDay: 0:00-23:59\nweekend: 0:00-23:59\n", ss.schedule);
         assertEquals(1558588131596L, ss.sessionCreatedOn);

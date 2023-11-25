@@ -16,14 +16,14 @@
 
 package ai.metaheuristic.ai.mhbp.services;
 
-import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.data.GitData;
-import ai.metaheuristic.ai.mhbp.data.KbData;
-import ai.metaheuristic.ai.utils.ArtifactUtils;
-import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.api.data.GitData;
+import ai.metaheuristic.commons.utils.GtiUtils;
+import ai.metaheuristic.api.data.AssetFile;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -40,8 +40,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static ai.metaheuristic.ai.core.SystemProcessLauncher.ExecResult;
-import static ai.metaheuristic.ai.core.SystemProcessLauncher.execCmd;
+import static ai.metaheuristic.commons.system.SystemProcessLauncher.ExecResult;
 
 /**
  * @author Sergio Lissner
@@ -60,7 +59,7 @@ public class LocalGitSourcingService {
 
     private final Globals globals;
 
-    public final GitData.GitStatusInfo gitStatusInfo = new GitData.GitStatusInfo(Enums.GitStatus.unknown);
+    public final GitData.GitStatusInfo gitStatusInfo = new GitData.GitStatusInfo(EnumsApi.GitStatus.unknown);
 
     private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
@@ -69,7 +68,7 @@ public class LocalGitSourcingService {
     public GitData.GitStatusInfo getGitStatus() {
         readLock.lock();
         try {
-            if (gitStatusInfo.status!=Enums.GitStatus.unknown) {
+            if (gitStatusInfo.status!= EnumsApi.GitStatus.unknown) {
                 return gitStatusInfo;
             }
         } finally {
@@ -77,15 +76,15 @@ public class LocalGitSourcingService {
         }
         writeLock.lock();
         try {
-            if (gitStatusInfo.status!=Enums.GitStatus.unknown) {
+            if (gitStatusInfo.status!= EnumsApi.GitStatus.unknown) {
                 return gitStatusInfo;
             }
-            this.gitStatusInfo.status = Enums.GitStatus.processing;
+            this.gitStatusInfo.status = EnumsApi.GitStatus.processing;
             Thread t = new Thread(() -> {
                 try {
                     this.gitStatusInfo.updateWith( getGitStatusInternal() );
                 } catch(Throwable th){
-                    this.gitStatusInfo.status = Enums.GitStatus.error;
+                    this.gitStatusInfo.status = EnumsApi.GitStatus.error;
                     log.error("Git info retrival failed", th);
                 }
             });
@@ -101,14 +100,14 @@ public class LocalGitSourcingService {
     }
 
     public static GitData.GitStatusInfo getGitStatus(GitData.GitContext gitContext) {
-        ExecResult result = execGitCmd(GIT_VERSION_CMD, gitContext);
+        ExecResult result = GtiUtils.execGitCmd(GIT_VERSION_CMD, gitContext);
         if (!result.ok) {
             log.warn("026.010 Error of getting git status");
             log.warn("\tresult.ok: {}",  result.ok);
             log.warn("\tresult.error: {}",  result.error);
             log.warn("\tresult.functionDir: {}", result.functionDir!=null ? result.functionDir.toAbsolutePath() : null);
             log.warn("\tresult.systemExecResult: {}",  result.systemExecResult);
-            return new GitData.GitStatusInfo(Enums.GitStatus.error, null, "026.010 Error: " + result.error);
+            return new GitData.GitStatusInfo(EnumsApi.GitStatus.error, null, "026.010 Error: " + result.error);
         }
 
         // at this point result.systemExecResult must be not null,
@@ -116,19 +115,15 @@ public class LocalGitSourcingService {
         //noinspection DataFlowIssue
         if (result.systemExecResult.exitCode!=0) {
             return new GitData.GitStatusInfo(
-                    Enums.GitStatus.not_found, null,
+                    EnumsApi.GitStatus.not_found, null,
                     "026.013 Console: " + result.systemExecResult.console);
         }
-        return new GitData.GitStatusInfo(Enums.GitStatus.installed, getGitVersion(result.systemExecResult.console.toLowerCase()), null);
-    }
-
-    public static ExecResult execGitCmd(List<String> gitVersionCmd, GitData.GitContext gitContext) {
-        return execCmd(gitVersionCmd, gitContext.timeout(), gitContext.consoleOutputMaxLines());
+        return new GitData.GitStatusInfo(EnumsApi.GitStatus.installed, getGitVersion(result.systemExecResult.console.toLowerCase()), null);
     }
 
     private static AssetFile prepareFunctionDir(final Path resourceDir, String functionCode) {
         final AssetFile assetFile = new AssetFile();
-        final Path trgDir = ArtifactUtils.prepareFunctionPath(resourceDir);
+        final Path trgDir = ArtifactCommonUtils.prepareFunctionPath(resourceDir);
         log.info("Target dir: {}, exist: {}", trgDir.toAbsolutePath(), Files.exists(trgDir) );
         if (Files.notExists(trgDir)) {
             try {
@@ -158,10 +153,10 @@ public class LocalGitSourcingService {
     }
 
     @SneakyThrows
-    public static ExecResult prepareRepo(final Path resourceDir, KbData.KbGit git, GitData.GitContext gitContext) {
+    public static ExecResult prepareRepo(final Path resourceDir, GitInfo git, GitData.GitContext gitContext) {
 
         Path functionDir = resourceDir;
-        Path repoDir = functionDir.resolve(Consts.REPO);
+        Path repoDir = functionDir.resolve(CommonConsts.REPO);
         log.info("026.070 Target dir: {}, exist: {}", repoDir.toAbsolutePath(), Files.exists(repoDir));
 
         if (Files.exists(repoDir) && PathUtils.isEmpty(repoDir)) {
@@ -169,7 +164,7 @@ public class LocalGitSourcingService {
         }
 
         if (Files.notExists(repoDir)) {
-            ExecResult result = execClone(functionDir, git, gitContext);
+            ExecResult result = GtiUtils.execClone(functionDir, git.getRepo(), gitContext);
             log.info("026.080 Result of cloning repo: {}", result.toString());
             if (!result.ok || !result.systemExecResult.isOk()) {
                 result = tryToRepairRepo(functionDir, git, gitContext);
@@ -237,8 +232,8 @@ public class LocalGitSourcingService {
     }
 
     @SneakyThrows
-    public static ExecResult tryToRepairRepo(Path functionDir, KbData.KbGit git, GitData.GitContext gitContext) {
-        Path repoDir = functionDir.resolve(Consts.REPO);
+    public static ExecResult tryToRepairRepo(Path functionDir, GitInfo git, GitData.GitContext gitContext) {
+        Path repoDir = functionDir.resolve(CommonConsts.REPO);
         ExecResult result;
         PathUtils.deleteDirectory(repoDir);
         //Files.deleteIfExists(repoDir);
@@ -247,7 +242,7 @@ public class LocalGitSourcingService {
                     false,
                     "026.170 can't prepare repo dir for function: " + repoDir.toAbsolutePath());
         }
-        result = execClone(functionDir, git, gitContext);
+        result = GtiUtils.execClone(functionDir, git.getRepo(), gitContext);
         return result;
     }
 
@@ -263,13 +258,13 @@ public class LocalGitSourcingService {
         return result;
     }
 
-    private static ExecResult execCheckoutRevision(Path repoDir, KbData.KbGit git, GitData.GitContext gitContext) {
+    private static ExecResult execCheckoutRevision(Path repoDir, GitInfo git, GitData.GitContext gitContext) {
         // git checkout sha1
         ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "checkout", git.getCommit()), gitContext.withTimeout(0L));
         return result;
     }
 
-    private static ExecResult execPullOrigin(Path repoDir, KbData.KbGit git, GitData.GitContext gitContext) {
+    private static ExecResult execPullOrigin(Path repoDir, GitInfo git, GitData.GitContext gitContext) {
         // pull origin master
         ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "pull", "origin", git.getBranch()), gitContext.withTimeout(0L));
         return result;
@@ -296,16 +291,7 @@ public class LocalGitSourcingService {
 
     private static ExecResult execCommonCmd(List<String> cmd, GitData.GitContext gitContext) {
         log.info("exec {}", cmd);
-        return execGitCmd(cmd, gitContext);
-    }
-
-    private static ExecResult execClone(Path repoDir, KbData.KbGit git, GitData.GitContext gitContext) {
-        // git -C <path> clone <git-repo-url> repo
-        String gitUrl = git.getRepo();
-        List<String> cmd = List.of("git", "-C", repoDir.toAbsolutePath().toString(), "clone", gitUrl, Consts.REPO);
-        log.info("exec {}", cmd);
-        ExecResult result = execGitCmd(cmd, gitContext.withTimeout(0L));
-        return result;
+        return GtiUtils.execGitCmd(cmd, gitContext);
     }
 
     private static String getGitVersion(String s) {

@@ -66,8 +66,6 @@ public final class Enums {
 
     public enum AssetType { company, account, function, source}
 
-    public enum GitStatus {unknown, processing, installed, not_found, error }
-
     public enum StoringStatus {OK, CANT_BE_STORED}
 
     public enum VariableState {none, ok, file_too_big, variable_doesnt_exist, unknown_error, transmitting_error, variable_cant_be_null, variable_is_null }

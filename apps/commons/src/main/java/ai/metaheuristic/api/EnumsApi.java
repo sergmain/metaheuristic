@@ -482,4 +482,6 @@ public class EnumsApi {
     public enum AuthType { basic, token }
 
     public enum HttpMethodType { get, post }
+
+    public enum GitStatus {unknown, processing, installed, not_found, error }
 }

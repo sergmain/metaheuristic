@@ -17,15 +17,15 @@
 package ai.metaheuristic.mhbp.kb.reader.openai;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.core.SystemProcessLauncher;
-import ai.metaheuristic.ai.dispatcher.data.GitData;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.system.SystemProcessLauncher;
+import ai.metaheuristic.api.data.GitData;
 import ai.metaheuristic.ai.mhbp.kb.reader.openai.OpenaiInput;
 import ai.metaheuristic.ai.mhbp.kb.reader.openai.OpenaiJsonReader;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.ai.mhbp.data.KbData;
 import ai.metaheuristic.ai.mhbp.questions.QuestionData;
 import ai.metaheuristic.ai.mhbp.services.LocalGitRepoService;
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParams;
@@ -99,7 +99,7 @@ public class OpenaiJsonReaderTest {
         Path p = gitPath.resolve(code);
         assertFalse(Files.notExists(p));
 
-        Path repo = p.resolve(Consts.REPO);
+        Path repo = p.resolve(CommonConsts.REPO);
         assertFalse(Files.notExists(repo));
 
         QuestionData.Chapters qas = OpenaiJsonReader.read(10L, repo, kbParams.kb.git);
@@ -245,9 +245,9 @@ public class OpenaiJsonReaderTest {
         assertNotNull(kbParams.kb.git);
 
         GitData.GitStatusInfo statusInfo = getGitStatus(new GitData.GitContext(30L, 100));
-        assertEquals(Enums.GitStatus.installed, statusInfo.status);
+        assertEquals(EnumsApi.GitStatus.installed, statusInfo.status);
 
-        KbData.KbGit git = new KbParams.Git(kbParams.kb.git.repo, kbParams.kb.git.branch, kbParams.kb.git.commit);
+        KbParams.Git git = new KbParams.Git(kbParams.kb.git.repo, kbParams.kb.git.branch, kbParams.kb.git.commit, null);
         Path gitPath = temp.resolve("git");
         GitData.GitContext gitContext = new GitData.GitContext(60L, 100);
 

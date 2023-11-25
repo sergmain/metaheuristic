@@ -17,9 +17,12 @@ package ai.metaheuristic.apps.package_bundle;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.api.data.GitData;
+import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.ExitApplicationException;
+import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.commons.utils.*;
 import ai.metaheuristic.commons.yaml.auth.ApiAuthUtils;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYaml;
@@ -34,7 +37,6 @@ import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.NameFileFilter;
-import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -73,7 +75,13 @@ public class PackageBundle implements CommandLineRunner {
         }
 
     public record Cfg(int version, @Nullable PrivateKey privateKey, Path workingDir, Path currDir,
-                      BundleCfgYaml bundleCfg) {}
+                      BundleCfgYaml bundleCfg, @Nullable GitInfo gitInfo) {
+        public boolean isGit() {
+            return gitInfo!=null;
+        }
+    }
+
+    public record FunctionConfigAndFile(FunctionConfigYaml config, Path file) {}
 
     @Override
     public void run(String... args) throws IOException, GeneralSecurityException, ParseException {
@@ -88,12 +96,31 @@ public class PackageBundle implements CommandLineRunner {
     public static void runInternal(String... args) throws IOException, GeneralSecurityException, ParseException {
         Cfg cfg = initPackaging(args);
 
+        if (cfg.isGit()) {
+            Path temp = cfg.currDir.resolve("temp");
+            if (Files.notExists(temp)) {
+                Files.createDirectories(temp);
+            }
+            Path gitDir = DirUtils.createTempPath(temp, "git-");
+            if (gitDir==null) {
+                throw new ExitApplicationException("Can't create temporary dir in "+temp.toAbsolutePath());
+            }
+            cloneRepo(cfg, gitDir);
+        }
+
         processFunctions(cfg);
         processCommonType(cfg, sourceCode, SourceCodeParamsYamlUtils.BASE_YAML_UTILS::to);
         processCommonType(cfg, auth, ApiAuthUtils.UTILS::to);
         processCommonType(cfg, api, ApiSchemeUtils.UTILS::to);
 
         createFinalZip(cfg);
+    }
+
+    private static void cloneRepo(Cfg cfg, Path gitDir) {
+        SystemProcessLauncher.ExecResult result = GtiUtils.execClone(gitDir, cfg.gitInfo.repo,  new GitData.GitContext(60L, 1000));
+        if (!result.ok) {
+            throw new ExitApplicationException("Error while cloning repo "+cfg.gitInfo.repo+", error: "+result.error);
+        }
     }
 
     private static void processCommonType(Cfg cfg, EnumsApi.BundleItemType type, Consumer<String> yamlCheckerFunc) throws IOException {
@@ -195,17 +222,23 @@ public class PackageBundle implements CommandLineRunner {
         return isError;
     }
 
-    private static BundleCfgYaml initBundleCfg(CommandLine cmd, Path currDir) throws IOException {
+    private static BundleCfgYaml initBundleCfg(CommandLine cmd, Path currDir, @Nullable GitInfo gitInfo) throws IOException {
         String bundleFilename = cmd.getOptionValue("b");
         if (S.b(bundleFilename)) {
             bundleFilename = CommonConsts.BUNDLE_CFG_YAML;
         }
         System.out.println("Effective bundle filename is " + bundleFilename);
 
-        Path bundleCfgPath = currDir.resolve(bundleFilename);
+        Path bundleCfgPath;
+        if (gitInfo!=null && !S.b(gitInfo.path)) {
+            bundleCfgPath = currDir.resolve(Path.of(gitInfo.path, bundleFilename));
+        }
+        else {
+            bundleCfgPath = currDir.resolve(bundleFilename);
+        }
 
         if (Files.notExists(bundleCfgPath)) {
-            System.out.printf("File %s wasn't found in path %s\n", CommonConsts.BUNDLE_CFG_YAML, currDir.toAbsolutePath());
+            System.out.printf("File %s wasn't found in path %s\n", bundleFilename, currDir.toAbsolutePath());
             throw new ExitApplicationException();
         }
 
@@ -327,8 +360,6 @@ public class PackageBundle implements CommandLineRunner {
         return zip;
     }
 
-    public record FunctionConfigAndFile(FunctionConfigYaml config, Path file) {}
-
     private static FunctionConfigAndFile getFunctionConfigYaml(Path p) throws IOException {
         Path functionYaml = p.resolve(CommonConsts.FUNCTION_YAML);
         if (Files.notExists(p)) {
@@ -359,10 +390,28 @@ public class PackageBundle implements CommandLineRunner {
             throw new ExitApplicationException();
         }
 
-        BundleCfgYaml bundleCfgYaml = initBundleCfg(cmd, currDir);
+        GitInfo gitInfo = null;
+        if (cmd.hasOption("git-repo")) {
+            if (!cmd.hasOption("git-branch")) {
+                System.out.println("Option --git-branch was missed");
+                throw new ExitApplicationException();
+            }
+            if (!cmd.hasOption("git-commit")) {
+                System.out.println("Option --git-commit was missed");
+                throw new ExitApplicationException();
+            }
+            gitInfo = new GitInfo(
+                cmd.getOptionValue("git-repo"),
+                cmd.getOptionValue("git-branch"),
+                cmd.getOptionValue("git-commit"),
+                cmd.getOptionValue("git-path"));
+        }
+
+        BundleCfgYaml bundleCfgYaml = initBundleCfg(cmd, currDir, gitInfo);
         System.out.println("\tcurrDir dir: " + currDir);
         System.out.println("\tworking dir: " + workingDir);
-        Cfg cfg = new Cfg(version, privateKey, workingDir, currDir, bundleCfgYaml);
+
+        Cfg cfg = new Cfg(version, privateKey, workingDir, currDir, bundleCfgYaml, gitInfo);
         return cfg;
     }
 
@@ -391,9 +440,25 @@ public class PackageBundle implements CommandLineRunner {
         keyOption.setRequired(false);
         options.addOption(keyOption);
 
-        Option bundleOption = new Option("b", "bundle", true, "Name of bundle file");
+        Option bundleOption = new Option("b", "bundle", true, "path to bundle file");
         bundleOption.setRequired(false);
         options.addOption(bundleOption);
+
+        Option gitRepoOption = new Option("repo", "git-repo", true, "URL of git repository");
+        gitRepoOption.setRequired(false);
+        options.addOption(gitRepoOption);
+
+        Option gitBranchOption = new Option("branch", "git-branch", true, "Branch of git repository");
+        gitBranchOption.setRequired(false);
+        options.addOption(gitBranchOption);
+
+        Option gitCommitOption = new Option("commit", "git-commit", true, "Commit in git repository");
+        gitCommitOption.setRequired(false);
+        options.addOption(gitCommitOption);
+
+        Option gitPathOption = new Option("path", "git-path", true, "Path in git repository to dir with bundle.yaml");
+        gitPathOption.setRequired(false);
+        options.addOption(gitPathOption);
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);

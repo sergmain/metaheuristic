@@ -26,7 +26,7 @@ import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProvider;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProviderFactory;
-import ai.metaheuristic.ai.utils.asset.AssetFile;
+import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
