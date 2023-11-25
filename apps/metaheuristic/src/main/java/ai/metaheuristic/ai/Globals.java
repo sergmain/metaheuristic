@@ -248,6 +248,37 @@ public class Globals {
 
     @Getter
     @Setter
+    public static class Trusted {
+        @Nullable
+        public String gitRepo = "https://github.com/sergmain/metaheuristic-assets";
+        public boolean dispatcher = true;
+
+    }
+
+    @Getter
+    @Setter
+    public static class Function {
+        public Enums.FunctionSecurityCheck securityCheck = Enums.FunctionSecurityCheck.skip_trusted;
+        public Trusted trusted;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Key {
+        public String code;
+        public PublicKey publicKey;
+    }
+
+    @Getter
+    @Setter
+    public static class PublicKeyStore {
+        public Key[] key = new Key[0];
+    }
+
+    @Getter
+    @Setter
     public static class Dispatcher {
         public Asset asset = new Asset();
         public RowsLimit rowsLimit = new RowsLimit();
@@ -256,7 +287,9 @@ public class Globals {
         @PeriodUnit(ChronoUnit.DAYS)
         public Period keepEventsInDb = ConstsApi.DAYS_90;
 
-        public boolean functionSignatureRequired = true;
+        @Nullable
+        private Boolean functionSignatureRequired = true;
+
         public boolean enabled = false;
 
         @Nullable
@@ -266,7 +299,7 @@ public class Globals {
         public String masterPassword;
 
         @Nullable
-        public PublicKey publicKey;
+        private PublicKey publicKey;
 
         public String defaultResultFileExtension = Consts.BIN_EXT;
 
@@ -281,6 +314,28 @@ public class Globals {
 
         public void setMaxTriesAfterError(int maxTriesAfterError) {
             this.maxTriesAfterError = EnvProperty.minMax(maxTriesAfterError, 0, 10);
+        }
+
+        @DeprecatedConfigurationProperty(replacement = "mh.publicKeyStore")
+        @Deprecated
+        @Nullable
+        public PublicKey getPublicKey() {
+            return publicKey;
+        }
+
+        public void setPublicKey(@Nullable PublicKey publicKey) {
+            this.publicKey = publicKey;
+        }
+
+        @DeprecatedConfigurationProperty(replacement = "mh.dispatcher.function-security")
+        @Deprecated
+        @Nullable
+        public Boolean isFunctionSignatureRequired() {
+            return functionSignatureRequired;
+        }
+
+        public void setFunctionSignatureRequired(boolean functionSignatureRequired) {
+            this.functionSignatureRequired = functionSignatureRequired;
         }
 
         @DeprecatedConfigurationProperty(replacement = "mh.dispatcher.rows-limit.global-variable-table")
@@ -483,6 +538,8 @@ public class Globals {
     public final Mhbp mhbp = new Mhbp();
     public final Standalone standalone = new Standalone();
     public final State state = new State();
+    public final Function function = new Function();
+    public final PublicKeyStore publicKeyStore = new PublicKeyStore();
 
     @Nullable
     public String systemOwner = null;
@@ -529,7 +586,11 @@ public class Globals {
         processorPath = getHome().resolve("processor");
         Files.createDirectories(processorPath);
 
-        if (dispatcher.enabled && dispatcher.functionSignatureRequired && dispatcher.publicKey==null ) {
+        processOldParameters();
+
+        if (dispatcher.enabled
+            && (function.securityCheck==Enums.FunctionSecurityCheck.always || (function.securityCheck==Enums.FunctionSecurityCheck.skip_trusted && !function.trusted.dispatcher))
+            && publicKeyStore.key.length==0) {
             throw new GlobalConfigurationException("mh.dispatcher.public-key wasn't configured for dispatcher (file application.properties) but mh.dispatcher.function-signature-required is true (default value)");
         }
         if (dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated && S.b(dispatcher.asset.sourceUrl)) {
@@ -586,6 +647,36 @@ public class Globals {
         logGarbageCollectors();
 //        logDeprecated();
 
+    }
+
+    @Nullable
+    public PublicKey getPublicKey(String code) {
+        for (Key key : publicKeyStore.key) {
+            if (code.equals(key.code)) {
+                return key.getPublicKey();
+            }
+        }
+        return null;
+    }
+
+    private void processOldParameters() {
+        if (Boolean.TRUE.equals(dispatcher.functionSignatureRequired)) {
+            function.securityCheck = Enums.FunctionSecurityCheck.always;
+        }
+        if (dispatcher.publicKey!=null) {
+            if (publicKeyStore.key==null || publicKeyStore.key.length==0) {
+                publicKeyStore.key = new Key[1];
+                publicKeyStore.key[0] = new Key(Consts.DEFAULT_PUBLIC_KEY_CODE, dispatcher.publicKey);
+            }
+            else {
+                List<Key> keys = new ArrayList<>(List.of(publicKeyStore.key));
+                if (keys.stream().allMatch(o->o.code.equals(Consts.DEFAULT_PUBLIC_KEY_CODE))) {
+                    throw new IllegalStateException("Default PublicKey can't be declared in dispatcher.publicKey and in publicKeyStore.key at the same time.");
+                }
+                keys.add(new Key(Consts.DEFAULT_PUBLIC_KEY_CODE, dispatcher.publicKey));
+                publicKeyStore.key = keys.toArray(new Key[0]);
+            }
+        }
     }
 
     @PreDestroy

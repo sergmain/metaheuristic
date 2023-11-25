@@ -196,4 +196,5 @@ public class Consts {
     public static final String ELECTRON_PATH = "electron";
     public static final String X_AUTH_TOKEN = "x-auth-token";
     public static final String BEARER = "Bearer ";
+    public static final String DEFAULT_PUBLIC_KEY_CODE = "default";
 }

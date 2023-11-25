@@ -17,6 +17,8 @@ package ai.metaheuristic.ai;
 
 public final class Enums {
 
+    public enum FunctionSecurityCheck { always, skip_trusted, none }
+
     public enum TaskRejectingStatus {
         internal_task, exec_context_not_started, exec_context_stopped_or_finished,
         queued_task_or_params_is_null, task_was_finished, task_in_progress_already, task_for_cache_checking,

@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.function;
 
+import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.data.BundleData;
@@ -59,6 +61,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -371,7 +374,9 @@ public class FunctionService {
             return;
         }
 
-        if (globals.dispatcher.functionSignatureRequired) {
+        if (globals.function.securityCheck== Enums.FunctionSecurityCheck.always ||
+            (globals.function.securityCheck== Enums.FunctionSecurityCheck.skip_trusted && !globals.function.trusted.dispatcher)) {
+
             // at 2020-09-02, only HashAlgo.SHA256WithSignature is supported for signing right now
             final EnumsApi.HashAlgo hashAlgo = EnumsApi.HashAlgo.SHA256WithSignature;
 
@@ -419,8 +424,11 @@ public class FunctionService {
             }
             // ###idea### why?
             //noinspection ConstantConditions
+
+            final PublicKey publicKey = globals.getPublicKey(Consts.DEFAULT_PUBLIC_KEY_CODE);
+
             EnumsApi.SignatureState st = ChecksumWithSignatureUtils.isValid(
-                    hashAlgo.signatureAlgo, sum.getBytes(), checksumWithSignature.signature, globals.dispatcher.publicKey);
+                    hashAlgo.signatureAlgo, sum.getBytes(), checksumWithSignature.signature, publicKey);
 
             if (st!= EnumsApi.SignatureState.correct) {
                 if (!checksumWithSignature.checksum.equals(sum)) {

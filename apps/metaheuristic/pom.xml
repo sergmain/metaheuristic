@@ -178,7 +178,7 @@
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
-            <version>4.23.0</version>
+<!--            <version>4.23.0</version>-->
             <exclusions>
                 <exclusion>
                     <groupId>org.liquibase</groupId>
@@ -393,7 +393,7 @@
                 include <groupId>, <artifactID>, and <version> elements-->
                 <groupId>org.liquibase</groupId>
                 <artifactId>liquibase-maven-plugin</artifactId>
-                <version>4.23.0</version>
+                <version>4.24.0</version>
             </plugin>
         </plugins>
 
@@ -404,7 +404,7 @@
                     include <groupId>, <artifactID>, and <version> elements-->
                     <groupId>org.liquibase</groupId>
                     <artifactId>liquibase-maven-plugin</artifactId>
-                    <version>4.23.0</version>
+                    <version>4.24.0</version>
                     <configuration>
                         <!--set values for Liquibase properties and settings
                         for example, the location of a properties file to use-->

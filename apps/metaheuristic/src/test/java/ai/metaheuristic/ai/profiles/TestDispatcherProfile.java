@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.profiles;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.api.ConstsApi;
 import org.junit.jupiter.api.Disabled;
@@ -57,10 +58,14 @@ public class TestDispatcherProfile {
         assertFalse(globals.sslRequired);
         assertEquals("qwe321", globals.dispatcher.masterUsername);
         assertEquals("123ewq", globals.dispatcher.masterPassword);
-        assertTrue(globals.dispatcher.functionSignatureRequired);
+        assertSame(globals.function.securityCheck, Enums.FunctionSecurityCheck.always);
         assertNotNull(globals.dispatcherPath);
         assertEquals(Consts.DISPATCHER_DIR, globals.dispatcherPath.getFileName().toString());
-        assertNotNull(globals.dispatcher.publicKey);
+
+        assertNotNull(globals.publicKeyStore.key);
+        assertEquals(1, globals.publicKeyStore.key.length);
+        assertEquals(Consts.DEFAULT_PUBLIC_KEY_CODE, globals.publicKeyStore.key[0].code);
+
         assertEquals(replicated, globals.dispatcher.asset.mode);
         assertEquals("http://localhost:33377", globals.dispatcher.asset.sourceUrl);
         assertEquals("1277", globals.dispatcher.asset.password);
