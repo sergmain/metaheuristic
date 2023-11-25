@@ -55,7 +55,7 @@ public class TestDispatcherProfile {
         assertEquals(List.of("http://localhost", "https://127.0.0.1", "http://192.168.0.1"), globals.corsAllowedOrigins);
 
         assertTrue(globals.dispatcher.enabled);
-        assertFalse(globals.sslRequired);
+        assertFalse(globals.security.sslRequired);
         assertEquals("qwe321", globals.dispatcher.masterUsername);
         assertEquals("123ewq", globals.dispatcher.masterPassword);
         assertSame(globals.function.securityCheck, Enums.FunctionSecurityCheck.always);

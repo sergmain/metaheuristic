@@ -122,7 +122,7 @@ public class PackageBundle implements CommandLineRunner {
                 }
                 String yaml = Files.readString(p);
 
-                // let's check that this yaml is actually SourceCode
+                // let's check that this yaml is actually one of required type
                 yamlCheckerFunc.accept(yaml);
 
                 Path file = tempFuncPath.resolve(p.getFileName().toString());

@@ -104,7 +104,7 @@ public class MultiHttpSecurityConfig {
                 .httpStrictTransportSecurity(withDefaults())
                 .frameOptions(withDefaults()));
 
-        if (globals.sslRequired) {
+        if (globals.security.sslRequired) {
             http.requiresChannel((requiresChannel) -> requiresChannel.anyRequest().requiresSecure());
         }
         return http.build();

@@ -526,6 +526,14 @@ public class Globals {
         public boolean awaitingForProcessor = true;
     }
 
+    @Getter
+    @Setter
+    public static class Security {
+        public boolean sslRequired = true;
+        public boolean dynamicFunctionSecurity = false;
+
+    }
+
     @Value("${spring.profiles.active}")
     public String[] activeProfiles;
 
@@ -540,6 +548,7 @@ public class Globals {
     public final State state = new State();
     public final Function function = new Function();
     public final PublicKeyStore publicKeyStore = new PublicKeyStore();
+    public final Security security = new Security();
 
     @Nullable
     public String systemOwner = null;
@@ -552,7 +561,19 @@ public class Globals {
     public boolean testing = false;
     public boolean eventEnabled = false;
 
-    public boolean sslRequired = true;
+    @DeprecatedConfigurationProperty(replacement = "mh.security.ssl-required")
+    @Deprecated
+    @Nullable
+    public Boolean isSslRequired() {
+        return sslRequired;
+    }
+
+    public void setSslRequired(boolean sslRequired) {
+        this.sslRequired = sslRequired;
+    }
+
+    @Nullable
+    private Boolean sslRequired = true;
 
     public Path home;
 
@@ -662,6 +683,9 @@ public class Globals {
     private void processOldParameters() {
         if (Boolean.TRUE.equals(dispatcher.functionSignatureRequired)) {
             function.securityCheck = Enums.FunctionSecurityCheck.always;
+        }
+        if (sslRequired != null) {
+            security.sslRequired = security.sslRequired || sslRequired;
         }
         if (dispatcher.publicKey!=null) {
             if (publicKeyStore.key==null || publicKeyStore.key.length==0) {

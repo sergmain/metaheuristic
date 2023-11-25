@@ -422,11 +422,10 @@ public class FunctionService {
                 log.warn(es);
                 return;
             }
-            // ###idea### why?
-            //noinspection ConstantConditions
-
             final PublicKey publicKey = globals.getPublicKey(Consts.DEFAULT_PUBLIC_KEY_CODE);
 
+            // ###idea### why?
+            //noinspection ConstantConditions
             EnumsApi.SignatureState st = ChecksumWithSignatureUtils.isValid(
                     hashAlgo.signatureAlgo, sum.getBytes(), checksumWithSignature.signature, publicKey);
 
