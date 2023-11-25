@@ -39,5 +39,5 @@ public class CommonConsts {
     public static final String FUNCTION_YAML = "function.yaml";
     public static final String ZIP_EXTENSION = ".zip";
     public static final String BUNDLE_CFG_YAML = "bundle-cfg.yaml";
-    public static final String REPO = "repo";
+    public static final String GIT_REPO = "git-repo";
 }

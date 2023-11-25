@@ -99,7 +99,7 @@ public class OpenaiJsonReaderTest {
         Path p = gitPath.resolve(code);
         assertFalse(Files.notExists(p));
 
-        Path repo = p.resolve(CommonConsts.REPO);
+        Path repo = p.resolve(CommonConsts.GIT_REPO);
         assertFalse(Files.notExists(repo));
 
         QuestionData.Chapters qas = OpenaiJsonReader.read(10L, repo, kbParams.kb.git);

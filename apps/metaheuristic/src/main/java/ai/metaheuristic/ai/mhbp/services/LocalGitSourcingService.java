@@ -156,7 +156,7 @@ public class LocalGitSourcingService {
     public static ExecResult prepareRepo(final Path resourceDir, GitInfo git, GitData.GitContext gitContext) {
 
         Path functionDir = resourceDir;
-        Path repoDir = functionDir.resolve(CommonConsts.REPO);
+        Path repoDir = functionDir.resolve(CommonConsts.GIT_REPO);
         log.info("026.070 Target dir: {}, exist: {}", repoDir.toAbsolutePath(), Files.exists(repoDir));
 
         if (Files.exists(repoDir) && PathUtils.isEmpty(repoDir)) {
@@ -233,7 +233,7 @@ public class LocalGitSourcingService {
 
     @SneakyThrows
     public static ExecResult tryToRepairRepo(Path functionDir, GitInfo git, GitData.GitContext gitContext) {
-        Path repoDir = functionDir.resolve(CommonConsts.REPO);
+        Path repoDir = functionDir.resolve(CommonConsts.GIT_REPO);
         ExecResult result;
         PathUtils.deleteDirectory(repoDir);
         //Files.deleteIfExists(repoDir);

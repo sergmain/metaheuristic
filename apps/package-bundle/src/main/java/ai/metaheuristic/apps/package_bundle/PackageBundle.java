@@ -60,6 +60,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.BundleItemType.*;
+import static ai.metaheuristic.commons.CommonConsts.GIT_REPO;
 
 @SpringBootApplication
 public class PackageBundle implements CommandLineRunner {
@@ -74,10 +75,42 @@ public class PackageBundle implements CommandLineRunner {
             SpringApplication.run(PackageBundle.class, args);
         }
 
-    public record Cfg(int version, @Nullable PrivateKey privateKey, Path workingDir, Path currDir,
-                      BundleCfgYaml bundleCfg, @Nullable GitInfo gitInfo) {
-        public boolean isGit() {
-            return gitInfo!=null;
+    public static final class Cfg {
+        public final int version;
+        @Nullable
+        public final PrivateKey privateKey;
+        public Path workingDir;
+        public Path baseDir;
+        public Path currDir;
+        public final BundleCfgYaml bundleCfg;
+        @Nullable
+        public final GitInfo gitInfo;
+
+        public Cfg(int version, @Nullable PrivateKey privateKey, Path baseDir,
+                   BundleCfgYaml bundleCfg, @Nullable GitInfo gitInfo) {
+            this.version = version;
+            this.privateKey = privateKey;
+            this.baseDir = baseDir;
+            this.bundleCfg = bundleCfg;
+            this.gitInfo = gitInfo;
+        }
+
+        @SneakyThrows
+        public void initOtherPaths() {
+            Path tempDir = baseDir.resolve("bundles");
+            Files.createDirectories(tempDir);
+            Path workingDir = DirUtils.createTempPath(tempDir, "bundle-");
+            if (workingDir==null) {
+                throw new ExitApplicationException("Can't create temp directory in path " + tempDir);
+            }
+            this.workingDir = workingDir;
+
+            if (gitInfo != null && !S.b(gitInfo.path)) {
+                currDir = baseDir.resolve(gitInfo.path);
+            }
+            else {
+                currDir = baseDir;
+            }
         }
     }
 
@@ -96,8 +129,8 @@ public class PackageBundle implements CommandLineRunner {
     public static void runInternal(String... args) throws IOException, GeneralSecurityException, ParseException {
         Cfg cfg = initPackaging(args);
 
-        if (cfg.isGit()) {
-            Path temp = cfg.currDir.resolve("temp");
+        if (cfg.gitInfo != null) {
+            Path temp = cfg.baseDir.resolve("temp");
             if (Files.notExists(temp)) {
                 Files.createDirectories(temp);
             }
@@ -106,7 +139,12 @@ public class PackageBundle implements CommandLineRunner {
                 throw new ExitApplicationException("Can't create temporary dir in "+temp.toAbsolutePath());
             }
             cloneRepo(cfg, gitDir);
+            cfg.baseDir = gitDir.resolve(GIT_REPO);
+            System.out.println("\tnew currDir dir: " + cfg.baseDir);
         }
+
+        cfg.initOtherPaths();
+        System.out.println("\tworking dir: " + cfg.workingDir);
 
         processFunctions(cfg);
         processCommonType(cfg, sourceCode, SourceCodeParamsYamlUtils.BASE_YAML_UTILS::to);
@@ -128,7 +166,7 @@ public class PackageBundle implements CommandLineRunner {
             if (bundleConfig.type!=type) {
                 continue;
             }
-            Path p = cfg.currDir.resolve(bundleConfig.path);
+            Path p = cfg.baseDir.resolve(bundleConfig.path);
             if (Files.notExists(p) || !Files.isDirectory(p)) {
                 System.out.printf("Path %s is broken\n", p.toAbsolutePath());
                 throw new ExitApplicationException();
@@ -283,7 +321,13 @@ public class PackageBundle implements CommandLineRunner {
             if (bundleConfig.type!= function) {
                 continue;
             }
-            Path p = cfg.currDir.resolve(bundleConfig.path);
+            Path p;
+            if (cfg.gitInfo != null && !S.b(cfg.gitInfo.path)) {
+                p = cfg.baseDir.resolve(cfg.gitInfo.path).resolve(bundleConfig.path);
+            }
+            else {
+                p = cfg.baseDir.resolve(bundleConfig.path);
+            }
             if (Files.notExists(p) || !Files.isDirectory(p)) {
                 System.out.printf("Path %s is broken\n", p.toAbsolutePath());
                 throw new ExitApplicationException();
@@ -382,13 +426,6 @@ public class PackageBundle implements CommandLineRunner {
         PrivateKey privateKey = getPrivateKey(cmd);
 
         Path currDir = Path.of(SystemUtils.USER_DIR);
-        Path tempDir = currDir.resolve("bundles");
-        Files.createDirectories(tempDir);
-        Path workingDir = DirUtils.createTempPath(tempDir, "bundle-");
-        if (workingDir==null) {
-            System.out.println("Can't create temp directory in path " + tempDir);
-            throw new ExitApplicationException();
-        }
 
         GitInfo gitInfo = null;
         if (cmd.hasOption("git-repo")) {
@@ -408,10 +445,11 @@ public class PackageBundle implements CommandLineRunner {
         }
 
         BundleCfgYaml bundleCfgYaml = initBundleCfg(cmd, currDir, gitInfo);
-        System.out.println("\tcurrDir dir: " + currDir);
-        System.out.println("\tworking dir: " + workingDir);
 
-        Cfg cfg = new Cfg(version, privateKey, workingDir, currDir, bundleCfgYaml, gitInfo);
+        Cfg cfg = new Cfg(version, privateKey, currDir, bundleCfgYaml, gitInfo);
+
+        System.out.println("\tcurrDir dir: " + currDir);
+
         return cfg;
     }
 

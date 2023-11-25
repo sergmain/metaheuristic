@@ -20,7 +20,6 @@ import ai.metaheuristic.api.data.GitData;
 import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
-import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 import static ai.metaheuristic.commons.system.SystemProcessLauncher.ExecResult;
@@ -47,8 +47,8 @@ public class GtiUtils {
     public static int taskConsoleOutputMaxLines = 1000;
 
     public static ExecResult execClone(Path repoDir, String gitUrl, GitData.GitContext gitContext) {
-        // git -C <path> clone <git-repo-url> repo
-        List<String> cmd = List.of("git", "-C", repoDir.toAbsolutePath().toString(), "clone", gitUrl, CommonConsts.REPO);
+        // git -C <path> clone <git-repo-url> git-repo
+        List<String> cmd = List.of("git", "-C", repoDir.toAbsolutePath().toString(), "clone", gitUrl, CommonConsts.GIT_REPO);
         log.info("exec {}", cmd);
         ExecResult result = execGitCmd(cmd, gitContext.withTimeout(0L));
         return result;
