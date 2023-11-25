@@ -34,4 +34,5 @@ public class GitInfo {
 //        public String remote;
     public String branch;
     public String commit;
+    public String path;
 }

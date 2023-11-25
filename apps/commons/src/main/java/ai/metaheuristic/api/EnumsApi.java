@@ -119,8 +119,10 @@ public class EnumsApi {
     public enum FunctionSourcing {
         // function will be downloaded from dispatcher
         dispatcher(1),
+
         // function already has been deployed locally at processor
         // processor(2), --> not used anymore. function.yaml must be re-written according with bundle structure
+
         // function will be downloaded from git
         git(3);
 

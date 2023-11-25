@@ -28,7 +28,13 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import ai.metaheuristic.commons.yaml.scheme.ApiSchemeUtils;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
+import lombok.SneakyThrows;
 import org.apache.commons.cli.*;
+import org.apache.commons.io.file.PathUtils;
+import org.apache.commons.io.filefilter.FileFileFilter;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.NameFileFilter;
+import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.lang3.SystemUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -49,6 +55,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.BundleItemType.*;
 
@@ -208,19 +215,18 @@ public class PackageBundle implements CommandLineRunner {
     }
 
     private static void processFunctions(Cfg cfg) throws IOException, GeneralSecurityException {
-        for (BundleCfgYaml.BundleConfig bundleConfig : cfg.bundleCfg.bundleConfig) {
-            if (bundleConfig.type!= function) {
-                continue;
-            }
-            Path p = cfg.currDir.resolve(bundleConfig.path);
+        List<Path> paths = collectPathsToFunctions(cfg);
+        for (Path pathFunctionYaml : paths) {
+
+            Path path = cfg.currDir.relativize(pathFunctionYaml).getParent();
+            Path p = cfg.currDir.resolve(path);
             if (Files.notExists(p) || !Files.isDirectory(p)) {
                 System.out.printf("Path %s is broken\n", p.toAbsolutePath());
                 throw new ExitApplicationException();
             }
-            Path tempFuncPath = cfg.workingDir.resolve(bundleConfig.path);
-            System.out.println("\t\tprocess path " + bundleConfig.path);
+            Path tempFuncPath = cfg.workingDir.resolve(path);
+            System.out.println("\t\tprocess path " + path);
             Files.createDirectories(tempFuncPath);
-
 
             final FunctionConfigAndFile fcy = getFunctionConfigYaml(p);
             if (verify(fcy, p)) {
@@ -232,6 +238,41 @@ public class PackageBundle implements CommandLineRunner {
 
             calcChecksum(zippedFunction, fcy.config, cfg);
             storeFunctionConfigYaml(tempFuncPath, fcy.config);
+        }
+    }
+
+    static IOFileFilter FUNCTION_YAML_FILTER = FileFileFilter.INSTANCE.and(new NameFileFilter(CommonConsts.FUNCTION_YAML));
+
+    @SneakyThrows
+    private static List<Path> collectPathsToFunctions(Cfg cfg) {
+        List<Path> paths = new ArrayList<>();
+        for (BundleCfgYaml.BundleConfig bundleConfig : cfg.bundleCfg.bundleConfig) {
+            if (bundleConfig.type!= function) {
+                continue;
+            }
+            Path p = cfg.currDir.resolve(bundleConfig.path);
+            if (Files.notExists(p) || !Files.isDirectory(p)) {
+                System.out.printf("Path %s is broken\n", p.toAbsolutePath());
+                throw new ExitApplicationException();
+            }
+
+            Set<Path> collected = new HashSet<>();
+            Collection<Path> files = PathUtils.walk(p, FUNCTION_YAML_FILTER, Integer.MAX_VALUE, false, FileVisitOption.FOLLOW_LINKS).collect(Collectors.toList());
+            for (Path file : files) {
+                checkForDoubles(collected, file);
+                paths.add(file);
+            }
+        }
+        return paths;
+    }
+
+    private static void checkForDoubles(Set<Path> collected, Path file) {
+        Path p=file;
+        while ((p=p.getParent())!=null) {
+            if (collected.contains(p)) {
+                System.out.printf("Path %s was already registered as function dir\n", p.toAbsolutePath());
+                throw new ExitApplicationException();
+            }
         }
     }
 

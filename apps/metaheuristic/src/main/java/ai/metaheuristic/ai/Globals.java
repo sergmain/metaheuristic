@@ -542,7 +542,6 @@ public class Globals {
 
     public final Dispatcher dispatcher = new Dispatcher();
     public final Processor processor = new Processor();
-//    public final ThreadNumber threadNumber = new ThreadNumber();
     public final Mhbp mhbp = new Mhbp();
     public final Standalone standalone = new Standalone();
     public final State state = new State();
