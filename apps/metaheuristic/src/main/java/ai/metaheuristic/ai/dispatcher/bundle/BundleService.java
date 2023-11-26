@@ -17,8 +17,9 @@
 package ai.metaheuristic.ai.dispatcher.bundle;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
-import ai.metaheuristic.ai.dispatcher.data.BundleData;
+import ai.metaheuristic.api.data.BundleData;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.exceptions.BundleProcessingException;
@@ -28,23 +29,26 @@ import ai.metaheuristic.ai.mhbp.auth.AuthService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.DirUtils;
-import ai.metaheuristic.commons.utils.StrUtils;
-import ai.metaheuristic.commons.utils.ZipUtils;
+import ai.metaheuristic.commons.exceptions.ExitApplicationException;
+import ai.metaheuristic.commons.utils.*;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYaml;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.PrivateKey;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -65,12 +69,39 @@ import static ai.metaheuristic.ai.Consts.YML_EXT;
 @Slf4j
 @Profile("dispatcher")
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class BundleService {
+
+    private final Globals globals;
 
     private static final Pattern ZIP_CHARS_PATTERN = Pattern.compile("^[/\\\\A-Za-z0-9._-]*$");
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_FUNCTION = BundleService::isZipEntityNameOk;
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_ENTRY_SIZE_FUNCTION = BundleService::isZipEntitySizeOk;
+
+    public BundleData.UploadingStatus uploadFromGit(GitInfo gitInfo, String bundleFilename, DispatcherContext context) {
+//                public Cfg(@Nullable PrivateKey privateKey, Path baseDir,
+//            BundleCfgYaml bundleCfg, @Nullable GitInfo gitInfo) {
+//        -b function-only-bundle-cfg.yaml --git-repo https://github.com/sergmain/metaheuristic-assets.git --git-branch master --git-commit HEAD --git-path common-bundle
+
+        try {
+
+            BundleData.Cfg cfg = new BundleData.Cfg(null, globals.dispatcherGitRepoPath, gitInfo);
+            BundleUtils.initRepo(cfg);
+            BundleCfgYaml bundleCfgYaml = BundleUtils.readBundleCfgYaml(cfg.repoDir, gitInfo, bundleFilename);;
+            BundleUtils.createBundle(cfg, bundleCfgYaml);
+
+
+            cfg.initOtherPaths(null);
+
+            BundleUtils.createBundle(cfg, bundleCfgYaml);
+        } catch (ExitApplicationException e) {
+            return new BundleData.UploadingStatus("971.015 Error while processing git repo "+ repo+", error: " + e.message);
+        } catch (Throwable e) {
+            return new BundleData.UploadingStatus("971.020 Error while processing git repo "+ repo+", error: " + e.getMessage());
+        }
+        BundleData.UploadingStatus status = new BundleData.UploadingStatus();
+        return status;
+    }
 
     private record BundleLocation(Path dir, Path zipFile) {}
 

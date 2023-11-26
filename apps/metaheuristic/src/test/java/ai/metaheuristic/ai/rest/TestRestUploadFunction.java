@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.rest;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
-import ai.metaheuristic.ai.dispatcher.data.BundleData;
+import ai.metaheuristic.api.data.BundleData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;

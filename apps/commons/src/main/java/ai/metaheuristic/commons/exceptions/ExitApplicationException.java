@@ -22,10 +22,9 @@ package ai.metaheuristic.commons.exceptions;
  * Time: 2:06 PM
  */
 public class ExitApplicationException extends RuntimeException {
-    public ExitApplicationException() {
+    public final String message;
+    public ExitApplicationException(String message) {
+        this.message = message;
     }
 
-    public ExitApplicationException(String message) {
-        System.out.println(message);
-    }
 }
