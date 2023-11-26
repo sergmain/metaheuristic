@@ -86,13 +86,18 @@ public class BundleData {
 
         @SneakyThrows
         public void initOtherPaths(@Nullable Path pathForBundles) {
-            Path tempDir = (pathForBundles==null ? baseDir : pathForBundles).resolve("bundles");
-            Files.createDirectories(tempDir);
-            Path workingDir = DirUtils.createTempPath(tempDir, "bundle-");
-            if (workingDir==null) {
-                throw new ExitApplicationException("Can't create temp directory in path " + tempDir);
+            if (pathForBundles==null) {
+                Path tempDir = baseDir.resolve("bundles");
+                Files.createDirectories(tempDir);
+                Path workingDir = DirUtils.createTempPath(tempDir, "bundle-");
+                if (workingDir == null) {
+                    throw new ExitApplicationException("Can't create temp directory in path " + tempDir);
+                }
+                this.workingDir = workingDir;
             }
-            this.workingDir = workingDir;
+            else {
+                this.workingDir = pathForBundles;
+            }
 
             if (gitInfo != null) {
                 if (repoDir == null) {

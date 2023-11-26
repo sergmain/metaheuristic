@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.bundle.BundleService;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.api.data.BundleData;
+import ai.metaheuristic.api.sourcing.GitInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,9 +60,10 @@ public class BundleRestController {
 
     @PostMapping(value = "/bundle-upload-from-git")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN')")
-    public BundleData.UploadingStatus uploaFromGit(String repo, String branch, String commit, String path, Authentication authentication) {
+    public BundleData.UploadingStatus uploadFromGit(String repo, String branch, String commit, String path, String bundleFilename, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
-        BundleData.UploadingStatus status = bundleTopLevelService.uploadFromGit(repo, branch, commit, path, context);
+        GitInfo gitInfo = new GitInfo(repo, branch, commit, path);
+        BundleData.UploadingStatus status = bundleTopLevelService.uploadFromGit(gitInfo, bundleFilename, context);
         return status;
     }
 

@@ -68,12 +68,12 @@ public class BundleUtils {
 
         cfg.initOtherPaths(null);
         System.out.println("\tworking dir: " + cfg.workingDir);
-        processFunctions(cfg);
+        processFunctions(cfg,bundleCfgYaml);
         processCommonType(cfg, bundleCfgYaml, sourceCode, SourceCodeParamsYamlUtils.BASE_YAML_UTILS::to);
         processCommonType(cfg, bundleCfgYaml, auth, ApiAuthUtils.UTILS::to);
         processCommonType(cfg, bundleCfgYaml, api, ApiSchemeUtils.UTILS::to);
 
-        createFinalZip(cfg);
+        createFinalZip(cfg, bundleCfgYaml);
     }
 
     @SneakyThrows
@@ -140,8 +140,8 @@ public class BundleUtils {
         });
     }
 
-    private static void createFinalZip(BundleData.Cfg cfg) throws IOException {
-        String bundleCfgYaml = BundleCfgYamlUtils.UTILS.toString(cfg.bundleCfg);
+    private static void createFinalZip(BundleData.Cfg cfg, BundleCfgYaml bundleCfg) throws IOException {
+        String bundleCfgYaml = BundleCfgYamlUtils.UTILS.toString(bundleCfg);
         Path bundleCfgPath = cfg.workingDir.resolve(CommonConsts.BUNDLE_CFG_YAML);
         Files.writeString(bundleCfgPath, bundleCfgYaml);
 
@@ -196,8 +196,8 @@ public class BundleUtils {
         return isError;
     }
 
-    private static void processFunctions(BundleData.Cfg cfg) throws IOException, GeneralSecurityException {
-        List<Path> paths = collectPathsToFunctions(cfg);
+    private static void processFunctions(BundleData.Cfg cfg, BundleCfgYaml bundleCfg) throws IOException, GeneralSecurityException {
+        List<Path> paths = collectPathsToFunctions(cfg, bundleCfg);
         for (Path pathFunctionYaml : paths) {
             Path path = cfg.currDir.relativize(pathFunctionYaml).getParent();
             Path p = cfg.currDir.resolve(path);
@@ -232,9 +232,9 @@ public class BundleUtils {
     }
 
     @SneakyThrows
-    private static List<Path> collectPathsToFunctions(BundleData.Cfg cfg) {
+    private static List<Path> collectPathsToFunctions(BundleData.Cfg cfg, BundleCfgYaml bundleCfg) {
         List<Path> paths = new ArrayList<>();
-        for (BundleCfgYaml.BundleConfig bundleConfig : cfg.bundleCfg.bundleConfig) {
+        for (BundleCfgYaml.BundleConfig bundleConfig : bundleCfg.bundleConfig) {
             if (bundleConfig.type!= function) {
                 continue;
             }
