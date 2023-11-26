@@ -61,7 +61,7 @@ import static ai.metaheuristic.commons.CommonConsts.GIT_REPO;
 public class BundleUtils {
     static IOFileFilter FUNCTION_YAML_FILTER = FileFileFilter.INSTANCE.and(new NameFileFilter(CommonConsts.FUNCTION_YAML));
 
-    public static void createBundle(BundleData.Cfg cfg, BundleCfgYaml bundleCfgYaml) throws IOException, GeneralSecurityException {
+    public static Path createBundle(BundleData.Cfg cfg, BundleCfgYaml bundleCfgYaml) throws IOException, GeneralSecurityException {
         if (cfg.gitInfo != null) {
             initRepo(cfg);
         }
@@ -73,7 +73,7 @@ public class BundleUtils {
         processCommonType(cfg, bundleCfgYaml, auth, ApiAuthUtils.UTILS::to);
         processCommonType(cfg, bundleCfgYaml, api, ApiSchemeUtils.UTILS::to);
 
-        createFinalZip(cfg, bundleCfgYaml);
+        return createFinalZip(cfg, bundleCfgYaml);
     }
 
     @SneakyThrows
@@ -140,7 +140,7 @@ public class BundleUtils {
         });
     }
 
-    private static void createFinalZip(BundleData.Cfg cfg, BundleCfgYaml bundleCfg) throws IOException {
+    private static Path createFinalZip(BundleData.Cfg cfg, BundleCfgYaml bundleCfg) throws IOException {
         String bundleCfgYaml = BundleCfgYamlUtils.UTILS.toString(bundleCfg);
         Path bundleCfgPath = cfg.workingDir.resolve(CommonConsts.BUNDLE_CFG_YAML);
         Files.writeString(bundleCfgPath, bundleCfgYaml);
@@ -159,6 +159,7 @@ public class BundleUtils {
 
         Path zip = cfg.workingDir.resolve("bundle-" + LocalDate.now() + CommonConsts.ZIP_EXTENSION);
         ZipUtils.createZip(paths, zip);
+        return zip;
     }
 
     public static boolean verify(BundleData.FunctionConfigAndFile fcy, Path tempFuncPath) {

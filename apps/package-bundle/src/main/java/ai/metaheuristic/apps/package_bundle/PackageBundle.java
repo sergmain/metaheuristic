@@ -58,8 +58,8 @@ public class PackageBundle implements CommandLineRunner {
             BundleData.Cfg cfg = initPackaging(cmd);
 
             BundleCfgYaml bundleCfgYaml = initBundleCfg(cmd, cfg.baseDir, cfg.gitInfo);
-            BundleUtils.createBundle(cfg, bundleCfgYaml);
-            System.out.println("All done.");
+            Path bundleZipFile = BundleUtils.createBundle(cfg, bundleCfgYaml);
+            System.out.println("All done. Bundle file: " + bundleZipFile);
         } catch (ExitApplicationException e) {
             System.out.println(e.message);
             System.exit(SpringApplication.exit(appCtx, () -> -2));

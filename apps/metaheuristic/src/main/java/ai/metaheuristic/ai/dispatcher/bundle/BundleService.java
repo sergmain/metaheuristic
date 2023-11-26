@@ -44,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -92,20 +93,19 @@ public class BundleService {
             cfg.initOtherPaths(tempBundleDir);
 
             BundleCfgYaml bundleCfgYaml = BundleUtils.readBundleCfgYaml(cfg.repoDir, gitInfo, bundleFilename);
-            BundleUtils.createBundle(cfg, bundleCfgYaml);
+            Path bundleZipFile = BundleUtils.createBundle(cfg, bundleCfgYaml);
 
+            BundleLocation bundleLocation = new BundleLocation(tempBundleDir, bundleZipFile);
+            return processBundle(bundleLocation, context);
 
-            BundleUtils.createBundle(cfg, bundleCfgYaml);
         } catch (ExitApplicationException e) {
             return new BundleData.UploadingStatus("971.015 Error while processing git repo "+ gitInfo.repo+", error: " + e.message);
         } catch (Throwable e) {
             return new BundleData.UploadingStatus("971.020 Error while processing git repo "+ gitInfo.repo+", error: " + e.getMessage());
         }
-        BundleData.UploadingStatus status = new BundleData.UploadingStatus();
-        return status;
     }
 
-    private record BundleLocation(Path dir, Path zipFile) {}
+    private record BundleLocation(Path dir, Path bundleZipFile) {}
 
     private final FunctionService functionService;
     private final SourceCodeService sourceCodeService;
@@ -145,8 +145,13 @@ public class BundleService {
             return new BundleData.UploadingStatus("971.140 Can't create a new temp zip file");
         }
 
+        return processBundle(bundleLocation, dispatcherContext);
+    }
+
+    @NonNull
+    private BundleData.UploadingStatus processBundle(BundleLocation bundleLocation, DispatcherContext dispatcherContext) {
         try {
-            BundleData.UploadingStatus status = processBundle(bundleLocation, dispatcherContext);
+            BundleData.UploadingStatus status = processBundleInternal(bundleLocation, dispatcherContext);
             return status;
         }
         catch (ExecContextTooManyInstancesException e) {
@@ -164,10 +169,10 @@ public class BundleService {
         }
     }
 
-    private BundleData.UploadingStatus processBundle(BundleLocation bundleLocation, DispatcherContext dispatcherContext) throws IOException {
+    private BundleData.UploadingStatus processBundleInternal(BundleLocation bundleLocation, DispatcherContext dispatcherContext) throws IOException {
         Path data = bundleLocation.dir.resolve("data");
         Files.createDirectories(data);
-        ZipUtils.unzipFolder(bundleLocation.zipFile, data);
+        ZipUtils.unzipFolder(bundleLocation.bundleZipFile, data);
 
         Path bundleCfg = data.resolve(CommonConsts.BUNDLE_CFG_YAML);
         if (Files.notExists(bundleCfg)) {
@@ -186,9 +191,9 @@ public class BundleService {
         return status;
     }
 
-    private void processCommonType(EnumsApi.BundleItemType type, BundleCfgYaml bundleCfgYaml,
-                                   Path data, BundleData.UploadingStatus status, DispatcherContext dispatcherContext,
-                                   BiFunction<String, DispatcherContext, BaseDataClass> storeCommonTypeFunc) throws IOException {
+    private static void processCommonType(EnumsApi.BundleItemType type, BundleCfgYaml bundleCfgYaml,
+                                          Path data, BundleData.UploadingStatus status, DispatcherContext dispatcherContext,
+                                          BiFunction<String, DispatcherContext, BaseDataClass> storeCommonTypeFunc) throws IOException {
         for (BundleCfgYaml.BundleConfig bundleConfig : bundleCfgYaml.bundleConfig) {
             if (bundleConfig.type!= type) {
                 continue;
