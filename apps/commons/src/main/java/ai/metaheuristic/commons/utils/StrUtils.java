@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.commons.utils;
 
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -132,5 +133,17 @@ public class StrUtils {
             code = isVarNameOk(n) ? n : defaultNameFunc.get();
         }
         return code;
+    }
+
+    public static String asCode(String url) {
+        String s = url.toLowerCase();
+        if (s.startsWith(CommonConsts.HTTP)) {
+            s = s.substring(CommonConsts.HTTP.length());
+        }
+        else if (s.startsWith(CommonConsts.HTTPS)) {
+            s = s.substring(CommonConsts.HTTPS.length());
+        }
+        s = StringUtils.replaceEach(s, new String[]{".", ":", "/", "#"}, new String[]{"_", "-", "-", "_"});
+        return s;
     }
 }

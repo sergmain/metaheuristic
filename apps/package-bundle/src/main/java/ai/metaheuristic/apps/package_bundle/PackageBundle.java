@@ -130,17 +130,7 @@ public class PackageBundle implements CommandLineRunner {
         Cfg cfg = initPackaging(args);
 
         if (cfg.gitInfo != null) {
-            Path temp = cfg.baseDir.resolve("temp");
-            if (Files.notExists(temp)) {
-                Files.createDirectories(temp);
-            }
-            Path gitDir = DirUtils.createTempPath(temp, "git-");
-            if (gitDir==null) {
-                throw new ExitApplicationException("Can't create temporary dir in "+temp.toAbsolutePath());
-            }
-            cloneRepo(cfg, gitDir);
-            cfg.baseDir = gitDir.resolve(GIT_REPO);
-            System.out.println("\tnew currDir dir: " + cfg.baseDir);
+            initRepo(cfg);
         }
 
         cfg.initOtherPaths();
@@ -154,11 +144,30 @@ public class PackageBundle implements CommandLineRunner {
         createFinalZip(cfg);
     }
 
-    private static void cloneRepo(Cfg cfg, Path gitDir) {
-        SystemProcessLauncher.ExecResult result = GtiUtils.execClone(gitDir, cfg.gitInfo.repo,  new GitData.GitContext(60L, 1000));
-        if (!result.ok) {
+    @SneakyThrows
+    private static void initRepo(Cfg cfg) {
+        if (cfg.gitInfo==null) {
+            throw new ExitApplicationException("cfg.gitInfo is null");
+        }
+        Path temp = cfg.baseDir.resolve("git-repo");
+        if (Files.notExists(temp)) {
+            Files.createDirectories(temp);
+        }
+        String gitCode = StrUtils.asCode(cfg.gitInfo.repo);
+        Path gitDir = temp.resolve(gitCode);
+        if (Files.notExists(gitDir)) {
+            Files.createDirectories(gitDir);
+        }
+
+        GitData.GitContext gitContext = new GitData.GitContext(60L, 1000);
+
+        SystemProcessLauncher.ExecResult result = GtiUtils.initGitRepository(cfg.gitInfo, gitDir, cfg.gitInfo.repo, gitContext, true);
+        if (result!=null && !result.ok) {
             throw new ExitApplicationException("Error while cloning repo "+cfg.gitInfo.repo+", error: "+result.error);
         }
+
+        cfg.baseDir = gitDir.resolve(GIT_REPO);
+        System.out.println("\tnew currDir dir: " + cfg.baseDir);
     }
 
     private static void processCommonType(Cfg cfg, EnumsApi.BundleItemType type, Consumer<String> yamlCheckerFunc) throws IOException {
@@ -434,14 +443,17 @@ public class PackageBundle implements CommandLineRunner {
                 throw new ExitApplicationException();
             }
             if (!cmd.hasOption("git-commit")) {
-                System.out.println("Option --git-commit was missed");
-                throw new ExitApplicationException();
+                throw new ExitApplicationException("Option --git-commit was missed"));
             }
             gitInfo = new GitInfo(
                 cmd.getOptionValue("git-repo"),
                 cmd.getOptionValue("git-branch"),
                 cmd.getOptionValue("git-commit"),
                 cmd.getOptionValue("git-path"));
+
+            if (gitInfo.branch.indexOf('/')!=-1) {
+                throw new ExitApplicationException("Option --git-branch can't contain '/', i.e. origin/main or remote/master are wrong, must be main only."));
+            }
         }
 
         BundleCfgYaml bundleCfgYaml = initBundleCfg(cmd, currDir, gitInfo);

@@ -24,8 +24,8 @@ import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -468,19 +468,7 @@ public class MetadataParams {
     }
 
     public static String asCode(CommonUrl commonUrl) {
-        return asCode(commonUrl.getUrl().toLowerCase());
-    }
-
-    public static String asCode(String url) {
-        String s = url;
-        if (s.startsWith(Consts.HTTP)) {
-            s = s.substring(Consts.HTTP.length());
-        }
-        else if (s.startsWith(Consts.HTTPS)) {
-            s = s.substring(Consts.HTTPS.length());
-        }
-        s = StringUtils.replaceEach(s, new String[]{".", ":", "/"}, new String[]{"_", "-", "-"});
-        return s;
+        return StrUtils.asCode(commonUrl.getUrl());
     }
 
     @SneakyThrows

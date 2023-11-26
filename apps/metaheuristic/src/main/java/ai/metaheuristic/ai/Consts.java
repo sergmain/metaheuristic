@@ -33,9 +33,6 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings("DeprecatedIsStillUsed")
 public class Consts {
 
-    public static final String HTTP = "http://";
-    public static final String HTTPS = "https://";
-
     public static final String WEB_CONTAINER_SESSIONID_NAME = "JSESSIONID";
 
     public static final long SESSION_TTL = TimeUnit.MINUTES.toMillis(30);

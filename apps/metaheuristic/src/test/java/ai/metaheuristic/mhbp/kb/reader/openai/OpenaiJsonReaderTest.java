@@ -23,13 +23,13 @@ import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.api.data.GitData;
 import ai.metaheuristic.ai.mhbp.kb.reader.openai.OpenaiInput;
 import ai.metaheuristic.ai.mhbp.kb.reader.openai.OpenaiJsonReader;
-import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.mhbp.questions.QuestionData;
 import ai.metaheuristic.ai.mhbp.services.LocalGitRepoService;
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParams;
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParamsUtils;
+import ai.metaheuristic.commons.utils.StrUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
@@ -94,7 +94,7 @@ public class OpenaiJsonReaderTest {
         Path mhbpHome = Path.of(mhbpHomeEnv);
         Path gitPath = mhbpHome.resolve(Consts.GIT_PATH);
 
-        String code = MetadataParams.asCode(kbParams.kb.git.repo);
+        String code = StrUtils.asCode(kbParams.kb.git.repo);
 
         Path p = gitPath.resolve(code);
         assertFalse(Files.notExists(p));

@@ -19,11 +19,15 @@ package ai.metaheuristic.commons.utils;
 import ai.metaheuristic.api.data.GitData;
 import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.lang.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -51,6 +55,106 @@ public class GtiUtils {
         List<String> cmd = List.of("git", "-C", repoDir.toAbsolutePath().toString(), "clone", gitUrl, CommonConsts.GIT_REPO);
         log.info("exec {}", cmd);
         ExecResult result = execGitCmd(cmd, gitContext.withTimeout(0L));
+        return result;
+    }
+
+    @SneakyThrows
+    @Nullable
+    public static ExecResult initGitRepository(GitInfo gitInfo, Path gitDir, String gitUrl, GitData.GitContext gitContext, boolean firstRun) {
+
+        Path repoDir = gitDir.resolve(CommonConsts.GIT_REPO);
+        log.info("028.070 Target dir: {}, exist: {}", repoDir.toAbsolutePath(), Files.exists(repoDir) );
+
+        if (Files.notExists(repoDir)) {
+            ExecResult result = execClone(gitDir, gitUrl,  gitContext);
+            log.info("028.080 Result of cloning repo: {}", result.toString());
+            if (!result.ok || !result.systemExecResult.isOk()) {
+                result = tryToRepairRepo(gitDir, gitContext, gitUrl);
+                log.info("028.090 Result of repairing of repo: {}", result.toString());
+                if (!result.ok || !result.systemExecResult.isOk()) {
+                    return result;
+                }
+            }
+        }
+        ExecResult result = execRevParse(repoDir);
+        log.info("028.100 Result of execRevParse: {}", result.toString());
+        if (!result.ok) {
+            return result;
+        }
+        if (!result.systemExecResult.isOk) {
+            return new ExecResult(null, false, result.systemExecResult.console);
+        }
+        if (!"true".equals(result.systemExecResult.console.strip())) {
+            result = tryToRepairRepo(repoDir, gitContext, gitUrl);
+            log.info("028.110 Result of tryToRepairRepo: {}", result.toString());
+            if (!result.ok) {
+                return result;
+            }
+            if (!result.systemExecResult.isOk) {
+                return new ExecResult(null, false, result.systemExecResult.console);
+            }
+        }
+
+        result = execResetHardHead(repoDir);
+        log.info("028.120 Result of execResetHardHead: {}", result.toString());
+        if (!result.ok) {
+            return result;
+        }
+        if (!result.systemExecResult.isOk) {
+            return new ExecResult(null, false, result.systemExecResult.console);
+        }
+
+        result = execCleanDF(repoDir);
+        log.info("028.130 Result of execCleanDF: {}", result.toString());
+        if (!result.ok) {
+            return result;
+        }
+        if (!result.systemExecResult.isOk) {
+            return new ExecResult(null, false, result.systemExecResult.console);
+        }
+
+        result = execPullOrigin(repoDir, gitInfo.branch);
+        log.info("028.140 Result of execPullOrigin: {}", result.toString());
+        if (!result.ok) {
+            if (firstRun) {
+                PathUtils.deleteDirectory(repoDir);
+                return initGitRepository(gitInfo, gitDir, gitUrl, gitContext, false);
+            }
+            else {
+                return result;
+            }
+        }
+        if (!result.systemExecResult.isOk) {
+            return new ExecResult(null, false, result.systemExecResult.console);
+        }
+
+        result = execCheckoutRevision(repoDir, gitInfo.commit);
+        log.info("028.150 Result of execCheckoutRevision: {}", result.toString());
+        if (!result.ok) {
+            return result;
+        }
+        if (!result.systemExecResult.isOk) {
+            return new ExecResult(null, false, result.systemExecResult.console);
+        }
+        log.info("028.160 repoDir: {}, exist: {}", repoDir.toAbsolutePath(), Files.exists(repoDir));
+        return null;
+    }
+
+    public static ExecResult tryToRepairRepo(Path gitDir, GitData.GitContext gitContext, String gitUrl) {
+        Path repoDir = gitDir.resolve(CommonConsts.GIT_REPO);
+        ExecResult result;
+        try {
+            PathUtils.deleteDirectory(repoDir);
+        }
+        catch (IOException e) {
+            //
+        }
+        if (Files.exists(repoDir)) {
+            return new ExecResult(null,
+                false,
+                "028.170 Error preparing git repo " + repoDir.toAbsolutePath());
+        }
+        result = execClone(gitDir, gitUrl, gitContext);
         return result;
     }
 
@@ -143,15 +247,15 @@ public class GtiUtils {
         return result;
     }
 
-    public static ExecResult execCheckoutRevision(Path repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
+    public static ExecResult execCheckoutRevision(Path repoDir, String commit) {
         // git checkout sha1
-        ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "checkout", functionConfig.git.commit),0L);
+        ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "checkout", commit),0L);
         return result;
     }
 
-    public static ExecResult execPullOrigin(Path repoDir, TaskParamsYaml.FunctionConfig functionConfig) {
-        // pull origin master
-        ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "pull", "origin", functionConfig.git.branch),0L);
+    public static ExecResult execPullOrigin(Path repoDir, String branch) {
+        // git pull origin master
+        ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "pull", "origin", branch),0L);
         return result;
     }
 

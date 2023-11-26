@@ -40,4 +40,6 @@ public class CommonConsts {
     public static final String ZIP_EXTENSION = ".zip";
     public static final String BUNDLE_CFG_YAML = "bundle-cfg.yaml";
     public static final String GIT_REPO = "git-repo";
+    public static final String HTTP = "http://";
+    public static final String HTTPS = "https://";
 }

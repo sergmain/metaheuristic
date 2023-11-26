@@ -53,13 +53,14 @@ public class SystemProcessLauncher {
         @Nullable
         public final FunctionApiData.SystemExecResult systemExecResult;
         public final boolean ok;
+        @Nullable
         public final String error;
 
         public ExecResult(@Nullable FunctionApiData.SystemExecResult systemExecResult, boolean ok, String error) {
             this(null, systemExecResult, ok, error);
         }
 
-        public ExecResult(@Nullable Path functionDir, @Nullable FunctionApiData.SystemExecResult systemExecResult, boolean ok, String error) {
+        public ExecResult(@Nullable Path functionDir, @Nullable FunctionApiData.SystemExecResult systemExecResult, boolean ok, @Nullable String error) {
             this.functionDir = functionDir;
             this.systemExecResult = systemExecResult;
             this.ok = ok;

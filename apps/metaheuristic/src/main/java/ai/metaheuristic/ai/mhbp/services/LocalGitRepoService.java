@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.mhbp.services;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.commons.system.SystemProcessLauncher;
-import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.utils.StrUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -58,7 +58,7 @@ public class LocalGitRepoService {
     @SneakyThrows
     public static SystemProcessLauncher.ExecResult initGitRepo(GitInfo git, Path gitPath, GitContext gitContext) {
         String url = git.getRepo();
-        String code = MetadataParams.asCode(url);
+        String code = StrUtils.asCode(url);
         Path p = gitPath.resolve(code);
         if (Files.notExists(p)) {
             Files.createDirectories(p);
