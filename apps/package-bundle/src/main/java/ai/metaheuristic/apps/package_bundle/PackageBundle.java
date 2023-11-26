@@ -297,7 +297,6 @@ public class PackageBundle implements CommandLineRunner {
     private static void processFunctions(Cfg cfg) throws IOException, GeneralSecurityException {
         List<Path> paths = collectPathsToFunctions(cfg);
         for (Path pathFunctionYaml : paths) {
-
             Path path = cfg.currDir.relativize(pathFunctionYaml).getParent();
             Path p = cfg.currDir.resolve(path);
             if (Files.notExists(p) || !Files.isDirectory(p)) {
@@ -313,10 +312,21 @@ public class PackageBundle implements CommandLineRunner {
                 System.out.println("Error while verification was encountered.");
                 throw new ExitApplicationException();
             }
+            if (cfg.gitInfo==null) {
+                Path zippedFunction = createZipWithFunction(tempFuncPath, fcy.config, p);
+                calcChecksum(zippedFunction, fcy.config, cfg);
+            }
+            else {
+                fcy.config.function.sourcing = EnumsApi.FunctionSourcing.git;
+                Path pathToFunc = Path.of(cfg.gitInfo.path).resolve(path);
+                if (pathToFunc.isAbsolute()) {
+                    throw new ExitApplicationException("Can't create relative path, actual is absolute: " + pathToFunc);
+                }
+                fcy.config.function.git = new GitInfo(cfg.gitInfo.repo, cfg.gitInfo.branch, cfg.gitInfo.commit, pathToFunc.toString());
 
-            Path zippedFunction = createZipWithFunction(tempFuncPath, fcy.config, p);
+                int i=0;
+            }
 
-            calcChecksum(zippedFunction, fcy.config, cfg);
             storeFunctionConfigYaml(tempFuncPath, fcy.config);
         }
     }
@@ -443,7 +453,7 @@ public class PackageBundle implements CommandLineRunner {
                 throw new ExitApplicationException();
             }
             if (!cmd.hasOption("git-commit")) {
-                throw new ExitApplicationException("Option --git-commit was missed"));
+                throw new ExitApplicationException("Option --git-commit was missed");
             }
             gitInfo = new GitInfo(
                 cmd.getOptionValue("git-repo"),
@@ -452,7 +462,11 @@ public class PackageBundle implements CommandLineRunner {
                 cmd.getOptionValue("git-path"));
 
             if (gitInfo.branch.indexOf('/')!=-1) {
-                throw new ExitApplicationException("Option --git-branch can't contain '/', i.e. origin/main or remote/master are wrong, must be main only."));
+                throw new ExitApplicationException("Option --git-branch can't contain '/', i.e. origin/main or remote/master are wrong, must be main only.");
+            }
+            if (privateKey!=null) {
+                privateKey = null;
+                System.out.println("Warning. Even PrivateKey was specified, signature won't be calculated because source is git.");
             }
         }
 
