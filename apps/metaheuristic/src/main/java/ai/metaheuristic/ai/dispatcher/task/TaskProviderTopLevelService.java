@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.data.QuotasData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
@@ -59,6 +60,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static ai.metaheuristic.ai.dispatcher.data.ProcessorData.*;
 
 /**
  * @author Serge
@@ -317,9 +320,11 @@ public class TaskProviderTopLevelService {
             return null;
         }
 
+        ProcessorAndCoreParams processorAndCoreParams = new ProcessorAndCoreParams(processor.id, coreId, psy, csy);
+
         DispatcherCommParamsYaml.AssignedTask assignedTask =
                 MetaheuristicThreadLocal.getExecutionStat().getNullable("findTask -> getTaskAndAssignToProcessor()",
-                        ()-> getTaskAndAssignToProcessor(core.id, psy, csy, isAcceptOnlySigned, quotas, taskIds));
+                        ()-> getTaskAndAssignToProcessor(processorAndCoreParams, isAcceptOnlySigned, quotas, taskIds));
 
         if (assignedTask!=null && log.isDebugEnabled()) {
             TaskImpl task = taskRepository.findByIdReadOnly(assignedTask.taskId);
@@ -361,19 +366,19 @@ public class TaskProviderTopLevelService {
 
     @Nullable
     private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(
-            Long coreId, ProcessorStatusYaml psy, CoreStatusYaml csy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
+        ProcessorAndCoreParams processorAndCoreParams, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
         TxUtils.checkTxNotExists();
 
         final TaskData.AssignedTask task =
                 MetaheuristicThreadLocal.getExecutionStat().getNullable("getTaskAndAssignToProcessor -> getTaskAndAssignToProcessorInternal()",
-                        ()-> getTaskAndAssignToProcessorInternal(coreId, psy, csy, isAcceptOnlySigned, quotas, taskIds));
+                        ()-> getTaskAndAssignToProcessorInternal(processorAndCoreParams, isAcceptOnlySigned, quotas, taskIds));
 
         // task won't be returned for an internal function
         if (task==null) {
             return null;
         }
         try {
-            String params = TaskProviderUtils.initEmptiness(coreId, psy.taskParamsVersion, task.task.getParams(), task.task.id,
+            String params = TaskProviderUtils.initEmptiness(processorAndCoreParams.coreId(), processorAndCoreParams.psy().taskParamsVersion, task.task.getParams(), task.task.id,
                     variableService::getVariable, eventPublisher::publishEvent);
             if (params==null) {
                 return null;
@@ -391,12 +396,12 @@ public class TaskProviderTopLevelService {
 
     @Nullable
     private TaskData.AssignedTask getTaskAndAssignToProcessorInternal(
-            Long coreId, ProcessorStatusYaml psy, CoreStatusYaml csy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
+        ProcessorAndCoreParams processorAndCoreParams, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
 
         TxUtils.checkTxNotExists();
 
         // find all tasks which were assigned to this core. and try to assign one again
-        List<Object[]> tasks = taskRepository.findExecStateByCoreId(coreId);
+        List<Object[]> tasks = taskRepository.findExecStateByCoreId(processorAndCoreParams.coreId());
         for (Object[] obj : tasks) {
             Long taskId = ((Number)obj[0]).longValue();
             int execState = ((Number)obj[1]).intValue();
@@ -409,11 +414,11 @@ public class TaskProviderTopLevelService {
             if (!taskIds.contains(taskId)) {
                 if (execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     log.warn("393.680 already assigned task, core: #{}, task #{}, task execStatus: {}",
-                            coreId, taskId, EnumsApi.TaskExecState.from(execState));
+                        processorAndCoreParams.coreId(), taskId, EnumsApi.TaskExecState.from(execState));
                     TaskImpl task = taskRepository.findById(taskId).orElse(null);
                     if (task!=null) {
-                        if (psy.env==null) {
-                            log.error("393.720 Core #{} has empty env.yaml", coreId);
+                        if (processorAndCoreParams.psy().env==null) {
+                            log.error("393.720 Core #{} has empty env.yaml", processorAndCoreParams.coreId());
                             return null;
                         }
                         ExecContextImpl ec = execContextCache.findById(execContextId, true);
@@ -441,9 +446,9 @@ public class TaskProviderTopLevelService {
                             continue;
                         }
 
-                        QuotasData.ActualQuota quota = QuotasUtils.getQuotaAmount(psy.env.quotas, p.tag);
+                        QuotasData.ActualQuota quota = QuotasUtils.getQuotaAmount(processorAndCoreParams.psy().env.quotas, p.tag);
 
-                        if (!QuotasUtils.isEnough(psy.env.quotas, quotas, quota)) {
+                        if (!QuotasUtils.isEnough(processorAndCoreParams.psy().env.quotas, quotas, quota)) {
                             log.warn("393.840 Not enough quotas, start re-setting task #{}, execContext #{}", taskId, execContextId);
                             eventPublisher.publishEvent(new ResetTaskEvent(ec.id, task.id));
                             continue;
@@ -461,15 +466,15 @@ public class TaskProviderTopLevelService {
 
         TaskData.TaskSearching result =
                 MetaheuristicThreadLocal.getExecutionStat().get("getTaskAndAssignToProcessorInternal -> assignTaskToCore()",
-                        ()-> taskProviderUnassignedTaskTopLevelService.findUnassignedTaskAndAssign(coreId, psy, csy, isAcceptOnlySigned, quotas));
+                        ()-> taskProviderUnassignedTaskTopLevelService.findUnassignedTaskAndAssign(processorAndCoreParams, isAcceptOnlySigned, quotas));
 
         if (log.isDebugEnabled()) {
-            log.debug("393.860 Result of searching task for core #{} is {}", coreId, result.status);
+            log.debug("393.860 Result of searching task for core #{} is {}", processorAndCoreParams.coreId(), result.status);
             log.debug("393.861   tasks were rejected: {}", result.rejected);
         }
 
         if (result.task!=null) {
-            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, coreId, result.task.task.id, result.task.task.execContextId, null, null);
+            dispatcherEventService.publishTaskEvent(EnumsApi.DispatcherEventType.TASK_ASSIGNED, processorAndCoreParams.coreId(), result.task.task.id, result.task.task.execContextId, null, null);
         }
 
         return result.task;

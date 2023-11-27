@@ -119,6 +119,18 @@ public class ProcessorStatusYaml implements BaseParams {
     @Nullable
     public Log log;
 
+    @Deprecated(forRemoval = true)
+    // key - code of function, value - stae of function
+    private Map<String, EnumsApi.FunctionState> functions = new HashMap<>();
+
+    public Map<String, EnumsApi.FunctionState> getFunctions() {
+        return functions;
+    }
+
+    public void setFunctions(Map<String, EnumsApi.FunctionState> functions) {
+        this.functions = functions;
+    }
+
     public void addError(String error) {
         if (errors==null) {
             errors = new ArrayList<>();

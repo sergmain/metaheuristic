@@ -27,7 +27,6 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.functions.FunctionRepositoryDispatcherService;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.ParamsVersion;
@@ -50,6 +49,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static ai.metaheuristic.ai.Enums.TaskRejectingStatus.*;
 import static ai.metaheuristic.ai.Enums.TaskSearchingStatus.*;
+import static ai.metaheuristic.ai.dispatcher.data.ProcessorData.*;
 
 /**
  * @author Serge
@@ -82,7 +82,7 @@ public class TaskProviderUnassignedTaskService {
         return bannedSince;
     }
 
-    public TaskData.TaskSearching findUnassignedTaskAndAssign(Long coreId, ProcessorStatusYaml psy, CoreStatusYaml csy, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas currentQuotas) {
+    public TaskData.TaskSearching findUnassignedTaskAndAssign(ProcessorAndCoreParams processorAndCoreParams, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas currentQuotas) {
         TaskQueueSyncStaticService.checkWriteLockNotPresent();
         TxUtils.checkTxNotExists();
 
@@ -91,12 +91,12 @@ public class TaskProviderUnassignedTaskService {
         }
 
         // Environment of Processor must be initialized before getting any task
-        if (psy.env==null) {
-            log.error("317.070 Processor with core #{} has an empty env.yaml", coreId);
+        if (processorAndCoreParams.psy().env==null) {
+            log.error("317.070 Processor with core #{} has an empty env.yaml", processorAndCoreParams.coreId());
             return new TaskData.TaskSearching(environment_is_empty);
         }
 
-        AtomicLong longHolder = getBannedSince().computeIfAbsent(coreId, o -> new AtomicLong(0));
+        AtomicLong longHolder = getBannedSince().computeIfAbsent(processorAndCoreParams.coreId(), o -> new AtomicLong(0));
         if (longHolder.get() != 0 && System.currentTimeMillis() - longHolder.get() < TimeUnit.MINUTES.toMillis(30)) {
             return new TaskData.TaskSearching(core_is_banned);
         }
@@ -140,11 +140,12 @@ public class TaskProviderUnassignedTaskService {
 
                 if (queuedTask.task==null || queuedTask.taskParamYaml==null) {
                     // TODO 2021.03.14 this could happened when execContext is deleted while executing of task was active
-                    log.warn("317.037 (queuedTask.task==null || queuedTask.taskParamYaml==null). shouldn't happened,\n" +
-                                    "assigned: {}, state: {}\n" +
-                                    "taskId: {}, queuedTask.execContext: {}\n" +
-                                    "queuedTask.task is null: {}\n" +
-                                    "queuedTask.taskParamYaml is null: {}",
+                    log.warn("""
+                            317.037 (queuedTask.task==null || queuedTask.taskParamYaml==null). shouldn't happened,
+                            assigned: {}, state: {}
+                            taskId: {}, queuedTask.execContext: {}
+                            queuedTask.task is null: {}
+                            queuedTask.taskParamYaml is null: {}""",
                             allocatedTask.assigned, allocatedTask.state, queuedTask.taskId, queuedTask.execContext, queuedTask.task==null, queuedTask.taskParamYaml==null);
                     searching.rejected.put(queuedTask.taskId, queued_task_or_params_is_null);
                     continue;
@@ -180,26 +181,26 @@ public class TaskProviderUnassignedTaskService {
                 }
 
                 // check of git availability
-                if (TaskUtils.gitUnavailable(queuedTask.taskParamYaml.task, psy.gitStatusInfo.status != EnumsApi.GitStatus.installed)) {
+                if (TaskUtils.gitUnavailable(queuedTask.taskParamYaml.task, processorAndCoreParams.psy().gitStatusInfo.status != EnumsApi.GitStatus.installed)) {
                     log.warn("317.060 Can't assign task #{} to core #{} because this processor doesn't correctly installed git, git status info: {}",
-                            coreId, queuedTask.task.getId(), psy.gitStatusInfo
+                        processorAndCoreParams.coreId(), queuedTask.task.getId(), processorAndCoreParams.psy().gitStatusInfo
                     );
                     searching.rejected.put(queuedTask.taskId, git_required);
                     continue;
                 }
 
                 // check of tag
-                if (!CollectionUtils.checkTagAllowed(queuedTask.tag, csy.tags)) {
+                if (!CollectionUtils.checkTagAllowed(queuedTask.tag, processorAndCoreParams.csy().tags)) {
                     log.debug("317.077 Check of !CollectionUtils.checkTagAllowed(queuedTask.tag, psy.env.tags) was failed");
                     searching.rejected.put(queuedTask.taskId, tags_arent_allowed);
                     continue;
                 }
 
                 if (!S.b(queuedTask.taskParamYaml.task.function.env)) {
-                    String interpreter = psy.env.getEnvs().get(queuedTask.taskParamYaml.task.function.env);
+                    String interpreter = processorAndCoreParams.psy().env.getEnvs().get(queuedTask.taskParamYaml.task.function.env);
                     if (interpreter == null) {
                         log.error("317.080 Can't assign task #{} to core #{} because this processor doesn't have defined interpreter for function's env {}",
-                                queuedTask.task.getId(), coreId, queuedTask.taskParamYaml.task.function.env
+                                queuedTask.task.getId(), processorAndCoreParams.coreId(), queuedTask.taskParamYaml.task.function.env
                         );
                         longHolder.set(System.currentTimeMillis());
                         searching.rejected.put(queuedTask.taskId, interpreter_is_undefined);
@@ -208,10 +209,10 @@ public class TaskProviderUnassignedTaskService {
                 }
 
                 final List<EnumsApi.OS> supportedOS = FunctionCoreUtils.getSupportedOS(queuedTask.taskParamYaml.task.function.metas);
-                if (psy.os != null && !supportedOS.isEmpty() && !supportedOS.contains(psy.os)) {
+                if (processorAndCoreParams.psy().os != null && !supportedOS.isEmpty() && !supportedOS.contains(processorAndCoreParams.psy().os)) {
                     log.info("317.100 Can't assign task #{} to core #{}, " +
                                     "because this processor doesn't support required OS version. processor: {}, function: {}",
-                            coreId, queuedTask.task.getId(), psy.os, supportedOS
+                        processorAndCoreParams.coreId(), queuedTask.task.getId(), processorAndCoreParams.psy().os, supportedOS
                     );
                     longHolder.set(System.currentTimeMillis());
                     searching.rejected.put(queuedTask.taskId, not_supported_operating_system);
@@ -225,15 +226,15 @@ public class TaskProviderUnassignedTaskService {
                         continue;
                     }
                 }
-                if (notAllFunctionsReady(coreId, psy, queuedTask.taskParamYaml)) {
-                    log.debug("317.123 Core #{} isn't ready to process task #{}", coreId, queuedTask.taskId);
+                if (notAllFunctionsReady(processorAndCoreParams, queuedTask.taskParamYaml)) {
+                    log.debug("317.123 Core #{} isn't ready to process task #{}", processorAndCoreParams.coreId(), queuedTask.taskId);
                     searching.rejected.put(queuedTask.taskId, functions_not_ready);
                     continue;
                 }
 
-                quota = QuotasUtils.getQuotaAmount(psy.env.quotas, queuedTask.tag);
+                quota = QuotasUtils.getQuotaAmount(processorAndCoreParams.psy().env.quotas, queuedTask.tag);
 
-                if (!QuotasUtils.isEnough(psy.env.quotas, currentQuotas, quota)) {
+                if (!QuotasUtils.isEnough(processorAndCoreParams.psy().env.quotas, currentQuotas, quota)) {
                     searching.rejected.put(queuedTask.taskId, not_enough_quotas);
                     continue;
                 }
@@ -242,15 +243,15 @@ public class TaskProviderUnassignedTaskService {
                 // check that downgrading is being supported
                 try {
                     ParamsVersion v = YamlForVersioning.getParamsVersion(queuedTask.task.getParams());
-                    if (v.getActualVersion()!=psy.taskParamsVersion) {
-                        log.info("317.138 check downgrading is possible, actual version: {}, required version: {}", v.getActualVersion(), psy.taskParamsVersion);
+                    if (v.getActualVersion()!=processorAndCoreParams.psy().taskParamsVersion) {
+                        log.info("317.138 check downgrading is possible, actual version: {}, required version: {}", v.getActualVersion(), processorAndCoreParams.psy().taskParamsVersion);
                         TaskParamsYaml tpy = queuedTask.task.getTaskParamsYaml();
                         //noinspection unused
-                        String params = TaskParamsYamlUtils.UTILS.toStringAsVersion(tpy, psy.taskParamsVersion);
+                        String params = TaskParamsYamlUtils.UTILS.toStringAsVersion(tpy, processorAndCoreParams.psy().taskParamsVersion);
                     }
                 } catch (DowngradeNotSupportedException e) {
                     log.warn("317.140 Task #{} can't be assigned to core #{} because it's too old, downgrade to required taskParams level {} isn't supported",
-                            queuedTask.task.id, coreId, psy.taskParamsVersion);
+                            queuedTask.task.id, processorAndCoreParams.coreId(), processorAndCoreParams.psy().taskParamsVersion);
                     longHolder.set(System.currentTimeMillis());
                     searching.rejected.put(queuedTask.taskId, downgrade_not_supported);
                     resultTask = null;
@@ -302,7 +303,7 @@ public class TaskProviderUnassignedTaskService {
         final QuotasData.ActualQuota quotaFinal = quota;
 
         searching.task = TaskSyncService.getWithSyncNullable(resultTask.queuedTask.task.id,
-            () -> taskProviderTransactionalService.assignTaskToCore(coreId, currentQuotas, resultTaskFinal, quotaFinal));
+            () -> taskProviderTransactionalService.assignTaskToCore(processorAndCoreParams.coreId(), currentQuotas, resultTaskFinal, quotaFinal));
 
         if (searching.task==null) {
             searching.status = task_assigning_was_failed;
@@ -312,23 +313,23 @@ public class TaskProviderUnassignedTaskService {
     }
 
 
-    private static boolean notAllFunctionsReady(Long processorId, ProcessorStatusYaml status, TaskParamsYaml taskParamYaml) {
+    private static boolean notAllFunctionsReady(ProcessorAndCoreParams processorAndCoreParams, TaskParamsYaml taskParamYaml) {
         AtomicBoolean result = new AtomicBoolean(false);
-        notAllFunctionsReadyInternal(processorId, status, taskParamYaml.task.function, result);
+        notAllFunctionsReadyInternal(processorAndCoreParams, taskParamYaml.task.function, result);
         for (TaskParamsYaml.FunctionConfig preFunction : taskParamYaml.task.preFunctions) {
-            notAllFunctionsReadyInternal(processorId, status, preFunction, result);
+            notAllFunctionsReadyInternal(processorAndCoreParams, preFunction, result);
         }
         for (TaskParamsYaml.FunctionConfig postFunction : taskParamYaml.task.postFunctions) {
-            notAllFunctionsReadyInternal(processorId, status, postFunction, result);
+            notAllFunctionsReadyInternal(processorAndCoreParams, postFunction, result);
         }
         return result.get();
     }
 
-    private static void notAllFunctionsReadyInternal(Long processorId, ProcessorStatusYaml status, TaskParamsYaml.FunctionConfig functionConfig, AtomicBoolean result) {
-        boolean b = FunctionRepositoryDispatcherService.isProcessorReady(functionConfig.code, processorId);
+    private static void notAllFunctionsReadyInternal(ProcessorAndCoreParams processorAndCoreParams, TaskParamsYaml.FunctionConfig functionConfig, AtomicBoolean result) {
+        boolean b = FunctionRepositoryDispatcherService.isProcessorReady(functionConfig.code, processorAndCoreParams.processorId());
 
         if (!b) {
-            log.debug("317.240 function {} at processor #{} isn't ready.", functionConfig.code, processorId);
+            log.debug("317.240 function {} at processor #{} isn't ready.", functionConfig.code, processorAndCoreParams.processorId());
             result.set(true);
         }
     }

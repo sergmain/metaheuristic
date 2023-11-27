@@ -58,6 +58,7 @@ import java.util.function.BiFunction;
 
 import static ai.metaheuristic.ai.functions.FunctionEnums.DownloadPriority.HIGH;
 import static ai.metaheuristic.ai.functions.FunctionEnums.DownloadPriority.NORMAL;
+import static ai.metaheuristic.ai.functions.FunctionRepositoryData.*;
 import static ai.metaheuristic.api.EnumsApi.FunctionState.*;
 
 /**
@@ -78,7 +79,7 @@ public class FunctionRepositoryProcessorService {
 
 
     // key - assetManagerUrl, value - Map with key - function code, value - FunctionRepositoryData.Function
-    private static final ConcurrentHashMap<ProcessorAndCoreData.AssetManagerUrl, ConcurrentHashMap<String, FunctionRepositoryData.DownloadStatus>> functions = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<ProcessorAndCoreData.AssetManagerUrl, ConcurrentHashMap<String, DownloadStatus>> functions = new ConcurrentHashMap<>();
 
     @Nullable
     public FunctionRepositoryRequestParams processFunctionRepositoryResponseParams(
@@ -93,7 +94,7 @@ public class FunctionRepositoryProcessorService {
             final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
 
             for (String functionCode : responseParams.functionCodes) {
-                FunctionRepositoryData.DownloadStatus f = functions.computeIfAbsent(assetManagerUrl, (o)->new ConcurrentHashMap<>()).get(functionCode);
+                DownloadStatus f = functions.computeIfAbsent(assetManagerUrl, (o)->new ConcurrentHashMap<>()).get(functionCode);
                 if (f!=null) {
                     if (f.state==ready) {
                         codesReady.add(functionCode);
@@ -103,7 +104,7 @@ public class FunctionRepositoryProcessorService {
 //                        codesFailed.add(functionCode);
                     }
                 }
-                eventPublisher.publishEvent(new FunctionRepositoryData.DownloadFunctionTask(functionCode, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, HIGH));
+                eventPublisher.publishEvent(new DownloadFunctionTask(functionCode, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, HIGH));
 //                downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionCode, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, HIGH));
             }
         }
@@ -117,8 +118,8 @@ public class FunctionRepositoryProcessorService {
     }
 
     @Nullable
-    public static FunctionRepositoryData.DownloadStatus getFunctionDownloadStatus(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode) {
-        FunctionRepositoryData.DownloadStatus status = functions.computeIfAbsent(assetManagerUrl, (o)->new ConcurrentHashMap<>()).get(functionCode);
+    public static DownloadStatus getFunctionDownloadStatus(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode) {
+        DownloadStatus status = functions.computeIfAbsent(assetManagerUrl, (o)->new ConcurrentHashMap<>()).get(functionCode);
         return status;
     }
 
@@ -138,7 +139,7 @@ public class FunctionRepositoryProcessorService {
 
         boolean isChanged = false;
         for (Pair<EnumsApi.FunctionSourcing, String> info : list) {
-            FunctionRepositoryData.DownloadStatus status = getFunctionDownloadStatus(assetManagerUrl, info.getValue());
+            DownloadStatus status = getFunctionDownloadStatus(assetManagerUrl, info.getValue());
 /*
             FunctionRepositoryData.Function status = functions.computeIfAbsent(assetManagerUrl, (o)->new ConcurrentHashMap<>()).values().stream()
                 .filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(info.getValue()))
@@ -166,12 +167,12 @@ public class FunctionRepositoryProcessorService {
     }
 
     @Nullable
-    public FunctionRepositoryData.DownloadStatus setFunctionState(final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode, FunctionState functionState) {
+    public DownloadStatus setFunctionState(final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode, FunctionState functionState) {
         if (S.b(functionCode)) {
             throw new IllegalStateException("816.240 functionCode is null");
         }
 //        FunctionRepositoryData.DownloadStatus status = getFunctionDownloadStatus(assetManagerUrl, functionCode);
-        final FunctionRepositoryData.DownloadStatus status = new FunctionRepositoryData.DownloadStatus(functionState, functionCode, assetManagerUrl, EnumsApi.FunctionSourcing.dispatcher);
+        final DownloadStatus status = new DownloadStatus(functionState, functionCode, assetManagerUrl, EnumsApi.FunctionSourcing.dispatcher);
         functions.computeIfAbsent(assetManagerUrl, (o)->new ConcurrentHashMap<>()).put(functionCode, status);
 //        FunctionRepositoryData.Function status = functions.values().stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
 /*
@@ -188,7 +189,7 @@ public class FunctionRepositoryProcessorService {
         if (S.b(functionCode)) {
             throw new IllegalStateException("816.260 functionCode is null");
         }
-        FunctionRepositoryData.DownloadStatus status = getFunctionDownloadStatus(assetManagerUrl, functionCode);
+        DownloadStatus status = getFunctionDownloadStatus(assetManagerUrl, functionCode);
 //        FunctionRepositoryData.Function status = functions.values().stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
         if (status == null) {
             return;
@@ -209,7 +210,7 @@ public class FunctionRepositoryProcessorService {
         if (checksumMap==null) {
             return;
         }
-        FunctionRepositoryData.DownloadStatus status = getFunctionDownloadStatus(assetManagerUrl, functionCode);
+        DownloadStatus status = getFunctionDownloadStatus(assetManagerUrl, functionCode);
 //        FunctionRepositoryData.Function status = functions.values().stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
         if (status == null) {
             return;
@@ -224,7 +225,7 @@ public class FunctionRepositoryProcessorService {
         if (S.b(functionCode)) {
             throw new IllegalStateException("816.300 functionCode is null");
         }
-        FunctionRepositoryData.DownloadStatus status = getFunctionDownloadStatus(assetManagerUrl, functionCode);
+        DownloadStatus status = getFunctionDownloadStatus(assetManagerUrl, functionCode);
 //        FunctionRepositoryData.Function status = functions.values().stream().filter(o -> o.assetManagerUrl.equals(assetManagerUrl.url)).filter(o-> o.code.equals(functionCode)).findFirst().orElse(null);
         if (status == null) {
             return;
@@ -268,13 +269,13 @@ public class FunctionRepositoryProcessorService {
     }
 
     private void setFunctionDownloadStatusInternal(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode, EnumsApi.FunctionSourcing sourcing, FunctionState functionState, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher) {
-        FunctionRepositoryData.DownloadStatus status = getFunctionDownloadStatus(assetManagerUrl, functionCode);
+        DownloadStatus status = getFunctionDownloadStatus(assetManagerUrl, functionCode);
 //        FunctionRepositoryData.DownloadStatus status = functions.values().stream().filter(o->o.assetManagerUrl.equals(assetManagerUrl.url) && o.code.equals(functionCode)).findFirst().orElse(null);
         if (status == null) {
 
-            status = new FunctionRepositoryData.DownloadStatus(none, functionCode, assetManagerUrl, sourcing);
+            status = new DownloadStatus(none, functionCode, assetManagerUrl, sourcing);
 
-            eventPublisher.publishEvent(new FunctionRepositoryData.DownloadFunctionTask(functionCode, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
+            eventPublisher.publishEvent(new DownloadFunctionTask(functionCode, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
             //downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionCode, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
         }
         status.state = functionState;
@@ -310,18 +311,18 @@ public class FunctionRepositoryProcessorService {
 */
 
     @Nullable
-    public FunctionRepositoryData.FunctionConfigAndStatus syncFunctionStatus(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager assetManager, final String functionCode) {
+    public FunctionConfigAndStatus syncFunctionStatus(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager assetManager, final String functionCode) {
         try {
             return syncFunctionStatusInternal(assetManagerUrl, assetManager, functionCode);
         } catch (Throwable th) {
             log.error("816.080 Error in syncFunctionStatus()", th);
-            return new FunctionRepositoryData.FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, io_error));
+            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, io_error));
         }
     }
 
     @Nullable
-    private FunctionRepositoryData.FunctionConfigAndStatus syncFunctionStatusInternal(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager assetManager, String functionCode) {
-        FunctionRepositoryData.DownloadStatus status = getFunctionDownloadStatus(assetManagerUrl, functionCode);
+    private FunctionConfigAndStatus syncFunctionStatusInternal(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, DispatcherLookupParamsYaml.AssetManager assetManager, String functionCode) {
+        DownloadStatus status = getFunctionDownloadStatus(assetManagerUrl, functionCode);
 
         if (status == null) {
             return null;
@@ -331,7 +332,7 @@ public class FunctionRepositoryProcessorService {
             return null;
         }
         if (status.state == ready) {
-            return new FunctionRepositoryData.FunctionConfigAndStatus(status);
+            return new FunctionConfigAndStatus(status);
 /*
             if (status.checksum!= EnumsApi.ChecksumState.not_yet && status.signature!= EnumsApi.SignatureState.not_yet) {
                 return new FunctionRepositoryData.FunctionConfigAndStatus(status);
@@ -340,11 +341,11 @@ public class FunctionRepositoryProcessorService {
 */
         }
 
-        FunctionRepositoryData.DownloadedFunctionConfigStatus downloadedFunctionConfigStatus =
+        DownloadedFunctionConfigStatus downloadedFunctionConfigStatus =
             ProcessorFunctionUtils.downloadFunctionConfig(assetManager, functionCode);
 
         if (downloadedFunctionConfigStatus.status==FunctionEnums.ConfigStatus.error) {
-            return new FunctionRepositoryData.FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, function_config_error));
+            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, function_config_error));
         }
         if (downloadedFunctionConfigStatus.status== FunctionEnums.ConfigStatus.not_found) {
             removeFunction(assetManagerUrl, functionCode);
@@ -355,23 +356,23 @@ public class FunctionRepositoryProcessorService {
 
         if (S.b(functionConfig.file)) {
             log.error("816.100 name of file for function {} is blank and content of function is blank too", functionCode);
-            return new FunctionRepositoryData.FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, function_config_error));
+            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, function_config_error));
         }
 
         Path baseFunctionDir = MetadataParams.prepareBaseDir(globals.processorResourcesPath, assetManagerUrl);
 
         final AssetFile assetFile = AssetUtils.prepareFunctionAssetFile(baseFunctionDir, status.code, functionConfig.file);
         if (assetFile.isError) {
-            return new FunctionRepositoryData.FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, asset_error));
+            return new FunctionConfigAndStatus(setFunctionState(assetManagerUrl, functionCode, asset_error));
         }
         if (!assetFile.isContent) {
-            return new FunctionRepositoryData.FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, none), assetFile);
+            return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, none), assetFile);
         }
 
-        return new FunctionRepositoryData.FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, ok), assetFile);
+        return new FunctionConfigAndStatus(downloadedFunctionConfigStatus.functionConfig, setFunctionState(assetManagerUrl, functionCode, ok), assetFile);
     }
 
-    public FunctionRepositoryData.FunctionPrepareResult prepareFunction(DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig function) {
+    public FunctionPrepareResult prepareFunction(DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig function) {
         try {
             final MetadataParams metadataParams = processorEnvironment.metadataParams;
             if (function.sourcing==EnumsApi.FunctionSourcing.dispatcher) {
@@ -384,7 +385,7 @@ public class FunctionRepositoryProcessorService {
         } catch (Throwable th) {
             String es = "100.480 System error: " + th.getMessage();
             log.error(es, th);
-            FunctionRepositoryData.FunctionPrepareResult functionPrepareResult = new FunctionRepositoryData.FunctionPrepareResult();
+            FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
             functionPrepareResult.function = function;
             functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1000, es);
             functionPrepareResult.isLoaded = false;
@@ -393,8 +394,8 @@ public class FunctionRepositoryProcessorService {
         }
     }
 
-    private static FunctionRepositoryData.FunctionPrepareResult prepareWithSourcingAsGit(Path processorResourcesPath, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig function, MetadataParams metadataParams, BiFunction<Path, TaskParamsYaml.FunctionConfig, SystemProcessLauncher.ExecResult> gitSourcing) {
-        FunctionRepositoryData.FunctionPrepareResult functionPrepareResult = new FunctionRepositoryData.FunctionPrepareResult();
+    private static FunctionPrepareResult prepareWithSourcingAsGit(Path processorResourcesPath, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig function, MetadataParams metadataParams, BiFunction<Path, TaskParamsYaml.FunctionConfig, SystemProcessLauncher.ExecResult> gitSourcing) {
+        FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
         functionPrepareResult.function = function;
 
         if (S.b(functionPrepareResult.function.file)) {
@@ -427,34 +428,39 @@ public class FunctionRepositoryProcessorService {
         return functionPrepareResult;
     }
 
-    private static FunctionRepositoryData.FunctionPrepareResult prepareWithSourcingAsDispatcher(
+    private FunctionPrepareResult prepareWithSourcingAsDispatcher(
         ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig function, Globals Globals,
         DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher) {
 
-        FunctionRepositoryData.FunctionPrepareResult functionPrepareResult = new FunctionRepositoryData.FunctionPrepareResult();
+        FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
         functionPrepareResult.function = function;
 
         final Path baseResourceDir = MetadataParams.prepareBaseDir(Globals.processorResourcesPath, assetManagerUrl);
-        functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionAssetFile(baseResourceDir, functionPrepareResult.function.getCode(), functionPrepareResult.function.file);
+        final String actualFunctionFile = AssetUtils.getActualFunctionFile(functionPrepareResult.function);
+        if (actualFunctionFile==null) {
+            log.error("100.320 actualFunctionFile is null");
+            setFunctionState(assetManagerUrl, functionPrepareResult.function.getCode(), EnumsApi.FunctionState.asset_error);
+            return new FunctionPrepareResult(function, null, new FunctionApiData.SystemExecResult(function.code, false, -995, "" ), false, true);
+        }
+        functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionAssetFile(baseResourceDir, functionPrepareResult.function.getCode(), actualFunctionFile);
 
         // is this function prepared?
         if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
-            log.info("100.560 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
+            log.info("100.340 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
             functionPrepareResult.isLoaded = false;
 
             return functionPrepareResult;
             // setFunctionDownloadStatus(assetManagerUrl, function.code, EnumsApi.FunctionSourcing.dispatcher, none, dispatcher);
         }
-        FunctionRepositoryData.DownloadStatus functionDownloadStatus = FunctionRepositoryProcessorService.getFunctionDownloadStatus(assetManagerUrl, function.code);
+        DownloadStatus functionDownloadStatus = FunctionRepositoryProcessorService.getFunctionDownloadStatus(assetManagerUrl, function.code);
         if (functionDownloadStatus!=null) {
-            return new FunctionRepositoryData.FunctionPrepareResult(function, functionPrepareResult.functionAssetFile, new FunctionApiData.SystemExecResult(function.code, true, 0, "" ), true, false);
+            return new FunctionPrepareResult(function, functionPrepareResult.functionAssetFile, new FunctionApiData.SystemExecResult(function.code, true, 0, "" ), true, false);
         }
         functionPrepareResult.isLoaded = false;
         functionPrepareResult.isError = true;
 
         return functionPrepareResult;
     }
-
 
     private static FunctionApiData.SystemExecResult verifyChecksumAndSignature(boolean signatureRequired, @Nullable PublicKey publicKey, TaskParamsYaml.FunctionConfig function) {
         if (!signatureRequired) {
@@ -505,7 +511,7 @@ public class FunctionRepositoryProcessorService {
         return new FunctionApiData.SystemExecResult(function.code, true, 0, "");
     }
 
-    private static Map<String, FunctionState> parseToMapOfStates( FunctionRepositoryData.FunctionDownloadStatuses functionDownloadStatus) {
+    private static Map<String, FunctionState> parseToMapOfStates( FunctionDownloadStatuses functionDownloadStatus) {
         Map<String, FunctionState> map = new HashMap<>();
         for (Map.Entry<FunctionState, String> entry : functionDownloadStatus.statuses.entrySet()) {
             String[] names = entry.getValue().split(",");

@@ -59,7 +59,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.ConnectException;
@@ -137,9 +136,7 @@ public class DownloadFunctionService {
 //            ? baseFunctionDir
 //            : baseFunctionDir.resolve(status.functionConfig.getSrc());
 //        final AssetFile assetFile = AssetUtils.prepareFunctionAssetFile(actualBaseFunctionDir, functionCode, status.functionConfig.file);
-        String actualFunctionFile = status.functionConfig.getSrc().isEmpty()
-            ? status.functionConfig.file
-            : status.functionConfig.getSrc() + File.separatorChar + status.functionConfig.file;
+        final String actualFunctionFile = AssetUtils.getActualFunctionFile(status.functionConfig);
         if (actualFunctionFile==null) {
             log.error("811.010 actualFunctionFile is null");
             functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error);

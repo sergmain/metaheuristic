@@ -33,7 +33,6 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.lang.Nullable;
@@ -41,6 +40,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
@@ -58,19 +58,30 @@ public class FunctionRepositoryDispatcherService {
 
     private final SourceCodeRepository sourceCodeRepository;
     private final ExecContextRepository execContextRepository;
-    private final ApplicationEventPublisher eventPublisher;
 
-    // private final ApplicationEventPublisher eventPublisher;
+    public static class Processors {
+        public long mills = System.currentTimeMillis();
+        public final Set<Long> ids = new HashSet<>();
+
+        public boolean contains(Long processorId) {
+            return ids.contains(processorId);
+        }
+    }
 
     // key - function code, value - list of processorIds
-    private static final Map<String, Set<Long>> functionReadiness = new HashMap<>();
+    private static final LinkedHashMap<String, Processors> functionReadiness = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, Processors> eldest) {
+            return System.currentTimeMillis() - eldest.getValue().mills > TimeUnit.HOURS.toMillis(2);
+        }
+    };
     private static final Set<String> activeFunctions = new HashSet<>();
 
     private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
     private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
-    public Set<String> getActiveFunctionCode(@Nullable Long processorId) {
+    public static Set<String> getActiveFunctionCode(@Nullable Long processorId) {
         readLock.lock();
         try {
             if (processorId==null) {
@@ -78,8 +89,8 @@ public class FunctionRepositoryDispatcherService {
             }
             else {
                 return activeFunctions.stream().filter(c->{
-                    Set<Long> ids = functionReadiness.get(c);
-                    return ids==null || !ids.contains(processorId);
+                    Processors processors = functionReadiness.get(c);
+                    return processors==null || !processors.contains(processorId);
                 }).collect(Collectors.toSet());
             }
         } finally {
@@ -87,7 +98,7 @@ public class FunctionRepositoryDispatcherService {
         }
     }
 
-    public String processRequest(String data, String remoteAddr) {
+    public static String processRequest(String data, String remoteAddr) {
         FunctionRepositoryRequestParams p = FunctionRepositoryRequestParamsUtils.UTILS.to(data);
         FunctionRepositoryResponseParams r = new FunctionRepositoryResponseParams();
         r.success = true;
@@ -112,7 +123,7 @@ public class FunctionRepositoryDispatcherService {
                 if (!activeFunctions.contains(functionCode)) {
                     continue;
                 }
-                functionReadiness.computeIfAbsent(functionCode, (o)-> new HashSet<>()).add(p.processorId);
+                functionReadiness.computeIfAbsent(functionCode, (o)-> new Processors()).ids.add(p.processorId);
             }
         } finally {
             writeLock.unlock();
@@ -125,15 +136,19 @@ public class FunctionRepositoryDispatcherService {
             if (!force && !activeFunctions.contains(functionCode)) {
                 return;
             }
-            functionReadiness.computeIfAbsent(functionCode, (o)-> new HashSet<>()).add(processorId);
+            functionReadiness.computeIfAbsent(functionCode, (o)-> new Processors()).ids.add(processorId);
         } finally {
             writeLock.unlock();
         }
     }
 
     public static boolean isProcessorReady(String funcCode, Long processorId) {
-        Set<Long> set = functionReadiness.get(funcCode);
-        return set != null && set.contains(processorId);
+        Processors processors = functionReadiness.get(funcCode);
+        if (processors != null) {
+            processors.mills = System.currentTimeMillis();
+            return processors.contains(processorId);
+        }
+        return false;
     }
 
     public static boolean notAllFunctionsReady(Long processorId, TaskParamsYaml taskParamYaml) {
@@ -153,6 +168,7 @@ public class FunctionRepositoryDispatcherService {
         return false;
     }
 
+    @SuppressWarnings("MethodMayBeStatic")
     @Async
     @EventListener
     public void activateFunctions(SourceCodeParamsYaml sc) {
@@ -160,12 +176,12 @@ public class FunctionRepositoryDispatcherService {
         registerCodes(funcCodes, false);
     }
 
-    private void registerCodes(Set<String> funcCodes, boolean clean) {
+    private static void registerCodes(Set<String> funcCodes, boolean clean) {
         for (String funcCode : funcCodes) {
             writeLock.lock();
             try {
                 activeFunctions.add(funcCode);
-                functionReadiness.computeIfAbsent(funcCode, (o)->new HashSet<>());
+                functionReadiness.computeIfAbsent(funcCode, (o)->new Processors());
             } finally {
                 writeLock.unlock();
             }

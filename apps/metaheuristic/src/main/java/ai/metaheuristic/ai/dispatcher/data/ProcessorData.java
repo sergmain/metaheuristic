@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
+import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
+import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.AllArgsConstructor;
@@ -29,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProcessorData {
+
+    public record ProcessorAndCoreParams(Long processorId, Long coreId, ProcessorStatusYaml psy, CoreStatusYaml csy) {}
 
     @Data
     @NoArgsConstructor
