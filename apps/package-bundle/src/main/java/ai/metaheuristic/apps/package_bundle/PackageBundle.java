@@ -19,7 +19,7 @@ import ai.metaheuristic.api.data.BundleData;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.exceptions.ExitApplicationException;
+import ai.metaheuristic.commons.exceptions.BundleProcessingException;
 import ai.metaheuristic.commons.utils.*;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYaml;
 import org.apache.commons.cli.*;
@@ -56,24 +56,27 @@ public class PackageBundle implements CommandLineRunner {
         try {
             CommandLine cmd = parseArgs(args);
             BundleData.Cfg cfg = initPackaging(cmd);
+            if (cfg.gitInfo!=null) {
+                BundleUtils.initRepo(cfg);
+            }
 
-            BundleCfgYaml bundleCfgYaml = initBundleCfg(cmd, cfg.baseDir, cfg.gitInfo);
+            BundleCfgYaml bundleCfgYaml = initBundleCfg(cmd, cfg);
             Path bundleZipFile = BundleUtils.createBundle(cfg, bundleCfgYaml);
             System.out.println("All done. Bundle file: " + bundleZipFile);
-        } catch (ExitApplicationException e) {
+        } catch (BundleProcessingException e) {
             System.out.println(e.message);
             System.exit(SpringApplication.exit(appCtx, () -> -2));
         }
     }
 
-    private static BundleCfgYaml initBundleCfg(CommandLine cmd, Path currDir, @Nullable GitInfo gitInfo) throws IOException {
+    private static BundleCfgYaml initBundleCfg(CommandLine cmd, BundleData.Cfg cfg) throws IOException {
         String bundleFilename = cmd.getOptionValue("b");
         if (S.b(bundleFilename)) {
-            bundleFilename = CommonConsts.BUNDLE_CFG_YAML;
+            bundleFilename = CommonConsts.MH_BUNDLE_YAML;
         }
         System.out.println("Effective bundle filename is " + bundleFilename);
 
-        return BundleUtils.readBundleCfgYaml(currDir, gitInfo, bundleFilename);
+        return BundleUtils.readBundleCfgYaml(cfg, bundleFilename);
     }
 
     private static BundleData.Cfg initPackaging(CommandLine cmd) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
@@ -84,10 +87,10 @@ public class PackageBundle implements CommandLineRunner {
         GitInfo gitInfo = null;
         if (cmd.hasOption("git-repo")) {
             if (!cmd.hasOption("git-branch")) {
-                throw new ExitApplicationException("Option --git-branch was missed");
+                throw new BundleProcessingException("Option --git-branch was missed");
             }
             if (!cmd.hasOption("git-commit")) {
-                throw new ExitApplicationException("Option --git-commit was missed");
+                throw new BundleProcessingException("Option --git-commit was missed");
             }
             gitInfo = new GitInfo(
                 cmd.getOptionValue("git-repo"),
@@ -96,7 +99,7 @@ public class PackageBundle implements CommandLineRunner {
                 cmd.getOptionValue("git-path"));
 
             if (gitInfo.branch.indexOf('/')!=-1) {
-                throw new ExitApplicationException("Option --git-branch can't contain '/', i.e. origin/main or remote/master are wrong, must be main only.");
+                throw new BundleProcessingException("Option --git-branch can't contain '/', i.e. origin/main or remote/master are wrong, must be main only.");
             }
             if (privateKey!=null) {
                 privateKey = null;
@@ -117,7 +120,7 @@ public class PackageBundle implements CommandLineRunner {
         if (cmd.hasOption("key")) {
             Path privateKeyFile = Path.of(cmd.getOptionValue("key"));
             if (Files.notExists(privateKeyFile)) {
-                throw new ExitApplicationException("Private key file wasn't found. File: " + privateKeyFile);
+                throw new BundleProcessingException("Private key file wasn't found. File: " + privateKeyFile);
             }
             String privateKeyStr = Files.readString(privateKeyFile, StandardCharsets.UTF_8);
             privateKey = SecUtils.getPrivateKey(privateKeyStr);

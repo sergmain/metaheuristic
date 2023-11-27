@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
-import ai.metaheuristic.ai.exceptions.BundleProcessingException;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.auth.AuthService;
@@ -32,7 +31,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.exceptions.ExitApplicationException;
+import ai.metaheuristic.commons.exceptions.BundleProcessingException;
 import ai.metaheuristic.commons.utils.BundleUtils;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -80,7 +79,7 @@ public class BundleService {
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_FUNCTION = BundleService::isZipEntityNameOk;
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_ENTRY_SIZE_FUNCTION = BundleService::isZipEntitySizeOk;
 
-    public BundleData.UploadingStatus uploadFromGit(GitInfo gitInfo, String bundleFilename, DispatcherContext context) {
+    public BundleData.UploadingStatus uploadFromGit(GitInfo gitInfo, DispatcherContext context) {
 //        -b function-only-bundle-cfg.yaml --git-repo https://github.com/sergmain/metaheuristic-assets.git --git-branch master --git-commit HEAD --git-path common-bundle
 
         try {
@@ -92,13 +91,13 @@ public class BundleService {
             }
             cfg.initOtherPaths(tempBundleDir);
 
-            BundleCfgYaml bundleCfgYaml = BundleUtils.readBundleCfgYaml(cfg.repoDir, gitInfo, bundleFilename);
+            BundleCfgYaml bundleCfgYaml = BundleUtils.readBundleCfgYaml(cfg, CommonConsts.MH_BUNDLE_YAML);
             Path bundleZipFile = BundleUtils.createBundle(cfg, bundleCfgYaml);
 
             BundleLocation bundleLocation = new BundleLocation(tempBundleDir, bundleZipFile);
             return processBundle(bundleLocation, context);
 
-        } catch (ExitApplicationException e) {
+        } catch (BundleProcessingException e) {
             return new BundleData.UploadingStatus("971.015 Error while processing git repo "+ gitInfo.repo+", error: " + e.message);
         } catch (Throwable e) {
             return new BundleData.UploadingStatus("971.020 Error while processing git repo "+ gitInfo.repo+", error: " + e.getMessage());
@@ -174,9 +173,9 @@ public class BundleService {
         Files.createDirectories(data);
         ZipUtils.unzipFolder(bundleLocation.bundleZipFile, data);
 
-        Path bundleCfg = data.resolve(CommonConsts.BUNDLE_CFG_YAML);
+        Path bundleCfg = data.resolve(CommonConsts.MH_BUNDLE_YAML);
         if (Files.notExists(bundleCfg)) {
-            throw new BundleProcessingException(S.f("File %s wasn't found in bundle archive", CommonConsts.BUNDLE_CFG_YAML));
+            throw new ai.metaheuristic.ai.exceptions.BundleProcessingException(S.f("File %s wasn't found in bundle archive", CommonConsts.MH_BUNDLE_YAML));
         }
 
         String yaml = Files.readString(bundleCfg);

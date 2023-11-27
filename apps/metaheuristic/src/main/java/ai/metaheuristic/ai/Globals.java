@@ -689,7 +689,10 @@ public class Globals {
             function.securityCheck = Enums.FunctionSecurityCheck.always;
         }
         if (sslRequired != null) {
-            security.sslRequired = security.sslRequired || sslRequired;
+            if (security.sslRequired!=sslRequired) {
+                log.warn("mh.security.ssl-required doesn't equal to mh.ssl-required, value of mh.ssl-required will be used. Usage of mh.ssl-required is deprecated.");
+            }
+            security.sslRequired = sslRequired;
         }
         if (dispatcher.publicKey!=null) {
             if (publicKeyStore.key==null || publicKeyStore.key.length==0) {

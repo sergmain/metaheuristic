@@ -36,9 +36,10 @@ public class CommonConsts {
     public static final String APP_UUID_NONE = "none";
 
 
-    public static final String FUNCTION_YAML = "function.yaml";
+    public static final String MH_FUNCTION_YAML = "mh-function.yaml";
+    public static final String MH_BUNDLE_YAML = "mh-bundle.yaml";
+    public static final String DEFAULT_FUNCTION_SRC_DIR = "src";
     public static final String ZIP_EXTENSION = ".zip";
-    public static final String BUNDLE_CFG_YAML = "bundle-cfg.yaml";
     public static final String GIT_REPO = "git-repo";
     public static final String HTTP = "http://";
     public static final String HTTPS = "https://";

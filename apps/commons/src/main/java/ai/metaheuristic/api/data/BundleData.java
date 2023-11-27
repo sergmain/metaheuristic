@@ -18,7 +18,7 @@ package ai.metaheuristic.api.data;
 
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.exceptions.ExitApplicationException;
+import ai.metaheuristic.commons.exceptions.BundleProcessingException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -91,7 +91,7 @@ public class BundleData {
                 Files.createDirectories(tempDir);
                 Path workingDir = DirUtils.createTempPath(tempDir, "bundle-");
                 if (workingDir == null) {
-                    throw new ExitApplicationException("Can't create temp directory in path " + tempDir);
+                    throw new BundleProcessingException("Can't create temp directory in path " + tempDir);
                 }
                 this.workingDir = workingDir;
             }
@@ -101,7 +101,7 @@ public class BundleData {
 
             if (gitInfo != null) {
                 if (repoDir == null) {
-                    throw new ExitApplicationException("repoDir is null");
+                    throw new BundleProcessingException("repoDir is null");
                 }
                 if (!S.b(gitInfo.path)) {
                     currDir = repoDir.resolve(gitInfo.path);

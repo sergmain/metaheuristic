@@ -19,6 +19,7 @@ package ai.metaheuristic.commons.yaml.function;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
 import org.springframework.lang.Nullable;
@@ -86,6 +87,8 @@ public class FunctionConfigYamlV2 implements BaseParams {
         @Nullable
         public GitInfo git;
         public @Nullable List<Map<String, String>> metas = new ArrayList<>();
+
+        public String src = CommonConsts.DEFAULT_FUNCTION_SRC_DIR;
     }
 
 

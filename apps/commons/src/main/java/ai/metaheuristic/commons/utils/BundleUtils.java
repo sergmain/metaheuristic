@@ -23,7 +23,7 @@ import ai.metaheuristic.api.data.GitData;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.exceptions.ExitApplicationException;
+import ai.metaheuristic.commons.exceptions.BundleProcessingException;
 import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.commons.yaml.auth.ApiAuthUtils;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYaml;
@@ -51,6 +51,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.BundleItemType.*;
+import static ai.metaheuristic.commons.CommonConsts.*;
 import static ai.metaheuristic.commons.CommonConsts.GIT_REPO;
 
 /**
@@ -59,12 +60,12 @@ import static ai.metaheuristic.commons.CommonConsts.GIT_REPO;
  * Time: 1:56 AM
  */
 public class BundleUtils {
-    static IOFileFilter FUNCTION_YAML_FILTER = FileFileFilter.INSTANCE.and(new NameFileFilter(CommonConsts.FUNCTION_YAML));
+    static IOFileFilter FUNCTION_YAML_FILTER = FileFileFilter.INSTANCE.and(new NameFileFilter(MH_FUNCTION_YAML));
 
     public static Path createBundle(BundleData.Cfg cfg, BundleCfgYaml bundleCfgYaml) throws IOException, GeneralSecurityException {
-        if (cfg.gitInfo != null) {
-            initRepo(cfg);
-        }
+//        if (cfg.gitInfo != null) {
+//            initRepo(cfg);
+//        }
 
         cfg.initOtherPaths(null);
         System.out.println("\tworking dir: " + cfg.workingDir);
@@ -79,7 +80,7 @@ public class BundleUtils {
     @SneakyThrows
     public static void initRepo(BundleData.Cfg cfg) {
         if (cfg.gitInfo==null) {
-            throw new ExitApplicationException("cfg.gitInfo is null");
+            throw new BundleProcessingException("cfg.gitInfo is null");
         }
         String gitCode = StrUtils.asCode(cfg.gitInfo.repo);
         Path gitDir = cfg.baseDir.resolve(gitCode);
@@ -91,7 +92,7 @@ public class BundleUtils {
 
         SystemProcessLauncher.ExecResult result = GtiUtils.initGitRepository(cfg.gitInfo, gitDir, cfg.gitInfo.repo, gitContext, true);
         if (result!=null && !result.ok) {
-            throw new ExitApplicationException("Error while cloning repo "+cfg.gitInfo.repo+", error: "+result.error);
+            throw new BundleProcessingException("Error while cloning repo "+cfg.gitInfo.repo+", error: "+result.error);
         }
 
         cfg.repoDir = gitDir.resolve(GIT_REPO);
@@ -105,7 +106,7 @@ public class BundleUtils {
             }
             Path p = cfg.baseDir.resolve(bundleConfig.path);
             if (Files.notExists(p) || !Files.isDirectory(p)) {
-                throw new ExitApplicationException(S.f("Path %s is broken", p.toAbsolutePath()));
+                throw new BundleProcessingException(S.f("Path %s is broken", p.toAbsolutePath()));
             }
             Path tempPath = cfg.workingDir.resolve(bundleConfig.path);
             System.out.println("\t\tprocess path " + bundleConfig.path);
@@ -114,7 +115,7 @@ public class BundleUtils {
 
 //            final FunctionConfigAndFile fcy = getFunctionConfigYaml(p);
 //            if (verifySourceCode(fcy, p)) {
-//                throw new ExitApplicationException();
+//                throw new BundleProcessingException();
 //            }
 
             processFilesForCommonType(tempPath, p, yamlCheckerFunc);
@@ -125,7 +126,7 @@ public class BundleUtils {
         Files.walkFileTree(srcPath, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path p, BasicFileAttributes attrs) throws IOException {
-                if (Files.isDirectory(p) || CommonConsts.FUNCTION_YAML.equals(p.getFileName().toString())) {
+                if (Files.isDirectory(p) || MH_FUNCTION_YAML.equals(p.getFileName().toString())) {
                     return FileVisitResult.CONTINUE;
                 }
                 String yaml = Files.readString(p);
@@ -142,14 +143,14 @@ public class BundleUtils {
 
     private static Path createFinalZip(BundleData.Cfg cfg, BundleCfgYaml bundleCfg) throws IOException {
         String bundleCfgYaml = BundleCfgYamlUtils.UTILS.toString(bundleCfg);
-        Path bundleCfgPath = cfg.workingDir.resolve(CommonConsts.BUNDLE_CFG_YAML);
+        Path bundleCfgPath = cfg.workingDir.resolve(MH_BUNDLE_YAML);
         Files.writeString(bundleCfgPath, bundleCfgYaml);
 
         final List<Path> paths = new ArrayList<>();
         Files.walkFileTree(cfg.workingDir, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path p, BasicFileAttributes attrs) {
-                if (CommonConsts.FUNCTION_YAML.equals(p.getFileName().toString())) {
+                if (MH_FUNCTION_YAML.equals(p.getFileName().toString())) {
                     return FileVisitResult.CONTINUE;
                 }
                 paths.add(p);
@@ -157,7 +158,7 @@ public class BundleUtils {
             }
         });
 
-        Path zip = cfg.workingDir.resolve("bundle-" + LocalDate.now() + CommonConsts.ZIP_EXTENSION);
+        Path zip = cfg.workingDir.resolve("bundle-" + LocalDate.now() + ZIP_EXTENSION);
         ZipUtils.createZip(paths, zip);
         return zip;
     }
@@ -178,7 +179,7 @@ public class BundleUtils {
                 isError = true;
             }
             else {
-                Path sn = tempFuncPath.resolve(function.file);
+                Path sn = tempFuncPath.resolve(function.src).resolve(function.file);
                 if (Files.notExists(sn)) {
                     System.out.printf("Function %s has missing file %s\n", function.code, function.file);
                     isError = true;
@@ -203,7 +204,7 @@ public class BundleUtils {
             Path path = cfg.currDir.relativize(pathFunctionYaml).getParent();
             Path p = cfg.currDir.resolve(path);
             if (Files.notExists(p) || !Files.isDirectory(p)) {
-                throw new ExitApplicationException(S.f("Path %s is broken", p.toAbsolutePath()));
+                throw new BundleProcessingException(S.f("Path %s is broken", p.toAbsolutePath()));
             }
             Path tempFuncPath = cfg.workingDir.resolve(path);
             System.out.println("\t\tprocess path " + path);
@@ -211,7 +212,7 @@ public class BundleUtils {
 
             final BundleData.FunctionConfigAndFile fcy = getFunctionConfigYaml(p);
             if (verify(fcy, p)) {
-                throw new ExitApplicationException("Error while verification was encountered.");
+                throw new BundleProcessingException("Error while verification was encountered.");
             }
             if (cfg.gitInfo==null) {
                 Path zippedFunction = createZipWithFunction(tempFuncPath, fcy.config(), p);
@@ -221,7 +222,7 @@ public class BundleUtils {
                 fcy.config().function.sourcing = EnumsApi.FunctionSourcing.git;
                 Path pathToFunc = Path.of(cfg.gitInfo.path).resolve(path);
                 if (pathToFunc.isAbsolute()) {
-                    throw new ExitApplicationException("Can't create relative path, actual is absolute: " + pathToFunc);
+                    throw new BundleProcessingException("Can't create relative path, actual is absolute: " + pathToFunc);
                 }
                 fcy.config().function.git = new GitInfo(cfg.gitInfo.repo, cfg.gitInfo.branch, cfg.gitInfo.commit, pathToFunc.toString());
 
@@ -241,13 +242,13 @@ public class BundleUtils {
             }
             Path p;
             if (cfg.gitInfo != null && !S.b(cfg.gitInfo.path)) {
-                p = cfg.baseDir.resolve(cfg.gitInfo.path).resolve(bundleConfig.path);
+                p = cfg.repoDir.resolve(cfg.gitInfo.path).resolve(bundleConfig.path);
             }
             else {
                 p = cfg.baseDir.resolve(bundleConfig.path);
             }
             if (Files.notExists(p) || !Files.isDirectory(p)) {
-                throw new ExitApplicationException(S.f("Path %s is broken", p.toAbsolutePath()));
+                throw new BundleProcessingException(S.f("Path %s is broken", p.toAbsolutePath()));
             }
 
             Set<Path> collected = new HashSet<>();
@@ -264,14 +265,14 @@ public class BundleUtils {
         Path p=file;
         while ((p=p.getParent())!=null) {
             if (collected.contains(p)) {
-                throw new ExitApplicationException(S.f("Path %s was already registered as function dir", p.toAbsolutePath()));
+                throw new BundleProcessingException(S.f("Path %s was already registered as function dir", p.toAbsolutePath()));
             }
         }
     }
 
     private static void storeFunctionConfigYaml(Path tempFuncPath, FunctionConfigYaml config) throws IOException {
         String yaml = FunctionConfigYamlUtils.UTILS.toString(config);
-        Path f = tempFuncPath.resolve(CommonConsts.FUNCTION_YAML);
+        Path f = tempFuncPath.resolve(MH_FUNCTION_YAML);
         Files.writeString(f, yaml);
     }
 
@@ -305,7 +306,7 @@ public class BundleUtils {
         Files.walkFileTree(funcPath, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path p, BasicFileAttributes attrs) {
-                if (CommonConsts.FUNCTION_YAML.equals(p.getFileName().toString())) {
+                if (MH_FUNCTION_YAML.equals(p.getFileName().toString())) {
                     return FileVisitResult.CONTINUE;
                 }
                 paths.add(p);
@@ -313,7 +314,7 @@ public class BundleUtils {
             }
         });
 
-        final String zipName = ArtifactCommonUtils.normalizeCode(fcy.function.code) + CommonConsts.ZIP_EXTENSION;
+        final String zipName = ArtifactCommonUtils.normalizeCode(fcy.function.code) + ZIP_EXTENSION;
         Path zip = tempFuncPath.resolve(zipName);
         ZipUtils.createZip(paths, zip);
         fcy.system.archive = zipName;
@@ -321,26 +322,26 @@ public class BundleUtils {
     }
 
     private static BundleData.FunctionConfigAndFile getFunctionConfigYaml(Path p) throws IOException {
-        Path functionYaml = p.resolve(CommonConsts.FUNCTION_YAML);
+        Path functionYaml = p.resolve(MH_FUNCTION_YAML);
         if (Files.notExists(p)) {
-            throw new ExitApplicationException(S.f("File %s wasn't found in path %s", CommonConsts.FUNCTION_YAML, p.toAbsolutePath()));
+            throw new BundleProcessingException(S.f("File %s wasn't found in path %s", MH_FUNCTION_YAML, p.toAbsolutePath()));
         }
         String yaml = Files.readString(functionYaml);
         FunctionConfigYaml fcy = FunctionConfigYamlUtils.UTILS.to(yaml);
         return new BundleData.FunctionConfigAndFile(fcy, p);
     }
 
-    public static BundleCfgYaml readBundleCfgYaml(Path currDir, @Nullable GitInfo gitInfo, String bundleFilename) throws IOException {
+    public static BundleCfgYaml readBundleCfgYaml(BundleData.Cfg cfg, String bundleFilename) throws IOException {
         Path bundleCfgPath;
-        if (gitInfo !=null && !S.b(gitInfo.path)) {
-            bundleCfgPath = currDir.resolve(Path.of(gitInfo.path, bundleFilename));
+        if (cfg.gitInfo !=null && !S.b(cfg.gitInfo.path)) {
+            bundleCfgPath = cfg.repoDir.resolve(Path.of(cfg.gitInfo.path, bundleFilename));
         }
         else {
-            bundleCfgPath = currDir.resolve(bundleFilename);
+            bundleCfgPath = cfg.baseDir.resolve(bundleFilename);
         }
 
         if (Files.notExists(bundleCfgPath)) {
-            throw new ExitApplicationException(S.f("File %s wasn't found in path %s", bundleFilename, currDir.toAbsolutePath()));
+            throw new BundleProcessingException(S.f("File %s wasn't found", bundleCfgPath));
         }
 
         String yaml = Files.readString(bundleCfgPath);

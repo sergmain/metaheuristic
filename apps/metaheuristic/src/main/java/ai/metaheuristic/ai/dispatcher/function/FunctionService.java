@@ -304,9 +304,9 @@ public class FunctionService {
 
     public void loadFunction(Path srcDir, BundleData.UploadingStatus status) {
         try {
-            Path yamlConfigFile = srcDir.resolve(CommonConsts.FUNCTION_YAML);
+            Path yamlConfigFile = srcDir.resolve(CommonConsts.MH_FUNCTION_YAML);
             if (Files.notExists(yamlConfigFile)) {
-                String es = S.f("295.140 File '%s' wasn't found in dir %s", CommonConsts.FUNCTION_YAML, srcDir.normalize());
+                String es = S.f("295.140 File '%s' wasn't found in dir %s", CommonConsts.MH_FUNCTION_YAML, srcDir.normalize());
                 status.addErrorMessage(es);
                 log.error(es);
                 return;

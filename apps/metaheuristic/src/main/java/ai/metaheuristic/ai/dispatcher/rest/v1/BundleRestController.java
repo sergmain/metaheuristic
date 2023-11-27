@@ -60,10 +60,10 @@ public class BundleRestController {
 
     @PostMapping(value = "/bundle-upload-from-git")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN')")
-    public BundleData.UploadingStatus uploadFromGit(String repo, String branch, String commit, String path, String bundleFilename, Authentication authentication) {
+    public BundleData.UploadingStatus uploadFromGit(String repo, String branch, String commit, String path, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         GitInfo gitInfo = new GitInfo(repo, branch, commit, path);
-        BundleData.UploadingStatus status = bundleTopLevelService.uploadFromGit(gitInfo, bundleFilename, context);
+        BundleData.UploadingStatus status = bundleTopLevelService.uploadFromGit(gitInfo, context);
         return status;
     }
 

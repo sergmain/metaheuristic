@@ -21,9 +21,9 @@ package ai.metaheuristic.commons.exceptions;
  * Date: 10/14/2023
  * Time: 2:06 PM
  */
-public class ExitApplicationException extends RuntimeException {
+public class BundleProcessingException extends RuntimeException {
     public final String message;
-    public ExitApplicationException(String message) {
+    public BundleProcessingException(String message) {
         this.message = message;
     }
 
