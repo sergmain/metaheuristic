@@ -21,7 +21,6 @@ import ai.metaheuristic.api.data.BundleData;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.GitData;
 import ai.metaheuristic.api.sourcing.GitInfo;
-import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BundleProcessingException;
 import ai.metaheuristic.commons.system.SystemProcessLauncher;
@@ -37,7 +36,6 @@ import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.NameFileFilter;
-import org.springframework.lang.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -52,21 +50,17 @@ import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.BundleItemType.*;
 import static ai.metaheuristic.commons.CommonConsts.*;
-import static ai.metaheuristic.commons.CommonConsts.GIT_REPO;
 
 /**
  * @author Sergio Lissner
  * Date: 11/26/2023
  * Time: 1:56 AM
  */
+@SuppressWarnings({"unused", "SimplifyStreamApiCallChains"})
 public class BundleUtils {
     static IOFileFilter FUNCTION_YAML_FILTER = FileFileFilter.INSTANCE.and(new NameFileFilter(MH_FUNCTION_YAML));
 
     public static Path createBundle(BundleData.Cfg cfg, BundleCfgYaml bundleCfgYaml) throws IOException, GeneralSecurityException {
-//        if (cfg.gitInfo != null) {
-//            initRepo(cfg);
-//        }
-
         cfg.initOtherPaths(null);
         System.out.println("\tworking dir: " + cfg.workingDir);
         processFunctions(cfg,bundleCfgYaml);
@@ -111,12 +105,6 @@ public class BundleUtils {
             Path tempPath = cfg.workingDir.resolve(bundleConfig.path);
             System.out.println("\t\tprocess path " + bundleConfig.path);
             Files.createDirectories(tempPath);
-
-
-//            final FunctionConfigAndFile fcy = getFunctionConfigYaml(p);
-//            if (verifySourceCode(fcy, p)) {
-//                throw new BundleProcessingException();
-//            }
 
             processFilesForCommonType(tempPath, p, yamlCheckerFunc);
         }

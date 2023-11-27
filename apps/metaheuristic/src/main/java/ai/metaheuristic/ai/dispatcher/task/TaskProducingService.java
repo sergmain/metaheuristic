@@ -17,8 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
@@ -33,6 +31,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -178,7 +177,7 @@ public class TaskProducingService {
             taskParams.task.function = new TaskParamsYaml.FunctionConfig(
                     process.function.code, "internal", null, S.b(process.function.params) ? "" : process.function.params, "internal",
                     EnumsApi.FunctionSourcing.dispatcher, null,
-                    null );
+                    null, CommonConsts.DEFAULT_FUNCTION_SRC_DIR );
         }
         else {
             TaskParamsYaml.FunctionConfig fConfig = functionTopLevelService.getFunctionConfig(process.function);

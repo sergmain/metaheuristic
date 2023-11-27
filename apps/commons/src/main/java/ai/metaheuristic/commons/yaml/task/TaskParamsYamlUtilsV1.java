@@ -16,17 +16,15 @@
 
 package ai.metaheuristic.commons.yaml.task;
 
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
-import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
-import ai.metaheuristic.commons.yaml.event.DispatcherEventYamlUtils;
-import ai.metaheuristic.commons.yaml.event.DispatcherEventYamlUtilsV2;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
-import javax.annotation.Nonnull;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.annotation.Nonnull;
 import java.util.stream.Collectors;
 
 /**
@@ -96,7 +94,7 @@ public class TaskParamsYamlUtilsV1
 
     private static TaskParamsYamlV2.FunctionConfigV2 toUp(TaskParamsYamlV1.FunctionConfigV1 src) {
         TaskParamsYamlV2.FunctionConfigV2 trg = new TaskParamsYamlV2.FunctionConfigV2(
-                src.code, src.type, src.file, src.params, src.env, src.sourcing, src.checksumMap, src.git);
+                src.code, src.type, src.file, src.params, src.env, src.sourcing, src.checksumMap, src.git, CommonConsts.DEFAULT_FUNCTION_SRC_DIR);
 
         trg.metas.addAll(src.metas);
         return trg;

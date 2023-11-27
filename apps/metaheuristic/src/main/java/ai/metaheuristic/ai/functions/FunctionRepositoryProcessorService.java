@@ -427,7 +427,7 @@ public class FunctionRepositoryProcessorService {
         return functionPrepareResult;
     }
 
-    private FunctionRepositoryData.FunctionPrepareResult prepareWithSourcingAsDispatcher(
+    private static FunctionRepositoryData.FunctionPrepareResult prepareWithSourcingAsDispatcher(
         ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig function, Globals Globals,
         DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher) {
 

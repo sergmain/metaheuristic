@@ -20,6 +20,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
@@ -196,6 +197,8 @@ public class TaskParamsYaml implements BaseParams {
         public GitInfo git;
 
         public final List<Map<String, String>> metas = new ArrayList<>();
+
+        public String src = CommonConsts.DEFAULT_FUNCTION_SRC_DIR;
     }
 
     @Data
