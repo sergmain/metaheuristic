@@ -92,9 +92,6 @@ public class ProcessorStatusYamlV3 implements BaseParams {
         public final QuotasV3 quotas = new QuotasV3();
     }
 
-    // key - code of function, value - stae of function
-    public final Map<String, EnumsApi.FunctionState> functions = new HashMap<>();
-
     @Nullable
     public EnvV3 env;
     public GtiUtils.GitStatusInfo gitStatusInfo;

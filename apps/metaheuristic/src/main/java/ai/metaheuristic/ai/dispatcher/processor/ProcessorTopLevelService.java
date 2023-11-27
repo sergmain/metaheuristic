@@ -31,7 +31,6 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.utils.PageUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -46,7 +45,10 @@ import org.springframework.data.domain.SliceImpl;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -187,11 +189,15 @@ public class ProcessorTopLevelService {
 
             String blacklistReason = processorBlacklisted(status);
 
+            boolean isFunctionProblem = false;
+            // TODO p5  2023-11-26 need to re-write
+/*
             boolean isFunctionProblem = status.functions.entrySet().stream()
                     .anyMatch(s->s.getValue() != EnumsApi.FunctionState.none &&
                             s.getValue() != EnumsApi.FunctionState.ready &&
                             s.getValue() != EnumsApi.FunctionState.not_found &&
                             s.getValue() != EnumsApi.FunctionState.ok);
+*/
 
             final ProcessorData.ProcessorStatus processorStatus = new ProcessorData.ProcessorStatus(
                     processor, System.currentTimeMillis() - processor.updatedOn < PROCESSOR_TIMEOUT,

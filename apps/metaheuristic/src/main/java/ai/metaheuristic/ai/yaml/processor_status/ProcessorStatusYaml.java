@@ -20,6 +20,7 @@ import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 
 import java.util.*;
@@ -89,9 +90,6 @@ public class ProcessorStatusYaml implements BaseParams {
         public final Quotas quotas = new Quotas();
     }
 
-    // key - code of function, value - stae of function
-    public TreeMap<String, EnumsApi.FunctionState> functions = new TreeMap<>();
-
     @Nullable
     public Env env;
     public GtiUtils.GitStatusInfo gitStatusInfo;
@@ -127,5 +125,4 @@ public class ProcessorStatusYaml implements BaseParams {
         }
         errors.add(error);
     }
-
 }

@@ -45,6 +45,8 @@ import org.springframework.stereotype.Service;
 import java.util.TreeMap;
 import java.util.UUID;
 
+import static ai.metaheuristic.ai.functions.FunctionRepositoryDispatcherService.*;
+
 /**
  * @author Serge
  * Date: 1/6/2022
@@ -95,14 +97,6 @@ public class PreparingCoreInitService {
                 TaskParamsYamlUtils.UTILS.getDefault().getVersion(), EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
         final String description = "Test processor. Must be deleted automatically";
         final String descriptionCore = "Test processor core. Must be deleted automatically";
-        ss.functions.put(PreparingConsts.TEST_FIT_FUNCTION, EnumsApi.FunctionState.ready);
-        ss.functions.put(PreparingConsts.TEST_PREDICT_FUNCTION, EnumsApi.FunctionState.ready);
-
-        ss.functions.put("function-01:1.1", EnumsApi.FunctionState.ready);
-        ss.functions.put("function-02:1.1", EnumsApi.FunctionState.ready);
-        ss.functions.put("function-03:1.1", EnumsApi.FunctionState.ready);
-        ss.functions.put("function-04:1.1", EnumsApi.FunctionState.ready);
-        ss.functions.put("function-05:1.1", EnumsApi.FunctionState.ready);
 
         mills = System.currentTimeMillis();
         log.info("Start processorRepository.saveAndFlush()");
@@ -111,6 +105,16 @@ public class PreparingCoreInitService {
         // Prepare processor
         data.processor = processorTransactionService.createProcessor(description, null, ss);
         log.info("processorRepository.save() was finished for {} milliseconds", System.currentTimeMillis() - mills);
+
+        registerReadyFunctionCodesOnProcessor(PreparingConsts.TEST_FIT_FUNCTION, data.processor.id, true);
+        registerReadyFunctionCodesOnProcessor(PreparingConsts.TEST_PREDICT_FUNCTION, data.processor.id, true);
+
+        registerReadyFunctionCodesOnProcessor("function-01:1.1", data.processor.id, true);
+        registerReadyFunctionCodesOnProcessor("function-02:1.1", data.processor.id, true);
+        registerReadyFunctionCodesOnProcessor("function-03:1.1", data.processor.id, true);
+        registerReadyFunctionCodesOnProcessor("function-04:1.1", data.processor.id, true);
+        registerReadyFunctionCodesOnProcessor("function-05:1.1", data.processor.id, true);
+
 
         // Prepare processor's cores
         CoreStatusYaml csy1 = new CoreStatusYaml("/home/core-1", null, null);

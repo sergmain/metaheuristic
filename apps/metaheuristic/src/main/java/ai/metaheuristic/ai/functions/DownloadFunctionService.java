@@ -35,6 +35,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
+import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
@@ -132,18 +133,34 @@ public class DownloadFunctionService {
         DownloadedFunctionConfigStatus status = ProcessorFunctionUtils.downloadFunctionConfig(assetManager, functionCode);
         Path baseFunctionDir = MetadataParams.prepareBaseDir(globals.processorResourcesPath, assetManagerUrl);
 
+//        Path actualBaseFunctionDir = status.functionConfig.getSrc().isEmpty()
+//            ? baseFunctionDir
+//            : baseFunctionDir.resolve(status.functionConfig.getSrc());
+//        final AssetFile assetFile = AssetUtils.prepareFunctionAssetFile(actualBaseFunctionDir, functionCode, status.functionConfig.file);
         String actualFunctionFile = status.functionConfig.getSrc().isEmpty()
             ? status.functionConfig.file
             : status.functionConfig.getSrc() + File.separatorChar + status.functionConfig.file;
+        if (actualFunctionFile==null) {
+            log.error("811.010 actualFunctionFile is null");
+            functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error);
+            return;
+        }
         final AssetFile assetFile = AssetUtils.prepareFunctionAssetFile(baseFunctionDir, functionCode, actualFunctionFile);
         if (assetFile.isError) {
-            log.error("AssetFile error creation for function " + functionCode + " encountered");
+            log.error("811. 015 AssetFile error creation for function " + functionCode + " encountered");
             return;
         }
 
         String functionZipFilename = ArtifactCommonUtils.normalizeCode(task.functionCode) + Consts.ZIP_EXT;
         String mask = functionZipFilename + ".%s.tmp";
-        Path parentDir = assetFile.file.getParent();
+//        Path parentDir = assetFile.file.getParent();
+        Path parentDir = DirUtils.getParent(assetFile.file, Path.of(actualFunctionFile));
+        if (parentDir==null) {
+            log.error("811.070 parentDir is null");
+            functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error);
+            return;
+        }
+
         Path downloadDir = parentDir.getParent().resolve(parentDir.getFileName().toString()+"-download");
         Path functionZip = downloadDir.resolve(functionZipFilename);
 
@@ -340,7 +357,7 @@ public class DownloadFunctionService {
                 }
 
                 DownloadUtils.combineParts(functionZip, functionZip, idx);
-                ZipUtils.unzipFolder(functionZip, parentDir);
+                //ZipUtils.unzipFolder(functionZip, parentDir);
 
                 int i=0;
             } catch (HttpResponseException e) {
@@ -357,10 +374,6 @@ public class DownloadFunctionService {
                 log.error("811.165 Throwable", th);
             }
         }
-        if (Files.notExists(assetFile.file)) {
-            log.error("811.180 assetManager file {} is missing", assetFile.file.toAbsolutePath());
-            return;
-        }
         CheckSumAndSignatureStatus checkSumAndSignatureStatus;
         try {
             checkSumAndSignatureStatus = ChecksumAndSignatureUtils.getCheckSumAndSignatureStatus(assetManagerUrl, assetManager, functionCode, checksum, functionZip);
@@ -373,6 +386,11 @@ public class DownloadFunctionService {
         }
 
         if (checkSumAndSignatureStatus.checksum != EnumsApi.ChecksumState.wrong && checkSumAndSignatureStatus.signature != EnumsApi.SignatureState.wrong) {
+            ZipUtils.unzipFolder(functionZip, parentDir);
+            if (Files.notExists(assetFile.file)) {
+                log.error("811.180 assetManager file {} is missing", assetFile.file.toAbsolutePath());
+                return;
+            }
             functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.ready);
         } else {
             if (checkSumAndSignatureStatus.checksum== EnumsApi.ChecksumState.wrong) {

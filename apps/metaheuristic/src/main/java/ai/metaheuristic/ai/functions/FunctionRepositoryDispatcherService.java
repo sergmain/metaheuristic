@@ -63,8 +63,8 @@ public class FunctionRepositoryDispatcherService {
     // private final ApplicationEventPublisher eventPublisher;
 
     // key - function code, value - list of processorIds
-    private final Map<String, Set<Long>> functionReadiness = new HashMap<>();
-    private final Set<String> activeFunctions = new HashSet<>();
+    private static final Map<String, Set<Long>> functionReadiness = new HashMap<>();
+    private static final Set<String> activeFunctions = new HashSet<>();
 
     private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
@@ -102,7 +102,7 @@ public class FunctionRepositoryDispatcherService {
         return response;
     }
 
-    private void registerReadyFunctionCodesOnProcessor(FunctionRepositoryRequestParams p) {
+    private static void registerReadyFunctionCodesOnProcessor(FunctionRepositoryRequestParams p) {
         if (p.processorId==null || CollectionUtils.isEmpty(p.functionCodes)) {
             return;
         }
@@ -119,12 +119,24 @@ public class FunctionRepositoryDispatcherService {
         }
     }
 
-    public boolean isProcessorReady(String funcCode, Long processorId) {
+    public static void registerReadyFunctionCodesOnProcessor(String functionCode, Long processorId, boolean force) {
+        writeLock.lock();
+        try {
+            if (!force && !activeFunctions.contains(functionCode)) {
+                return;
+            }
+            functionReadiness.computeIfAbsent(functionCode, (o)-> new HashSet<>()).add(processorId);
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    public static boolean isProcessorReady(String funcCode, Long processorId) {
         Set<Long> set = functionReadiness.get(funcCode);
         return set != null && set.contains(processorId);
     }
 
-    public boolean notAllFunctionsReady(Long processorId, TaskParamsYaml taskParamYaml) {
+    public static boolean notAllFunctionsReady(Long processorId, TaskParamsYaml taskParamYaml) {
         if (!isProcessorReady(taskParamYaml.task.function.code, processorId)) {
             return true;
         }

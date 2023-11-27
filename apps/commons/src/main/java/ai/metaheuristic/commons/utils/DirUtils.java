@@ -35,6 +35,20 @@ import java.util.List;
 @Slf4j
 public class DirUtils {
 
+    @Nullable
+    public static Path getParent(Path main, Path ending) {
+        if (!main.endsWith(ending)) {
+            return null;
+        }
+        Path curr = ending;
+        Path r = main;
+        do {
+            r = r.getParent();
+            curr = curr.getParent();
+        } while (curr!=null);
+        return r;
+    }
+
     public static Path getPoweredPath(Path basePath, long taskId) {
         final String path = getPoweredPath(taskId);
         final Path poweredPath = basePath.resolve(path);

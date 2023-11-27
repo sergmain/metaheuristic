@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.RegisterTaskForCheckCachingEv
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.functions.FunctionRepositoryDispatcherService;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
@@ -66,6 +67,7 @@ public class TaskProviderUnassignedTaskService {
     private final TaskRepository taskRepository;
     private final ExecContextStatusService execContextStatusService;
     private final TaskCheckCachingService taskCheckCachingTopLevelService;
+    private final FunctionRepositoryDispatcherService functionRepositoryDispatcherService;
 
     /**
      * this Map contains an AtomicLong which contains millisecond value which is specify how long to not use concrete processor
@@ -323,17 +325,22 @@ public class TaskProviderUnassignedTaskService {
     }
 
     private static void notAllFunctionsReadyInternal(Long processorId, ProcessorStatusYaml status, TaskParamsYaml.FunctionConfig functionConfig, AtomicBoolean result) {
-        EnumsApi.FunctionState state = status.functions.get(functionConfig.code);
+        boolean b = FunctionRepositoryDispatcherService.isProcessorReady(functionConfig.code, processorId);
+
+        if (!b) {
+            log.debug("317.240 function {} at processor #{} isn't ready.", functionConfig.code, processorId);
+            result.set(true);
+        }
+    }
+
+    private static void notAllFunctionsReadyInternal_old(Long processorId, ProcessorStatusYaml status, TaskParamsYaml.FunctionConfig functionConfig, AtomicBoolean result) {
 /*
-        EnumsApi.FunctionState state = status.functions.entrySet().stream()
-                .filter(o->o.getKey().equals(functionConfig.code))
-                .findFirst()
-                .map(Map.Entry::getValue).orElse(null);
-*/
+        EnumsApi.FunctionState state = status.functions.get(functionConfig.code);
 
         if (state != EnumsApi.FunctionState.ready) {
             log.debug("317.240 function {} at processor #{} isn't ready, state: {}", functionConfig.code, processorId, state==null ? "'not prepared yet'" : state);
             result.set(true);
         }
+*/
     }
 }

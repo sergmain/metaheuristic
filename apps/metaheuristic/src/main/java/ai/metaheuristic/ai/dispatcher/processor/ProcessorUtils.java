@@ -19,10 +19,8 @@ package ai.metaheuristic.ai.dispatcher.processor;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import ai.metaheuristic.api.EnumsApi;
 import org.springframework.lang.Nullable;
 
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -31,19 +29,6 @@ import java.util.Objects;
  * Time: 4:30 PM
  */
 public class ProcessorUtils {
-
-    public static boolean isProcessorFunctionDownloadStatusDifferent(ProcessorStatusYaml ss, Map<String, EnumsApi.FunctionState> mapOfFunctionStates) {
-        if (ss.functions.size()!=mapOfFunctionStates.size()) {
-            return true;
-        }
-        for (Map.Entry<String, EnumsApi.FunctionState> entry : ss.functions.entrySet()) {
-            EnumsApi.FunctionState state = mapOfFunctionStates.get(entry.getKey());
-            if (!entry.getValue().equals(state)) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     private static boolean isEnvEmpty(@Nullable ProcessorStatusYaml.Env env) {
         return env==null || (CollectionUtils.isEmpty(env.envs) && CollectionUtils.isEmpty(env.mirrors) && CollectionUtils.isEmpty(env.quotas.values));
