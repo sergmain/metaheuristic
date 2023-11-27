@@ -48,7 +48,6 @@ public class ProcessorStatusYamlUtilsV2
     public ProcessorStatusYamlV3 upgradeTo(@NonNull ProcessorStatusYamlV2 src) {
         src.checkIntegrity();
         ProcessorStatusYamlV3 trg = new ProcessorStatusYamlV3();
-        src.downloadStatuses.forEach(o->trg.functions.put(o.functionCode, o.functionState));
         if (src.errors!=null) {
             trg.errors = new ArrayList<>(src.errors);
         }

@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
 import ai.metaheuristic.ai.exceptions.CommonRollbackException;
-import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
@@ -34,6 +33,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +43,6 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -166,7 +165,7 @@ public class ProcessorTxService {
     @Transactional
     public DispatcherApiData.ProcessorSessionId getNewProcessorId() {
         String sessionId = createNewSessionId();
-        ProcessorStatusYaml psy = new ProcessorStatusYaml(new TreeMap<>(), null,
+        ProcessorStatusYaml psy = new ProcessorStatusYaml(null,
                 new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.unknown),
                 "", sessionId, System.currentTimeMillis(), "", "", null, false,
                 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);
@@ -304,7 +303,7 @@ public class ProcessorTxService {
     @Transactional
     public DispatcherApiData.ProcessorSessionId reassignProcessorId(@Nullable String remoteAddress, @Nullable String description) {
         String sessionId = ProcessorTxService.createNewSessionId();
-        ProcessorStatusYaml psy = new ProcessorStatusYaml(new TreeMap<>(), null,
+        ProcessorStatusYaml psy = new ProcessorStatusYaml(null,
                 new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),
                 Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false, 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null);

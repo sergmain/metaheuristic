@@ -28,11 +28,11 @@ import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxTestingTopLevelService;
-import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.utils.GtiUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -42,10 +42,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.TreeMap;
 import java.util.UUID;
 
-import static ai.metaheuristic.ai.functions.FunctionRepositoryDispatcherService.*;
+import static ai.metaheuristic.ai.functions.FunctionRepositoryDispatcherService.registerReadyFunctionCodesOnProcessor;
 
 /**
  * @author Serge
@@ -90,7 +89,7 @@ public class PreparingCoreInitService {
         envYaml.getEnvs().put("env-function-04:1.1", "python.exe" );
         envYaml.getEnvs().put("env-function-05:1.1", "python.exe" );
 
-        ProcessorStatusYaml ss = new ProcessorStatusYaml(new TreeMap<>(), envYaml,
+        ProcessorStatusYaml ss = new ProcessorStatusYaml(envYaml,
                 new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.not_found), "",
                 ""+ UUID.randomUUID(), System.currentTimeMillis(),
                 Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false,
