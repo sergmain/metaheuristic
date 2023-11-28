@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.functions.DownloadFunctionService;
 import ai.metaheuristic.ai.functions.FunctionRepositoryData;
 import ai.metaheuristic.ai.functions.FunctionRepositoryProcessorService;
+import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParams;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.event.AssetPreparingForProcessorTaskEvent;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
@@ -210,6 +211,9 @@ public class TaskAssetPreparer {
             ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core,
             TaskParamsYaml.FunctionConfig functionConfig, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, Long taskId) {
 
+        FunctionRepositoryResponseParams.ShortFunctionConfig shortFunctionConfig =
+            new FunctionRepositoryResponseParams.ShortFunctionConfig(functionConfig.code, functionConfig.sourcing, functionConfig.git);
+
         if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
             final FunctionRepositoryData.DownloadStatus functionDownloadStatuses = FunctionRepositoryProcessorService.getFunctionDownloadStatus(assetManagerUrl, functionConfig.code);
             if (functionDownloadStatuses==null) {
@@ -220,7 +224,7 @@ public class TaskAssetPreparer {
 
             final EnumsApi.FunctionState functionState = functionDownloadStatuses.state;
             if (functionState == EnumsApi.FunctionState.none) {
-                downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, functionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
+                downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
                 return false;
             }
             else {
@@ -229,7 +233,7 @@ public class TaskAssetPreparer {
 
                     functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none);
 
-                    downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, functionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
+                    downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
                     return true;
                 }
                 else if (functionState== EnumsApi.FunctionState.dispatcher_config_error) {

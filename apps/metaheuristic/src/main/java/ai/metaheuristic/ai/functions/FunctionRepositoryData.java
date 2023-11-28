@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.functions;
 
+import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParams;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.api.EnumsApi;
@@ -43,7 +44,7 @@ public class FunctionRepositoryData {
     @EqualsAndHashCode(of = {"functionCode", "assetManagerUrl"})
     public static class DownloadFunctionTask implements EventWithId<FunctionEnums.DownloadPriority> {
         public final String functionCode;
-        public final TaskParamsYaml.FunctionConfig functionConfig;
+        public final FunctionRepositoryResponseParams.ShortFunctionConfig shortFunctionConfig;
         public final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl;
         public final boolean signatureRequired;
         public final FunctionEnums.DownloadPriority priority;

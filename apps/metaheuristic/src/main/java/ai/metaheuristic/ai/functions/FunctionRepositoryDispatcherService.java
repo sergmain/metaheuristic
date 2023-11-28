@@ -16,9 +16,11 @@
 
 package ai.metaheuristic.ai.functions;
 
+import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.event.events.RegisterFunctionCodesForStartedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParams;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParamsUtils;
@@ -28,6 +30,7 @@ import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -58,6 +61,7 @@ public class FunctionRepositoryDispatcherService {
 
     private final SourceCodeRepository sourceCodeRepository;
     private final ExecContextRepository execContextRepository;
+    private final FunctionRepository functionRepository;
 
     public static class Processors {
         public long mills = System.currentTimeMillis();
@@ -76,6 +80,12 @@ public class FunctionRepositoryDispatcherService {
         }
     };
     private static final Set<String> activeFunctions = new HashSet<>();
+    private static final LinkedHashMap<String, FunctionRepositoryResponseParams.ShortFunctionConfig> shortFunctionConfigCache = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, FunctionRepositoryResponseParams.ShortFunctionConfig> eldest) {
+            return size()>100;
+        }
+    };
 
     private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
@@ -98,7 +108,7 @@ public class FunctionRepositoryDispatcherService {
         }
     }
 
-    public static String processRequest(String data, String remoteAddr) {
+    public String processRequest(String data, String remoteAddr) {
         FunctionRepositoryRequestParams p = FunctionRepositoryRequestParamsUtils.UTILS.to(data);
         FunctionRepositoryResponseParams r = new FunctionRepositoryResponseParams();
         r.success = true;
@@ -106,11 +116,36 @@ public class FunctionRepositoryDispatcherService {
 
         final Set<String> activeFunctionCodes = getActiveFunctionCode(p.processorId);
         if (CollectionUtils.isNotEmpty(activeFunctionCodes)) {
-            r.functionCodes = new ArrayList<>(activeFunctionCodes);
+            r.functions = new ArrayList<>();
+            for (String activeFunctionCode : activeFunctionCodes) {
+                FunctionRepositoryResponseParams.ShortFunctionConfig shortFunctionConfig = toShortFunctionConfig(activeFunctionCode);
+                if (shortFunctionConfig != null) {
+                    r.functions.add(shortFunctionConfig);
+                }
+                else {
+                    log.warn("479.040 Function wasn't found for code " + activeFunctionCode);
+                }
+            }
         }
 
         String response = FunctionRepositoryResponseParamsUtils.UTILS.toString(r);
         return response;
+    }
+
+    @Nullable
+    private FunctionRepositoryResponseParams.ShortFunctionConfig toShortFunctionConfig(String functionCode) {
+        FunctionRepositoryResponseParams.ShortFunctionConfig f = shortFunctionConfigCache.computeIfAbsent(functionCode, this::loadShortFunctionConfig);
+        return f;
+    }
+
+    @Nullable
+    private FunctionRepositoryResponseParams.ShortFunctionConfig loadShortFunctionConfig(String functionCode) {
+        Function f = functionRepository.findByCode(functionCode);
+        if (f==null) {
+            return null;
+        }
+        FunctionConfigYaml params = f.getFunctionConfigYaml();
+        return new FunctionRepositoryResponseParams.ShortFunctionConfig(functionCode, params.function.sourcing, params.function.git);
     }
 
     private static void registerReadyFunctionCodesOnProcessor(FunctionRepositoryRequestParams p) {

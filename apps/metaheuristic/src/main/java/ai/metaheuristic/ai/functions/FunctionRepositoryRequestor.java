@@ -113,7 +113,7 @@ public class FunctionRepositoryRequestor {
     }
 
     public static boolean isNotEmpty(@Nullable FunctionRepositoryResponseParams p) {
-        return p!=null && CollectionUtils.isNotEmpty(p.functionCodes);
+        return p!=null && CollectionUtils.isNotEmpty(p.functions);
     }
 
     @Nullable

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.processor.download;
 
 import ai.metaheuristic.ai.functions.FunctionRepositoryData;
+import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParams;
 import ai.metaheuristic.ai.processor.actors.AbstractTaskQueue;
 import org.junit.jupiter.api.Test;
 
@@ -39,19 +40,20 @@ public class TestDownloadQueue {
     public void test() {
         TestQueue testQueue = new TestQueue();
 
-        FunctionRepositoryData.DownloadFunctionTask task1 = new FunctionRepositoryData.DownloadFunctionTask("function-1", new AssetManagerUrl("url2"), false, NORMAL);
+        // value of shortFunctionConfig doesn't matter
+        FunctionRepositoryData.DownloadFunctionTask task1 = new FunctionRepositoryData.DownloadFunctionTask("function-1", new FunctionRepositoryResponseParams.ShortFunctionConfig(), new AssetManagerUrl("url2"), false, NORMAL);
 
         testQueue.add(task1);
         assertEquals(1, testQueue.queueSize());
 
-        FunctionRepositoryData.DownloadFunctionTask task2 = new FunctionRepositoryData.DownloadFunctionTask("function-1", new AssetManagerUrl("url2"), false, NORMAL);
+        FunctionRepositoryData.DownloadFunctionTask task2 = new FunctionRepositoryData.DownloadFunctionTask("function-1", new FunctionRepositoryResponseParams.ShortFunctionConfig(), new AssetManagerUrl("url2"), false, NORMAL);
 
         testQueue.add(task2);
         assertEquals(1, testQueue.queueSize());
 
-        FunctionRepositoryData.DownloadFunctionTask task3 = new FunctionRepositoryData.DownloadFunctionTask("function-2", new AssetManagerUrl("url2"), false, NORMAL);
+        FunctionRepositoryData.DownloadFunctionTask task3 = new FunctionRepositoryData.DownloadFunctionTask("function-2", new FunctionRepositoryResponseParams.ShortFunctionConfig(), new AssetManagerUrl("url2"), false, NORMAL);
 
-        FunctionRepositoryData.DownloadFunctionTask task4 = new FunctionRepositoryData.DownloadFunctionTask("function-1", new AssetManagerUrl("url2-1"), false, NORMAL);
+        FunctionRepositoryData.DownloadFunctionTask task4 = new FunctionRepositoryData.DownloadFunctionTask("function-1", new FunctionRepositoryResponseParams.ShortFunctionConfig(), new AssetManagerUrl("url2-1"), false, NORMAL);
 
         testQueue.add(task3);
         testQueue.add(task4);
