@@ -43,6 +43,7 @@ public class FunctionRepositoryData {
     @EqualsAndHashCode(of = {"functionCode", "assetManagerUrl"})
     public static class DownloadFunctionTask implements EventWithId<FunctionEnums.DownloadPriority> {
         public final String functionCode;
+        public final TaskParamsYaml.FunctionConfig functionConfig;
         public final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl;
         public final boolean signatureRequired;
         public final FunctionEnums.DownloadPriority priority;

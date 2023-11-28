@@ -19,7 +19,10 @@ package ai.metaheuristic.ai.functions.communication;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
+
+import java.util.List;
 
 /**
  * @author Sergio Lissner
@@ -47,10 +50,20 @@ public class FunctionRepositoryResponseParamsUtilsV1
 
         FunctionRepositoryResponseParams trg = new FunctionRepositoryResponseParams();
         trg.success = src.success;
-        trg.functionCodes = src.functionCodes;
+        trg.functions = to(src.functions);
 
         trg.checkIntegrity();
         return trg;
+    }
+
+    @Nullable
+    public static List<FunctionRepositoryResponseParams.ShortFunctionConfig> to(@Nullable List<FunctionRepositoryResponseParamsV1.ShortFunctionConfigV1> v1) {
+        if (v1==null) {
+            return null;
+        }
+        FunctionRepositoryResponseParams v = new FunctionRepositoryResponseParams();
+        v.functions = v1.stream().map(o->new FunctionRepositoryResponseParams.ShortFunctionConfig(o.code, o.sourcing, o.git)).toList();
+        return v.functions;
     }
 
     @NonNull

@@ -16,7 +16,9 @@
 
 package ai.metaheuristic.ai.functions.communication;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.api.sourcing.GitInfo;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import org.springframework.lang.Nullable;
@@ -38,10 +40,17 @@ public class FunctionRepositoryResponseParamsV1 implements BaseParams {
         return true;
     }
 
+    public static class ShortFunctionConfigV1 {
+        public String code;
+        public EnumsApi.FunctionSourcing sourcing;
+        @javax.annotation.Nullable
+        public GitInfo git;
+    }
+
     // list of function codes which must to be prepared and ready
     @Nullable
     @JsonInclude(value= JsonInclude.Include.NON_NULL)
-    public List<String> functionCodes = null;
+    public List<ShortFunctionConfigV1> functions = null;
 
     public boolean success;
 

@@ -220,7 +220,7 @@ public class TaskAssetPreparer {
 
             final EnumsApi.FunctionState functionState = functionDownloadStatuses.state;
             if (functionState == EnumsApi.FunctionState.none) {
-                downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
+                downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, functionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
                 return false;
             }
             else {
@@ -229,7 +229,7 @@ public class TaskAssetPreparer {
 
                     functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none);
 
-                    downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
+                    downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, functionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
                     return true;
                 }
                 else if (functionState== EnumsApi.FunctionState.dispatcher_config_error) {
