@@ -49,7 +49,7 @@ public class FunctionRepositoryResponseParams implements BaseParams {
     public static class ShortFunctionConfig {
         public String code;
         public EnumsApi.FunctionSourcing sourcing;
-        @javax.annotation.Nullable
+        @Nullable
         public GitInfo git;
     }
 

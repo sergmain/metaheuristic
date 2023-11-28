@@ -97,7 +97,7 @@ public class DownloadFunctionService {
         try {
             addTask(event);
         } catch (Throwable th) {
-            log.error("951.004 Error, need to investigate ", th);
+            log.error("811.002 Error, need to investigate ", th);
         }
     }
 
@@ -109,8 +109,9 @@ public class DownloadFunctionService {
             return;
         }
 
-        if (true) {
-
+        if (task.shortFunctionConfig.sourcing!= EnumsApi.FunctionSourcing.dispatcher) {
+            log.warn("811.005 Attempt to download function from dispatcher but sourcing is" + task.shortFunctionConfig.sourcing);
+            return;
         }
 
         // created for easier debugging
