@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.storage.variable;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
@@ -25,13 +24,13 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.storage.CacheVariableDatabaseStorageService;
 import ai.metaheuristic.ai.dispatcher.storage.DatabaseBlobPersistService;
 import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobService;
-import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
@@ -76,7 +75,7 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
 
         final Path tempFile;
         try {
-            tempFile = Files.createTempFile(globals.dispatcherTempPath, "var-" + srcVariable.id + "-", Consts.BIN_EXT);
+            tempFile = Files.createTempFile(globals.dispatcherTempPath, "var-" + srcVariable.id + "-", CommonConsts.BIN_EXT);
         }
         catch (IOException e) {
             throw new BreakFromLambdaException(e.toString());

@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.storage;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
@@ -31,6 +30,7 @@ import ai.metaheuristic.ai.exceptions.FunctionDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.DirUtils;
 import jakarta.annotation.PostConstruct;
@@ -88,7 +88,7 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
                 log.warn(es);
                 throw new VariableDataNotFoundException(id, EnumsApi.VariableContext.local, es);
             }
-            Path dataPath = path.resolve(id + Consts.BIN_EXT);
+            Path dataPath = path.resolve(id + CommonConsts.BIN_EXT);
             try (InputStream is = Files.newInputStream(dataPath); BufferedInputStream bis = new BufferedInputStream(is, 0x1000)) {
                 processBlobDataFunc.accept(bis);
             }
@@ -101,7 +101,7 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
                 log.warn(es);
                 throw new VariableDataNotFoundException(id, EnumsApi.VariableContext.local, es);
             }
-            Path dataPath = path.resolve(id + Consts.BIN_EXT);
+            Path dataPath = path.resolve(id + CommonConsts.BIN_EXT);
             return Files.newInputStream(dataPath);
         }
 
@@ -111,7 +111,7 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
             if (Files.notExists(path)) {
                 Files.createDirectories(path);
             }
-            Path dataPath = path.resolve(id + Consts.BIN_EXT);
+            Path dataPath = path.resolve(id + CommonConsts.BIN_EXT);
             try (OutputStream os = Files.newOutputStream(dataPath); BufferedOutputStream bos = new BufferedOutputStream(os)) {
                 IOUtils.copyLarge(is, bos);
                 bos.flush();

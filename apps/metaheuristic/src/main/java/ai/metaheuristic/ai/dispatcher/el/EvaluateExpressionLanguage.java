@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.el;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
@@ -27,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.AllArgsConstructor;
@@ -204,7 +204,7 @@ public class EvaluateExpressionLanguage {
                 if (tempDir == null) {
                     throw new InternalFunctionException(system_error, "509.180 can't create a temporary file");
                 }
-                Path tempFile = Files.createTempFile(tempDir, "input-", Consts.BIN_EXT);
+                Path tempFile = Files.createTempFile(tempDir, "input-", CommonConsts.BIN_EXT);
                 if (variableHolderInput.globalVariable!=null) {
                     globalVariableService.storeToFileWithTx(variableHolderInput.globalVariable.id, tempFile);
                 } else if (variableHolderInput.variable!=null) {

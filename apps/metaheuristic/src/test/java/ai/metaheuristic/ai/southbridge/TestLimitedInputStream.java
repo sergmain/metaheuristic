@@ -16,16 +16,13 @@
 
 package ai.metaheuristic.ai.southbridge;
 
-import ai.metaheuristic.ai.Consts;
-import org.apache.commons.io.FileUtils;
+import ai.metaheuristic.commons.CommonConsts;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BoundedInputStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -46,7 +43,7 @@ public class TestLimitedInputStream {
 
     @BeforeEach
     public void before() throws IOException {
-        testFile = Files.createTempFile("test-limited-input-stream", Consts.BIN_EXT);
+        testFile = Files.createTempFile("test-limited-input-stream", CommonConsts.BIN_EXT);
     }
 
     @AfterEach

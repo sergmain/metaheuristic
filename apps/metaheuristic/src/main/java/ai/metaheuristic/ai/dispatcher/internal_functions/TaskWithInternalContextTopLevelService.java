@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
@@ -123,7 +124,7 @@ public class TaskWithInternalContextTopLevelService {
                             ()->variableTxService.setVariableAsNull(task.id, output.id));
                 }
                 else {
-                    Path tempFile = Files.createTempFile(tempDir, "output-", Consts.BIN_EXT);
+                    Path tempFile = Files.createTempFile(tempDir, "output-", CommonConsts.BIN_EXT);
                     variableTxService.storeToFileWithTx(variableHolder.variable.id, tempFile);
                     VariableSyncService.getWithSyncVoidForCreation(output.id,
                             ()-> variableTxService.storeDataInVariable(output, tempFile));

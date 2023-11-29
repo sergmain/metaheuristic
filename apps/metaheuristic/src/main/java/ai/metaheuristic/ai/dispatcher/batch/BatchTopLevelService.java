@@ -45,6 +45,7 @@ import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.PageUtils;
@@ -77,8 +78,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 
-import static ai.metaheuristic.ai.Consts.XML_EXT;
-import static ai.metaheuristic.ai.Consts.ZIP_EXT;
+import static ai.metaheuristic.commons.CommonConsts.XML_EXT;
+import static ai.metaheuristic.commons.CommonConsts.ZIP_EXT;
 
 /**
  * @author Serge
@@ -290,7 +291,7 @@ public class BatchTopLevelService {
             // doesn't work with abstract InputStream
             Path tempFile;
             try {
-                tempFile = Files.createTempFile(tempDir, "mh-temp-file-for-processing-", Consts.BIN_EXT);
+                tempFile = Files.createTempFile(tempDir, "mh-temp-file-for-processing-", CommonConsts.BIN_EXT);
                 try (InputStream is = file.getInputStream()) {
                     DirUtils.copy(is, tempFile);
                 }

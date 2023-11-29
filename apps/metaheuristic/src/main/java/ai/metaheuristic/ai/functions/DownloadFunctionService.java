@@ -33,6 +33,7 @@ import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -153,7 +154,7 @@ public class DownloadFunctionService {
             return;
         }
 
-        String functionZipFilename = ArtifactCommonUtils.normalizeCode(task.functionCode) + Consts.ZIP_EXT;
+        String functionZipFilename = ArtifactCommonUtils.normalizeCode(task.functionCode) + CommonConsts.ZIP_EXT;
         String mask = functionZipFilename + ".%s.tmp";
 //        Path parentDir = assetFile.file.getParent();
         Path parentDir = DirUtils.getParent(assetFile.file, Path.of(actualFunctionFile));

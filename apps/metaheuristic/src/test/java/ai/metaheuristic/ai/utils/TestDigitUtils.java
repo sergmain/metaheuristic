@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.utils;
 
-import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.DigitUtils;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.SneakyThrows;
@@ -102,7 +102,7 @@ public class TestDigitUtils {
 
     private void fillTrgFiles(Path temp, String prefix, Path[] files) throws IOException {
         for (int i = 0; i < files.length; i++) {
-            files[i] = temp.resolve(prefix+i+ Consts.BIN_EXT);
+            files[i] = temp.resolve(prefix+i+ CommonConsts.BIN_EXT);
             Files.write(files[i], createRandomContent(FILE_SIZE));
         }
     }

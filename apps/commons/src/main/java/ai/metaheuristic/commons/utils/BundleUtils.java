@@ -32,10 +32,12 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import ai.metaheuristic.commons.yaml.scheme.ApiSchemeUtils;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.NameFileFilter;
+import org.apache.commons.io.filefilter.SuffixFileFilter;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -57,8 +59,10 @@ import static ai.metaheuristic.commons.CommonConsts.*;
  * Time: 1:56 AM
  */
 @SuppressWarnings({"unused", "SimplifyStreamApiCallChains"})
+@Slf4j
 public class BundleUtils {
-    static IOFileFilter FUNCTION_YAML_FILTER = FileFileFilter.INSTANCE.and(new NameFileFilter(MH_FUNCTION_YAML));
+    public static final IOFileFilter YAML_SUFFIX_FILTER = FileFileFilter.INSTANCE.and(new SuffixFileFilter(YAML_EXT, YML_EXT));
+    public static IOFileFilter FUNCTION_YAML_FILTER = FileFileFilter.INSTANCE.and(new NameFileFilter(MH_FUNCTION_YAML));
 
     public static Path createBundle(BundleData.Cfg cfg, BundleCfgYaml bundleCfgYaml) throws IOException, GeneralSecurityException {
         System.out.println("\tworking dir: " + cfg.workingDir);
@@ -101,16 +105,43 @@ public class BundleUtils {
             if (Files.notExists(p) || !Files.isDirectory(p)) {
                 throw new BundleProcessingException(S.f("Path %s is broken", p.toAbsolutePath()));
             }
-            Path tempPath = cfg.workingDir.resolve(bundleConfig.path);
-            System.out.println("\t\tprocess path " + bundleConfig.path);
-            Files.createDirectories(tempPath);
 
-            processFilesForCommonType(tempPath, p, yamlCheckerFunc);
+            PathUtils.walk(p, BundleUtils.YAML_SUFFIX_FILTER, Integer.MAX_VALUE, false, FileVisitOption.FOLLOW_LINKS)
+                .forEach(f-> {
+                    try {
+                        if (Files.isDirectory(f) || MH_FUNCTION_YAML.equals(p.getFileName().toString())) {
+                            return;
+                        }
+
+                        String yaml = Files.readString(f);
+
+                        System.out.println("\t\tprocess path " + f);
+                        Path file = cfg.workingDir.resolve(p.relativize(f));
+                        Path tempPath = file.getParent();
+                        if (Files.notExists(tempPath)) {
+                            Files.createDirectories(tempPath);
+                        }
+
+                        // let's check that this yaml is actually one of required type
+                        try {
+                            yamlCheckerFunc.accept(yaml);
+                        } catch (Throwable th) {
+                            throw new RuntimeException("Validation of content was failed. type: " + bundleConfig.type, th);
+                        }
+
+//                        Path file = tempPath.resolve(p.getFileName().toString());
+                        Files.writeString(file, yaml);
+
+                    } catch (IOException e) {
+                        log.error("Error", e);
+                        throw new RuntimeException("Error", e);
+                    }
+                });
         }
     }
 
     private static void processFilesForCommonType(Path tempFuncPath, Path srcPath, Consumer<String> yamlCheckerFunc) throws IOException {
-        Files.walkFileTree(srcPath, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
+        Files.walkFileTree(srcPath, EnumSet.noneOf(FileVisitOption.class), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path p, BasicFileAttributes attrs) throws IOException {
                 if (Files.isDirectory(p) || MH_FUNCTION_YAML.equals(p.getFileName().toString())) {

@@ -46,7 +46,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-import static ai.metaheuristic.ai.Consts.ZIP_EXT;
+import static ai.metaheuristic.commons.CommonConsts.ZIP_EXT;
 import static ai.metaheuristic.ai.dispatcher.data.InternalFunctionData.InternalFunctionProcessingResult;
 
 /**

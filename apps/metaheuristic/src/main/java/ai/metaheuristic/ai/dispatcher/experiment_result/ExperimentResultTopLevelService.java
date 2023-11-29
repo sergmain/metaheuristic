@@ -68,7 +68,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.Consts.ZIP_EXT;
+import static ai.metaheuristic.commons.CommonConsts.ZIP_EXT;
 import static ai.metaheuristic.ai.Enums.FeatureExecStatus;
 import static ai.metaheuristic.ai.dispatcher.data.ExperimentResultData.*;
 import static ai.metaheuristic.api.data.experiment.ExperimentApiData.ExperimentFeatureData;

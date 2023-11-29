@@ -301,7 +301,7 @@ public class Globals {
         @Nullable
         private PublicKey publicKey;
 
-        public String defaultResultFileExtension = Consts.BIN_EXT;
+        public String defaultResultFileExtension = CommonConsts.BIN_EXT;
 
         public int maxTriesAfterError = 3;
 

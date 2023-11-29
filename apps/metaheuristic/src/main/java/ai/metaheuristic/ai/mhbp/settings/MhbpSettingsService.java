@@ -44,8 +44,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.StreamSupport;
 
-import static ai.metaheuristic.ai.Consts.YAML_EXT;
-import static ai.metaheuristic.ai.Consts.YML_EXT;
+import static ai.metaheuristic.commons.CommonConsts.YAML_EXT;
+import static ai.metaheuristic.commons.CommonConsts.YML_EXT;
 
 /**
  * @author Sergio Lissner

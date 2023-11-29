@@ -37,6 +37,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -166,7 +167,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
                     variableTxService.initInputVariableWithNull(execContextResultRest.execContext.id, execContextParamsYaml, i);
                 }
                 else {
-                    Path tempFile = Files.createTempFile(tempDir, "input-", Consts.BIN_EXT);
+                    Path tempFile = Files.createTempFile(tempDir, "input-", CommonConsts.BIN_EXT);
                     switch (input.context) {
                         case global:
                             globalVariableService.storeToFileWithTx(input.id, tempFile);

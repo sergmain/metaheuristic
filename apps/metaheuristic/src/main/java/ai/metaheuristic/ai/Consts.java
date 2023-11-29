@@ -109,13 +109,6 @@ public class Consts {
 
     public static final String MAIN_DOCUMENT_POOL_CODE_FOR_BATCH = "mainDocument";
 
-    public static final String YAML_EXT = ".yaml";
-    public static final String YML_EXT = ".yml";
-    public static final String ZIP_EXT = ".zip";
-    public static final String XML_EXT = ".xml";
-    public static final String RAR_EXT = ".rar";
-    public static final String BIN_EXT = ".bin";
-
     public static final String HEADER_MH_IS_LAST_CHUNK = "mh-is-last-chunk";
     public static final String HEADER_MH_CHUNK_SIZE = "mh-chunk-size";
     public static final String RESOURCES_TO_CLEAN = "mh-to-clean";

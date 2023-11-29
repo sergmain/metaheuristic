@@ -16,13 +16,13 @@
 
 package ai.metaheuristic.ai.binary_data;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.internal_functions.batch_result_processor.BatchResultProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -34,7 +34,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
@@ -92,7 +91,7 @@ public class TestBinaryDataSaveAndLoad {
 
     @Test
     public void testSaveAndLoadToTempFile(@TempDir Path tempDir) throws IOException {
-        storeAndVerify(tempDir, Files.createTempFile(tempDir, "variable-", Consts.BIN_EXT));
+        storeAndVerify(tempDir, Files.createTempFile(tempDir, "variable-", CommonConsts.BIN_EXT));
     }
 
     @Test

@@ -72,8 +72,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.Consts.YAML_EXT;
-import static ai.metaheuristic.ai.Consts.YML_EXT;
+import static ai.metaheuristic.commons.CommonConsts.YAML_EXT;
+import static ai.metaheuristic.commons.CommonConsts.YML_EXT;
 
 @SuppressWarnings("unused")
 @Slf4j

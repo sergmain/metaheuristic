@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.rest;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
+import ai.metaheuristic.commons.CommonConsts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +29,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -77,7 +76,7 @@ public class TestRestPayload {
     public void testRestPayload_asUser() throws Exception {
         final String url = "/rest/v1/payload/resource/variable/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
         //noinspection ConstantConditions
-        assertTrue(url.endsWith(Consts.BIN_EXT));
+        assertTrue(url.endsWith(CommonConsts.BIN_EXT));
 
         mockMvc.perform(
                 get(url + "?processorId=15&id=42&chunkSize=10000000&chunkNum=0")

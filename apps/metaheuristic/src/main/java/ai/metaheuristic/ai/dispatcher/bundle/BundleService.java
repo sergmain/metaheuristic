@@ -35,7 +35,6 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BundleProcessingException;
 import ai.metaheuristic.commons.utils.BundleUtils;
 import ai.metaheuristic.commons.utils.DirUtils;
-import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYaml;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYamlUtils;
@@ -44,9 +43,6 @@ import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.file.PathUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.io.filefilter.NameFileFilter;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
@@ -55,17 +51,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
-
-import static ai.metaheuristic.ai.Consts.YAML_EXT;
-import static ai.metaheuristic.ai.Consts.YML_EXT;
 
 /**
  * @author Serge
@@ -217,21 +208,17 @@ public class BundleService {
                 continue;
             }
 
-            Files.walkFileTree(p, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult visitFile(Path p, BasicFileAttributes attrs) throws IOException {
-                    final String filename = p.getFileName().toString();
-                    String ext = StrUtils.getExtension(filename);
-                    if (ext == null || !StringUtils.equalsAny(ext.toLowerCase(), YAML_EXT, YML_EXT)) {
-                        return FileVisitResult.CONTINUE;
+            PathUtils.walk(p, BundleUtils.YAML_SUFFIX_FILTER, Integer.MAX_VALUE, false, FileVisitOption.FOLLOW_LINKS)
+                .forEach(f-> {
+                    try {
+                        String yaml = Files.readString(f);
+                        BaseDataClass codeResult = storeCommonTypeFunc.apply(yaml, dispatcherContext);
+                        status.addErrorMessages(codeResult.getErrorMessagesAsList());
+                        status.addInfoMessages(codeResult.getInfoMessagesAsList());
+                    } catch (IOException e) {
+                        throw new RuntimeException("Error", e);
                     }
-                    String yaml = Files.readString(p);
-                    BaseDataClass codeResult = storeCommonTypeFunc.apply(yaml, dispatcherContext);
-                    status.addErrorMessages(codeResult.getErrorMessagesAsList());
-                    status.addInfoMessages(codeResult.getInfoMessagesAsList());
-                    return FileVisitResult.CONTINUE;
-                }
-            });
+                });
         }
     }
 
@@ -249,9 +236,8 @@ public class BundleService {
                 log.error("971.320 invalid record in bundle-cfg.yaml, path {} doesn't exist", bundleConfig.path);
                 continue;
             }
-            final IOFileFilter filter = new NameFileFilter(CommonConsts.MH_FUNCTION_YAML);
-            PathUtils.walk(p, filter, Integer.MAX_VALUE, false, FileVisitOption.FOLLOW_LINKS)
-                .forEach(f-> { loadFunction(f, status); });
+            PathUtils.walk(p, BundleUtils.FUNCTION_YAML_FILTER, Integer.MAX_VALUE, false, FileVisitOption.FOLLOW_LINKS)
+                .forEach(f-> loadFunction(f, status));
         }
     }
 

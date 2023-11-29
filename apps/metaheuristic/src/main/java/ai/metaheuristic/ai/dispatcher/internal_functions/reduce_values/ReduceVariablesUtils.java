@@ -239,6 +239,8 @@ public class ReduceVariablesUtils {
         return freqValues;
     }
 
+    private static final IOFileFilter filter = FileFileFilter.INSTANCE.and(new SuffixFileFilter(new String[]{".zip"}));
+
     @SneakyThrows
     public static ReduceVariablesData.VariablesData loadData(Path actualTemp, ReduceVariablesData.VariablesData data, Path zipFile, ReduceVariablesConfigParamsYaml config,
                                                              Consumer<ProgressData> consumer) {
@@ -249,7 +251,6 @@ public class ReduceVariablesUtils {
 
         ZipUtils.unzipFolder(zipFile, zipDir, false, Collections.emptyList(), false);
 
-        final IOFileFilter filter = FileFileFilter.INSTANCE.and(new SuffixFileFilter(new String[]{".zip"}));
         Collection<Path> files = PathUtils.walk(zipDir, filter, Integer.MAX_VALUE, false, FileVisitOption.FOLLOW_LINKS).collect(Collectors.toList());
         int i=0;
         for (Path f : files) {

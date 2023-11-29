@@ -43,6 +43,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextsListItem;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.PageUtils;
@@ -262,11 +263,11 @@ public class ExecContextTxService {
                 return resource;
             }
 
-            String ext = execContextUtilsServices.getExtensionForVariable(execContext.execContextVariableStateId, variableId, Consts.BIN_EXT);
+            String ext = execContextUtilsServices.getExtensionForVariable(execContext.execContextVariableStateId, variableId, CommonConsts.BIN_EXT);
 
             String filename = S.f("variable-%s-%s%s", variableId, v.name, ext);
 
-            Path varFile = resultDir.resolve("variable-"+variableId+ Consts.BIN_EXT);
+            Path varFile = resultDir.resolve("variable-"+variableId+ CommonConsts.BIN_EXT);
             variableService.storeToFileWithTx(v.id, varFile);
 
             HttpHeaders httpHeaders = new HttpHeaders();

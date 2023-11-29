@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.cache;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
@@ -33,6 +32,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -124,7 +124,7 @@ public class CacheTxService {
 
 
             try {
-                tempFile = Files.createTempFile(globals.dispatcherTempPath, "var-" + output.id + "-", Consts.BIN_EXT);
+                tempFile = Files.createTempFile(globals.dispatcherTempPath, "var-" + output.id + "-", CommonConsts.BIN_EXT);
             } catch (IOException e) {
                 String es = "611.060 Error: " + e;
                 log.error(es, e);

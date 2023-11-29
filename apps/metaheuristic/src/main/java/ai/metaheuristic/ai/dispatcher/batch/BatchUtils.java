@@ -16,9 +16,9 @@
 
 package ai.metaheuristic.ai.dispatcher.batch;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -42,7 +42,7 @@ public class BatchUtils {
         final String ext = MetaUtils.getValue(scpy.source.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION);
 
         return S.b(ext)
-                ? (StringUtils.isNotBlank(defaultResultFileExtension) ? defaultResultFileExtension : Consts.BIN_EXT)
+                ? (StringUtils.isNotBlank(defaultResultFileExtension) ? defaultResultFileExtension : CommonConsts.BIN_EXT)
                 : ext;
     }
 
