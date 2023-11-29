@@ -59,6 +59,7 @@ public class PackageBundle implements CommandLineRunner {
             if (cfg.gitInfo!=null) {
                 BundleUtils.initRepo(cfg);
             }
+            cfg.initOtherPaths(null);
 
             BundleCfgYaml bundleCfgYaml = initBundleCfg(cmd, cfg);
             Path bundleZipFile = BundleUtils.createBundle(cfg, bundleCfgYaml);

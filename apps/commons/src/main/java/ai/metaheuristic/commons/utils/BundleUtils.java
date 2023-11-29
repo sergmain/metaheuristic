@@ -61,7 +61,6 @@ public class BundleUtils {
     static IOFileFilter FUNCTION_YAML_FILTER = FileFileFilter.INSTANCE.and(new NameFileFilter(MH_FUNCTION_YAML));
 
     public static Path createBundle(BundleData.Cfg cfg, BundleCfgYaml bundleCfgYaml) throws IOException, GeneralSecurityException {
-        cfg.initOtherPaths(null);
         System.out.println("\tworking dir: " + cfg.workingDir);
         processFunctions(cfg,bundleCfgYaml);
         processCommonType(cfg, bundleCfgYaml, sourceCode, SourceCodeParamsYamlUtils.BASE_YAML_UTILS::to);

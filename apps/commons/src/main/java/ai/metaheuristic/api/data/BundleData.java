@@ -78,6 +78,8 @@ public class BundleData {
         // a path where bundle.yaml is located
         public Path currDir;
 
+        public boolean inited = false;
+
         public Cfg(@Nullable PrivateKey privateKey, Path baseDir, @Nullable GitInfo gitInfo) {
             this.privateKey = privateKey;
             this.baseDir = baseDir;
@@ -86,6 +88,9 @@ public class BundleData {
 
         @SneakyThrows
         public void initOtherPaths(@Nullable Path pathForBundles) {
+            if (inited) {
+                throw new IllegalStateException("paths were already inited");
+            }
             if (pathForBundles==null) {
                 Path tempDir = baseDir.resolve("bundles");
                 Files.createDirectories(tempDir);
