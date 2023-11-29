@@ -116,7 +116,7 @@ public class BundleUtils {
                         String yaml = Files.readString(f);
 
                         System.out.println("\t\tprocess path " + f);
-                        Path file = cfg.workingDir.resolve(p.relativize(f));
+                        Path file = cfg.workingDir.resolve(bundleConfig.path).resolve(p.relativize(f));
                         Path tempPath = file.getParent();
                         if (Files.notExists(tempPath)) {
                             Files.createDirectories(tempPath);
