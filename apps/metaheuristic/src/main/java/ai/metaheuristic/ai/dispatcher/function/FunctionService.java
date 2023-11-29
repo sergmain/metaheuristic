@@ -20,17 +20,15 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
-import ai.metaheuristic.api.data.BundleData;
 import ai.metaheuristic.ai.dispatcher.data.FunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
-import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.BundleData;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.data.replication.ReplicationApiData;
-import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import ai.metaheuristic.commons.utils.Checksum;
@@ -49,7 +47,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -128,13 +125,6 @@ public class FunctionService {
     private final FunctionRepository functionRepository;
     private final FunctionCache functionCache;
     private final FunctionTxService functionTxService;
-    private final ApplicationEventPublisher eventPublisher;
-
-/*
-    private static final long FUNCTION_INFOS_TIMEOUT_REFRESH = TimeUnit.SECONDS.toMillis(30);
-    private List<Pair<EnumsApi.FunctionSourcing, String>> functionInfosCache = null;
-    private long mills = 0L;
-*/
 
     @Nullable
     public FunctionData.SimpleFunctionResult getFunction(String code) {
@@ -144,112 +134,6 @@ public class FunctionService {
         }
         return new FunctionData.SimpleFunctionResult(f.id, f.code, f.type, f.getParams());
     }
-
-/*
-    public static class RefreshInfoAboutFunctionsEvent {}
-
-    private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
-*/
-
-/*
-    public Map<EnumsApi.FunctionSourcing, String> toMapOfFunctionInfos() {
-        Map<EnumsApi.FunctionSourcing, List<String>> map = new HashMap<>();
-        for (Pair<EnumsApi.FunctionSourcing, String> pair : getFunctionInfos()) {
-            map.computeIfAbsent(pair.getKey(), (k)->new ArrayList<>()).add(pair.getValue());
-        }
-        Map<EnumsApi.FunctionSourcing, String> result = new HashMap<>();
-        for (Map.Entry<EnumsApi.FunctionSourcing, List<String>> e : map.entrySet()) {
-            result.put(e.getKey(), String.join(",", e.getValue()));
-        }
-        return result;
-    }
-*/
-
-/*
-    public List<Pair<EnumsApi.FunctionSourcing, String>> getFunctionInfos() {
-        final ReentrantReadWriteLock.ReadLock readLock = rwl.readLock();
-        final ReentrantReadWriteLock.WriteLock writeLock = rwl.writeLock();
-
-        readLock.lock();
-        try {
-            if (functionInfosCache != null) {
-                if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {
-                    eventPublisher.publishEvent(new RefreshInfoAboutFunctionsEvent());
-                }
-                return functionInfosCache;
-            }
-        }
-        finally {
-            readLock.unlock();
-        }
-
-        writeLock.lock();
-        try {
-            if (functionInfosCache == null) {
-                functionInfosCache = collectInfoAboutFunction();
-                mills = System.currentTimeMillis();
-            }
-        }
-        finally {
-            writeLock.unlock();
-        }
-
-        if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {
-            eventPublisher.publishEvent(new RefreshInfoAboutFunctionsEvent());
-        }
-
-        return functionInfosCache;
-    }
-*/
-
-/*
-    private final LinkedHashMap<Long, Pair<EnumsApi.FunctionSourcing, String>> sourcingInfoCache = new LinkedHashMap<>(1000) {
-        protected boolean removeEldestEntry(Map.Entry<Long, Pair<EnumsApi.FunctionSourcing, String>> entry) {
-            return this.size()>700;
-        }
-    };
-
-    public List<Pair<EnumsApi.FunctionSourcing, String>> collectInfoAboutFunction() {
-        final List<Long> allIds = functionRepository.findAllIds();
-
-        List<Pair<EnumsApi.FunctionSourcing, String>> result = new ArrayList<>(allIds.size());
-        for (Long id : allIds) {
-            Pair<EnumsApi.FunctionSourcing, String> pair = sourcingInfoCache.get(id);
-            if (pair==null) {
-                final Function f = functionRepository.findByIdNullable(id);
-                if (f!=null) {
-                    FunctionConfigYaml fcy = f.getFunctionConfigYaml();
-                    pair = Pair.of(fcy.function.sourcing, f.code);
-                    sourcingInfoCache.put(id, pair);
-                }
-            }
-            if (pair!=null) {
-                result.add(pair);
-            }
-        }
-        if (allIds.size()!=result.size()) {
-            throw new IllegalStateException("295.040 (allIds.size()!=result.size())");
-        }
-        return result;
-    }
-*/
-
-/*
-    @Async
-    @EventListener
-    public void handleRefreshInfoAboutFunctionsEvent(RefreshInfoAboutFunctionsEvent event) {
-        rwl.writeLock().lock();
-        try {
-            if (System.currentTimeMillis() - mills > FUNCTION_INFOS_TIMEOUT_REFRESH) {
-                functionInfosCache = collectInfoAboutFunction();
-                mills = System.currentTimeMillis();
-            }
-        }
-        finally {
-            rwl.writeLock().unlock();
-        }
-    }
-*/
 
     public static String produceFinalCommandLineParams(@Nullable String functionConfigParams, @Nullable String functionDefParams) {
         String s;
@@ -302,38 +186,7 @@ public class FunctionService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public void loadFunction(Path srcDir, BundleData.UploadingStatus status) {
-        try {
-            Path yamlConfigFile = srcDir.resolve(CommonConsts.MH_FUNCTION_YAML);
-            if (Files.notExists(yamlConfigFile)) {
-                String es = S.f("295.140 File '%s' wasn't found in dir %s", CommonConsts.MH_FUNCTION_YAML, srcDir.normalize());
-                status.addErrorMessage(es);
-                log.error(es);
-                return;
-            }
-
-            String yaml = Files.readString(yamlConfigFile);
-            // TODO p3 2023-10-16 after fixing validation of yaml with single element, enable this validation
-            //  test about this problem - ai.metaheuristic.commons.yaml.TestYamlSchemeValidator.testOneElement
-//            String errorString = FUNCTION_CONFIG_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(yaml);
-//            if (errorString!=null) {
-//                return List.of(new FunctionApiData.FunctionConfigStatus(false, errorString));
-//            }
-
-            FunctionConfigYaml functionConfigList = FunctionConfigYamlUtils.UTILS.to(yaml);
-            loadFunctionInternal(srcDir, status, functionConfigList);
-        }
-        catch (VariableSavingException e) {
-            status.addErrorMessage(e.getMessage());
-        }
-        catch(Throwable th) {
-            final String es = "295.200 Error " + th.getClass().getName() + " while uploading functions from bundle: " + th.getMessage();
-            log.error(es, th);
-            status.addErrorMessage(es);
-        }
-    }
-
-    private void loadFunctionInternal(Path srcDir, BundleData.UploadingStatus status, FunctionConfigYaml functionConfigYaml) throws IOException {
+    public void loadFunctionInternal(Path srcDir, BundleData.UploadingStatus status, FunctionConfigYaml functionConfigYaml) throws IOException {
         FunctionConfigYaml.FunctionConfig functionConfig = functionConfigYaml.function;
         if (functionConfigYaml.system == null) {
             final String es = S.f("295.220 Config yaml for function %s is broken, field system or system.archive is empty ", functionConfig.code);
@@ -359,20 +212,64 @@ public class FunctionService {
             log.error(validated.error);
             return;
         }
-        if (S.b(functionConfigYaml.system.archive)) {
-            final String es = S.f("295.260 Config yaml for function %s is broken, field system or system.archive is empty ", functionConfig.code);
-            status.addErrorMessage(es);
-            return;
-        }
-        String sum=null;
-        Path file = srcDir.resolve(functionConfigYaml.system.archive);
-        if (Files.notExists(file)) {
-            final String es = "295.300 Function has broken functionConfigYaml.system.archive, file not found " + file;
-            status.addErrorMessage(es);
-            log.warn(es+" Temp dir: " + srcDir.normalize());
-            return;
-        }
 
+        if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
+            if (S.b(functionConfigYaml.system.archive)) {
+                final String es = S.f("295.260 Config yaml for function %s is broken, field system or system.archive is empty ", functionConfig.code);
+                status.addErrorMessage(es);
+                return;
+            }
+            Path file = srcDir.resolve(functionConfigYaml.system.archive);
+            if (Files.notExists(file)) {
+                final String es = "295.300 Function has broken functionConfigYaml.system.archive, file not found " + file;
+                status.addErrorMessage(es);
+                log.warn(es + " Temp dir: " + srcDir.normalize());
+                return;
+            }
+
+            if (checksumFailed(status, functionConfigYaml, functionConfig, file)) {
+                return;
+            }
+            try (InputStream is = Files.newInputStream(file); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
+                functionTxService.persistFunction(functionConfigYaml, bis, Files.size(file));
+            }
+        }
+        else if (functionConfig.sourcing== EnumsApi.FunctionSourcing.git) {
+            if (notTrusted(functionConfig)) {
+                final String es = "295.310 Function " + functionConfig.code +" can't be uploaded from git repo " + (functionConfig.git!=null ? functionConfig.git.repo : "<unknown>") +" because this repo isn't trusted";
+                status.addErrorMessage(es);
+                log.warn(es);
+                return;
+            }
+            functionTxService.persistFunction(functionConfigYaml, null, 0);
+        }
+        else {
+            throw new IllegalStateException("Not supported");
+        }
+    }
+
+    private boolean notTrusted(FunctionConfigYaml.FunctionConfig functionConfig) {
+        if (globals.function.securityCheck==Enums.FunctionSecurityCheck.none) {
+            return false;
+        }
+        if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
+            return !globals.function.trusted.dispatcher;
+        }
+        if (functionConfig.sourcing==EnumsApi.FunctionSourcing.git) {
+            if (globals.function.trusted.gitRepo==null || functionConfig.git==null) {
+                return true;
+            }
+            for (String repo : globals.function.trusted.gitRepo) {
+                if (functionConfig.git.repo.startsWith(repo)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private boolean checksumFailed(BundleData.UploadingStatus status, FunctionConfigYaml functionConfigYaml, FunctionConfigYaml.FunctionConfig functionConfig, Path file) throws IOException {
+        String sum=null;
         if (globals.function.securityCheck== Enums.FunctionSecurityCheck.always ||
             (globals.function.securityCheck== Enums.FunctionSecurityCheck.skip_trusted && !globals.function.trusted.dispatcher)) {
 
@@ -383,7 +280,7 @@ public class FunctionService {
                 String es = S.f("295.320 Global isFunctionSignatureRequired==true but function %s isn't signed with HashAlgo.SHA256WithSignature", functionConfig.code);
                 status.addErrorMessage(es);
                 log.error(es);
-                return;
+                return true;
             }
             String data = functionConfigYaml.system.checksumMap.entrySet().stream()
                     .filter(o -> o.getKey() == hashAlgo)
@@ -394,14 +291,14 @@ public class FunctionService {
                 String es = S.f("295.340 Global isFunctionSignatureRequired==true but function %s has empty SHA256WithSignature value", functionConfig.code);
                 status.addErrorMessage(es);
                 log.warn(es);
-                return;
+                return true;
             }
             ChecksumAndSignatureData.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureUtils.parse(data);
             if (S.b(checksumWithSignature.checksum) || S.b(checksumWithSignature.signature)) {
                 String es = S.f("295.360 Global isFunctionSignatureRequired==true but function %s has empty checksum or signature", functionConfig.code);
                 status.addErrorMessage(es);
                 log.warn(es);
-                return;
+                return true;
             }
 
             switch(functionConfig.sourcing) {
@@ -419,7 +316,7 @@ public class FunctionService {
                 String es = S.f("295.380 Function %s has wrong checksum", functionConfig.code);
                 status.addErrorMessage(es);
                 log.warn(es);
-                return;
+                return true;
             }
             final PublicKey publicKey = globals.getPublicKey(Consts.DEFAULT_PUBLIC_KEY_CODE);
 
@@ -433,15 +330,11 @@ public class FunctionService {
                     String es = S.f("295.400 Function %s has wrong signature", functionConfig.code);
                     status.addErrorMessage(es);
                     log.warn(es);
-                    return;
+                    return true;
                 }
             }
         }
-
-        FunctionConfigYaml scy = functionConfigYaml;
-        try (InputStream is = Files.newInputStream(file); BufferedInputStream bis = new BufferedInputStream(is, 0x8000)) {
-            functionTxService.persistFunction(scy, bis, Files.size(file));
-        }
+        return false;
     }
 
     public void deleteResourceDirForFunction(String functionCode) throws IOException {

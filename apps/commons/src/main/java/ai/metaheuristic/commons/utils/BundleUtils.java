@@ -97,7 +97,7 @@ public class BundleUtils {
             if (bundleConfig.type!=type) {
                 continue;
             }
-            Path p = cfg.baseDir.resolve(bundleConfig.path);
+            Path p = cfg.currDir.resolve(bundleConfig.path);
             if (Files.notExists(p) || !Files.isDirectory(p)) {
                 throw new BundleProcessingException(S.f("Path %s is broken", p.toAbsolutePath()));
             }

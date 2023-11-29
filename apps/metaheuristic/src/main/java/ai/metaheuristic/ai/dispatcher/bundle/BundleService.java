@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
+import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.auth.AuthService;
 import ai.metaheuristic.api.EnumsApi;
@@ -38,8 +39,13 @@ import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYaml;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYamlUtils;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
+import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.file.PathUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.NameFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -74,6 +80,10 @@ import static ai.metaheuristic.ai.Consts.YML_EXT;
 public class BundleService {
 
     private final Globals globals;
+    private final FunctionService functionService;
+    private final SourceCodeService sourceCodeService;
+    private final ApiService apiService;
+    private final AuthService authService;
 
     private static final Pattern ZIP_CHARS_PATTERN = Pattern.compile("^[/\\\\A-Za-z0-9._-]*$");
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_FUNCTION = BundleService::isZipEntityNameOk;
@@ -82,84 +92,90 @@ public class BundleService {
     public BundleData.UploadingStatus uploadFromGit(GitInfo gitInfo, DispatcherContext context) {
 //        -b function-only-bundle-cfg.yaml --git-repo https://github.com/sergmain/metaheuristic-assets.git --git-branch master --git-commit HEAD --git-path common-bundle
 
+        int j=11;
+
         try {
             BundleData.Cfg cfg = new BundleData.Cfg(null, globals.dispatcherGitRepoPath, gitInfo);
             BundleUtils.initRepo(cfg);
             Path tempBundleDir = DirUtils.createMhTempPath("bundle-");
             if (tempBundleDir==null) {
-                return new BundleData.UploadingStatus("971.010 Can't create temporary dir");
+                return new BundleData.UploadingStatus("971.020 Can't create temporary dir");
             }
-            cfg.initOtherPaths(tempBundleDir);
+            Path uploadPath = tempBundleDir.resolve("upload");
+            Files.createDirectories(uploadPath);
+            cfg.initOtherPaths(uploadPath);
 
             BundleCfgYaml bundleCfgYaml = BundleUtils.readBundleCfgYaml(cfg, CommonConsts.MH_BUNDLE_YAML);
             Path bundleZipFile = BundleUtils.createBundle(cfg, bundleCfgYaml);
 
-            BundleLocation bundleLocation = new BundleLocation(tempBundleDir, bundleZipFile);
-            return processBundle(bundleLocation, context);
+            BundleData.BundleLocation bundleLocation = new BundleData.BundleLocation(uploadPath, bundleZipFile);
+            Path processingPath = tempBundleDir.resolve("processing");
+            Files.createDirectories(processingPath);
+
+            return processBundle(processingPath, bundleLocation, context);
 
         } catch (BundleProcessingException e) {
-            return new BundleData.UploadingStatus("971.015 Error while processing git repo "+ gitInfo.repo+", error: " + e.message);
+            return new BundleData.UploadingStatus("971.040 Error while processing git repo "+ gitInfo.repo+", error: " + e.message);
         } catch (Throwable e) {
-            return new BundleData.UploadingStatus("971.020 Error while processing git repo "+ gitInfo.repo+", error: " + e.getMessage());
+            return new BundleData.UploadingStatus("971.060 Error while processing git repo "+ gitInfo.repo+", error: " + e.getMessage());
         }
     }
 
-    private record BundleLocation(Path dir, Path bundleZipFile) {}
-
-    private final FunctionService functionService;
-    private final SourceCodeService sourceCodeService;
-    private final ApiService apiService;
-    private final AuthService authService;
-
     public BundleData.UploadingStatus uploadFromFile(final MultipartFile file, final DispatcherContext dispatcherContext) {
         if (Consts.ID_1.equals(dispatcherContext.getCompanyId())) {
-            return new BundleData.UploadingStatus("971.030 Batch can't be created in company #1");
+            return new BundleData.UploadingStatus("971.080 Batch can't be created in company #1");
         }
         if (file.getSize()==0) {
-            return new BundleData.UploadingStatus("971.035 Can't upload bundle because uploaded file has a zero length");
+            return new BundleData.UploadingStatus("971.100 Can't upload bundle because uploaded file has a zero length");
         }
 
-        log.info("971.055 Staring of uploadFromFile(), file: {}, size: {}", file.getOriginalFilename(), file.getSize());
+        log.info("971.120 Staring of uploadFromFile(), file: {}, size: {}", file.getOriginalFilename(), file.getSize());
 
-        BundleLocation bundleLocation;
+        BundleData.BundleLocation bundleLocation;
         try {
             // TODO 2021.03.13 add a support of
             //  CleanerInfo resource = new CleanerInfo();
             Path tempDir = DirUtils.createMhTempPath("uploaded-bundle-");
             if (tempDir==null) {
-                return new BundleData.UploadingStatus( "971.090 Can't create a temporary dir");
+                return new BundleData.UploadingStatus( "971.140 Can't create a temporary dir");
             }
-            Path tempFile = tempDir.resolve("zip.zip");
+            Path uploadPath = tempDir.resolve("upload");
+            Files.createDirectories(uploadPath);
+
+            Path tempFile = uploadPath.resolve("zip.zip");
             file.transferTo(tempFile);
             if (file.getSize()!=Files.size(tempFile)) {
-                return new BundleData.UploadingStatus( "971.125 System error while preparing data. The sizes of files are different");
+                return new BundleData.UploadingStatus( "971.160 System error while preparing data. The sizes of files are different");
             }
             List<String> errors = ZipUtils.validate(tempFile, VALIDATE_ZIP_ENTRY_SIZE_FUNCTION);
             if (!errors.isEmpty()) {
-                errors.add(0, "971.144 Batch can't be created because of following errors:");
+                errors.add(0, "971.180 Batch can't be created because of following errors:");
                 return new BundleData.UploadingStatus( errors);
             }
-            bundleLocation = new BundleLocation(tempDir, tempFile);
-        } catch (IOException e) {
-            return new BundleData.UploadingStatus("971.140 Can't create a new temp zip file");
-        }
+            bundleLocation = new BundleData.BundleLocation(uploadPath, tempFile);
+            Path processingPath = tempDir.resolve("processing");
+            Files.createDirectories(processingPath);
 
-        return processBundle(bundleLocation, dispatcherContext);
+            return processBundle(processingPath, bundleLocation, dispatcherContext);
+        }
+        catch (IOException e) {
+            return new BundleData.UploadingStatus("971.200 Can't create a new temp zip file");
+        }
     }
 
     @NonNull
-    private BundleData.UploadingStatus processBundle(BundleLocation bundleLocation, DispatcherContext dispatcherContext) {
+    private BundleData.UploadingStatus processBundle(Path processingPath, BundleData.BundleLocation bundleLocation, DispatcherContext dispatcherContext) {
         try {
-            BundleData.UploadingStatus status = processBundleInternal(bundleLocation, dispatcherContext);
+            BundleData.UploadingStatus status = processBundleInternal(processingPath, bundleLocation, dispatcherContext);
             return status;
         }
         catch (ExecContextTooManyInstancesException e) {
-            String es = S.f("971.255 Too many instances of SourceCode '%s', max allowed: %d, current count: %d", e.sourceCodeUid, e.max, e.curr);
+            String es = S.f("971.220 Too many instances of SourceCode '%s', max allowed: %d, current count: %d", e.sourceCodeUid, e.max, e.curr);
             log.warn(es);
             return new BundleData.UploadingStatus(es);
         }
         catch (Throwable th) {
-            String es = "971.260 can't load bundle file, error: " + th.getMessage() + ", class: " + th.getClass();
+            String es = "971.240 can't load bundle file, error: " + th.getMessage() + ", class: " + th.getClass();
             log.error(es, th);
             return new BundleData.UploadingStatus(es);
         }
@@ -168,24 +184,22 @@ public class BundleService {
         }
     }
 
-    private BundleData.UploadingStatus processBundleInternal(BundleLocation bundleLocation, DispatcherContext dispatcherContext) throws IOException {
-        Path data = bundleLocation.dir.resolve("data");
-        Files.createDirectories(data);
-        ZipUtils.unzipFolder(bundleLocation.bundleZipFile, data);
+    private BundleData.UploadingStatus processBundleInternal(Path processingPath, BundleData.BundleLocation bundleLocation, DispatcherContext dispatcherContext) throws IOException {
+        ZipUtils.unzipFolder(bundleLocation.bundleZipFile, processingPath);
 
-        Path bundleCfg = data.resolve(CommonConsts.MH_BUNDLE_YAML);
+        Path bundleCfg = processingPath.resolve(CommonConsts.MH_BUNDLE_YAML);
         if (Files.notExists(bundleCfg)) {
-            throw new ai.metaheuristic.ai.exceptions.BundleProcessingException(S.f("File %s wasn't found in bundle archive", CommonConsts.MH_BUNDLE_YAML));
+            throw new BundleProcessingException(S.f("971.260 File %s wasn't found in bundle archive", CommonConsts.MH_BUNDLE_YAML));
         }
 
         String yaml = Files.readString(bundleCfg);
         BundleCfgYaml bundleCfgYaml = BundleCfgYamlUtils.UTILS.to(yaml);
         BundleData.UploadingStatus status = new BundleData.UploadingStatus();
 
-        processFunctions(bundleCfgYaml, data, status);
-        processCommonType(EnumsApi.BundleItemType.sourceCode, bundleCfgYaml, data, status, dispatcherContext, this::storeSourceCode);
-        processCommonType(EnumsApi.BundleItemType.api, bundleCfgYaml, data, status, dispatcherContext, apiService::createApi);
-        processCommonType(EnumsApi.BundleItemType.auth, bundleCfgYaml, data, status, dispatcherContext, authService::createAuth);
+        processFunctions(bundleCfgYaml, processingPath, status);
+        processCommonType(EnumsApi.BundleItemType.sourceCode, bundleCfgYaml, processingPath, status, dispatcherContext, this::storeSourceCode);
+        processCommonType(EnumsApi.BundleItemType.api, bundleCfgYaml, processingPath, status, dispatcherContext, apiService::createApi);
+        processCommonType(EnumsApi.BundleItemType.auth, bundleCfgYaml, processingPath, status, dispatcherContext, authService::createAuth);
 
         return status;
     }
@@ -199,7 +213,7 @@ public class BundleService {
             }
             Path p = data.resolve(bundleConfig.path);
             if (Files.notExists(p)) {
-                log.error("invalid record in bundle-cfg.yaml, path {} doesn't exist", bundleConfig.path);
+                log.error("971.300 invalid record in bundle-cfg.yaml, path {} doesn't exist", bundleConfig.path);
                 continue;
             }
 
@@ -225,23 +239,50 @@ public class BundleService {
         return sourceCodeService.createSourceCode(yaml, dispatcherContext.getCompanyId());
     }
 
-    private void processFunctions(BundleCfgYaml bundleCfgYaml, Path data, BundleData.UploadingStatus status) {
+    private void processFunctions(BundleCfgYaml bundleCfgYaml, Path data, BundleData.UploadingStatus status) throws IOException {
         for (BundleCfgYaml.BundleConfig bundleConfig : bundleCfgYaml.bundleConfig) {
-            if (bundleConfig.type!= EnumsApi.BundleItemType.function) {
+            if (bundleConfig.type!=EnumsApi.BundleItemType.function) {
                 continue;
             }
-            Path f = data.resolve(bundleConfig.path);
-            if (Files.notExists(f)) {
-                log.error("invalid record in bundle-cfg.yaml, path {} doesn't exist", bundleConfig.path);
+            Path p = data.resolve(bundleConfig.path);
+            if (Files.notExists(p)) {
+                log.error("971.320 invalid record in bundle-cfg.yaml, path {} doesn't exist", bundleConfig.path);
                 continue;
             }
-            functionService.loadFunction(f, status);
+            final IOFileFilter filter = new NameFileFilter(CommonConsts.MH_FUNCTION_YAML);
+            PathUtils.walk(p, filter, Integer.MAX_VALUE, false, FileVisitOption.FOLLOW_LINKS)
+                .forEach(f-> { loadFunction(f, status); });
+        }
+    }
+
+    private void loadFunction(Path yamlConfigFile, BundleData.UploadingStatus status) {
+        try {
+            Path srcDir = yamlConfigFile.getParent();
+
+            String yaml = Files.readString(yamlConfigFile);
+            // TODO p3 2023-10-16 after fixing validation of yaml with single element, enable this validation
+            //  test about this problem - ai.metaheuristic.commons.yaml.TestYamlSchemeValidator.testOneElement
+//            String errorString = FUNCTION_CONFIG_YAML_SCHEME_VALIDATOR.validateStructureOfDispatcherYaml(yaml);
+//            if (errorString!=null) {
+//                return List.of(new FunctionApiData.FunctionConfigStatus(false, errorString));
+//            }
+
+            FunctionConfigYaml functionConfigList = FunctionConfigYamlUtils.UTILS.to(yaml);
+            functionService.loadFunctionInternal(srcDir, status, functionConfigList);
+        }
+        catch (VariableSavingException e) {
+            status.addErrorMessage(e.getMessage());
+        }
+        catch(Throwable th) {
+            final String es = "971.340 Error " + th.getClass().getName() + " while uploading functions from bundle: " + th.getMessage();
+            log.error(es, th);
+            status.addErrorMessage(es);
         }
     }
 
     private static ZipUtils.ValidationResult isZipEntityNameOk(ZipEntry zipEntry) {
         Matcher m = ZIP_CHARS_PATTERN.matcher(zipEntry.getName());
-        return m.matches() ? ZipUtils.VALIDATION_RESULT_OK : new ZipUtils.ValidationResult("971.010 Wrong name of file in zip file. Name: "+zipEntry.getName());
+        return m.matches() ? ZipUtils.VALIDATION_RESULT_OK : new ZipUtils.ValidationResult("971.360 Wrong name of file in zip file. Name: "+zipEntry.getName());
     }
 
     private static ZipUtils.ValidationResult isZipEntitySizeOk(ZipEntry zipEntry) {
@@ -249,7 +290,7 @@ public class BundleService {
             return ZipUtils.VALIDATION_RESULT_OK;
         }
         return zipEntry.getSize()>0 ? ZipUtils.VALIDATION_RESULT_OK : new ZipUtils.ValidationResult(
-                "971.013 File "+zipEntry.getName()+" has a zero length.");
+                "971.380 File "+zipEntry.getName()+" has a zero length.");
     }
 
 }

@@ -251,16 +251,15 @@ public class Globals {
     @Setter
     public static class Trusted {
         @Nullable
-        public String gitRepo = "https://github.com/sergmain/metaheuristic-assets";
+        public String[] gitRepo = new String[]{"https://github.com/sergmain/metaheuristic-assets"};
         public boolean dispatcher = true;
-
     }
 
     @Getter
     @Setter
     public static class Function {
         public Enums.FunctionSecurityCheck securityCheck = Enums.FunctionSecurityCheck.skip_trusted;
-        public Trusted trusted;
+        public final Trusted trusted = new Trusted();
     }
 
     @Getter

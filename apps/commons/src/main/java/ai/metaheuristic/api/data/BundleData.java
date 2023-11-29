@@ -23,10 +23,7 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.SneakyThrows;
+import lombok.*;
 import org.springframework.lang.Nullable;
 
 import java.nio.file.Files;
@@ -120,4 +117,10 @@ public class BundleData {
     }
 
     public record FunctionConfigAndFile(FunctionConfigYaml config, Path file) {}
+
+    @AllArgsConstructor
+    public static class BundleLocation {
+        public final Path dir;
+        public final Path bundleZipFile;
+    }
 }
