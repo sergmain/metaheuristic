@@ -16,12 +16,11 @@
 
 package ai.metaheuristic.commons.utils;
 
-import ai.metaheuristic.api.data.GitData;
-import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.AssetFile;
+import ai.metaheuristic.api.data.GitData;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.CommonConsts;
-import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +31,6 @@ import org.springframework.lang.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 
 import static ai.metaheuristic.commons.system.SystemProcessLauncher.ExecResult;
@@ -268,6 +266,12 @@ public class GtiUtils {
     public static ExecResult execRevParse(Path repoDir) {
         // git rev-parse --is-inside-work-tree
         ExecResult result = execCommonCmd(List.of("git", "-C", repoDir.toAbsolutePath().toString(), "rev-parse", "--is-inside-work-tree"),60L);
+        return result;
+    }
+
+    public static ExecResult execConfigEnableLongPaths() {
+        // git config --global core.longpaths true
+        ExecResult result = execCommonCmd(List.of("git", "config", "--global", "core.longpaths", "true"),60L);
         return result;
     }
 

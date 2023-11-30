@@ -68,6 +68,14 @@ public class TaskStateService {
     @Async
     @EventListener
     public void changeTaskStateToInitForChildrenTasksTxEvent(ChangeTaskStateToInitForChildrenTasksEvent event) {
+        try {
+            changeTaskStateToInitForChildrenTasksTxEventInternal(event);
+        } catch (Throwable th) {
+            log.error("189.060 Error", th);
+        }
+    }
+
+    private void changeTaskStateToInitForChildrenTasksTxEventInternal(ChangeTaskStateToInitForChildrenTasksEvent event) {
         TaskImpl task = taskRepository.findById(event.taskId).orElse(null);
         if (task==null) {
             return;

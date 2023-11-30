@@ -17,41 +17,42 @@
 package ai.metaheuristic.ai.processor.sourcing.git;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.commons.system.SystemProcessLauncher;
-import ai.metaheuristic.api.data.GitData;
-import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.utils.GtiUtils;
-import ai.metaheuristic.api.data.AssetFile;
-import ai.metaheuristic.api.data.FunctionApiData;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.SystemUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.Path;
+import static ai.metaheuristic.commons.utils.GtiUtils.execConfigEnableLongPaths;
 
 @Service
 @Slf4j
 @Profile("processor")
 public class GitSourcingService {
 
-    private final ProcessorEnvironment processorEnvironment;
-    private final Globals globals;
-
     public GtiUtils.GitStatusInfo gitStatusInfo;
 
-    public GitSourcingService(@Autowired ProcessorEnvironment processorEnvironment, @Autowired Globals globals) {
-        this.processorEnvironment = processorEnvironment;
-        this.globals = globals;
+//    public GitSourcingService(@Autowired ProcessorEnvironment processorEnvironment, @Autowired Globals globals) {
+//        this.processorEnvironment = processorEnvironment;
+//        this.globals = globals;
+    public GitSourcingService(@Autowired Globals globals) {
+        //    private final ProcessorEnvironment processorEnvironment;
         GtiUtils.taskConsoleOutputMaxLines = globals.processor.taskConsoleOutputMaxLines;
         Thread.startVirtualThread(this::intiGitStatus);
     }
 
     public void intiGitStatus() {
         this.gitStatusInfo = GtiUtils.getGitStatus();
+
+        if (SystemUtils.IS_OS_WINDOWS && gitStatusInfo.status==EnumsApi.GitStatus.installed) {
+            // https://stackoverflow.com/a/49080763/2672202
+            execConfigEnableLongPaths();
+        }
     }
 
+/*
     public SystemProcessLauncher.ExecResult prepareFunction(final Path resourceDir, TaskParamsYaml.FunctionConfig functionConfig) {
 
         log.info("028.050 Start preparing function dir");
@@ -73,5 +74,6 @@ public class GitSourcingService {
         }
         return new SystemProcessLauncher.ExecResult(functionDir, new FunctionApiData.SystemExecResult(functionConfig.code, true, 0, ""), true, null);
     }
+*/
 
 }

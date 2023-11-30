@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponsePar
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
-import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
@@ -31,7 +30,6 @@ import ai.metaheuristic.api.EnumsApi.FunctionState;
 import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +45,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiFunction;
 
 import static ai.metaheuristic.ai.functions.FunctionEnums.DownloadPriority.HIGH;
 import static ai.metaheuristic.ai.functions.FunctionRepositoryData.*;
@@ -65,8 +62,6 @@ import static ai.metaheuristic.api.EnumsApi.FunctionState.ready;
 public class FunctionRepositoryProcessorService {
 
     private final Globals globals;
-    private final ProcessorEnvironment processorEnvironment;
-    private final GitSourcingService gitSourcingService;
     private final ApplicationEventPublisher eventPublisher;
 
     // key - assetManagerUrl, value - Map with key - function code, value - FunctionRepositoryData.Function
@@ -137,7 +132,7 @@ public class FunctionRepositoryProcessorService {
                 return prepareWithSourcingAsDispatcher(assetManagerUrl, function, globals.processorResourcesPath);
             }
             else if (function.sourcing== EnumsApi.FunctionSourcing.git) {
-                return prepareWithSourcingAsGit(globals.processorResourcesPath, assetManagerUrl, function, gitSourcingService::prepareFunction);
+                return prepareWithSourcingAsGit(assetManagerUrl, function);
             }
             throw new IllegalStateException("100.460 Shouldn't get there");
         } catch (Throwable th) {
@@ -153,8 +148,7 @@ public class FunctionRepositoryProcessorService {
     }
 
     private static FunctionPrepareResult prepareWithSourcingAsGit(
-        Path processorResourcesPath, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig functionConfig,
-        BiFunction<Path, TaskParamsYaml.FunctionConfig, SystemProcessLauncher.ExecResult> gitSourcing ) {
+        ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig functionConfig ) {
 
         if (functionConfig.git==null) {
             throw new IllegalStateException("(functionConfig.git==null)");

@@ -15,14 +15,14 @@
  */
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.commons.CommonConsts;
-import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.ai.dispatcher.data.KbData;
 import ai.metaheuristic.ai.exceptions.GlobalConfigurationException;
 import ai.metaheuristic.ai.utils.EnvProperty;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.commons.utils.SecUtils;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;

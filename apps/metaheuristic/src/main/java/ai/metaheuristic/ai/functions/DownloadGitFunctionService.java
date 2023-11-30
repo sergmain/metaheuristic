@@ -158,14 +158,11 @@ public class DownloadGitFunctionService {
             Path baseRepoPath = baseResourcePath.resolve(GIT_REPO);
             Files.createDirectories(baseRepoPath);
 
-            Path actualRepoPath = baseRepoPath.resolve(StrUtils.asCode(gitInfo.repo));
+            BundleData.Cfg cfg = new BundleData.Cfg(null, baseRepoPath, gitInfo);
+            BundleUtils.initRepo(cfg);
 
             final AssetFile assetFile = new AssetFile();
-            // git repo will be clones in sub dir 'git-repo'
-            assetFile.file = actualRepoPath.resolve(GIT_REPO).resolve(actualFunctionFile);
-
-            BundleData.Cfg cfg = new BundleData.Cfg(null, actualRepoPath, gitInfo);
-            BundleUtils.initRepo(cfg);
+            assetFile.file = cfg.repoDir.resolve(gitInfo.path).resolve(actualFunctionFile);
 
             FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.ready, assetFile);
 
