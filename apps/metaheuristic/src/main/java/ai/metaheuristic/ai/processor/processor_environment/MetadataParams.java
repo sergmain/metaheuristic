@@ -471,9 +471,13 @@ public class MetadataParams {
         return StrUtils.asCode(commonUrl.getUrl());
     }
 
-    @SneakyThrows
     public static Path prepareBaseDir(Path processorResourcesPath, AssetManagerUrl assetManagerUrl) {
-        Path dir = processorResourcesPath.resolve(asCode(assetManagerUrl));
+        return prepareBaseDir(processorResourcesPath, asCode(assetManagerUrl));
+    }
+
+    @SneakyThrows
+    public static Path prepareBaseDir(Path processorResourcesPath, String part) {
+        Path dir = processorResourcesPath.resolve(StrUtils.asCode(part));
         if (Files.notExists(dir)) {
             //noinspection unused
             Files.createDirectories(dir);

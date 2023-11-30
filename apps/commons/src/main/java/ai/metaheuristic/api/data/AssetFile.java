@@ -22,6 +22,7 @@ import java.nio.file.Path;
 @Data
 public class AssetFile {
     public Path file;
+    // meaningful only for variables
     public long fileLength;
     public boolean isError;
     public boolean isContent;

@@ -30,7 +30,10 @@ import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.api.data.BundleData;
+import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.BundleUtils;
+import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -146,22 +149,22 @@ public class DownloadGitFunctionService {
             return;
         }
 
-        GitRepoSync.getWithSyncVoid(task.shortFunctionConfig.git.repo, ()-> initGitRepo(task, assetManagerUrl, functionCode, actualFunctionFile));
+        GitRepoSync.getWithSyncVoid(task.shortFunctionConfig.git.repo, ()-> initGitRepo(task.shortFunctionConfig.git, assetManagerUrl, functionCode, actualFunctionFile));
     }
 
-    private void initGitRepo(FunctionRepositoryData.DownloadFunctionTask task, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode, String actualFunctionFile) {
+    private void initGitRepo(GitInfo gitInfo, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode, String actualFunctionFile) {
         try {
-            Path baseFunctionDir = MetadataParams.prepareBaseDir(globals.processorResourcesPath, assetManagerUrl);
-            Path repoPath = baseFunctionDir.resolve(GIT_REPO);
-            Files.createDirectories(repoPath);
-            final AssetFile assetFile = AssetUtils.prepareFunctionAssetFile(repoPath, functionCode, actualFunctionFile);
-            if (assetFile.isError) {
-                log.error("811. 015 AssetFile error creation for function " + functionCode + " encountered");
-                FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error, assetFile);
-                return;
-            }
+            Path baseResourcePath = MetadataParams.prepareBaseDir(globals.processorResourcesPath, assetManagerUrl);
+            Path baseRepoPath = baseResourcePath.resolve(GIT_REPO);
+            Files.createDirectories(baseRepoPath);
 
-            BundleData.Cfg cfg = new BundleData.Cfg(null, repoPath, task.shortFunctionConfig.git);
+            Path actualRepoPath = baseRepoPath.resolve(StrUtils.asCode(gitInfo.repo));
+
+            final AssetFile assetFile = new AssetFile();
+            // git repo will be clones in sub dir 'git-repo'
+            assetFile.file = actualRepoPath.resolve(GIT_REPO).resolve(actualFunctionFile);
+
+            BundleData.Cfg cfg = new BundleData.Cfg(null, actualRepoPath, gitInfo);
             BundleUtils.initRepo(cfg);
 
             FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.ready, assetFile);
