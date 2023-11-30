@@ -221,7 +221,7 @@ public class TaskProcessor {
             ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
 
             for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.task.preFunctions) {
-                result = functionRepositoryProcessorService.prepareFunction(dispatcher, assetManagerUrl, preFunctionConfig);
+                result = functionRepositoryProcessorService.prepareFunction(assetManagerUrl, preFunctionConfig);
                 if (result.isError) {
                     markFunctionAsFinishedWithPermanentError(core, task.taskId, result);
                     isNotReady = true;
@@ -237,7 +237,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            result = functionRepositoryProcessorService.prepareFunction(dispatcher, assetManagerUrl, taskParamYaml.task.getFunction());
+            result = functionRepositoryProcessorService.prepareFunction(assetManagerUrl, taskParamYaml.task.getFunction());
             if (result.isError) {
                 markFunctionAsFinishedWithPermanentError(core, task.taskId, result);
                 continue;
@@ -248,7 +248,7 @@ public class TaskProcessor {
             }
 
             for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.task.postFunctions) {
-                result = functionRepositoryProcessorService.prepareFunction(dispatcher, assetManagerUrl, postFunctionConfig);
+                result = functionRepositoryProcessorService.prepareFunction(assetManagerUrl, postFunctionConfig);
                 if (result.isError) {
                     markFunctionAsFinishedWithPermanentError(core, task.taskId, result);
                     isNotReady = true;

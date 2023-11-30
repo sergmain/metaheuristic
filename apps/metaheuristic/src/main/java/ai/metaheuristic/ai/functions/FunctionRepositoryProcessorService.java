@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.functions;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParams;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParams;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
@@ -25,13 +24,14 @@ import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.utils.CollectionUtils;
-import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.EnumsApi.FunctionState;
+import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.commons.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -44,13 +44,14 @@ import org.springframework.stereotype.Service;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 
 import static ai.metaheuristic.ai.functions.FunctionEnums.DownloadPriority.HIGH;
 import static ai.metaheuristic.ai.functions.FunctionRepositoryData.*;
-import static ai.metaheuristic.api.EnumsApi.FunctionState.*;
+import static ai.metaheuristic.api.EnumsApi.FunctionState.ready;
 
 /**
  * @author Sergio Lissner
@@ -67,7 +68,6 @@ public class FunctionRepositoryProcessorService {
     private final ProcessorEnvironment processorEnvironment;
     private final GitSourcingService gitSourcingService;
     private final ApplicationEventPublisher eventPublisher;
-
 
     // key - assetManagerUrl, value - Map with key - function code, value - FunctionRepositoryData.Function
     private static final ConcurrentHashMap<ProcessorAndCoreData.AssetManagerUrl, ConcurrentHashMap<String, DownloadStatus>> functions = new ConcurrentHashMap<>();
@@ -112,11 +112,11 @@ public class FunctionRepositoryProcessorService {
     }
 
     @Nullable
-    public static DownloadStatus setFunctionState(final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode, FunctionState functionState) {
+    public static DownloadStatus setFunctionState(final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode, FunctionState functionState, @Nullable AssetFile assetFile) {
         if (S.b(functionCode)) {
             throw new IllegalStateException("816.240 functionCode is null");
         }
-        final DownloadStatus status = new DownloadStatus(functionState, functionCode, assetManagerUrl, EnumsApi.FunctionSourcing.dispatcher);
+        final DownloadStatus status = new DownloadStatus(functionState, functionCode, assetManagerUrl, EnumsApi.FunctionSourcing.dispatcher, assetFile);
         functions.computeIfAbsent(assetManagerUrl, (o)->new ConcurrentHashMap<>()).put(functionCode, status);
         return status;
     }
@@ -131,14 +131,13 @@ public class FunctionRepositoryProcessorService {
         }
     }
 
-    public FunctionPrepareResult prepareFunction(DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig function) {
+    public FunctionPrepareResult prepareFunction(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig function) {
         try {
-            final MetadataParams metadataParams = processorEnvironment.metadataParams;
             if (function.sourcing==EnumsApi.FunctionSourcing.dispatcher) {
-                return prepareWithSourcingAsDispatcher(assetManagerUrl, function, globals, dispatcher);
+                return prepareWithSourcingAsDispatcher(assetManagerUrl, function, globals.processorResourcesPath);
             }
             else if (function.sourcing== EnumsApi.FunctionSourcing.git) {
-                return prepareWithSourcingAsGit(globals.processorResourcesPath, assetManagerUrl, function, metadataParams, gitSourcingService::prepareFunction);
+                return prepareWithSourcingAsGit(globals.processorResourcesPath, assetManagerUrl, function, gitSourcingService::prepareFunction);
             }
             throw new IllegalStateException("100.460 Shouldn't get there");
         } catch (Throwable th) {
@@ -153,52 +152,46 @@ public class FunctionRepositoryProcessorService {
         }
     }
 
-    private static FunctionPrepareResult prepareWithSourcingAsGit(Path processorResourcesPath, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig function, MetadataParams metadataParams, BiFunction<Path, TaskParamsYaml.FunctionConfig, SystemProcessLauncher.ExecResult> gitSourcing) {
-        FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
-        functionPrepareResult.function = function;
+    private static FunctionPrepareResult prepareWithSourcingAsGit(
+        Path processorResourcesPath, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig functionConfig,
+        BiFunction<Path, TaskParamsYaml.FunctionConfig, SystemProcessLauncher.ExecResult> gitSourcing ) {
 
-        if (S.b(functionPrepareResult.function.file)) {
-            String s = S.f("100.520 Function %s has a blank file", functionPrepareResult.function.code);
-            log.warn(s);
-            functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1, s);
-            functionPrepareResult.isLoaded = false;
-            functionPrepareResult.isError = true;
-            return functionPrepareResult;
+        if (functionConfig.git==null) {
+            throw new IllegalStateException("(functionConfig.git==null)");
         }
-        final Path resourceDir = MetadataParams.prepareBaseDir(processorResourcesPath, assetManagerUrl);
-        log.info("Root dir for function: " + resourceDir);
-        SystemProcessLauncher.ExecResult result = gitSourcing.apply(resourceDir, functionPrepareResult.function);
-        if (!result.ok) {
-            log.warn("100.540 Function {} has a permanent error, {}", functionPrepareResult.function.code, result.error);
-            functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -1, result.error);
-            functionPrepareResult.isLoaded = false;
-            functionPrepareResult.isError = true;
-            return functionPrepareResult;
+
+        FunctionPrepareResult result = new FunctionPrepareResult(functionConfig);
+
+        DownloadStatus f = functions.computeIfAbsent(assetManagerUrl, (o)->new ConcurrentHashMap<>()).get(functionConfig.code);
+        if (f!=null) {
+            result.functionAssetFile = f.assetFile;
+            if (f.state==ready) {
+                log.info("Function asset file: {}, exist: {}", result.functionAssetFile.file.toAbsolutePath(), Files.exists(result.functionAssetFile.file));
+                return result;
+            }
+            else if (f.state.failed) {
+                final String es = S.f("816.030 function %s is active but failed to be downloaded. assetManagerUrl: %s", functionConfig.code, assetManagerUrl.url);
+                log.warn(es);
+                result.systemExecResult = new FunctionApiData.SystemExecResult(functionConfig.code, false, -1, es);
+                result.isLoaded = false;
+                result.isError = true;
+                return result;
+            }
         }
-        if (result.functionDir==null) {
-            functionPrepareResult.systemExecResult = new FunctionApiData.SystemExecResult(function.code, false, -777, "result.functionDir is null");
-            functionPrepareResult.isLoaded = false;
-            functionPrepareResult.isError = true;
-            return functionPrepareResult;
-        }
-        functionPrepareResult.functionAssetFile = new AssetFile();
-        functionPrepareResult.functionAssetFile.file = result.functionDir.resolve(Objects.requireNonNull(functionPrepareResult.function.file));
-        log.info("Function asset file: {}, exist: {}", functionPrepareResult.functionAssetFile.file.toAbsolutePath(), Files.exists(functionPrepareResult.functionAssetFile.file));
-        return functionPrepareResult;
+        result.isLoaded = false;
+        return result;
     }
 
     private static FunctionPrepareResult prepareWithSourcingAsDispatcher(
-        ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig function, Globals Globals,
-        DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher) {
+        ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig function, Path processorResourcesPath) {
 
-        FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
-        functionPrepareResult.function = function;
+        FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult(function);
 
-        final Path baseResourceDir = MetadataParams.prepareBaseDir(Globals.processorResourcesPath, assetManagerUrl);
+        final Path baseResourceDir = MetadataParams.prepareBaseDir(processorResourcesPath, assetManagerUrl);
         final String actualFunctionFile = AssetUtils.getActualFunctionFile(functionPrepareResult.function);
         if (actualFunctionFile==null) {
             log.error("100.320 actualFunctionFile is null");
-            setFunctionState(assetManagerUrl, functionPrepareResult.function.getCode(), EnumsApi.FunctionState.asset_error);
+            setFunctionState(assetManagerUrl, functionPrepareResult.function.getCode(), EnumsApi.FunctionState.asset_error, null);
             return new FunctionPrepareResult(function, null, new FunctionApiData.SystemExecResult(function.code, false, -995, "" ), false, true);
         }
         functionPrepareResult.functionAssetFile = AssetUtils.prepareFunctionAssetFile(baseResourceDir, functionPrepareResult.function.getCode(), actualFunctionFile);

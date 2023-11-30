@@ -70,6 +70,10 @@ public class FunctionRepositoryData {
         public FunctionApiData.SystemExecResult systemExecResult;
         public boolean isLoaded = true;
         public boolean isError = false;
+
+        public FunctionPrepareResult(TaskParamsYaml.FunctionConfig function) {
+            this.function = function;
+        }
     }
 
     @Data
@@ -80,6 +84,7 @@ public class FunctionRepositoryData {
         public String code;
         public ProcessorAndCoreData.AssetManagerUrl assetManagerUrl;
         public EnumsApi.FunctionSourcing sourcing;
+        public AssetFile assetFile;
     }
 
     @Data

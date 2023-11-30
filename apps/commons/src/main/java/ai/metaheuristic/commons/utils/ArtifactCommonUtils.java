@@ -23,6 +23,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.Path;
 
+import static ai.metaheuristic.commons.CommonConsts.GIT_REPO;
+
 /**
  * @author Sergio Lissner
  * Date: 8/23/2022
@@ -95,5 +97,9 @@ public class ArtifactCommonUtils {
 
     public static Path prepareFunctionPath(Path basePath) {
         return basePath.resolve(EnumsApi.DataType.function.toString());
+    }
+
+    public static Path prepareGitRepoPath(Path basePath) {
+        return basePath.resolve(GIT_REPO);
     }
 }
