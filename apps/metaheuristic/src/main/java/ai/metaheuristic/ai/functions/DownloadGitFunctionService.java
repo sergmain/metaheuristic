@@ -122,7 +122,7 @@ public class DownloadGitFunctionService {
         final String actualFunctionFile = AssetUtils.getActualFunctionFile(status.functionConfig);
         if (actualFunctionFile==null) {
             log.error("811.010 actualFunctionFile is null");
-            FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error, assetFile);
+            FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error, null);
             return;
         }
         final AssetFile assetFile = AssetUtils.prepareFunctionAssetFile(baseFunctionDir, functionCode, actualFunctionFile);

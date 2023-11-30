@@ -277,7 +277,7 @@ public class TaskAssetPreparer {
             if (functionState== EnumsApi.FunctionState.function_config_error || functionState== EnumsApi.FunctionState.download_error) {
                 log.error("951.360 The function {} has a state as {}, start re-downloading", functionConfig.code, functionState);
 
-                FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none, assetFile);
+                FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none, null);
 
                 downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
                 return true;
