@@ -40,6 +40,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static ai.metaheuristic.ai.functions.FunctionEnums.ConfigStatus;
 import static ai.metaheuristic.ai.functions.FunctionRepositoryData.*;
@@ -64,17 +65,35 @@ public class ProcessorFunctionUtils {
             return size()>100;
         }
     };
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
     public static DownloadedFunctionConfigStatus downloadFunctionConfig(DispatcherLookupParamsYaml.AssetManager assetManager, String functionCode) {
         final AssetManagerUrlAndFunctionCode key = new AssetManagerUrlAndFunctionCode(assetManager.url, functionCode);
-        DownloadedFunctionConfigStatus status = CACHE.get(key);
-        if (status!=null && status.status!=ConfigStatus.error) {
-            return status;
+        readLock.lock();
+        try {
+            DownloadedFunctionConfigStatus status = CACHE.get(key);
+            if (status!=null && status.status!=ConfigStatus.error) {
+                return status;
+            }
+        } finally {
+            readLock.unlock();
         }
-        final DownloadedFunctionConfigStatus downloadedFunctionConfigStatus = downloadFunctionConfigInternal(assetManager, functionCode);
-        CACHE.put(key, downloadedFunctionConfigStatus);
 
-        return downloadedFunctionConfigStatus;
+        final DownloadedFunctionConfigStatus downloadedFunctionConfigStatus = downloadFunctionConfigInternal(assetManager, functionCode);
+
+        writeLock.lock();
+        try {
+            DownloadedFunctionConfigStatus result = CACHE.get(key);
+            if (result!=null) {
+                return result;
+            }
+            CACHE.put(key, downloadedFunctionConfigStatus);
+            return downloadedFunctionConfigStatus;
+        } finally {
+            writeLock.unlock();
+        }
     }
 
     private static DownloadedFunctionConfigStatus downloadFunctionConfigInternal(DispatcherLookupParamsYaml.AssetManager assetManager, String functionCode) {
@@ -129,58 +148,5 @@ public class ProcessorFunctionUtils {
         }
         return functionConfigStatus;
     }
-
-/*
-    public static FunctionRepositoryData.DownloadedFunctionConfigsStatus downloadFunctionConfigs(
-            String dispatcherUrl,
-            DispatcherLookupParamsYaml.AssetManager asset, String processorId) {
-
-        final String functionConfigsUrl = asset.url + Consts.REST_ASSET_URL + "/function-configs/" + processorId;
-        final String randomPartUri =  '/' + UUID.randomUUID().toString().substring(0, 8);
-
-        final FunctionRepositoryData.DownloadedFunctionConfigsStatus functionConfigStatus = new FunctionRepositoryData.DownloadedFunctionConfigsStatus();
-        functionConfigStatus.status = ConfigStatus.error;
-        try {
-            final Request request = Request.get(functionConfigsUrl + randomPartUri).connectTimeout(Timeout.ofSeconds(5)); //.socketTimeout(20000);
-
-            RestUtils.addHeaders(request);
-
-            Response response = HttpClientExecutor.getExecutor(asset.url, asset.username, asset.password).execute(request);
-            String yaml = response.returnContent().asString(StandardCharsets.UTF_8);
-
-            functionConfigStatus.functionConfigs = JsonUtils.getMapper().readValue(yaml, ReplicationApiData.FunctionConfigsReplication.class);
-            functionConfigStatus.status = ConfigStatus.ok;
-        }
-        catch (HttpResponseException e) {
-            if (e.getStatusCode()== HttpServletResponse.SC_FORBIDDEN) {
-                log.warn("813.360 Access denied to url {}", functionConfigsUrl);
-            }
-            else if (e.getStatusCode()== HttpServletResponse.SC_NOT_FOUND) {
-                functionConfigStatus.status = ConfigStatus.not_found;
-                log.warn("813.380 Url {} wasn't found. Need to check the dispatcher.yaml config file", asset.url);
-            }
-            else if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
-                functionConfigStatus.status = ConfigStatus.not_found;
-                log.warn("813.400 Functions wasn't found");
-            }
-            else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
-                log.warn("813.420 Functions are broken and need to be recreated");
-            }
-            else {
-                log.error("813.440 HttpResponseException", e);
-            }
-        }
-        catch (SocketTimeoutException e) {
-            log.error("813.460 SocketTimeoutException: {}, dispatcher: {}, assetManagerUrl: {}", e.getMessage(), dispatcherUrl, asset.url);
-        }
-        catch (IOException e) {
-            log.error(S.f("813.480 IOException, dispatcher: %s, assetManagerUrl: %s", dispatcherUrl, asset.url), e);
-        }
-        catch (Throwable th) {
-            log.error(S.f("813.500 Throwable, dispatcher: %s, assetManagerUrl: %s", dispatcherUrl, asset.url), th);
-        }
-        return functionConfigStatus;
-    }
-*/
 
 }

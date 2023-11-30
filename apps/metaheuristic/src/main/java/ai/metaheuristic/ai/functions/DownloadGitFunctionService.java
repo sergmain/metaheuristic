@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.functions;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.data.DispatcherData;
+import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.processor.DispatcherContextInfoHolder;
 import ai.metaheuristic.ai.processor.ProcessorAndCoreData;
 import ai.metaheuristic.ai.processor.actors.GetDispatcherContextInfoService;
@@ -30,7 +31,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.api.data.BundleData;
 import ai.metaheuristic.commons.utils.BundleUtils;
-import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +49,9 @@ import java.net.SocketTimeoutException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static ai.metaheuristic.commons.CommonConsts.GIT_REPO;
 
 /**
  * @author Sergio Lissner
@@ -83,6 +86,20 @@ public class DownloadGitFunctionService {
         }
     }
 
+    public static class GitRepoSync {
+        private static final CommonSync<String> commonSync = new CommonSync<>();
+
+        public static void getWithSyncVoid(final String repo, Runnable runnable) {
+            final ReentrantReadWriteLock.WriteLock lock = commonSync.getWriteLock(repo);
+            try {
+                lock.lock();
+                runnable.run();
+            } finally {
+                lock.unlock();
+            }
+        }
+    }
+
     public void downloadFunction(FunctionRepositoryData.DownloadFunctionTask task) {
         if (globals.testing) {
             return;
@@ -110,6 +127,10 @@ public class DownloadGitFunctionService {
             log.error("817.080 assetManager server wasn't found for url {}", assetManagerUrl.url);
             return;
         }
+        if (task.shortFunctionConfig.git==null) {
+            FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error, null);
+            return;
+        }
 
         final DispatcherData.DispatcherContextInfo contextInfo = getDispatcherContextInfo(assetManagerUrl);
         if (contextInfo == null) {
@@ -117,7 +138,6 @@ public class DownloadGitFunctionService {
         }
 
         FunctionRepositoryData.DownloadedFunctionConfigStatus status = ProcessorFunctionUtils.downloadFunctionConfig(assetManager, functionCode);
-        Path baseFunctionDir = MetadataParams.prepareBaseDir(globals.processorResourcesPath, assetManagerUrl);
 
         final String actualFunctionFile = AssetUtils.getActualFunctionFile(status.functionConfig);
         if (actualFunctionFile==null) {
@@ -125,29 +145,29 @@ public class DownloadGitFunctionService {
             FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error, null);
             return;
         }
-        final AssetFile assetFile = AssetUtils.prepareFunctionAssetFile(baseFunctionDir, functionCode, actualFunctionFile);
-        if (assetFile.isError) {
-            log.error("811. 015 AssetFile error creation for function " + functionCode + " encountered");
-            return;
-        }
 
-        Path parentDir = DirUtils.getParent(assetFile.file, Path.of(actualFunctionFile));
-        if (parentDir==null) {
-            log.error("811.070 parentDir is null");
-            FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error, assetFile);
-            return;
-        }
+        GitRepoSync.getWithSyncVoid(task.shortFunctionConfig.git.repo, ()-> initGitRepo(task, assetManagerUrl, functionCode, actualFunctionFile));
+    }
 
+    private void initGitRepo(FunctionRepositoryData.DownloadFunctionTask task, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, String functionCode, String actualFunctionFile) {
         try {
-            Files.createDirectories(parentDir);
+            Path baseFunctionDir = MetadataParams.prepareBaseDir(globals.processorResourcesPath, assetManagerUrl);
+            Path repoPath = baseFunctionDir.resolve(GIT_REPO);
+            Files.createDirectories(repoPath);
+            final AssetFile assetFile = AssetUtils.prepareFunctionAssetFile(repoPath, functionCode, actualFunctionFile);
+            if (assetFile.isError) {
+                log.error("811. 015 AssetFile error creation for function " + functionCode + " encountered");
+                FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error, assetFile);
+                return;
+            }
 
-            BundleData.Cfg cfg = new BundleData.Cfg(null, parentDir, task.shortFunctionConfig.git);
+            BundleData.Cfg cfg = new BundleData.Cfg(null, repoPath, task.shortFunctionConfig.git);
             BundleUtils.initRepo(cfg);
 
             FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.ready, assetFile);
 
-
             int i=0;
+            return;
         } catch (HttpResponseException e) {
             logError(functionCode, e);
         } catch (SocketTimeoutException e) {
@@ -159,6 +179,7 @@ public class DownloadGitFunctionService {
         } catch (Throwable th) {
             log.error("817.580 Throwable", th);
         }
+        FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.io_error, null);
     }
 
     @Nullable
