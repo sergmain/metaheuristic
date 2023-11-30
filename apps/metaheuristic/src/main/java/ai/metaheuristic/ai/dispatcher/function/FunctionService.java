@@ -29,6 +29,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData;
 import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.data.replication.ReplicationApiData;
+import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import ai.metaheuristic.commons.utils.Checksum;
@@ -70,6 +71,7 @@ import java.util.stream.Collectors;
 import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Element;
 import static ai.metaheuristic.commons.yaml.YamlSchemeValidator.Scheme;
 
+@SuppressWarnings("BooleanMethodIsAlwaysInverted")
 @Service
 @Slf4j
 @Profile("dispatcher")
@@ -235,7 +237,7 @@ public class FunctionService {
             }
         }
         else if (functionConfig.sourcing== EnumsApi.FunctionSourcing.git) {
-            if (notTrusted(functionConfig)) {
+            if (!trusted(functionConfig.sourcing, functionConfig.git)) {
                 final String es = "295.310 Function " + functionConfig.code +" can't be uploaded from git repo " + (functionConfig.git!=null ? functionConfig.git.repo : "<unknown>") +" because this repo isn't trusted";
                 status.addErrorMessage(es);
                 log.warn(es);
@@ -248,24 +250,24 @@ public class FunctionService {
         }
     }
 
-    private boolean notTrusted(FunctionConfigYaml.FunctionConfig functionConfig) {
+    public boolean trusted(EnumsApi.FunctionSourcing sourcing, @Nullable GitInfo git) {
         if (globals.function.securityCheck==Enums.FunctionSecurityCheck.none) {
-            return false;
+            return true;
         }
-        if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-            return !globals.function.trusted.dispatcher;
+        if (sourcing== EnumsApi.FunctionSourcing.dispatcher) {
+            return globals.function.trusted.dispatcher;
         }
-        if (functionConfig.sourcing==EnumsApi.FunctionSourcing.git) {
-            if (globals.function.trusted.gitRepo==null || functionConfig.git==null) {
-                return true;
+        if (sourcing==EnumsApi.FunctionSourcing.git) {
+            if (globals.function.trusted.gitRepo==null || git==null) {
+                return false;
             }
             for (String repo : globals.function.trusted.gitRepo) {
-                if (functionConfig.git.repo.startsWith(repo)) {
-                    return false;
+                if (git.repo.startsWith(repo)) {
+                    return true;
                 }
             }
         }
-        return true;
+        return false;
     }
 
     private boolean checksumFailed(BundleData.UploadingStatus status, FunctionConfigYaml functionConfigYaml, FunctionConfigYaml.FunctionConfig functionConfig, Path file) throws IOException {

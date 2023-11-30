@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.data.QuotasData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.events.RegisterTaskForCheckCachingEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.functions.FunctionRepositoryDispatcherService;
@@ -67,7 +68,7 @@ public class TaskProviderUnassignedTaskService {
     private final TaskRepository taskRepository;
     private final ExecContextStatusService execContextStatusService;
     private final TaskCheckCachingService taskCheckCachingTopLevelService;
-    private final FunctionRepositoryDispatcherService functionRepositoryDispatcherService;
+    private final FunctionService functionService;
 
     /**
      * this Map contains an AtomicLong which contains millisecond value which is specify how long to not use concrete processor
@@ -220,10 +221,13 @@ public class TaskProviderUnassignedTaskService {
                 }
 
                 if (isAcceptOnlySigned) {
-                    if (queuedTask.taskParamYaml.task.function.checksumMap == null || queuedTask.taskParamYaml.task.function.checksumMap.keySet().stream().noneMatch(o -> o.isSigned)) {
-                        log.warn("317.120 Function with code {} wasn't signed", queuedTask.taskParamYaml.task.function.getCode());
-                        searching.rejected.put(queuedTask.taskId, accept_only_signed);
-                        continue;
+                    boolean trusted = functionService.trusted(queuedTask.taskParamYaml.task.function.sourcing, queuedTask.taskParamYaml.task.function.git);
+                    if (!trusted) {
+                        if (queuedTask.taskParamYaml.task.function.checksumMap == null || queuedTask.taskParamYaml.task.function.checksumMap.keySet().stream().noneMatch(o -> o.isSigned)) {
+                            log.warn("317.120 Function with code {} wasn't signed", queuedTask.taskParamYaml.task.function.getCode());
+                            searching.rejected.put(queuedTask.taskId, accept_only_signed);
+                            continue;
+                        }
                     }
                 }
                 if (notAllFunctionsReady(processorAndCoreParams, queuedTask.taskParamYaml)) {
