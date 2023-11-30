@@ -31,9 +31,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.api.data.BundleData;
 import ai.metaheuristic.api.sourcing.GitInfo;
-import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.BundleUtils;
-import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -70,10 +68,9 @@ public class DownloadGitFunctionService {
     private final Globals globals;
     private final ProcessorEnvironment processorEnvironment;
     private final GetDispatcherContextInfoService getDispatcherContextInfoService;
-    private final FunctionRepositoryProcessorService functionRepositoryProcessorService;
 
     private final MultiTenantedQueue<FunctionEnums.DownloadPriority, FunctionRepositoryData.DownloadFunctionTask> downloadFunctionQueue =
-        new MultiTenantedQueue<>(100, Duration.ZERO, true, "git-clone-", this::downloadFunction);
+        new MultiTenantedQueue<>(100, Duration.ZERO, true, "git-clone-", this::getGitRepo);
 
     public void addTask(FunctionRepositoryData.DownloadFunctionTask task) {
         downloadFunctionQueue.putToQueue(task);
@@ -103,7 +100,7 @@ public class DownloadGitFunctionService {
         }
     }
 
-    public void downloadFunction(FunctionRepositoryData.DownloadFunctionTask task) {
+    public void getGitRepo(FunctionRepositoryData.DownloadFunctionTask task) {
         if (globals.testing) {
             return;
         }

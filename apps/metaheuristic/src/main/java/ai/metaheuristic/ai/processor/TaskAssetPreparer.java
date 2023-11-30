@@ -111,7 +111,9 @@ public class TaskAssetPreparer {
                 if (EnumsApi.ExecContextState.DOESNT_EXIST == currentExecState.getState(dispatcherUrl, task.execContextId)) {
                     processorTaskService.delete(core, task.taskId);
                     log.info("951.030 orphan task was deleted, taskId: #{}, url: {}, execContextId: {}", task.taskId, task.dispatcherUrl, task.execContextId);
-                    log.info("951.060  registered execContexts: {}", currentExecState.getExecContextsNormalized(dispatcherUrl));
+                    if (log.isDebugEnabled()) {
+                        log.debug("951.060  registered execContexts: {}", currentExecState.getExecContextsNormalized(dispatcherUrl));
+                    }
                 }
                 // mark as Reported and Delivered for all finished ExecContexts
                 if ((!task.isReported() || !task.isDelivered()) && currentExecState.finished(core.dispatcherUrl, task.execContextId)) {

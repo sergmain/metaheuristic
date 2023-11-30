@@ -218,6 +218,12 @@ public class DispatcherParamsService {
         return dispatcherParamsYaml ==null ? List.of() : new ArrayList<>(dispatcherParamsYaml.experiments);
     }
 
+    @Nullable
+    public DispatcherParamsYaml.LongRunningExecContext getLongRunningExecContext(Long execContextId) {
+        find();
+        return dispatcherParamsYaml==null ? null : dispatcherParamsYaml.longRunnings.stream().filter(o->o.execContextId.equals(execContextId)).findFirst().orElse(null);
+    }
+
     public List<DispatcherParamsYaml.LongRunningExecContext> getLongRunningExecContexts() {
         find();
         return dispatcherParamsYaml ==null ? List.of() : dispatcherParamsYaml.longRunnings.stream()

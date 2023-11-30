@@ -43,7 +43,7 @@ public class ExecSourceCodeTopLevelService {
     private final TaskWithInternalContextTopLevelService taskWithInternalContextTopLevelService;
 
     public void finishLongRunningTask(DispatcherParamsYaml.LongRunningExecContext longRunningExecContext, EnumsApi.ExecContextState state) {
-        TaskSyncService.getWithSyncNullable(longRunningExecContext.taskId,
+        TaskSyncService.getWithSyncVoid(longRunningExecContext.taskId,
                 () -> {
                     switch (state) {
                         case ERROR:
@@ -64,7 +64,6 @@ public class ExecSourceCodeTopLevelService {
                         default:
                             throw new IllegalStateException("#035.100 must be FINISHED or ERROR only, actual: " + state);
                     }
-                    return null;
                 });
     }
 }
