@@ -52,4 +52,10 @@ public class ProcessorData {
         public final String dispatcherCode;
         public final Long processorId;
     }
+
+    @Data
+    public static class ResultOfChecking {
+        public boolean isAllLoaded = true;
+        public boolean isError = false;
+    }
 }

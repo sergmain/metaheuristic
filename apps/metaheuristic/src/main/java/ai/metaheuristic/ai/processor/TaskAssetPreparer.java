@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.functions.DownloadFunctionService;
 import ai.metaheuristic.ai.functions.FunctionRepositoryData;
 import ai.metaheuristic.ai.functions.FunctionRepositoryProcessorService;
-import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParams;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.event.AssetPreparingForProcessorTaskEvent;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
@@ -50,6 +49,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.functions.FunctionEnums.DownloadPriority.NORMAL;
+import static ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParams.*;
 
 @Service
 @Slf4j
@@ -176,7 +176,7 @@ public class TaskAssetPreparer {
 
         // Start preparing data for function
         Path taskDir = processorTaskService.prepareTaskDir(core, task.taskId);
-        ProcessorService.ResultOfChecking resultOfChecking = processorService.checkForPreparingVariables(core, task, processorState, taskParamYaml, dispatcher, taskDir);
+        ProcessorData.ResultOfChecking resultOfChecking = processorService.checkForPreparingVariables(core, task, processorState, taskParamYaml, dispatcher, taskDir);
         if (resultOfChecking.isError) {
             return null;
         }
@@ -211,47 +211,86 @@ public class TaskAssetPreparer {
             ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core,
             TaskParamsYaml.FunctionConfig functionConfig, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, Long taskId) {
 
-        FunctionRepositoryResponseParams.ShortFunctionConfig shortFunctionConfig =
-            new FunctionRepositoryResponseParams.ShortFunctionConfig(functionConfig.code, functionConfig.sourcing, functionConfig.git);
+        ShortFunctionConfig shortFunctionConfig =
+            new ShortFunctionConfig(functionConfig.code, functionConfig.sourcing, functionConfig.git);
 
         if (functionConfig.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-            final FunctionRepositoryData.DownloadStatus functionDownloadStatuses = FunctionRepositoryProcessorService.getFunctionDownloadStatus(assetManagerUrl, functionConfig.code);
-            if (functionDownloadStatuses==null) {
-                return false;
-            }
-            final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
-                    processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
-
-            final EnumsApi.FunctionState functionState = functionDownloadStatuses.state;
-            if (functionState == EnumsApi.FunctionState.none) {
-                downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
-                return false;
-            }
-            else {
-                if (functionState== EnumsApi.FunctionState.function_config_error || functionState== EnumsApi.FunctionState.download_error) {
-                    log.error("951.360 The function {} has a state as {}, start re-downloading", functionConfig.code, functionState);
-
-                    functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none);
-
-                    downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
-                    return true;
-                }
-                else if (functionState== EnumsApi.FunctionState.dispatcher_config_error) {
-                    processorTaskService.markAsFinishedWithError(core,
-                            taskId,
-                            S.f("951.390 Task #%d can't be processed because dispatcher at %s was mis-configured and function %s can't downloaded",
-                                    taskId, core.dispatcherUrl.url, functionConfig.code));
-                }
-                if (functionState!= EnumsApi.FunctionState.ready) {
-                    log.warn("951.420 Function {} has broken state as {}", functionConfig.code, functionState);
-                }
-                return functionState == EnumsApi.FunctionState.ready;
-            }
+            return checkFunctionPreparednessWithDispatcher(core, functionConfig, assetManagerUrl, taskId, shortFunctionConfig);
         }
         else if (functionConfig.sourcing== EnumsApi.FunctionSourcing.git) {
-            throw new IllegalStateException("Not implemented yet");
+            return checkFunctionPreparednessWithGit(core, functionConfig, assetManagerUrl, taskId, shortFunctionConfig);
         }
         return true;
+    }
+
+    private boolean checkFunctionPreparednessWithGit(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, TaskParamsYaml.FunctionConfig functionConfig, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, Long taskId, ShortFunctionConfig shortFunctionConfig) {
+        final FunctionRepositoryData.DownloadStatus functionDownloadStatuses = FunctionRepositoryProcessorService.getFunctionDownloadStatus(assetManagerUrl, functionConfig.code);
+        if (functionDownloadStatuses==null) {
+            return false;
+        }
+        final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
+                processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
+
+        final EnumsApi.FunctionState functionState = functionDownloadStatuses.state;
+        if (functionState == EnumsApi.FunctionState.none) {
+            downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
+            return false;
+        }
+        else {
+            if (functionState== EnumsApi.FunctionState.function_config_error || functionState== EnumsApi.FunctionState.download_error) {
+                log.error("951.360 The function {} has a state as {}, start re-downloading", functionConfig.code, functionState);
+
+                FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none);
+
+                downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
+                return true;
+            }
+            else if (functionState== EnumsApi.FunctionState.dispatcher_config_error) {
+                processorTaskService.markAsFinishedWithError(core,
+                    taskId,
+                        S.f("951.390 Task #%d can't be processed because dispatcher at %s was mis-configured and function %s can't downloaded",
+                            taskId, core.dispatcherUrl.url, functionConfig.code));
+            }
+            if (functionState!= EnumsApi.FunctionState.ready) {
+                log.warn("951.420 Function {} has broken state as {}", functionConfig.code, functionState);
+            }
+            return functionState == EnumsApi.FunctionState.ready;
+        }
+    }
+
+    private boolean checkFunctionPreparednessWithDispatcher(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, TaskParamsYaml.FunctionConfig functionConfig, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, Long taskId, ShortFunctionConfig shortFunctionConfig) {
+        final FunctionRepositoryData.DownloadStatus functionDownloadStatuses = FunctionRepositoryProcessorService.getFunctionDownloadStatus(assetManagerUrl, functionConfig.code);
+        if (functionDownloadStatuses==null) {
+            return false;
+        }
+        final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
+                processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
+
+        final EnumsApi.FunctionState functionState = functionDownloadStatuses.state;
+        if (functionState == EnumsApi.FunctionState.none) {
+            downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
+            return false;
+        }
+        else {
+            if (functionState== EnumsApi.FunctionState.function_config_error || functionState== EnumsApi.FunctionState.download_error) {
+                log.error("951.360 The function {} has a state as {}, start re-downloading", functionConfig.code, functionState);
+
+                FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none);
+
+                downloadFunctionService.addTask(new FunctionRepositoryData.DownloadFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
+                return true;
+            }
+            else if (functionState== EnumsApi.FunctionState.dispatcher_config_error) {
+                processorTaskService.markAsFinishedWithError(core,
+                    taskId,
+                        S.f("951.390 Task #%d can't be processed because dispatcher at %s was mis-configured and function %s can't downloaded",
+                            taskId, core.dispatcherUrl.url, functionConfig.code));
+            }
+            if (functionState!= EnumsApi.FunctionState.ready) {
+                log.warn("951.420 Function {} has broken state as {}", functionConfig.code, functionState);
+            }
+            return functionState == EnumsApi.FunctionState.ready;
+        }
     }
 
 }

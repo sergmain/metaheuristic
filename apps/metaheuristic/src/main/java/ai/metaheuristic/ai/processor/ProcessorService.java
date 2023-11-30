@@ -38,7 +38,6 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
@@ -228,17 +227,10 @@ public class ProcessorService {
         return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
     }
 
-
-    @Data
-    public static class ResultOfChecking {
-        public boolean isAllLoaded = true;
-        public boolean isError = false;
-    }
-
-    public ProcessorService.ResultOfChecking checkForPreparingVariables(
+    public ProcessorData.ResultOfChecking checkForPreparingVariables(
             ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
             TaskParamsYaml taskParamYaml, DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher, Path taskDir) {
-        ProcessorService.ResultOfChecking result = new ProcessorService.ResultOfChecking();
+        ProcessorData.ResultOfChecking result = new ProcessorData.ResultOfChecking();
         if (!core.dispatcherUrl.url.equals(task.dispatcherUrl)) {
             throw new IllegalStateException("(!core.dispatcherUrl.url.equals(task.dispatcherUrl))");
         }

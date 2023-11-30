@@ -122,7 +122,7 @@ public class DownloadGitFunctionService {
         final String actualFunctionFile = AssetUtils.getActualFunctionFile(status.functionConfig);
         if (actualFunctionFile==null) {
             log.error("811.010 actualFunctionFile is null");
-            functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error);
+            FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error);
             return;
         }
         final AssetFile assetFile = AssetUtils.prepareFunctionAssetFile(baseFunctionDir, functionCode, actualFunctionFile);
@@ -134,7 +134,7 @@ public class DownloadGitFunctionService {
         Path parentDir = DirUtils.getParent(assetFile.file, Path.of(actualFunctionFile));
         if (parentDir==null) {
             log.error("811.070 parentDir is null");
-            functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error);
+            FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.asset_error);
             return;
         }
 
@@ -144,7 +144,7 @@ public class DownloadGitFunctionService {
             BundleData.Cfg cfg = new BundleData.Cfg(null, parentDir, task.shortFunctionConfig.git);
             BundleUtils.initRepo(cfg);
 
-            functionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.ready);
+            FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.ready);
 
 
             int i=0;

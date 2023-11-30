@@ -85,12 +85,6 @@ public class ProcessorKeepAliveProcessor {
         DispatcherContextInfoHolder.put(dispatcherUrl, new DispatcherData.DispatcherContextInfo(responseParamYaml.dispatcherInfo.chunkSize, maxVersionOfProcessor));
     }
 
-/*
-    private void registerFunctions(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml.Functions functions) {
-        processorEnvironment.metadataParams.registerNewFunctionCode(dispatcherUrl, functions.infos);
-    }
-*/
-
     private void processExecContextStatus(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml.ExecContextStatus execContextStatus) {
         currentExecState.register(dispatcherUrl, execContextStatus.statuses);
     }
