@@ -50,6 +50,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -151,38 +152,16 @@ public class ExecSourceCodeFunction implements InternalFunction {
                 throw new InternalFunctionException(system_error, "508.070 can't create a temporary file");
             }
             for (int i = 0; i < taskParamsYaml.task.inputs.size(); i++) {
-                TaskParamsYaml.InputVariable input = taskParamsYaml.task.inputs.get(i);
-                Variable v = variableRepository.findByIdAsSimple(input.id);
-                if (v==null) {
-                    throw new InternalFunctionException(variable_not_found, "508.073 can't find a variable #"+input.id);
-                }
                 if (execContextParamsYaml.variables.inputs.size()<i+1) {
                     throw new ExecContextCommonException(
-                            S.f("508.075 i is bigger than number of input variables. varIndex: %s, number: %s",
-                                    i, execContextParamsYaml.variables.inputs.size()));
+                        S.f("508.075 i is bigger than number of input variables. varIndex: %s, number: %s",
+                            i, execContextParamsYaml.variables.inputs.size()));
                 }
+
+                TaskParamsYaml.InputVariable input = taskParamsYaml.task.inputs.get(i);
                 ExecContextParamsYaml.Variable inputVariable = execContextParamsYaml.variables.inputs.get(i);
 
-                if (v.nullified) {
-                    variableTxService.initInputVariableWithNull(execContextResultRest.execContext.id, execContextParamsYaml, i);
-                }
-                else {
-                    Path tempFile = Files.createTempFile(tempDir, "input-", CommonConsts.BIN_EXT);
-                    switch (input.context) {
-                        case global:
-                            globalVariableService.storeToFileWithTx(input.id, tempFile);
-                            break;
-                        case local:
-                            variableTxService.storeToFileWithTx(input.id, tempFile);
-                            break;
-                        case array:
-                            throw new NotImplementedException("Not yet");
-                    }
-                    try (InputStream is = Files.newInputStream(tempFile)) {
-                        variableTxService.createInitializedTx(
-                                is, Files.size(tempFile), inputVariable.name, "variable-" + input.name, execContextResultRest.execContext.id, Consts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.unknown);
-                    }
-                }
+                initInputVariable(tempDir, input, execContextResultRest, execContextParamsYaml, inputVariable);
             }
             for (ExecContextParamsYaml.Variable output : execContextParamsYaml.variables.outputs) {
                 variableTxService.initOutputVariable(execContextResultRest.execContext.id, output);
@@ -217,5 +196,38 @@ public class ExecSourceCodeFunction implements InternalFunction {
                             "508.080 execContext #"+execContextResultRest.execContext.id+" for sourceCode '"+scUid+"' can't be started, error: " + operationStatusRest.getErrorMessagesAsStr());
         }
 
+    }
+
+    private void initInputVariable(
+        Path tempDir, TaskParamsYaml.InputVariable input, ExecContextCreatorService.ExecContextCreationResult execContextResultRest,
+        ExecContextParamsYaml execContextParamsYaml, ExecContextParamsYaml.Variable inputVariable) throws IOException {
+        Path tempFile = null;
+        switch (input.context) {
+            case global:
+                tempFile = Files.createTempFile(tempDir, "input-", CommonConsts.BIN_EXT);
+                globalVariableService.storeToFileWithTx(input.id, tempFile);
+                break;
+            case local:
+                Variable v = variableRepository.findByIdAsSimple(input.id);
+                if (v==null) {
+                    throw new InternalFunctionException(variable_not_found, "508.073 can't find a variable #"+ input.id);
+                }
+                if (v.nullified) {
+                    variableTxService.initInputVariableWithNull(execContextParamsYaml.sourceCodeUid, execContextResultRest.execContext.id, inputVariable);
+                }
+                else {
+                    tempFile = Files.createTempFile(tempDir, "input-", CommonConsts.BIN_EXT);
+                    variableTxService.storeToFileWithTx(input.id, tempFile);
+                }
+                break;
+            case array:
+                throw new NotImplementedException("Not yet");
+        }
+        if (tempFile!=null) {
+            try (InputStream is = Files.newInputStream(tempFile)) {
+                variableTxService.createInitializedTx(
+                    is, Files.size(tempFile), inputVariable.name, "variable-" + input.name, execContextResultRest.execContext.id, Consts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.unknown);
+            }
+        }
     }
 }

@@ -163,16 +163,18 @@ public class VariableTxService {
     }
 
     @Transactional
-    public void initInputVariableWithNull(Long execContextId, ExecContextParamsYaml execContextParamsYaml, int varIndex) {
+    public void initInputVariableWithNull(String sourceCodeUid, Long execContextId, final ExecContextParamsYaml.Variable variable) {
+/*
         if (execContextParamsYaml.variables.inputs.size()<varIndex+1) {
             throw new ExecContextCommonException(
                     S.f("171.200 varIndex is bigger than number of input variables. varIndex: %s, number: %s",
                             varIndex, execContextParamsYaml.variables.inputs.size()));
         }
         final ExecContextParamsYaml.Variable variable = execContextParamsYaml.variables.inputs.get(varIndex);
+*/
         if (!variable.getNullable()) {
             throw new ExecContextCommonException(S.f("171.240 sourceCode %s, input variable %s must be declared as nullable to be set as null",
-                    execContextParamsYaml.sourceCodeUid, variable.name));
+                    sourceCodeUid, variable.name));
         }
         String inputVariable = variable.name;
         if (S.b(inputVariable)) {

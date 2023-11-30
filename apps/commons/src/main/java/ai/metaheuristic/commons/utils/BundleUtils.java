@@ -65,7 +65,7 @@ public class BundleUtils {
     public static IOFileFilter FUNCTION_YAML_FILTER = FileFileFilter.INSTANCE.and(new NameFileFilter(MH_FUNCTION_YAML));
 
     public static Path createBundle(BundleData.Cfg cfg, BundleCfgYaml bundleCfgYaml) throws IOException, GeneralSecurityException {
-        System.out.println("\tworking dir: " + cfg.workingDir);
+        log.info("\tworking dir: " + cfg.workingDir);
         processFunctions(cfg,bundleCfgYaml);
         processCommonType(cfg, bundleCfgYaml, sourceCode, SourceCodeParamsYamlUtils.BASE_YAML_UTILS::to);
         processCommonType(cfg, bundleCfgYaml, auth, ApiAuthUtils.UTILS::to);
@@ -188,24 +188,24 @@ public class BundleUtils {
 
         final FunctionApiData.FunctionConfigStatus verify = FunctionCoreUtils.validate(function);
         if (!verify.isOk) {
-            System.out.println(verify.error);
+            log.error(verify.error);
             isError=true;
         }
         if (function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
             if (S.b(function.file)) {
-                System.out.println("function " + function.code + " has an empty 'file' field.");
+                log.error("function " + function.code + " has an empty 'file' field.");
                 isError = true;
             }
             else {
                 Path sn = tempFuncPath.resolve(function.src).resolve(function.file);
                 if (Files.notExists(sn)) {
-                    System.out.printf("Function %s has missing file %s\n", function.code, function.file);
+                    log.error("Function {} has missing file {}", function.code, function.file);
                     isError = true;
                 }
 
                 Path f = Path.of(function.file);
                 if (!f.toString().equals(function.file)) {
-                    System.out.println("Relative path for function file isn't supported, file: " + function.file);
+                    log.error("Relative path for function file isn't supported, file: " + function.file);
                     isError = true;
                 }
             }
@@ -225,7 +225,7 @@ public class BundleUtils {
                 throw new BundleProcessingException(S.f("Path %s is broken", p.toAbsolutePath()));
             }
             Path tempFuncPath = cfg.workingDir.resolve(path);
-            System.out.println("\t\tprocess path " + path);
+            log.info("'\tprocess path " + path);
             Files.createDirectories(tempFuncPath);
 
             final BundleData.FunctionConfigAndFile fcy = getFunctionConfigYaml(p);

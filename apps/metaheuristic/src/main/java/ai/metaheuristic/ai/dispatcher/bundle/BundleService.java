@@ -81,7 +81,7 @@ public class BundleService {
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_ENTRY_SIZE_FUNCTION = BundleService::isZipEntitySizeOk;
 
     public BundleData.UploadingStatus uploadFromGit(GitInfo gitInfo, DispatcherContext context) {
-//        -b function-only-bundle-cfg.yaml --git-repo https://github.com/sergmain/metaheuristic-assets.git --git-branch master --git-commit HEAD --git-path common-bundle
+//      --git-repo https://github.com/sergmain/metaheuristic-assets.git --git-branch master --git-commit HEAD --git-path common-bundle
 
         int j=11;
 
