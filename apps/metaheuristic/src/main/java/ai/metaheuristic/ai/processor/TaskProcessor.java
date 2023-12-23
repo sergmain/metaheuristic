@@ -299,7 +299,7 @@ public class TaskProcessor {
     private void markFunctionAsFinishedWithPermanentError(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, Long taskId, FunctionRepositoryData.FunctionPrepareResult result) {
         FunctionApiData.SystemExecResult execResult = new FunctionApiData.SystemExecResult(
                 result.getFunction().code, false, -990,
-                "100.150 Function "+result.getFunction().code+" has a permanent error: " + result.getSystemExecResult().console);
+                "100.150 Function "+result.getFunction().code+" has a permanent error: " + (result.getSystemExecResult()!=null ? result.getSystemExecResult().console : "<system exec console is null>"));
         processorTaskService.markAsFinished(core, taskId,
                 new FunctionApiData.FunctionExec(null, null, null, execResult));
     }
