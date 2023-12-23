@@ -50,13 +50,13 @@ public class ProcessorCoreTxService {
         ss.code = core.coreCode;
         ss.currDir = core.coreDir;
 
-        ProcessorCore p = new ProcessorCore();
-        p.processorId = processorId;
-        p.updatedOn = System.currentTimeMillis();
-        p.code = core.coreCode;
+        ProcessorCore pc = new ProcessorCore();
+        pc.processorId = processorId;
+        pc.updatedOn = System.currentTimeMillis();
+        pc.code = core.coreCode;
 
-        p.updateParams(ss);
-        return coreCache.save(p);
+        pc.updateParams(ss);
+        return coreCache.save(pc);
     }
 
     @Transactional

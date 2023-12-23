@@ -124,6 +124,7 @@ public class FunctionRepositoryProcessorService {
         if (status == null) {
             return;
         }
+        // TODO p3 2023.12.22 is this intentional or something is missed here?
     }
 
     public FunctionPrepareResult prepareFunction(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig function) {
