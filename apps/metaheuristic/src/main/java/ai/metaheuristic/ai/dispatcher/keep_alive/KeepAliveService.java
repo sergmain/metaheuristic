@@ -175,6 +175,7 @@ public class KeepAliveService {
 
             final ProcessorCore processorCore = processorCoreCache.findById(core.coreId);
             if (processorCore == null || !processorCore.processorId.equals(processorId)) {
+                // TODO p0 2023-12-23 add a refresh of processor core settings after redefining processorCoreId number
                 log.warn("446.140 processor == null, return ReAssignProcessorId() with new processorCoreId and new sessionId");
                 final Long coreId = ProcessorSyncService.getWithSync(processorId, ()->processorCoreTxService.createProcessorCore(processorId, core).id);
                 resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(coreId, core.coreCode));
