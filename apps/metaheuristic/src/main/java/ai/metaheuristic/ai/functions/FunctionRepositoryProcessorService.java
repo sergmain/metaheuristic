@@ -85,7 +85,7 @@ public class FunctionRepositoryProcessorService {
                         codesReady.add(shortFunctionConfig.code);
                     }
                     else if (f.state.failed) {
-                        log.warn("816.030 function {} is active but failed to be downloaded. assetManagerUrl: {}", shortFunctionConfig.code, assetManagerUrl.url);
+                        log.warn("816.030 function {} is active but failed to be downloaded, state: {}. assetManagerUrl: {}", shortFunctionConfig.code, f.state, assetManagerUrl.url);
                     }
                 }
                 eventPublisher.publishEvent(new DownloadFunctionTask(shortFunctionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, HIGH));
