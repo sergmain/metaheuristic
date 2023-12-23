@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorSyncService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreTxService;
@@ -185,7 +186,7 @@ public class PreparingCoreInitService {
     private void deleteProcessorCore(@Nullable ProcessorCore s) {
         if (s!=null) {
             try {
-                processorCoreService.deleteProcessorCoreById(s.id);
+                ProcessorSyncService.getWithSyncVoid(s.processorId, ()->processorCoreService.deleteProcessorCoreById(s.id));
             } catch (Throwable th) {
                 log.error("Error", th);
             }

@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTxService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
+import ai.metaheuristic.ai.dispatcher.processor.ProcessorSyncService;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
@@ -150,7 +151,7 @@ public class ArtifactCleanerAtDispatcher {
                     }
                     log.info("Found orphan ProcessorCore, processorId: #{}, cores #{}", processorId, page);
                     try {
-                        processorCoreService.deleteOrphanProcessorCores(page);
+                        ProcessorSyncService.getWithSyncVoid(processorId, ()->processorCoreService.deleteOrphanProcessorCores(page));
                     }
                     catch (Throwable th) {
                         log.error("510.060 variableService.deleteOrphanVariables("+processorId+")", th);

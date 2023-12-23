@@ -167,19 +167,21 @@ public class KeepAliveService {
     private void processInfoAboutCores(Long processorId, KeepAliveRequestParamYaml req, long startMills, KeepAliveResponseParamYaml resp) {
         for (KeepAliveRequestParamYaml.Core core : req.cores) {
             if (core.coreId == null) {
-                resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(processorCoreTxService.createProcessorCore(processorId, core).id, core.coreCode));
+                // there is strange error with H2s Identity field - keys aren't unique. so sync was added
+                final Long coreId = ProcessorSyncService.getWithSync(processorId, ()->processorCoreTxService.createProcessorCore(processorId, core).id);
+                resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(coreId, core.coreCode));
                 continue;
             }
 
             final ProcessorCore processorCore = processorCoreCache.findById(core.coreId);
             if (processorCore == null || !processorCore.processorId.equals(processorId)) {
-                log.warn("446.140 processor == null, return ReAssignProcessorId() with new processorId and new sessionId");
-                // no need of syncing for creation of new Processor
-                resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(processorCoreTxService.createProcessorCore(processorId, core).id, core.coreCode));
+                log.warn("446.140 processor == null, return ReAssignProcessorId() with new processorCoreId and new sessionId");
+                final Long coreId = ProcessorSyncService.getWithSync(processorId, ()->processorCoreTxService.createProcessorCore(processorId, core).id);
+                resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(coreId, core.coreCode));
                 continue;
             }
             if (coreMetadataDifferent(core, processorCore.getCoreStatusYaml())) {
-                processorCoreTxService.updateCore(processorCore, core);
+                ProcessorSyncService.getWithSyncVoid(processorId, ()->processorCoreTxService.updateCore(processorCore, core));
             }
 
             resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(core.coreId, core.coreCode));
