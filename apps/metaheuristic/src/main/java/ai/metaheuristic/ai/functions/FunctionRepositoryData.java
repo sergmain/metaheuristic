@@ -55,6 +55,21 @@ public class FunctionRepositoryData {
         }
     }
 
+    @AllArgsConstructor
+    @EqualsAndHashCode(of = {"functionCode", "assetManagerUrl"})
+    public static class DownloadGitFunctionTask implements EventWithId<FunctionEnums.DownloadPriority> {
+        public final String functionCode;
+        public final FunctionRepositoryResponseParams.ShortFunctionConfig shortFunctionConfig;
+        public final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl;
+        public final boolean signatureRequired;
+        public final FunctionEnums.DownloadPriority priority;
+
+        @Override
+        public FunctionEnums.DownloadPriority getId() {
+            return priority;
+        }
+    }
+
     @Data
     public static class FunctionDownloadStatuses {
         public final Map<EnumsApi.FunctionState, String> statuses = new HashMap<>();

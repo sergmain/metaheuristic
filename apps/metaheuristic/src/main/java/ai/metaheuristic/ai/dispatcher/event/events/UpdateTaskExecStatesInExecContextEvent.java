@@ -30,7 +30,7 @@ import java.util.List;
  */
 @Data
 @AllArgsConstructor
-@EqualsAndHashCode(of = "taskId")
+@EqualsAndHashCode(of = "execContextId")
 public class UpdateTaskExecStatesInExecContextEvent implements EventWithId<Long> {
     public final Long execContextId;
     public final List<Long> taskIds;

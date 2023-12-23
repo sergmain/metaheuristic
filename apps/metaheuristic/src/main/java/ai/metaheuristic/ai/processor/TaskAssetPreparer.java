@@ -19,6 +19,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.ai.functions.DownloadFunctionService;
 import ai.metaheuristic.ai.functions.DownloadGitFunctionService;
+import ai.metaheuristic.ai.functions.FunctionRepositoryData;
 import ai.metaheuristic.ai.functions.FunctionRepositoryProcessorService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.event.AssetPreparingForProcessorTaskEvent;
@@ -48,6 +49,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.functions.FunctionEnums.DownloadPriority.NORMAL;
+import static ai.metaheuristic.ai.functions.FunctionRepositoryData.*;
 import static ai.metaheuristic.ai.functions.FunctionRepositoryData.DownloadFunctionTask;
 import static ai.metaheuristic.ai.functions.FunctionRepositoryData.DownloadStatus;
 import static ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParams.ShortFunctionConfig;
@@ -232,13 +234,13 @@ public class TaskAssetPreparer {
         final DispatcherLookupExtended dispatcher = processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
 
         if (functionDownloadStatuses==null) {
-            downloadGitFunctionService.addTask(new DownloadFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
+            downloadGitFunctionService.addTask(new DownloadGitFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
             return false;
         }
 
         final EnumsApi.FunctionState functionState = functionDownloadStatuses.state;
         if (functionState == EnumsApi.FunctionState.none) {
-            downloadGitFunctionService.addTask(new DownloadFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
+            downloadGitFunctionService.addTask(new DownloadGitFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
             return false;
         }
         else {
@@ -247,7 +249,7 @@ public class TaskAssetPreparer {
 
                 FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionConfig.code, EnumsApi.FunctionState.none, null);
 
-                downloadGitFunctionService.addTask(new DownloadFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
+                downloadGitFunctionService.addTask(new DownloadGitFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
                 return true;
             }
             else if (functionState== EnumsApi.FunctionState.dispatcher_config_error) {

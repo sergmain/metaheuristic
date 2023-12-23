@@ -69,16 +69,16 @@ public class DownloadGitFunctionService {
     private final ProcessorEnvironment processorEnvironment;
     private final GetDispatcherContextInfoService getDispatcherContextInfoService;
 
-    private final MultiTenantedQueue<FunctionEnums.DownloadPriority, FunctionRepositoryData.DownloadFunctionTask> downloadFunctionQueue =
+    private final MultiTenantedQueue<FunctionEnums.DownloadPriority, FunctionRepositoryData.DownloadGitFunctionTask> downloadFunctionQueue =
         new MultiTenantedQueue<>(100, Duration.ZERO, true, "git-clone-", this::getGitRepo);
 
-    public void addTask(FunctionRepositoryData.DownloadFunctionTask task) {
+    public void addTask(FunctionRepositoryData.DownloadGitFunctionTask task) {
         downloadFunctionQueue.putToQueue(task);
     }
 
     @Async
     @EventListener
-    public void processAssetPreparing(FunctionRepositoryData.DownloadFunctionTask event) {
+    public void processAssetPreparing(FunctionRepositoryData.DownloadGitFunctionTask event) {
         try {
             addTask(event);
         } catch (Throwable th) {
@@ -100,7 +100,7 @@ public class DownloadGitFunctionService {
         }
     }
 
-    public void getGitRepo(FunctionRepositoryData.DownloadFunctionTask task) {
+    public void getGitRepo(FunctionRepositoryData.DownloadGitFunctionTask task) {
         if (globals.testing) {
             return;
         }
@@ -109,7 +109,7 @@ public class DownloadGitFunctionService {
         }
 
         if (task.shortFunctionConfig.sourcing!= EnumsApi.FunctionSourcing.git) {
-            log.warn("817.040 Attempt to download function from git but sourcing is" + task.shortFunctionConfig.sourcing);
+            log.warn("817.040 Attempt to download function from git but sourcing is {}", task.shortFunctionConfig.sourcing);
             return;
         }
 

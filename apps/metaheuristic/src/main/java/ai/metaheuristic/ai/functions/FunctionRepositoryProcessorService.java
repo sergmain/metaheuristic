@@ -134,9 +134,9 @@ public class FunctionRepositoryProcessorService {
             else if (function.sourcing== EnumsApi.FunctionSourcing.git) {
                 return prepareWithSourcingAsGit(assetManagerUrl, function);
             }
-            throw new IllegalStateException("100.460 Shouldn't get there");
+            throw new IllegalStateException("816.330 Shouldn't get there");
         } catch (Throwable th) {
-            String es = "100.480 System error: " + th.getMessage();
+            String es = "816.360 System error: " + th.getMessage();
             log.error(es, th);
             FunctionPrepareResult functionPrepareResult = new FunctionPrepareResult();
             functionPrepareResult.function = function;
@@ -151,7 +151,7 @@ public class FunctionRepositoryProcessorService {
         ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, TaskParamsYaml.FunctionConfig functionConfig ) {
 
         if (functionConfig.git==null) {
-            throw new IllegalStateException("(functionConfig.git==null)");
+            throw new IllegalStateException("816.390 (functionConfig.git==null)");
         }
 
         FunctionPrepareResult result = new FunctionPrepareResult(functionConfig);
@@ -160,11 +160,11 @@ public class FunctionRepositoryProcessorService {
         if (f!=null) {
             result.functionAssetFile = f.assetFile;
             if (f.state==ready) {
-                log.info("Function asset file: {}, exist: {}", result.functionAssetFile.file.toAbsolutePath(), Files.exists(result.functionAssetFile.file));
+                log.info("816.420 Function asset file: {}, exist: {}", result.functionAssetFile.file.toAbsolutePath(), Files.exists(result.functionAssetFile.file));
                 return result;
             }
             else if (f.state.failed) {
-                final String es = S.f("816.030 function %s is active but failed to be downloaded. assetManagerUrl: %s", functionConfig.code, assetManagerUrl.url);
+                final String es = S.f("816.450 function %s is active but failed to be downloaded. assetManagerUrl: %s", functionConfig.code, assetManagerUrl.url);
                 log.warn(es);
                 result.systemExecResult = new FunctionApiData.SystemExecResult(functionConfig.code, false, -1, es);
                 result.isLoaded = false;
@@ -184,7 +184,7 @@ public class FunctionRepositoryProcessorService {
         final Path baseResourceDir = MetadataParams.prepareBaseDir(processorResourcesPath, assetManagerUrl);
         final String actualFunctionFile = AssetUtils.getActualFunctionFile(functionPrepareResult.function);
         if (actualFunctionFile==null) {
-            log.error("100.320 actualFunctionFile is null");
+            log.error("816.480 actualFunctionFile is null");
             setFunctionState(assetManagerUrl, functionPrepareResult.function.getCode(), EnumsApi.FunctionState.asset_error, null);
             return new FunctionPrepareResult(function, null, new FunctionApiData.SystemExecResult(function.code, false, -995, "" ), false, true);
         }
@@ -192,7 +192,7 @@ public class FunctionRepositoryProcessorService {
 
         // is this function prepared?
         if (functionPrepareResult.functionAssetFile.isError || !functionPrepareResult.functionAssetFile.isContent) {
-            log.info("100.340 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
+            log.info("816.510 Function {} hasn't been prepared yet, {}", functionPrepareResult.function.code, functionPrepareResult.functionAssetFile);
             functionPrepareResult.isLoaded = false;
 
             return functionPrepareResult;
