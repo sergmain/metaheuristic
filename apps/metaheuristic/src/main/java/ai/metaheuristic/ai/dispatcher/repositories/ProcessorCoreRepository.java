@@ -18,9 +18,9 @@ package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
+import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -52,9 +52,16 @@ public interface ProcessorCoreRepository extends CrudRepository<ProcessorCore, L
     List<Long> findIdsByProcessorId(Pageable pageable, Long processorId);
 
     @Query(value="select c.id, c.code from ProcessorCore c where c.processorId=:processorId")
-    List<Object[]> findIdsAndCodesByProcessorId(Pageable pageable, Long processorId);
+    List<Object[]> findIdsAndCodesByProcessorIdWithPage(Pageable pageable, Long processorId);
+
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.data.ProcessorData$ProcessorCore(c.id, c.code, false) from ProcessorCore c where c.processorId=:processorId")
+    List<ProcessorData.ProcessorCore> findIdsAndCodesByProcessorId(Long processorId);
 
     @Modifying
     @Query(value="delete from ProcessorCore t where t.id in (:ids)")
     void deleteByIds(List<Long> ids);
+
+    @Query(value="select max(p.id) from ProcessorCore p")
+    Long getMaxCoreId();
+
 }

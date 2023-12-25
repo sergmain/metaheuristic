@@ -190,6 +190,7 @@ public class ProcessorTxService {
         core.updatedOn = System.currentTimeMillis();
         core.updateParams(ss);
         core.description= description;
+        core.code = ss.code;
         return processorCoreRepository.save(core);
     }
 
@@ -212,7 +213,7 @@ public class ProcessorTxService {
         if (processor == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "807.080 Processor wasn't found, processorId: " + id);
         }
-        processorCache.deleteById(id);
+        processorRepository.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

@@ -32,7 +32,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.VariableUploadedTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
-import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
+import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
@@ -45,7 +45,6 @@ import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -54,6 +53,7 @@ import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYamlUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -110,7 +110,7 @@ public class BatchResultProcessorTxService {
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
     private final ProcessorCache processorCache;
-    private final ProcessorCoreCache processorCoreCache;
+    private final ProcessorCoreRepository processorCoreRepository;
     private final SourceCodeCache sourceCodeCache;
     private final BatchHelperService batchHelperService;
     private final ApplicationEventPublisher eventPublisher;
@@ -571,7 +571,7 @@ public class BatchResultProcessorTxService {
         if (coreId==null) {
             return UNKNOWN_IP_AND_HOST;
         }
-        ProcessorCore core = processorCoreCache.findById(coreId);
+        ProcessorCore core = processorCoreRepository.findById(coreId).orElse(null);
         if (core==null) {
             return UNKNOWN_IP_AND_HOST;
         }

@@ -28,8 +28,8 @@ import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorSyncService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
-import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
 import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreTxService;
+import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
@@ -66,7 +66,7 @@ public class KeepAliveService {
     private final DispatcherCommandProcessor dispatcherCommandProcessor;
     private final ProcessorTxService processorTxService;
     private final ProcessorCoreTxService processorCoreTxService;
-    private final ProcessorCoreCache processorCoreCache;
+    private final ProcessorCoreRepository processorCoreRepository;
     private final ExecContextStatusService execContextStatusService;
 
     private MultiTenantedQueue<Long, CheckProcessorIdEvent> checkProcessorIdEventPool;
@@ -164,20 +164,25 @@ public class KeepAliveService {
             () -> processorTxService.checkProcessorId(event.processorAndSessionStatus(), event.processorId(), event.remoteAddress()));
     }
 
-    private void processInfoAboutCores(Long processorId, KeepAliveRequestParamYaml req, long startMills, KeepAliveResponseParamYaml resp) {
+    public void processInfoAboutCores(Long processorId, KeepAliveRequestParamYaml req, long startMills, KeepAliveResponseParamYaml resp) {
+        // this solution changes request object. can't decide is it ok or not.
+        // List<ProcessorData.ProcessorCore> cores = processorCoreRepository.findIdsAndCodesByProcessorId(processorId);
         for (KeepAliveRequestParamYaml.Core core : req.cores) {
             if (core.coreId == null) {
-                // there is strange error with H2s Identity field - keys aren't unique. so sync was added
                 final Long coreId = ProcessorSyncService.getWithSync(processorId, ()->processorCoreTxService.createProcessorCore(processorId, core).id);
+                // this solution changes request object. can't decide is it ok or not.
+                req.cores.stream().filter(c-> coreId.equals(c.coreId)).forEach(c->c.coreId=null);
                 resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(coreId, core.coreCode));
                 continue;
             }
 
-            final ProcessorCore processorCore = processorCoreCache.findById(core.coreId);
+            final ProcessorCore processorCore = processorCoreRepository.findById(core.coreId).orElse(null);
             if (processorCore == null || !processorCore.processorId.equals(processorId)) {
                 // TODO p0 2023-12-23 add a refresh of processor core settings after redefining processorCoreId number
                 log.warn("446.140 processor == null, return ReAssignProcessorId() with new processorCoreId and new sessionId");
                 final Long coreId = ProcessorSyncService.getWithSync(processorId, ()->processorCoreTxService.createProcessorCore(processorId, core).id);
+                // this solution changes request object. can't decide is it ok or not.
+                req.cores.stream().filter(c-> coreId.equals(c.coreId)).forEach(c->c.coreId=null);
                 resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(coreId, core.coreCode));
                 continue;
             }

@@ -62,7 +62,7 @@ public class PreparingCoreInitService {
     private final TxTestingTopLevelService txTestingTopLevelService;
     private final ExperimentCache experimentCache;
     private final ProcessorTopLevelService processorTopLevelService;
-    private final ProcessorTxService processorTransactionService;
+    private final ProcessorTxService processorTxService;
     private final TxSupportForTestingService txSupportForTestingService;
     private final ProcessorCoreTxService processorCoreService;
     private final TaskWithInternalContextEventService taskWithInternalContextEventService;
@@ -103,7 +103,7 @@ public class PreparingCoreInitService {
 
 
         // Prepare processor
-        data.processor = processorTransactionService.createProcessor(description, null, ss);
+        data.processor = processorTxService.createProcessor(description, null, ss);
         log.info("processorRepository.save() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
         registerReadyFunctionCodesOnProcessor(PreparingConsts.TEST_FIT_FUNCTION, data.processor.id, true);
@@ -118,10 +118,10 @@ public class PreparingCoreInitService {
 
         // Prepare processor's cores
         CoreStatusYaml csy1 = new CoreStatusYaml("/home/core-1", null, null);
-        data.core1 = processorTransactionService.createProcessorCore(descriptionCore, csy1, data.processor.id);
+        data.core1 = processorTxService.createProcessorCore(descriptionCore, csy1, data.processor.id);
 
         CoreStatusYaml csy2 = new CoreStatusYaml("/home/core-2", null, null);
-        data.core2 = processorTransactionService.createProcessorCore(descriptionCore, csy2, data.processor.id);
+        data.core2 = processorTxService.createProcessorCore(descriptionCore, csy2, data.processor.id);
 
         // Prepare functions
         data.fitFunction = txTestingTopLevelService.getOrCreateFunction(PreparingConsts.TEST_FIT_FUNCTION, CommonConsts.FIT_TYPE, "fit-filename.txt");

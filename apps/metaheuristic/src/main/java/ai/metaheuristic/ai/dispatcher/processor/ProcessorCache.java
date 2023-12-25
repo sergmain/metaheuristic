@@ -47,33 +47,6 @@ public class ProcessorCache {
         return processorRepository.save(processor);
     }
 
-    public void delete(Processor processor) {
-        TxUtils.checkTxExists();
-        try {
-            processorRepository.delete(processor);
-        } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#457.030 Error deleting of processor by object", e);
-        }
-    }
-
-    public void delete(Long processorId) {
-        TxUtils.checkTxExists();
-        try {
-            processorRepository.deleteById(processorId);
-        } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#457.050 Error deleting of processor by id", e);
-        }
-    }
-
-    public void deleteById(Long processorId) {
-        TxUtils.checkTxExists();
-        try {
-            processorRepository.deleteById(processorId);
-        } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#457.070 Error deleting of processor by id", e);
-        }
-    }
-
     @Nullable
     public Processor findById(Long id) {
         return processorRepository.findById(id).orElse(null);

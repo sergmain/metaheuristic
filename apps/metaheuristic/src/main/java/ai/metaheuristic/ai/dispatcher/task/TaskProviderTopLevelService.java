@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.data.QuotasData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
@@ -33,8 +32,8 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextReadinessStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
-import ai.metaheuristic.ai.dispatcher.processor_core.ProcessorCoreCache;
 import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
+import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -61,7 +60,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static ai.metaheuristic.ai.dispatcher.data.ProcessorData.*;
+import static ai.metaheuristic.ai.dispatcher.data.ProcessorData.ProcessorAndCoreParams;
 
 /**
  * @author Serge
@@ -78,7 +77,7 @@ public class TaskProviderTopLevelService {
     private final Globals globals;
     private final TaskRepository taskRepository;
     private final ProcessorCache processorCache;
-    private final ProcessorCoreCache processorCoreCache;
+    private final ProcessorCoreRepository processorCoreRepository;
     private final ExecContextStatusService execContextStatusService;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final ExecContextCache execContextCache;
@@ -295,7 +294,7 @@ public class TaskProviderTopLevelService {
             mills.set(System.currentTimeMillis());
         }
 
-        final ProcessorCore core = processorCoreCache.findById(coreId);
+        final ProcessorCore core = processorCoreRepository.findById(coreId).orElse(null);
         if (core == null) {
             log.error("393.440 Core #{} wasn't found", coreId);
             return null;

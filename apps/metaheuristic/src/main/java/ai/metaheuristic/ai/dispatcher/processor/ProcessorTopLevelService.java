@@ -209,7 +209,7 @@ public class ProcessorTopLevelService {
             );
             ss.add(processorStatus);
 
-            List<Object[]> coreIds = processorCoreRepository.findIdsAndCodesByProcessorId(Consts.PAGE_REQUEST_100_REC, processor.id);
+            List<Object[]> coreIds = processorCoreRepository.findIdsAndCodesByProcessorIdWithPage(Consts.PAGE_REQUEST_100_REC, processor.id);
 
             for (Object[] obj : coreIds) {
                 Long coreId = ((Number)obj[0]).longValue();

@@ -40,7 +40,6 @@ import java.util.List;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ProcessorCoreTxService {
 
-    private final ProcessorCoreCache coreCache;
     private final ProcessorCoreRepository processorCoreRepository;
 
     @Transactional
@@ -56,7 +55,7 @@ public class ProcessorCoreTxService {
         pc.code = core.coreCode;
 
         pc.updateParams(ss);
-        return coreCache.save(pc);
+        return processorCoreRepository.save(pc);
     }
 
     @Transactional
@@ -76,6 +75,6 @@ public class ProcessorCoreTxService {
         status.tags = core.tags;
         processorCore.updateParams(status);
 
-        coreCache.save(processorCore);
+        processorCoreRepository.save(processorCore);
     }
 }
