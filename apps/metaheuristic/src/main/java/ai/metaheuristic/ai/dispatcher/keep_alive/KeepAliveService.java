@@ -165,12 +165,12 @@ public class KeepAliveService {
     }
 
     public void processInfoAboutCores(Long processorId, KeepAliveRequestParamYaml req, long startMills, KeepAliveResponseParamYaml resp) {
-        // this solution changes request object. can't decide is it ok or not.
+        // this solution changes request object. can't decide rn is it ok or not.
         // List<ProcessorData.ProcessorCore> cores = processorCoreRepository.findIdsAndCodesByProcessorId(processorId);
         for (KeepAliveRequestParamYaml.Core core : req.cores) {
             if (core.coreId == null) {
                 final Long coreId = ProcessorSyncService.getWithSync(processorId, ()->processorCoreTxService.createProcessorCore(processorId, core).id);
-                // this solution changes request object. can't decide is it ok or not.
+                // this solution changes request object. can't decide rn is it ok or not.
                 req.cores.stream().filter(c-> coreId.equals(c.coreId)).forEach(c->c.coreId=null);
                 resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(coreId, core.coreCode));
                 continue;
@@ -181,7 +181,7 @@ public class KeepAliveService {
                 // TODO p0 2023-12-23 add a refresh of processor core settings after redefining processorCoreId number
                 log.warn("446.140 processor == null, return ReAssignProcessorId() with new processorCoreId and new sessionId");
                 final Long coreId = ProcessorSyncService.getWithSync(processorId, ()->processorCoreTxService.createProcessorCore(processorId, core).id);
-                // this solution changes request object. can't decide is it ok or not.
+                // this solution changes request object. can't decide rn is it ok or not.
                 req.cores.stream().filter(c-> coreId.equals(c.coreId)).forEach(c->c.coreId=null);
                 resp.response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(coreId, core.coreCode));
                 continue;
