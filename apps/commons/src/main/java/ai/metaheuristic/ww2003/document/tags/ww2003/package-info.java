@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2023, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2024, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
