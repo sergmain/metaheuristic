@@ -1,7 +1,5 @@
 package ai.metaheuristic.ai.processor.ws;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.lang.NonNull;
@@ -9,14 +7,11 @@ import org.springframework.lang.Nullable;
 import org.springframework.messaging.converter.StringMessageConverter;
 import org.springframework.messaging.simp.stomp.*;
 import org.springframework.scheduling.concurrent.SimpleAsyncTaskScheduler;
-import org.springframework.stereotype.Service;
 import org.springframework.web.socket.client.WebSocketClient;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 
 import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -29,22 +24,17 @@ import java.util.function.Supplier;
  * Date: 2/6/2024
  * Time: 12:07 PM
  */
-@Service
 @Slf4j
 public class ProcessorWebsocketService {
-    public static final String URL1 = "ws://127.0.0.1:8080/ws/dispatcher";
-    public static final String URL2 = "ws://127.0.0.1:8081/ws/dispatcher";
-
-    final Map<String, WebSocketInfra> webSocketInfraMap = new HashMap<>();
 
     public static class MyStompFrameHandler implements StompFrameHandler  {
 
         private final String url;
-        private final Consumer<String> msgConsumerFunc;
+        private final Consumer<String> eventConsumerFunc;
 
-        public MyStompFrameHandler(String url, Consumer<String> msgConsumerFunc) {
+        public MyStompFrameHandler(String url, Consumer<String> eventConsumerFunc) {
             this.url = url;
-            this.msgConsumerFunc = msgConsumerFunc;
+            this.eventConsumerFunc = eventConsumerFunc;
         }
 
         @Override
@@ -57,7 +47,7 @@ public class ProcessorWebsocketService {
         public void handleFrame(StompHeaders headers, @Nullable Object payload) {
             log.debug(url + ", payload: " + payload);
             String text = (String)payload;
-            msgConsumerFunc.accept(text);
+            eventConsumerFunc.accept(text);
         }
     }
 
@@ -71,11 +61,11 @@ public class ProcessorWebsocketService {
         private Thread wsThread = null;
         @Nullable
         private Thread mainThread = null;
-        private final Consumer<String> msgConsumerFunc;
+        private final Consumer<String> eventConsumerFunc;
 
-        public WebSocketInfra(String url, Consumer<String> msgConsumerFunc) {
+        public WebSocketInfra(String url, Consumer<String> eventConsumerFunc) {
             this.url = url;
-            this.msgConsumerFunc = msgConsumerFunc;
+            this.eventConsumerFunc = eventConsumerFunc;
             webSocketClient = new StandardWebSocketClient();
             stompClient = new WebSocketStompClient(webSocketClient);
             stompClient.setMessageConverter(new StringMessageConverter());
@@ -154,7 +144,7 @@ public class ProcessorWebsocketService {
                     StompHeaders headers = new StompHeaders();
                     headers.add("url", url);
                     headers.setDestination("/topic/events");
-                    session.subscribe(headers, new MyStompFrameHandler(url, msgConsumerFunc));
+                    session.subscribe(headers, new MyStompFrameHandler(url, eventConsumerFunc));
                     sessionHandler.initialized = true;
                     System.out.println("\tinitialization of session was completed, " + url);
                 }
@@ -212,29 +202,4 @@ public class ProcessorWebsocketService {
             terminateOnErrorFunc.run();
         }
     }
-
-    @PostConstruct
-    public void post() {
-
-
-//        inProcess.set(true);
-        WebSocketInfra infra8080 = new WebSocketInfra(URL1);
-        WebSocketInfra infra8081 = new WebSocketInfra(URL2);
-
-        this.webSocketInfraMap.put(URL1, infra8080);
-        this.webSocketInfraMap.put(URL2, infra8081);
-
-        System.out.println("infra8080.runInfra()");
-        infra8080.runInfra();
-
-        System.out.println("infra8081.runInfra()");
-//        infra8081.runInfra();
-    }
-
-    @PreDestroy
-    public void preDestroy() {
-        webSocketInfraMap.forEach((key, value) -> value.destroy());
-    }
-
-
 }
