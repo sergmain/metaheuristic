@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.mhbp.settings;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +28,7 @@ import org.springframework.stereotype.Service;
  * Time: 2:53 AM
  */
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 @Profile("dispatcher")
 @Slf4j
 public class MhbpSettingsTxService {

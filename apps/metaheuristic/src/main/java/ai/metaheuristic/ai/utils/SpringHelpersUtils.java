@@ -34,6 +34,7 @@ public class SpringHelpersUtils {
     public static final List<String> POSSIBLE_PROFILES = List.of(
             // Spring's profiles
             "dispatcher", "processor", "quickstart", "standalone", "disk-storage", "test", "disable-check-frontend",
+            "websocket",
 
             // db's profiles
             "mysql", "postgresql", "h2", "hsqldb", "derby", "generic", "custom");

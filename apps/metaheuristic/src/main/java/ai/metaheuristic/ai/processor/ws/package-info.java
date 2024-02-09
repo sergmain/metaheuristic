@@ -15,6 +15,6 @@
  */
 
 @ParametersAreNonnullByDefault
-package ai.metaheuristic.ai.functions.ws;
+package ai.metaheuristic.ai.processor.ws;
 
 import javax.annotation.ParametersAreNonnullByDefault;

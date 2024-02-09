@@ -81,7 +81,9 @@ public class Schedulers {
         return Optional.ofNullable(context.lastCompletion()).orElseGet(Instant::now).plus(duration);
     }
 
-    @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
+    @Configuration @EnableScheduling
+    @RequiredArgsConstructor(onConstructor_={@Autowired}) 
+    @Slf4j @SuppressWarnings("DuplicatedCode")
     @Profile("dispatcher")
     public static class ArtifactCleanerAtDispatcherSchedulingConfig implements SchedulingConfigurer {
         private final Globals globals;
@@ -101,7 +103,10 @@ public class Schedulers {
         }
     }
 
-    @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
+    @Configuration 
+    @EnableScheduling
+    @RequiredArgsConstructor(onConstructor_={@Autowired}) 
+    @Slf4j @SuppressWarnings("DuplicatedCode")
     @Profile("dispatcher")
     public static class UpdateBatchStatusesSchedulingConfig implements SchedulingConfigurer {
         private final Globals globals;
@@ -131,7 +136,10 @@ public class Schedulers {
         }
     }
 
-    @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
+    @Configuration 
+    @EnableScheduling
+    @RequiredArgsConstructor(onConstructor_={@Autowired}) 
+    @Slf4j @SuppressWarnings("DuplicatedCode")
     @Profile("dispatcher")
     public static class GarbageCollectionAtDispatcherSchedulingConfig implements SchedulingConfigurer {
         private final Globals globals;
@@ -153,7 +161,10 @@ public class Schedulers {
         }
     }
 
-    @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
+    @Configuration
+    @EnableScheduling
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
+    @Slf4j @SuppressWarnings("DuplicatedCode")
     @Profile("dispatcher")
     public static class SyncReplicationSchedulingConfig implements SchedulingConfigurer {
         private final Globals globals;
@@ -349,7 +360,10 @@ public class Schedulers {
 
     // processor's schedulers
 
-    @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
+    @Configuration
+    @EnableScheduling
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
+    @Slf4j @SuppressWarnings("DuplicatedCode")
     @Profile("processor")
     public static class DispatcherRequesterSchedulingConfig implements SchedulingConfigurer {
         private final Globals globals;
@@ -391,7 +405,10 @@ public class Schedulers {
         }
     }
 
-    @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
+    @Configuration
+    @EnableScheduling
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
+    @Slf4j @SuppressWarnings("DuplicatedCode")
     @Profile("processor")
     public static class TaskAssignerSchedulingConfig implements SchedulingConfigurer {
         private final Globals globals;
@@ -413,7 +430,10 @@ public class Schedulers {
         }
     }
 
-    @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
+    @Configuration
+    @EnableScheduling
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
+    @Slf4j @SuppressWarnings("DuplicatedCode")
     @Profile("processor")
     public static class TaskProcessorSchedulingConfig implements SchedulingConfigurer {
         private final Globals globals;
@@ -434,30 +454,10 @@ public class Schedulers {
         }
     }
 
-/*
-    @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
-    @Profile("processor")
-    public static class PrepareFunctionForDownloadingSchedulingConfig implements SchedulingConfigurer {
-        private final Globals globals;
-        private final DownloadFunctionService downloadFunctionActor;
-
-        @Override
-        public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-            taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
-            taskRegistrar.addTriggerTask( this::prepareFunctionForDownloading, context -> getInstant(context, globals.processor.timeout.getPrepareFunctionForDownloading()));
-        }
-
-        public void prepareFunctionForDownloading() {
-            if (globals.testing || !globals.processor.enabled) {
-                return;
-            }
-            log.info("Run downloadFunctionActor.prepareFunctionForDownloading()");
-            downloadFunctionActor.prepareFunctionForDownloading();
-        }
-    }
-*/
-
-    @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
+    @Configuration
+    @EnableScheduling
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
+    @Slf4j @SuppressWarnings("DuplicatedCode")
     @Profile("processor")
     public static class DownloadResourceActorSchedulingConfig implements SchedulingConfigurer {
         private final Globals globals;
@@ -478,7 +478,10 @@ public class Schedulers {
         }
     }
 
-    @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
+    @Configuration
+    @EnableScheduling
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
+    @Slf4j @SuppressWarnings("DuplicatedCode")
     @Profile("processor")
     public static class UploadResourceActorSchedulingConfig implements SchedulingConfigurer {
         private final Globals globals;
@@ -499,7 +502,10 @@ public class Schedulers {
         }
     }
 
-    @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
+    @Configuration
+    @EnableScheduling
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
+    @Slf4j @SuppressWarnings("DuplicatedCode")
     @Profile("processor")
     public static class GetDispatcherContextInfoActorSchedulingConfig implements SchedulingConfigurer {
         private final Globals globals;
@@ -520,7 +526,10 @@ public class Schedulers {
         }
     }
 
-    @Configuration @EnableScheduling @RequiredArgsConstructor @Slf4j @SuppressWarnings("DuplicatedCode")
+    @Configuration
+    @EnableScheduling
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
+    @Slf4j @SuppressWarnings("DuplicatedCode")
     @Profile("processor")
     public static class ProcessorArtifactCleanerSchedulingConfig implements SchedulingConfigurer {
         private final Globals globals;

@@ -38,13 +38,20 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.*;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
+import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -62,32 +69,49 @@ import java.util.List;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class Config {
 
-/*
+    @Bean
+    @Profile("dispatcher & websocket")
+    public ServletServerContainerFactoryBean createWebSocketContainer() {
+        ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
+        container.setMaxTextMessageBufferSize(8192);
+        container.setMaxBinaryMessageBufferSize(8192);
+        return container;
+    }
+
     @Configuration
     @EnableWebSocketMessageBroker
-    public static class MHWebSocketMessageBrokerConfigurer implements WebSocketMessageBrokerConfigurer {
-
-        @Override
-        public void configureMessageBroker(MessageBrokerRegistry config) {
-            config.enableSimpleBroker("/chat");
-            config.setApplicationDestinationPrefixes("/ws/");
-        }
+    @Profile("dispatcher & websocket")
+    public static class DispatcherWebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
         @Override
         public void registerStompEndpoints(StompEndpointRegistry registry) {
-            registry.addEndpoint("/ws/chat"); // This will allow you to use ws://localhost:8080/test to establish websocket connection
-            registry.addEndpoint("/ws/chat").withSockJS(); // This will allow you to use http://localhost:8080/test to establish websocket connection
+            registry.addEndpoint("/dispatcher");
+        }
+
+        @Override
+        public void configureMessageBroker(MessageBrokerRegistry config) {
+            config.setApplicationDestinationPrefixes("/dispatcher");
+            config.enableSimpleBroker("/topic", "/queue");
+        }
+
+        @Override
+        public void configureWebSocketTransport(WebSocketTransportRegistration registry) {
+            registry.setMessageSizeLimit(4 * 8192);
+            registry.setTimeToFirstMessage(30000);
         }
     }
 
     @Configuration
-    @EnableWebSocket
-    public static class MHWebSocketConfigurer implements WebSocketConfigurer {
-        public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-            registry.addHandler(new MyChatHandler(), "/ws/chat");
+    @EnableWebSocketMessageBroker
+//    @EnableScheduling
+    @Profile("processor & websocket")
+    public static class ProcessorWebSocketConfig implements WebSocketMessageBrokerConfigurer {
+        @Override
+        public void registerStompEndpoints(StompEndpointRegistry registry) {
+            registry.addEndpoint("/processor");
+//            registry.addEndpoint("/processor").setAllowedOrigins("*").withSockJS();
         }
     }
-*/
 
     @SuppressWarnings("unused")
     private final SpringChecker springChecker;
