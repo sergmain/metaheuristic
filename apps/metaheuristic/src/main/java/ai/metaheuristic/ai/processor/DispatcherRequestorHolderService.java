@@ -16,11 +16,13 @@
 
 package ai.metaheuristic.ai.processor;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.functions.FunctionRepositoryProcessorService;
 import ai.metaheuristic.ai.functions.FunctionRepositoryRequestor;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
+import jakarta.annotation.PreDestroy;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -69,8 +71,10 @@ public class DispatcherRequestorHolderService {
         for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedParams.DispatcherLookupExtended> entry : processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
             final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher = entry.getValue();
             final DispatcherRequestor requestor = new DispatcherRequestor(dispatcher.getDispatcherUrl(), globals,
-                    processorTaskService, processorService, processorEnvironment.metadataParams, currentExecState,
-                    processorEnvironment.dispatcherLookupExtendedService, processorCommandProcessor);
+                processorTaskService, processorService, processorEnvironment.metadataParams, currentExecState,
+                processorEnvironment.dispatcherLookupExtendedService, processorCommandProcessor,
+                globals.activeProfilesSet.contains(Consts.WEBSOCKET_PROFILE)
+            );
 
             final ProcessorKeepAliveRequestor keepAliveRequestor = new ProcessorKeepAliveRequestor(
                     dispatcher.dispatcherUrl, globals, processorService, processorKeepAliveProcessor, processorEnvironment);
@@ -79,6 +83,11 @@ public class DispatcherRequestorHolderService {
 
             dispatcherRequestorMap.put(dispatcher.dispatcherUrl, new Requesters(requestor, keepAliveRequestor, functionRepositoryRequestor));
         }
+    }
+
+    @PreDestroy
+    public void preDestroy() {
+        dispatcherRequestorMap.forEach((k,v) -> v.dispatcherRequestor.destroy());
     }
 
 }

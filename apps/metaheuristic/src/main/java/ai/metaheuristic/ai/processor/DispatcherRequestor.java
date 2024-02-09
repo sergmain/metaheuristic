@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
+import ai.metaheuristic.ai.processor.ws.ProcessorWebsocketService;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
@@ -34,6 +35,7 @@ import ai.metaheuristic.commons.CommonConsts;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
+import org.springframework.lang.Nullable;
 import org.springframework.web.client.*;
 
 import java.nio.charset.StandardCharsets;
@@ -49,6 +51,7 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
  * Time: 16:25
  */
 
+@SuppressWarnings("FieldCanBeLocal")
 @Slf4j
 public class DispatcherRequestor {
 
@@ -66,9 +69,17 @@ public class DispatcherRequestor {
     private final RestTemplate restTemplate;
     private final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher;
     private final String dispatcherRestUrl;
+    private final String dispatcherWsUrl;
+    @Nullable
+    private final ProcessorWebsocketService.WebSocketInfra wsInfra;
     private static final Random R = new Random();
 
-    public DispatcherRequestor(DispatcherUrl dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService, ProcessorService processorService, MetadataParams metadataService, CurrentExecState currentExecState, DispatcherLookupExtendedParams dispatcherLookupExtendedService, ProcessorCommandProcessor processorCommandProcessor) {
+    public DispatcherRequestor(
+        DispatcherUrl dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService,
+        ProcessorService processorService, MetadataParams metadataService, CurrentExecState currentExecState,
+        DispatcherLookupExtendedParams dispatcherLookupExtendedService, ProcessorCommandProcessor processorCommandProcessor,
+        boolean websocketEnabled) {
+
         this.dispatcherUrl = dispatcherUrl;
         this.globals = globals;
         this.processorTaskService = processorTaskService;
@@ -86,6 +97,15 @@ public class DispatcherRequestor {
             throw new IllegalStateException("775.010 Can't find dispatcher config for url " + dispatcherUrl);
         }
         dispatcherRestUrl = dispatcherUrl.url + CommonConsts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
+        dispatcherWsUrl = dispatcherUrl.url + Consts.WS_DISPATCHER_URL;
+
+        wsInfra = websocketEnabled ? new ProcessorWebsocketService.WebSocketInfra(dispatcherWsUrl, this::consumeDispatcherEvent) : null;
+    }
+
+    public void destroy() {
+        if (wsInfra!=null) {
+            wsInfra.destroy();
+        }
     }
 
     private long lastRequestForMissingResources = 0;
@@ -101,6 +121,10 @@ public class DispatcherRequestor {
         } finally {
             writeLock.unlock();
         }
+    }
+
+    private void consumeDispatcherEvent(String event) {
+
     }
 
     private void processDispatcherCommParamsYaml(ProcessorCommParamsYaml scpy, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {

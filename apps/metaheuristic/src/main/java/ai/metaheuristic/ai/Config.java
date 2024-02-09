@@ -73,8 +73,8 @@ public class Config {
     @Profile("dispatcher & websocket")
     public ServletServerContainerFactoryBean createWebSocketContainer() {
         ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
-        container.setMaxTextMessageBufferSize(8192);
-        container.setMaxBinaryMessageBufferSize(8192);
+        container.setMaxTextMessageBufferSize(1024);
+        container.setMaxBinaryMessageBufferSize(1024);
         return container;
     }
 
@@ -85,31 +85,19 @@ public class Config {
 
         @Override
         public void registerStompEndpoints(StompEndpointRegistry registry) {
-            registry.addEndpoint("/dispatcher");
+            registry.addEndpoint("/ws/dispatcher");
         }
 
         @Override
         public void configureMessageBroker(MessageBrokerRegistry config) {
-            config.setApplicationDestinationPrefixes("/dispatcher");
-            config.enableSimpleBroker("/topic", "/queue");
+            config.setApplicationDestinationPrefixes("/ws/dispatcher");
+            config.enableSimpleBroker("/topic");
         }
 
         @Override
         public void configureWebSocketTransport(WebSocketTransportRegistration registry) {
-            registry.setMessageSizeLimit(4 * 8192);
-            registry.setTimeToFirstMessage(30000);
-        }
-    }
-
-    @Configuration
-    @EnableWebSocketMessageBroker
-//    @EnableScheduling
-    @Profile("processor & websocket")
-    public static class ProcessorWebSocketConfig implements WebSocketMessageBrokerConfigurer {
-        @Override
-        public void registerStompEndpoints(StompEndpointRegistry registry) {
-            registry.addEndpoint("/processor");
-//            registry.addEndpoint("/processor").setAllowedOrigins("*").withSockJS();
+            registry.setMessageSizeLimit(1024);
+//            registry.setTimeToFirstMessage(30000);
         }
     }
 

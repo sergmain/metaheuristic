@@ -17,6 +17,8 @@ package ai.metaheuristic.ai;
 
 public final class Enums {
 
+    public enum WebsocketEventType { task, function }
+
     public enum FunctionSecurityCheck { always, skip_trusted, none }
 
     public enum TaskRejectingStatus {

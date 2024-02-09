@@ -33,6 +33,8 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings("DeprecatedIsStillUsed")
 public class Consts {
 
+    // - = +
+
     public static final String WEB_CONTAINER_SESSIONID_NAME = "JSESSIONID";
 
     public static final long SESSION_TTL = TimeUnit.MINUTES.toMillis(30);
@@ -45,6 +47,7 @@ public class Consts {
     public static final String UPLOAD_REST_URL = "/upload";
     public static final String VARIABLE_STATUS_REST_URL = "/variable-status";
     public static final String REST_ASSET_URL = "/rest/v1/asset";
+    public static final String WS_DISPATCHER_URL = "/ws/dispatcher";
 
     public static final MediaType APPLICATION_JSON_UTF8 = new MediaType(MediaType.APPLICATION_JSON.getType(), MediaType.APPLICATION_JSON.getSubtype(), StandardCharsets.UTF_8);
 
@@ -175,6 +178,7 @@ public class Consts {
     public static final String EXPECTED = "expected";
     public static final byte[] STUB_BYTES = "1".getBytes();
     public static final String STANDALONE_PROFILE = "standalone";
+    public static final String WEBSOCKET_PROFILE = "websocket";
     public static final String OPENAI_API_KEY = "OPENAI_API_KEY";
     public static final String REST_USER = "rest_user";
 

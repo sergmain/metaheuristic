@@ -16,12 +16,15 @@
 
 package ai.metaheuristic.ai.utils;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static ai.metaheuristic.ai.Consts.*;
 
 /**
  * @author Sergio Lissner
@@ -32,9 +35,9 @@ import java.util.List;
 public class SpringHelpersUtils {
 
     public static final List<String> POSSIBLE_PROFILES = List.of(
-            // Spring's profiles
-            "dispatcher", "processor", "quickstart", "standalone", "disk-storage", "test", "disable-check-frontend",
-            "websocket",
+        // Spring's profiles
+        "dispatcher", "processor", "quickstart", STANDALONE_PROFILE, "disk-storage", "test", "disable-check-frontend",
+        WEBSOCKET_PROFILE,
 
             // db's profiles
             "mysql", "postgresql", "h2", "hsqldb", "derby", "generic", "custom");
