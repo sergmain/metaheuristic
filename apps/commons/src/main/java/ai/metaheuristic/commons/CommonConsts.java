@@ -43,6 +43,7 @@ public class CommonConsts {
     public static final String GIT_REPO = "git-repo";
     public static final String HTTP = "http://";
     public static final String HTTPS = "https://";
+    public static final String WS_PROTOCOL = "ws://";
     public static final String YAML_EXT = ".yaml";
     public static final String YML_EXT = ".yml";
     public static final String ZIP_EXT = ".zip";

@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -116,6 +117,7 @@ public class FunctionRepositoryRequestor {
         return p!=null && CollectionUtils.isNotEmpty(p.functions);
     }
 
+    @SneakyThrows
     @Nullable
     private FunctionRepositoryResponseParams makeQuery(FunctionRepositoryRequestParams frrp) {
         final String url = dispatcherRestUrl + '/' + R.nextInt(100_000, 1_000_000);

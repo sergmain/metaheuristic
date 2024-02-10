@@ -17,20 +17,17 @@
 package ai.metaheuristic.ai.dispatcher.ws;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.event.events.NewWebsocketEvent;
 import ai.metaheuristic.ai.yaml.ws_event.WebsocketEventParams;
 import ai.metaheuristic.ai.yaml.ws_event.WebsocketEventParamsUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-
-import java.time.LocalDateTime;
-
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
 /**
  * @author Sergio Lissner
@@ -53,5 +50,16 @@ public class DispatcherWebsocketService {
         }
         String text = WebsocketEventParamsUtils.BASE_UTILS.toString(params);
         this.template.convertAndSend("/topic/events", text);
+    }
+
+    @Async
+    @EventListener
+    public void handleNewTaskWasProducedEvent(NewWebsocketEvent event) {
+        try {
+            log.info("188.040 New tasks were produced and processors will be informed via websockets");
+            sendEvent(Enums.WebsocketEventType.task);
+        } catch (Throwable th) {
+            log.error("188.060 Error", th);
+        }
     }
 }

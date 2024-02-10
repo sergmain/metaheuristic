@@ -34,6 +34,7 @@ import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.ai.yaml.ws_event.WebsocketEventParams;
 import ai.metaheuristic.ai.yaml.ws_event.WebsocketEventParamsUtils;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.exceptions.CustomInterruptedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -47,6 +48,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
+import static ai.metaheuristic.commons.CommonConsts.*;
 
 /**
  * User: Serg
@@ -97,12 +99,28 @@ public class DispatcherRequestor {
         this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
         this.dispatcher = dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
         if (dispatcher == null) {
-            throw new IllegalStateException("775.010 Can't find dispatcher config for url " + dispatcherUrl);
+            throw new IllegalStateException("775.030 Can't find dispatcher config for url " + dispatcherUrl);
         }
-        dispatcherRestUrl = dispatcherUrl.url + CommonConsts.REST_V1_URL + Consts.SERVER_REST_URL_V2;
-        dispatcherWsUrl = dispatcherUrl.url + Consts.WS_DISPATCHER_URL;
+        dispatcherRestUrl = dispatcherUrl.url + REST_V1_URL + Consts.SERVER_REST_URL_V2;
+        dispatcherWsUrl = getDispatcherWsUrl(dispatcherUrl);
 
         wsInfra = websocketEnabled ? new ProcessorWebsocketService.WebSocketInfra(dispatcherWsUrl, this::consumeDispatcherEvent) : null;
+    }
+
+    @NonNull
+    private static String getDispatcherWsUrl(DispatcherUrl dispatcherUrl) {
+        final String url = dispatcherUrl.url + Consts.WS_DISPATCHER_URL;
+        String wsUrl;
+        if (url.startsWith(HTTP)) {
+            wsUrl = url.substring(HTTP.length());
+        }
+        else if (url.startsWith(HTTPS)) {
+            wsUrl = url.substring(HTTPS.length());
+        }
+        else {
+            throw new IllegalStateException("Unknown protocol in url: " + url);
+        }
+        return WS_PROTOCOL + wsUrl;
     }
 
     public void destroy() {
@@ -128,31 +146,44 @@ public class DispatcherRequestor {
 
     private void consumeDispatcherEvent(String event) {
         WebsocketEventParams params = WebsocketEventParamsUtils.BASE_UTILS.to(event);
+        log.info("77.060 new event "+params.type+" from dispatcher via WS, " + dispatcherWsUrl);
+        if (params.type== Enums.WebsocketEventType.task) {
+            requestNewTaskImmediately();
+        }
         if (params.type== Enums.WebsocketEventType.function) {
-            throw new IllegalStateException("Not implemented yet");
+            throw new IllegalStateException("77.090 Not implemented yet");
         }
     }
 
+    private void requestNewTaskImmediately() {
+        Thread.currentThread().interrupt();
+        proceedWithRequest(true);
+    }
+
     private void processDispatcherCommParamsYaml(ProcessorCommParamsYaml scpy, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
-        log.debug("775.015 DispatcherCommParamsYaml:\n{}", dispatcherYaml);
+        log.debug("775.120 DispatcherCommParamsYaml:\n{}", dispatcherYaml);
         withSync(() -> {
             processorCommandProcessor.processDispatcherCommParamsYaml(scpy, dispatcherUrl, dispatcherYaml);
         });
     }
 
     public void proceedWithRequest() {
+        proceedWithRequest(false);
+    }
+
+    public void proceedWithRequest(boolean requestOnlyNewTask) {
         if (globals.testing || !globals.processor.enabled) {
             return;
         }
         if (dispatcher.dispatcherLookup.disabled) {
-            log.warn("775.020 dispatcher {} is disabled", dispatcherUrl.url);
+            log.warn("775.150 dispatcher {} is disabled", dispatcherUrl.url);
             return;
         }
 
         try {
             final ProcessorCommParamsYaml pcpy = prepareProcessorCommParamsYaml();
             if (!newRequest(pcpy)) {
-                log.info("775.045 no new requests to {}", dispatcherUrl.url );
+                log.info("775.180 no new requests to {}", dispatcherUrl.url );
                 return;
             }
 
@@ -164,20 +195,24 @@ public class DispatcherRequestor {
             final String result = RestUtils.makeRequest(restTemplate, url, yaml, dispatcher.authHeader, dispatcherRestUrl);
 
             if (result == null) {
-                log.warn("775.050 Dispatcher returned null as a result");
+                log.warn("775.210 Dispatcher returned null as a result");
                 return;
             }
             DispatcherCommParamsYaml dispatcherYaml = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(result);
 
             if (!dispatcherYaml.success) {
-                log.error("775.060 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
+                log.error("775.240 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
                 return;
             }
             processDispatcherCommParamsYaml(pcpy, dispatcherUrl, dispatcherYaml);
 
 
-        } catch (Throwable e) {
-            log.error("775.130 Error in fixedDelay(), url: {}, error: {}", dispatcherRestUrl, e.getMessage());
+        }
+        catch (CustomInterruptedException | InterruptedException e) {
+            //
+        }
+        catch (Throwable e) {
+            log.error("775.270 Error in fixedDelay(), url: {}, error: {}", dispatcherRestUrl, e.getMessage());
         }
     }
 

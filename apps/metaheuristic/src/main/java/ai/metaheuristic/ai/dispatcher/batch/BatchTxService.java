@@ -295,8 +295,9 @@ public class BatchTxService {
 
     @Nullable
     private static String selectVariable(Long execContextId, SourceCodeParamsYaml scpy) {
-        if (scpy.source.variables.inputs.size()!=1) {
-            final String es = "#981.410 expected only one input variable in execContext but actual count: " + scpy.source.variables.inputs.size();
+        if (scpy.source.variables==null || scpy.source.variables.inputs.size()!=1) {
+            final String es = "#981.410 expected only one input variable in execContext but actual count: " +
+                (scpy.source.variables==null ? "null" : ""+scpy.source.variables.inputs.size());
             log.warn(es);
             return null;
         }

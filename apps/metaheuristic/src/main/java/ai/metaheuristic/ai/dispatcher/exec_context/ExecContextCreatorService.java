@@ -16,9 +16,11 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
+import ai.metaheuristic.ai.dispatcher.event.events.NewWebsocketTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
@@ -49,6 +51,7 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -79,6 +82,7 @@ public class ExecContextCreatorService {
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextGraphCache execContextGraphCache;
     private final ExecContextVariableStateTxService execContextVariableStateCache;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -157,6 +161,7 @@ public class ExecContextCreatorService {
 
     private void produceTasksForExecContextInternal(SourceCodeImpl sourceCode, ExecContextCreationResult creationResult) {
         TxUtils.checkTxExists();
+        eventPublisher.publishEvent(new NewWebsocketTxEvent(Enums.WebsocketEventType.task));
         ExecContextSyncService.getWithSyncVoidForCreation(creationResult.execContext.id, () ->
                 ExecContextGraphSyncService.getWithSyncVoidForCreation(creationResult.execContext.execContextGraphId, ()->
                         ExecContextTaskStateSyncService.getWithSyncVoidForCreation(creationResult.execContext.execContextTaskStateId,

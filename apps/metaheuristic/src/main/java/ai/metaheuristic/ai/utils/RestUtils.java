@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.utils;
 
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.ConnectTimeoutException;
 import org.apache.hc.client5.http.fluent.Request;
@@ -66,7 +67,7 @@ public class RestUtils {
     }
 
     @Nullable
-    public static String makeRequest(RestTemplate restTemplate, String url, String requestContent, String authHeader, String serverRestUrl) {
+    public static String makeRequest(RestTemplate restTemplate, String url, String requestContent, String authHeader, String serverRestUrl) throws InterruptedException {
         String result = null;
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -77,6 +78,8 @@ public class RestUtils {
             HttpEntity<String> request = new HttpEntity<>(requestContent, headers);
 
             log.debug("ExchangeData:\n{}", requestContent);
+            ThreadUtils.checkInterrupted();
+            Thread.sleep(0);
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
             result = response.getBody();
             log.debug("ExchangeData from dispatcher:\n{}", result);
