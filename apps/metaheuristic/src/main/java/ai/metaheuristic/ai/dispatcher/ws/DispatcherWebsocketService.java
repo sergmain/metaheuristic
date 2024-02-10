@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.ws;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.yaml.ws_event.WebsocketEventParams;
+import ai.metaheuristic.ai.yaml.ws_event.WebsocketEventParamsUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +46,12 @@ public class DispatcherWebsocketService {
     private final SimpMessagingTemplate template;
 
     public void sendEvent(Enums.WebsocketEventType type) {
-        String text = type.toString();
+        WebsocketEventParams params = new WebsocketEventParams();
+        params.type = type;
+        if (type== Enums.WebsocketEventType.function) {
+            throw new IllegalStateException("Not implemented yet");
+        }
+        String text = WebsocketEventParamsUtils.BASE_UTILS.toString(params);
         this.template.convertAndSend("/topic/events", text);
     }
 }
