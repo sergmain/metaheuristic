@@ -1,5 +1,5 @@
 1. create fat-jar for metaheuristic in repository metaheuristic
-!!! default repo for 1.x. command is metaheuristic
+!!! default repo for paragraphs 1.x. command is metaheuristic
 
 1.1. copy ./apps/metaheuristic/target/metaheuristic.jar to ./distrib/jpackage/jar
 1.2. delete everything in ./distrib/jpackage/output
@@ -7,7 +7,7 @@
 
 
 2. rebuild angular in repository metaheuristic-angular
-!!! default repo for 2.x. command is metaheuristic-angular
+!!! default repo for paragraphs 2.x. command is metaheuristic-angular
 
 2.1. delete everything in ./dist
 2.2. run command "build4.2 ng build --aot --configuration production-standalone"
@@ -28,9 +28,15 @@ result of packaging will be in ./release-builds/metaheuristic-win32-x64
 
 3. Push to Steam
 
-3.1. Delete everything in D:\___steam\mh-play-test\ContentBuilder\content\
-3.2. Copy ./release-builds/metaheuristic-win32-x64 to D:\___steam\mh-play-test\ContentBuilder\content\
-3.3. Run D:\___steam\mh-play-test\ContentBuilder\run_build.bat
-3.4. in steamworks at https://partner.steamgames.com/apps/builds/2512570 switch the latest build
+3.1. Delete everything in D:\___steam\mh\ContentBuilder\content\
+3.2. Copy ./release-builds/metaheuristic-win32-x64 to D:\___steam\mh\ContentBuilder\content\
+3.3. Run D:\___steam\mh\ContentBuilder\run_build.bat
+
+for Metaheuristic:
+3.4.1. in steamworks at https://partner.steamgames.com/apps/builds/2499020 switch the latest build
+  by selecting default options and then pressing 'Preview changes' button
+
+for Metaheuristic-playtest:
+3.4.2. in steamworks at https://partner.steamgames.com/apps/builds/2512570 switch the latest build
   by pressing 'Preview changes' button
 
