@@ -40,6 +40,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class CustomUserDetails implements UserDetailsService {
 
+    public static final long MAIN_USER_ID = Integer.MAX_VALUE - 5L;
+
     private final Globals globals;
     private final AccountTxService accountService;
     private final AdditionalCustomUserDetails additionalCustomUserDetails;
@@ -62,7 +64,8 @@ public class CustomUserDetails implements UserDetailsService {
 
             // fake Id, I hope it won't make any collision with the real accounts
             // need to think of better solution for virtual accounts
-            account.setId( Integer.MAX_VALUE -5L );
+            account.setId(MAIN_USER_ID);
+
 
             // master admin will belong to companyUniqueId==1
             account.setCompanyId( 1L );
