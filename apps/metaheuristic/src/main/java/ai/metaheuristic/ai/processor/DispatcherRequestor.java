@@ -33,7 +33,6 @@ import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.ai.yaml.ws_event.WebsocketEventParams;
 import ai.metaheuristic.ai.yaml.ws_event.WebsocketEventParamsUtils;
-import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.exceptions.CustomInterruptedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -104,7 +103,11 @@ public class DispatcherRequestor {
         dispatcherRestUrl = dispatcherUrl.url + REST_V1_URL + Consts.SERVER_REST_URL_V2;
         dispatcherWsUrl = getDispatcherWsUrl(dispatcherUrl);
 
-        wsInfra = websocketEnabled ? new ProcessorWebsocketService.WebSocketInfra(dispatcherWsUrl, this::consumeDispatcherEvent) : null;
+        wsInfra = websocketEnabled ? new ProcessorWebsocketService.WebSocketInfra(
+            dispatcherWsUrl,
+            dispatcher.dispatcherLookup.getRestUsername(),
+            dispatcher.dispatcherLookup.getRestPassword(),
+            this::consumeDispatcherEvent) : null;
     }
 
     @NonNull

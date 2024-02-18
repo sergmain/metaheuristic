@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -116,6 +117,9 @@ public class ExecContextTaskAssigningTopLevelService {
             for (String notAllocatedReason : statTotal.notAllocatedReasons) {
                 log.info("  " + notAllocatedReason);
             }
+        }
+        if (statTotal.allocated>0) {
+            eventPublisher.publishEvent(new NewWebsocketEvent(Enums.WebsocketEventType.task));
         }
     }
 
@@ -264,7 +268,7 @@ public class ExecContextTaskAssigningTopLevelService {
             }
         }
         TaskProviderTopLevelService.lock(execContextId);
-        log.debug("703.670 allocated {} of new taks in execContext #{}", stat.allocated, execContextId);
+        log.debug("703.670 allocated {} of new tasks in execContext #{}", stat.allocated, execContextId);
 
         return stat;
     }

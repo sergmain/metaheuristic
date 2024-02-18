@@ -2,16 +2,17 @@ package ai.metaheuristic.ai.processor.ws;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.tomcat.websocket.Constants;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.converter.StringMessageConverter;
 import org.springframework.messaging.simp.stomp.*;
 import org.springframework.scheduling.concurrent.SimpleAsyncTaskScheduler;
-import org.springframework.web.socket.client.WebSocketClient;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 
 import java.lang.reflect.Type;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -52,7 +53,7 @@ public class ProcessorWebsocketService {
     }
 
     public static class WebSocketInfra {
-        private final WebSocketClient webSocketClient;
+        private final StandardWebSocketClient webSocketClient;
         private final WebSocketStompClient stompClient;
         private final String url;
         private final MyStompSessionHandler sessionHandler;
@@ -63,10 +64,15 @@ public class ProcessorWebsocketService {
         private Thread mainThread = null;
         private final Consumer<String> eventConsumerFunc;
 
-        public WebSocketInfra(String url, Consumer<String> eventConsumerFunc) {
+        public WebSocketInfra(String url, String  user, String pass, Consumer<String> eventConsumerFunc) {
             this.url = url;
             this.eventConsumerFunc = eventConsumerFunc;
             webSocketClient = new StandardWebSocketClient();
+            // hard-lock on Apache Tomcat
+            webSocketClient.setUserProperties(Map.of(
+                Constants.WS_AUTHENTICATION_USER_NAME, user,
+                Constants.WS_AUTHENTICATION_PASSWORD, pass
+            ));
             stompClient = new WebSocketStompClient(webSocketClient);
             stompClient.setMessageConverter(new StringMessageConverter());
             final SimpleAsyncTaskScheduler taskScheduler = new SimpleAsyncTaskScheduler();
@@ -98,8 +104,7 @@ public class ProcessorWebsocketService {
         private boolean end = false;
 
         private void runInfra() {
-            mainThread = new Thread(this::runInfraLoop);
-            mainThread.start();
+            mainThread = Thread.startVirtualThread(this::runInfraLoop);
         }
 
         private void runInfraLoop() {
@@ -109,8 +114,7 @@ public class ProcessorWebsocketService {
                     try {
                         if (wsThread==null) {
                             System.out.println("Create a new thread for connecting to server, " + url);
-                            wsThread = new Thread(this::connectToServer);
-                            wsThread.start();
+                            wsThread = Thread.startVirtualThread(this::connectToServer);
                         }
                     }
                     finally {
