@@ -77,7 +77,7 @@ public class DispatcherRequestor {
     @Nullable
     private final ProcessorWebsocketService.WebSocketInfra wsInfra;
     private static final Random R = new Random();
-    private final Enums.RequestToDispatcherType defaultTaskRequest;
+    private Enums.RequestToDispatcherType defaultTaskRequest = Enums.RequestToDispatcherType.both;
 
     public DispatcherRequestor(
         DispatcherUrl dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService,
@@ -105,7 +105,6 @@ public class DispatcherRequestor {
         dispatcherWsUrl = getDispatcherWsUrl(dispatcherUrl);
 
         if (websocketEnabled && !dispatcher.dispatcherLookup.disabled) {
-            defaultTaskRequest = Enums.RequestToDispatcherType.main;
             wsInfra = new ProcessorWebsocketService.WebSocketInfra(
                 dispatcherWsUrl,
                 dispatcher.dispatcherLookup.getRestUsername(),
@@ -114,7 +113,6 @@ public class DispatcherRequestor {
             wsInfra.runInfra();
         }
         else {
-            defaultTaskRequest = Enums.RequestToDispatcherType.both;
             wsInfra = null;
         }
     }
@@ -168,6 +166,8 @@ public class DispatcherRequestor {
     }
 
     private void requestNewTaskImmediately() {
+        // if we received request via websocket, then downgrade default request type to main
+        defaultTaskRequest = Enums.RequestToDispatcherType.main;
         proceedWithRequest(Enums.RequestToDispatcherType.task);
     }
 
