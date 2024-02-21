@@ -28,6 +28,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.aop.interceptor.AsyncExecutionAspectSupport;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,11 +38,11 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.*;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -57,12 +58,15 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.util.List;
 
+import static org.springframework.scheduling.config.TaskSchedulerRouter.DEFAULT_TASK_SCHEDULER_BEAN_NAME;
+
 /**
  * User: Serg
  * Date: 08.06.2017
  * Time: 17:21
  */
 @EnableCaching
+@EnableAsync
 @Configuration
 @Slf4j
 @EnableConfigurationProperties(Globals.class)
@@ -76,6 +80,20 @@ public class Config {
         container.setMaxTextMessageBufferSize(1024);
         container.setMaxBinaryMessageBufferSize(1024);
         return container;
+    }
+
+    @Bean
+    public TaskExecutor taskExecutor() {
+        final SimpleAsyncTaskExecutor simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor(AsyncExecutionAspectSupport.DEFAULT_TASK_EXECUTOR_BEAN_NAME);
+        simpleAsyncTaskExecutor.setVirtualThreads(true);
+        return simpleAsyncTaskExecutor;
+    }
+
+    @Bean
+    public TaskExecutor taskScheduler() {
+        final SimpleAsyncTaskExecutor simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor(DEFAULT_TASK_SCHEDULER_BEAN_NAME);
+        simpleAsyncTaskExecutor.setVirtualThreads(true);
+        return simpleAsyncTaskExecutor;
     }
 
     @Configuration
@@ -104,10 +122,12 @@ public class Config {
     @SuppressWarnings("unused")
     private final SpringChecker springChecker;
 
+/*
     @Configuration
     @EnableAsync
     public static class SpringAsyncConfig implements AsyncConfigurer {
     }
+*/
 
     @Component
     public static class EOFCustomFilter implements Filter {

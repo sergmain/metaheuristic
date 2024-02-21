@@ -17,6 +17,17 @@ package ai.metaheuristic.ai;
 
 public final class Enums {
 
+    public enum RequestToDispatcherType {task(true, false), main(false, true), both(true, true);
+
+        public final boolean isTask;
+        public final boolean isMain;
+
+        RequestToDispatcherType(boolean isTask, boolean isMain) {
+            this.isTask = isTask;
+            this.isMain = isMain;
+        }
+    }
+
     public enum WebsocketEventType { task, function }
 
     public enum FunctionSecurityCheck { always, skip_trusted, none }
