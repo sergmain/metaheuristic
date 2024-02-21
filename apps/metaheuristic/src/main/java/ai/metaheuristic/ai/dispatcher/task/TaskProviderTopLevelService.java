@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.MetaheuristicThreadLocal;
 import ai.metaheuristic.ai.data.DispatcherData;
@@ -79,7 +80,6 @@ public class TaskProviderTopLevelService {
     private final ProcessorCache processorCache;
     private final ProcessorCoreRepository processorCoreRepository;
     private final ExecContextStatusService execContextStatusService;
-    private final ApplicationEventPublisher applicationEventPublisher;
     private final ExecContextCache execContextCache;
     private final ExecContextReadinessStateService execContextReadinessStateService;
     private final ApplicationEventPublisher eventPublisher;
@@ -262,9 +262,10 @@ public class TaskProviderTopLevelService {
         }
         TaskQueueSyncStaticService.getWithSyncVoid(()-> {
             boolean b = TaskQueueService.setTaskExecState(execContextId, taskId, state);
+            eventPublisher.publishEvent(new NewWebsocketEvent(Enums.WebsocketEventType.task));
             log.debug("393.400 task #{}, state: {}, result: {}", taskId, state, b);
             if (b) {
-                applicationEventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
+                eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
                         execContextId, execContext.execContextTaskStateId));
             }
         });
