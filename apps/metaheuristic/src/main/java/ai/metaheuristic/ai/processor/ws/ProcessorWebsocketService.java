@@ -83,19 +83,19 @@ public class ProcessorWebsocketService {
 
         public void terminateWsThread() {
             if (wsThread!=null) {
-                System.out.println("Start terminating ws thread, " + url);
+                log.debug("Start terminating ws thread, " + url);
                 wsThread.interrupt();
                 wsThread = null;
-                System.out.println("\tws thread was terminated, " + url);
+                log.debug("\tws thread was terminated, " + url);
             }
         }
 
         public void terminateMainThread() {
             if (mainThread!=null) {
-                System.out.println("Start terminating mian thread, " + url);
+                log.debug("Start terminating main thread, " + url);
                 mainThread.interrupt();
                 mainThread = null;
-                System.out.println("\tmain thread was terminated, " + url);
+                log.debug("\tmain thread was terminated, " + url);
             }
         }
 
@@ -103,8 +103,10 @@ public class ProcessorWebsocketService {
         private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
         private boolean end = false;
 
-        private void runInfra() {
+        public void runInfra() {
             mainThread = Thread.startVirtualThread(this::runInfraLoop);
+//            mainThread = new Thread(this::runInfraLoop);
+//            mainThread.start();
         }
 
         private void runInfraLoop() {
@@ -115,6 +117,8 @@ public class ProcessorWebsocketService {
                         if (wsThread==null) {
                             System.out.println("Create a new thread for connecting to server, " + url);
                             wsThread = Thread.startVirtualThread(this::connectToServer);
+//                            wsThread = new Thread(this::connectToServer);
+//                            wsThread.start();
                         }
                     }
                     finally {
@@ -137,12 +141,12 @@ public class ProcessorWebsocketService {
         }
 
         private boolean connectToServer()  {
-            System.out.println("start processing CompletableFuture, " + url);
+            log.debug("start processing CompletableFuture, " + url);
             inProcess.set(true);
             try {
                 CompletableFuture<StompSession> future = stompClient.connectAsync(url, sessionHandler);
 
-                System.out.println("\twaiting for completion, " + url);
+                log.debug("\twaiting for completion, " + url);
                 StompSession session = future.get();
                 if (session!=null) {
                     StompHeaders headers = new StompHeaders();
@@ -150,10 +154,10 @@ public class ProcessorWebsocketService {
                     headers.setDestination("/topic/events");
                     session.subscribe(headers, new MyStompFrameHandler(url, eventConsumerFunc));
                     sessionHandler.initialized = true;
-                    System.out.println("\tinitialization of session was completed, " + url);
+                    log.debug("\tinitialization of session was completed, " + url);
                 }
                 else {
-                    System.out.println("\tsession is null, " + url);
+                    log.debug("\tsession is null, " + url);
                 }
                 return true;
             }
@@ -187,14 +191,14 @@ public class ProcessorWebsocketService {
 
         @Override
         public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
-            System.out.println("afterConnected(), " + url+ ", " + statusFunc.get());
+            log.debug("afterConnected(), " + url+ ", " + statusFunc.get());
             // ...
         }
 
         @Override
         public void handleException(StompSession session, @Nullable StompCommand command,
                                     StompHeaders headers, byte[] payload, Throwable exception) {
-            System.out.println("handleException(), " + url+ ", " + statusFunc.get());
+            log.debug("handleException(), " + url+ ", " + statusFunc.get());
         }
 
         /**
@@ -202,7 +206,7 @@ public class ProcessorWebsocketService {
          */
         @Override
         public void handleTransportError(StompSession session, Throwable exception) {
-            System.out.println("handleTransportError(), " + url + ", " + statusFunc.get());
+            log.debug("handleTransportError(), " + url + ", " + statusFunc.get());
             terminateOnErrorFunc.run();
         }
     }

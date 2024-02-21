@@ -77,6 +77,7 @@ public class DispatcherRequestor {
     @Nullable
     private final ProcessorWebsocketService.WebSocketInfra wsInfra;
     private static final Random R = new Random();
+    private final Enums.RequestToDispatcherType defaultTaskRequest;
 
     public DispatcherRequestor(
         DispatcherUrl dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService,
@@ -103,11 +104,19 @@ public class DispatcherRequestor {
         dispatcherRestUrl = dispatcherUrl.url + REST_V1_URL + Consts.SERVER_REST_URL_V2;
         dispatcherWsUrl = getDispatcherWsUrl(dispatcherUrl);
 
-        wsInfra = websocketEnabled ? new ProcessorWebsocketService.WebSocketInfra(
-            dispatcherWsUrl,
-            dispatcher.dispatcherLookup.getRestUsername(),
-            dispatcher.dispatcherLookup.getRestPassword(),
-            this::consumeDispatcherEvent) : null;
+        if (websocketEnabled && !dispatcher.dispatcherLookup.disabled) {
+            defaultTaskRequest = Enums.RequestToDispatcherType.main;
+            wsInfra = new ProcessorWebsocketService.WebSocketInfra(
+                dispatcherWsUrl,
+                dispatcher.dispatcherLookup.getRestUsername(),
+                dispatcher.dispatcherLookup.getRestPassword(),
+                this::consumeDispatcherEvent);
+            wsInfra.runInfra();
+        }
+        else {
+            defaultTaskRequest = Enums.RequestToDispatcherType.both;
+            wsInfra = null;
+        }
     }
 
     @NonNull
@@ -135,10 +144,10 @@ public class DispatcherRequestor {
     private long lastRequestForMissingResources = 0;
     private long lastCheckForResendTaskOutputResource = 0;
 
-    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
-    private static void withSync(Runnable function) {
+    private void withSync(Runnable function) {
         writeLock.lock();
         try {
             function.run();
@@ -159,8 +168,7 @@ public class DispatcherRequestor {
     }
 
     private void requestNewTaskImmediately() {
-        Thread.currentThread().interrupt();
-        proceedWithRequest(true);
+        proceedWithRequest(Enums.RequestToDispatcherType.task);
     }
 
     private void processDispatcherCommParamsYaml(ProcessorCommParamsYaml scpy, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
@@ -171,10 +179,10 @@ public class DispatcherRequestor {
     }
 
     public void proceedWithRequest() {
-        proceedWithRequest(false);
+        proceedWithRequest(defaultTaskRequest);
     }
 
-    public void proceedWithRequest(boolean requestOnlyNewTask) {
+    private void proceedWithRequest(Enums.RequestToDispatcherType taskRequest) {
         if (globals.testing || !globals.processor.enabled) {
             return;
         }
@@ -184,7 +192,7 @@ public class DispatcherRequestor {
         }
 
         try {
-            final ProcessorCommParamsYaml pcpy = prepareProcessorCommParamsYaml();
+            final ProcessorCommParamsYaml pcpy = prepareProcessorCommParamsYaml(taskRequest);
             if (!newRequest(pcpy)) {
                 log.info("775.180 no new requests to {}", dispatcherUrl.url );
                 return;
@@ -208,8 +216,6 @@ public class DispatcherRequestor {
                 return;
             }
             processDispatcherCommParamsYaml(pcpy, dispatcherUrl, dispatcherYaml);
-
-
         }
         catch (CustomInterruptedException | InterruptedException e) {
             //
@@ -219,20 +225,26 @@ public class DispatcherRequestor {
         }
     }
 
-    private ProcessorCommParamsYaml prepareProcessorCommParamsYaml() {
+    private ProcessorCommParamsYaml prepareProcessorCommParamsYaml(Enums.RequestToDispatcherType taskRequest) {
         ProcessorCommParamsYaml pcpy = new ProcessorCommParamsYaml();
 
         ProcessorCommParamsYaml.ProcessorRequest r = pcpy.request;
-        r.currentQuota = metadataService.currentQuota(dispatcherUrl.url);
 
         MetadataParamsYaml.ProcessorSession ps = metadataService.getProcessorSession(dispatcherUrl);
         final Long processorId = ps.processorId;
         final String sessionId = ps.sessionId;
 
         if (processorId == null || sessionId == null) {
-            r.requestProcessorId = new ProcessorCommParamsYaml.RequestProcessorId();
+            if (taskRequest.isMain) {
+                r.requestProcessorId = new ProcessorCommParamsYaml.RequestProcessorId();
+            }
+            else {
+                // return empty request in case when e need a new task but session wasn't initialized yet
+                return pcpy;
+            }
         }
         else {
+            r.currentQuota = metadataService.currentQuota(dispatcherUrl.url);
             r.processorCommContext = new ProcessorCommParamsYaml.ProcessorCommContext(processorId, sessionId);
 
             if (System.currentTimeMillis() - lastRequestForMissingResources > 30_000) {
@@ -248,24 +260,28 @@ public class DispatcherRequestor {
                 ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core =
                         new ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef(dispatcherUrl, ps.dispatcherCode, processorId, coreCode, coreId);
 
-                // we have to pull new tasks from server constantly only if a list of execContextIds was initialized fully
-                if (currentExecState.getCurrentInitState(dispatcherUrl)== Enums.ExecContextInitState.FULL) {
-                    final boolean b = processorTaskService.isNeedNewTask(core);
-                    if (b && dispatcher.schedule.isCurrentTimeActive()) {
-                        // always report about current active tasks, if we have actual processorId
-                        // don't report about tasks which belong to finished execContext
-                        final String taskIds = processorTaskService.findAllForCore(core).stream()
+                if (taskRequest.isTask) {
+                    if (currentExecState.getCurrentInitState(dispatcherUrl)== Enums.ExecContextInitState.FULL) {
+                        final boolean b = processorTaskService.isNeedNewTask(core);
+                        if (b && dispatcher.schedule.isCurrentTimeActive()) {
+                            // don't report about tasks which belong to finished execContext
+                            final String taskIds = processorTaskService.findAllForCore(core).stream()
                                 .filter(o -> currentExecState.notFinishedAndExists(dispatcher.dispatcherUrl, o.execContextId))
                                 .map(o -> o.taskId.toString()).collect(Collectors.joining(","));
-                        coreParams.requestTask = new ProcessorCommParamsYaml.RequestTask(dispatcher.dispatcherLookup.signatureRequired, taskIds);
+                            coreParams.requestTask = new ProcessorCommParamsYaml.RequestTask(dispatcher.dispatcherLookup.signatureRequired, taskIds);
+                        }
                     }
-                    else {
+                }
+
+                if (taskRequest.isMain) {
+                    // we have to pull new tasks from server constantly only if a list of execContextIds was initialized fully
+                    if (currentExecState.getCurrentInitState(dispatcherUrl)== Enums.ExecContextInitState.FULL) {
                         if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
                             // let's check variables for not completed and not sent yet tasks
                             List<ProcessorCoreTask> processorTasks = processorTaskService.findAllByCompletedIsFalse(core).stream()
-                                    .filter(t -> t.delivered && t.finishedOn != null && !t.output.allUploaded())
-                                    .filter(t -> currentExecState.notFinishedAndExists(core.dispatcherUrl, t.execContextId))
-                                    .collect(Collectors.toList());
+                                .filter(t -> t.delivered && t.finishedOn != null && !t.output.allUploaded())
+                                .filter(t -> currentExecState.notFinishedAndExists(core.dispatcherUrl, t.execContextId))
+                                .collect(Collectors.toList());
 
                             List<ProcessorCommParamsYaml.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
                             for (ProcessorCoreTask processorTask : processorTasks) {
@@ -280,8 +296,8 @@ public class DispatcherRequestor {
                             lastCheckForResendTaskOutputResource = System.currentTimeMillis();
                         }
                     }
+                    pcpy.addReportTaskProcessingResult(processorTaskService.reportTaskProcessingResult(core));
                 }
-                pcpy.addReportTaskProcessingResult(processorTaskService.reportTaskProcessingResult(core));
             }
         }
         return pcpy;
