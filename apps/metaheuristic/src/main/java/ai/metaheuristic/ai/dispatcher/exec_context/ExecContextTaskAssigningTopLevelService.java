@@ -135,7 +135,7 @@ public class ExecContextTaskAssigningTopLevelService {
         if (execContext == null) {
             return stat;
         }
-        // do nothing is execContext is finished or stopped
+        // do nothing if execContext is finished or stopped
         var execContextState = EnumsApi.ExecContextState.fromCode(execContext.state);
         if (EnumsApi.ExecContextState.isFinishedState(execContextState) || execContextState== EnumsApi.ExecContextState.STOPPED) {
             return stat;

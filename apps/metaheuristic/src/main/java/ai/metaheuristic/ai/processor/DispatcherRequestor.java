@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
+import ai.metaheuristic.ai.processor.event.RequestDispatcherForNewTaskEvent;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
 import ai.metaheuristic.ai.processor.ws.ProcessorWebsocketService;
@@ -33,7 +34,9 @@ import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import ai.metaheuristic.ai.yaml.ws_event.WebsocketEventParams;
 import ai.metaheuristic.ai.yaml.ws_event.WebsocketEventParamsUtils;
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.commons.exceptions.CustomInterruptedException;
+import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -78,6 +81,9 @@ public class DispatcherRequestor {
     private final ProcessorWebsocketService.WebSocketInfra wsInfra;
     private static final Random R = new Random();
     private Enums.RequestToDispatcherType defaultTaskRequest = Enums.RequestToDispatcherType.both;
+
+    private final MultiTenantedQueue<Enums.WebsocketEventType, RequestDispatcherForNewTaskEvent> MULTI_TENANTED_QUEUE =
+        new MultiTenantedQueue<>(2, ConstsApi.SECONDS_1, true, null, this::handleRequestDispatcherForNewTaskEvent);
 
     public DispatcherRequestor(
         DispatcherUrl dispatcherUrl, Globals globals, ProcessorTaskService processorTaskService,
@@ -137,6 +143,7 @@ public class DispatcherRequestor {
         if (wsInfra!=null) {
             wsInfra.destroy();
         }
+        MULTI_TENANTED_QUEUE.shutdown();
     }
 
     private long lastRequestForMissingResources = 0;
@@ -156,11 +163,15 @@ public class DispatcherRequestor {
 
     private void consumeDispatcherEvent(String event) {
         WebsocketEventParams params = WebsocketEventParamsUtils.BASE_UTILS.to(event);
-        log.info("77.060 new event "+params.type+" from dispatcher via WS, " + dispatcherWsUrl);
-        if (params.type== Enums.WebsocketEventType.task) {
+        MULTI_TENANTED_QUEUE.putToQueue(new RequestDispatcherForNewTaskEvent(params));
+    }
+
+    private void handleRequestDispatcherForNewTaskEvent(RequestDispatcherForNewTaskEvent event) {
+        log.info("77.060 new event "+event.params.type+" from dispatcher via WS, " + dispatcherWsUrl);
+        if (event.params.type== Enums.WebsocketEventType.task) {
             requestNewTaskImmediately();
         }
-        if (params.type== Enums.WebsocketEventType.function) {
+        if (event.params.type== Enums.WebsocketEventType.function) {
             throw new IllegalStateException("77.090 Not implemented yet");
         }
     }
