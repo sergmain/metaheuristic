@@ -34,6 +34,7 @@ import ai.metaheuristic.ai.mhbp.yaml.chat.ChatParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -71,6 +72,7 @@ public class ChatService {
     private final ApplicationEventPublisher eventPublisher;
 
     public ChatData.Chats getChats(Pageable pageable, DispatcherContext context) {
+        pageable = PageUtils.fixPageSize(25, pageable);
         try {
             List<ChatData.SimpleChat> chats = chatRepository.findIds(pageable, context.getAccountId()).stream()
                     .map(this::to).toList();

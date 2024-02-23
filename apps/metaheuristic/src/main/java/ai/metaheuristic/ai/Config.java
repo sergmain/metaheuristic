@@ -83,6 +83,7 @@ public class Config {
     }
 
     @Bean
+    @Profile("websocket")
     public TaskExecutor taskExecutor() {
         final SimpleAsyncTaskExecutor simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor(AsyncExecutionAspectSupport.DEFAULT_TASK_EXECUTOR_BEAN_NAME);
         simpleAsyncTaskExecutor.setVirtualThreads(true);
@@ -90,6 +91,7 @@ public class Config {
     }
 
     @Bean
+    @Profile("websocket")
     public TaskExecutor taskScheduler() {
         final SimpleAsyncTaskExecutor simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor(DEFAULT_TASK_SCHEDULER_BEAN_NAME);
         simpleAsyncTaskExecutor.setVirtualThreads(true);
