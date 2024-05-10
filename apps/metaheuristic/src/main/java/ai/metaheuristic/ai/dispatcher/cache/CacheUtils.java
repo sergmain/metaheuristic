@@ -26,7 +26,7 @@ import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.compress.utils.CountingInputStream;
+import org.apache.commons.io.input.CountingInputStream;
 import org.springframework.lang.Nullable;
 
 import java.io.ByteArrayInputStream;
@@ -146,7 +146,7 @@ public class CacheUtils {
     public static CacheData.Sha256PlusLength getSha256PlusLength(InputStream bis) {
         CountingInputStream cis = new CountingInputStream(bis);
         String sha256 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, cis);
-        long length = cis.getBytesRead();
+        long length = cis.getByteCount();
         return new CacheData.Sha256PlusLength(sha256, length);
     }
 

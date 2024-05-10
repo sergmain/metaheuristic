@@ -13,14 +13,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.yaml.data_storage;
+package ai.metaheuristic.commons.yaml.data_storage;
 
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.yaml.YamlUtils;
+import ai.metaheuristic.commons.yaml.auth.ApiAuth;
+import ai.metaheuristic.commons.yaml.auth.ApiAuthUtilsV1;
+import ai.metaheuristic.commons.yaml.auth.ApiAuthUtilsV2;
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -29,24 +34,14 @@ import java.nio.file.Path;
  */
 public class DataStorageParamsUtils {
 
-    private static Yaml getYaml() {
-        return YamlUtils.init(DataStorageParams.class);
-    }
+    private static final DataStorageParamsUtilsV1 UTILS_V_1 = new DataStorageParamsUtilsV1();
+    private static final DataStorageParamsUtilsV1 DEFAULT_UTILS = UTILS_V_1;
 
-    public static String toString(DataStorageParams config) {
-        return YamlUtils.toString(config, getYaml());
-    }
-
-    public static DataStorageParams to(String s) {
-        return (DataStorageParams) YamlUtils.to(s, getYaml());
-    }
-
-    public static DataStorageParams to(InputStream is) {
-        return (DataStorageParams) YamlUtils.to(is, getYaml());
-    }
-
-    public static DataStorageParams to(Path file) {
-        return (DataStorageParams) YamlUtils.to(file, getYaml());
-    }
+    public static final BaseYamlUtils<DataStorageParams> UTILS = new BaseYamlUtils<>(
+        Map.of(
+            1, UTILS_V_1
+        ),
+        DEFAULT_UTILS
+    );
 
 }

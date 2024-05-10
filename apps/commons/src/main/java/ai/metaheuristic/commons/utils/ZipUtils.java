@@ -231,11 +231,18 @@ public class ZipUtils {
         return destinationPath;
     }
 
+/*
     public static class MyZipFile extends ZipFile implements AutoCloseable {
 
         public MyZipFile(SeekableByteChannel inChannel) throws IOException {
             super(inChannel);
         }
+    }
+
+*/
+    @SneakyThrows
+    private static ZipFile getZipFile(SeekableByteChannel inChannel) {
+        return new ZipFile.Builder().setSeekableByteChannel(inChannel).get();
     }
 
     @Deprecated(forRemoval = true)
@@ -253,7 +260,10 @@ public class ZipUtils {
         log.debug("'\t\tis readable: {}", Files.isReadable(archivePath));
         List<String> errors = new ArrayList<>();
 
-        try (SeekableByteChannel inChannel = Files.newByteChannel(archivePath, EnumSet.of(READ)); MyZipFile zipFile = new MyZipFile(inChannel)) {
+        try (SeekableByteChannel inChannel = Files.newByteChannel(archivePath, EnumSet.of(READ));
+//             MyZipFile zipFile = new MyZipFile(inChannel)
+             ZipFile zipFile = getZipFile(inChannel)
+        ) {
             Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
             while (entries.hasMoreElements()) {
                 ZipArchiveEntry zipEntry = entries.nextElement();
@@ -322,7 +332,10 @@ public class ZipUtils {
             log.debug("'\t\tis writable: {}", Files.isWritable(zipDestinationFolderPath));
         }
 
-        try (SeekableByteChannel inChannel = Files.newByteChannel(archivePath, EnumSet.of(READ)); MyZipFile zipFile = new MyZipFile(inChannel)) {
+        try (SeekableByteChannel inChannel = Files.newByteChannel(archivePath, EnumSet.of(READ));
+//             MyZipFile zipFile = new MyZipFile(inChannel)
+             ZipFile zipFile = getZipFile(inChannel)
+        ) {
 
             Map<String, String> mapping = new HashMap<>();
 
@@ -418,7 +431,10 @@ public class ZipUtils {
             log.debug("'\t\tis readable: {}", Files.isReadable(archivePath));
         }
         List<String> names = new ArrayList<>();
-        try (SeekableByteChannel inChannel = Files.newByteChannel(archivePath, EnumSet.of(READ)); MyZipFile zipFile = new MyZipFile(inChannel)) {
+        try (SeekableByteChannel inChannel = Files.newByteChannel(archivePath, EnumSet.of(READ));
+//             MyZipFile zipFile = new MyZipFile(inChannel)
+             ZipFile zipFile = getZipFile(inChannel)
+        ) {
             Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
             while (entries.hasMoreElements()) {
                 ZipArchiveEntry zipEntry = entries.nextElement();

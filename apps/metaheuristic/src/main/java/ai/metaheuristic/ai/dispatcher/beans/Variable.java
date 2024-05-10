@@ -16,8 +16,9 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
-import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
+import ai.metaheuristic.commons.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -78,13 +79,36 @@ public class Variable implements Serializable {
 
     // ai.metaheuristic.api.data_storage.DataStorageParams is here
     @Column(name = "PARAMS")
-    public String params;
+    private String params;
 
     // TODO 2020-12-21 need to add a way to check the length of variable with length of stored on disk variable
     //  maybe even with checksum
+    public String getParams() {
+        return params;
+    }
+
+    public void setParams(String params) {
+        this.paramsLocked.reset(()->this.params = params);
+    }
+
+    @Transient
+    @JsonIgnore
+    private final ThreadUtils.CommonThreadLocker<DataStorageParams> paramsLocked = new ThreadUtils.CommonThreadLocker<>(this::parseParams);
+
+    private DataStorageParams parseParams() {
+        DataStorageParams temp = DataStorageParamsUtils.UTILS.to(params);
+        DataStorageParams ecpy = temp==null ? new DataStorageParams() : temp;
+        return ecpy;
+    }
 
     @JsonIgnore
     public DataStorageParams getDataStorageParams() {
-        return DataStorageParamsUtils.to(params);
+        return paramsLocked.get();
     }
+
+    @JsonIgnore
+    public void updateParams(DataStorageParams wpy) {
+        setParams(DataStorageParamsUtils.UTILS.toString(wpy));
+    }
+
 }

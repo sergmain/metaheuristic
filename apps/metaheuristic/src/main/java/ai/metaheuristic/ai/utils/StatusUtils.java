@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.utils;
 import ai.metaheuristic.commons.S;
 import org.springframework.lang.NonNull;
 
-import java.io.PrintStream;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -90,14 +89,14 @@ public class StatusUtils {
          * Print table
          */
         consumeFunc.accept(line);
-        Arrays.stream(finalTable).limit(1).forEach(a -> consumeFunc.accept(S.f(formatingString, a)));
+        Arrays.stream(finalTable).limit(1).forEach(a -> consumeFunc.accept(S.f(formatingString, (Object[]) a)));
 
         for (int i = 1;  i < finalTable.length ; ++i) {
             if (allEmpty(finalTable[i]) && !emptyRowSeparator) {
                 consumeFunc.accept(line);
             }
             else {
-                consumeFunc.accept(S.f(formatingString, finalTable[i]));
+                consumeFunc.accept(S.f(formatingString, (Object[]) finalTable[i]));
             }
         }
         if (!allEmpty(finalTable[finalTable.length-1])) {

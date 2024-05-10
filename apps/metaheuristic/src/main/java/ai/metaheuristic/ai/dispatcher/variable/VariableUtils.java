@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.commons.utils.JsonUtils;
-import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
+import ai.metaheuristic.commons.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
@@ -50,7 +50,7 @@ public class VariableUtils {
                 v.id = pv.globalVariable.id.toString();
                 v.name = pv.globalVariable.variable;
 
-                DataStorageParams dsp = DataStorageParamsUtils.to(pv.globalVariable.params);
+                DataStorageParams dsp = DataStorageParamsUtils.UTILS.to(pv.globalVariable.params);
                 v.sourcing = dsp.sourcing;
                 v.git = dsp.git;
                 v.disk = dsp.disk;

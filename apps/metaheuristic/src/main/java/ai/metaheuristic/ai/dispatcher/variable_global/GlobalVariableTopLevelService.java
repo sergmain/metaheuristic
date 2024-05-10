@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.data.GlobalVariableData;
 import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
 import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
-import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
+import ai.metaheuristic.commons.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -116,14 +116,14 @@ public class GlobalVariableTopLevelService {
             log.error(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
-        DataStorageParams dsp = DataStorageParamsUtils.to(params);
+        DataStorageParams dsp = DataStorageParamsUtils.UTILS.to(params);
         if (dsp.sourcing==null || dsp.sourcing== EnumsApi.DataSourcing.dispatcher) {
             String es = "#172.070 Sourcing must be "+ EnumsApi.DataSourcing.disk + " or " +EnumsApi.DataSourcing.git +", actual: " + dsp.sourcing;
             log.error(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
         dsp.name = variable;
-        String realParams = DataStorageParamsUtils.toString(dsp);
+        String realParams = DataStorageParamsUtils.UTILS.toString(dsp);
 
         try {
             globalVariableService.createGlobalVariableWithExternalStorage(variable, realParams);

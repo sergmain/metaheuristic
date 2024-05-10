@@ -34,7 +34,7 @@ import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobService;
 import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
 import ai.metaheuristic.ai.exceptions.*;
 import ai.metaheuristic.ai.utils.TxUtils;
-import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
+import ai.metaheuristic.commons.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -108,7 +108,9 @@ public class VariableTxService {
         data.setName(variable);
         data.setFilename(filename);
         data.setExecContextId(execContextId);
-        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(EnumsApi.DataSourcing.dispatcher, variable, type)));
+        final DataStorageParams dsp = new DataStorageParams(DataSourcing.dispatcher, variable, type);
+        dsp.size = size;
+        data.updateParams(dsp);
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
         data.setTaskContextId(taskContextId);
 
@@ -128,6 +130,9 @@ public class VariableTxService {
             throw new IllegalStateException("171.120 Variable can't be with zero length");
         }
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
+        DataStorageParams dsp = data.getDataStorageParams();
+        dsp.size = size;
+        data.updateParams(dsp);
 
         data.variableBlobId = generalBlobService.createVariableIfNotExist(data.variableBlobId);
         dispatcherBlobStorage.storeVariableData(data.variableBlobId, is, size);
@@ -225,9 +230,9 @@ public class VariableTxService {
     @Transactional
     public void storeBytesInVariable(TaskParamsYaml.OutputVariable outputVariable, byte[] bytes, EnumsApi.VariableType type) {
         Variable variable = findVariableInLocalContext(outputVariable);
-        DataStorageParams dsp = DataStorageParamsUtils.to(variable.params);
+        DataStorageParams dsp = variable.getDataStorageParams();
         dsp.type = type;
-        variable.params = DataStorageParamsUtils.toString(dsp);
+        variable.updateParams(dsp);
 
         InputStream is = new ByteArrayInputStream(bytes);
         update(is, bytes.length, variable);
@@ -327,7 +332,7 @@ public class VariableTxService {
         data.name = variable;
         data.filename = null;
         data.setExecContextId(execContextId);
-        data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
+        data.setParams(DataStorageParamsUtils.UTILS.toString(new DataStorageParams(DataSourcing.dispatcher, variable)));
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
         data.setTaskContextId(taskContextId);
         data.variableBlobId = null;
@@ -702,7 +707,7 @@ public class VariableTxService {
 
         // TODO 2020-02-03 right now, only DataSourcing.dispatcher is supported as internal variable.
         //   a new code has to be added for another type of sourcing
-        v.params = DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.dispatcher, v.name));
+        v.updateParams(new DataStorageParams(DataSourcing.dispatcher, v.name));
         v.uploadTs = new Timestamp(System.currentTimeMillis());
 
         return variableRepository.save(v);

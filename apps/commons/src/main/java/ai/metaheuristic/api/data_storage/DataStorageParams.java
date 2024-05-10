@@ -17,12 +17,15 @@
 package ai.metaheuristic.api.data_storage;
 
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import javax.annotation.Nullable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Serge
@@ -32,7 +35,9 @@ import javax.annotation.Nullable;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DataStorageParams {
+public class DataStorageParams implements BaseParams {
+
+    public final int version=1;
 
     // it's a name of asset. Asset can be Variable, GlobalVariable or Function
     // for Variable and GlobalVariable it's a 'name' field
@@ -47,6 +52,12 @@ public class DataStorageParams {
 
     @Nullable
     public EnumsApi.VariableType type;
+
+    @Nullable
+    public Long size = null;
+
+    @Nullable
+    public Map<EnumsApi.HashAlgo, String> checksumMap = null;
 
     public DataStorageParams(EnumsApi.DataSourcing sourcing, String name) {
         this.sourcing = sourcing;
