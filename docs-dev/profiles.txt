@@ -1,0 +1,40 @@
+standalone - application is running without needing to configure processors and dispatcher, front-end must communicate with server via port 64967
+disable-check-frontend - is app in standalone mode then it'll check presence of front-end, if front-end not presented, then server will be shut down.
+disk-storage - variables and other blobs assets are stored on disk as a files, instead of database as BLOBs
+websocket - enable communication between dispatcher and processors via WebSocket
+
+-----------------------------------
+# AiAi main with standalone mhbp_home-2
+-Xms512m -Xmx512m -Dfile.encoding=UTF-8 -Dspring.profiles.active=dispatcher,processor,h2,standalone,disable-check-frontend -Dmh.home=C:\_mh\mhbp_home-2
+
+# AiAi main H2 disk-storage v5.x
+-ea -Xms1g -Xmx1g -Dfile.encoding=UTF-8 -Dspring.profiles.active=dispatcher,processor,h2,disk-storage,disable-check-frontend -Dmh.home=C:\mhbp_home-disk-storage
+
+# AiAi main only dispatcher
+-ea -Xms1g -Xmx1g -Dfile.encoding=UTF-8  -Dspring.profiles.active=dispatcher,mysql -Dmh.home=C:\sandbox\git\aiai-home
+
+# AiAi main standalone H2 disk-storage  v5.x
+-ea -Xms1g -Xmx1g -Dfile.encoding=UTF-8 -Dspring.profiles.active=dispatcher,processor,h2,standalone,disk-storage,disable-check-frontend -Dmh.home=C:\mhbp_home-disk-storage
+
+# AiAi main
+-ea -Xms1g -Xmx1g -Dfile.encoding=UTF-8 -Dspring.profiles.active=dispatcher,processor,mysql -Dmh.home=C:\sandbox\git\aiai-home
+
+# AiApplication processor only #1
+-Xms256m -Xmx256m
+
+# AiAi main standalone Derby disk-storage without mh.home
+-ea -Xms1g -Xmx1g -Dfile.encoding=UTF-8 -Dspring.profiles.active=dispatcher,processor,derby,standalone,disk-storage,disable-check-frontend
+
+# AiAi main standalone Derby disk-storage
+-ea -Xms1g -Xmx1g -Dfile.encoding=UTF-8 -Dspring.profiles.active=dispatcher,processor,derby,standalone,disk-storage,disable-check-frontend -Dmh.home=C:\mhbp_home-derby-disk-storage
+
+# AiAi main standalone HSQLDB disk-storage
+-ea -Xms1g -Xmx1g -Dfile.encoding=UTF-8 -Dspring.profiles.active=dispatcher,processor,hsqldb,standalone,disk-storage,disable-check-frontend -Dmh.home=C:\mhbp_home-hsqldb-disk-storage
+
+
+
+---
+-ea -Xms1g -Xmx1g -Dfile.encoding=UTF-8 -Dspring.profiles.active=dispatcher,processor,h2,standalone,disable-check-frontend -Dmh.home=C:\_mh\mhbp_home-4
+-ea -Xms1g -Xmx1g -Dfile.encoding=UTF-8 -Dspring.profiles.active=dispatcher,processor,h2,standalone,websocket -Dmh.home=C:\_mh\mhbp_home-2
+-ea -Xms1g -Xmx1g -Dfile.encoding=UTF-8 -Dspring.profiles.active=dispatcher,processor,mysql,websocket -Dmh.home=C:\sandbox\git\aiai-home
+-ea -Xms1g -Xmx1g -Dfile.encoding=UTF-8 -Dspring.profiles.active=dispatcher,processor,h2 -Dmh.home=C:\_mh\mhbp_home-5

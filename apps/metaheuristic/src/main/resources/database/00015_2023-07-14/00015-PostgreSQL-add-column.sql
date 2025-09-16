@@ -14,9 +14,9 @@
 --  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
--- !!!!! DO NOT CHANGE THE TYPE OF ID FIELD. IT MUST BE NUMERIC(10, 0) !!!!!!!
 alter table mh_account add PARAMS          TEXT null;
 
+-- !!!!! DO NOT CHANGE THE TYPE OF ID FIELD. IT MUST BE NUMERIC(10, 0) !!!!!!!
 alter table mh_exec_context add ACCOUNT_ID        NUMERIC(10, 0);
 
 

@@ -65,8 +65,9 @@ public class PostInitService {
 
     @PostConstruct
     public void post() {
-        initAuths();
-        initApis();
+        log.warn("AT THIS MOMENT INITIALIZING OF AUTH FOR LLM PROVIDERS, IS DISABLED");
+//        initAuths();
+//        initApis();
     }
 
     private void initApis() {
@@ -76,7 +77,7 @@ public class PostInitService {
                 if (api!=null) {
                     continue;
                 }
-                String resource = APIS_PREFIX + apiCode;
+                String resource = APIS_PREFIX + apiCode+".yaml";
                 String content = IOUtils.resourceToString(resource, StandardCharsets.UTF_8);
                 ApiScheme apiScheme = ApiSchemeUtils.UTILS.to(content);
 
