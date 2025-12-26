@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
+import ai.metaheuristic.ai.sec.RoleService;
 import ai.metaheuristic.ai.sec.SecConsts;
 import ai.metaheuristic.ai.yaml.account.AccountParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -58,6 +59,7 @@ public class AccountTxService {
     private final AccountRepository accountRepository;
     private final AccountCache accountCache;
     private final PasswordEncoder passwordEncoder;
+    private final RoleService roleService;
 
     @Nullable
     @Transactional(readOnly = true)
@@ -179,9 +181,10 @@ public class AccountTxService {
         if (account == null || !Objects.equals(account.companyId, companyUniqueId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.110 account wasn't found, accountId: " + accountId);
         }
+        List<String> possibleRoles = roleService.getPossibleRoles();
         String str = Arrays.stream(StringUtils.split(roles, ','))
                 .map(String::strip)
-                .filter(SecConsts.POSSIBLE_ROLES::contains)
+                .filter(possibleRoles::contains)
                 .collect(Collectors.joining(", "));
 
         account.setRoles(str);
@@ -198,7 +201,7 @@ public class AccountTxService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.120 account wasn't found, accountId: " + accountId);
         }
 
-        List<String> possibleRoles = Consts.ID_1.equals(companyUniqueId) ? SecConsts.COMPANY_1_POSSIBLE_ROLES : SecConsts.POSSIBLE_ROLES;
+        List<String> possibleRoles = Consts.ID_1.equals(companyUniqueId) ? roleService.getCompany1PossibleRoles() : roleService.getPossibleRoles();
         if (!possibleRoles.contains(role)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.130 account wasn't found, accountId: " + accountId);
         }
