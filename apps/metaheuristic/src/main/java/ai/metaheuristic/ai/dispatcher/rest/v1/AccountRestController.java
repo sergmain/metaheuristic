@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.account.AccountService;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
+import ai.metaheuristic.ai.sec.RoleService;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @SuppressWarnings("Duplicates")
 @RestController
@@ -43,11 +46,17 @@ public class AccountRestController {
 
     private final AccountService accountTopLevelService;
     private final UserContextService userContextService;
+    private final RoleService roleService;
 
     @GetMapping("/accounts")
     public AccountData.AccountsResult accounts(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
         DispatcherContext context = userContextService.getContext(authentication);
         return accountTopLevelService.getAccounts(pageable, context);
+    }
+
+    @GetMapping("/possible-roles")
+    public List<String> getPossibleRoles() {
+        return roleService.getPossibleRoles();
     }
 
     @PostMapping("/account-add-commit")
