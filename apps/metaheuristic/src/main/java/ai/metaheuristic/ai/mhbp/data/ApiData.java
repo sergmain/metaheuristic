@@ -24,7 +24,7 @@ import ai.metaheuristic.api.data.BaseDataClass;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import org.springframework.data.domain.Slice;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.function.Supplier;
@@ -114,7 +114,7 @@ public class ApiData {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class QueriedInfoWithError {
-        public @Nullable NluData.QueriedPrompt queriedInfo;
+        public NluData.@Nullable QueriedPrompt queriedInfo;
         public @Nullable Error error;
 
         public static QueriedInfoWithError asError(String error, Enums.QueryResultErrorType errorType) {

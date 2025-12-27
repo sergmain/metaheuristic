@@ -41,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.web.client.*;
 
 import java.nio.charset.StandardCharsets;
@@ -77,8 +77,7 @@ public class DispatcherRequestor {
     private final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher;
     private final String dispatcherRestUrl;
     private final String dispatcherWsUrl;
-    @Nullable
-    private final ProcessorWebsocketService.WebSocketInfra wsInfra;
+    private final ProcessorWebsocketService.@Nullable WebSocketInfra wsInfra;
     private static final Random R = new Random();
     private Enums.RequestToDispatcherType defaultTaskRequest = Enums.RequestToDispatcherType.both;
 
@@ -123,7 +122,6 @@ public class DispatcherRequestor {
         }
     }
 
-    @NonNull
     private static String getDispatcherWsUrl(DispatcherUrl dispatcherUrl) {
         final String url = dispatcherUrl.url + Consts.WS_DISPATCHER_URL;
         String wsUrl;

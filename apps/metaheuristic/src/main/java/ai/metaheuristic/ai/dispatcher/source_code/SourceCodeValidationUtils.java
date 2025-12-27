@@ -24,7 +24,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -43,14 +43,12 @@ public class SourceCodeValidationUtils {
     public static final Function<SourceCodeParamsYaml.Process, SourceCodeApiData.SourceCodeValidationResult> NULL_CHECK_FUNC =
             (p)-> new SourceCodeApiData.SourceCodeValidationResult(OK, null);
 
-
-    @Nullable
-    public static SourceCodeApiData.SourceCodeValidationResult validateSourceCodeParamsYaml(
+    public static SourceCodeApiData.@Nullable SourceCodeValidationResult validateSourceCodeParamsYaml(
             Function<SourceCodeParamsYaml.Process, SourceCodeApiData.SourceCodeValidationResult> checkFunctionsFunc,
             SourceCodeParamsYaml sourceCodeParamsYaml) {
         SourceCodeParamsYaml.SourceCode sourceCode = sourceCodeParamsYaml.source;
 
-        if (sourceCode.getProcesses().isEmpty()) {
+        if (sourceCode.getProcesses()!=null && sourceCode.getProcesses().isEmpty()) {
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.NO_ANY_PROCESSES_ERROR, "#177.080 At least one process must be defined");
         }

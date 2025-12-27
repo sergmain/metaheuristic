@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.sec;
 
 import lombok.Data;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Sergio Lissner

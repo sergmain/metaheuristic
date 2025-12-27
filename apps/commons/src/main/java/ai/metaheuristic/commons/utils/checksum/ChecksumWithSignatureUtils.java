@@ -22,7 +22,7 @@ import ai.metaheuristic.commons.utils.SecUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.StringUtils;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.InputStream;
 import java.security.GeneralSecurityException;

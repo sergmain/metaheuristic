@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.mhbp.yaml.kb.KbParams;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.SneakyThrows;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -52,7 +52,7 @@ public class OpenaiJsonReader {
     public static final String MATCH = "evals.elsuite.basic.match:Match";
 
     @SneakyThrows
-    public static Chapters read(long kbId, Path repoDir, @Nullable KbParams.Git git) {
+    public static Chapters read(long kbId, Path repoDir, KbParams.@Nullable Git git) {
         if (git==null) {
             return NOT_YET;
         }
@@ -124,8 +124,7 @@ public class OpenaiJsonReader {
         return jsonlPath;
     }
 
-    @Nullable
-    public static Map.Entry<Object, Object> isMatch(Map<Object, Object> map) {
+    public static Map.@Nullable Entry<Object, Object> isMatch(Map<Object, Object> map) {
         for (Map.Entry<Object, Object> entry : map.entrySet()) {
             if (entry.getValue() instanceof Map mmap) {
                 if (MATCH.equals(mmap.get("class"))) {
@@ -137,7 +136,7 @@ public class OpenaiJsonReader {
     }
 
     @Nullable
-    public static String getJsonlPath(@Nullable Map.Entry match) {
+    public static String getJsonlPath(Map.@Nullable Entry match) {
         if (match==null) {
             return null;
         }

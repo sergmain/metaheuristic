@@ -36,6 +36,7 @@ import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.utils.PageUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
@@ -103,7 +104,7 @@ public class ExperimentTopLevelService {
         return result;
     }
 
-    public OperationStatusRest changeExecContextState(String state, Long experimentId, DispatcherContext context) {
+    public OperationStatusRest changeExecContextState(String state, Long experimentId, UserContext context) {
         Experiment e = experimentCache.findById(experimentId);
         if (e==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.040 experiment wasn't found, experimentId: " + experimentId);
@@ -194,7 +195,7 @@ public class ExperimentTopLevelService {
     }
 
 
-    public OperationStatusRest experimentDeleteCommit(Long id, DispatcherContext context) {
+    public OperationStatusRest experimentDeleteCommit(Long id, UserContext context) {
         return experimentService.deleteExperiment(id, context);
     }
 

@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Sergio Lissner
@@ -31,12 +31,12 @@ public class ProviderData {
 
     public record QueriedData(String queryText, ExecContextData.UserExecContext userExecContext){}
 
-    public record QuestionAndAnswer(@Nullable String q, @Nullable ApiData.QueryResult a, EnumsApi.OperationStatus status, @Nullable String error) {
+    public record QuestionAndAnswer(@Nullable String q, ApiData.@Nullable QueryResult a, EnumsApi.OperationStatus status, @Nullable String error) {
         public QuestionAndAnswer(EnumsApi.OperationStatus status, String error) {
             this(null, null, status, error);
         }
 
-        public QuestionAndAnswer(@Nullable String q, @Nullable ApiData.QueryResult a) {
+        public QuestionAndAnswer(@Nullable String q, ApiData.@Nullable QueryResult a) {
             this(q, a, EnumsApi.OperationStatus.OK, null);
             if (S.b(q)) {
                 throw new IllegalStateException("(S.b(q))");

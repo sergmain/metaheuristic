@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.processor.dispatcher_selection;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;

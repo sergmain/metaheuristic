@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.mhbp.evaluation;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.api.ApiUtils;
 import ai.metaheuristic.ai.mhbp.beans.Api;
@@ -33,16 +32,17 @@ import ai.metaheuristic.ai.mhbp.repositories.EvaluationRepository;
 import ai.metaheuristic.ai.mhbp.repositories.KbRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -69,7 +69,7 @@ public class EvaluationService {
     public final KbRepository kbRepository;
     public final ChapterRepository chapterRepository;
 
-    public EvaluationData.Evaluations getEvaluations(Pageable pageable, DispatcherContext context) {
+    public EvaluationData.Evaluations getEvaluations(Pageable pageable, UserContext context) {
         pageable = PageUtils.fixPageSize(20, pageable);
 
         Page<Evaluation> evaluations = evaluationRepository.findAllByCompanyUniqueId(pageable, context.getCompanyId());
@@ -78,7 +78,7 @@ public class EvaluationService {
         return new EvaluationData.Evaluations(new PageImpl<>(sorted, pageable, list.size()));
     }
 
-    public EvaluationData.EvaluationUidsForCompany getEvaluationUidsForCompany(DispatcherContext context) {
+    public EvaluationData.EvaluationUidsForCompany getEvaluationUidsForCompany(UserContext context) {
         EvaluationData.EvaluationUidsForCompany r = new EvaluationData.EvaluationUidsForCompany();
 
         r.apis = apiService.getApisAllowedForCompany(context).stream()
@@ -93,7 +93,7 @@ public class EvaluationService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest evaluate(@Nullable Long evaluationId, DispatcherContext context, int limit) {
+    public OperationStatusRest evaluate(@Nullable Long evaluationId, UserContext context, int limit) {
         if (evaluationId==null) {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
@@ -124,7 +124,7 @@ public class EvaluationService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest deleteEvaluationById(Long evaluationId, DispatcherContext context) {
+    public OperationStatusRest deleteEvaluationById(Long evaluationId, UserContext context) {
         Evaluation evaluation = evaluationRepository.findById(evaluationId).orElse(null);
         if (evaluation == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,

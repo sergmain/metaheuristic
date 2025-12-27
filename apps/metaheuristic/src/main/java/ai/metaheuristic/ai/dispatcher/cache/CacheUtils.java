@@ -20,14 +20,15 @@ import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.Checksum;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.input.CountingInputStream;
-import org.springframework.lang.Nullable;
+import org.apache.commons.io.input.BoundedInputStream;
+import org.jspecify.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -143,15 +144,20 @@ public class CacheUtils {
         }
     }
 
+    @SneakyThrows
     public static CacheData.Sha256PlusLength getSha256PlusLength(InputStream bis) {
-        CountingInputStream cis = new CountingInputStream(bis);
-        String sha256 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, cis);
-        long length = cis.getByteCount();
+        BoundedInputStream boundedStream = BoundedInputStream.builder()
+            .setInputStream(bis)
+            .setMaxCount(Long.MAX_VALUE)
+            .get();
+
+        String sha256 = Checksum.getChecksum(EnumsApi.HashAlgo.SHA256, boundedStream);
+        long length = boundedStream.getCount();
+
         return new CacheData.Sha256PlusLength(sha256, length);
     }
 
-    @Nullable
-    public static CacheData.SimpleKey fullKeyToSimpleKey(CacheData.FullKey fullKey) {
+    public static CacheData.@Nullable SimpleKey fullKeyToSimpleKey(CacheData.FullKey fullKey) {
         String keyAsStr = fullKey.asString();
         byte[] bytes = keyAsStr.getBytes();
 

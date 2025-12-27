@@ -53,7 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -110,7 +110,7 @@ public class ExecContextCreatorService {
 
     @Transactional(rollbackFor = {CommonRollbackException.class, ExecContextTooManyInstancesException.class} )
     public ExecContextCreationResult createExecContextAndStart(
-            Long sourceCodeId, ExecContextData.UserExecContext context, boolean isProduceTasks, @Nullable ExecContextData.RootAndParent rootAndParent) {
+            Long sourceCodeId, ExecContextData.UserExecContext context, boolean isProduceTasks, ExecContextData.@Nullable RootAndParent rootAndParent) {
 
         SourceCodeSyncService.checkWriteLockPresent(sourceCodeId);
 
@@ -183,7 +183,7 @@ public class ExecContextCreatorService {
      * @param context user's context - accountId+companyId. companyId can be different from sourceCode.companyId
      * @return ExecContextCreationResult
      */
-    public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, ExecContextData.UserExecContext context, @Nullable ExecContextData.RootAndParent rootAndParent) {
+    public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, ExecContextData.UserExecContext context, ExecContextData.@Nullable RootAndParent rootAndParent) {
         TxUtils.checkTxExists();
         SourceCodeSyncService.checkWriteLockPresent(sourceCode.id);
 
@@ -219,7 +219,7 @@ public class ExecContextCreatorService {
 
     private ExecContextImpl createExecContext(
             SourceCodeImpl sourceCode, ExecContextData.UserExecContext context, SourceCodeData.SourceCodeGraph sourceCodeGraph,
-            @Nullable ExecContextData.RootAndParent rootAndParent) {
+            ExecContextData.@Nullable RootAndParent rootAndParent) {
 
         ExecContextImpl ec = new ExecContextImpl();
         ec.companyId = context.companyId();

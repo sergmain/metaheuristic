@@ -39,7 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.file.PathUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -327,8 +327,7 @@ public class ProcessorTaskService {
         }
     }
 
-    @Nullable
-    public ProcessorCommParamsYaml.ReportTaskProcessingResult reportTaskProcessingResult(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
+    public ProcessorCommParamsYaml.@Nullable ReportTaskProcessingResult reportTaskProcessingResult(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
         final List<ProcessorCoreTask> list = getForReporting(core);
         if (list.isEmpty()) {
             return null;

@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.utils;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;

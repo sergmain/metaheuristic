@@ -35,7 +35,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -92,7 +92,7 @@ public class TestFunctionService {
         check(sc1);
     }
 
-    private static void check(@Nullable TaskParamsYaml.FunctionConfig sc) {
+    private static void check(TaskParamsYaml.@Nullable FunctionConfig sc) {
         assertNotNull(sc);
         assertNotNull(sc.params);
         final String[] split = StringUtils.split(sc.params);

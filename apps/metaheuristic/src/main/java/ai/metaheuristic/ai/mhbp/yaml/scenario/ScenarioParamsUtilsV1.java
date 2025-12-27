@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.mhbp.yaml.scenario;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;
@@ -46,8 +46,7 @@ public class ScenarioParamsUtilsV1 extends
         return t;
     }
 
-    @Nullable
-    private static ScenarioParams.Step toPrompt(ScenarioParamsV1.StepV1 v1) {
+    private static ScenarioParams.@Nullable Step toPrompt(ScenarioParamsV1.StepV1 v1) {
         ScenarioParams.Step f = new ScenarioParams.Step(
                 v1.uuid, v1.parentUuid, v1.name, v1.p, v1.r, v1.resultCode,
                 v1.expected, toApi(v1.api), toFunction(v1.function), v1.aggregateType,
@@ -55,16 +54,14 @@ public class ScenarioParamsUtilsV1 extends
         return f;
     }
 
-    @Nullable
-    private static ScenarioParams.Function toFunction(@Nullable ScenarioParamsV1.FunctionV1 v1) {
+    private static ScenarioParams.@Nullable Function toFunction(ScenarioParamsV1.@Nullable FunctionV1 v1) {
         if (v1==null) {
             return null;
         }
         return new ScenarioParams.Function(v1.code, v1.context);
     }
 
-    @Nullable
-    private static ScenarioParams.Api toApi(@Nullable ScenarioParamsV1.ApiV1 v1) {
+    private static ScenarioParams.@Nullable Api toApi(ScenarioParamsV1.@Nullable ApiV1 v1) {
         if (v1==null) {
             return null;
         }

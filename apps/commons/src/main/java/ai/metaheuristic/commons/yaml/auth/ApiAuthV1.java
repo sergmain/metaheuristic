@@ -22,7 +22,7 @@ import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 @SuppressWarnings("FieldMayBeStatic")
 @Data
@@ -54,9 +54,9 @@ public class ApiAuthV1 implements BaseParams  {
     @AllArgsConstructor
     public static class TokenAuthV1 {
         public EnumsApi.TokenPlace place;
-        public String token;
+        public @Nullable String token;
         public String param;
-        public String env;
+        public @Nullable String env;
     }
 
     @Data

@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.preparing;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import lombok.Data;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Serge

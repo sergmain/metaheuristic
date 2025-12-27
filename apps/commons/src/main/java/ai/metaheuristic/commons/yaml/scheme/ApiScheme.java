@@ -23,7 +23,7 @@ import ai.metaheuristic.commons.S;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 @SuppressWarnings("FieldMayBeStatic")
 @Data
@@ -78,7 +78,7 @@ public class ApiScheme implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Scheme {
-        public Auth auth;
+        public @Nullable Auth auth;
         public Request request;
         public Response response;
     }

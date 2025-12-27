@@ -17,7 +17,7 @@
 package ai.metaheuristic.commons.utils.threads;
 
 import lombok.SneakyThrows;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedList;
 import java.util.concurrent.Semaphore;

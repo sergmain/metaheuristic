@@ -38,9 +38,8 @@ public class JsonForVersioning {
             String versionValue = null;
             JsonFactory jsonFactory = new JsonFactory();
             try (JsonParser parser = jsonFactory.createParser(json)) {
-                JsonToken startToken = parser.nextToken();
                 while (parser.nextToken() != JsonToken.END_OBJECT) {
-                    String fieldName = parser.getCurrentName();
+                    String fieldName = parser.currentName();
                     if ("version".equals(fieldName)) {
                         if (parser.nextToken() == JsonToken.VALUE_NUMBER_INT) {
                             versionValue = parser.getValueAsString();

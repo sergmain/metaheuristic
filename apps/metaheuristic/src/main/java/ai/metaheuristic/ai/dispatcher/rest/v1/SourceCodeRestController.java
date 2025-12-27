@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import ai.metaheuristic.commons.account.UserContext;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.NotImplementedException;
@@ -56,42 +57,42 @@ public class SourceCodeRestController {
     @GetMapping("/source-codes")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public SourceCodeApiData.SourceCodesResult sourceCodes(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return sourceCodeTxService.getSourceCodes(pageable, false, context);
     }
 
     @GetMapping("/simple-source-codes")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public SourceCodeApiData.SimpleSourceCodesResult simpleSourceCodes(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return sourceCodeTxService.getSimpleSourceCodes(false, context);
     }
 
     @GetMapping("/source-codes-archived-only")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public SourceCodeApiData.SourceCodesResult sourceCodeArchivedOnly(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return sourceCodeTxService.getSourceCodes(pageable, true, context);
     }
 
     @GetMapping(value = "/source-code/{id}")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public SourceCodeApiData.SourceCodeResult edit(@PathVariable Long id, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return sourceCodeService.getSourceCode(id, context);
     }
 
     @GetMapping(value = "/source-code-validate/{id}")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'MANAGER', 'DATA')")
     public SourceCodeApiData.SourceCodeResult validate(@PathVariable Long id, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return sourceCodeTxService.validateSourceCode(id, context);
     }
 
     @PostMapping("/source-code-add-commit")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public SourceCodeApiData.SourceCodeResult addFormCommit(@RequestParam(name = "source") String sourceCodeYamlAsStr, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return sourceCodeService.createSourceCode(sourceCodeYamlAsStr, context.getCompanyId());
     }
 
@@ -104,28 +105,28 @@ public class SourceCodeRestController {
     @PostMapping("/source-code-delete-commit")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest deleteCommit(Long id, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return sourceCodeTxService.deleteSourceCodeById(id, context);
     }
 
     @PostMapping("/source-code-archive-commit")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest archiveCommit(Long id, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return sourceCodeTxService.archiveSourceCodeById(id, context);
     }
 
     @PostMapping(value = "/source-code-upload-from-file")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest uploadSourceCode(final MultipartFile file, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return sourceCodeService.uploadSourceCode(file, context);
     }
 
     @GetMapping(value = "/source-code-devs/{id}")
     @PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public String development(@PathVariable Long id, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         //noinspection ConstantValue
         if (true) {
             throw new NotImplementedException("Need to re-write as Rest API");
@@ -146,7 +147,7 @@ public class SourceCodeRestController {
     public HttpEntity<AbstractResource> sourceCodeDevGenerate(
             HttpServletRequest request, @PathVariable("sourceCodeId") Long sourceCodeId, @PathVariable("processCode") String processCode,
             Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
 
         final ResponseEntity<AbstractResource> entity;
         try {

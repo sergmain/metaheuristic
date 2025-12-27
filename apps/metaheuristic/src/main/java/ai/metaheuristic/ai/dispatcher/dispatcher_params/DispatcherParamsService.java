@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -136,8 +136,7 @@ public class DispatcherParamsService {
         consumer.accept(sourceCode.uid);
     }
 
-    @Nullable
-    private static SourceCodeParamsYaml.Process findProcessForFunction(SourceCodeParamsYaml scpy, String functionCode) {
+    private static SourceCodeParamsYaml.@Nullable Process findProcessForFunction(SourceCodeParamsYaml scpy, String functionCode) {
         for (SourceCodeParamsYaml.Process process : scpy.source.processes) {
             SourceCodeParamsYaml.Process result = findProcessForFunction(process, functionCode);
             if (result!=null) {
@@ -147,8 +146,7 @@ public class DispatcherParamsService {
         return null;
     }
 
-    @Nullable
-    private static SourceCodeParamsYaml.Process findProcessForFunction(SourceCodeParamsYaml.Process process, String functionCode) {
+    private static SourceCodeParamsYaml.@Nullable Process findProcessForFunction(SourceCodeParamsYaml.Process process, String functionCode) {
         if (process.function.code.equals(functionCode)) {
             return process;
         }
@@ -218,8 +216,7 @@ public class DispatcherParamsService {
         return dispatcherParamsYaml ==null ? List.of() : new ArrayList<>(dispatcherParamsYaml.experiments);
     }
 
-    @Nullable
-    public DispatcherParamsYaml.LongRunningExecContext getLongRunningExecContext(Long execContextId) {
+    public DispatcherParamsYaml.@Nullable LongRunningExecContext getLongRunningExecContext(Long execContextId) {
         find();
         return dispatcherParamsYaml==null ? null : dispatcherParamsYaml.longRunnings.stream().filter(o->o.execContextId.equals(execContextId)).findFirst().orElse(null);
     }

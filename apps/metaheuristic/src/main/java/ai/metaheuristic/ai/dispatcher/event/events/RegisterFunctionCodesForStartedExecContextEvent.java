@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.event.events;
 
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Sergio Lissner

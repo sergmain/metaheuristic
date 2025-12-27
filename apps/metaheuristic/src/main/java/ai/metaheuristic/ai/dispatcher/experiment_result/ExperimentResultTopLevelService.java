@@ -38,6 +38,7 @@ import ai.metaheuristic.api.data.ParamsVersion;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParams;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParams;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.json.versioning_json.JsonForVersioning;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.PageUtils;
@@ -52,7 +53,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.*;
 import org.springframework.http.*;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -106,7 +107,7 @@ public class ExperimentResultTopLevelService {
         }
     }
 
-    public OperationStatusRest uploadExperiment(MultipartFile file, DispatcherContext context) {
+    public OperationStatusRest uploadExperiment(MultipartFile file, UserContext context) {
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -423,7 +424,7 @@ public class ExperimentResultTopLevelService {
     }
 
     public static ExperimentFeatureData asExperimentFeatureData(
-            @Nullable ExperimentResultParams.ExperimentFeature experimentFeature,
+            ExperimentResultParams.@Nullable ExperimentFeature experimentFeature,
             List<ExperimentResultParams.ExperimentTaskFeature> taskFeatures) {
 
         final ExperimentFeatureData featureData = new ExperimentFeatureData();

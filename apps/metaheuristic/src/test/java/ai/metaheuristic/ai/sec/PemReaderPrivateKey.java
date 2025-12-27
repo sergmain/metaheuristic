@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.sec;
 
 import org.apache.commons.io.FileUtils;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileReader;

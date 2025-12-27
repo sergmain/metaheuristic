@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +31,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -51,7 +52,7 @@ public class ApiService {
     private final ApiRepository apiRepository;
     private final ApiTxService apiTxService;
 
-    public ApiData.Apis getApis(Pageable pageable, DispatcherContext context) {
+    public ApiData.Apis getApis(Pageable pageable, UserContext context) {
         pageable = PageUtils.fixPageSize(20, pageable);
 
         Page<Api> apis = apiRepository.findAllByCompanyUniqueId(pageable, context.getCompanyId());
@@ -60,12 +61,12 @@ public class ApiService {
         return new ApiData.Apis(new PageImpl<>(sorted, pageable, list.size()));
     }
 
-    public List<Api> getApisAllowedForCompany(DispatcherContext context) {
+    public List<Api> getApisAllowedForCompany(UserContext context) {
         List<Api> apis = apiRepository.findAllByCompanyUniqueId(context.getCompanyId());
         return apis;
     }
 
-    public ApiData.Api getApiAsData(@Nullable Long apiId, DispatcherContext context) {
+    public ApiData.Api getApiAsData(@Nullable Long apiId, UserContext context) {
         Api api = getApi(apiId, context);
         if (api==null) {
             return new ApiData.Api("217.150 Not found");
@@ -74,7 +75,7 @@ public class ApiService {
     }
 
     @Nullable
-    public Api getApi(@Nullable Long apiId, DispatcherContext context) {
+    public Api getApi(@Nullable Long apiId, UserContext context) {
         if (apiId==null) {
             return null;
         }
@@ -88,7 +89,7 @@ public class ApiService {
         return api;
     }
 
-    public OperationStatusRest createApi(String yaml, DispatcherContext context) {
+    public OperationStatusRest createApi(String yaml, UserContext context) {
         try {
             return apiTxService.createApi(yaml, context);
         } catch (CommonRollbackException e) {

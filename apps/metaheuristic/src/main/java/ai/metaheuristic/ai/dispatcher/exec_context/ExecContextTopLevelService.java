@@ -37,12 +37,13 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.Authentication;
@@ -157,7 +158,7 @@ public class ExecContextTopLevelService {
         return result;
     }
 
-    public OperationStatusRest changeExecContextState(String state, Long execContextId, DispatcherContext context) {
+    public OperationStatusRest changeExecContextState(String state, Long execContextId, UserContext context) {
         EnumsApi.ExecContextState execState = EnumsApi.ExecContextState.from(state.toUpperCase());
         if (execState == EnumsApi.ExecContextState.UNKNOWN) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "210.060 Unknown exec state, state: " + state);
@@ -269,7 +270,7 @@ public class ExecContextTopLevelService {
         ExecContextSyncService.getWithSyncVoid(event.execContextId, ()-> execContextTxService.deleteExecContext(event.execContextId));
     }
 
-    public OperationStatusRest deleteExecContextById(Long execContextId, DispatcherContext context) {
+    public OperationStatusRest deleteExecContextById(Long execContextId, UserContext context) {
         return ExecContextSyncService.getWithSync(execContextId, ()-> execContextTxService.deleteExecContextById(execContextId, context));
     }
 
@@ -294,7 +295,7 @@ public class ExecContextTopLevelService {
                 S.b(task.functionExecResults) ? S.f("Task #%s doesn't have functionExecResults", taskId) : task.functionExecResults);
     }
 
-    public OperationStatusRest resetCache(Long taskId, DispatcherContext context) {
+    public OperationStatusRest resetCache(Long taskId, UserContext context) {
         TaskImpl task = taskRepository.findByIdReadOnly(taskId);
         if (task == null) {
             String es = S.f("210.420 Task #%s wasn't found", taskId);
@@ -323,7 +324,7 @@ public class ExecContextTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public ExecContextApiData.ExecContextSimpleStateResult getExecContextSimpleState(Long execContextId, DispatcherContext context) {
+    public ExecContextApiData.ExecContextSimpleStateResult getExecContextSimpleState(Long execContextId, UserContext context) {
         ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext == null) {
             String es = S.f("210.480 ExecContext #%s wasn't found", execContextId);

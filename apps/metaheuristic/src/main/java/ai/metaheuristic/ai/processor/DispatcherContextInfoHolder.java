@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.data.DispatcherData;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,8 +31,7 @@ public class DispatcherContextInfoHolder {
 
     public static final Map<String, DispatcherData.DispatcherContextInfo> contexts = new HashMap<>();
 
-    @Nullable
-    public static DispatcherData.DispatcherContextInfo getCtx(ProcessorAndCoreData.CommonUrl commonUrl) {
+    public static DispatcherData.@Nullable DispatcherContextInfo getCtx(ProcessorAndCoreData.CommonUrl commonUrl) {
         return contexts.get(commonUrl.getUrl());
     }
 

@@ -33,7 +33,7 @@ import org.jgrapht.traverse.TopologicalOrderIterator;
 import org.jgrapht.util.SupplierUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.StringReader;
@@ -190,8 +190,7 @@ public class ExecContextProcessGraphService {
         return error;
     }
 
-    @Nullable
-    public static ExecContextData.ProcessVertex findVertex(
+    public static ExecContextData.@Nullable ProcessVertex findVertex(
             DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, String process) {
 
         ExecContextData.ProcessVertex vertex = processGraph.vertexSet()

@@ -35,7 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
@@ -81,7 +81,7 @@ public class DispatcherCommandProcessor {
         if (request.processorCommContext==null || request.processorCommContext.processorId==null || S.b(request.processorCommContext.sessionId)) {
             throw new IllegalStateException("997.060 (scpy.processorCommContext==null || S.b(scpy.processorCommContext.processorId) || S.b(scpy.processorCommContext.sessionId))");
         }
-        DispatcherCommParamsYaml.AssignedTask assignedTask = MetaheuristicThreadLocal.getExecutionStat().get("processRequestTask()",
+        DispatcherCommParamsYaml.AssignedTask assignedTask = MetaheuristicThreadLocal.getExecutionStat().getNullable("processRequestTask()",
                 ()-> processRequestTask(core, request, quotas, queueEmpty));
 
         DispatcherCommParamsYaml.Core responseCore = new DispatcherCommParamsYaml.Core(core.code, core.coreId, assignedTask);
@@ -89,8 +89,7 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    @Nullable
-    private DispatcherCommParamsYaml.ResendTaskOutputs checkForMissingOutputResources(ProcessorCommParamsYaml.ProcessorRequest request) {
+    private DispatcherCommParamsYaml.@Nullable ResendTaskOutputs checkForMissingOutputResources(ProcessorCommParamsYaml.ProcessorRequest request) {
         if (request.checkForMissingOutputResources==null || request.processorCommContext==null || request.processorCommContext.processorId==null) {
             return null;
         }
@@ -114,8 +113,7 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    @Nullable
-    private DispatcherCommParamsYaml.ReportResultDelivering processReportTaskProcessingResult(ProcessorCommParamsYaml.ProcessorRequest request) {
+    private DispatcherCommParamsYaml.@Nullable ReportResultDelivering processReportTaskProcessingResult(ProcessorCommParamsYaml.ProcessorRequest request) {
         if (request.reportTaskProcessingResult==null || request.reportTaskProcessingResult.results==null) {
             return null;
         }
@@ -126,8 +124,7 @@ public class DispatcherCommandProcessor {
     }
 
     // processing at dispatcher side
-    @Nullable
-    private DispatcherCommParamsYaml.AssignedTask processRequestTask(ProcessorCommParamsYaml.Core core, ProcessorCommParamsYaml.ProcessorRequest request, DispatcherData.TaskQuotas quotas, boolean queueEmpty) {
+    private DispatcherCommParamsYaml.@Nullable AssignedTask processRequestTask(ProcessorCommParamsYaml.Core core, ProcessorCommParamsYaml.ProcessorRequest request, DispatcherData.TaskQuotas quotas, boolean queueEmpty) {
         if (core.requestTask==null) {
             return null;
         }

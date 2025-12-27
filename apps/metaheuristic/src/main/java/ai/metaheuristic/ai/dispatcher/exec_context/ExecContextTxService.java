@@ -45,6 +45,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
@@ -54,7 +55,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -85,7 +86,7 @@ public class ExecContextTxService {
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextVariableStateRepository execContextVariableStateRepository;
 
-    public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
+    public ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDesc(Long sourceCodeId, Pageable pageable, UserContext context) {
         ExecContextApiData.ExecContextsResult result = getExecContextsOrderByCreatedOnDescResult(sourceCodeId, pageable, context);
         initInfoAboutSourceCode(sourceCodeId, result);
         return result;
@@ -159,7 +160,7 @@ public class ExecContextTxService {
         return EnumsApi.SourceCodeType.common;
     }
 
-    private ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, DispatcherContext context) {
+    private ExecContextApiData.ExecContextsResult getExecContextsOrderByCreatedOnDescResult(Long sourceCodeId, Pageable pageable, UserContext context) {
         pageable = PageUtils.fixPageSize(globals.dispatcher.rowsLimit.execContext, pageable);
         ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.dispatcher.asset.mode);
         result.instances = execContextRepository.findBySourceCodeIdOrderByCreatedOnDesc(pageable, sourceCodeId);
@@ -201,7 +202,7 @@ public class ExecContextTxService {
     }
 
     @Transactional(readOnly = true)
-    public SourceCodeApiData.ExecContextForDeletion getExecContextExtendedForDeletion(Long execContextId, DispatcherContext context) {
+    public SourceCodeApiData.ExecContextForDeletion getExecContextExtendedForDeletion(Long execContextId, UserContext context) {
         ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext == null) {
             return new SourceCodeApiData.ExecContextForDeletion("705.260 execContext wasn't found, execContextId: " + execContextId);
@@ -212,7 +213,7 @@ public class ExecContextTxService {
     }
 
     @Transactional
-    public OperationStatusRest deleteExecContextById(Long execContextId, DispatcherContext context) {
+    public OperationStatusRest deleteExecContextById(Long execContextId, UserContext context) {
         OperationStatusRest status = checkExecContext(execContextId, context);
         if (status != null) {
             return status;
@@ -223,7 +224,7 @@ public class ExecContextTxService {
     }
 
     @Nullable
-    private OperationStatusRest checkExecContext(Long execContextId, DispatcherContext context) {
+    private OperationStatusRest checkExecContext(Long execContextId, UserContext context) {
         ExecContext wb = execContextCache.findById(execContextId, true);
         if (wb==null) {
             return new OperationStatusRest(OperationStatus.ERROR, "705.280 ExecContext wasn't found, execContextId: " + execContextId );

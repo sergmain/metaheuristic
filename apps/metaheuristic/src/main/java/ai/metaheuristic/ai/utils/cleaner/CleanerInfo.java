@@ -20,6 +20,7 @@ import ai.metaheuristic.api.data.BaseDataClass;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.http.ResponseEntity;
 
@@ -37,7 +38,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
 public class CleanerInfo extends BaseDataClass {
-    public ResponseEntity<AbstractResource> entity;
+    public @Nullable ResponseEntity<AbstractResource> entity;
     public List<Path> toClean = new ArrayList<>();
     public List<InputStream> inputStreams = new ArrayList<>();
 

@@ -43,7 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedList;
@@ -199,8 +199,7 @@ public class TaskCheckCachingService {
         return new PrepareData(cacheProcess, PrepareDataState.ok);
     }
 
-    @Nullable
-    public CacheData.SimpleKey getSimpleKey(ExecContextParamsYaml ecpy, TaskImpl task) {
+    public CacheData.@Nullable SimpleKey getSimpleKey(ExecContextParamsYaml ecpy, TaskImpl task) {
         TaskParamsYaml tpy = task.getTaskParamsYaml();
         ExecContextParamsYaml.Process p = ecpy.findProcess(tpy.task.processCode);
         if (p==null) {

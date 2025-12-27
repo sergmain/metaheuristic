@@ -44,6 +44,7 @@ import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioGroupRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioRepository;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.yaml.scheme.ApiScheme;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
@@ -64,7 +65,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -105,7 +106,7 @@ public class ScenarioService {
     private final ApplicationEventPublisher eventPublisher;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
 
-    public ScenarioData.ScenarioGroupsResult getScenarioGroups(Pageable pageable, DispatcherContext context) {
+    public ScenarioData.ScenarioGroupsResult getScenarioGroups(Pageable pageable, UserContext context) {
         pageable = PageUtils.fixPageSize(10, pageable);
 
         Page<ScenarioGroup> scenarioGroups = scenarioGroupRepository.findAllByAccountId(pageable, context.getAccountId());
@@ -114,14 +115,14 @@ public class ScenarioService {
         return new ScenarioData.ScenarioGroupsResult(new PageImpl<>(sorted, pageable, list.size()));
     }
 
-    public ScenarioData.ScenarioGroupsAllResult getScenarioGroupsAll(DispatcherContext context) {
+    public ScenarioData.ScenarioGroupsAllResult getScenarioGroupsAll(UserContext context) {
         List<ScenarioGroup> scenarioGroups = scenarioGroupRepository.findAllByAccountId(context.getAccountId());
         List<ScenarioData.SimpleScenarioGroup> list = scenarioGroups.stream().map(ScenarioData.SimpleScenarioGroup::new).toList();
         var sorted = list.stream().sorted((o1, o2)->Long.compare(o2.scenarioGroupId, o1.scenarioGroupId)).collect(Collectors.toList());
         return new ScenarioData.ScenarioGroupsAllResult(sorted);
     }
 
-    public ScenarioData.ScenariosResult getScenarios(Pageable pageable, @Nullable Long scenarioGroupId, DispatcherContext context) {
+    public ScenarioData.ScenariosResult getScenarios(Pageable pageable, @Nullable Long scenarioGroupId, UserContext context) {
         if (scenarioGroupId==null) {
             return new ScenarioData.ScenariosResult(Page.empty(pageable));
         }
@@ -131,7 +132,7 @@ public class ScenarioService {
         return new ScenarioData.ScenariosResult(scenarios);
     }
 
-    public ScenarioData.ScenarioUidsForAccount getScenarioUidsForAccount(DispatcherContext context) {
+    public ScenarioData.ScenarioUidsForAccount getScenarioUidsForAccount(UserContext context) {
         ScenarioData.ScenarioUidsForAccount r = new ScenarioData.ScenarioUidsForAccount();
         r.apis = apiService.getApisAllowedForCompany(context).stream()
                 .map(ApiUtils::to)
@@ -142,7 +143,7 @@ public class ScenarioService {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ScenarioData.SimpleScenarioSteps getScenarioSteps(long scenarioGroupId, long scenarioId, DispatcherContext context) {
+    public ScenarioData.SimpleScenarioSteps getScenarioSteps(long scenarioGroupId, long scenarioId, UserContext context) {
         Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
         if (s==null || s.scenarioGroupId!=scenarioGroupId || s.accountId!=context.getAccountId()) {
             return new ScenarioData.SimpleScenarioSteps(null, List.of());
@@ -175,7 +176,7 @@ public class ScenarioService {
         return new ScenarioData.SimpleScenarioSteps(new ScenarioData.SimpleScenarioInfo(s.name, s.description), stepTree);
     }
 
-    public OperationStatusWithSourceCodeId runScenario(long scenarioGroupId, long scenarioId, DispatcherContext context) {
+    public OperationStatusWithSourceCodeId runScenario(long scenarioGroupId, long scenarioId, UserContext context) {
         PreparedScenario preparedScenario = prepareScenario(scenarioId, context);
         if (preparedScenario.status.status!= EnumsApi.OperationStatus.OK) {
             return new OperationStatusWithSourceCodeId(preparedScenario.status,
@@ -188,13 +189,13 @@ public class ScenarioService {
 
         Long sourceCodeId = Objects.requireNonNull(preparedScenario.sourceCode).id;
 
-        ExecContextData.UserExecContext context1 = context.asUserExecContext();
+        ExecContextData.UserExecContext context1 = new ExecContextData.UserExecContext(context.getAccountId(), context.getCompanyId());
         ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context1, true, null);
 
         return new OperationStatusWithSourceCodeId(OperationStatusRest.OPERATION_STATUS_OK, sourceCodeId);
     }
 
-    public SourceCodeData.SimpleSourceCodeUid getSourceCodeId(long scenarioGroupId, long scenarioId, DispatcherContext context) {
+    public SourceCodeData.SimpleSourceCodeUid getSourceCodeId(long scenarioGroupId, long scenarioId, UserContext context) {
         Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
         if (s==null || s.scenarioGroupId!=scenarioGroupId || s.accountId!=context.getAccountId()) {
             return new SourceCodeData.SimpleSourceCodeUid("373.120 scenario wasn't found, " + scenarioGroupId+", " + scenarioId);
@@ -209,7 +210,7 @@ public class ScenarioService {
         return new SourceCodeData.SimpleSourceCodeUid(new SourceCodeData.SourceCodeUid(sc.id, sc.uid));
     }
 
-    public OperationStatusRest copyScenario(String scenarioGroupId, String scenarioId, DispatcherContext context) {
+    public OperationStatusRest copyScenario(String scenarioGroupId, String scenarioId, UserContext context) {
         Scenario s = scenarioRepository.findById(Long.parseLong(scenarioId)).orElse(null);
         if (s==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"373.160 Scenario # " + scenarioId+" wasn't found");
@@ -231,7 +232,7 @@ public class ScenarioService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest updateScenarioInfo(long scenarioGroupId, long scenarioId, String name, String description, DispatcherContext context) {
+    public OperationStatusRest updateScenarioInfo(long scenarioGroupId, long scenarioId, String name, String description, UserContext context) {
         Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
         if (s==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"373.280 Scenario # " + scenarioId+" wasn't found");
@@ -252,7 +253,7 @@ public class ScenarioService {
     public OperationStatusRest createOrChangeScenarioStep(
             String scenarioGroupId, String scenarioId, String uuid, String parentUuid, String name, String prompt,
             String apiId, String resultCode, String expected, String functionCode, String aggregateType, boolean isCachable,
-            DispatcherContext context) {
+            UserContext context) {
 
         if (S.b(scenarioGroupId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"373.400 scenarioGroupId is null");
@@ -330,7 +331,7 @@ public class ScenarioService {
 
     public record PreparedScenario(@Nullable Scenario scenario, @Nullable SourceCodeImpl sourceCode, OperationStatusRest status) {}
 
-    public PreparedScenario prepareScenario(long scenarioId, DispatcherContext context) {
+    public PreparedScenario prepareScenario(long scenarioId, UserContext context) {
         Scenario s = scenarioRepository.findById(scenarioId).orElse(null);
         if (s==null || s.accountId!=context.getAccountId()) {
             return new PreparedScenario(null, null,
@@ -364,7 +365,7 @@ public class ScenarioService {
         return api != null ? api.getApiScheme() : null;
     }
 
-    public ScenarioData.PreparedStep scenarioStepEvaluationPrepare(long scenarioId, String uuid, DispatcherContext context) {
+    public ScenarioData.PreparedStep scenarioStepEvaluationPrepare(long scenarioId, String uuid, UserContext context) {
 
         try {
             PreparedScenario preparedScenario = prepareScenario(scenarioId, context);
@@ -387,7 +388,7 @@ public class ScenarioService {
         }
     }
 
-    public ScenarioData.StepEvaluationResult scenarioStepEvaluationRun(long scenarioId, String uuid, String stepEvaluation, DispatcherContext context) {
+    public ScenarioData.StepEvaluationResult scenarioStepEvaluationRun(long scenarioId, String uuid, String stepEvaluation, UserContext context) {
         ScenarioData.StepEvaluationResult r = new ScenarioData.StepEvaluationResult(scenarioId, uuid);
         try {
             ChatData.PromptEvaluation se = ScenarioUtils.toPromptEvaluation(stepEvaluation);
@@ -421,8 +422,9 @@ public class ScenarioService {
             if (step.function==null) {
                 chatService.evaluationAsApiCall(chatResult, se, Objects.requireNonNull(api), context);
                 eventPublisher.publishEvent(new StoreChatLogEvent(
-                        ChatLogService.toChatLogParams(null, scenarioId, api, chatResult, context),
-                        context.asUserExecContext()));
+                    ChatLogService.toChatLogParams(null, scenarioId, api, chatResult, context),
+                    new ExecContextData.UserExecContext(context.getAccountId(), context.getCompanyId())
+                ));
             }
             else {
                 if (Consts.MH_ENHANCE_TEXT_FUNCTION.equals(step.function.code)) {

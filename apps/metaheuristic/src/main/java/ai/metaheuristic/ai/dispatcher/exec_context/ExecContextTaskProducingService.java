@@ -40,7 +40,7 @@ import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -162,8 +162,7 @@ public class ExecContextTaskProducingService {
 
     // the logic is following: because we goes through all processed, we have to filter out any processes whose ancestor is internal task
     // there is a trick - we have to stop scanning when we've reached the top-level process, i.e. internalContextId=="1"
-    @Nullable
-    public static ExecContextParamsYaml.Process checkForInternalFunctionAsParent(ExecContextParamsYaml execContextParamsYaml, DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, ExecContextData.ProcessVertex currProcess) {
+    public static ExecContextParamsYaml.@Nullable Process checkForInternalFunctionAsParent(ExecContextParamsYaml execContextParamsYaml, DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, ExecContextData.ProcessVertex currProcess) {
         if (currProcess.processContextId.equals(Consts.TOP_LEVEL_CONTEXT_ID)) {
             return null;
         }
@@ -184,8 +183,7 @@ public class ExecContextTaskProducingService {
     }
 
     @SuppressWarnings("SimplifyStreamApiCallChains")
-    @Nullable
-    private static ExecContextData.ProcessVertex getDirectAncestor(DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, ExecContextData.ProcessVertex currProcess) {
+    private static ExecContextData.@Nullable ProcessVertex getDirectAncestor(DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, ExecContextData.ProcessVertex currProcess) {
         if (currProcess.processContextId.equals(Consts.TOP_LEVEL_CONTEXT_ID)) {
             return null;
         }

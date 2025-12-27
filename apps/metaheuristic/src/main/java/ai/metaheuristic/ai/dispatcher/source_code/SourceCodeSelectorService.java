@@ -17,18 +17,18 @@
 package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
-import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.account.UserContext;
+import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -61,7 +61,7 @@ public class SourceCodeSelectorService {
     private final CompanyCache companyCache;
 
     @Transactional(readOnly = true)
-    public List<SourceCodeData.SourceCodeUid> filterSourceCodes(DispatcherContext context, List<String> uids) {
+    public List<SourceCodeData.SourceCodeUid> filterSourceCodes(UserContext context, List<String> uids) {
         log.debug("#984.005 list for filtering: {}", uids);
         List<SourceCodeData.SourceCodeUid> codes = getAvailableSourceCodesForCompany(context).items.stream()
 //                .peek(o->log.debug("\t#984.010 sourceCodeUid: {}", o.getUid()))
@@ -72,7 +72,7 @@ public class SourceCodeSelectorService {
         return codes;
     }
 
-    private SourceCodeData.SourceCodesForCompany getAvailableSourceCodesForCompany(DispatcherContext context) {
+    private SourceCodeData.SourceCodesForCompany getAvailableSourceCodesForCompany(UserContext context) {
         return getAvailableSourceCodesForCompany(context.getCompanyId());
     }
 

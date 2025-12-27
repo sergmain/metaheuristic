@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
+import ai.metaheuristic.ai.dispatcher.data.SettingsData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskQueueCleanByExecContextIdEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
@@ -40,6 +41,7 @@ import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -61,7 +63,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -151,7 +153,7 @@ public class BatchTxService {
     @Transactional
     public BatchData.UploadingStatus createBatchForFile(
             SourceCodeImpl sourceCode, Long execContextId,
-            final DispatcherContext dispatcherContext) {
+            final UserContext dispatcherContext) {
 
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
@@ -177,7 +179,10 @@ public class BatchTxService {
         return uploadingStatus;
     }
 
-    private Batch createBatch(SourceCodeImpl sourceCode, Long execContextId, DispatcherContext dispatcherContext) {
+    private Batch createBatch(SourceCodeImpl sourceCode, Long execContextId, UserContext context) {
+        if (!(context instanceof DispatcherContext dispatcherContext)) {
+            throw new RuntimeException("(!(context instanceof DispatcherContext dispatcherContext))");
+        }
         Batch b = new Batch(sourceCode.id, execContextId, Enums.BatchExecState.Stored,
                 dispatcherContext.getAccountId(), dispatcherContext.getCompanyId());
 

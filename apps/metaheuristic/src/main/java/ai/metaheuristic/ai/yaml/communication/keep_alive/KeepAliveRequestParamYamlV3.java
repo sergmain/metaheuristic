@@ -23,7 +23,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -117,8 +117,7 @@ public class KeepAliveRequestParamYamlV3 implements BaseParams {
     // ReportProcessor
     public static class ProcessorStatusV3 {
         public EnvV3 env;
-        @Nullable
-        public GtiUtils.GitStatusInfo gitStatusInfo;
+        public GtiUtils.@Nullable GitStatusInfo gitStatusInfo;
         public String schedule;
         public String ip;
         public String host;

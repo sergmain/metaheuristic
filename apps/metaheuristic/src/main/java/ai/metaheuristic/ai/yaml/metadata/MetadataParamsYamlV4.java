@@ -17,7 +17,7 @@ package ai.metaheuristic.ai.yaml.metadata;
 
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.*;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

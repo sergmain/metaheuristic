@@ -19,6 +19,8 @@ package ai.metaheuristic.ai.yaml.company;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -59,7 +61,7 @@ public class CompanyParamsYamlUtilsV1
     }
 
     @Override
-    public CompanyParamsYamlUtilsV2 nextUtil() {
+    public @Nullable CompanyParamsYamlUtilsV2 nextUtil() {
         return (CompanyParamsYamlUtilsV2) CompanyParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
     }
 

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.status.DispatcherStatusService;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -42,13 +43,13 @@ public class StatusRestController {
 
     @GetMapping("/source-code/{id}")
     public String sourceCode(@PathVariable Long id, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return dispatcherStatusService.statusSourceCode(id, context);
     }
 
     @GetMapping("/exec-context/{id}")
     public String execContext(@PathVariable Long id, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return dispatcherStatusService.statusExecContext(id, context, authentication);
     }
 }

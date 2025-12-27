@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.data.SettingsData;
 import ai.metaheuristic.ai.yaml.account.AccountParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -29,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -44,8 +46,11 @@ public class SettingsService {
 
     private final AccountTxService accountTxService;
 
-    public SettingsData.ApiKeys getApiKeys(DispatcherContext context) {
-        AccountParamsYaml params = context.account.getAccountParamsYaml();
+    public SettingsData.ApiKeys getApiKeys(UserContext context) {
+        if (!(context instanceof DispatcherContext dispatcherContext)) {
+            return new SettingsData.ApiKeys(List.of("236.040 (!(context instanceof DispatcherContext dispatcherContext))"), List.of());
+        }
+        AccountParamsYaml params = dispatcherContext.account.getAccountParamsYaml();
 
         SettingsData.ApiKeys apiKeys = new SettingsData.ApiKeys(
                 params.apiKeys.stream()
@@ -56,25 +61,25 @@ public class SettingsService {
         return apiKeys;
     }
 
-    public OperationStatusRest saveOpenaiKey(String openaiKey, DispatcherContext context) {
+    public OperationStatusRest saveOpenaiKey(String openaiKey, UserContext context) {
         return accountTxService.saveOpenaiKey(context.getAccountId(), context.getCompanyId(), openaiKey);
     }
 
-    public OperationStatusRest changePasswordCommit(String oldPassword, String newPassword, DispatcherContext context) {
+    public OperationStatusRest changePasswordCommit(String oldPassword, String newPassword, UserContext context) {
         if (StringUtils.isBlank(oldPassword) || StringUtils.isBlank(newPassword)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "236.100 oldPassword and newPassword must not be null");
         }
         return accountTxService.changePasswordCommit(oldPassword, newPassword, context);
     }
 
-    public OperationStatusRest setLanguage(String lang, DispatcherContext context) {
+    public OperationStatusRest setLanguage(String lang, UserContext context) {
         if (StringUtils.isBlank(lang)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#236.140 Language must not be null");
         }
         return accountTxService.setLanguage(context.getAccountId(), context.getCompanyId(), lang);
     }
 
-    public OperationStatusRest restLanguage(DispatcherContext context) {
+    public OperationStatusRest restLanguage(UserContext context) {
         return accountTxService.resetLanguage(context.getAccountId(), context.getCompanyId());
     }
 }

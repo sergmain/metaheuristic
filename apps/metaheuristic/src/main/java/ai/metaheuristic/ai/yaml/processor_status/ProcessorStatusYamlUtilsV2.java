@@ -19,9 +19,10 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.BeanUtils;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
@@ -60,8 +61,7 @@ public class ProcessorStatusYamlUtilsV2
         return trg;
     }
 
-    @Nullable
-    private static ProcessorStatusYamlV3.EnvV3 getEnv(@Nullable ProcessorStatusYamlV2.EnvV2 envSrc) {
+    private static ProcessorStatusYamlV3.@Nullable EnvV3 getEnv(ProcessorStatusYamlV2.@Nullable EnvV2 envSrc) {
         if (envSrc==null) {
             return null;
         }

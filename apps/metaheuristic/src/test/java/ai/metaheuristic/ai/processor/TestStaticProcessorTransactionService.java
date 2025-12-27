@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import org.junit.jupiter.api.Test;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -43,7 +43,7 @@ public class TestStaticProcessorTransactionService {
     }
 
     private static ProcessorStatusYaml.Env createProcessorStatusYamlEnvYaml(
-            Map<String, String> mirrors, Map<String, String> envs, List<ProcessorStatusYaml.DiskStorage> disk, @Nullable ProcessorStatusYaml.Quotas quotas) {
+            Map<String, String> mirrors, Map<String, String> envs, List<ProcessorStatusYaml.DiskStorage> disk, ProcessorStatusYaml.@Nullable Quotas quotas) {
         ProcessorStatusYaml.Env envYaml = new ProcessorStatusYaml.Env();
         envYaml.mirrors.putAll(mirrors);
         envYaml.envs.putAll(envs);
@@ -60,7 +60,7 @@ public class TestStaticProcessorTransactionService {
     }
 
     private static KeepAliveRequestParamYaml.Env createEnvYaml(
-            Map<String, String> mirrors, Map<String, String> envs, List<KeepAliveRequestParamYaml.DiskStorage> disk, @Nullable KeepAliveRequestParamYaml.Quotas quotas) {
+            Map<String, String> mirrors, Map<String, String> envs, List<KeepAliveRequestParamYaml.DiskStorage> disk, KeepAliveRequestParamYaml.@Nullable Quotas quotas) {
         KeepAliveRequestParamYaml.Env envYaml = new KeepAliveRequestParamYaml.Env();
         envYaml.mirrors.putAll(mirrors);
         envYaml.envs.putAll(envs);

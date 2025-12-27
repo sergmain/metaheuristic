@@ -90,8 +90,7 @@ public class ExecutionStat {
         }
     }
 
-    @Nullable
-    public <T> T getNullable(String key, Supplier<T> action) {
+    public @Nullable <T> T getNullable(String key, Supplier<@Nullable T> action) {
         long start = System.currentTimeMillis();
         try {
             return action.get();

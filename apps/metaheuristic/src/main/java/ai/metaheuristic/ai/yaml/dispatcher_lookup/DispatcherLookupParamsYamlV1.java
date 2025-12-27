@@ -22,7 +22,7 @@ import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,8 +59,7 @@ public class DispatcherLookupParamsYamlV1 implements BaseParams {
         public boolean signatureRequired;
         @Nullable
         public String publicKey;
-        @Nullable
-        public Enums.DispatcherLookupType lookupType;
+        public Enums.@Nullable DispatcherLookupType lookupType;
         public EnumsApi.AuthType authType;
 
         public String restPassword;

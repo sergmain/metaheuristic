@@ -18,7 +18,7 @@ package ai.metaheuristic.commons.yaml.auth;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 public class ApiAuthUtilsV2 extends
@@ -48,8 +48,7 @@ public class ApiAuthUtilsV2 extends
         return t;
     }
 
-    @Nullable
-    public static ApiAuth.BasicAuth toBasicAuth(@Nullable ApiAuthV2.BasicAuthV2 v2) {
+    public static ApiAuth.@Nullable BasicAuth toBasicAuth(ApiAuthV2.@Nullable BasicAuthV2 v2) {
         if (v2==null) {
             return null;
         }
@@ -57,8 +56,7 @@ public class ApiAuthUtilsV2 extends
         return ta;
     }
 
-    @Nullable
-    public static ApiAuth.TokenAuth toTokenAuth(@Nullable ApiAuthV2.TokenAuthV2 v2) {
+    public static ApiAuth.@Nullable TokenAuth toTokenAuth(ApiAuthV2.@Nullable TokenAuthV2 v2) {
         if (v2==null) {
             return null;
         }

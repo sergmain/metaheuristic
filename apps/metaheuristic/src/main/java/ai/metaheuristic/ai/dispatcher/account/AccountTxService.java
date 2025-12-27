@@ -29,12 +29,13 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.account.SimpleAccount;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -231,7 +232,7 @@ public class AccountTxService {
     }
 
     @Transactional
-    public OperationStatusRest changePasswordCommit(String oldPassword, String newPassword, DispatcherContext context) {
+    public OperationStatusRest changePasswordCommit(String oldPassword, String newPassword, UserContext context) {
         Account a = accountRepository.findByIdForUpdate(context.getAccountId());
         if (a == null || !Objects.equals(a.companyId, context.getCompanyId())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.310 account wasn't found, accountId: " + context.getAccountId());

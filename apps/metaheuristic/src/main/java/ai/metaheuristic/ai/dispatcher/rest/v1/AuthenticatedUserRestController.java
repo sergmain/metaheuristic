@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.settings.SettingsService;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -46,7 +47,7 @@ public class AuthenticatedUserRestController {
 
     @GetMapping("/reset-language")
     public OperationStatusRest resetLanguage(Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = settingsService.restLanguage(context);
         return operationStatusRest;
     }

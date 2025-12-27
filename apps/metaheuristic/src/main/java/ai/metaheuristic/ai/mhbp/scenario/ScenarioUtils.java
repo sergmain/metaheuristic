@@ -35,7 +35,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,7 +74,7 @@ public class ScenarioUtils {
 
         @JsonIgnore
         @Override
-        public String getTopId() {
+        public @Nullable String getTopId() {
             return parentUuid;
         }
 
@@ -269,8 +269,7 @@ public class ScenarioUtils {
         return p;
     }
 
-    @Nullable
-    private static SourceCodeParamsYaml.Cache initCache(ScenarioParams.Step step) {
+    private static SourceCodeParamsYaml.@Nullable Cache initCache(ScenarioParams.Step step) {
         return step.isCachable ? new SourceCodeParamsYaml.Cache(true, true, true) : null;
     }
 
@@ -344,8 +343,7 @@ public class ScenarioUtils {
         return list;
     }
 
-    @Nullable
-    public static ScenarioParams.Step findStepByUuid(ScenarioParams sp, String uuid) {
+    public static ScenarioParams.@Nullable Step findStepByUuid(ScenarioParams sp, String uuid) {
         return sp.steps.stream().filter(o->o.uuid.equals(uuid)).findFirst().orElse(null);
     }
 }

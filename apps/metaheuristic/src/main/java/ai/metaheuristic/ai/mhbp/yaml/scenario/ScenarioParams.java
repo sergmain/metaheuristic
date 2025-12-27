@@ -22,7 +22,7 @@ import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +66,7 @@ public class ScenarioParams implements BaseParams {
         // prompt or inputCode for function
         public String p;
         // result of executing
-        public String r;
+        public @Nullable String r;
         public String resultCode;
 
         // this field is for mh.acceptance-test function only. in future, it'll be changed to meta, maybe.
@@ -79,8 +79,7 @@ public class ScenarioParams implements BaseParams {
         @Nullable
         public Function function;
 
-        @Nullable
-        public AggregateFunction.AggregateType aggregateType;
+        public AggregateFunction.@Nullable AggregateType aggregateType;
 
         public boolean isCachable = false;
     }

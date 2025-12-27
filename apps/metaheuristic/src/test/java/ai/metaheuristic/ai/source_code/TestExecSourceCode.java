@@ -38,7 +38,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -169,7 +169,7 @@ public class TestExecSourceCode {
         }
     }
 
-    private void finalize(@Nullable SourceCodeApiData.SourceCodeResult scr) {
+    private void finalize(SourceCodeApiData.@Nullable SourceCodeResult scr) {
         if (scr != null) {
             SourceCodeImpl sc = Objects.requireNonNull(sourceCodeCache.findById(scr.id));
             try {

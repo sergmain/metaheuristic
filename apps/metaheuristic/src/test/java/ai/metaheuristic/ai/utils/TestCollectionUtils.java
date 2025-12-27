@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.utils;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedList;
 import java.util.List;

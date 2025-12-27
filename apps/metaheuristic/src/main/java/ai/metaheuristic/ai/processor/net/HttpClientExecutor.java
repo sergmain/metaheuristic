@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.processor.net;
 import ai.metaheuristic.ai.utils.HttpUtils;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.client5.http.fluent.Executor;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class HttpClientExecutor {
 

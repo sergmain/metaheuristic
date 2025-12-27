@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.mhbp.session;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.beans.Answer;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Evaluation;
@@ -28,13 +27,14 @@ import ai.metaheuristic.ai.mhbp.repositories.SessionRepository;
 import ai.metaheuristic.ai.mhbp.yaml.answer.AnswerParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,7 +76,7 @@ public class SessionTxService {
     }
 
     @Transactional
-    public OperationStatusRest deleteSessionById(@Nullable Long sessionId, DispatcherContext context) {
+    public OperationStatusRest deleteSessionById(@Nullable Long sessionId, UserContext context) {
         if (sessionId==null) {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }

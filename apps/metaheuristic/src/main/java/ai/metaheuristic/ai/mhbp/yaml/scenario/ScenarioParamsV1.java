@@ -22,7 +22,7 @@ import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,8 +79,7 @@ public class ScenarioParamsV1 implements BaseParams {
         @Nullable
         public FunctionV1 function;
 
-        @Nullable
-        public AggregateFunction.AggregateType aggregateType;
+        public AggregateFunction.@Nullable AggregateType aggregateType;
 
         public boolean isCachable = false;
     }

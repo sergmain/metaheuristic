@@ -16,12 +16,11 @@
 
 package ai.metaheuristic.ai.southbridge;
 
-import ai.metaheuristic.commons.CommonConsts;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BoundedInputStream;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,35 +29,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 8/29/2020
  * Time: 1:47 AM
  */
-public class TestLimitedInputStream {
+@Execution(CONCURRENT)
+class TestLimitedInputStream {
 
     private static final long SKIP_BYTES = 15L;
-    private Path testFile = null;
-
-    @BeforeEach
-    public void before() throws IOException {
-        testFile = Files.createTempFile("test-limited-input-stream", CommonConsts.BIN_EXT);
-    }
-
-    @AfterEach
-    public void after() throws IOException {
-        if (testFile!=null) {
-            Files.deleteIfExists(testFile);
-        }
-    }
 
     @Test
-    public void test() throws IOException {
+    public void test(@TempDir Path path) throws IOException {
+        Path testFile = path.resolve("test-limited-input-stream.bin");
         Files.writeString(testFile, "123456789012345678901234567890", StandardCharsets.UTF_8);
 
         try (InputStream fis = Files.newInputStream( testFile);
-            BoundedInputStream bis = new BoundedInputStream(fis, 5)) {
+            BoundedInputStream bis = BoundedInputStream.builder().setInputStream(fis).setMaxCount(5).get()) {
+
+            // act
             long skipped = fis.skip(SKIP_BYTES);
             assertEquals(15L, skipped);
             String s = IOUtils.toString(bis, StandardCharsets.UTF_8);

@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
@@ -28,10 +27,8 @@ import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.ArtifactUtils;
 import ai.metaheuristic.ai.utils.EnvServiceUtils;
 import ai.metaheuristic.ai.utils.HttpUtils;
-import ai.metaheuristic.commons.utils.*;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
-import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -39,23 +36,29 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
+import ai.metaheuristic.commons.utils.*;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
+import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.*;
-import org.springframework.lang.Nullable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -131,7 +134,7 @@ public class SourceCodeService {
         }
     }
 
-    public SourceCodeApiData.SourceCodeResult getSourceCode(Long sourceCodeId, DispatcherContext context) {
+    public SourceCodeApiData.SourceCodeResult getSourceCode(Long sourceCodeId, UserContext context) {
         final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
             String errorMessage = "560.210 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
@@ -143,7 +146,7 @@ public class SourceCodeService {
         return new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source, globals.dispatcher.asset.mode);
     }
 
-    public SourceCodeData.Development getSourceCodeDevs(Long sourceCodeId, DispatcherContext context) {
+    public SourceCodeData.Development getSourceCodeDevs(Long sourceCodeId, UserContext context) {
         final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
             String errorMessage = "560.240 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
@@ -179,8 +182,7 @@ public class SourceCodeService {
         return d;
     }
 
-    @Nullable
-    private SourceCodeApiData.SourceCodeResult checkSourceCodeExist(SourceCodeParamsYaml ppy) {
+    private SourceCodeApiData.@Nullable SourceCodeResult checkSourceCodeExist(SourceCodeParamsYaml ppy) {
         final String code = ppy.source.uid;
         if (StringUtils.isBlank(code)) {
             return new SourceCodeApiData.SourceCodeResult("560.270 the code of sourceCode is empty");
@@ -194,7 +196,7 @@ public class SourceCodeService {
         return null;
     }
 
-    public OperationStatusRest uploadSourceCode(MultipartFile file, DispatcherContext context) {
+    public OperationStatusRest uploadSourceCode(MultipartFile file, UserContext context) {
         if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "560.330 Can't upload sourceCode while 'replicated' mode of asset is active");

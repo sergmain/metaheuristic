@@ -21,7 +21,7 @@ import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,7 +93,7 @@ public class ProcessorCommParamsYaml implements BaseParams {
             public String result;
         }
 
-        public List<SimpleTaskExecResult> results = new ArrayList<>();
+        public @Nullable List<SimpleTaskExecResult> results = new ArrayList<>();
     }
 
     @Data

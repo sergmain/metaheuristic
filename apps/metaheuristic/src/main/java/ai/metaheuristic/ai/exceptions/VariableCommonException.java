@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.exceptions;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Serge

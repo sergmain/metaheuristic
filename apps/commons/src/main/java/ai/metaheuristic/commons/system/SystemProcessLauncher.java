@@ -22,7 +22,7 @@ import ai.metaheuristic.commons.dispatcher_schedule.ExtendedTimePeriod;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -50,17 +50,16 @@ public class SystemProcessLauncher {
     public static class ExecResult {
         @Nullable
         public final Path functionDir;
-        @Nullable
-        public final FunctionApiData.SystemExecResult systemExecResult;
+        public final FunctionApiData.@Nullable SystemExecResult systemExecResult;
         public final boolean ok;
         @Nullable
         public final String error;
 
-        public ExecResult(@Nullable FunctionApiData.SystemExecResult systemExecResult, boolean ok, String error) {
+        public ExecResult(FunctionApiData.@Nullable SystemExecResult systemExecResult, boolean ok, String error) {
             this(null, systemExecResult, ok, error);
         }
 
-        public ExecResult(@Nullable Path functionDir, @Nullable FunctionApiData.SystemExecResult systemExecResult, boolean ok, @Nullable String error) {
+        public ExecResult(@Nullable Path functionDir, FunctionApiData.@Nullable SystemExecResult systemExecResult, boolean ok, @Nullable String error) {
             this.functionDir = functionDir;
             this.systemExecResult = systemExecResult;
             this.ok = ok;

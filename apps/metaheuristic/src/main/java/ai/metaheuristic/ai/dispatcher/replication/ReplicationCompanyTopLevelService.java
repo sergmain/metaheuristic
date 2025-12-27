@@ -30,7 +30,7 @@ import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -106,8 +106,7 @@ public class ReplicationCompanyTopLevelService {
 
     }
 
-    @Nullable
-    private ReplicationData.CompanyAsset getCompanyAsset(Long uniqueId) {
+    private ReplicationData.@Nullable CompanyAsset getCompanyAsset(Long uniqueId) {
         ReplicationData.CompanyAsset companyAsset = requestCompanyAsset(uniqueId);
         if (companyAsset.isErrorMessages()) {
             log.error("#308.020 Error while getting company with uniqueId "+ uniqueId +", error: " + companyAsset.getErrorMessagesAsStr());

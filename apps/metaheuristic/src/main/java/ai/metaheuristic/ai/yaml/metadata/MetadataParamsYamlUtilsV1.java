@@ -23,6 +23,8 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.Map;
@@ -91,7 +93,7 @@ public class MetadataParamsYamlUtilsV1
     }
 
     @Override
-    public MetadataParamsYamlUtilsV2 nextUtil() {
+    public @Nullable MetadataParamsYamlUtilsV2 nextUtil() {
         return (MetadataParamsYamlUtilsV2) MetadataParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
     }
 

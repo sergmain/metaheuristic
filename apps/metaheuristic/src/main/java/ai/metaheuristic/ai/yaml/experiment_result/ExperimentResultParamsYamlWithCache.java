@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Transient;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -45,13 +45,11 @@ public class ExperimentResultParamsYamlWithCache {
         this.experimentResult = experimentResult;
     }
 
-    @Nullable
-    public ExperimentResultParams.ExperimentFeature getFeature(Long featureId) {
+    public ExperimentResultParams.@Nullable ExperimentFeature getFeature(Long featureId) {
         return experimentResult.features.stream().filter(o -> Objects.equals(o.id, featureId)).findFirst().orElse(null);
     }
 
-    @Nullable
-    public ExperimentResultParams.ExperimentTaskFeature getExperimentTaskFeature(Long taskId) {
+    public ExperimentResultParams.@Nullable ExperimentTaskFeature getExperimentTaskFeature(Long taskId) {
         return experimentResult.taskFeatures
                 .stream()
                 .filter(o -> o.taskId.equals(taskId))

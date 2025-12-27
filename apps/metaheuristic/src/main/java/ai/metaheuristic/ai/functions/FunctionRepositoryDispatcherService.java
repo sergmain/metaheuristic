@@ -38,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -132,14 +132,12 @@ public class FunctionRepositoryDispatcherService {
         return response;
     }
 
-    @Nullable
-    private FunctionRepositoryResponseParams.ShortFunctionConfig toShortFunctionConfig(String functionCode) {
+    private FunctionRepositoryResponseParams.@Nullable ShortFunctionConfig toShortFunctionConfig(String functionCode) {
         FunctionRepositoryResponseParams.ShortFunctionConfig f = shortFunctionConfigCache.computeIfAbsent(functionCode, this::loadShortFunctionConfig);
         return f;
     }
 
-    @Nullable
-    private FunctionRepositoryResponseParams.ShortFunctionConfig loadShortFunctionConfig(String functionCode) {
+    private FunctionRepositoryResponseParams.@Nullable ShortFunctionConfig loadShortFunctionConfig(String functionCode) {
         Function f = functionRepository.findByCode(functionCode);
         if (f==null) {
             return null;
@@ -277,6 +275,7 @@ public class FunctionRepositoryDispatcherService {
         return codes;
     }
 
+    @SuppressWarnings("ConstantValue")
     public static void collectFunctionCodesForProcess(Set<String> codes, SourceCodeParamsYaml.Process process) {
         if (process.function !=null && process.function.context==EnumsApi.FunctionExecContext.external) {
             codes.add(process.function.code);
@@ -296,7 +295,7 @@ public class FunctionRepositoryDispatcherService {
             }
         }
 
-        if (process.subProcesses!=null) {
+        if (process.subProcesses!=null && process.subProcesses.processes!=null) {
             for (SourceCodeParamsYaml.Process subProcess : process.subProcesses.processes) {
                 collectFunctionCodesForProcess(codes, subProcess);
             }

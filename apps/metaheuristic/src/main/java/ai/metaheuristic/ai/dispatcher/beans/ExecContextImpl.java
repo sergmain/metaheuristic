@@ -28,7 +28,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -79,6 +79,7 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name = "CTX_GRAPH_ID")
     public Long execContextGraphId;
 
+    @Nullable
     @Column(name = "CTX_TASK_STATE_ID")
     public Long execContextTaskStateId;
 

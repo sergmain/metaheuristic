@@ -34,7 +34,6 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 public class DispatcherContext implements UserContext {
-    public final String contextId = UUID.randomUUID().toString();
 
     @NonNull
     public final Account account;

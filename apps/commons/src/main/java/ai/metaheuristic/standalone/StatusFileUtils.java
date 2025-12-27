@@ -19,7 +19,7 @@ package ai.metaheuristic.standalone;
 import ai.metaheuristic.commons.utils.ErrorUtils;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import lombok.SneakyThrows;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.BufferedWriter;
 import java.nio.charset.StandardCharsets;

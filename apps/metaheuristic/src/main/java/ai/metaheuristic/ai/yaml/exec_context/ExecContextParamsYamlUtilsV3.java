@@ -20,6 +20,8 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV3;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV4;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.BeanUtils;
 
 import org.yaml.snakeyaml.Yaml;
@@ -97,7 +99,6 @@ public class ExecContextParamsYamlUtilsV3
         return new ExecContextParamsYamlV4.VariableV4(v.name, v.context, v.sourcing, v.git, v.disk, v.parentContext, v.type, v.getNullable(), v.ext);
     }
 
-    @NonNull
     private static ExecContextParamsYamlV4.FunctionDefinitionV4 toFunction(ExecContextParamsYamlV3.FunctionDefinitionV3 f1) {
         return new ExecContextParamsYamlV4.FunctionDefinitionV4(f1.code, f1.params, f1.context);
     }
@@ -109,7 +110,7 @@ public class ExecContextParamsYamlUtilsV3
     }
 
     @Override
-    public ExecContextParamsYamlUtilsV4 nextUtil() {
+    public @Nullable ExecContextParamsYamlUtilsV4 nextUtil() {
         return (ExecContextParamsYamlUtilsV4) ExecContextParamsYamlUtils.BASE_YAML_UTILS.getForVersion(4);
     }
 

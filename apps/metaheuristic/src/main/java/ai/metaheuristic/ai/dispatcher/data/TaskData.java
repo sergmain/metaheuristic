@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.*;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -104,8 +104,7 @@ public class TaskData {
     @NoArgsConstructor
     public static class TaskSearching {
         public  Enums.TaskSearchingStatus status = Enums.TaskSearchingStatus.found;
-        @Nullable
-        public TaskData.AssignedTask task = null;
+        public TaskData.@Nullable AssignedTask task = null;
         public final Map<Long, Enums.TaskRejectingStatus> rejected = new HashMap<>();
 
         public TaskSearching(@Nullable AssignedTask task) {

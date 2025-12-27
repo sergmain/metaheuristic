@@ -29,7 +29,7 @@ import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -53,7 +53,7 @@ public class MetadataParams {
     private final DispatcherLookupExtendedParams dispatcherLookupExtendedService;
     private final Path processorPath;
 
-    private MetadataParamsYaml metadata = null;
+    private @Nullable MetadataParamsYaml metadata = null;
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
@@ -92,7 +92,7 @@ public class MetadataParams {
     public static void fixProcessorCodes(List<String> codes, Map<String, MetadataParamsYaml.ProcessorSession> map) {
         Set<String> forDeletion = new HashSet<>();
         for (Map.Entry<String, MetadataParamsYaml.ProcessorSession> entry : map.entrySet()) {
-            final LinkedHashMap<String, Long> cores = entry.getValue().cores;
+            final LinkedHashMap<String, @Nullable Long> cores = entry.getValue().cores;
             for (String key : cores.keySet()) {
                 if (!codes.contains(key)) {
                     forDeletion.add(key);
@@ -348,8 +348,7 @@ public class MetadataParams {
         }
     }
 
-    @Nullable
-    public ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef getCoreRef(String coreCode, DispatcherUrl dispatcherUrl) {
+    public ProcessorData.@Nullable ProcessorCoreAndProcessorIdAndDispatcherUrlRef getCoreRef(String coreCode, DispatcherUrl dispatcherUrl) {
         try {
             readLock.lock();
             MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(dispatcherUrl.url);
@@ -366,8 +365,7 @@ public class MetadataParams {
         }
     }
 
-    @Nullable
-    public ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef getRef(DispatcherUrl dispatcherUrl) {
+    public ProcessorData.@Nullable ProcessorCodeAndIdAndDispatcherUrlRef getRef(DispatcherUrl dispatcherUrl) {
         try {
             readLock.lock();
             MetadataParamsYaml.ProcessorSession processorState = getProcessorSession(dispatcherUrl.url);

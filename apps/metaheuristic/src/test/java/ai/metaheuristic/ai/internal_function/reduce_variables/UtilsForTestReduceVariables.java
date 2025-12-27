@@ -24,7 +24,7 @@ import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigPara
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import org.apache.commons.io.FileUtils;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;

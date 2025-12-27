@@ -39,7 +39,7 @@ import org.springframework.boot.convert.DataSizeUnit;
 import org.springframework.boot.convert.DurationUnit;
 import org.springframework.boot.convert.PeriodUnit;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.unit.DataSize;
 import org.springframework.util.unit.DataUnit;
@@ -511,7 +511,7 @@ public class Globals {
     @Setter
     public static class Mhbp {
         public final Max max = new Max();
-        public Kb[] kb;
+        public @Nullable Kb[] kb;
         public Enums.ApiKeySourceDefinedBy apiKeySource = none;
         @Nullable
         public String[] envTokens;

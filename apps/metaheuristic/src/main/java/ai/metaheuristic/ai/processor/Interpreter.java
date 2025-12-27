@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.processor;
 
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 @Data
 public class Interpreter {

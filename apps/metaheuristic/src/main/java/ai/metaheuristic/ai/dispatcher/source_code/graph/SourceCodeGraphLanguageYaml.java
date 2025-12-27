@@ -28,7 +28,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import org.apache.commons.lang3.NotImplementedException;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -114,7 +114,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
             Supplier<String> contextIdSupplier, SourceCodeParamsYaml sourceCodeParams,
             SourceCodeData.SourceCodeGraph scg, ExecContextData.ProcessVertex parentProcess,
             String currentInternalContextId, Set<String> processCodes, Map<String, Long> ids,
-            AtomicLong currId, @Nullable SourceCodeParamsYaml.SubProcesses subProcesses) {
+            AtomicLong currId, SourceCodeParamsYaml.@Nullable SubProcesses subProcesses) {
 
         Set<ExecContextData.ProcessVertex> lastProcesses = new HashSet<>();
         // tasks for sub-processes of internal function will be produced at runtime phase

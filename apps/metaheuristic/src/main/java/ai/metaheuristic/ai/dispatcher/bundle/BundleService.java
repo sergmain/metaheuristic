@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.bundle;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
@@ -32,6 +31,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.exceptions.BundleProcessingException;
 import ai.metaheuristic.commons.utils.BundleUtils;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -45,12 +45,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.file.PathUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileVisitOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -80,7 +81,7 @@ public class BundleService {
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_FUNCTION = BundleService::isZipEntityNameOk;
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_ENTRY_SIZE_FUNCTION = BundleService::isZipEntitySizeOk;
 
-    public BundleData.UploadingStatus uploadFromGit(GitInfo gitInfo, DispatcherContext context) {
+    public BundleData.UploadingStatus uploadFromGit(GitInfo gitInfo, UserContext context) {
 //      --git-repo https://github.com/sergmain/metaheuristic-assets.git --git-branch master --git-commit HEAD --git-path common-bundle
 
         int j=11;
@@ -112,7 +113,7 @@ public class BundleService {
         }
     }
 
-    public BundleData.UploadingStatus uploadFromFile(final MultipartFile file, final DispatcherContext dispatcherContext) {
+    public BundleData.UploadingStatus uploadFromFile(final MultipartFile file, final UserContext dispatcherContext) {
         if (Consts.ID_1.equals(dispatcherContext.getCompanyId())) {
             return new BundleData.UploadingStatus("971.080 Batch can't be created in company #1");
         }
@@ -154,10 +155,9 @@ public class BundleService {
         }
     }
 
-    @NonNull
-    private BundleData.UploadingStatus processBundle(Path processingPath, BundleData.BundleLocation bundleLocation, DispatcherContext dispatcherContext) {
+    private BundleData.UploadingStatus processBundle(Path processingPath, BundleData.BundleLocation bundleLocation, UserContext userContext) {
         try {
-            BundleData.UploadingStatus status = processBundleInternal(processingPath, bundleLocation, dispatcherContext);
+            BundleData.UploadingStatus status = processBundleInternal(processingPath, bundleLocation, userContext);
             return status;
         }
         catch (ExecContextTooManyInstancesException e) {
@@ -175,7 +175,7 @@ public class BundleService {
         }
     }
 
-    private BundleData.UploadingStatus processBundleInternal(Path processingPath, BundleData.BundleLocation bundleLocation, DispatcherContext dispatcherContext) throws IOException {
+    private BundleData.UploadingStatus processBundleInternal(Path processingPath, BundleData.BundleLocation bundleLocation, UserContext userContext) throws IOException {
         ZipUtils.unzipFolder(bundleLocation.bundleZipFile, processingPath);
 
         Path bundleCfg = processingPath.resolve(CommonConsts.MH_BUNDLE_YAML);
@@ -188,16 +188,16 @@ public class BundleService {
         BundleData.UploadingStatus status = new BundleData.UploadingStatus();
 
         processFunctions(bundleCfgYaml, processingPath, status);
-        processCommonType(EnumsApi.BundleItemType.sourceCode, bundleCfgYaml, processingPath, status, dispatcherContext, this::storeSourceCode);
-        processCommonType(EnumsApi.BundleItemType.api, bundleCfgYaml, processingPath, status, dispatcherContext, apiService::createApi);
-        processCommonType(EnumsApi.BundleItemType.auth, bundleCfgYaml, processingPath, status, dispatcherContext, authService::createAuth);
+        processCommonType(EnumsApi.BundleItemType.sourceCode, bundleCfgYaml, processingPath, status, userContext, this::storeSourceCode);
+        processCommonType(EnumsApi.BundleItemType.api, bundleCfgYaml, processingPath, status, userContext, apiService::createApi);
+        processCommonType(EnumsApi.BundleItemType.auth, bundleCfgYaml, processingPath, status, userContext, authService::createAuth);
 
         return status;
     }
 
     private static void processCommonType(EnumsApi.BundleItemType type, BundleCfgYaml bundleCfgYaml,
-                                          Path data, BundleData.UploadingStatus status, DispatcherContext dispatcherContext,
-                                          BiFunction<String, DispatcherContext, BaseDataClass> storeCommonTypeFunc) throws IOException {
+                                          Path data, BundleData.UploadingStatus status, UserContext dispatcherContext,
+                                          BiFunction<String, UserContext, BaseDataClass> storeCommonTypeFunc) throws IOException {
         for (BundleCfgYaml.BundleConfig bundleConfig : bundleCfgYaml.bundleConfig) {
             if (bundleConfig.type!= type) {
                 continue;
@@ -222,7 +222,7 @@ public class BundleService {
         }
     }
 
-    private SourceCodeApiData.SourceCodeResult storeSourceCode(String yaml, DispatcherContext dispatcherContext) {
+    private SourceCodeApiData.SourceCodeResult storeSourceCode(String yaml, UserContext dispatcherContext) {
         return sourceCodeService.createSourceCode(yaml, dispatcherContext.getCompanyId());
     }
 

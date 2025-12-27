@@ -58,7 +58,6 @@ public class CompletableFutureExample {
     }
 
     @SneakyThrows
-    @NonNull
     private static String getString(String name, long sleep) {
         long mills = System.currentTimeMillis();
         Thread.sleep(sleep);

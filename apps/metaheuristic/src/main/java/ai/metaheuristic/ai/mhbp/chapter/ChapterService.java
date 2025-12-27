@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.mhbp.beans.Kb;
 import ai.metaheuristic.ai.mhbp.data.SimpleChapterUid;
 import ai.metaheuristic.ai.mhbp.repositories.ChapterRepository;
 import ai.metaheuristic.ai.mhbp.repositories.KbRepository;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +55,7 @@ public class ChapterService {
         return result;
     }
 
-    public List<Long> getKbIdsAllowedForCompany(DispatcherContext context) {
+    public List<Long> getKbIdsAllowedForCompany(UserContext context) {
         List<Long> result = new ArrayList<>(50);
         List<Long> kbs = kbRepository.findAllIdsByCompanyUniqueId(Consts.ID_1);
         result.addAll(kbs);
@@ -63,7 +64,7 @@ public class ChapterService {
         return result;
     }
 
-    public List<SimpleChapterUid> getChaptersAllowedForCompany(DispatcherContext context) {
+    public List<SimpleChapterUid> getChaptersAllowedForCompany(UserContext context) {
         List<Long> kbIds = getKbIdsAllowedForCompany(context);
         List<SimpleChapterUid> result = chapterRepository.findAllByKbIds(kbIds);
         return result;

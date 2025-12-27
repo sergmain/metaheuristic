@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import jakarta.persistence.AttributeConverter;
 

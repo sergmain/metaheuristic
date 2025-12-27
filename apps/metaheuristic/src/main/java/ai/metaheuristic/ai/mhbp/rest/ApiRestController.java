@@ -22,12 +22,13 @@ import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.api.ApiTxService;
 import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,14 +50,14 @@ public class ApiRestController {
 
     @GetMapping("/apis")
     public ApiData.Apis apis(Pageable pageable, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         final ApiData.Apis apis = apiService.getApis(pageable, context);
         return apis;
     }
 
     @GetMapping("/api/{apiId}")
     public ApiData.Api apis(@PathVariable @Nullable Long apiId, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         final ApiData.Api api = apiService.getApiAsData(apiId, context);
         return api;
     }
@@ -68,7 +69,7 @@ public class ApiRestController {
             @RequestParam(name = "code") String code,
             @RequestParam(name = "scheme") String scheme,
             Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
 
         return apiTxService.createApi(name, code, scheme, context);
     }
@@ -76,7 +77,7 @@ public class ApiRestController {
     @PostMapping("/evaluation-add-commit")
 //    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public SourceCodeApiData.SourceCodeResult addFormCommit(@RequestParam(name = "source") String sourceCodeYamlAsStr, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return sourceCodeService.createSourceCode(sourceCodeYamlAsStr, context.getCompanyId());
     }
 
@@ -90,7 +91,7 @@ public class ApiRestController {
     @PostMapping("/api-delete-commit")
 //    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest deleteCommit(Long id, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return apiTxService.deleteApiById(id, context);
     }
 

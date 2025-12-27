@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -71,15 +72,25 @@ public class BatchRestController {
     public BatchData.BatchesResult batches(
             @RequestParam(required = false, defaultValue = "false") boolean filterBatches,
             @PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
-        return batchTopLevelService.getBatches(pageable, context, false, filterBatches);
+        UserContext context = userContextService.getContext(authentication);
+        if (!(context instanceof DispatcherContext dispatcherContext)) {
+            BatchData.BatchesResult result = new BatchData.BatchesResult();
+            result.addErrorMessage("220.100 (!(context instanceof DispatcherContext dispatcherContext))");
+            return result;
+        }
+        return batchTopLevelService.getBatches(pageable, dispatcherContext, false, filterBatches);
     }
 
     @GetMapping("/batch-exec-statuses")
     @PreAuthorize("isAuthenticated()")
     public BatchData.ExecStatuses batchExecStatuses(Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
-        return batchTopLevelService.getBatchExecStatuses(context);
+        UserContext context = userContextService.getContext(authentication);
+        if (!(context instanceof DispatcherContext dispatcherContext)) {
+            BatchData.ExecStatuses result = new BatchData.ExecStatuses(List.of());
+            result.addErrorMessage("220.140 (!(context instanceof DispatcherContext dispatcherContext))");
+            return result;
+        }
+        return batchTopLevelService.getBatchExecStatuses(dispatcherContext);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
@@ -87,14 +98,19 @@ public class BatchRestController {
     public BatchData.BatchesResult batchesPart(
             @RequestParam(required = false, defaultValue = "false") boolean filterBatches,
             @PageableDefault(size = 20) Pageable pageable, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
-        return batchTopLevelService.getBatches(pageable, context, false, filterBatches);
+        UserContext context = userContextService.getContext(authentication);
+        if (!(context instanceof DispatcherContext dispatcherContext)) {
+            BatchData.BatchesResult result = new BatchData.BatchesResult();
+            result.addErrorMessage("220.180 (!(context instanceof DispatcherContext dispatcherContext))");
+            return result;
+        }
+        return batchTopLevelService.getBatches(pageable, dispatcherContext, false, filterBatches);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
     @GetMapping(value = "/batch-add")
     public SourceCodeData.SourceCodeUidsForCompany batchAdd(Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         SourceCodeData.SourceCodeUidsForCompany codes = new SourceCodeData.SourceCodeUidsForCompany();
         List<String> uids = dispatcherParamsTopLevelService.getBatches();
         codes.items = sourceCodeSelectorService.filterSourceCodes(context, uids);
@@ -110,7 +126,8 @@ public class BatchRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
     @PostMapping("/batch-delete-commit")
     public OperationStatusRest processResourceDeleteCommit(Long batchId, Authentication authentication) {
-        return batchTopLevelService.processBatchDeleteCommit(batchId, userContextService.getContext(authentication), true);
+        UserContext context = userContextService.getContext(authentication);
+        return batchTopLevelService.processBatchDeleteCommit(batchId, context, true);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
@@ -134,7 +151,7 @@ public class BatchRestController {
     public HttpEntity<AbstractResource> downloadProcessingResult(
             HttpServletRequest request, @PathVariable("batchId") Long batchId,
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         try {
             CleanerInfo resource = batchTopLevelService.getBatchProcessingResul(batchId, context.getCompanyId(), false);
             if (resource==null) {

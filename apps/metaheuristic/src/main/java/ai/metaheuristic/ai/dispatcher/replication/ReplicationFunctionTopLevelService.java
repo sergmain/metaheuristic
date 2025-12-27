@@ -27,7 +27,7 @@ import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -65,8 +65,7 @@ public class ReplicationFunctionTopLevelService {
                 .forEach(replicationFunctionService::createFunction);
     }
 
-    @Nullable
-    private ReplicationData.FunctionAsset getFunctionAsset(String functionCode) {
+    private ReplicationData.@Nullable FunctionAsset getFunctionAsset(String functionCode) {
         ReplicationData.FunctionAsset functionAsset = requestFunctionAsset(functionCode);
         if (functionAsset.isErrorMessages()) {
             log.error("#306.020 Error while getting function {} , error: {}",  functionCode, functionAsset.getErrorMessagesAsStr());

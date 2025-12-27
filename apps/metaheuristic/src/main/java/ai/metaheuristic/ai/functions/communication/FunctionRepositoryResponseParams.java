@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -48,7 +48,7 @@ public class FunctionRepositoryResponseParams implements BaseParams {
     @NoArgsConstructor
     public static class ShortFunctionConfig {
         public String code;
-        public EnumsApi.FunctionSourcing sourcing;
+        public EnumsApi.@Nullable FunctionSourcing sourcing;
         @Nullable
         public GitInfo git;
     }

@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +44,7 @@ public class DispatcherData {
     public static class DispatcherContextInfo {
 
         // chunkSize must be inited with value from Dispatcher. Until then Processor will wait for initializing
-        public Long chunkSize;
+        public @Nullable Long chunkSize;
 
         public Integer maxVersionOfProcessor;
 

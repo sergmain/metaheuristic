@@ -17,16 +17,16 @@
 package ai.metaheuristic.ai.dispatcher.account;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -38,7 +38,7 @@ public class AccountService {
     private final AccountTxService accountService;
     private final Globals globals;
 
-    public AccountData.AccountsResult getAccounts(Pageable pageable, DispatcherContext context) {
+    public AccountData.AccountsResult getAccounts(Pageable pageable, UserContext context) {
         pageable = PageUtils.fixPageSize(globals.dispatcher.rowsLimit.account, pageable);
         return accountService.getAccounts(pageable, context.getCompanyId());
     }
@@ -49,19 +49,19 @@ public class AccountService {
         return accountService.addAccount(account, companyId, "ROLE_OPERATOR");
     }
 
-    public AccountData.AccountResult getAccount(Long id, DispatcherContext context) {
+    public AccountData.AccountResult getAccount(Long id, UserContext context) {
         return accountService.getAccount(id, context.getCompanyId());
     }
 
-    public OperationStatusRest editFormCommit(@Nullable Long accountId, @Nullable String publicName, boolean enabled, DispatcherContext context) {
+    public OperationStatusRest editFormCommit(@Nullable Long accountId, @Nullable String publicName, boolean enabled, UserContext context) {
         return accountService.editFormCommit(accountId, publicName, enabled, context.getCompanyId());
     }
 
-    public OperationStatusRest passwordEditFormCommit(Long accountId, String password, String password2, DispatcherContext context) {
+    public OperationStatusRest passwordEditFormCommit(Long accountId, String password, String password2, UserContext context) {
         return accountService.passwordEditFormCommit(accountId, password, password2, context.getCompanyId());
     }
 
-    public OperationStatusRest roleFormCommit(Long accountId, String roles, DispatcherContext context) {
+    public OperationStatusRest roleFormCommit(Long accountId, String roles, UserContext context) {
         return accountService.roleFormCommit(accountId, roles, context.getCompanyId());
     }
 }

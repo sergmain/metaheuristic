@@ -20,6 +20,8 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;
@@ -77,7 +79,7 @@ public class DispatcherLookupParamsYamlUtilsV1
     }
 
     @Override
-    public DispatcherLookupParamsYamlUtilsV2 nextUtil() {
+    public @Nullable DispatcherLookupParamsYamlUtilsV2 nextUtil() {
         return (DispatcherLookupParamsYamlUtilsV2) DispatcherLookupParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
     }
 

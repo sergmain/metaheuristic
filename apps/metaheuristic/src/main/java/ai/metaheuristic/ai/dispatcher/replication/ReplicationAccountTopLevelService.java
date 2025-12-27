@@ -29,7 +29,7 @@ import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -102,8 +102,7 @@ public class ReplicationAccountTopLevelService {
                 .forEach(replicationAccountService::createAccount);
     }
 
-    @Nullable
-    private ReplicationData.AccountAsset getAccountAsset(String username) {
+    private ReplicationData.@Nullable AccountAsset getAccountAsset(String username) {
         ReplicationData.AccountAsset accountAsset = requestAccountAsset(username);
         if (accountAsset.isErrorMessages()) {
             log.error("#308.020 Error while getting account for username "+ username +", error: " + accountAsset.getErrorMessagesAsStr());

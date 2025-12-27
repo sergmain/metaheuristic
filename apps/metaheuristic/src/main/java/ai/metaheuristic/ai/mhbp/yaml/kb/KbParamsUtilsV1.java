@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.mhbp.yaml.kb;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.List;
@@ -53,8 +53,7 @@ public class KbParamsUtilsV1 extends
         return t;
     }
 
-    @Nullable
-    private static KbParams.File toFile(@Nullable KbParamsV1.FileV1 v1) {
+    private static KbParams.@Nullable File toFile(KbParamsV1.@Nullable FileV1 v1) {
         if (v1==null) {
             return null;
         }
@@ -62,8 +61,7 @@ public class KbParamsUtilsV1 extends
         return f;
     }
 
-    @Nullable
-    private static KbParams.Git toGit(@Nullable KbParamsV1.GitV1 v1) {
+    private static KbParams.@Nullable Git toGit(KbParamsV1.@Nullable GitV1 v1) {
         if (v1==null) {
             return null;
         }
@@ -72,8 +70,7 @@ public class KbParamsUtilsV1 extends
         return g;
     }
 
-    @Nullable
-    public static KbParams.KbPath toKbPath(KbParamsV1.KbPathV1 v1) {
+    public static KbParams.@Nullable KbPath toKbPath(KbParamsV1.KbPathV1 v1) {
         KbParams.KbPath ta = new KbParams.KbPath(v1.evals, v1.data);
         return ta;
     }

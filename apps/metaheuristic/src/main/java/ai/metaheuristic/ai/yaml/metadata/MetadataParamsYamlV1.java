@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 
@@ -48,6 +49,6 @@ public class MetadataParamsYamlV1 implements BaseParams {
         public String sessionId;
     }
 
-    public LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
-    public LinkedHashMap<String, DispatcherInfoV1> dispatcher = new LinkedHashMap<>();
+    public @Nullable LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
+    public @Nullable LinkedHashMap<String, DispatcherInfoV1> dispatcher = new LinkedHashMap<>();
 }

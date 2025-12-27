@@ -15,7 +15,6 @@
  */
 package ai.metaheuristic.ai.dispatcher.experiment;
 
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
@@ -27,14 +26,15 @@ import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -145,8 +145,7 @@ public class ExperimentService {
         return new OperationStatusRest(EnumsApi.OperationStatus.OK);
     }
 
-    @Nullable
-    public ExperimentApiData.ExperimentData asExperimentDataShort(Experiment e) {
+    public ExperimentApiData.@Nullable ExperimentData asExperimentDataShort(Experiment e) {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
         ExecContextImpl ec = execContextCache.findById(e.execContextId, true);
         if (ec==null) {
@@ -171,7 +170,7 @@ public class ExperimentService {
     }
 
     @Transactional
-    public OperationStatusRest deleteExperiment(Long id, DispatcherContext context) {
+    public OperationStatusRest deleteExperiment(Long id, UserContext context) {
         try {
             Experiment experiment = experimentCache.findById(id);
             if (experiment == null) {

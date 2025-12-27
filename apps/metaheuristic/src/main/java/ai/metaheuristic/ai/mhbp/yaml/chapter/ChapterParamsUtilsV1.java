@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.mhbp.yaml.chapter;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;
@@ -46,7 +46,6 @@ public class ChapterParamsUtilsV1 extends
         return t;
     }
 
-    @Nullable
     private static ChapterParams.Prompt toPrompt(ChapterParamsV1.PromptV1 v1) {
         ChapterParams.Prompt f = new ChapterParams.Prompt(v1.p, v1.a);
         return f;

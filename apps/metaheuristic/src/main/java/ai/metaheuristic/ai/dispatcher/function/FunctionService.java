@@ -49,7 +49,7 @@ import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedInputStream;
@@ -128,8 +128,7 @@ public class FunctionService {
     private final FunctionCache functionCache;
     private final FunctionTxService functionTxService;
 
-    @Nullable
-    public FunctionData.SimpleFunctionResult getFunction(String code) {
+    public FunctionData.@Nullable SimpleFunctionResult getFunction(String code) {
         Function f = functionRepository.findByCode(code);
         if (f==null) {
             return null;
@@ -372,8 +371,7 @@ public class FunctionService {
         return checksumInfo;
     }
 
-    @Nullable
-    public TaskParamsYaml.FunctionConfig getFunctionConfig(SimpleFunctionDefinition functionDef) {
+    public TaskParamsYaml.@Nullable FunctionConfig getFunctionConfig(SimpleFunctionDefinition functionDef) {
         TaskParamsYaml.FunctionConfig functionConfig = null;
         if (StringUtils.isNotBlank(functionDef.getCode())) {
             Function function = null;

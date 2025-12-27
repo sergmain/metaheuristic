@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.yaml.communication.keep_alive;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.BeanUtils;
 
 import org.yaml.snakeyaml.Yaml;

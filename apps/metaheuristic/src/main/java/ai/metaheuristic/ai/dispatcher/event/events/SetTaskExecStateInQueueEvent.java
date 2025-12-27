@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.event.events;
 
 import ai.metaheuristic.api.EnumsApi;
 import lombok.AllArgsConstructor;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Serge
@@ -32,8 +32,7 @@ public class SetTaskExecStateInQueueEvent implements CommonEvent {
     public final EnumsApi.TaskExecState state;
     @Nullable
     public final Long coreId;
-    @Nullable
-    public EnumsApi.FunctionExecContext context;
+    public EnumsApi.@Nullable FunctionExecContext context;
     @Nullable
     public String funcCode;
 }

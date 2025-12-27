@@ -39,7 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -140,8 +140,7 @@ public class BatchSplitterTxService {
         eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
     }
 
-    @Nullable
-    private static VariableData.VariableDataSource getVariableDataSource(Map<String, String> mapping, Path dataFilePath, Path file) throws IOException {
+    private static VariableData.@Nullable VariableDataSource getVariableDataSource(Map<String, String> mapping, Path dataFilePath, Path file) throws IOException {
         VariableData.VariableDataSource variableDataSource;
         if (Files.isDirectory(file)) {
             final List<BatchTopLevelService.FileWithMapping> files;

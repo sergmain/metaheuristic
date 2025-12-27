@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStatePara
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +56,7 @@ public class DispatcherStatusService {
     private final TaskRepository taskRepository;
     private final ExecContextTopLevelService execContextTopLevelService;
 
-    public String statusSourceCode(Long id, DispatcherContext context) {
+    public String statusSourceCode(Long id, UserContext context) {
         SourceCodeImpl sc = sourceCodeRepository.findById(id).orElse(null);
         if (sc==null) {
             return "SourceCode with id #"+id+" wasn't found\n";
@@ -70,7 +71,7 @@ public class DispatcherStatusService {
         return s.toString();
     }
 
-    public String statusExecContext(Long id, DispatcherContext context, Authentication authentication) {
+    public String statusExecContext(Long id, UserContext context, Authentication authentication) {
         ExecContextImpl ec = execContextRepository.findById(id).orElse(null);
         if (ec == null) {
             return "ExecContext with id #" + id + " wasn't found\n";

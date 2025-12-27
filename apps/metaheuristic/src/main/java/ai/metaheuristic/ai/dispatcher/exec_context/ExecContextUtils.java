@@ -25,7 +25,7 @@ import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.commons.S;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;

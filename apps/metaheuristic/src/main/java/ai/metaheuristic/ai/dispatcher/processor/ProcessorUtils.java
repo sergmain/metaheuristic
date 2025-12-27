@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.processor;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -30,15 +30,15 @@ import java.util.Objects;
  */
 public class ProcessorUtils {
 
-    private static boolean isEnvEmpty(@Nullable ProcessorStatusYaml.Env env) {
+    private static boolean isEnvEmpty(ProcessorStatusYaml.@Nullable Env env) {
         return env==null || (CollectionUtils.isEmpty(env.envs) && CollectionUtils.isEmpty(env.mirrors) && CollectionUtils.isEmpty(env.quotas.values));
     }
 
-    private static boolean isEnvEmpty(@Nullable KeepAliveRequestParamYaml.Env env) {
+    private static boolean isEnvEmpty(KeepAliveRequestParamYaml.@Nullable Env env) {
         return env==null || (CollectionUtils.isEmpty(env.envs) && CollectionUtils.isEmpty(env.mirrors));
     }
 
-    public static boolean envNotEquals(@Nullable ProcessorStatusYaml.Env env1, @Nullable KeepAliveRequestParamYaml.Env env2) {
+    public static boolean envNotEquals(ProcessorStatusYaml.@Nullable Env env1, KeepAliveRequestParamYaml.@Nullable Env env2) {
         final boolean envEmpty1 = isEnvEmpty(env1);
         final boolean envEmpty2 = isEnvEmpty(env2);
         if (envEmpty1 && !envEmpty2) {

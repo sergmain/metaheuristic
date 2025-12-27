@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.yaml.dispatcher;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 
+import org.jspecify.annotations.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;

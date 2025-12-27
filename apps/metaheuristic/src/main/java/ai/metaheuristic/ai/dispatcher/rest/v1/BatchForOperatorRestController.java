@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
@@ -26,9 +25,11 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
@@ -104,10 +105,10 @@ public class BatchForOperatorRestController {
 
     @PostMapping(value = "/company-batch-upload-from-file/{companyUniqueId}")
     @PreAuthorize("hasAnyRole('MAIN_OPERATOR')")
-    public BatchData.UploadingStatus uploadFile(final MultipartFile file, @PathVariable Long companyUniqueId,
+    public BatchData.UploadingStatus uploadFile(final MultipartFile file, @PathVariable @Nullable Long companyUniqueId,
                                                 Long sourceCodeId, Authentication authentication) {
         // create context with putting current user to specific company
-        DispatcherContext context = userContextService.getContext(authentication, companyUniqueId);
+        UserContext context = userContextService.getDispatcherContext(authentication, companyUniqueId);
         BatchData.UploadingStatus uploadingStatus = batchTopLevelService.batchUploadFromFile(file, sourceCodeId, context);
         return uploadingStatus;
     }
@@ -136,6 +137,9 @@ public class BatchForOperatorRestController {
             // TODO 2019-10-13 in case of this exception, resources won't be cleaned. Need to re-write
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         }
+        catch (Throwable e) {
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
+        }
         return entity;
     }
 
@@ -155,13 +159,14 @@ public class BatchForOperatorRestController {
             }
             entity = resource.entity;
             request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
+            return entity;
         } catch (CommonErrorWithDataException e) {
             // TODO 2019-10-13 in case of this exception, resources won't be cleaned. Need to re-write
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
-        } catch (Throwable e) {
+        }
+        catch (Throwable e) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         }
-        return entity;
     }
 
 }

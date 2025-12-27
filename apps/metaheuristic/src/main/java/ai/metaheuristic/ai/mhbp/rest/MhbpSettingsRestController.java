@@ -16,12 +16,12 @@
 
 package ai.metaheuristic.ai.mhbp.rest;
 
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.mhbp.settings.MhbpSettingsService;
 import ai.metaheuristic.ai.utils.HttpUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,7 +56,7 @@ public class MhbpSettingsRestController {
     @PostMapping(value = "/import")
     //@PreAuthorize("hasAnyRole('MAIN_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest importBackup(final MultipartFile file, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         OperationStatusRest result = mhbpSettingsService.importBackup(file, context);
         return result;
     }

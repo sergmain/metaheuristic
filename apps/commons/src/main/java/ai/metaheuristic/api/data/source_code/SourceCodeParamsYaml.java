@@ -18,14 +18,11 @@ package ai.metaheuristic.api.data.source_code;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
-import ai.metaheuristic.commons.utils.MetaUtils;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
@@ -139,7 +136,7 @@ public class SourceCodeParamsYaml implements BaseParams {
     @AllArgsConstructor
     public static class SubProcesses {
         public EnumsApi.SourceCodeSubProcessLogic logic;
-        public List<Process> processes;
+        public @Nullable List<Process> processes;
     }
 
     @Data
@@ -219,7 +216,7 @@ public class SourceCodeParamsYaml implements BaseParams {
         public Integer instances;
         @Nullable
         public VariableDefinition variables = new VariableDefinition();
-        public List<Process> processes = new ArrayList<>();
+        public @Nullable List<Process> processes = new ArrayList<>();
         public boolean clean = false;
         public String uid;
         @Nullable

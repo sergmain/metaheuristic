@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.mhbp.kb;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.beans.Chapter;
@@ -46,7 +47,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -77,6 +78,9 @@ public class KbService {
         if (globals.mhbp.kb!=null) {
             List<Kb> kbs = kbTxService.findSystemKbs();
             for (Globals.Kb globalKb : globals.mhbp.kb) {
+                if (globalKb==null) {
+                    continue;
+                }
                 boolean create = true;
                 for (Kb kb : kbs) {
                     if (kb.code.equals(globalKb.code)) {
@@ -109,8 +113,7 @@ public class KbService {
         return t;
     }
 
-    @Nullable
-    private static KbParams.File toFile(@Nullable Globals.KbFile v1) {
+    private static KbParams.@Nullable File toFile(Globals.@Nullable KbFile v1) {
         if (v1==null) {
             return null;
         }
@@ -118,8 +121,7 @@ public class KbService {
         return f;
     }
 
-    @Nullable
-    private static KbParams.Git toGit(@Nullable Globals.Git v1) {
+    private static KbParams.@Nullable Git toGit(Globals.@Nullable Git v1) {
         if (v1==null) {
             return null;
         }
@@ -128,13 +130,12 @@ public class KbService {
         return g;
     }
 
-    @Nullable
-    public static KbParams.KbPath toKbPath(Globals.KbPath v1) {
+    public static KbParams.@Nullable KbPath toKbPath(Globals.KbPath v1) {
         KbParams.KbPath ta = new KbParams.KbPath(v1.evals, v1.data);
         return ta;
     }
 
-    public KbData.Kbs getKbs(Pageable pageable, DispatcherContext context) {
+    public KbData.Kbs getKbs(Pageable pageable, UserContext context) {
         pageable = PageUtils.fixPageSize(20, pageable);
 
         List<KbData.SimpleKb> simpleKbs = new ArrayList<>(50);
@@ -148,7 +149,7 @@ public class KbService {
         return new KbData.Kbs(new PageImpl<>(sorted, pageable, simpleKbs.size()));
     }
 
-    public KbData.Kb getKb(@Nullable Long kbId, DispatcherContext context) {
+    public KbData.Kb getKb(@Nullable Long kbId, UserContext context) {
         if (kbId==null) {
             return new KbData.Kb("261.040 Not found");
         }
@@ -162,7 +163,7 @@ public class KbService {
         return new KbData.Kb(new KbData.SimpleKb(kb));
     }
 
-    public OperationStatusRest initKb(Long kbId, DispatcherContext context) {
+    public OperationStatusRest initKb(@Nullable Long kbId, UserContext context) {
         if (kbId==null) {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }

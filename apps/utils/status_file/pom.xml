@@ -60,6 +60,12 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+            <version>1.0.0</version> <!-- or the latest version, currently 1.0.0 as of Dec 2025 -->
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>

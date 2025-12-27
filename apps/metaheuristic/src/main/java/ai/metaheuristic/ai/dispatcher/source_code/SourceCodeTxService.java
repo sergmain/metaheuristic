@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
@@ -27,14 +26,15 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -58,7 +58,7 @@ public class SourceCodeTxService {
     private final SourceCodeValidationService sourceCodeValidationService;
 
     @Transactional(readOnly = true)
-    public SourceCodeApiData.SourceCodesResult getSourceCodes(Pageable pageable, boolean isArchive, DispatcherContext context) {
+    public SourceCodeApiData.SourceCodesResult getSourceCodes(Pageable pageable, boolean isArchive, UserContext context) {
         pageable = PageUtils.fixPageSize(globals.dispatcher.rowsLimit.sourceCode, pageable);
         List<Long> sourceCodeIds = sourceCodeRepository.findAllIdsByOrderByIdDesc(context.getCompanyId());
         AtomicInteger count = new AtomicInteger();
@@ -98,7 +98,7 @@ public class SourceCodeTxService {
     }
 
     @Transactional(readOnly = true)
-    public SourceCodeApiData.SimpleSourceCodesResult getSimpleSourceCodes(boolean isArchive, DispatcherContext context) {
+    public SourceCodeApiData.SimpleSourceCodesResult getSimpleSourceCodes(boolean isArchive, UserContext context) {
         List<Long> sourceCodeIds = sourceCodeRepository.findAllIdsByOrderByIdDesc(context.getCompanyId());
         AtomicInteger count = new AtomicInteger();
 
@@ -128,7 +128,7 @@ public class SourceCodeTxService {
     }
 
     @Transactional
-    public OperationStatusRest deleteSourceCodeById(Long sourceCodeId, DispatcherContext context) {
+    public OperationStatusRest deleteSourceCodeById(Long sourceCodeId, UserContext context) {
         return deleteSourceCodeById(sourceCodeId);
     }
 
@@ -179,7 +179,7 @@ public class SourceCodeTxService {
     // TODO p3 2023-10-17 do we need Transaction for validating?
     //  Transaction is needed because of dispatcherParamsTopLevelService.registerSourceCode(sourceCode);
     @Transactional
-    public SourceCodeApiData.SourceCodeResult validateSourceCode(Long sourceCodeId, DispatcherContext context) {
+    public SourceCodeApiData.SourceCodeResult validateSourceCode(Long sourceCodeId, UserContext context) {
         final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
         if (sourceCode == null) {
             String es = "565.280 SourceCode wasn't found, sourceCodeId: " + sourceCodeId;
@@ -225,7 +225,7 @@ public class SourceCodeTxService {
     }
 
 /*    @Transactional
-    public SourceCodeApiData.SourceCodeResult updateSourceCode(Long sourceCodeId, String sourceCodeYamlAsStr, DispatcherContext context) {
+    public SourceCodeApiData.SourceCodeResult updateSourceCode(Long sourceCodeId, String sourceCodeYamlAsStr, UserContext context) {
         if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new SourceCodeApiData.SourceCodeResult("565.300 Can't update a sourceCode while 'replicated' mode of asset is active");
         }
@@ -268,7 +268,7 @@ public class SourceCodeTxService {
     }*/
 
     @Transactional
-    public OperationStatusRest archiveSourceCodeById(Long sourceCodeId, DispatcherContext context) {
+    public OperationStatusRest archiveSourceCodeById(Long sourceCodeId, UserContext context) {
         if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "565.400 Can't archive a sourceCode while 'replicated' mode of asset is active");

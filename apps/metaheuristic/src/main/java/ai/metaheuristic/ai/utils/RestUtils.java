@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.ConnectTimeoutException;
 import org.apache.hc.client5.http.fluent.Request;
 import org.springframework.http.*;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.web.client.*;
 
 import javax.net.ssl.SSLException;

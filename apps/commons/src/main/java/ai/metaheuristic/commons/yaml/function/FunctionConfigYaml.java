@@ -25,7 +25,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.*;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -136,7 +136,7 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
         public String params;
 
         public String env;
-        public EnumsApi.FunctionSourcing sourcing;
+        public EnumsApi.@Nullable FunctionSourcing sourcing;
         @Nullable
         public GitInfo git;
         @Nullable

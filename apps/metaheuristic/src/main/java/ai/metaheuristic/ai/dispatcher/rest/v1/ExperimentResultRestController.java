@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultTopLevelService;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -96,7 +97,7 @@ public class ExperimentResultRestController {
 
     @PostMapping(value = "/experiment-result-upload-from-file")
     public OperationStatusRest uploadExperimentResult(final MultipartFile file, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return experimentResultTopLevelService.uploadExperiment(file, context);
     }
 

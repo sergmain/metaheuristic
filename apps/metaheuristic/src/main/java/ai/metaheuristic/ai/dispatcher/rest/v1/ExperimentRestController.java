@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentTopLevelService;
@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,7 +65,7 @@ public class ExperimentRestController {
 
     @GetMapping(value = "/experiment-add")
     public SourceCodeData.SourceCodeUidsForCompany experimentAdd(Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         SourceCodeData.SourceCodeUidsForCompany codes = new SourceCodeData.SourceCodeUidsForCompany();
         List<String> uids = dispatcherParamsTopLevelService.getExperiments();
         codes.items = sourceCodeSelectorService.filterSourceCodes(context, uids);
@@ -78,8 +79,10 @@ public class ExperimentRestController {
 
     @PostMapping("/experiment-add-commit")
     public OperationStatusRest addFormCommit(String sourceCodeUid, String name, String code, String description, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
-        return experimentTopLevelService.addExperimentCommit(sourceCodeUid, name, code, description, context.asUserExecContext());
+        UserContext context = userContextService.getContext(authentication);
+        return experimentTopLevelService.addExperimentCommit(
+            sourceCodeUid, name, code, description,
+            new ExecContextData.UserExecContext(context.getAccountId(), context.getCompanyId()));
     }
 
     @PostMapping("/experiment-edit-commit")
@@ -89,20 +92,20 @@ public class ExperimentRestController {
 
     @PostMapping("/experiment-delete-commit")
     public OperationStatusRest deleteCommit(Long id, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return experimentTopLevelService.experimentDeleteCommit(id, context);
     }
 
     @PostMapping("/experiment-clone-commit")
     public OperationStatusRest experimentCloneCommit(Long id, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
-        return experimentTopLevelService.experimentCloneCommit(id, context.asUserExecContext());
+        UserContext context = userContextService.getContext(authentication);
+        return experimentTopLevelService.experimentCloneCommit(id, new ExecContextData.UserExecContext(context.getAccountId(), context.getCompanyId()));
     }
 
     @PostMapping("/experiment-target-state/{state}/{experimentId}")
     public OperationStatusRest execContextTargetExecState(
             @PathVariable Long experimentId, @PathVariable String state, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         OperationStatusRest operationStatusRest = experimentTopLevelService.changeExecContextState(state, experimentId, context);
         return operationStatusRest;
     }
@@ -111,7 +114,7 @@ public class ExperimentRestController {
 
     @PostMapping("/start-processing-of-tasks")
     public OperationStatusRest startProcessingOfTasks(String experimentCode, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return experimentTopLevelService.startProcessingOfTasks(experimentCode, context.getCompanyId());
     }
 

@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.sec.RoleService;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,7 +51,7 @@ public class AccountRestController {
 
     @GetMapping("/accounts")
     public AccountData.AccountsResult accounts(@PageableDefault(size = 5) Pageable pageable, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return accountTopLevelService.getAccounts(pageable, context);
     }
 
@@ -61,31 +62,31 @@ public class AccountRestController {
 
     @PostMapping("/account-add-commit")
     public OperationStatusRest addFormCommit(@RequestBody AccountData.NewAccount account, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return accountTopLevelService.addAccount(account, context.getCompanyId());
     }
 
     @GetMapping(value = "/account/{id}")
     public AccountData.AccountResult getAccount(@PathVariable Long id, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return accountTopLevelService.getAccount(id, context);
     }
 
     @PostMapping("/account-edit-commit")
     public OperationStatusRest editFormCommit(Long id, String publicName, boolean enabled, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return accountTopLevelService.editFormCommit(id, publicName, enabled, context);
     }
 
     @PostMapping("/account-role-commit")
     public OperationStatusRest roleFormCommit(Long accountId, String roles, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return accountTopLevelService.roleFormCommit(accountId, roles, context);
     }
 
     @PostMapping("/account-password-edit-commit")
     public OperationStatusRest passwordEditFormCommit(Long id, String password, String password2, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return accountTopLevelService.passwordEditFormCommit(id, password, password2, context);
     }
 

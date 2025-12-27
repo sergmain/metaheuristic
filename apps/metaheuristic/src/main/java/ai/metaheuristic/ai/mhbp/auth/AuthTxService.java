@@ -16,22 +16,22 @@
 
 package ai.metaheuristic.ai.mhbp.auth;
 
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.mhbp.beans.Auth;
 import ai.metaheuristic.ai.mhbp.repositories.AuthRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.yaml.auth.ApiAuth;
 import ai.metaheuristic.commons.yaml.auth.ApiAuthUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static ai.metaheuristic.api.EnumsApi.OperationStatus.ERROR;
 import static ai.metaheuristic.api.EnumsApi.OperationStatus.INFO;
 
 /**
@@ -48,7 +48,7 @@ public class AuthTxService {
     private final AuthRepository authRepository;
 
     @Transactional
-    public OperationStatusRest deleteAuthById(Long authId, DispatcherContext context) {
+    public OperationStatusRest deleteAuthById(@Nullable Long authId, UserContext context) {
         if (authId==null) {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
@@ -66,7 +66,7 @@ public class AuthTxService {
     }
 
     @Transactional
-    public OperationStatusRest createAuth(String code, String params, DispatcherContext context) {
+    public OperationStatusRest createAuth(String code, String params, UserContext context) {
         Auth auth = new Auth();
         auth.code = code;
         auth.setParams(params);
@@ -80,7 +80,7 @@ public class AuthTxService {
     }
 
     @Transactional(rollbackFor = CommonRollbackException.class)
-    public OperationStatusRest createAuth(String yaml, DispatcherContext context) {
+    public OperationStatusRest createAuth(String yaml, UserContext context) {
 
         ApiAuth apiAuth = ApiAuthUtils.UTILS.to(yaml);
         Auth auth = authRepository.findByCode(apiAuth.auth.code);
@@ -101,7 +101,7 @@ public class AuthTxService {
     }
 
     @Transactional
-    public OperationStatusRest updateAuth(Long authId, String params, DispatcherContext context) {
+    public OperationStatusRest updateAuth(Long authId, String params, UserContext context) {
         Auth auth = authRepository.findById(authId).orElse(null);
         if (auth == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,

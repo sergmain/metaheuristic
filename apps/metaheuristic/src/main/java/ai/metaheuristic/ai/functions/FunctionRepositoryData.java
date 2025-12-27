@@ -28,7 +28,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -105,8 +105,7 @@ public class FunctionRepositoryData {
     @Data
     @AllArgsConstructor
     public static class FunctionConfigAndStatus {
-        @Nullable
-        public final TaskParamsYaml.FunctionConfig functionConfig;
+        public final TaskParamsYaml.@Nullable FunctionConfig functionConfig;
         @Nullable
         public final DownloadStatus status;
         @Nullable
@@ -120,7 +119,7 @@ public class FunctionRepositoryData {
             this.status = status;
         }
 
-        public FunctionConfigAndStatus(@Nullable TaskParamsYaml.FunctionConfig functionConfig, @Nullable DownloadStatus setFunctionState, AssetFile assetFile) {
+        public FunctionConfigAndStatus(TaskParamsYaml.@Nullable FunctionConfig functionConfig, @Nullable DownloadStatus setFunctionState, AssetFile assetFile) {
             this.functionConfig = functionConfig;
             this.assetFile = assetFile;
             this.contentIsInline = false;

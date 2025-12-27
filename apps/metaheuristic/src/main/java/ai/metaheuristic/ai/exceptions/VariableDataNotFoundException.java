@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.exceptions;
 
 import ai.metaheuristic.api.EnumsApi;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Serge

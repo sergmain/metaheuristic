@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.yaml.exec_context_task_state;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 
+import org.jspecify.annotations.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 /**

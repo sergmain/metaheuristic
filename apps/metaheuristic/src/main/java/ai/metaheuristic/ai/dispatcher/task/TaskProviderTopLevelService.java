@@ -51,7 +51,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -273,16 +273,14 @@ public class TaskProviderTopLevelService {
 
     private static final ConcurrentHashMap<Long, AtomicLong> coreCheckedOn = new ConcurrentHashMap<>();
 
-    @Nullable
-    public DispatcherCommParamsYaml.AssignedTask findTask(Long coreId, boolean isAcceptOnlySigned) {
+    public DispatcherCommParamsYaml.@Nullable AssignedTask findTask(Long coreId, boolean isAcceptOnlySigned) {
         if (!globals.isTesting()) {
             throw new IllegalStateException("(!globals.isTesting())");
         }
         return findTask(coreId, isAcceptOnlySigned, new DispatcherData.TaskQuotas(0), List.of(), false);
     }
 
-    @Nullable
-    public DispatcherCommParamsYaml.AssignedTask findTask(Long coreId, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds, boolean queueEmpty) {
+    public DispatcherCommParamsYaml.@Nullable AssignedTask findTask(Long coreId, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds, boolean queueEmpty) {
         TxUtils.checkTxNotExists();
 
         if (queueEmpty) {
@@ -364,8 +362,7 @@ public class TaskProviderTopLevelService {
         }
     }
 
-    @Nullable
-    private DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor(
+    private DispatcherCommParamsYaml.@Nullable AssignedTask getTaskAndAssignToProcessor(
         ProcessorAndCoreParams processorAndCoreParams, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
         TxUtils.checkTxNotExists();
 
@@ -394,8 +391,7 @@ public class TaskProviderTopLevelService {
         }
     }
 
-    @Nullable
-    private TaskData.AssignedTask getTaskAndAssignToProcessorInternal(
+    private TaskData.@Nullable AssignedTask getTaskAndAssignToProcessorInternal(
         ProcessorAndCoreParams processorAndCoreParams, boolean isAcceptOnlySigned, DispatcherData.TaskQuotas quotas, List<Long> taskIds) {
 
         TxUtils.checkTxNotExists();

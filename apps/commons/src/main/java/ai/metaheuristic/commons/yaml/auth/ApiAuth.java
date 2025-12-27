@@ -22,7 +22,7 @@ import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 @SuppressWarnings("FieldMayBeStatic")
 @Data
@@ -56,10 +56,10 @@ public class ApiAuth implements BaseParams {
         public EnumsApi.TokenPlace place;
         // this is a just anon token. it will be used in uri,
         // i.e. https://api.weatherapi.com/v1/current.json?key=xxx&q=94103
-        public String token;
+        public @Nullable String token;
         public String param;
-        public String env;
-        public String key;
+        public @Nullable String env;
+        public @Nullable String key;
     }
 
     @Data

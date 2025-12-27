@@ -30,7 +30,7 @@ import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -91,8 +91,7 @@ public class ReplicationSourceCodeTopLevelService {
         }
     }
 
-    @Nullable
-    private ReplicationData.SourceCodeAsset getSourceCodeAsset(String sourceCodeUid) {
+    private ReplicationData.@Nullable SourceCodeAsset getSourceCodeAsset(String sourceCodeUid) {
         ReplicationData.SourceCodeAsset sourceCodeAsset = requestSourceCodeAsset(sourceCodeUid);
         if (sourceCodeAsset.isErrorMessages()) {
             log.error("#308.020 Error while getting sourceCodeUid "+ sourceCodeUid +", error: " + sourceCodeAsset.getErrorMessagesAsStr());

@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.dispatcher.commons.CommonSync;
 import ai.metaheuristic.commons.S;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.parallel.Execution;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;

@@ -27,11 +27,13 @@ import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.CompanyApiData;
 import ai.metaheuristic.api.data.event.DispatcherEventYaml;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
@@ -40,7 +42,6 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
@@ -52,6 +53,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static ai.metaheuristic.commons.CommonConsts.EVENT_DATE_TIME_FORMATTER;
 
@@ -76,12 +78,12 @@ public class DispatcherEventService {
 
     public void publishBatchEvent(
             EnumsApi.DispatcherEventType event, @Nullable Long companyUniqueId, @Nullable String filename,
-            @Nullable Long size, @Nullable Long batchId, @Nullable Long execContextId, @Nullable DispatcherContext dispatcherContext) {
+            @Nullable Long size, @Nullable Long batchId, @Nullable Long execContextId, @Nullable UserContext userContext) {
         if (!globals.eventEnabled) {
             return;
         }
-        if (event==EnumsApi.DispatcherEventType.BATCH_CREATED && (batchId==null || dispatcherContext ==null)) {
-            throw new IllegalStateException("Error (event==Enums.DispatcherEventType.BATCH_CREATED && (batchId==null || dispatcherContext==null))");
+        if (event==EnumsApi.DispatcherEventType.BATCH_CREATED && (batchId==null || userContext ==null)) {
+            throw new IllegalStateException("Error (event==Enums.DispatcherEventType.BATCH_CREATED && (batchId==null || userContext==null))");
         }
         DispatcherEventYaml.BatchEventData batchEventData = new DispatcherEventYaml.BatchEventData();
         batchEventData.filename = filename;
@@ -89,17 +91,18 @@ public class DispatcherEventService {
         batchEventData.batchId = batchId;
         batchEventData.execContextId = execContextId;
         String contextId = null;
-        if (dispatcherContext !=null) {
-            batchEventData.companyId = dispatcherContext.getCompanyId();
-            batchEventData.username = dispatcherContext.getUsername();
-            contextId = dispatcherContext.contextId;
+        if (userContext !=null) {
+            batchEventData.companyId = userContext.getCompanyId();
+            batchEventData.username = userContext.getUsername();
+//            contextId = userContext.contextId;
+            contextId = UUID.randomUUID().toString();
         }
         applicationEventPublisher.publishEvent(new DispatcherApplicationEvent(event, companyUniqueId, contextId, batchEventData));
     }
 
     public void publishTaskEvent(
             EnumsApi.DispatcherEventType event, @Nullable Long coreId, Long taskId, Long execContextId,
-            @Nullable EnumsApi.FunctionExecContext context, @Nullable String funcCode) {
+            EnumsApi.@Nullable FunctionExecContext context, @Nullable String funcCode) {
         if (!globals.eventEnabled) {
             return;
         }

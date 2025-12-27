@@ -20,7 +20,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.task_ml.metrics.MetricValues;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,8 +48,7 @@ public class ReduceVariablesData {
 
     public static class PermutedVariables {
         public final Map<String, String> values = new HashMap<>();
-        @Nullable
-        public EnumsApi.Fitting fitting;
+        public EnumsApi.@Nullable Fitting fitting;
         @Nullable
         public MetricValues metricValues;
         public String dir;

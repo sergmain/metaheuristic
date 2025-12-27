@@ -22,7 +22,7 @@ import ai.metaheuristic.commons.yaml.auth.ApiAuth;
 import ai.metaheuristic.ai.yaml.account.AccountParamsYaml;
 import ai.metaheuristic.commons.S;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Function;
 import java.util.function.Supplier;

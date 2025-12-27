@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.mhbp.yaml.answer;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;
@@ -48,7 +48,6 @@ public class AnswerParamsUtilsV1 extends
         return t;
     }
 
-    @Nullable
     private static AnswerParams.Result toResult(AnswerParamsV1.ResultV1 v1) {
         AnswerParams.Result f = new AnswerParams.Result(v1.p, v1.a, v1.e, v1.r, v1.s);
         return f;

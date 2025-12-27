@@ -16,16 +16,16 @@
 
 package ai.metaheuristic.ai.mhbp.chat_log;
 
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.data.ChatData;
 import ai.metaheuristic.ai.mhbp.events.StoreChatLogEvent;
 import ai.metaheuristic.ai.mhbp.yaml.chat_log.ChatLogParams;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
-import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -45,7 +45,7 @@ public class ChatLogService {
         this.chatLogTxService = chatLogTxService;
     }
 
-    public static ChatLogParams toChatLogParams(@Nullable Long chatId, @Nullable Long scenarioId, Api api, ChatData.ChatPrompt prompt, DispatcherContext context) {
+    public static ChatLogParams toChatLogParams(@Nullable Long chatId, @Nullable Long scenarioId, Api api, ChatData.ChatPrompt prompt, UserContext context) {
         ChatLogParams params = new ChatLogParams();
         params.api = new ChatLogParams.Api(api.id, api.code);
         params.prompt = new ChatLogParams.Prompt(prompt.prompt, prompt.result, prompt.raw, prompt.error);

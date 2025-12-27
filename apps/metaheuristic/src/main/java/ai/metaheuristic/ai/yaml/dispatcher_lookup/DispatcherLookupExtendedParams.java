@@ -23,7 +23,7 @@ import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import lombok.Data;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.http.HttpHeaders;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
@@ -51,8 +51,7 @@ public abstract class DispatcherLookupExtendedParams {
         public final DispatcherSchedule schedule;
         public String authHeader;
 
-        @Nullable
-        public final ThreadUtils.CommonThreadLocker<PublicKey> locker;
+        public final ThreadUtils.@Nullable CommonThreadLocker<PublicKey> locker;
 
         public DispatcherLookupExtended(ProcessorAndCoreData.DispatcherUrl dispatcherUrl, DispatcherLookupParamsYaml.DispatcherLookup dispatcherLookup, DispatcherSchedule schedule) {
             this.dispatcherUrl = dispatcherUrl;
@@ -88,8 +87,7 @@ public abstract class DispatcherLookupExtendedParams {
         }
     }
 
-    @Nullable
-    public DispatcherLookupExtendedParams.DispatcherLookupExtended getDispatcher(ProcessorAndCoreData.DispatcherUrl dispatcherUrl) {
+    public DispatcherLookupExtendedParams.@Nullable DispatcherLookupExtended getDispatcher(ProcessorAndCoreData.DispatcherUrl dispatcherUrl) {
         return lookupExtendedMap.get(dispatcherUrl);
     }
 
@@ -97,8 +95,7 @@ public abstract class DispatcherLookupExtendedParams {
         return lookupExtendedMap.values().stream().filter(o->!o.dispatcherLookup.disabled).map(o->o.dispatcherUrl).collect(Collectors.toList());
     }
 
-    @Nullable
-    public DispatcherLookupParamsYaml.AssetManager getAssetManager(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl) {
+    public DispatcherLookupParamsYaml.@Nullable AssetManager getAssetManager(ProcessorAndCoreData.AssetManagerUrl assetManagerUrl) {
         return assets.get(assetManagerUrl);
     }
 

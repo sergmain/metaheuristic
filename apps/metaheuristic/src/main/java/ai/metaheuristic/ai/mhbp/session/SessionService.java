@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.mhbp.data.SessionData;
 import ai.metaheuristic.ai.mhbp.data.SimpleAnswerStats;
 import ai.metaheuristic.ai.mhbp.repositories.*;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -36,7 +37,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -139,7 +140,7 @@ public class SessionService {
         return evalsDesc;
     }
 
-    public ErrorData.ErrorsResult getErrors(Pageable pageable, Long sessionId, DispatcherContext context) {
+    public ErrorData.ErrorsResult getErrors(Pageable pageable, Long sessionId, UserContext context) {
         Session s = sessionRepository.findById(sessionId).orElse(null);
         if (s==null) {
             return new ErrorData.ErrorsResult("Session wasn't found");

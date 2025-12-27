@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.yaml.processor_task;
 import ai.metaheuristic.api.data.Meta;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;

@@ -47,6 +47,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.PageUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -62,7 +63,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -185,8 +186,7 @@ public class BatchTopLevelService {
         return result;
     }
 
-    @Nullable
-    public BatchData.BatchExecInfo getBatchExecInfoForDeleting(DispatcherContext context, Long batchId) {
+    public BatchData.@Nullable BatchExecInfo getBatchExecInfoForDeleting(DispatcherContext context, Long batchId) {
         List<BatchData.BatchExecInfo> items = getBatchExecInfos(List.of(batchId));
         if (items.isEmpty()) {
             return null;
@@ -244,8 +244,8 @@ public class BatchTopLevelService {
         return items;
     }
 
-    public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final DispatcherContext dispatcherContext) {
-        if (Consts.ID_1.equals(dispatcherContext.getCompanyId())) {
+    public BatchData.UploadingStatus batchUploadFromFile(final MultipartFile file, Long sourceCodeId, final UserContext userContext) {
+        if (Consts.ID_1.equals(userContext.getCompanyId())) {
             return new BatchData.UploadingStatus("981.030 Batch can't be created in company #1");
         }
         if (file.getSize()==0) {
@@ -271,7 +271,7 @@ public class BatchTopLevelService {
             return new BatchData.UploadingStatus("981.080 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
         }
 
-        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, dispatcherContext.getCompanyId());
+        SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeById(sourceCodeId, userContext.getCompanyId());
         if (sourceCodesForCompany.isErrorMessages()) {
             return new BatchData.UploadingStatus(sourceCodesForCompany.getErrorMessagesAsList());
         }
@@ -311,13 +311,13 @@ public class BatchTopLevelService {
                 }
             }
 
-            dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FILE_UPLOADED, dispatcherContext.getCompanyId(), originFilename, file.getSize(), null, null, dispatcherContext );
+            dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_FILE_UPLOADED, userContext.getCompanyId(), originFilename, file.getSize(), null, null, userContext );
 
             final SourceCodeImpl sc = sourceCodeCache.findById(sourceCode.id);
             if (sc==null) {
                 return new BatchData.UploadingStatus("981.165 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
             }
-            ExecContextData.UserExecContext context = dispatcherContext.asUserExecContext();
+            ExecContextData.UserExecContext context = new ExecContextData.UserExecContext(userContext.getAccountId(), userContext.getCompanyId());;
 
             // we must postpone a creation of tasks until input variable for SourceCode/ExecContext will be initialized
             ExecContextCreatorService.ExecContextCreationResult creationResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context, false, null);
@@ -339,7 +339,7 @@ public class BatchTopLevelService {
                     ExecContextGraphSyncService.getWithSync(creationResult.execContext.execContextGraphId, ()->
                             ExecContextTaskStateSyncService.getWithSync(creationResult.execContext.execContextTaskStateId, ()->
                                     batchTxService.createBatchForFile(
-                                            sc, creationResult.execContext.id, dispatcherContext))));
+                                            sc, creationResult.execContext.id, userContext))));
 
             verifyGraph = execContextGraphService.verifyGraph(creationResult.execContext.execContextGraphId);
             if (!verifyGraph) {
@@ -364,7 +364,7 @@ public class BatchTopLevelService {
         }
     }
 
-    public OperationStatusRest processBatchDeleteCommit(Long batchId, DispatcherContext context, boolean isVirtualDeletion) {
+    public OperationStatusRest processBatchDeleteCommit(Long batchId, UserContext context, boolean isVirtualDeletion) {
         try {
             return processBatchDeleteCommit(batchId, context.getCompanyId(), isVirtualDeletion);
         } catch (Throwable th) {

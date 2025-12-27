@@ -20,12 +20,13 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
-import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.yaml.scheme.ApiScheme;
 import ai.metaheuristic.commons.yaml.scheme.ApiSchemeUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -48,7 +49,7 @@ public class ApiTxService {
     private final ApiRepository apiRepository;
 
     @Transactional
-    public OperationStatusRest deleteApiById(Long apiId, DispatcherContext context) {
+    public OperationStatusRest deleteApiById(@Nullable Long apiId, UserContext context) {
         if (apiId==null) {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
@@ -66,7 +67,7 @@ public class ApiTxService {
     }
 
     @Transactional
-    public OperationStatusRest createApi(String name, String code, String scheme, DispatcherContext context) {
+    public OperationStatusRest createApi(String name, String code, String scheme, UserContext context) {
         Api api = new Api();
         api.name = name;
         api.code = code;
@@ -80,7 +81,7 @@ public class ApiTxService {
     }
 
     @Transactional(noRollbackFor = CommonRollbackException.class)
-    public OperationStatusRest createApi(String yaml, DispatcherContext context) {
+    public OperationStatusRest createApi(String yaml, UserContext context) {
         ApiScheme apiScheme = ApiSchemeUtils.UTILS.to(yaml);
 
         Api api = apiRepository.findByApiCode(apiScheme.code);

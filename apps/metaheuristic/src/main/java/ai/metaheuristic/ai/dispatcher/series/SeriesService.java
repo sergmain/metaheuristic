@@ -27,8 +27,10 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParams;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -65,7 +67,7 @@ public class SeriesService {
     }
 
     @Transactional
-    public OperationStatusRest deleteSeriesById(Long seriesId, DispatcherContext context) {
+    public OperationStatusRest deleteSeriesById(@Nullable Long seriesId, UserContext context) {
         if (seriesId==null) {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
@@ -74,7 +76,7 @@ public class SeriesService {
     }
 
     @Transactional
-    public OperationStatusRest editCommit(Long id, String name, DispatcherContext context) {
+    public OperationStatusRest editCommit(@Nullable Long id, String name, UserContext context) {
         if (id==null) {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }

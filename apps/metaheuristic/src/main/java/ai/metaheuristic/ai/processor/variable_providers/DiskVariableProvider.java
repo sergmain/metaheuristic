@@ -35,7 +35,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Files;
@@ -53,8 +53,7 @@ public class DiskVariableProvider implements VariableProvider {
     private final ProcessorEnvironment processorEnvironment;
     private final ProcessorTaskService processorTaskService;
 
-    @Nullable
-    private static EnvParamsYaml.DiskStorage findDiskStorageByCode(List<EnvParamsYaml.DiskStorage> disk, String code) {
+    private static EnvParamsYaml.@Nullable DiskStorage findDiskStorageByCode(List<EnvParamsYaml.DiskStorage> disk, String code) {
         for (EnvParamsYaml.DiskStorage diskStorage : disk) {
             if (Objects.equals(diskStorage.code, code)) {
                 return diskStorage;

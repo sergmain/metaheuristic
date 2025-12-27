@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.data.SettingsData;
 import ai.metaheuristic.ai.dispatcher.settings.SettingsService;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,25 +50,25 @@ public class SettingsRestController {
 
     @GetMapping("/api-keys")
     public SettingsData.ApiKeys apiKeys(Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return settingsService.getApiKeys(context);
     }
 
     @PostMapping("/save-openai-key-commit")
     public OperationStatusRest saveOpenaiKey(@RequestParam String openaiKey, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return settingsService.saveOpenaiKey(openaiKey, context);
     }
 
     @PostMapping("/change-password-commit")
     public OperationStatusRest changePasswordCommit(@RequestParam String oldPassword, @RequestParam String newPassword, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return settingsService.changePasswordCommit(oldPassword, newPassword, context);
     }
 
     @PostMapping("/set-language")
     public OperationStatusRest setLanguage(@RequestParam String lang, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return settingsService.setLanguage(lang, context);
     }
 

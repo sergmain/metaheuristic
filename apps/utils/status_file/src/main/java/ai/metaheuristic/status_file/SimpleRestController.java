@@ -23,7 +23,7 @@ import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.standalone.StatusFileUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.SneakyThrows;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;

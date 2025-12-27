@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.mhbp.chat.ChatService;
 import ai.metaheuristic.ai.mhbp.chat.ChatTxService;
 import ai.metaheuristic.ai.mhbp.data.ChatData;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,21 +49,21 @@ public class ChatRestController {
 
     @GetMapping("/chats")
     public ChatData.Chats chats(Pageable pageable, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         final ChatData.Chats chats = chatService.getChats(pageable, context);
         return chats;
     }
 
     @GetMapping("/chats-all")
     public ChatData.ChatsAll chatsAll(Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         final ChatData.ChatsAll chats = chatService.getChatsAll(context);
         return chats;
     }
 
     @GetMapping("/chat/{chatId}")
     public ChatData.FullChat chat(@PathVariable Long chatId, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         final ChatData.FullChat chat = chatService.getChat(chatId, context);
         return chat;
     }
@@ -72,19 +73,19 @@ public class ChatRestController {
             @PathVariable Long chatId,
             @RequestParam(name = "prompt") String prompt,
             Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return chatService.postPrompt(chatId, prompt, context);
     }
 
     @PostMapping("/chat-delete-commit")
     public OperationStatusRest deleteCommit(Long chatId, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return chatTxService.deleteChatById(chatId);
     }
 
     @GetMapping(value = "/chat-add")
     public ChatData.ApiForCompany chatAdd(Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         ChatData.ApiForCompany result = chatService.getApiForCompany(context);
         return result;
     }
@@ -94,7 +95,7 @@ public class ChatRestController {
             @RequestParam(name = "name") String name,
             @RequestParam(name = "apiId") String apiId,
             Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return chatService.createChat(name, apiId, context.getCompanyId(), context.getAccountId());
     }
 
@@ -104,7 +105,7 @@ public class ChatRestController {
         @RequestParam(name = "name") String name,
         Authentication authentication) {
 
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return chatService.updateChatInfoFormCommit(chatId, name, context);
     }
 

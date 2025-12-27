@@ -25,6 +25,7 @@ import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.account.UserContextServiceProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.Authentication;
@@ -52,7 +53,7 @@ public class UserContextService implements UserContextServiceProvider {
         return getDispatcherContext(authentication, account.companyId);
     }
 
-    public DispatcherContext getDispatcherContext(Authentication authentication) {
+    public UserContext getDispatcherContext(Authentication authentication) {
         Account account = (Account)authentication.getPrincipal();
         if (account==null) {
             throw new BadExecutionContextException("principal is null");
@@ -60,7 +61,10 @@ public class UserContextService implements UserContextServiceProvider {
         return getDispatcherContext(authentication, account.companyId);
     }
 
-    public DispatcherContext getDispatcherContext(Authentication authentication, Long companyUniqueId) {
+    public UserContext getDispatcherContext(Authentication authentication, @Nullable Long companyUniqueId) {
+        if (companyUniqueId==null) {
+            throw new BadExecutionContextException("(companyUniqueId==null)");
+        }
         Account account = (Account)authentication.getPrincipal();
         if (account==null) {
             throw new BadExecutionContextException("principal is null");

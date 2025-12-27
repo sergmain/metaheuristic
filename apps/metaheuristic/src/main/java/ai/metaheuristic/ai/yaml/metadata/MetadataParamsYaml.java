@@ -17,7 +17,7 @@ package ai.metaheuristic.ai.yaml.metadata;
 
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.*;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -70,5 +70,5 @@ public class MetadataParamsYaml implements BaseParams {
      * key  - a url of dispatcher
      * value - ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml.ProcessorSession
      */
-    public LinkedHashMap<String, ProcessorSession> processorSessions = new LinkedHashMap<>();
+    public @Nullable LinkedHashMap<String, ProcessorSession> processorSessions = new LinkedHashMap<>();
 }

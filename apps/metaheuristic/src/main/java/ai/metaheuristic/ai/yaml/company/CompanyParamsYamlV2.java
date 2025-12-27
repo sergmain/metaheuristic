@@ -20,6 +20,7 @@ import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Serge
@@ -48,6 +49,6 @@ public class CompanyParamsYamlV2 implements BaseParams {
     public long createdOn;
     public long updatedOn;
 
-    public AccessControlV2 ac;
+    public @Nullable AccessControlV2 ac;
 
 }

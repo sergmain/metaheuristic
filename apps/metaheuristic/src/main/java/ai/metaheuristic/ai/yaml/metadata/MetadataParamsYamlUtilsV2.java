@@ -21,6 +21,8 @@ import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -55,7 +57,7 @@ public class MetadataParamsYamlUtilsV2
     }
 
     @Override
-    public MetadataParamsYamlUtilsV3 nextUtil() {
+    public @Nullable MetadataParamsYamlUtilsV3 nextUtil() {
         return (MetadataParamsYamlUtilsV3) MetadataParamsYamlUtils.BASE_YAML_UTILS.getForVersion(3);
     }
 

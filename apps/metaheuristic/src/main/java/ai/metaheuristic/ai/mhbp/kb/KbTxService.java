@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.mhbp.yaml.kb.KbParams;
 import ai.metaheuristic.ai.mhbp.yaml.part.PartParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,7 +95,7 @@ public class KbTxService {
     }
 
     @Transactional
-    public OperationStatusRest deleteKbById(Long kbId, DispatcherContext context) {
+    public OperationStatusRest deleteKbById(Long kbId, UserContext context) {
         if (kbId==null) {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
@@ -112,7 +113,7 @@ public class KbTxService {
     }
 
     @Transactional
-    public OperationStatusRest createKb(String code, String params, DispatcherContext context) {
+    public OperationStatusRest createKb(String code, String params, UserContext context) {
         Kb kb = new Kb();
         kb.code = code;
         kb.status = Enums.KbStatus.none.code;

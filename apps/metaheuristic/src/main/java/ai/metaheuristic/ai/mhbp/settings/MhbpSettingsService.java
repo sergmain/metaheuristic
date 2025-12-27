@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.mhbp.settings;
 
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.mhbp.beans.Api;
 import ai.metaheuristic.ai.mhbp.beans.Auth;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
@@ -29,6 +28,7 @@ import ai.metaheuristic.ai.mhbp.yaml.backup.BackupParams;
 import ai.metaheuristic.ai.mhbp.yaml.backup.BackupParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
@@ -63,7 +63,7 @@ public class MhbpSettingsService {
     private final ScenarioGroupRepository scenarioGroupRepository;
     private final ScenarioRepository scenarioRepository;
 
-    public OperationStatusRest importBackup(MultipartFile file, DispatcherContext context) {
+    public OperationStatusRest importBackup(MultipartFile file, UserContext context) {
 
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {
@@ -101,7 +101,7 @@ public class MhbpSettingsService {
         }
     }
 
-    public OperationStatusRest importBackupParams(BackupParams backupParams, DispatcherContext context) {
+    public OperationStatusRest importBackupParams(BackupParams backupParams, UserContext context) {
         OperationStatusRest result = new OperationStatusRest();
         backupParams.backup.apis.forEach(api -> storeApi(context, result, api));
         backupParams.backup.auths.forEach(auth -> storeAuth(context, result, auth));
@@ -114,7 +114,7 @@ public class MhbpSettingsService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    private void storeScenarioGroup(DispatcherContext context, OperationStatusRest result, BackupParams.ScenarioGroup scenarioGroup) {
+    private void storeScenarioGroup(UserContext context, OperationStatusRest result, BackupParams.ScenarioGroup scenarioGroup) {
         ScenarioGroup bean = scenarioGroupRepository.findByName(scenarioGroup.name);
         if (bean!=null) {
             result.addInfoMessage("Auth with code '" + scenarioGroup.name + "' already exists in database, make a copy.");
@@ -132,7 +132,7 @@ public class MhbpSettingsService {
         scenarioGroup.scenarios.forEach(scenario->storeScenario(context, result, scenarioGroupBean.id, scenario));
     }
 
-    private void storeScenario(DispatcherContext context, OperationStatusRest result, Long scenarioGroupId, BackupParams.Scenario scenario) {
+    private void storeScenario(UserContext context, OperationStatusRest result, Long scenarioGroupId, BackupParams.Scenario scenario) {
         Scenario scenarioBean = new Scenario();
         scenarioBean.scenarioGroupId = scenarioGroupId;
         scenarioBean.createdOn = scenario.createdOn;
@@ -143,7 +143,7 @@ public class MhbpSettingsService {
         scenarioRepository.save(scenarioBean);
     }
 
-    private void storeAuth(DispatcherContext context, OperationStatusRest result, BackupParams.Auth auth) {
+    private void storeAuth(UserContext context, OperationStatusRest result, BackupParams.Auth auth) {
         Auth authBean = authRepository.findByCode(auth.code);
         if (authBean!=null) {
             result.addInfoMessage("Auth with code '" + auth.code + "' already exists in database, skipped.");
@@ -158,7 +158,7 @@ public class MhbpSettingsService {
         authRepository.save(authBean);
     }
 
-    private void storeApi(DispatcherContext context, OperationStatusRest result, BackupParams.Api api) {
+    private void storeApi(UserContext context, OperationStatusRest result, BackupParams.Api api) {
         Api apiBean = apiRepository.findByApiCode(api.code);
         if (apiBean!=null) {
             result.addInfoMessage("API with code '" + api.code + "' already exists in database, skipped.");

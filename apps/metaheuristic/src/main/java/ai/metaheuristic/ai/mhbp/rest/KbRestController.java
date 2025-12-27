@@ -16,18 +16,18 @@
 
 package ai.metaheuristic.ai.mhbp.rest;
 
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.mhbp.data.KbData;
 import ai.metaheuristic.ai.mhbp.kb.KbService;
 import ai.metaheuristic.ai.mhbp.kb.KbTxService;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,14 +49,14 @@ public class KbRestController {
 
     @GetMapping("/kbs")
     public KbData.Kbs auths(Pageable pageable, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         final KbData.Kbs kbs = kbService.getKbs(pageable, context);
         return kbs;
     }
 
     @GetMapping("/kb/{kbId}")
     public KbData.Kb apis(@PathVariable @Nullable Long kbId, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         final KbData.Kb api = kbService.getKb(kbId, context);
         return api;
     }
@@ -67,7 +67,7 @@ public class KbRestController {
             @RequestParam(name = "code") String code,
             @RequestParam(name = "params") String params,
             Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
 
         return kbTxService.createKb(code, params, context);
     }
@@ -75,14 +75,14 @@ public class KbRestController {
     @PostMapping("/kb-delete-commit")
 //    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest deleteCommit(Long id, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return kbTxService.deleteKbById(id, context);
     }
 
     @PostMapping("/kb-init")
 //    @PreAuthorize("hasAnyRole('MASTER_ASSET_MANAGER', 'ADMIN', 'DATA')")
     public OperationStatusRest initKb(Long id, Authentication authentication) {
-        DispatcherContext context = userContextService.getContext(authentication);
+        UserContext context = userContextService.getContext(authentication);
         return kbService.initKb(id, context);
     }
 

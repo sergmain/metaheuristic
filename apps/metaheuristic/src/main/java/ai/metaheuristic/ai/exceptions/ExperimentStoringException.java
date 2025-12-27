@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.exceptions;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;

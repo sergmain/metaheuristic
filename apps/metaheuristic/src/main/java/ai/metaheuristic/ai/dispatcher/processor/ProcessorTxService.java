@@ -38,7 +38,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,9 +70,8 @@ public class ProcessorTxService {
         return UUID.randomUUID().toString() + '-' + UUID.randomUUID();
     }
 
-    @Nullable
     @Transactional
-    public DispatcherApiData.ProcessorSessionId checkProcessorId(Enums.ProcessorAndSessionStatus processorAndSessionStatus, final Long processorId, String remoteAddress) {
+    public DispatcherApiData.@Nullable ProcessorSessionId checkProcessorId(Enums.ProcessorAndSessionStatus processorAndSessionStatus, final Long processorId, String remoteAddress) {
         if (processorAndSessionStatus == Enums.ProcessorAndSessionStatus.reassignProcessor) {
             return reassignProcessorId(remoteAddress, "Id was reassigned from " + processorId);
         }

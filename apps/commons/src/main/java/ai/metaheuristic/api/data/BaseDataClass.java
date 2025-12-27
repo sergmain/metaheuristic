@@ -41,7 +41,10 @@ public abstract class BaseDataClass {
     @JsonInclude(value= JsonInclude.Include.NON_NULL, content= JsonInclude.Include.NON_EMPTY)
     public @Nullable List<String> infoMessages;
 
-    public void addErrorMessage(String errorMessage) {
+    public void addErrorMessage(@Nullable String errorMessage) {
+        if (errorMessage==null) {
+            return;
+        }
         if (this.errorMessages==null) {
             this.errorMessages = new ArrayList<>();
         }

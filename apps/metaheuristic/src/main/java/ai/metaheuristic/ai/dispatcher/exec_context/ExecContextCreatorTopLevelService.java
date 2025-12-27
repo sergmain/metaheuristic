@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -60,7 +60,7 @@ public class ExecContextCreatorTopLevelService {
     }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(
-            Long sourceCodeId, ExecContextData.UserExecContext context, boolean isProduceTasks, @Nullable ExecContextData.RootAndParent rootAndParent) {
+            Long sourceCodeId, ExecContextData.UserExecContext context, boolean isProduceTasks, ExecContextData.@Nullable RootAndParent rootAndParent) {
         final ExecContextCreatorService.ExecContextCreationResult withSyncForCreation = SourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
             () -> {
                 try {

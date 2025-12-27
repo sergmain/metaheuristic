@@ -177,13 +177,13 @@ public class SourceCodeParamsYamlV2 implements BaseParams {
         @Nullable
         public Integer instances;
         public @Nullable VariableDefinitionV2 variables = new VariableDefinitionV2();
-        public List<ProcessV2> processes = new ArrayList<>();
+        public @Nullable List<ProcessV2> processes = new ArrayList<>();
         public boolean clean = false;
         public String uid;
         public @Nullable List<Map<String, String>> metas = new ArrayList<>();;
         public @Nullable AccessControlV2 ac;
     }
 
-    public SourceCodeV2 source = new SourceCodeV2();
+    public @Nullable SourceCodeV2 source = new SourceCodeV2();
 
 }

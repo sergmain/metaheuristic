@@ -175,6 +175,12 @@
         <!-- End of spring's section -->
 
         <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
 <!--            <version>4.23.0</version>-->
@@ -335,9 +341,11 @@
                     <release>25</release>
                     <encoding>${project.build.sourceEncoding}</encoding>
                     <showDeprecation>true</showDeprecation>
+<!--
                     <annotationProcessors>
                         <annotationProcessor>lombok.launch.AnnotationProcessorHider$AnnotationProcessor</annotationProcessor>
                     </annotationProcessors>
+-->
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>

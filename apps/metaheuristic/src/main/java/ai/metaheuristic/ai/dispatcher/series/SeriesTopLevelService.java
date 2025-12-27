@@ -26,9 +26,11 @@ import ai.metaheuristic.ai.yaml.series.SeriesParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
@@ -85,7 +87,7 @@ public class SeriesTopLevelService {
         return results;
     }
 
-    public OperationStatusRest addSeriesCommit(String name, DispatcherContext context) {
+    public OperationStatusRest addSeriesCommit(@Nullable String name, UserContext context) {
         if (S.b(name)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#286.020 name of series can be empty");
@@ -95,7 +97,7 @@ public class SeriesTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public SeriesData.SeriesResult getSeries(Long seriesId, DispatcherContext context) {
+    public SeriesData.SeriesResult getSeries(Long seriesId, UserContext context) {
         final Series series = seriesRepository.findById(seriesId).orElse(null);
         if (series == null) {
             String errorMessage = "#286.040 series wasn't found, seriesId: " + seriesId;

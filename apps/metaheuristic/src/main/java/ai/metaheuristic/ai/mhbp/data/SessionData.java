@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.mhbp.data;
 import ai.metaheuristic.api.data.BaseDataClass;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Slice;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Sergio Lissner

@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.yaml.function_exec;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.InputStream;
@@ -35,8 +35,7 @@ public class FunctionExecUtils {
         return YamlUtils.toString(config, getYaml());
     }
 
-    @Nullable
-    public static FunctionApiData.FunctionExec to(@Nullable String s) {
+    public static FunctionApiData.@Nullable FunctionExec to(@Nullable String s) {
         return (FunctionApiData.FunctionExec) YamlUtils.toNullable(s, getYaml());
     }
 

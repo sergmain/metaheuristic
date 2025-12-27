@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.mhbp.beans.Auth;
 import ai.metaheuristic.ai.mhbp.data.AuthData;
 import ai.metaheuristic.ai.mhbp.repositories.AuthRepository;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +31,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -51,7 +52,7 @@ public class AuthService {
     private final AuthRepository authRepository;
     private final AuthTxService authTxService;
 
-    public AuthData.Auths getAuths(Pageable pageable, DispatcherContext context) {
+    public AuthData.Auths getAuths(Pageable pageable, UserContext context) {
         pageable = PageUtils.fixPageSize(20, pageable);
 
         Page<Auth> auths = authRepository.findAllByCompanyUniqueId(pageable, context.getCompanyId());
@@ -60,7 +61,7 @@ public class AuthService {
         return new AuthData.Auths(new PageImpl<>(sorted, pageable, list.size()));
     }
 
-    public AuthData.Auth getAuth(@Nullable Long authId, DispatcherContext context) {
+    public AuthData.Auth getAuth(@Nullable Long authId, UserContext context) {
         if (authId==null) {
             return new AuthData.Auth("247.120 Not found");
         }
@@ -74,7 +75,7 @@ public class AuthService {
         return new AuthData.Auth(new AuthData.SimpleAuth(auth));
     }
 
-    public OperationStatusRest createAuth(String yaml, DispatcherContext context) {
+    public OperationStatusRest createAuth(String yaml, UserContext context) {
         try {
             return authTxService.createAuth(yaml, context);
         } catch (CommonRollbackException e) {

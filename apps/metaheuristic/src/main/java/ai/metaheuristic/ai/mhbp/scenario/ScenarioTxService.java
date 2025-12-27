@@ -25,8 +25,10 @@ import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -49,7 +51,7 @@ public class ScenarioTxService {
     private final ScenarioRepository scenarioRepository;
 
     @Transactional
-    public OperationStatusRest createScenarioGroup(String name, String description, DispatcherContext context) {
+    public OperationStatusRest createScenarioGroup(String name, String description, UserContext context) {
         ScenarioGroup s = new ScenarioGroup();
         s.name = name;
         s.description = description;
@@ -63,7 +65,7 @@ public class ScenarioTxService {
     }
 
     @Transactional
-    public OperationStatusRest createScenario(String scenarioGroupId, String name, String description, DispatcherContext context) {
+    public OperationStatusRest createScenario(String scenarioGroupId, String name, String description, UserContext context) {
         if (S.b(scenarioGroupId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"229.040 scenarioGroupId is null");
         }
@@ -83,7 +85,7 @@ public class ScenarioTxService {
     public record FindScenario(Scenario scenario, OperationStatusRest status) {}
 
     @SuppressWarnings({"ConstantValue", "DataFlowIssue"})
-    private FindScenario findScenario(Long scenarioId, DispatcherContext context) {
+    private FindScenario findScenario(Long scenarioId, UserContext context) {
         if (scenarioId==null) {
             return new FindScenario(null, new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "229.240 scenarioId is null"));
@@ -100,7 +102,7 @@ public class ScenarioTxService {
     }
 
     @Transactional
-    public OperationStatusRest moveScenarioToNewGroup(long scenarioGroupId, long scenarioId, long newScenarioGroupId, DispatcherContext context) {
+    public OperationStatusRest moveScenarioToNewGroup(long scenarioGroupId, long scenarioId, long newScenarioGroupId, UserContext context) {
         FindScenario findScenario = findScenario(scenarioId, context);
         if (findScenario.status.status!=EnumsApi.OperationStatus.OK) {
             return findScenario.status;
@@ -125,7 +127,7 @@ public class ScenarioTxService {
     }
 
     @Transactional
-    public OperationStatusRest deleteScenarioById(Long scenarioId, DispatcherContext context) {
+    public OperationStatusRest deleteScenarioById(Long scenarioId, UserContext context) {
         FindScenario findScenario = findScenario(scenarioId, context);
         if (findScenario.status.status!=EnumsApi.OperationStatus.OK) {
             return findScenario.status;
@@ -136,7 +138,7 @@ public class ScenarioTxService {
     }
 
     @Transactional
-    public OperationStatusRest deleteScenarioGroupById(Long scenarioGroupId, DispatcherContext context) {
+    public OperationStatusRest deleteScenarioGroupById(@Nullable Long scenarioGroupId, UserContext context) {
         if (scenarioGroupId==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "229.360 scenarioGroupId is null");
@@ -155,7 +157,7 @@ public class ScenarioTxService {
     }
 
     @Transactional
-    public OperationStatusRest acceptNewPromptForStep(long scenarioId, String uuid, String newPrompt, DispatcherContext context) {
+    public OperationStatusRest acceptNewPromptForStep(long scenarioId, String uuid, String newPrompt, UserContext context) {
         FindScenario findScenario = findScenario(scenarioId, context);
         if (findScenario.status.status!=EnumsApi.OperationStatus.OK) {
             return findScenario.status;
@@ -174,7 +176,7 @@ public class ScenarioTxService {
     }
 
     @Transactional
-    public OperationStatusRest deleteScenarioStep(Long scenarioId, String uuid, DispatcherContext context) {
+    public OperationStatusRest deleteScenarioStep(Long scenarioId, String uuid, UserContext context) {
         FindScenario findScenario = findScenario(scenarioId, context);
         if (findScenario.status.status!=EnumsApi.OperationStatus.OK) {
             return findScenario.status;
@@ -189,7 +191,7 @@ public class ScenarioTxService {
     }
 
     @Transactional
-    public OperationStatusRest scenarioStepRearrange(Long scenarioId, String previousUuid, String currentUuid, DispatcherContext context) {
+    public OperationStatusRest scenarioStepRearrange(Long scenarioId, String previousUuid, String currentUuid, UserContext context) {
         FindScenario findScenario = findScenario(scenarioId, context);
         if (findScenario.status.status!=EnumsApi.OperationStatus.OK) {
             return findScenario.status;

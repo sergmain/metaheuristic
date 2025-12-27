@@ -42,7 +42,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -269,8 +269,7 @@ public class ProcessorTopLevelService {
         return bulkOperations;
     }
 
-    @Nullable
-    public KeepAliveResponseParamYaml.RequestLogFile processLogRequest(Long processorId) {
+    public KeepAliveResponseParamYaml.@Nullable RequestLogFile processLogRequest(Long processorId) {
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
             // we throw ISE cos all checks have to be made early

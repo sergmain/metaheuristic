@@ -40,7 +40,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -114,7 +114,7 @@ public class ExecContextTaskResettingService {
         resetTask(execContext, taskId, null);
     }
 
-    public void resetTask(ExecContextImpl execContext, Long taskId, @Nullable EnumsApi.TaskExecState targetExecState) {
+    public void resetTask(ExecContextImpl execContext, Long taskId, EnumsApi.@Nullable TaskExecState targetExecState) {
         TxUtils.checkTxExists();
         ExecContextSyncService.checkWriteLockPresent(execContext.id);
         TaskSyncService.checkWriteLockPresent(taskId);

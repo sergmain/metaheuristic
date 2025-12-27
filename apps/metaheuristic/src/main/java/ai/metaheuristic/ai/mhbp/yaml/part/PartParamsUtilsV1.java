@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.mhbp.yaml.part;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;
@@ -46,8 +46,7 @@ public class PartParamsUtilsV1 extends
         return t;
     }
 
-    @Nullable
-    private static PartParams.Prompt toPrompt(PartParamsV1.PromptV1 v1) {
+    private static PartParams.@Nullable Prompt toPrompt(PartParamsV1.PromptV1 v1) {
         PartParams.Prompt f = new PartParams.Prompt(v1.p, v1.a);
         return f;
     }

@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.mhbp.chat;
 
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.api.ApiUtils;
 import ai.metaheuristic.ai.mhbp.beans.Api;
@@ -34,16 +34,17 @@ import ai.metaheuristic.ai.mhbp.yaml.chat.ChatParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.lang.Nullable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -71,7 +72,7 @@ public class ChatService {
     private final ProviderQueryService providerQueryService;
     private final ApplicationEventPublisher eventPublisher;
 
-    public ChatData.Chats getChats(Pageable pageable, DispatcherContext context) {
+    public ChatData.Chats getChats(Pageable pageable, UserContext context) {
         pageable = PageUtils.fixPageSize(25, pageable);
         try {
             List<ChatData.SimpleChat> chats = chatRepository.findIds(pageable, context.getAccountId()).stream()
@@ -84,7 +85,7 @@ public class ChatService {
         }
     }
 
-    public ChatData.ChatsAll getChatsAll(DispatcherContext context) {
+    public ChatData.ChatsAll getChatsAll(UserContext context) {
         try {
             List<ChatData.SimpleChat> chats = chatRepository.findIdsAll(context.getAccountId()).stream()
                     .map(this::to).toList();
@@ -103,7 +104,7 @@ public class ChatService {
         return new ChatData.SimpleChat(chat.id, chat.name, chat.createdOn, new ApiData.ApiUid(params.api.apiId, params.api.code, api!=null ? api.name : "<Ref to API is broken>"));
     }
 
-    public OperationStatusRest updateChatInfoFormCommit(Long chatId, String name, DispatcherContext context) {
+    public OperationStatusRest updateChatInfoFormCommit(Long chatId, String name, UserContext context) {
         ChatInfo chatInfo = getChatInfo(chatId, context);
         if (chatInfo.error!=null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, chatInfo.error);
@@ -119,7 +120,7 @@ public class ChatService {
 
     public record ChatInfo(Chat chat, @Nullable Api api, @Nullable String error) {}
 
-    public ChatData.FullChat getChat(Long chatId, DispatcherContext context) {
+    public ChatData.FullChat getChat(Long chatId, UserContext context) {
         ChatInfo chatInfo = getChatInfo(chatId, context);
         ChatParams params = chatInfo.chat.getChatParams();
 
@@ -143,7 +144,7 @@ public class ChatService {
         return fullChat;
     }
 
-    private ChatInfo getChatInfo(Long chatId, DispatcherContext context) {
+    private ChatInfo getChatInfo(Long chatId, UserContext context) {
         Chat chat = chatRepository.findById(chatId).orElseThrow();
         ChatParams params = chat.getChatParams();
 
@@ -158,7 +159,7 @@ public class ChatService {
         return new ChatData.ChatPrompt(S.b(p.p) ? "" : p.p.strip(), S.b(p.a) ? "" : p.a.strip(), S.b(p.r) ? "" : p.r.strip(), null);
     }
 
-    public ChatData.OnePrompt postPrompt(Long chatId, String prompt, DispatcherContext context) {
+    public ChatData.OnePrompt postPrompt(Long chatId, String prompt, UserContext context) {
         ChatData.OnePrompt r = new ChatData.OnePrompt();
 
         ChatInfo chatInfo = getChatInfo(chatId, context);
@@ -175,8 +176,9 @@ public class ChatService {
             evaluationAsApiCall(result, new ChatData.PromptEvaluation("n/a", prompt, List.of()), chatInfo.api, context);
             chatTxService.storePrompt(chatId, result);
             eventPublisher.publishEvent(new StoreChatLogEvent(
-                    ChatLogService.toChatLogParams(chatInfo.chat.id, null, chatInfo.api, result, context),
-                    context.asUserExecContext()));
+                ChatLogService.toChatLogParams(chatInfo.chat.id, null, chatInfo.api, result, context),
+                new ExecContextData.UserExecContext(context.getAccountId(), context.getCompanyId())
+            ));
 
             r.update(result);
             return r;
@@ -188,7 +190,7 @@ public class ChatService {
         }
     }
 
-    public ChatData.ApiForCompany getApiForCompany(DispatcherContext context) {
+    public ChatData.ApiForCompany getApiForCompany(UserContext context) {
         ChatData.ApiForCompany r = new ChatData.ApiForCompany();
 
         r.apis = apiService.getApisAllowedForCompany(context).stream()
@@ -214,7 +216,7 @@ public class ChatService {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    public ChatData.ChatPrompt evaluationAsApiCall(ChatData.ChatPrompt r, ChatData.PromptEvaluation se, Api api, DispatcherContext context) {
+    public ChatData.ChatPrompt evaluationAsApiCall(ChatData.ChatPrompt r, ChatData.PromptEvaluation se, Api api, UserContext context) {
         String prompt = se.prompt;
         for (ScenarioData.StepVariable variable : se.variables) {
             String varName = getNameForVariable(variable.name);
@@ -227,7 +229,7 @@ public class ChatService {
         }
         r.prompt = prompt;
         log.info("372.280 prompt: {}", prompt);
-        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, context.asUserExecContext());
+        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, new ExecContextData.UserExecContext(context.getAccountId(), context.getCompanyId()));
         ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
         if (answer.status()!=OK) {
             r.error = "372.320 API call error: " + answer.error() + ", prompt: " + prompt;
