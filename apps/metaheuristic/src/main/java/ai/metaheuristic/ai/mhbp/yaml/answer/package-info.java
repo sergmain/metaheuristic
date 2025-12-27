@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2024, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@ParametersAreNonnullByDefault
+@NullMarked
 package ai.metaheuristic.ai.mhbp.yaml.answer;
 
-import javax.annotation.ParametersAreNonnullByDefault;
+import org.jspecify.annotations.NullMarked;
