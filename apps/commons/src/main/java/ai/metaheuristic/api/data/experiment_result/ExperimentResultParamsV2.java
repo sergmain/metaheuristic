@@ -23,7 +23,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -57,8 +57,7 @@ public class ExperimentResultParamsV2 implements BaseParams {
         public String taskContextId;
         @Nullable
         public Map<String, String> hyperParams;
-        @Nullable
-        public EnumsApi.Fitting fitting;
+        public EnumsApi.@Nullable Fitting fitting;
         @Nullable
         public MetricValuesV2 metrics;
         @Nullable

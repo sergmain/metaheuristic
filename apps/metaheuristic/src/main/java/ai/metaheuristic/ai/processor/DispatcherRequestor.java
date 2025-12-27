@@ -40,7 +40,7 @@ import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
-import org.springframework.lang.NonNull;
+
 import org.springframework.lang.Nullable;
 import org.springframework.web.client.*;
 

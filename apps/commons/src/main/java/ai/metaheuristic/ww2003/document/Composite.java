@@ -28,7 +28,7 @@ import ai.metaheuristic.ww2003.document.tags.ww2003.DummyNode;
 import ai.metaheuristic.ww2003.document.tags.xml.*;
 import ai.metaheuristic.ww2003.document.tags.xml.table.TCellBorders;
 import lombok.Getter;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;

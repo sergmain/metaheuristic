@@ -19,7 +19,7 @@ package ai.metaheuristic.api.data.event;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.Data;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Serge
@@ -67,8 +67,7 @@ public class DispatcherEventYaml implements BaseParams {
         public Long coreId;
         public Long taskId;
         public Long execContextId;
-        @Nullable
-        public EnumsApi.FunctionExecContext context;
+        public EnumsApi.@Nullable FunctionExecContext context;
         @Nullable
         public String funcCode;
     }

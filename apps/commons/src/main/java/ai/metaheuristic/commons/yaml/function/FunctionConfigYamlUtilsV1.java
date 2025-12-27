@@ -23,8 +23,8 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.event.DispatcherEventYamlUtils;
 import ai.metaheuristic.commons.yaml.event.DispatcherEventYamlUtilsV2;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.BeanUtils;
-import javax.annotation.Nonnull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
@@ -42,15 +42,15 @@ public class FunctionConfigYamlUtilsV1
         return 1;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(FunctionConfigYamlV1.class);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public FunctionConfigYamlV2 upgradeTo(@Nonnull FunctionConfigYamlV1 src) {
+    public FunctionConfigYamlV2 upgradeTo(@NonNull FunctionConfigYamlV1 src) {
         src.checkIntegrity();
         FunctionConfigYamlV2 trg = new FunctionConfigYamlV2();
         BeanUtils.copyProperties(src, trg.function, "checksumMap", "metas");
@@ -66,9 +66,9 @@ public class FunctionConfigYamlUtilsV1
         return trg;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Void downgradeTo(@Nonnull Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         throw new DowngradeNotSupportedException();
     }
 
@@ -83,13 +83,13 @@ public class FunctionConfigYamlUtilsV1
     }
 
     @Override
-    public String toString(@Nonnull FunctionConfigYamlV1 yaml) {
+    public String toString(@NonNull FunctionConfigYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public FunctionConfigYamlV1 to(@Nonnull String yaml) {
+    public FunctionConfigYamlV1 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

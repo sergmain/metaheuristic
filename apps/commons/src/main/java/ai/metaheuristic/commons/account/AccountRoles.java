@@ -157,6 +157,7 @@ public class AccountRoles {
             if (initedRoles.inited) {
                 return;
             }
+            //noinspection ConstantValue
             if (this.roleGetter.get()!=null) {
                 StringTokenizer st = new StringTokenizer(this.roleGetter.get(), ",");
                 while (st.hasMoreTokens()) {

@@ -20,7 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 

@@ -17,8 +17,7 @@
 package ai.metaheuristic.commons.yaml.versioning;
 
 import ai.metaheuristic.api.data.BaseParams;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 /**

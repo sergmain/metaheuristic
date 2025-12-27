@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ww2003.utils;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -22,7 +22,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import javax.annotation.Nonnull;
+import org.jspecify.annotations.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -38,15 +38,15 @@ public class DispatcherEventYamlUtilsV2
         return 2;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(DispatcherEventYamlV2.class);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DispatcherEventYaml upgradeTo(@Nonnull DispatcherEventYamlV2 src) {
+    public DispatcherEventYaml upgradeTo(@NonNull DispatcherEventYamlV2 src) {
         src.checkIntegrity();
         DispatcherEventYaml trg = new DispatcherEventYaml();
         trg.createdOn = src.createdOn;
@@ -73,9 +73,9 @@ public class DispatcherEventYamlUtilsV2
         return trg;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Void downgradeTo(@Nonnull Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -90,13 +90,13 @@ public class DispatcherEventYamlUtilsV2
     }
 
     @Override
-    public String toString(@Nonnull DispatcherEventYamlV2 yaml) {
+    public String toString(@NonNull DispatcherEventYamlV2 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DispatcherEventYamlV2 to(@Nonnull String yaml) {
+    public DispatcherEventYamlV2 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

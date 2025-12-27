@@ -21,7 +21,7 @@ import ai.metaheuristic.ww2003.document.tags.PropertyElement;
 import ai.metaheuristic.ww2003.document.tags.xml.Attr;
 import ai.metaheuristic.ww2003.document.tags.xml.XmlTag;
 import lombok.NoArgsConstructor;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 @NoArgsConstructor
 public class TblLayout extends Leaf implements XmlTag, PropertyElement {

@@ -24,7 +24,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -118,8 +118,7 @@ public class ExecContextParamsYamlV1 implements BaseParams {
         @Nullable
         public List<FunctionDefinitionV1> postFunctions;
 
-        @Nullable
-        public EnumsApi.SourceCodeSubProcessLogic logic;
+        public EnumsApi.@Nullable SourceCodeSubProcessLogic logic;
 
         /**
          * Timeout before terminating a process with function

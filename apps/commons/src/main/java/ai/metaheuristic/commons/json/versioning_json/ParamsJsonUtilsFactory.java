@@ -18,7 +18,7 @@ package ai.metaheuristic.commons.json.versioning_json;
 
 import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
 import lombok.Data;
-import javax.annotation.Nonnull;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Map;
 
@@ -30,18 +30,18 @@ import java.util.Map;
 @Data
 public class ParamsJsonUtilsFactory {
 
-    @Nonnull
+    @NonNull
     public Map<Integer, AbstractParamsJsonUtils> map;
 
-    @Nonnull
+    @NonNull
     public AbstractParamsJsonUtils defJsonUtils;
 
-    public void ParamsYamlUtilsFactory(@Nonnull Map<Integer, AbstractParamsJsonUtils> map, @Nonnull AbstractParamsJsonUtils defJsonUtils) {
+    public void ParamsYamlUtilsFactory(@NonNull Map<Integer, AbstractParamsJsonUtils> map, @NonNull AbstractParamsJsonUtils defJsonUtils) {
         this.map = map;
         this.defJsonUtils = defJsonUtils;
     }
 
-    @Nonnull
+    @NonNull
     public AbstractParamsJsonUtils getForVersion(int version) {
         AbstractParamsJsonUtils jsonUtils = map.get(version);
         if (jsonUtils==null) {
@@ -50,7 +50,7 @@ public class ParamsJsonUtilsFactory {
         return jsonUtils;
     }
 
-    @Nonnull
+    @NonNull
     public AbstractParamsJsonUtils getDefault() {
         return defJsonUtils;
     }

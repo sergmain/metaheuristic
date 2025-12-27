@@ -21,7 +21,9 @@ import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV2;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;
@@ -70,7 +72,6 @@ public class SourceCodeParamsYamlUtilsV1
         return p;
     }
 
-    @NonNull
     private static SourceCodeParamsYamlV2.ProcessV2 toProcess(SourceCodeParamsYamlV1.ProcessV1 o) {
         SourceCodeParamsYamlV2.ProcessV2 pr = new SourceCodeParamsYamlV2.ProcessV2();
         pr.name = o.name;
@@ -101,7 +102,7 @@ public class SourceCodeParamsYamlUtilsV1
     }
 
     @Override
-    public SourceCodeParamsYamlUtilsV2 nextUtil() {
+    public @Nullable SourceCodeParamsYamlUtilsV2 nextUtil() {
         return (SourceCodeParamsYamlUtilsV2) SourceCodeParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
     }
 
@@ -121,7 +122,7 @@ public class SourceCodeParamsYamlUtilsV1
     public SourceCodeParamsYamlV1 to(@NonNull String s) {
         final SourceCodeParamsYamlV1 p = getYaml().load(s);
         if (p.source ==null) {
-            throw new IllegalStateException("#635.010 SourceCode Yaml is null");
+            throw new IllegalStateException("635.010 SourceCode Yaml is null");
         }
         return p;
     }

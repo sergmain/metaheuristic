@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.api.dispatcher;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 // We need an interface because of not putting an implementation (which is Entity bean) here
 public interface Task {

@@ -20,7 +20,7 @@ import ai.metaheuristic.ww2003.Consts;
 import ai.metaheuristic.ww2003.document.persistence.CommonWriter;
 import ai.metaheuristic.ww2003.document.persistence.ww2003.WW2003WritersImpl;
 import lombok.SneakyThrows;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.BufferedWriter;
 import java.io.OutputStream;

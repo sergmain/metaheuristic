@@ -20,9 +20,9 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import org.jspecify.annotations.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
-import javax.annotation.Nonnull;
 import java.util.stream.Collectors;
 
 /**
@@ -38,15 +38,15 @@ public class BundleCfgUtilsV1
         return 1;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(BundleCfgYamlV1.class);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public BundleCfgYaml upgradeTo(@Nonnull BundleCfgYamlV1 src) {
+    public BundleCfgYaml upgradeTo(@NonNull BundleCfgYamlV1 src) {
         src.checkIntegrity();
         BundleCfgYaml trg = new BundleCfgYaml();
 
@@ -56,9 +56,9 @@ public class BundleCfgUtilsV1
         return trg;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Void downgradeTo(@Nonnull Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -73,13 +73,13 @@ public class BundleCfgUtilsV1
     }
 
     @Override
-    public String toString(@Nonnull BundleCfgYamlV1 yaml) {
+    public String toString(@NonNull BundleCfgYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public BundleCfgYamlV1 to(@Nonnull String yaml) {
+    public BundleCfgYamlV1 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

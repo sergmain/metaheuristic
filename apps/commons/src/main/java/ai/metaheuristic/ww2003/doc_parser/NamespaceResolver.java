@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ww2003.doc_parser;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.w3c.dom.Document;
 
 import javax.xml.XMLConstants;

@@ -23,7 +23,7 @@ import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -198,12 +198,12 @@ public class SourceCodeParamsYamlV5 implements BaseParams {
     public static class SourceCodeV5 {
         @Nullable
         public Integer instances;
-        public VariableDefinitionV5 variables = new VariableDefinitionV5();
+        public @Nullable VariableDefinitionV5 variables = new VariableDefinitionV5();
         public List<ProcessV5> processes = new ArrayList<>();
         public boolean clean = false;
         public String uid;
-        public List<Map<String, String>> metas = new ArrayList<>();
-        public AccessControlV5 ac;
+        public @Nullable List<Map<String, String>> metas = new ArrayList<>();
+        public @Nullable AccessControlV5 ac;
         @Nullable
         public Boolean strictNaming;
     }

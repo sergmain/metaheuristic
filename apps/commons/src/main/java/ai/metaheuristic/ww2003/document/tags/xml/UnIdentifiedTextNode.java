@@ -19,7 +19,7 @@ package ai.metaheuristic.ww2003.document.tags.xml;
 import ai.metaheuristic.ww2003.document.Composite;
 import lombok.Getter;
 import lombok.Setter;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class UnIdentifiedTextNode extends Composite implements XmlTag, TextContainer {
 

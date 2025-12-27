@@ -18,7 +18,7 @@ package ai.metaheuristic.api;
 
 import ai.metaheuristic.commons.S;
 import lombok.ToString;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class EnumsApi {
 
@@ -91,7 +91,7 @@ public class EnumsApi {
         // data will be provided via inline as metadata
         inline(4);
 
-        public int value;
+        public final int value;
 
         DataSourcing(int value) {
             this.value = value;
@@ -126,7 +126,7 @@ public class EnumsApi {
         // function will be downloaded from git
         git(3);
 
-        public int value;
+        public final int value;
 
         FunctionSourcing(int value) {
             this.value = value;
@@ -134,17 +134,12 @@ public class EnumsApi {
 
         @SuppressWarnings("Duplicates")
         public static FunctionSourcing to(int value) {
-            switch (value) {
-                case 1:
-                    //noinspection
-                    return dispatcher;
-                case 2:
-                    throw new IllegalStateException("not used anymore.");
-                case 3:
-                    return git;
-                default:
-                    return dispatcher;
-            }
+            return switch (value) {
+                case 1 -> dispatcher;
+                case 2 -> throw new IllegalStateException("not used anymore.");
+                case 3 -> git;
+                default -> dispatcher;
+            };
         }
 
         public static String from(int value) {
@@ -245,7 +240,7 @@ public class EnumsApi {
     public enum ExperimentTaskType {
         UNKNOWN(0), FIT(1), PREDICT(2);
 
-        public int value;
+        public final int value;
 
         ExperimentTaskType(int value) {
             this.value = value;
@@ -271,7 +266,7 @@ public class EnumsApi {
         FINISHED(5),        // finished
         DOESNT_EXIST(6);    // doesn't exist. this state is needed at processor side to reconcile list of tasks
 
-        public int code;
+        public final int code;
 
         ExecContextState(int code) {
             this.code = code;
@@ -454,7 +449,7 @@ public class EnumsApi {
         pdf(true, ".pdf");
 
         public final boolean isBinary;
-        public final String ext;
+        public final @Nullable String ext;
 
         VariableType(boolean isBinary, @Nullable String ext) {
             this.isBinary = isBinary;

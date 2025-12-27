@@ -24,9 +24,9 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import org.jspecify.annotations.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
-import javax.annotation.Nonnull;
 
 /**
  * @author Serge
@@ -42,13 +42,13 @@ public class DataStorageParamsUtilsV1
         return 1;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(DataStorageParamsV1.class);
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public DataStorageParams upgradeTo(DataStorageParamsV1 v1) {
         v1.checkIntegrity();
@@ -69,9 +69,9 @@ public class DataStorageParamsUtilsV1
         return t;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Void downgradeTo(@Nonnull Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -86,13 +86,13 @@ public class DataStorageParamsUtilsV1
     }
 
     @Override
-    public String toString(@Nonnull DataStorageParamsV1 params) {
+    public String toString(@NonNull DataStorageParamsV1 params) {
         return getYaml().dump(params);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DataStorageParamsV1 to(@Nonnull String yaml) {
+    public DataStorageParamsV1 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

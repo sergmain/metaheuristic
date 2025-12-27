@@ -18,7 +18,7 @@ package ai.metaheuristic.commons.yaml.env;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;

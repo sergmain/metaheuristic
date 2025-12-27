@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ww2003.document.presentation;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public enum HighlightColor {
 

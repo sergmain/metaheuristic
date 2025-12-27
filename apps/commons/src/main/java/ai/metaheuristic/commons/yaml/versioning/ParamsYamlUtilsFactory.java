@@ -18,7 +18,7 @@ package ai.metaheuristic.commons.yaml.versioning;
 
 import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
 import lombok.Data;
-import javax.annotation.Nonnull;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Map;
 
@@ -31,15 +31,15 @@ import java.util.Map;
 @Data
 public class ParamsYamlUtilsFactory {
 
-    public @Nonnull Map<Integer, AbstractParamsYamlUtils> map;
-    public @Nonnull AbstractParamsYamlUtils defYamlUtils;
+    public @NonNull Map<Integer, AbstractParamsYamlUtils> map;
+    public @NonNull AbstractParamsYamlUtils defYamlUtils;
 
-    public void ParamsYamlUtilsFactory(@Nonnull Map<Integer, AbstractParamsYamlUtils> map, @Nonnull AbstractParamsYamlUtils defYamlUtils) {
+    public void ParamsYamlUtilsFactory(@NonNull Map<Integer, AbstractParamsYamlUtils> map, @NonNull AbstractParamsYamlUtils defYamlUtils) {
         this.map = map;
         this.defYamlUtils = defYamlUtils;
     }
 
-    public @Nonnull AbstractParamsYamlUtils getForVersion(int version) {
+    public @NonNull AbstractParamsYamlUtils getForVersion(int version) {
         AbstractParamsYamlUtils yamlUtils = map.get(version);
         if (yamlUtils==null) {
             throw new WrongVersionOfParamsException("Not supported version: " + version);
@@ -48,7 +48,7 @@ public class ParamsYamlUtilsFactory {
     }
 
 
-    public @Nonnull AbstractParamsYamlUtils getDefault() {
+    public @NonNull AbstractParamsYamlUtils getDefault() {
         return defYamlUtils;
     }
 }

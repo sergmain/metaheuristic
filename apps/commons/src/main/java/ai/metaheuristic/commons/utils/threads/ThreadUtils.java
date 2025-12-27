@@ -22,7 +22,7 @@ import com.google.errorprone.annotations.MustBeClosed;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.List;

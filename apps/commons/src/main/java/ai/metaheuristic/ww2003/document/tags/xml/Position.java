@@ -19,7 +19,7 @@ package ai.metaheuristic.ww2003.document.tags.xml;
 import ai.metaheuristic.ww2003.document.Leaf;
 import ai.metaheuristic.ww2003.document.tags.PropertyElement;
 import lombok.NoArgsConstructor;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 @NoArgsConstructor
 public class Position extends Leaf implements XmlTag, PropertyElement {

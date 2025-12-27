@@ -20,7 +20,7 @@ import ai.metaheuristic.ww2003.document.Leaf;
 import ai.metaheuristic.ww2003.document.tags.xml.Attr;
 import ai.metaheuristic.ww2003.document.tags.xml.XmlTag;
 import lombok.NoArgsConstructor;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 @NoArgsConstructor
 public class GridCol extends Leaf implements XmlTag {

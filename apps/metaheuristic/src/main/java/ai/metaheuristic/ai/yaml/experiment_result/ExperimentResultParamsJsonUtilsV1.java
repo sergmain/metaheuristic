@@ -24,7 +24,7 @@ import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.json.versioning_json.AbstractParamsJsonUtils;
 import ai.metaheuristic.commons.json.versioning_json.BaseJsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.springframework.lang.NonNull;
+
 
 /**
  * @author Serge

@@ -21,7 +21,9 @@ import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV5;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.List;
@@ -77,7 +79,6 @@ public class SourceCodeParamsYamlUtilsV5
         return p;
     }
 
-    @NonNull
     private static SourceCodeParamsYaml.Process toProcess(SourceCodeParamsYamlV5.ProcessV5 o) {
         SourceCodeParamsYaml.Process pr = new SourceCodeParamsYaml.Process();
         pr.name = o.name;
@@ -117,12 +118,12 @@ public class SourceCodeParamsYamlUtilsV5
     }
 
     @Override
-    public Void nextUtil() {
+    public @Nullable Void nextUtil() {
         return null;
     }
 
     @Override
-    public Void prevUtil() {
+    public @Nullable Void prevUtil() {
         // not supported
         return null;
     }

@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ww2003.document.tags;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Serge

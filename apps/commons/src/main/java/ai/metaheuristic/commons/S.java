@@ -16,8 +16,7 @@
 
 package ai.metaheuristic.commons;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -29,11 +28,11 @@ import java.util.Objects;
  */
 public final class S {
 
-    public static @Nonnull String f(@Nonnull String format, @Nullable Object... args) {
+    public static String f(String format, @Nullable Object... args) {
         return Objects.requireNonNull(String.format(format, args));
     }
 
-    public static @Nonnull String f(@Nonnull Locale l, @Nonnull String format, Object... args) {
+    public static String f(Locale l, String format, Object... args) {
         return String.format(l, format, args);
     }
 

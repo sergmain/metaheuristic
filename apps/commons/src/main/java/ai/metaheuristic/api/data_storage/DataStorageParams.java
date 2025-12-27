@@ -23,7 +23,7 @@ import ai.metaheuristic.api.sourcing.GitInfo;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,8 +50,7 @@ public class DataStorageParams implements BaseParams {
     @Nullable
     public DiskInfo disk;
 
-    @Nullable
-    public EnumsApi.VariableType type;
+    public EnumsApi.@Nullable VariableType type;
 
     @Nullable
     public Long size = null;

@@ -20,7 +20,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import javax.annotation.Nonnull;
+import org.jspecify.annotations.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -36,15 +36,15 @@ public class FittingYamlUtilsV1
         return 1;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(FittingYamlV1.class);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public FittingYaml upgradeTo(@Nonnull FittingYamlV1 src) {
+    public FittingYaml upgradeTo(@NonNull FittingYamlV1 src) {
         src.checkIntegrity();
         FittingYaml trg = new FittingYaml();
         trg.fitting = src.fitting;
@@ -52,9 +52,9 @@ public class FittingYamlUtilsV1
         return trg;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Void downgradeTo(@Nonnull Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -69,13 +69,13 @@ public class FittingYamlUtilsV1
     }
 
     @Override
-    public String toString(@Nonnull FittingYamlV1 yaml) {
+    public String toString(@NonNull FittingYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public FittingYamlV1 to(@Nonnull String yaml) {
+    public FittingYamlV1 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

@@ -22,7 +22,7 @@ import ai.metaheuristic.ww2003.document.tags.PropertyElement;
 import ai.metaheuristic.ww2003.document.tags.xml.*;
 import ai.metaheuristic.ww2003.document.tags.xml.table.*;
 import org.apache.commons.lang3.StringUtils;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -583,7 +583,7 @@ public interface CDNode extends Streamable, Writable, Cloneable, Finalizable {
         return findSiblings(clazz, direction, includeThis, null);
     }
 
-    default <T extends CDNode> List<T> findSiblings(Class<T> clazz, Enums.BypassDirection direction, boolean includeThis, @Nullable NodeFilters.Filter filter) {
+    default <T extends CDNode> List<T> findSiblings(Class<T> clazz, Enums.BypassDirection direction, boolean includeThis, NodeFilters.@Nullable Filter filter) {
         final NodeFilters.Filter actualFilter = filter == null ? new NodeFilters.InstanceFilter(clazz)  : filter;
         CDNode node = this;
         List<T> nodes = new ArrayList<>();

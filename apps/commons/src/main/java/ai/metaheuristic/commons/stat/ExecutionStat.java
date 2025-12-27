@@ -18,7 +18,7 @@ package ai.metaheuristic.commons.stat;
 
 import ai.metaheuristic.commons.S;
 import lombok.Data;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.PrintStream;
 import java.util.*;

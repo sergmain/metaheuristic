@@ -27,6 +27,14 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <artifactId>liquibase-helper</artifactId>
     <version>1.0</version>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
+    </properties>
+
     <build>
         <plugins>
             <plugin>

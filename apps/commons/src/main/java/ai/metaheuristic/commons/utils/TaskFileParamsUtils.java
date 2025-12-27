@@ -49,9 +49,10 @@ public class TaskFileParamsUtils {
 
     public static Map<String, List<TaskFileParamsYaml.OutputVariable>> getOutputVariableForType(TaskFileParamsYaml params, List<String> type) {
         return params.task.outputs
-                .stream()
-                .filter(o-> type.contains(o.type))
-                .collect(Collectors.groupingBy(TaskFileParamsYaml.OutputVariable::getType));
+            .stream()
+            .filter(o->o.type!=null)
+            .filter(o-> type.contains(o.type))
+            .collect(Collectors.groupingBy(o->o.type));
     }
 
     public static VariableArrayParamsYaml getInputVariablesAsArray(TaskFileParamsYaml params, TaskFileParamsYaml.InputVariable arrayVariable) throws IOException {

@@ -19,6 +19,7 @@ package ai.metaheuristic.ww2003.doc_parser;
 import ai.metaheuristic.ww2003.utils.XmlUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
+import org.springframework.lang.NonNull;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -40,7 +41,7 @@ public class DocumentConvertingService {
         switch (convertingResult.status) {
             case ALREADY_IN_UTF8:
                 inputStream.reset();
-                return new BOMInputStream(inputStream);
+                return getBomInputStream(inputStream);
             case CONVERTED:
                 if (isMemory) {
                     return IOUtils.toInputStream(convertingResult.doc, StandardCharsets.UTF_8);
@@ -54,4 +55,10 @@ public class DocumentConvertingService {
                 throw new IOException("111.040 unknown status " + convertingResult.status);
         }
     }
+
+    public static BOMInputStream getBomInputStream(InputStream is) throws IOException {
+        return BOMInputStream.builder().setInputStream(is).get();
+    }
+
+
 }

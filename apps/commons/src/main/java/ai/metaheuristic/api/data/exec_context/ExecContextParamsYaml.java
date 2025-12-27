@@ -24,7 +24,7 @@ import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -171,8 +171,7 @@ public class ExecContextParamsYaml implements BaseParams {
         @Nullable
         public List<FunctionDefinition> postFunctions;
 
-        @Nullable
-        public EnumsApi.SourceCodeSubProcessLogic logic;
+        public EnumsApi.@Nullable SourceCodeSubProcessLogic logic;
 
         /**
          * Timeout before terminating a process with function

@@ -19,8 +19,8 @@ package ai.metaheuristic.commons.utils;
 import ai.metaheuristic.api.data.Meta;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -92,7 +92,7 @@ public class MetaUtils {
     }
 
     @Nullable
-    public static Meta getMeta(@Nullable List<Map<String, String>> metas, @Nonnull String... keys) {
+    public static Meta getMeta(@Nullable List<Map<String, String>> metas, @NonNull String... keys) {
         if (metas==null) {
             return null;
         }

@@ -17,7 +17,7 @@
 package ai.metaheuristic.api.data.function;
 
 import ai.metaheuristic.api.EnumsApi;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Serge

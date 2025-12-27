@@ -19,6 +19,7 @@ package ai.metaheuristic.api.data.event;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.Data;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Serge
@@ -35,6 +36,7 @@ public class DispatcherEventYamlV1 implements BaseParams {
     public EnumsApi.DispatcherEventType event;
     public String contextId;
 
+    @Nullable
     public BatchEventDataV1 batchData;
     public TaskEventDataV1 taskData;
 

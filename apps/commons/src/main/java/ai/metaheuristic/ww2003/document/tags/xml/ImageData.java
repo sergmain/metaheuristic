@@ -18,7 +18,7 @@ package ai.metaheuristic.ww2003.document.tags.xml;
 
 import ai.metaheuristic.ww2003.document.Leaf;
 import lombok.NoArgsConstructor;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 

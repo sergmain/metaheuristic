@@ -17,7 +17,7 @@
 package ai.metaheuristic.ww2003;
 
 import ai.metaheuristic.ww2003.document.exceptions.DocumentProcessingException;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Serge

@@ -24,8 +24,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.Map;
@@ -37,7 +36,6 @@ import java.util.Map;
  */
 public class BaseJsonUtils<T extends BaseParams> {
 
-    @Nonnull
     private final ParamsJsonUtilsFactory FACTORY;
 
     private static final ObjectMapper mapper;
@@ -53,7 +51,7 @@ public class BaseJsonUtils<T extends BaseParams> {
     }
 
 
-    public BaseJsonUtils(@Nonnull Map<Integer, AbstractParamsJsonUtils> map, @Nonnull AbstractParamsJsonUtils defJsonUtils) {
+    public BaseJsonUtils(Map<Integer, AbstractParamsJsonUtils> map, AbstractParamsJsonUtils defJsonUtils) {
         map.forEach((k,v)-> {
             if (k!=v.getVersion()) {
                 throw new IllegalStateException(S.f("Version is different, class: %s", v.getClass()));
@@ -67,19 +65,16 @@ public class BaseJsonUtils<T extends BaseParams> {
         return FACTORY.getForVersion(version);
     }
 
-    @Nonnull
     public AbstractParamsJsonUtils getDefault() {
         return FACTORY.getDefault();
     }
 
-    @Nonnull
-    public String toString(@Nonnull BaseParams baseParams) {
+    public String toString(BaseParams baseParams) {
         baseParams.checkIntegrity();
         return toStringInternal(baseParams);
     }
 
-    @Nonnull
-    public String toStringAsVersion(@Nonnull BaseParams baseParams, int version) {
+    public String toStringAsVersion(BaseParams baseParams, int version) {
         AbstractParamsJsonUtils utils = getForVersion(version);
         if (utils==null) {
             throw new IllegalStateException("Unsupported version: " + version);
@@ -115,7 +110,7 @@ public class BaseJsonUtils<T extends BaseParams> {
         }
     }
 
-    public T to(@Nonnull String s) {
+    public T to(String s) {
         try {
             ParamsVersion v = JsonForVersioning.getParamsVersion(s);
             AbstractParamsJsonUtils jsonUtils = getForVersion(v.getActualVersion());

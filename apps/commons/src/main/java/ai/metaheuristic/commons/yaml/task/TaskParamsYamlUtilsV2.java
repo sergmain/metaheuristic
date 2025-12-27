@@ -20,11 +20,11 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.BeanUtils;
 import org.springframework.lang.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
-import javax.annotation.Nonnull;
 import java.util.stream.Collectors;
 
 /**
@@ -41,15 +41,15 @@ public class TaskParamsYamlUtilsV2
         return 2;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(TaskParamsYamlV2.class);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public TaskParamsYaml upgradeTo(@Nonnull TaskParamsYamlV2 v1) {
+    public TaskParamsYaml upgradeTo(@NonNull TaskParamsYamlV2 v1) {
         v1.checkIntegrity();
         TaskParamsYaml t = new TaskParamsYaml();
         t.task = new TaskParamsYaml.TaskYaml();
@@ -147,14 +147,14 @@ public class TaskParamsYamlUtilsV2
     }
 
     @Override
-    public String toString(@Nonnull TaskParamsYamlV2 params) {
+    public String toString(@NonNull TaskParamsYamlV2 params) {
         params.checkIntegrity();
         return getYaml().dump(params);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public TaskParamsYamlV2 to(@Nonnull String yaml) {
+    public TaskParamsYamlV2 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.yaml.metadata;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
+
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.Map;

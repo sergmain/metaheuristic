@@ -19,11 +19,13 @@ package ai.metaheuristic.ww2003.utils;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ww2003.exception.ChangeEncodingException;
 import lombok.Data;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
+
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -89,12 +91,13 @@ public class XmlUtils {
         }
     }
 
+    @SneakyThrows
     public static ConvertingResult convertXmlToUtf8(InputStream is, boolean isMemory) {
         InputStream inputStream;
         if (!is.markSupported()) {
-            inputStream = new BufferedInputStream(new BOMInputStream(is));
+            inputStream = new BufferedInputStream(getBomInputStream(is));
         } else {
-            inputStream = new BOMInputStream(is);
+            inputStream = getBomInputStream(is);
         }
         inputStream.mark(10000);
         try {
@@ -129,6 +132,10 @@ public class XmlUtils {
             }
             return new ConvertingResult(ConvertStatus.ERROR, message);
         }
+    }
+
+    public static BOMInputStream getBomInputStream(InputStream is) throws IOException {
+        return BOMInputStream.builder().setInputStream(is).get();
     }
 
     public static String getEncodingAttr(@Nullable String header) {

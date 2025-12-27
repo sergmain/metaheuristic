@@ -20,7 +20,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import javax.annotation.Nonnull;
+import org.jspecify.annotations.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -36,15 +36,15 @@ public class BatchItemMappingYamlUtilsV1
         return 1;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(BatchItemMappingYamlV1.class);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public BatchItemMappingYaml upgradeTo(@Nonnull BatchItemMappingYamlV1 src) {
+    public BatchItemMappingYaml upgradeTo(@NonNull BatchItemMappingYamlV1 src) {
         src.checkIntegrity();
         BatchItemMappingYaml trg = new BatchItemMappingYaml();
         trg.targetDir = src.targetDir;
@@ -54,9 +54,9 @@ public class BatchItemMappingYamlUtilsV1
         return trg;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Void downgradeTo(@Nonnull Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -71,13 +71,13 @@ public class BatchItemMappingYamlUtilsV1
     }
 
     @Override
-    public String toString(@Nonnull BatchItemMappingYamlV1 yaml) {
+    public String toString(@NonNull BatchItemMappingYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public BatchItemMappingYamlV1 to(@Nonnull String yaml) {
+    public BatchItemMappingYamlV1 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

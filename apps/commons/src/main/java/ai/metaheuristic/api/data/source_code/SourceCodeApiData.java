@@ -275,6 +275,7 @@ public class SourceCodeApiData {
     @AllArgsConstructor
     public static class SourceCodeValidationResult {
         public EnumsApi.SourceCodeValidateStatus status;
+        @Nullable
         public String error;
     }
 

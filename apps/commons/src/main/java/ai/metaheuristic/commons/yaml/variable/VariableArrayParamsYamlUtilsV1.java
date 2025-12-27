@@ -20,7 +20,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import javax.annotation.Nonnull;
+import org.jspecify.annotations.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;
@@ -39,13 +39,13 @@ public class VariableArrayParamsYamlUtilsV1
         return 1;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(VariableArrayParamsYamlV1.class);
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public VariableArrayParamsYaml upgradeTo(VariableArrayParamsYamlV1 v1) {
         v1.checkIntegrity();
@@ -67,9 +67,9 @@ public class VariableArrayParamsYamlUtilsV1
         return v;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Void downgradeTo(@Nonnull Void yaml) {
+    public Void downgradeTo(@NonNull Void yaml) {
         return null;
     }
 
@@ -84,13 +84,13 @@ public class VariableArrayParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(@Nonnull VariableArrayParamsYamlV1 params) {
+    public String toString(@NonNull VariableArrayParamsYamlV1 params) {
         return getYaml().dump(params);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public VariableArrayParamsYamlV1 to(@Nonnull String yaml) {
+    public VariableArrayParamsYamlV1 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

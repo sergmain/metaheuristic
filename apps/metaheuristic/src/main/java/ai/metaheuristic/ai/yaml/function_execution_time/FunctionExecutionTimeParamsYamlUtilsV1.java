@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.yaml.function_execution_time;
 
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.lang.NonNull;
+
 import org.yaml.snakeyaml.Yaml;
 
 /**

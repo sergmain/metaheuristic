@@ -21,8 +21,8 @@ import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.ParamsVersion;
 import lombok.extern.slf4j.Slf4j;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.Map;
@@ -36,9 +36,9 @@ import java.util.Objects;
 @Slf4j
 public class BaseYamlUtils<T extends BaseParams> {
 
-    private @Nonnull final ParamsYamlUtilsFactory FACTORY;
+    private @NonNull final ParamsYamlUtilsFactory FACTORY;
 
-    public BaseYamlUtils(@Nonnull Map<Integer, AbstractParamsYamlUtils> map, @Nonnull AbstractParamsYamlUtils defYamlUtils) {
+    public BaseYamlUtils(@NonNull Map<Integer, AbstractParamsYamlUtils> map, @NonNull AbstractParamsYamlUtils defYamlUtils) {
         map.forEach((k,v)-> {
             if (k!=v.getVersion()) {
                 final String es = "Versions are different, class: "+ v.getClass() + ", expected version: "+ k+", version of class: " + v.getVersion();
@@ -53,16 +53,16 @@ public class BaseYamlUtils<T extends BaseParams> {
         return FACTORY.getForVersion(version);
     }
 
-    public @Nonnull AbstractParamsYamlUtils getDefault() {
+    public @NonNull AbstractParamsYamlUtils getDefault() {
         return FACTORY.getDefault();
     }
 
-    public @Nonnull String toString(@Nonnull BaseParams baseParams) {
+    public @NonNull String toString(@NonNull BaseParams baseParams) {
         baseParams.checkIntegrity();
         return Objects.requireNonNull(getDefault().getYaml().dumpAsMap(baseParams));
     }
 
-    public @Nonnull String toStringAsVersion(@Nonnull BaseParams baseParamsYaml, int version) {
+    public @NonNull String toStringAsVersion(@NonNull BaseParams baseParamsYaml, int version) {
         if (baseParamsYaml.getVersion()==version) {
             return toString(baseParamsYaml);
         }
@@ -93,7 +93,7 @@ public class BaseYamlUtils<T extends BaseParams> {
         }
     }
 
-    public T to(@Nonnull String s) {
+    public T to(@NonNull String s) {
         try {
             ParamsVersion v = YamlForVersioning.getParamsVersion(s);
             AbstractParamsYamlUtils yamlUtils = getForVersion(v.getActualVersion());

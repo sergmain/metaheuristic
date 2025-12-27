@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.commons.S;
-import org.springframework.lang.NonNull;
+
 
 import java.util.*;
 import java.util.function.Consumer;

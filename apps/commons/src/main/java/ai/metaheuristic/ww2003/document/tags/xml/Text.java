@@ -20,7 +20,7 @@ import ai.metaheuristic.ww2003.document.Leaf;
 import ai.metaheuristic.ww2003.document.exceptions.UtilsExecutingException;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.regex.Pattern;
 
