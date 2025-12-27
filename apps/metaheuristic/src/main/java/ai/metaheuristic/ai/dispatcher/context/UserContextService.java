@@ -21,6 +21,8 @@ import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
 import ai.metaheuristic.ai.exceptions.BadExecutionContextException;
+import ai.metaheuristic.commons.account.UserContext;
+import ai.metaheuristic.commons.account.UserContextServiceProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,19 +39,28 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class UserContextService {
+public class UserContextService implements UserContextServiceProvider {
 
     private final CompanyCache companyCache;
 
-    public DispatcherContext getContext(Authentication authentication) {
+    @Override
+    public UserContext getContext(Authentication authentication) {
         Account account = (Account)authentication.getPrincipal();
         if (account==null) {
             throw new BadExecutionContextException("principal is null");
         }
-        return getContext(authentication, account.companyId);
+        return getDispatcherContext(authentication, account.companyId);
     }
 
-    public DispatcherContext getContext(Authentication authentication, Long companyUniqueId) {
+    public DispatcherContext getDispatcherContext(Authentication authentication) {
+        Account account = (Account)authentication.getPrincipal();
+        if (account==null) {
+            throw new BadExecutionContextException("principal is null");
+        }
+        return getDispatcherContext(authentication, account.companyId);
+    }
+
+    public DispatcherContext getDispatcherContext(Authentication authentication, Long companyUniqueId) {
         Account account = (Account)authentication.getPrincipal();
         if (account==null) {
             throw new BadExecutionContextException("principal is null");
