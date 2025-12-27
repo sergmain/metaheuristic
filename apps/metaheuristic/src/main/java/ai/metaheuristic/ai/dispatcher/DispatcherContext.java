@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
@@ -32,7 +33,7 @@ import java.util.UUID;
  */
 @Data
 @AllArgsConstructor
-public class DispatcherContext {
+public class DispatcherContext implements UserContext {
     public final String contextId = UUID.randomUUID().toString();
 
     @NonNull
@@ -41,12 +42,17 @@ public class DispatcherContext {
     @NonNull
     private final Company company;
 
+    @Override
     public String getUsername() {
         return account.username;
     }
+
+    @Override
     public Long getAccountId() {
         return account.id;
     }
+
+    @Override
     public Long getCompanyId() {
         return company.uniqueId;
     }
