@@ -1,0 +1,3 @@
+# Metaheuristic Liquibase changelogs
+# Each line is a changelog path (classpath resource)
+classpath:database/main-database-change-log.yaml
