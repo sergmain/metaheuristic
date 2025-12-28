@@ -17,8 +17,7 @@
 package ai.metaheuristic.ai;
 
 import liquibase.integration.spring.SpringLiquibase;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -56,9 +55,8 @@ import java.util.List;
 @Import(MhLiquibaseAutoConfiguration.LiquibaseChangelogRegistrar.class)
 public class MhLiquibaseAutoConfiguration {
 
+    @Slf4j
     public static class LiquibaseChangelogRegistrar implements ImportBeanDefinitionRegistrar {
-
-        private static final Logger log = LoggerFactory.getLogger(LiquibaseChangelogRegistrar.class);
 
         private static final String CHANGELOGS_LOCATION = "classpath*:META-INF/liquibase-changelogs.txt";
 
@@ -110,12 +108,12 @@ public class MhLiquibaseAutoConfiguration {
                         .addPropertyValue("changeLog", changelog)
                         .addPropertyValue("shouldRun", true);
                 
+                BeanDefinition beanDefinition = builder.getBeanDefinition();
+                
                 // Each subsequent changelog depends on the previous one
                 if (previousBeanName != null) {
-                    builder.setDependsOn(previousBeanName);
+                    beanDefinition.setDependsOn(previousBeanName);
                 }
-                
-                BeanDefinition beanDefinition = builder.getBeanDefinition();
                 
                 registry.registerBeanDefinition(beanName, beanDefinition);
                 log.info("Registered Liquibase bean '{}' for changelog: {}", beanName, changelog);

@@ -16,8 +16,7 @@
 
 package ai.metaheuristic.ai;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.domain.EntityScanPackages;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
@@ -46,9 +45,8 @@ import java.util.List;
  * @author Serge
  * Date: 12/27/2024
  */
+@Slf4j
 public class MhEntityPackageRegistrar implements ImportBeanDefinitionRegistrar {
-
-    private static final Logger log = LoggerFactory.getLogger(MhEntityPackageRegistrar.class);
 
     private static final String ENTITY_PACKAGES_LOCATION = "classpath*:META-INF/jpa-entity-packages.txt";
 
