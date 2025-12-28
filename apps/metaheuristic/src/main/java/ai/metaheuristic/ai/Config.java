@@ -295,6 +295,7 @@ public class Config {
 */
     @Profile("dispatcher")
     @EnableTransactionManagement
+    @Import(MhEntityPackageRegistrar.class)
     @EnableJpaRepositories(basePackageClasses = {RefToDispatcherRepositories.class, RefToMhbpRepositories.class} )
     public static class DispatcherConfig {
     }
