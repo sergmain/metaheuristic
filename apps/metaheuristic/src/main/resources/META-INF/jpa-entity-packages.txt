@@ -1,0 +1,4 @@
+# Metaheuristic JPA entity packages
+# Each line is a package to scan for @Entity classes
+ai.metaheuristic.ai.dispatcher.beans
+ai.metaheuristic.ai.mhbp.beans
