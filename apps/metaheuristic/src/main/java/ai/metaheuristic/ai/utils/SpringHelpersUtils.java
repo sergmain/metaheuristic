@@ -36,11 +36,17 @@ public class SpringHelpersUtils {
 
     public static final List<String> POSSIBLE_PROFILES = List.of(
         // Spring's profiles
-        "dispatcher", "processor", "quickstart", STANDALONE_PROFILE, "disk-storage", "test", "disable-check-frontend",
+        "dispatcher",
+        "processor",
+        "quickstart",
+        STANDALONE_PROFILE, // standalone это профиль для запуска в режиме приложения на базе electron
+        "disk-storage",
+        "test", "disable-check-frontend",
         WEBSOCKET_PROFILE,
 
             // db's profiles
-            "mysql", "postgresql", "h2", "hsqldb", "derby", "generic", "custom");
+        "mysql", "postgresql", "h2", "hsqldb", "derby", "generic", "custom"
+    );
 
     public static List<String> getProfiles(String activeProfiles) {
         List<String> profiles = Arrays.stream(StringUtils.split(activeProfiles, ", "))

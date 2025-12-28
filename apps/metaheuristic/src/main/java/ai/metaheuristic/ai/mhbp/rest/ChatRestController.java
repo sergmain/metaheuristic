@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.mhbp.rest;
 
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.mhbp.chat.ChatService;
 import ai.metaheuristic.ai.mhbp.chat.ChatTxService;

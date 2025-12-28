@@ -60,7 +60,7 @@ public class MhEntityPackageRegistrar implements ImportBeanDefinitionRegistrar {
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
             Resource[] resources = resolver.getResources(ENTITY_PACKAGES_LOCATION);
             
-            log.info("Found {} jpa-entity-packages.txt files", resources.length);
+            log.info("Total number of founding files jpa-entity-packages.txt: {}", resources.length);
             
             for (Resource resource : resources) {
                 log.info("Reading entity packages from: {}", resource.getURL());

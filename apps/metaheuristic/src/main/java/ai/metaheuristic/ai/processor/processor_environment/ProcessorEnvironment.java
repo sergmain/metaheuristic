@@ -41,7 +41,6 @@ import java.nio.file.Path;
 @Service
 @Slf4j
 @Profile("processor")
-//@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ProcessorEnvironment {
 
     private final Globals globals;

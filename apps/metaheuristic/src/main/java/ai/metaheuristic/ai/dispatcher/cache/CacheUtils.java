@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.Checksum;
+import ai.metaheuristic.commons.utils.SecUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYamlUtils;
@@ -106,10 +107,10 @@ public class CacheUtils {
         if (tpy.task.cache!=null && tpy.task.cache.cacheMeta) {
             for (Map<String, String> meta : tpy.task.metas) {
                 if (meta.size()!=1) {
-                    throw new IllegalStateException("(meta.size()!=1)");
+                    throw new IllegalStateException("181.020 (meta.size()!=1)");
                 }
                 Map.Entry<String, String> entry = meta.entrySet().stream().findFirst().orElse(null);
-                fullKey.metas.add(getSha256PlusLength(new ByteArrayInputStream((entry.getKey()+"###"+entry.getValue()).getBytes(StandardCharsets.UTF_8))));
+                fullKey.metas.add(getSha256PlusLength(new ByteArrayInputStream((entry.getKey() + SecUtils.SIGNATURE_DELIMITER + entry.getValue()).getBytes(StandardCharsets.UTF_8))));
             }
         }
     }
@@ -157,6 +158,7 @@ public class CacheUtils {
         return new CacheData.Sha256PlusLength(sha256, length);
     }
 
+    @SuppressWarnings("ConstantValue")
     public static CacheData.@Nullable SimpleKey fullKeyToSimpleKey(CacheData.FullKey fullKey) {
         String keyAsStr = fullKey.asString();
         byte[] bytes = keyAsStr.getBytes();

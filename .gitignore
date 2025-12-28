@@ -23,6 +23,8 @@ nbdist/
 .nb-gradle/
 r.bat
 
+/lib
+
 aiai-dispatcher
 aiai-dispatcher*
 aiai-processor/**
