@@ -14,44 +14,45 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.storage;
+package ai.metaheuristic.ai.dispatcher.cache;
 
-import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
-import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
-import ai.metaheuristic.commons.spi.GeneralBlobTxService;
+import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
+import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Sergio Lissner
- * Date: 10/20/2023
- * Time: 1:55 PM
+ * Date: 12/28/2025
+ * Time: 4:25 PM
  */
 @Service
 @Slf4j
 @Profile({"dispatcher"})
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class GeneralBlobService {
+public class CacheBlobTxService {
 
-    private final GeneralBlobTxService generalBlobTxService;
-    private final VariableBlobRepository variableBlobRepository;
+    private final CacheVariableRepository cacheVariableRepository;
 
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public Long createVariableIfNotExist(@Nullable Long variableBlobId) {
-        VariableBlob variableBlob = null;
-        if (variableBlobId!=null) {
-            variableBlob = variableBlobRepository.findById(variableBlobId).orElse(null);
-        }
-        if (variableBlob != null) {
-            return variableBlobId;
-        }
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public CacheVariable createEmptyCacheVariable(Long cacheProcessId, String variable) {
+        //TxUtils.checkTxExists();
 
-        return generalBlobTxService.createEmptyVariable();
+        CacheVariable data = new CacheVariable();
+        data.cacheProcessId = cacheProcessId;
+        data.variableName = variable;
+        data.createdOn = System.currentTimeMillis();
+        data.data = null;
+        data.nullified = true;
+
+        data = cacheVariableRepository.save(data);
+
+        return data;
     }
 }

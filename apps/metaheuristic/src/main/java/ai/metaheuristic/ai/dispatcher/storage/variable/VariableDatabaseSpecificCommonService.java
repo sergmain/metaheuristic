@@ -18,12 +18,12 @@ package ai.metaheuristic.ai.dispatcher.storage.variable;
 
 import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobService;
-import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
+import ai.metaheuristic.commons.spi.GeneralBlobTxService;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.commons.spi.StoredVariable;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +50,7 @@ public class VariableDatabaseSpecificCommonService {
     private final GeneralBlobTxService generalBlobTxService;
     private final CacheVariableRepository cacheVariableRepository;
 
-    public void copyData(VariableData.StoredVariable storedVariable, TaskParamsYaml.OutputVariable targetVariable, BiConsumer<Long, Long> copyDataFunc) {
+    public void copyData(StoredVariable storedVariable, TaskParamsYaml.OutputVariable targetVariable, BiConsumer<Long, Long> copyDataFunc) {
         TxUtils.checkTxExists();
 
         CacheVariable src = cacheVariableRepository.findById(storedVariable.id).orElse(null);

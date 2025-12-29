@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.storage.variable;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.events.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.storage.CacheVariableDatabaseStorageService;
@@ -31,6 +30,7 @@ import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.spi.StoredVariable;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.RequiredArgsConstructor;
@@ -70,7 +70,7 @@ public class VariableDefaultDatabaseService implements VariableDatabaseSpecificS
     private final CacheVariableDatabaseStorageService cacheVariableDatabaseStorageService;
 
     @SneakyThrows
-    public void copyData(VariableData.StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) {
+    public void copyData(StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable) {
         TxUtils.checkTxExists();
 
         final Path tempFile;

@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.dispatcher.beans.FunctionData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
-import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
+import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.exceptions.FunctionDataErrorException;
 import ai.metaheuristic.commons.utils.DirUtils;

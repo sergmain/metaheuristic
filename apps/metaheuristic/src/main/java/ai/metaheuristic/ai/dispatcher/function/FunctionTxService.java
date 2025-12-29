@@ -17,8 +17,8 @@ package ai.metaheuristic.ai.dispatcher.function;
 
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
-import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
-import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
+import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
+import ai.metaheuristic.commons.spi.GeneralBlobTxService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import lombok.RequiredArgsConstructor;

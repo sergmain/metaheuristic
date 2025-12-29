@@ -14,9 +14,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.storage;
+package ai.metaheuristic.commons.spi;
 
-import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 
 import java.io.IOException;
@@ -37,7 +36,7 @@ public interface DispatcherBlobStorage {
 
     void storeVariableData(Long variableBlobId, InputStream is, long size);
 
-    void copyVariableData(VariableData.StoredVariable sourceVariable, TaskParamsYaml.OutputVariable targetVariable);
+    void copyVariableData(StoredVariable sourceVariable, TaskParamsYaml.OutputVariable targetVariable);
 
     InputStream getGlobalVariableDataAsStreamById(Long globalVariableId);
 

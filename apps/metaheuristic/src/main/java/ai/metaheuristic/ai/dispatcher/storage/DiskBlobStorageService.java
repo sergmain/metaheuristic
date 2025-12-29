@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
-import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
@@ -31,6 +30,8 @@ import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
+import ai.metaheuristic.commons.spi.StoredVariable;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.DirUtils;
 import jakarta.annotation.PostConstruct;
@@ -161,7 +162,7 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
 
     @SneakyThrows
     @Override
-    public void copyVariableData(VariableData.StoredVariable sourceVariable, TaskParamsYaml.OutputVariable targetVariable) {
+    public void copyVariableData(StoredVariable sourceVariable, TaskParamsYaml.OutputVariable targetVariable) {
         Variable trg = variableRepository.findById(targetVariable.id).orElse(null);
         if (trg==null) {
             log.warn("!!! trying to copy date to non-existed variable");

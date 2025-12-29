@@ -25,8 +25,8 @@ import ai.metaheuristic.ai.dispatcher.event.events.ResourceCloseTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.storage.DispatcherBlobStorage;
-import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobTxService;
+import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
+import ai.metaheuristic.commons.spi.GeneralBlobTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
@@ -71,6 +71,7 @@ public class CacheTxService {
     private final ApplicationEventPublisher eventPublisher;
     private final DispatcherBlobStorage dispatcherBlobStorage;
     private final GeneralBlobTxService generalBlobTxService;
+    private final CacheBlobTxService cacheBlobTxService;
 
     @Transactional
     public void deleteCacheVariable(Long cacheProcessId) {
@@ -118,7 +119,7 @@ public class CacheTxService {
                 throw new VariableCommonException("611.040 ExecContext is broken, variable #"+output.id+" wasn't found", output.id);
             }
             if (v.nullified) {
-                generalBlobTxService.createEmptyCacheVariable(cacheProcess.id, output.name);
+                cacheBlobTxService.createEmptyCacheVariable(cacheProcess.id, output.name);
                 return;
             }
 
@@ -146,7 +147,7 @@ public class CacheTxService {
             final long size;
             try {
                 size = Files.size(tempFile);
-                CacheVariable cacheVariable = generalBlobTxService.createEmptyCacheVariable(cacheProcess.id, output.name);
+                CacheVariable cacheVariable = cacheBlobTxService.createEmptyCacheVariable(cacheProcess.id, output.name);
                 dispatcherBlobStorage.storeCacheVariableData(cacheVariable.id, is, size);
             }
             catch (IOException e) {
@@ -156,10 +157,11 @@ public class CacheTxService {
     }
 
     public CacheData.FullKey getKey(TaskParamsYaml tpy, ExecContextParamsYaml.FunctionDefinition function) {
-        return CacheUtils.getKey(tpy, function.params, variableTopLevelService::variableBlobIdRef,
-                variableTxService::getVariableBlobDataAsString,
-                dispatcherBlobStorage::getVariableDataAsStreamById,
-                dispatcherBlobStorage::getGlobalVariableDataAsStreamById);
+        return CacheUtils.getKey(tpy, function.params,
+            variableTopLevelService::variableBlobIdRef,
+            variableTxService::getVariableBlobDataAsString,
+            dispatcherBlobStorage::getVariableDataAsStreamById,
+            dispatcherBlobStorage::getGlobalVariableDataAsStreamById);
     }
 
 }

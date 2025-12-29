@@ -52,7 +52,7 @@ public class CacheUtils {
     public static CacheData.FullKey getKey(
             TaskParamsYaml tpy,
             @Nullable String functionParams,
-            Function<Long, Long> variableBlobIdRefFunc,
+            Function<Long, @Nullable Long> variableBlobIdRefFunc,
             Function<Long, String> variableAsStringFunc,
             Function<Long, InputStream> variableAsStreamFunc,
             Function<Long, InputStream> globalVariableAsStreamFunc) {

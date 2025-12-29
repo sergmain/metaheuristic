@@ -17,14 +17,13 @@
 package ai.metaheuristic.ai.dispatcher.storage;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
 import ai.metaheuristic.ai.dispatcher.beans.FunctionData;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.beans.VariableBlob;
-import ai.metaheuristic.ai.dispatcher.repositories.CacheVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionDataRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobRepository;
+import ai.metaheuristic.commons.spi.GeneralBlobTxService;
 import ai.metaheuristic.commons.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -52,15 +51,15 @@ import java.sql.Timestamp;
 @Slf4j
 @Profile({"dispatcher"})
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class GeneralBlobTxService {
+public class MhGeneralBlobTxService implements GeneralBlobTxService {
 
     private final VariableBlobRepository variableBlobRepository;
     private final GlobalVariableRepository globalVariableRepository;
     private final FunctionDataRepository functionDataRepository;
-    private final CacheVariableRepository cacheVariableRepository;
     private final EntityManager em;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Override
     public Long createEmptyVariable() {
         VariableBlob data = new VariableBlob();
         ByteArrayInputStream bais = new ByteArrayInputStream(Consts.STUB_BYTES);
@@ -71,6 +70,7 @@ public class GeneralBlobTxService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Override
     public Long createEmptyGlobalVariable(String variable, @Nullable String filename) {
         GlobalVariable data = new GlobalVariable();
         data.name = variable;
@@ -86,6 +86,7 @@ public class GeneralBlobTxService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Override
     public Long createEmptyFunctionData(String functionCode) {
         FunctionData data = new FunctionData();
         data.functionCode = functionCode;
@@ -99,22 +100,4 @@ public class GeneralBlobTxService {
         FunctionData r = functionDataRepository.save(data);
         return r.id;
     }
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public CacheVariable createEmptyCacheVariable(Long cacheProcessId, String variable) {
-        //TxUtils.checkTxExists();
-
-        CacheVariable data = new CacheVariable();
-        data.cacheProcessId = cacheProcessId;
-        data.variableName = variable;
-        data.createdOn = System.currentTimeMillis();
-        data.data = null;
-        data.nullified = true;
-
-        data = cacheVariableRepository.save(data);
-
-        return data;
-    }
-
-
 }

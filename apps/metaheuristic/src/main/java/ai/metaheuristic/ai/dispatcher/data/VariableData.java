@@ -107,11 +107,4 @@ public class VariableData {
         }
     }
 
-    @Data
-    @AllArgsConstructor
-    public static class StoredVariable {
-        public Long id;
-        public String name;
-        public boolean nullified;
-    }
 }

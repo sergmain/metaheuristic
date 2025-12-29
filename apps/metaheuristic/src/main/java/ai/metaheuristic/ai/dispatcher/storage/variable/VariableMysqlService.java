@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.dispatcher.storage.variable;
 
-import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableBlobMysqlRepository;
+import ai.metaheuristic.commons.spi.StoredVariable;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +39,7 @@ public class VariableMysqlService implements VariableDatabaseSpecificService {
     private final VariableDatabaseSpecificCommonService variableDatabaseSpecificCommonService;
     private final VariableBlobMysqlRepository variableMysqlRepository;
 
-    public void copyData(VariableData.StoredVariable storedVariable, TaskParamsYaml.OutputVariable targetVariable) {
+    public void copyData(StoredVariable storedVariable, TaskParamsYaml.OutputVariable targetVariable) {
         variableDatabaseSpecificCommonService.copyData(storedVariable, targetVariable, variableMysqlRepository::copyData);
     }
 }

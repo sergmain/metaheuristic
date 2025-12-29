@@ -14,16 +14,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.storage.variable;
+package ai.metaheuristic.commons.spi;
 
-import ai.metaheuristic.commons.spi.StoredVariable;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
+import org.jspecify.annotations.Nullable;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
- * @author Serge
- * Date: 12/22/2021
- * Time: 10:46 PM
+ * @author Sergio Lissner
+ * Date: 12/28/2025
+ * Time: 4:18 PM
  */
-public interface VariableDatabaseSpecificService {
-    void copyData(StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable);
+public interface GeneralBlobTxService {
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    Long createEmptyVariable();
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    Long createEmptyGlobalVariable(String variable, @Nullable String filename);
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    Long createEmptyFunctionData(String functionCode);
 }

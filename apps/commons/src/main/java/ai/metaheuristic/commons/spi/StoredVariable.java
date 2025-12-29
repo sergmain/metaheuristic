@@ -14,16 +14,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.storage.variable;
+package ai.metaheuristic.commons.spi;
 
-import ai.metaheuristic.commons.spi.StoredVariable;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 /**
- * @author Serge
- * Date: 12/22/2021
- * Time: 10:46 PM
+ * @author Sergio Lissner
+ * Date: 12/28/2025
+ * Time: 4:14 PM
  */
-public interface VariableDatabaseSpecificService {
-    void copyData(StoredVariable srcVariable, TaskParamsYaml.OutputVariable targetVariable);
+@Data
+@AllArgsConstructor
+public class StoredVariable {
+    public Long id;
+    public String name;
+    public boolean nullified;
 }
