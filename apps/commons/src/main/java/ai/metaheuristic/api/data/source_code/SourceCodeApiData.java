@@ -285,6 +285,14 @@ public class SourceCodeApiData {
     @AllArgsConstructor
     public static class SourceCodeValidation extends BaseDataClass {
         public SourceCodeValidationResult status;
+
+        @JsonCreator
+        public SourceCodeValidation(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     @Data
@@ -293,6 +301,14 @@ public class SourceCodeApiData {
     public static class SourceCodeListResult extends BaseDataClass {
         public SourceCode sourceCode;
         public long currentSourceCodeId;
+
+        @JsonCreator
+        public SourceCodeListResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     // !!! DO NOT CHANGE THIS CLASS UNDER ANY CIRCUMSTANCES

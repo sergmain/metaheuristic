@@ -203,9 +203,14 @@ public class SouthbridgeService {
                     String es = S.f("444.190 Error (skipped!=offset), skipped: %d, offset: %d", skipped, offset);
                     log.error(es);
                     throw new CommonIOErrorWithDataException(es);
-
                 }
-                realInputStream = new BoundedInputStream(fis, realSize);
+
+                realInputStream =
+                    BoundedInputStream.builder()
+                    .setInputStream(fis)
+                    .setMaxCount(realSize)
+                    .get();
+
                 isLastChunk = (Files.size(assetFile.file) == (offset + realSize));
             }
             final HttpHeaders headers = RestUtils.getHeader(byteToRead);

@@ -20,9 +20,13 @@ import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.SimpleSelectOption;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,9 +36,18 @@ public class FunctionData {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
     public static class FunctionsResult extends BaseDataClass {
         public List<Function> functions;
         public EnumsApi.DispatcherAssetMode assetMode;
+
+        @JsonCreator
+        public FunctionsResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     @Data
@@ -45,6 +58,14 @@ public class FunctionData {
         public String code;
         public String type;
         public String params;
+
+        @JsonCreator
+        public SimpleFunctionResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     @Data

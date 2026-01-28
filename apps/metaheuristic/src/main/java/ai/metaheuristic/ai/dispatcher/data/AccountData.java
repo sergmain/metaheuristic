@@ -19,6 +19,8 @@ package ai.metaheuristic.ai.dispatcher.data;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.account.SimpleAccount;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -51,6 +53,14 @@ public class AccountData {
     public static class AccountsResult extends BaseDataClass {
         public Page<SimpleAccount> accounts;
         public EnumsApi.DispatcherAssetMode assetMode;
+
+        @JsonCreator
+        public AccountsResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     @Data
@@ -58,6 +68,14 @@ public class AccountData {
     @NoArgsConstructor
     public static class AccountResult extends BaseDataClass {
         public SimpleAccount account;
+
+        @JsonCreator
+        public AccountResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
 
         public AccountResult(String errorMessage) {
             this.errorMessages = Collections.singletonList(errorMessage);
@@ -79,6 +97,14 @@ public class AccountData {
     public static class AccountWithRoleResult extends BaseDataClass {
         public SimpleAccount account;
         public List<String> possibleRoles;
+
+        @JsonCreator
+        public AccountWithRoleResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
 
         public AccountWithRoleResult(SimpleAccount account, List<String> possibleRoles, @Nullable List<String> errorMessage) {
             this.account = account;

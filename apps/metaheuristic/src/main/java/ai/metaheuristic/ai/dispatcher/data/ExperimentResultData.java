@@ -24,10 +24,13 @@ import ai.metaheuristic.api.data.experiment_result.ExperimentResultApiData;
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultTaskParams;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Slice;
 
 import java.math.BigDecimal;
@@ -52,6 +55,14 @@ public class ExperimentResultData {
         public List<String> x = new ArrayList<>();
         public List<String> y = new ArrayList<>();
         public BigDecimal[][] z;
+
+        @JsonCreator
+        public PlotData(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
 
         public PlotData(String errorMessage) {
             addErrorMessage(errorMessage);

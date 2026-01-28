@@ -21,10 +21,13 @@ import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Slice;
 
 import java.util.ArrayList;
@@ -63,8 +66,17 @@ public class ProcessorData {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
     public static class ProcessorsResult extends BaseDataClass {
         public Slice<ProcessorStatus> items;
+
+        @JsonCreator
+        public ProcessorsResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     public record ProcessorCore(Long id, String code, boolean busy) {}
@@ -89,6 +101,14 @@ public class ProcessorData {
     @NoArgsConstructor
     public static class ProcessorResult extends BaseDataClass {
         public Processor processor;
+
+        @JsonCreator
+        public ProcessorResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
 
         public ProcessorResult(String errorMessage) {
             addErrorMessage(errorMessage);

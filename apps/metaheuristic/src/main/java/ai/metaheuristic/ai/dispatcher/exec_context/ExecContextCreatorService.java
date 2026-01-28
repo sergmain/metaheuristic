@@ -45,6 +45,8 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -90,6 +92,14 @@ public class ExecContextCreatorService {
     public static class ExecContextCreationResult extends BaseDataClass {
         public ExecContextImpl execContext;
         public SourceCodeImpl sourceCode;
+
+        @JsonCreator
+        public ExecContextCreationResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
 
         public ExecContextCreationResult(List<String> errorMessages) {
             this.errorMessages = errorMessages;

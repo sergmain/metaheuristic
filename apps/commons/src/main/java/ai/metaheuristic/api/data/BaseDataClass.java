@@ -29,7 +29,7 @@ import java.util.Objects;
 
 
 /**
- * !!! To include fields from this class constructor must be annotated with @JsonCreator
+ * !!! To include fields from this BaseDataClass class, constructor must be annotated with @JsonCreator
  * @see OperationStatusRest#OperationStatusRest(EnumsApi.OperationStatus, List, List)
  */
 @Data

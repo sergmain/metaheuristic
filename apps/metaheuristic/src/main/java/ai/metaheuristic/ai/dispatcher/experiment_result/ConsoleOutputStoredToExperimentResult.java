@@ -17,12 +17,16 @@
 package ai.metaheuristic.ai.dispatcher.experiment_result;
 
 import ai.metaheuristic.api.data.BaseDataClass;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -34,6 +38,14 @@ public class ConsoleOutputStoredToExperimentResult extends BaseDataClass {
     public static class TaskOutput {
         public long taskId;
         public String console;
+    }
+
+    @JsonCreator
+    public ConsoleOutputStoredToExperimentResult(
+        @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+        @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+        this.errorMessages = errorMessages;
+        this.infoMessages = infoMessages;
     }
 
     public ConsoleOutputStoredToExperimentResult(String errorMessage) {

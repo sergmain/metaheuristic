@@ -20,6 +20,7 @@ import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,7 +29,7 @@ import java.nio.file.Path;
 public class MetaheuristicStatus {
 
     public static String APP_UUID = CommonConsts.APP_UUID_NONE;
-    public static Path metaheuristicStatusFilePath = null;
+    public static @Nullable Path metaheuristicStatusFilePath = null;
 
     @SneakyThrows
     static void initAppStatus(String[] args) {

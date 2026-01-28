@@ -18,10 +18,13 @@ package ai.metaheuristic.api.data.task;
 
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.dispatcher.Task;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Slice;
 
 import java.util.List;
@@ -33,6 +36,14 @@ public class TaskApiData {
     @EqualsAndHashCode(callSuper = false)
     public static class ListOfTasksResult extends BaseDataClass {
         public List<Task> items;
+
+        @JsonCreator
+        public ListOfTasksResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     @Data

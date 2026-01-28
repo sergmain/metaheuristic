@@ -20,6 +20,8 @@ import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -67,6 +69,14 @@ public class SourceCodeData {
     public static class SimpleSourceCodeUid extends BaseDataClass {
         public SourceCodeUid simpleSourceCode;
 
+        @JsonCreator
+        public SimpleSourceCodeUid(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
+
         public SimpleSourceCodeUid(List<String> errorMessage) {
             this.errorMessages = errorMessage;
         }
@@ -82,6 +92,14 @@ public class SourceCodeData {
     @NoArgsConstructor
     public static class SourceCodeUidsForCompany extends BaseDataClass {
         public List<SourceCodeUid> items;
+
+        @JsonCreator
+        public SourceCodeUidsForCompany(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     @Data
@@ -90,6 +108,14 @@ public class SourceCodeData {
     @NoArgsConstructor
     public static class SourceCodesForCompany extends BaseDataClass {
         public List<SourceCode> items;
+
+        @JsonCreator
+        public SourceCodesForCompany(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     @Data
@@ -115,6 +141,14 @@ public class SourceCodeData {
         public String sourceCodeUid;
         public long sourceCodeId;
         public final List<SimpleProcess> processes = new ArrayList<>();
+
+        @JsonCreator
+        public Development(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
 
         public Development(List<String> errorMessage) {
             this.errorMessages = errorMessage;

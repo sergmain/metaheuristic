@@ -22,10 +22,13 @@ import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
 
 import java.util.ArrayList;
@@ -59,6 +62,14 @@ public final class BatchData {
         public Long batchId;
         public Long execContextId;
 
+        @JsonCreator
+        public UploadingStatus(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
+
         public UploadingStatus(String errorMessage) {
             addErrorMessage(errorMessage);
         }
@@ -73,6 +84,14 @@ public final class BatchData {
     @AllArgsConstructor
     public static class ExecStatuses extends BaseDataClass {
         public List<BatchExecStatus> statuses;
+
+        @JsonCreator
+        public ExecStatuses(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     @Data
@@ -100,6 +119,14 @@ public final class BatchData {
         public String console;
         public boolean ok;
 
+        @JsonCreator
+        public Status(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
+
         public Status(String errorMessage) {
             addErrorMessage(errorMessage);
         }
@@ -113,9 +140,18 @@ public final class BatchData {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
     public static class BatchesResult extends BaseDataClass {
         public Page<BatchExecInfo> batches;
         public EnumsApi.DispatcherAssetMode assetMode;
+
+        @JsonCreator
+        public BatchesResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     @Data
@@ -123,6 +159,14 @@ public final class BatchData {
     @NoArgsConstructor
     public static class BatchResult extends BaseDataClass {
         public Batch batch;
+
+        @JsonCreator
+        public BatchResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
 
         public BatchResult(String errorMessage) {
             addErrorMessage(errorMessage);

@@ -20,10 +20,13 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.dispatcher.ExecContext;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Slice;
 
 import java.util.ArrayList;
@@ -79,6 +82,14 @@ public class ExperimentApiData {
         public ExperimentsEditResult(String errorMessage) {
             addErrorMessage(errorMessage);
         }
+
+        @JsonCreator
+        public ExperimentsEditResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     @Data
@@ -87,6 +98,14 @@ public class ExperimentApiData {
     @EqualsAndHashCode(callSuper = false)
     public static class ExperimentsResult extends BaseDataClass {
         public Slice<ExperimentResult> items;
+
+        @JsonCreator
+        public ExperimentsResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     @Data
@@ -114,6 +133,14 @@ public class ExperimentApiData {
 
         public ExperimentResult(ExperimentData experiment) {
             this.experiment = experiment;
+        }
+
+        @JsonCreator
+        public ExperimentResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
         }
     }
 

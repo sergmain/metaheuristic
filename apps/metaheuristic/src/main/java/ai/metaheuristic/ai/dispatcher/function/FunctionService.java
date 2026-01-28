@@ -154,7 +154,7 @@ public class FunctionService {
         return getFunctions(functionRepository::findAllIds, functionRepository::findByIdNullable, globals.dispatcher.asset.mode);
     }
 
-    public static FunctionData.FunctionsResult getFunctions(Supplier<List<Long>> getAllIdsFunc, java.util.function.Function<Long, Function> findByIdNullableFunc, EnumsApi.DispatcherAssetMode mode) {
+    public static FunctionData.FunctionsResult getFunctions(Supplier<List<Long>> getAllIdsFunc, java.util.function.Function<Long, @Nullable Function> findByIdNullableFunc, EnumsApi.DispatcherAssetMode mode) {
         FunctionData.FunctionsResult result = new FunctionData.FunctionsResult();
         List<Long> ids = getAllIdsFunc.get();
         result.functions = ids.stream().map(findByIdNullableFunc).filter(Objects::nonNull).sorted((o1, o2)->o2.getId().compareTo(o1.getId())).collect(Collectors.toList());

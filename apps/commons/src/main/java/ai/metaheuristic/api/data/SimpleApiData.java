@@ -16,10 +16,15 @@
 
 package ai.metaheuristic.api.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.Nullable;
+
+import java.util.List;
 
 public class SimpleApiData {
 
@@ -29,6 +34,14 @@ public class SimpleApiData {
     @EqualsAndHashCode(callSuper = false)
     public static class LongResult extends BaseDataClass {
         public Long value;
+
+        @JsonCreator
+        public LongResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     @Data
@@ -37,6 +50,14 @@ public class SimpleApiData {
     @EqualsAndHashCode(callSuper = false)
     public static class IntegerResult extends BaseDataClass {
         public Integer value;
+
+        @JsonCreator
+        public IntegerResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
 }

@@ -19,13 +19,17 @@ package ai.metaheuristic.ai.dispatcher.data;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Serge
@@ -41,6 +45,14 @@ public class CompanyData {
     public static class SimpleCompaniesResult extends BaseDataClass {
         public Page<SimpleCompany> companies;
         public EnumsApi.DispatcherAssetMode assetMode;
+
+        @JsonCreator
+        public SimpleCompaniesResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     @Data
@@ -50,6 +62,14 @@ public class CompanyData {
     public static class CompaniesResult extends BaseDataClass {
         public Page<Company> companies;
         public EnumsApi.DispatcherAssetMode assetMode;
+
+        @JsonCreator
+        public CompaniesResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     @Data
@@ -65,6 +85,14 @@ public class CompanyData {
     public static class CompanyResult extends BaseDataClass {
         public Company company;
         public final CompanyAccessControl companyAccessControl = new CompanyAccessControl();
+
+        @JsonCreator
+        public CompanyResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
 
         public CompanyResult(String errorMessage) {
             this.errorMessages = Collections.singletonList(errorMessage);
@@ -86,6 +114,14 @@ public class CompanyData {
     public static class SimpleCompanyResult extends BaseDataClass {
         public SimpleCompany company;
         public final CompanyAccessControl companyAccessControl = new CompanyAccessControl();
+
+        @JsonCreator
+        public SimpleCompanyResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
 
         public SimpleCompanyResult(String errorMessage) {
             this.errorMessages = Collections.singletonList(errorMessage);

@@ -137,6 +137,14 @@ public class ExecContextApiData {
             this.sourceCodeId = sourceCodeId;
             this.assetMode = assetMode;
         }
+
+        @JsonCreator
+        public ExecContextsResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     @Data
@@ -246,6 +254,14 @@ public class ExecContextApiData {
         public ExecContextStateResult(List<String> errors) {
             addErrorMessages(errors);
         }
+
+        @JsonCreator
+        public ExecContextStateResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
     }
 
     @Data
@@ -262,6 +278,14 @@ public class ExecContextApiData {
 
         public RawExecContextStateResult(String error) {
             addErrorMessage(error);
+        }
+
+        @JsonCreator
+        public RawExecContextStateResult(
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
         }
     }
 

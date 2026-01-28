@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,60 +14,59 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.data;
+package ai.metaheuristic.trash;
 
+import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.api.data.BaseDataClass;
-import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
-import org.springframework.data.domain.Slice;
 
 import java.util.List;
 
-public class GlobalVariableData {
+/**
+ * @author Sergio Lissner
+ * Date: 1/27/2026
+ * Time: 8:53 PM
+ */
+public class IssueWithJackson {
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @EqualsAndHashCode(callSuper = false)
-    public static class GlobalVariablesResult extends BaseDataClass {
-        public Slice<SimpleGlobalVariable> items;
-
-        @JsonCreator
-        public GlobalVariablesResult(
-            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
-            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
-            this.errorMessages = errorMessages;
-            this.infoMessages = infoMessages;
-        }
-    }
 
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class GlobalVariableResult extends BaseDataClass {
-        public SimpleGlobalVariable data;
+    public static class Bbb extends BaseDataClass {
+        public Batch batch;
 
         @JsonCreator
-        public GlobalVariableResult(
+        public Bbb(
             @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
             @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
             this.errorMessages = errorMessages;
             this.infoMessages = infoMessages;
         }
 
-        public GlobalVariableResult(String errorMessage) {
+        public Bbb(String errorMessage) {
             addErrorMessage(errorMessage);
         }
 
-        public GlobalVariableResult(SimpleGlobalVariable data) {
-            this.data = data;
+        public Bbb(Batch batch) {
+            this.batch = batch;
         }
     }
 
+    static void main() throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+
+        Bbb b = new Bbb();
+        b.addErrorMessage("error");
+
+        String json = mapper.writeValueAsString(b);
+        System.out.println(json);  // check if errorMessages is present
+    }
 }
