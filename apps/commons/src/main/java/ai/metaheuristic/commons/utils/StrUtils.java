@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 public class StrUtils {
 
     private static final String COPY_NUMBER_PREFIX = "Copy #";
+    private static final int COPY_NUMBER_START_NUMBER = 1;
     public static final String ALLOWED_CHARS_IN_CODE_REGEXP = "^[A-Za-z0-9.:_-]*$";
     public static final String ALLOWED_CHARS_IN_VAR_NAME_REGEXP = "^[A-Za-z_][A-Za-z0-9_]*$";
 
@@ -86,13 +87,16 @@ public class StrUtils {
         return idx!=-1 ? filename.substring(0, idx) : filename;
     }
 
-    public static String incCopyNumber(String s) {
+    public static String incCopyNumber(@Nullable String s) {
+        if (S.b(s)) {
+            return COPY_NUMBER_PREFIX+COPY_NUMBER_START_NUMBER;
+        }
         if (!s.startsWith(COPY_NUMBER_PREFIX)) {
-            return formatString(s, 2);
+            return formatString(s, COPY_NUMBER_START_NUMBER);
         }
         final int idx = s.indexOf(',');
         if (idx==-1) {
-            return formatString(s, 2);
+            return formatString(s, COPY_NUMBER_START_NUMBER);
         }
 
         String mainPart = s.substring(idx+1).trim();
@@ -103,7 +107,7 @@ public class StrUtils {
         catch(NumberFormatException e) {
             log.warn("Error while incrementing copy number for string '{}'", s);
         }
-        return formatString(mainPart, 2);
+        return formatString(mainPart, COPY_NUMBER_START_NUMBER);
     }
 
     private static String formatString(String s, int i) {
