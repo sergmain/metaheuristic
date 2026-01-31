@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.mhbp.auth;
 
-import ai.metaheuristic.ai.exceptions.CommonRollbackException;
+import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.mhbp.beans.Auth;
 import ai.metaheuristic.ai.mhbp.repositories.AuthRepository;
 import ai.metaheuristic.api.EnumsApi;
