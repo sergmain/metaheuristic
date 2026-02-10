@@ -29,6 +29,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -102,7 +103,15 @@ public class DirUtils {
         if (Files.notExists(trgDir)) {
             Files.createDirectories(trgDir);
         }
-        return createTempPath(trgDir, prefix);
+        Path prefixDir = trgDir.resolve(prefix);
+        if (Files.notExists(prefixDir)) {
+            Files.createDirectories(prefixDir);
+        }
+        Path dateDir = prefixDir.resolve(LocalDate.now().toString());
+        if (Files.notExists(dateDir)) {
+            Files.createDirectories(dateDir);
+        }
+        return createTempPath(dateDir, prefix);
     }
 
     public static void deletePaths(@Nullable List<Path> toClean) {
