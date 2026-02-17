@@ -115,4 +115,60 @@ public class TestContextUtils {
 
     }
 
+    // === P0: buildTaskContextId tests ===
+
+    @Test
+    public void test_buildTaskContextId() {
+        assertEquals("1#1", ContextUtils.buildTaskContextId("1", "1"));
+        assertEquals("1,2#3", ContextUtils.buildTaskContextId("1,2", "3"));
+        assertEquals("1,2,3#0", ContextUtils.buildTaskContextId("1,2,3", "0"));
+    }
+
+    // === P0: getCurrTaskContextIdForSubProcesses tests ===
+
+    @Test
+    public void test_getCurrTaskContextIdForSubProcesses_withPath() {
+        // currTaskContextId = "1,2#1", processContextId = "3"
+        // level = "3", path = "1" => result = "3,1"
+        String result = ContextUtils.getCurrTaskContextIdForSubProcesses("1,2#1", "3");
+        assertEquals("3,1", result);
+    }
+
+    @Test
+    public void test_getCurrTaskContextIdForSubProcesses_withoutPath() {
+        // currTaskContextId = "1", no CONTEXT_SEPARATOR => path = null
+        // result = just processContextId
+        String result = ContextUtils.getCurrTaskContextIdForSubProcesses("1", "3");
+        assertEquals("3", result);
+    }
+
+    @Test
+    public void test_getCurrTaskContextIdForSubProcesses_deepPath() {
+        // currTaskContextId = "1,2,3#5", path = "5"
+        String result = ContextUtils.getCurrTaskContextIdForSubProcesses("1,2,3#5", "4");
+        assertEquals("4,5", result);
+    }
+
+    // === P1: VariableUtils.getParentContext tests ===
+
+    @Test
+    public void test_getParentContext_topLevel() {
+        assertNull(ai.metaheuristic.ai.dispatcher.variable.VariableUtils.getParentContext("1"));
+    }
+
+    @Test
+    public void test_getParentContext_twoLevels() {
+        assertEquals("1", ai.metaheuristic.ai.dispatcher.variable.VariableUtils.getParentContext("1,2"));
+    }
+
+    @Test
+    public void test_getParentContext_threeLevels() {
+        assertEquals("1,2", ai.metaheuristic.ai.dispatcher.variable.VariableUtils.getParentContext("1,2,3"));
+    }
+
+    @Test
+    public void test_getParentContext_fourLevels() {
+        assertEquals("1,2,3", ai.metaheuristic.ai.dispatcher.variable.VariableUtils.getParentContext("1,2,3,4"));
+    }
+
 }

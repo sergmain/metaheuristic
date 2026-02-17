@@ -276,6 +276,16 @@ public class ExecContextApiData {
         public boolean sourceCodeValid;
         public Map<Long, TaskApiData.TaskState> states;
 
+        // Option 5d: when non-empty, defines columns dynamically instead of processCodes
+        @Nullable
+        public Map<Integer, String> columnNames;
+
+        public RawExecContextStateResult(Long sourceCodeId, List<VariableState> infos, List<String> processCodes,
+                                         EnumsApi.SourceCodeType sourceCodeType, String sourceCodeUid,
+                                         boolean sourceCodeValid, Map<Long, TaskApiData.TaskState> states) {
+            this(sourceCodeId, infos, processCodes, sourceCodeType, sourceCodeUid, sourceCodeValid, states, null);
+        }
+
         public RawExecContextStateResult(String error) {
             addErrorMessage(error);
         }
