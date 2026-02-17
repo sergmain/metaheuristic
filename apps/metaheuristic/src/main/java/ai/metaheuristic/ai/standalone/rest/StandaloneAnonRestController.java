@@ -47,6 +47,9 @@ public class StandaloneAnonRestController {
     private final ApplicationContext appCtx;
     private final Globals globals;
 
+    // TODO p0 2026-02-15 add checking against host(?) (should be a local call only) and checking for correct UUID.
+    //  uuid should be added as parameter.
+    //  change from GET to POST type
     @GetMapping("/shutdown")
     public String shutdown() {
         globals.state.shutdownInProgress = true;

@@ -31,7 +31,7 @@ import static ai.metaheuristic.ai.MetaheuristicStatus.initAppStatus;
 @Slf4j
 public class MetaheuristicApplication {
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         initAppStatus(args);
         System.out.println("Metaheuristic was started at " + LocalDateTime.now()+", uuid: " + APP_UUID);
         final String encoding = System.getProperty("file.encoding");
@@ -43,9 +43,10 @@ public class MetaheuristicApplication {
             SpringApplication.run(MetaheuristicApplication.class, args);
         } catch (Throwable th) {
             log.error("error", th);
-            StatusFileUtils.appendError(MetaheuristicStatus.metaheuristicStatusFilePath, th);
+            if (MetaheuristicStatus.metaheuristicStatusFilePath != null) {
+                StatusFileUtils.appendError(MetaheuristicStatus.metaheuristicStatusFilePath, th);
+            }
             System.exit(-2);
         }
     }
-
 }
