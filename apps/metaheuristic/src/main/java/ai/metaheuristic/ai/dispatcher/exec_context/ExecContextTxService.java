@@ -132,10 +132,15 @@ public class ExecContextTxService {
         ExecContextParamsYaml ecpy = ec.getExecContextParamsYaml();
 
         List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ecpy);
-        return new ExecContextApiData.RawExecContextStateResult(
+        ExecContextApiData.RawExecContextStateResult rawResult = new ExecContextApiData.RawExecContextStateResult(
                 sourceCodeId, info.states, processCodes, result.sourceCodeType, result.sourceCodeUid, result.sourceCodeValid,
                 taskTxService.getExecStateOfTasks(execContextId)
         );
+        // Option 5d: populate columnNames from ExecContextParamsYaml when present
+        if (!ecpy.columnNames.isEmpty()) {
+            rawResult.columnNames = ecpy.columnNames;
+        }
+        return rawResult;
     }
 
     private void initInfoAboutSourceCode(Long sourceCodeId, ExecContextApiData.ExecContextsResult result) {

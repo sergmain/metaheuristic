@@ -38,6 +38,62 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class TestExecContextStateExtended {
 
+    // === P0: findOrAssignCol dedicated tests ===
+
+    @Test
+    public void test_findOrAssignCol_matchExistingProcess() {
+        ExecContextApiData.ColumnHeader[] headers = new ExecContextApiData.ColumnHeader[]{
+                new ExecContextApiData.ColumnHeader("p-1", "f-1"),
+                new ExecContextApiData.ColumnHeader("p-2", "f-2"),
+                new ExecContextApiData.ColumnHeader("p-3", "f-3")
+        };
+
+        assertEquals(0, ExecContextUtils.findOrAssignCol(headers, "p-1"));
+        assertEquals(1, ExecContextUtils.findOrAssignCol(headers, "p-2"));
+        assertEquals(2, ExecContextUtils.findOrAssignCol(headers, "p-3"));
+    }
+
+    @Test
+    public void test_findOrAssignCol_assignToFirstNullSlot() {
+        ExecContextApiData.ColumnHeader[] headers = new ExecContextApiData.ColumnHeader[]{
+                new ExecContextApiData.ColumnHeader("p-1", "f-1"),
+                new ExecContextApiData.ColumnHeader(null, null),
+                new ExecContextApiData.ColumnHeader(null, null)
+        };
+
+        int idx = ExecContextUtils.findOrAssignCol(headers, "p-new");
+        assertEquals(1, idx);
+        assertEquals("p-new", headers[1].process);
+    }
+
+    @Test
+    public void test_findOrAssignCol_throwsWhenNoSlots() {
+        ExecContextApiData.ColumnHeader[] headers = new ExecContextApiData.ColumnHeader[]{
+                new ExecContextApiData.ColumnHeader("p-1", "f-1"),
+                new ExecContextApiData.ColumnHeader("p-2", "f-2")
+        };
+
+        assertThrows(IllegalStateException.class, () -> ExecContextUtils.findOrAssignCol(headers, "p-unknown"));
+    }
+
+    @Test
+    public void test_findOrAssignCol_assignMultipleSequentially() {
+        ExecContextApiData.ColumnHeader[] headers = new ExecContextApiData.ColumnHeader[]{
+                new ExecContextApiData.ColumnHeader(null, null),
+                new ExecContextApiData.ColumnHeader(null, null),
+                new ExecContextApiData.ColumnHeader(null, null)
+        };
+
+        assertEquals(0, ExecContextUtils.findOrAssignCol(headers, "a"));
+        assertEquals(1, ExecContextUtils.findOrAssignCol(headers, "b"));
+        assertEquals(2, ExecContextUtils.findOrAssignCol(headers, "c"));
+
+        // now all assigned, should find by match
+        assertEquals(0, ExecContextUtils.findOrAssignCol(headers, "a"));
+        assertEquals(1, ExecContextUtils.findOrAssignCol(headers, "b"));
+        assertEquals(2, ExecContextUtils.findOrAssignCol(headers, "c"));
+    }
+
     // Test deep context hierarchy (4 levels) - baseline for dynamic depth scenarios
     @Test
     public void test_deepContextHierarchy() {

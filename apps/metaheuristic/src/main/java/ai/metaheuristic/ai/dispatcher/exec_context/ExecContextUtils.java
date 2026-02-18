@@ -76,6 +76,15 @@ public class ExecContextUtils {
             map.computeIfAbsent(info.taskContextId, (o) -> new ArrayList<>()).add(info);
         }
         r.header = raw.processCodes.stream().map(o -> new ExecContextApiData.ColumnHeader(o, o)).toArray(ExecContextApiData.ColumnHeader[]::new);
+
+        // Option 5d: when columnNames is present, override header with dynamic column names
+        if (raw.columnNames!=null && !raw.columnNames.isEmpty()) {
+            r.header = new ExecContextApiData.ColumnHeader[raw.columnNames.size()];
+            for (Map.Entry<Integer, String> entry : raw.columnNames.entrySet()) {
+                r.header[entry.getKey()] = new ExecContextApiData.ColumnHeader(entry.getValue(), entry.getValue());
+            }
+        }
+
         r.lines = new ExecContextApiData.LineWithState[contexts.size()];
 
         //noinspection SimplifyStreamApiCallChains
@@ -94,6 +103,16 @@ public class ExecContextUtils {
             r.lines[i].context = sortedContexts.get(i);
         }
 
+        // Option 5d: build processCode-to-column-index map when columnNames is present
+        final boolean useColumnNames = raw.columnNames!=null && !raw.columnNames.isEmpty();
+        Map<String, Integer> processCodeToColIdx = null;
+        if (useColumnNames) {
+            processCodeToColIdx = new HashMap<>();
+            for (int idx = 0; idx < raw.processCodes.size(); idx++) {
+                processCodeToColIdx.put(raw.processCodes.get(idx), idx);
+            }
+        }
+
         for (ExecContextApiData.VariableState variableState : raw.infos) {
             for (int i = 0; i < r.lines.length; i++) {
                 ExecContextApiData.VariableState simpleTaskInfo = null;
@@ -107,7 +126,18 @@ public class ExecContextUtils {
                 if (simpleTaskInfo == null) {
                     continue;
                 }
-                int j = findOrAssignCol(r.header, simpleTaskInfo.process);
+                // Option 5d: when columnNames is present, resolve column by processCode index; otherwise use legacy findOrAssignCol
+                int j;
+                if (useColumnNames && processCodeToColIdx!=null) {
+                    Integer colIdx = processCodeToColIdx.get(simpleTaskInfo.process);
+                    if (colIdx==null) {
+                        throw new IllegalStateException("Process code '" + simpleTaskInfo.process + "' not found in processCodes list");
+                    }
+                    j = colIdx;
+                }
+                else {
+                    j = findOrAssignCol(r.header, simpleTaskInfo.process);
+                }
 
                 TaskApiData.TaskState state = raw.states.get(simpleTaskInfo.taskId);
                 String stateAsStr;
@@ -129,9 +159,12 @@ public class ExecContextUtils {
                 r.lines[i].cells[j] = new ExecContextApiData.StateCell(simpleTaskInfo.taskId, stateAsStr, simpleTaskInfo.taskContextId, fromCache, outputs);
             }
         }
-        for (ExecContextApiData.ColumnHeader ch : r.header) {
-            ch.process = ExecContextUtils.shortName(ch.process);
-            ch.functionCode = ExecContextUtils.shortName(ch.functionCode);
+        // Option 5d: skip shortName truncation when columnNames provides display names
+        if (raw.columnNames==null || raw.columnNames.isEmpty()) {
+            for (ExecContextApiData.ColumnHeader ch : r.header) {
+                ch.process = ExecContextUtils.shortName(ch.process);
+                ch.functionCode = ExecContextUtils.shortName(ch.functionCode);
+            }
         }
         return r;
     }
@@ -178,7 +211,8 @@ public class ExecContextUtils {
         return sa1.length > sa2.length ? 1 : -1;
     }
 
-    private static int findOrAssignCol(ExecContextApiData.ColumnHeader[] headers, String process) {
+    // public for testing - will be refactored in Option 5d
+    public static int findOrAssignCol(ExecContextApiData.ColumnHeader[] headers, String process) {
         int idx = -1;
         for (int i = 0; i < headers.length; i++) {
             if (headers[i].process == null) {
