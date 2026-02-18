@@ -89,6 +89,9 @@ public class FunctionConfigYamlV2 implements BaseParams {
         public @Nullable List<Map<String, String>> metas = new ArrayList<>();
 
         public String src = CommonConsts.DEFAULT_FUNCTION_SRC_DIR;
+
+        @Nullable
+        public String assetDir;
     }
 
 

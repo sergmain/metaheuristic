@@ -143,6 +143,9 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
         public List<Map<String, String>> metas = new ArrayList<>();
 
         public String src = CommonConsts.DEFAULT_FUNCTION_SRC_DIR;
+
+        @Nullable
+        public String assetDir;
     }
 
     public FunctionConfig function = new FunctionConfig();

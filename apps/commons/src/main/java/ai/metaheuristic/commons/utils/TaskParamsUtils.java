@@ -39,6 +39,7 @@ public class TaskParamsUtils {
         trg.params = src.function.params;
         trg.sourcing = src.function.sourcing;
         trg.type = src.function.type;
+        trg.assetDir = src.function.assetDir;
         return trg;
     }
 }
