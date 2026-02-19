@@ -83,6 +83,7 @@ public class ArtifactUtils {
         t.task.inline = v1.task.inline;
         v1.task.inputs.stream().map(ArtifactCommonUtils::upInputVariable).collect(Collectors.toCollection(()->t.task.inputs));
         v1.task.outputs.stream().map(ArtifactCommonUtils::upOutputVariable).collect(Collectors.toCollection(()->t.task.outputs));
+        t.task.metas.addAll(v1.task.metas);
 
         t.checkIntegrity();
         return t;

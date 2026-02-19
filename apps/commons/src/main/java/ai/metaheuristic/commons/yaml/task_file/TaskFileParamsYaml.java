@@ -146,6 +146,7 @@ public class TaskFileParamsYaml implements BaseParams {
 
         public final List<InputVariable> inputs = new ArrayList<>();
         public final List<OutputVariable> outputs = new ArrayList<>();
+        public List<Map<String, String>> metas = new ArrayList<>();
 
         // fields which are initialized at processor
         public String workingPath;

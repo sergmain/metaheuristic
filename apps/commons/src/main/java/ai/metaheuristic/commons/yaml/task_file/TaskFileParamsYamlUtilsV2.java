@@ -53,10 +53,11 @@ public class TaskFileParamsYamlUtilsV2
         v1.checkIntegrity();
         TaskFileParamsYaml t = new TaskFileParamsYaml();
         t.task = new TaskFileParamsYaml.Task();
-        BeanUtils.copyProperties(v1.task, t.task, "inline", "input", "output");
+        BeanUtils.copyProperties(v1.task, t.task, "inline", "input", "output", "metas");
         t.task.inline = v1.task.inline;
         v1.task.inputs.stream().map(TaskFileParamsYamlUtilsV2::upInputVariable).collect(Collectors.toCollection(()->t.task.inputs));
         v1.task.outputs.stream().map(TaskFileParamsYamlUtilsV2::upOutputVariable).collect(Collectors.toCollection(()->t.task.outputs));
+        t.task.metas.addAll(v1.task.metas);
 
         t.checkIntegrity();
         return t;
