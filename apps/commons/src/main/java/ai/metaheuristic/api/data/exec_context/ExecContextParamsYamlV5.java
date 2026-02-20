@@ -27,6 +27,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -205,6 +206,11 @@ public class ExecContextParamsYamlV5 implements BaseParams {
 
     // this graph is for creating tasks dynamically
     public String processesGraph = ConstsApi.EMPTY_GRAPH;
+
+    // Option 5d: dynamic column names for UI state table
+    // key = column index, value = display name (function/process name)
+    // When populated, this map defines columns instead of processCodes from topology
+    public final Map<Integer, String> columnNames = new LinkedHashMap<>();
 
     @Nullable
     public ExecContextGraphV5 execContextGraph;

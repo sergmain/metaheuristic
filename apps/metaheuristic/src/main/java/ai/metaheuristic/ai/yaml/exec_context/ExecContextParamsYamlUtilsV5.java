@@ -62,6 +62,7 @@ public class ExecContextParamsYamlUtilsV5
             t.execContextGraph = new ExecContextParamsYaml.ExecContextGraph(
                     v5.execContextGraph.rootExecContextId, v5.execContextGraph.parentExecContextId, v5.execContextGraph.graph);
         }
+        t.columnNames.putAll(v5.columnNames);
         return t;
     }
 
