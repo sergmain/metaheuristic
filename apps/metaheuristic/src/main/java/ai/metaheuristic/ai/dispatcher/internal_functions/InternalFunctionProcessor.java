@@ -18,9 +18,10 @@ package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
+import ai.metaheuristic.api.dispatcher.InternalFunction;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +51,7 @@ public class InternalFunctionProcessor {
      *
      * @return boolean is that task a long-running task?
      */
-    public boolean process(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String internalContextId, TaskParamsYaml taskParamsYaml) {
+    public boolean process(ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String internalContextId, TaskParamsYaml taskParamsYaml) {
 
         InternalFunction internalFunction = internalFunctionRegisterService.get(taskParamsYaml.task.function.code);
         if (internalFunction==null) {

@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
+import ai.metaheuristic.api.dispatcher.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariableUtils;
@@ -32,6 +32,7 @@ import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
@@ -78,7 +79,7 @@ public class PermuteValuesOfVariablesFunction implements InternalFunction {
 
     @Override
     public void process(
-            ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
+            ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
         ArtifactCleanerAtDispatcher.setBusy();
@@ -91,7 +92,7 @@ public class PermuteValuesOfVariablesFunction implements InternalFunction {
     }
 
     private void processInternal(
-            ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
+            ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
 

@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.utils.ContextUtils;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
@@ -74,7 +75,7 @@ public class BatchSplitterTxService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
-    public void loadFilesFromDirAfterZip(ExecContextData.SimpleExecContext simpleExecContext, Path srcDir,
+    public void loadFilesFromDirAfterZip(ExecContextApiData.SimpleExecContext simpleExecContext, Path srcDir,
                                          final Map<String, String> mapping, TaskParamsYaml taskParamsYaml, Long taskId) {
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, taskId);

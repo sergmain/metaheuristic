@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import jakarta.annotation.PostConstruct;
@@ -104,7 +105,7 @@ public class ExecContextReadinessService {
         if (execContext == null) {
             return;
         }
-        ExecContextData.SimpleExecContext simpleExecContext = execContext.asSimple();
+        ExecContextApiData.SimpleExecContext simpleExecContext = execContext.asSimple();
 
         Map<Long, TaskApiData.TaskState> states = taskTxService.getExecStateOfTasks(execContextId);
 

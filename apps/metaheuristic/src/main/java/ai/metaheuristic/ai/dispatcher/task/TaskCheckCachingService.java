@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.cache.CacheTxService;
 import ai.metaheuristic.ai.dispatcher.cache.CacheUtils;
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.RegisterTaskForCheckCachingEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskFinishWithErrorEvent;
@@ -34,6 +33,7 @@ import ai.metaheuristic.ai.exceptions.InvalidateCacheProcessException;
 import ai.metaheuristic.ai.exceptions.VariableCommonException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
@@ -173,7 +173,7 @@ public class TaskCheckCachingService {
         }
     }
 
-    public PrepareData getCacheProcess(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
+    public PrepareData getCacheProcess(ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId) {
         TxUtils.checkTxNotExists();
 
         TaskImpl task = taskRepository.findByIdReadOnly(taskId);

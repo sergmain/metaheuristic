@@ -19,16 +19,16 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
+import ai.metaheuristic.api.dispatcher.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
@@ -76,8 +76,8 @@ public class BatchLineSplitterFunction implements InternalFunction {
     }
 
     public void process(
-            ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
-            TaskParamsYaml taskParamsYaml) {
+        ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
+        TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
 
         ArtifactCleanerAtDispatcher.setBusy();
@@ -90,8 +90,8 @@ public class BatchLineSplitterFunction implements InternalFunction {
     }
 
     private void processInternal(
-            ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
-            TaskParamsYaml taskParamsYaml) {
+        ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
+        TaskParamsYaml taskParamsYaml) {
 
         // variable-for-splitting
         String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, VARIABLE_FOR_SPLITTING);

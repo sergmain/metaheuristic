@@ -106,7 +106,8 @@ public class TestTaskParamYaml {
                     EnumsApi.FunctionSourcing.dispatcher,
                     null,
                     List.of(),
-                    CommonConsts.DEFAULT_FUNCTION_SRC_DIR
+                    CommonConsts.DEFAULT_FUNCTION_SRC_DIR,
+                    null
                 ),
                 null)
             )

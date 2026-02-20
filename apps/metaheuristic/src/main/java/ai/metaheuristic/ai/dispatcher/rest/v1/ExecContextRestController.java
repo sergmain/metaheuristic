@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
@@ -101,7 +100,7 @@ public class ExecContextRestController {
         UserContext context = userContextService.getContext(authentication);
         ExecContextCreatorService.ExecContextCreationResult execContextResult =
             execContextCreatorTopLevelService.createExecContextAndStart(uid,
-                new ExecContextData.UserExecContext(context.getAccountId(), context.getCompanyId()));
+                new ExecContextApiData.UserExecContext(context.getAccountId(), context.getCompanyId()));
         return new SimpleExecContextAddingResult(execContextResult.execContext.getId());
     }
 
@@ -112,7 +111,7 @@ public class ExecContextRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SourceCodeApiData.ExecContextResult execContextAddCommit(Long sourceCodeId, @SuppressWarnings("unused") @Nullable String variable, Authentication authentication) {
         UserContext context = userContextService.getContext(authentication);
-        ExecContextData.UserExecContext context1 = new ExecContextData.UserExecContext(context.getAccountId(), context.getCompanyId());
+        ExecContextApiData.UserExecContext context1 = new ExecContextApiData.UserExecContext(context.getAccountId(), context.getCompanyId());
         ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context1, true, null);
 
         SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(

@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.commons.S;
@@ -45,7 +46,7 @@ public class ExecContextCreatorTopLevelService {
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextCreatorService execContextCreatorService;
 
-    public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(String sourceCodeUid, ExecContextData.UserExecContext context) {
+    public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(String sourceCodeUid, ExecContextApiData.UserExecContext context) {
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeByUid(sourceCodeUid, context.companyId());
         if (sourceCodesForCompany.isErrorMessages()) {
             return new ExecContextCreatorService.ExecContextCreationResult("563.020 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
@@ -60,7 +61,7 @@ public class ExecContextCreatorTopLevelService {
     }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(
-            Long sourceCodeId, ExecContextData.UserExecContext context, boolean isProduceTasks, ExecContextData.@Nullable RootAndParent rootAndParent) {
+            Long sourceCodeId, ExecContextApiData.UserExecContext context, boolean isProduceTasks, ExecContextData.@Nullable RootAndParent rootAndParent) {
         final ExecContextCreatorService.ExecContextCreationResult withSyncForCreation = SourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
             () -> {
                 try {

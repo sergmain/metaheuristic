@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.utils.ContextUtils;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
@@ -72,7 +73,7 @@ public class BatchLineSplitterTxService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
-    public Void createTasksTx(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml, Long numberOfLines, String content) {
+    public Void createTasksTx(ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml, Long numberOfLines, String content) {
         try {
             ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId);
             createTasks(simpleExecContext, graphAndStates, content, taskParamsYaml, taskId, numberOfLines);
@@ -100,7 +101,7 @@ public class BatchLineSplitterTxService {
         return null;
     }
 
-    private void createTasks(ExecContextData.SimpleExecContext simpleExecContext, ExecContextData.GraphAndStates graphAndStates, String content, TaskParamsYaml taskParamsYaml, Long taskId, Long numberOfLines) {
+    private void createTasks(ExecContextApiData.SimpleExecContext simpleExecContext, ExecContextData.GraphAndStates graphAndStates, String content, TaskParamsYaml taskParamsYaml, Long taskId, Long numberOfLines) {
 
         InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, taskId);
         if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {

@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.internal_functions.api_call;
 
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
@@ -27,6 +26,7 @@ import ai.metaheuristic.ai.mhbp.provider.ProviderQueryService;
 import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
@@ -65,7 +65,7 @@ public class ApiCallService {
     private final ProviderQueryService providerQueryService;
     private final ApiRepository apiRepository;
 
-    public ProviderData.QuestionAndAnswer callApi(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId, TaskParamsYaml taskParamsYaml) {
+    public ProviderData.QuestionAndAnswer callApi(ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId, TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
 
         if (taskParamsYaml.task.outputs.isEmpty()) {

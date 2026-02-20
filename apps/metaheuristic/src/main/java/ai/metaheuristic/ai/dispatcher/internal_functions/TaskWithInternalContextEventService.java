@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.el.EvaluateExpressionLanguage;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskWithInternalContextEvent;
@@ -44,6 +43,7 @@ import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -114,7 +114,7 @@ public class TaskWithInternalContextEventService {
         if (execContext==null) {
             return;
         }
-        final ExecContextData.SimpleExecContext simpleExecContext = execContext.asSimple();
+        final ExecContextApiData.SimpleExecContext simpleExecContext = execContext.asSimple();
         ArtifactCleanerAtDispatcher.setBusy();
         try {
             TaskSyncService.getWithSyncVoid(event.taskId,
@@ -147,7 +147,7 @@ public class TaskWithInternalContextEventService {
         }
     }
 
-    private void processInternalFunction(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
+    private void processInternalFunction(ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId) {
         TxUtils.checkTxNotExists();
         TaskLastProcessingHelper.lastTaskId = null;
         try {

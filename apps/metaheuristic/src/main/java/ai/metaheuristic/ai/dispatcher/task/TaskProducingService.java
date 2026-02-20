@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.commons.CommonConsts;
@@ -95,8 +96,8 @@ public class TaskProducingService {
      * @param lastIds
      */
     public void createTasksForSubProcesses(
-        ExecContextData.GraphAndStates graphAndStates,
-            ExecContextData.SimpleExecContext simpleExecContext, InternalFunctionData.ExecutionContextData executionContextData,
+            ExecContextData.GraphAndStates graphAndStates,
+            ExecContextApiData.SimpleExecContext simpleExecContext, InternalFunctionData.ExecutionContextData executionContextData,
             String currTaskContextId, Long parentTaskId, List<Long> lastIds) {
         TxUtils.checkTxExists();
         ExecContextGraphSyncService.checkWriteLockPresent(simpleExecContext.execContextGraphId);

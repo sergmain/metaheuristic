@@ -17,13 +17,13 @@
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentTopLevelService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
@@ -82,7 +82,7 @@ public class ExperimentRestController {
         UserContext context = userContextService.getContext(authentication);
         return experimentTopLevelService.addExperimentCommit(
             sourceCodeUid, name, code, description,
-            new ExecContextData.UserExecContext(context.getAccountId(), context.getCompanyId()));
+            new ExecContextApiData.UserExecContext(context.getAccountId(), context.getCompanyId()));
     }
 
     @PostMapping("/experiment-edit-commit")
@@ -99,7 +99,7 @@ public class ExperimentRestController {
     @PostMapping("/experiment-clone-commit")
     public OperationStatusRest experimentCloneCommit(Long id, Authentication authentication) {
         UserContext context = userContextService.getContext(authentication);
-        return experimentTopLevelService.experimentCloneCommit(id, new ExecContextData.UserExecContext(context.getAccountId(), context.getCompanyId()));
+        return experimentTopLevelService.experimentCloneCommit(id, new ExecContextApiData.UserExecContext(context.getAccountId(), context.getCompanyId()));
     }
 
     @PostMapping("/experiment-target-state/{state}/{experimentId}")

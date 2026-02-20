@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -70,7 +71,7 @@ public class TxSupportForTestingService {
     private final ExecContextCache execContextCache;
 
     @Transactional(rollbackFor = CommonRollbackException.class)
-    public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, ExecContextData.UserExecContext context) {
+    public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, ExecContextApiData.UserExecContext context) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }

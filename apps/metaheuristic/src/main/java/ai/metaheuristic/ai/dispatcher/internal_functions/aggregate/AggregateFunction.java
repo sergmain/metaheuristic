@@ -19,9 +19,8 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.aggregate;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextUtilsService;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
+import ai.metaheuristic.api.dispatcher.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
@@ -33,6 +32,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFunctionParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFunctionParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -116,7 +116,7 @@ public class AggregateFunction implements InternalFunction {
 
     @Override
     public void process(
-            ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
+            ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
         ArtifactCleanerAtDispatcher.setBusy();
@@ -129,7 +129,7 @@ public class AggregateFunction implements InternalFunction {
     }
 
     @SneakyThrows
-    private void processInternal(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml) {
+    private void processInternal(ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml) {
 
         if (taskParamsYaml.task.outputs.size()!=1) {
             throw new InternalFunctionException(

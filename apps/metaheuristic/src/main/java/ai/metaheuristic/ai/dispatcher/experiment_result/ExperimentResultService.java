@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.experiment_result;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.*;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.ExperimentResultData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.StringVariableData;
@@ -37,6 +36,7 @@ import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWith
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
@@ -116,7 +116,7 @@ public class ExperimentResultService {
     }
 
     @Transactional
-    public Void storeExperimentToExperimentResult(ExecContextData.SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml) {
+    public Void storeExperimentToExperimentResult(ExecContextApiData.SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml) {
         try {
             OperationStatusRest status = internalStoreExperimentToExperimentResult(simpleExecContext, taskParamsYaml);
             if (status.status!=EnumsApi.OperationStatus.OK) {
@@ -130,7 +130,7 @@ public class ExperimentResultService {
         return null;
     }
 
-    private OperationStatusRest internalStoreExperimentToExperimentResult(ExecContextData.SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml) {
+    private OperationStatusRest internalStoreExperimentToExperimentResult(ExecContextApiData.SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml) {
         Long experimentId = experimentRepository.findIdByExecContextId(simpleExecContext.execContextId);
 
         if (experimentId==null ) {
@@ -423,7 +423,7 @@ public class ExperimentResultService {
         }
     }
 
-    public static StoredToExperimentResultWithStatus toExperimentStoredToExperimentResult(ExecContextData.SimpleExecContext simpleExecContext, Experiment experiment) {
+    public static StoredToExperimentResultWithStatus toExperimentStoredToExperimentResult(ExecContextApiData.SimpleExecContext simpleExecContext, Experiment experiment) {
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
         String s = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(simpleExecContext.getParamsYaml());

@@ -17,9 +17,9 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.inline_as_variable;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
+import ai.metaheuristic.api.dispatcher.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.string_as_variable.StringAsVariableFunction;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +55,7 @@ public class InlineAsVariableFunction implements InternalFunction {
 
     @Override
     public void process(
-            ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
+            ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
 
         stringAsVariableFunction.process(simpleExecContext, taskId, taskContextId, taskParamsYaml);

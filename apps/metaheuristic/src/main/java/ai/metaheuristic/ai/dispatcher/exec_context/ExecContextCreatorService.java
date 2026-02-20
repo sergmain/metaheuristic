@@ -120,7 +120,7 @@ public class ExecContextCreatorService {
 
     @Transactional(rollbackFor = {CommonRollbackException.class, ExecContextTooManyInstancesException.class} )
     public ExecContextCreationResult createExecContextAndStart(
-            Long sourceCodeId, ExecContextData.UserExecContext context, boolean isProduceTasks, ExecContextData.@Nullable RootAndParent rootAndParent) {
+            Long sourceCodeId, ExecContextApiData.UserExecContext context, boolean isProduceTasks, ExecContextData.@Nullable RootAndParent rootAndParent) {
 
         SourceCodeSyncService.checkWriteLockPresent(sourceCodeId);
 
@@ -193,7 +193,7 @@ public class ExecContextCreatorService {
      * @param context user's context - accountId+companyId. companyId can be different from sourceCode.companyId
      * @return ExecContextCreationResult
      */
-    public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, ExecContextData.UserExecContext context, ExecContextData.@Nullable RootAndParent rootAndParent) {
+    public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, ExecContextApiData.UserExecContext context, ExecContextData.@Nullable RootAndParent rootAndParent) {
         TxUtils.checkTxExists();
         SourceCodeSyncService.checkWriteLockPresent(sourceCode.id);
 
@@ -228,7 +228,7 @@ public class ExecContextCreatorService {
     }
 
     private ExecContextImpl createExecContext(
-            SourceCodeImpl sourceCode, ExecContextData.UserExecContext context, SourceCodeData.SourceCodeGraph sourceCodeGraph,
+            SourceCodeImpl sourceCode, ExecContextApiData.UserExecContext context, SourceCodeData.SourceCodeGraph sourceCodeGraph,
             ExecContextData.@Nullable RootAndParent rootAndParent) {
 
         ExecContextImpl ec = new ExecContextImpl();

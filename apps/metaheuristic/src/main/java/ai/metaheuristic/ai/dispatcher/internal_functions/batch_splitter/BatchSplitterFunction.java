@@ -19,14 +19,14 @@ package ai.metaheuristic.ai.dispatcher.internal_functions.batch_splitter;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
+import ai.metaheuristic.api.dispatcher.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
@@ -76,8 +76,8 @@ public class BatchSplitterFunction implements InternalFunction {
 
     @Override
     public void process(
-            ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
-            TaskParamsYaml taskParamsYaml) {
+        ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
+        TaskParamsYaml taskParamsYaml) {
 
         // variable-for-splitting
         String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "variable-for-splitting");
@@ -155,7 +155,7 @@ public class BatchSplitterFunction implements InternalFunction {
         }
     }
 
-    private void loadFilesFromDirAfterZip(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml, Path workingDir, Map<String, String> mapping) {
+    private void loadFilesFromDirAfterZip(ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml, Path workingDir, Map<String, String> mapping) {
         ArtifactCleanerAtDispatcher.setBusy();
         try {
             batchSplitterTxService.loadFilesFromDirAfterZip(simpleExecContext, workingDir, mapping, taskParamsYaml, taskId);

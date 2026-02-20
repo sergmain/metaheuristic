@@ -18,9 +18,7 @@ package ai.metaheuristic.ai.mhbp.scenario;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
@@ -44,6 +42,7 @@ import ai.metaheuristic.ai.mhbp.repositories.ApiRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioGroupRepository;
 import ai.metaheuristic.ai.mhbp.repositories.ScenarioRepository;
 import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.yaml.scheme.ApiScheme;
 import ai.metaheuristic.ai.utils.CollectionUtils;
@@ -189,7 +188,7 @@ public class ScenarioService {
 
         Long sourceCodeId = Objects.requireNonNull(preparedScenario.sourceCode).id;
 
-        ExecContextData.UserExecContext context1 = new ExecContextData.UserExecContext(context.getAccountId(), context.getCompanyId());
+        ExecContextApiData.UserExecContext context1 = new ExecContextApiData.UserExecContext(context.getAccountId(), context.getCompanyId());
         ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context1, true, null);
 
         return new OperationStatusWithSourceCodeId(OperationStatusRest.OPERATION_STATUS_OK, sourceCodeId);
@@ -423,7 +422,7 @@ public class ScenarioService {
                 chatService.evaluationAsApiCall(chatResult, se, Objects.requireNonNull(api), context);
                 eventPublisher.publishEvent(new StoreChatLogEvent(
                     ChatLogService.toChatLogParams(null, scenarioId, api, chatResult, context),
-                    new ExecContextData.UserExecContext(context.getAccountId(), context.getCompanyId())
+                    new ExecContextApiData.UserExecContext(context.getAccountId(), context.getCompanyId())
                 ));
             }
             else {

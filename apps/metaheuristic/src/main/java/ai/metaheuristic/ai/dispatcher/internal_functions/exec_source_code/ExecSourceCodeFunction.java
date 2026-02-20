@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevel
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
+import ai.metaheuristic.api.dispatcher.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
@@ -36,6 +36,7 @@ import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
@@ -94,7 +95,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
 
     @Override
     @SneakyThrows
-    public void process(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId, TaskParamsYaml taskParamsYaml) {
+    public void process(ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId, TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
         ArtifactCleanerAtDispatcher.setBusy();
         try {
@@ -105,7 +106,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
         }
     }
 
-    private void processInternal(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId, TaskParamsYaml taskParamsYaml) {
+    private void processInternal(ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId, TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxNotExists();
 
         String scUid = MetaUtils.getValue(taskParamsYaml.task.metas, Consts.SOURCE_CODE_UID);
@@ -133,7 +134,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
 
         ExecContextData.RootAndParent rootAndParent = new ExecContextData.RootAndParent(rootExecContextId, simpleExecContext.execContextId);
 
-        ExecContextData.UserExecContext context = new ExecContextData.UserExecContext(simpleExecContext.accountId, simpleExecContext.companyId);
+        ExecContextApiData.UserExecContext context = new ExecContextApiData.UserExecContext(simpleExecContext.accountId, simpleExecContext.companyId);
         ExecContextCreatorService.ExecContextCreationResult execContextResultRest =
                 execContextCreatorTopLevelService.createExecContextAndStart(subSc.id, context, false, rootAndParent);
 

@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.mhbp.chat;
 
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.api.ApiUtils;
 import ai.metaheuristic.ai.mhbp.beans.Api;
@@ -33,6 +32,7 @@ import ai.metaheuristic.ai.mhbp.repositories.ChatRepository;
 import ai.metaheuristic.ai.mhbp.yaml.chat.ChatParams;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.utils.PageUtils;
@@ -177,7 +177,7 @@ public class ChatService {
             chatTxService.storePrompt(chatId, result);
             eventPublisher.publishEvent(new StoreChatLogEvent(
                 ChatLogService.toChatLogParams(chatInfo.chat.id, null, chatInfo.api, result, context),
-                new ExecContextData.UserExecContext(context.getAccountId(), context.getCompanyId())
+                new ExecContextApiData.UserExecContext(context.getAccountId(), context.getCompanyId())
             ));
 
             r.update(result);
@@ -229,7 +229,7 @@ public class ChatService {
         }
         r.prompt = prompt;
         log.info("372.280 prompt: {}", prompt);
-        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, new ExecContextData.UserExecContext(context.getAccountId(), context.getCompanyId()));
+        ProviderData.QueriedData queriedData = new ProviderData.QueriedData(prompt, new ExecContextApiData.UserExecContext(context.getAccountId(), context.getCompanyId()));
         ProviderData.QuestionAndAnswer answer = providerQueryService.processQuery(api, queriedData, ProviderQueryService::asQueriedInfoWithError);
         if (answer.status()!=OK) {
             r.error = "372.320 API call error: " + answer.error() + ", prompt: " + prompt;

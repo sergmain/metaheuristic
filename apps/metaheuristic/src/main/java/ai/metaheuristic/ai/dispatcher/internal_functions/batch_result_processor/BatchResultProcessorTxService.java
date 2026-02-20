@@ -23,7 +23,6 @@ import ai.metaheuristic.ai.dispatcher.batch.BatchHelperService;
 import ai.metaheuristic.ai.dispatcher.batch.BatchUtils;
 import ai.metaheuristic.ai.dispatcher.batch.data.BatchStatusProcessor;
 import ai.metaheuristic.ai.dispatcher.beans.*;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
@@ -44,6 +43,7 @@ import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
@@ -131,7 +131,7 @@ public class BatchResultProcessorTxService {
     @SneakyThrows
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
     public void process(
-            ExecContextData.SimpleExecContext simpleExecContext, String taskContextId,
+            ExecContextApiData.SimpleExecContext simpleExecContext, String taskContextId,
             TaskParamsYaml taskParamsYaml, Long taskId) {
 
         ExecContextSyncService.checkWriteLockPresent(simpleExecContext.execContextId);
@@ -240,7 +240,7 @@ public class BatchResultProcessorTxService {
 
     @SneakyThrows
     private void storeGlobalBatchStatus(
-            ExecContextData.SimpleExecContext simpleExecContext, String taskContextId, TaskParamsYaml taskParamsYaml, Path zipDir, Long taskId) {
+            ExecContextApiData.SimpleExecContext simpleExecContext, String taskContextId, TaskParamsYaml taskParamsYaml, Path zipDir, Long taskId) {
         // TODO 2021-03-23 refactor as event
         BatchStatusProcessor status = prepareStatus(simpleExecContext);
 
@@ -472,7 +472,7 @@ public class BatchResultProcessorTxService {
         }
     }
 
-    private BatchStatusProcessor prepareStatus(ExecContextData.SimpleExecContext simpleExecContext) {
+    private BatchStatusProcessor prepareStatus(ExecContextApiData.SimpleExecContext simpleExecContext) {
         final BatchStatusProcessor bs = new BatchStatusProcessor();
         bs.ok = true;
 

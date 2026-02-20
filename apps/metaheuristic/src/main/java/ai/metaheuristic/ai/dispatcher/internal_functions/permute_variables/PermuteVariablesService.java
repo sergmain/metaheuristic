@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.ContextUtils;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.permutation.Permutation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -77,7 +78,7 @@ public class PermuteVariablesService {
      */
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
     public void createTaskForPermutations(
-            ExecContextData.SimpleExecContext simpleExecContext, Long taskId, InternalFunctionData.ExecutionContextData executionContextData,
+            ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, InternalFunctionData.ExecutionContextData executionContextData,
             Set<ExecContextData.TaskVertex> descendants, List<VariableUtils.VariableHolder> holders, String variableName,
             String subProcessContextId,
             final boolean producePresentVariable, final String producePresentVariablePrefix, boolean upperCaseFirstChar,
@@ -126,10 +127,10 @@ public class PermuteVariablesService {
     }
 
     private boolean createTaskWIthVariables(
-        ExecContextData.GraphAndStates graphAndStates, ExecContextData.SimpleExecContext simpleExecContext, Long taskId, InternalFunctionData.ExecutionContextData executionContextData,
-        String variableName, String subProcessContextId, boolean producePresentVariable, String producePresentVariablePrefix,
-        boolean upperCaseFirstChar, List<Pair<VariableUtils.VariableHolder, Boolean>> presentVariable,
-        AtomicInteger currTaskNumber, List<Long> lastIds, List<VariableUtils.VariableHolder> permutedVariables) {
+            ExecContextData.GraphAndStates graphAndStates, ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, InternalFunctionData.ExecutionContextData executionContextData,
+            String variableName, String subProcessContextId, boolean producePresentVariable, String producePresentVariablePrefix,
+            boolean upperCaseFirstChar, List<Pair<VariableUtils.VariableHolder, Boolean>> presentVariable,
+            AtomicInteger currTaskNumber, List<Long> lastIds, List<VariableUtils.VariableHolder> permutedVariables) {
 
         if (log.isInfoEnabled()) {
             log.info(permutedVariables.stream().map(VariableUtils.VariableHolder::getName).collect(Collectors.joining(", ")));

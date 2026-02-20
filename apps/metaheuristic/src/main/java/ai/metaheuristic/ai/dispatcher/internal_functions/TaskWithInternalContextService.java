@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.internal_functions;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -32,6 +31,7 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +59,7 @@ public class TaskWithInternalContextService {
     private final TaskExecStateService taskExecStateService;
 
     @Transactional
-    public void preProcessing(ExecContextData.SimpleExecContext simpleExecContext, Long taskId) {
+    public void preProcessing(ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId) {
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
@@ -119,7 +119,7 @@ public class TaskWithInternalContextService {
         return Enums.UploadVariableStatus.OK;
     }
 
-    private void preProcessInternalFunction(ExecContextData.SimpleExecContext simpleExecContext, TaskImpl task) {
+    private void preProcessInternalFunction(ExecContextApiData.SimpleExecContext simpleExecContext, TaskImpl task) {
         if (task.execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
             log.error("707.250 Task #"+task.id+" already in progress.");
             return;

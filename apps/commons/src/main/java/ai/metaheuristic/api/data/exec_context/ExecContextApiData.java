@@ -299,4 +299,22 @@ public class ExecContextApiData {
         }
     }
 
+    public record UserExecContext(Long accountId, Long companyId) {}
+
+    @Data
+    @AllArgsConstructor
+    public static class SimpleExecContext {
+        public final Long sourceCodeId;
+        public final Long execContextId;
+        public final Long execContextGraphId;
+        public final Long execContextTaskStateId;
+        public final Long execContextVariableStateId;
+        public final Long companyId;
+        public final Long accountId;
+        public final ExecContextParamsYaml paramsYaml;
+
+        public UserExecContext asUserExecContext() {
+            return new UserExecContext(getAccountId(), getCompanyId());
+        }
+    }
 }

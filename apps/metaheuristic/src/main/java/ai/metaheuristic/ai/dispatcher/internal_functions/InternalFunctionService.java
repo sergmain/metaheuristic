@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +53,7 @@ public class InternalFunctionService {
     private final SourceCodeCache sourceCodeCache;
     private final ExecContextGraphService execContextGraphService;
 
-    public InternalFunctionData.ExecutionContextData getSubProcesses(SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml, Long taskId) {
+    public InternalFunctionData.ExecutionContextData getSubProcesses(ExecContextApiData.SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml, Long taskId) {
         SourceCodeImpl sourceCode = sourceCodeCache.findById(simpleExecContext.sourceCodeId);
         if (sourceCode==null) {
             return new InternalFunctionData.ExecutionContextData(

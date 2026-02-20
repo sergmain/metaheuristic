@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
@@ -44,6 +43,7 @@ import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
@@ -317,7 +317,7 @@ public class BatchTopLevelService {
             if (sc==null) {
                 return new BatchData.UploadingStatus("981.165 sourceCode wasn't found, sourceCodeId: " + sourceCodeId);
             }
-            ExecContextData.UserExecContext context = new ExecContextData.UserExecContext(userContext.getAccountId(), userContext.getCompanyId());;
+            ExecContextApiData.UserExecContext context = new ExecContextApiData.UserExecContext(userContext.getAccountId(), userContext.getCompanyId());;
 
             // we must postpone a creation of tasks until input variable for SourceCode/ExecContext will be initialized
             ExecContextCreatorService.ExecContextCreationResult creationResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context, false, null);

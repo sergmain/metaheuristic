@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -72,7 +73,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
     @Test
     public void test() {
-        ExecContextData.UserExecContext context = new ExecContextData.UserExecContext(getAccount().id, getCompany().getUniqueId());
+        ExecContextApiData.UserExecContext context = new ExecContextApiData.UserExecContext(getAccount().id, getCompany().getUniqueId());
         ExecContextCreatorService.ExecContextCreationResult result = txSupportForTestingService.createExecContext(getSourceCode(), context);
         setExecContextForTest(result.execContext);
         assertNotNull(getExecContextForTest());

@@ -16,9 +16,9 @@
 
 package ai.metaheuristic.ai.mhbp.provider;
 
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.mhbp.data.ApiData;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.S;
 import org.jspecify.annotations.Nullable;
 
@@ -29,7 +29,7 @@ import org.jspecify.annotations.Nullable;
  */
 public class ProviderData {
 
-    public record QueriedData(String queryText, ExecContextData.UserExecContext userExecContext){}
+    public record QueriedData(String queryText, ExecContextApiData.UserExecContext userExecContext){}
 
     public record QuestionAndAnswer(@Nullable String q, ApiData.@Nullable QueryResult a, EnumsApi.OperationStatus status, @Nullable String error) {
         public QuestionAndAnswer(EnumsApi.OperationStatus status, String error) {

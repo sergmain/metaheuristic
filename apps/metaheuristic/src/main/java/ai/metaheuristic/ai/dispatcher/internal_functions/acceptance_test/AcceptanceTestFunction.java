@@ -17,16 +17,16 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.acceptance_test;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
-import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunction;
+import ai.metaheuristic.api.dispatcher.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.SubProcessesTxService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.mhbp.provider.ProviderData;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
@@ -74,7 +74,7 @@ public class AcceptanceTestFunction implements InternalFunction {
     @SneakyThrows
     @Override
     public void process(
-            ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
+            ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {
 
         executeAcceptanceTest(simpleExecContext, taskId, taskContextId, taskParamsYaml);
@@ -87,7 +87,7 @@ public class AcceptanceTestFunction implements InternalFunction {
         int i=0;
     }
 
-    private void executeAcceptanceTest(ExecContextData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId, TaskParamsYaml taskParamsYaml) {
+    private void executeAcceptanceTest(ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId, TaskParamsYaml taskParamsYaml) {
         String expected = MetaUtils.getValue(taskParamsYaml.task.metas, Consts.EXPECTED);
         if (S.b(expected)) {
             throw new InternalFunctionException(meta_not_found, "514.040 meta '" + Consts.EXPECTED + "' wasn't found or it's blank");

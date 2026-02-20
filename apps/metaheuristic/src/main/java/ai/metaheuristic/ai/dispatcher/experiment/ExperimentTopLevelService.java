@@ -17,11 +17,9 @@
 package ai.metaheuristic.ai.dispatcher.experiment;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.events.DispatcherCacheRemoveSourceCodeEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.ProcessDeletedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
@@ -32,6 +30,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
@@ -131,7 +130,7 @@ public class ExperimentTopLevelService {
         return result;
     }
 
-    public OperationStatusRest addExperimentCommit(String sourceCodeUid, String name, String code, String description, ExecContextData.UserExecContext context) {
+    public OperationStatusRest addExperimentCommit(String sourceCodeUid, String name, String code, String description, ExecContextApiData.UserExecContext context) {
         SourceCodeImpl sc = sourceCodeRepository.findByUid(sourceCodeUid);
         if (sc==null) {
             eventPublisher.publishEvent(new DispatcherCacheRemoveSourceCodeEvent(sourceCodeUid));
@@ -199,7 +198,7 @@ public class ExperimentTopLevelService {
         return experimentService.deleteExperiment(id, context);
     }
 
-    public OperationStatusRest experimentCloneCommit(Long id, ExecContextData.UserExecContext context) {
+    public OperationStatusRest experimentCloneCommit(Long id, ExecContextApiData.UserExecContext context) {
         final Experiment e = experimentCache.findById(id);
         if (e == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,

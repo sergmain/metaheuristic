@@ -15,8 +15,8 @@
  */
 package ai.metaheuristic.ai.dispatcher.beans;
 
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils.CommonThreadLocker;
@@ -123,8 +123,8 @@ public class ExecContextImpl implements Serializable, ExecContext {
     }
 
     @JsonIgnore
-    public ExecContextData.SimpleExecContext asSimple() {
-        return new ExecContextData.SimpleExecContext(
+    public ExecContextApiData.SimpleExecContext asSimple() {
+        return new ExecContextApiData.SimpleExecContext(
                 sourceCodeId, id, execContextGraphId, execContextTaskStateId,
                 execContextVariableStateId, companyId, accountId, getExecContextParamsYaml());
     }

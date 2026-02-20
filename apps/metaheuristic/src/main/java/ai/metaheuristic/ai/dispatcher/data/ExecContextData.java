@@ -19,7 +19,6 @@ package ai.metaheuristic.ai.dispatcher.data;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -42,8 +41,6 @@ public class ExecContextData {
     public record ExecContextDAC(Long execContextId, DirectedAcyclicGraph<TaskVertex, DefaultEdge> graph,
                                  Integer version) {}
 
-    public record UserExecContext(Long accountId, Long companyId) {}
-
     @Data
     @NoArgsConstructor
     public static class ExecContextStates {
@@ -58,23 +55,6 @@ public class ExecContextData {
     public static class RootAndParent {
         public Long rootExecContextId;
         public Long parentExecContextId;
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class SimpleExecContext {
-        public final Long sourceCodeId;
-        public final Long execContextId;
-        public final Long execContextGraphId;
-        public final Long execContextTaskStateId;
-        public final Long execContextVariableStateId;
-        public final Long companyId;
-        public final Long accountId;
-        public final ExecContextParamsYaml paramsYaml;
-
-        public ExecContextData.UserExecContext asUserExecContext() {
-            return new ExecContextData.UserExecContext(getAccountId(), getCompanyId());
-        }
     }
 
     @Data

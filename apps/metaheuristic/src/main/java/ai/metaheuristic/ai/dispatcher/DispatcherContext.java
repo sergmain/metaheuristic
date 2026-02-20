@@ -18,13 +18,11 @@ package ai.metaheuristic.ai.dispatcher;
 
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.account.UserContext;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
-
-import java.util.UUID;
 
 /**
  * @author Serge
@@ -56,7 +54,7 @@ public class DispatcherContext implements UserContext {
         return company.uniqueId;
     }
 
-    public ExecContextData.UserExecContext asUserExecContext() {
-        return new ExecContextData.UserExecContext(getAccountId(), getCompanyId());
+    public ExecContextApiData.UserExecContext asUserExecContext() {
+        return new ExecContextApiData.UserExecContext(getAccountId(), getCompanyId());
     }
 }

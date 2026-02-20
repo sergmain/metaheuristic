@@ -16,12 +16,12 @@
 
 package ai.metaheuristic.ai.mhbp.events;
 
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.mhbp.yaml.chat_log.ChatLogParams;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 
 /**
  * @author Sergio Lissner
  * Date: 7/5/2023
  * Time: 3:03 AM
  */
-public record StoreChatLogEvent(ChatLogParams params, ExecContextData.UserExecContext userExecContext) {}
+public record StoreChatLogEvent(ChatLogParams params, ExecContextApiData.UserExecContext userExecContext) {}
