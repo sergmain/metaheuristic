@@ -29,7 +29,7 @@ import java.util.Map;
 
 /**
  * This class is being used for storing a parameters of task for function in a file, ie params-v1.yaml
- *
+ * <br/>
  * Class TaskParamsYaml is for storing parameters of task internally at Processor side
  *
  * @author Serge

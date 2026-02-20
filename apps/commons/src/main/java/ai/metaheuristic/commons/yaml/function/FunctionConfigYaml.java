@@ -122,25 +122,19 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
          * code of function, i.e. simple-app:1.0
          */
         public String code;
-        @Nullable
-        public String type;
-
-        @Nullable
-        public String file;
+        public @Nullable String type;
+        public @Nullable String file;
         /**
          * params for command line for invoking function
          * <p>
          * this isn't a holder for yaml-based config
          */
-        @Nullable
-        public String params;
+        public @Nullable String params;
 
-        public String env;
+        public @Nullable String env;
         public EnumsApi.@Nullable FunctionSourcing sourcing;
-        @Nullable
-        public GitInfo git;
-        @Nullable
-        public List<Map<String, String>> metas = new ArrayList<>();
+        public @Nullable GitInfo git;
+        public @Nullable List<Map<String, String>> metas = new ArrayList<>();
 
         public String src = CommonConsts.DEFAULT_FUNCTION_SRC_DIR;
 
@@ -150,6 +144,6 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
 
     public FunctionConfig function = new FunctionConfig();
 
-    public System system = new System();
+    public @Nullable System system = new System();
 
 }

@@ -108,11 +108,11 @@ public class ProcessorStatusYaml implements BaseParams {
     public String host;
 
     // contains text of error which can occur while preparing a processor status
-    @Nullable
-    public List<String> errors = null;
+
+    public @Nullable List<String> errors = null;
     public boolean logDownloadable;
     public int taskParamsVersion;
-    public EnumsApi.OS os;
+    public EnumsApi.@Nullable OS os;
 
     public String currDir;
 

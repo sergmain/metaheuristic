@@ -20,7 +20,7 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
 
@@ -41,15 +41,13 @@ public class TaskFileParamsYamlUtilsV2
         return 2;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(TaskFileParamsYamlV2.class);
     }
 
-    @NonNull
     @Override
-    public TaskFileParamsYaml upgradeTo(@NonNull TaskFileParamsYamlV2 v1) {
+    public TaskFileParamsYaml upgradeTo(TaskFileParamsYamlV2 v1) {
         v1.checkIntegrity();
         TaskFileParamsYaml t = new TaskFileParamsYaml();
         t.task = new TaskFileParamsYaml.Task();
@@ -94,9 +92,8 @@ public class TaskFileParamsYamlUtilsV2
         return v;
     }
 
-    @NonNull
     @Override
-    public TaskFileParamsYamlV1 downgradeTo(@NonNull TaskFileParamsYaml v2) {
+    public TaskFileParamsYamlV1 downgradeTo(TaskFileParamsYaml v2) {
         v2.checkIntegrity();
 
         TaskFileParamsYamlV1 t1 = new TaskFileParamsYamlV1();
@@ -147,18 +144,17 @@ public class TaskFileParamsYamlUtilsV2
     }
 
     @Override
-    public TaskFileParamsYamlUtilsV1 prevUtil() {
+    public @Nullable TaskFileParamsYamlUtilsV1 prevUtil() {
         return (TaskFileParamsYamlUtilsV1) TaskFileParamsYamlUtils.BASE_YAML_UTILS.getForVersion(1);
     }
 
     @Override
-    public String toString(@NonNull TaskFileParamsYamlV2 params) {
+    public String toString(TaskFileParamsYamlV2 params) {
         return getYaml().dump(params);
     }
 
-    @NonNull
     @Override
-    public TaskFileParamsYamlV2 to(@NonNull String yaml) {
+    public TaskFileParamsYamlV2 to(String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

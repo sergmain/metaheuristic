@@ -81,7 +81,7 @@ public class FunctionApiData {
     @NoArgsConstructor
     public static class FunctionConfigStatus {
         public boolean isOk;
-        public String error;
+        public @Nullable String error;
     }
 
 }

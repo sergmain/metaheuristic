@@ -78,7 +78,7 @@ public class SourceCodeParamsYamlV5 implements BaseParams {
     @AllArgsConstructor
     public static class VariableV5 {
         public String name;
-        private EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        private EnumsApi.@Nullable DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
 
         @Nullable
         public GitInfo git;

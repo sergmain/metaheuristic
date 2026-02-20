@@ -189,7 +189,7 @@ public class TaskParamsYaml implements BaseParams {
         @Nullable
         public String params;
 
-        public String env;
+        public @Nullable String env;
         public EnumsApi.FunctionSourcing sourcing;
         @Nullable
         public Map<EnumsApi.HashAlgo, String> checksumMap;
