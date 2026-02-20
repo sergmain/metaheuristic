@@ -208,6 +208,14 @@ public class TaskProcessor {
                 continue;
             }
 
+            if (!S.b(taskParamYaml.task.function.assetDir)) {
+                Path assetDir = ProcessorTaskService.prepareTaskSubDir(taskDir, ConstsApi.ASSET_DIR);
+                if (assetDir == null) {
+                    processorTaskService.markAsFinishedWithError(core, task.taskId, "100.105 Error of configuring of environment. 'asset' directory wasn't created, task can't be processed.");
+                    continue;
+                }
+            }
+
             String status = EnvServiceUtils.prepareEnvironment(artifactDir, new EnvServiceUtils.EnvYamlShort(processorEnvironment.envParams.getEnvParamsYaml()));
             if (status!=null) {
                 processorTaskService.markAsFinishedWithError(core, task.taskId, status);

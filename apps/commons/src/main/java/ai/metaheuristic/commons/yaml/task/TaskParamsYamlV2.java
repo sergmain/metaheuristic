@@ -194,6 +194,9 @@ public class TaskParamsYamlV2 implements BaseParams {
         public final List<Map<String, String>> metas = new ArrayList<>();
 
         public String src = CommonConsts.DEFAULT_FUNCTION_SRC_DIR;
+
+        @Nullable
+        public String assetDir;
     }
 
     @Data

@@ -200,6 +200,9 @@ public class TaskParamsYaml implements BaseParams {
 
         private String src = CommonConsts.DEFAULT_FUNCTION_SRC_DIR;
 
+        @Nullable
+        public String assetDir;
+
         public String getSrc() {
             return S.b(src) ? "" : src;
         }

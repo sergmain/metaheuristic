@@ -32,6 +32,7 @@ import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
 public class ConstsApi {
 
     public static final String ARTIFACTS_DIR = "artifacts";
+    public static final String ASSET_DIR = "asset";
     public static final String MH_ENV_FILE = "mh-env.yaml";
 
     // name of inline variable
