@@ -105,7 +105,8 @@ public class MultiHttpSecurityConfig {
                 .frameOptions(withDefaults()));
 
         if (globals.security.sslRequired) {
-            http.requiresChannel((requiresChannel) -> requiresChannel.anyRequest().requiresSecure());
+//            http.requiresChannel((requiresChannel) -> requiresChannel.anyRequest().requiresSecure());
+            http.redirectToHttps(withDefaults());
         }
         return http.build();
     }

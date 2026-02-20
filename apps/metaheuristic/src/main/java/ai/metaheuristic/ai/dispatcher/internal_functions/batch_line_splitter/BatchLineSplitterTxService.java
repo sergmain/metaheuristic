@@ -195,7 +195,7 @@ public class BatchLineSplitterTxService {
                 currList = new ArrayList<>();
                 allLines.add(currList);
             }
-            currList.add(it.nextLine());
+            currList.add(it.next());
         }
         return allLines;
     }

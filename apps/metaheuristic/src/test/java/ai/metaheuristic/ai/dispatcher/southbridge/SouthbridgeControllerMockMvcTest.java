@@ -96,7 +96,7 @@ public class SouthbridgeControllerMockMvcTest {
             }
 
             try {
-                byte[] bs = IOUtils.readFully(file.getInputStream(), size);
+                byte[] bs = IOUtils.toByteArray(file.getInputStream(), size);
                 for (int i = 0; i <size; i++) {
                     if (bytes[i]!=bs[i]) {
                         return GENERAL_ERROR;
