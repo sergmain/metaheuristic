@@ -19,7 +19,9 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,23 +55,28 @@ public class TaskTxService {
         return task;
     }
 
+    public record ExecStateOfTasksResult(Map<Long, TaskApiData.TaskState> states, Map<Long, ExecContextApiData.TaskInfo> taskInfos) {}
+
     @Transactional(readOnly = true)
-    public Map<Long, TaskApiData.TaskState> getExecStateOfTasks(Long execContextId) {
+    public ExecStateOfTasksResult getExecStateOfTasks(Long execContextId) {
         long mills = System.currentTimeMillis();
         List<Long> ids = taskRepository.findAllTaskIdsByExecContextId(execContextId);
         Map<Long, TaskApiData.TaskState> states = new HashMap<>(ids.size() + 1);
+        Map<Long, ExecContextApiData.TaskInfo> taskInfos = new HashMap<>(ids.size() + 1);
         if (ids.isEmpty()) {
-            return states;
+            return new ExecStateOfTasksResult(states, taskInfos);
         }
         Stream<TaskImpl> stream = taskRepository.findByIds(ids);
 
         stream.forEach(t-> {
+            TaskParamsYaml tpy = t.getTaskParamsYaml();
             long updatedOn = t.updatedOn!=null ? t.updatedOn : 0;
-            TaskApiData.TaskState taskState = new TaskApiData.TaskState(t.id, t.execState, updatedOn, t.getTaskParamsYaml().task.fromCache);
+            TaskApiData.TaskState taskState = new TaskApiData.TaskState(t.id, t.execState, updatedOn, tpy.task.fromCache);
             states.put(taskState.taskId, taskState);
+            taskInfos.put(t.id, new ExecContextApiData.TaskInfo(tpy.task.processCode, tpy.task.taskContextId));
         });
         log.info("540.040 getExecStateOfTasks() with {} tasks was finished for {} mills", ids.size(), System.currentTimeMillis()-mills);
-        return states;
+        return new ExecStateOfTasksResult(states, taskInfos);
     }
 
     @Transactional

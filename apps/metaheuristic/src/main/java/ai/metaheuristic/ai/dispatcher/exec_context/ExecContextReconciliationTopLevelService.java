@@ -84,7 +84,7 @@ public class ExecContextReconciliationTopLevelService {
         final Set<TaskData.TaskWithState> vertices = execContextGraphService.findDescendantsWithState(
                 execContextGraphId, execContextTaskStateId, rootVertices.get(0).taskId);
 
-        final Map<Long, TaskApiData.TaskState> states = taskTxService.getExecStateOfTasks(execContextId);
+        final Map<Long, TaskApiData.TaskState> states = taskTxService.getExecStateOfTasks(execContextId).states();
         final Map<Long, TaskQueue.AllocatedTask> allocatedTasks = TaskProviderTopLevelService.getTaskExecStates(execContextId);
 
         List<Long> taskIds = new ArrayList<>();

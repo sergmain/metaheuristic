@@ -75,6 +75,12 @@ public class ExecContextUtils {
             contexts.add(info.taskContextId);
             map.computeIfAbsent(info.taskContextId, (o) -> new ArrayList<>()).add(info);
         }
+        // Include taskContextIds from tasks without VariableState (e.g. SKIPPED before variable init)
+        if (raw.taskInfos!=null) {
+            for (ExecContextApiData.TaskInfo ti : raw.taskInfos.values()) {
+                contexts.add(ti.taskContextId());
+            }
+        }
         r.header = raw.processCodes.stream().map(o -> new ExecContextApiData.ColumnHeader(o, o)).toArray(ExecContextApiData.ColumnHeader[]::new);
 
         // Option 5d: when columnNames is present, override header with dynamic column names
@@ -157,6 +163,45 @@ public class ExecContextUtils {
                 }
                 // TODO 2023-06-07 p5 add input variables' states here
                 r.lines[i].cells[j] = new ExecContextApiData.StateCell(simpleTaskInfo.taskId, stateAsStr, simpleTaskInfo.taskContextId, fromCache, outputs);
+            }
+        }
+
+        // Place tasks that have no VariableState (e.g. SKIPPED before variable initialization)
+        if (raw.taskInfos!=null) {
+            Set<Long> placedTaskIds = new HashSet<>();
+            for (ExecContextApiData.VariableState vs : raw.infos) {
+                placedTaskIds.add(vs.taskId);
+            }
+            for (Map.Entry<Long, TaskApiData.TaskState> entry : raw.states.entrySet()) {
+                Long taskId = entry.getKey();
+                if (placedTaskIds.contains(taskId)) {
+                    continue;
+                }
+                ExecContextApiData.TaskInfo taskInfo = raw.taskInfos.get(taskId);
+                if (taskInfo==null) {
+                    continue;
+                }
+                TaskApiData.TaskState state = entry.getValue();
+                EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(state.execState);
+
+                int j;
+                if (useColumnNames && processCodeToColIdx!=null) {
+                    Integer colIdx = processCodeToColIdx.get(taskInfo.processCode());
+                    if (colIdx==null) {
+                        continue;
+                    }
+                    j = colIdx;
+                }
+                else {
+                    j = findOrAssignCol(r.header, taskInfo.processCode());
+                }
+
+                for (int i = 0; i < r.lines.length; i++) {
+                    if (r.lines[i].context.equals(taskInfo.taskContextId())) {
+                        r.lines[i].cells[j] = new ExecContextApiData.StateCell(taskId, taskExecState.toString(), taskInfo.taskContextId(), state.fromCache, null);
+                        break;
+                    }
+                }
             }
         }
         // Option 5d: skip shortName truncation when columnNames provides display names

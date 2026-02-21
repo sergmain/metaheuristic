@@ -107,7 +107,7 @@ public class ExecContextReadinessService {
         }
         ExecContextApiData.SimpleExecContext simpleExecContext = execContext.asSimple();
 
-        Map<Long, TaskApiData.TaskState> states = taskTxService.getExecStateOfTasks(execContextId);
+        Map<Long, TaskApiData.TaskState> states = taskTxService.getExecStateOfTasks(execContextId).states();
 
         final List<ExecContextData.TaskVertex> vertices = execContextGraphService.findAllForAssigning(execContext.execContextGraphId, execContext.execContextTaskStateId, true);
 

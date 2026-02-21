@@ -264,6 +264,8 @@ public class ExecContextApiData {
         }
     }
 
+    public record TaskInfo(String processCode, String taskContextId) {}
+
     @Data
     @EqualsAndHashCode(callSuper = false)
     @AllArgsConstructor
@@ -276,6 +278,9 @@ public class ExecContextApiData {
         public boolean sourceCodeValid;
         public Map<Long, TaskApiData.TaskState> states;
 
+        // taskId -> (processCode, taskContextId) for all tasks
+        public Map<Long, TaskInfo> taskInfos;
+
         // Option 5d: when non-empty, defines columns dynamically instead of processCodes
         @Nullable
         public Map<Integer, String> columnNames;
@@ -283,7 +288,14 @@ public class ExecContextApiData {
         public RawExecContextStateResult(Long sourceCodeId, List<VariableState> infos, List<String> processCodes,
                                          EnumsApi.SourceCodeType sourceCodeType, String sourceCodeUid,
                                          boolean sourceCodeValid, Map<Long, TaskApiData.TaskState> states) {
-            this(sourceCodeId, infos, processCodes, sourceCodeType, sourceCodeUid, sourceCodeValid, states, null);
+            this(sourceCodeId, infos, processCodes, sourceCodeType, sourceCodeUid, sourceCodeValid, states, null, null);
+        }
+
+        public RawExecContextStateResult(Long sourceCodeId, List<VariableState> infos, List<String> processCodes,
+                                         EnumsApi.SourceCodeType sourceCodeType, String sourceCodeUid,
+                                         boolean sourceCodeValid, Map<Long, TaskApiData.TaskState> states,
+                                         Map<Long, TaskInfo> taskInfos) {
+            this(sourceCodeId, infos, processCodes, sourceCodeType, sourceCodeUid, sourceCodeValid, states, taskInfos, null);
         }
 
         public RawExecContextStateResult(String error) {

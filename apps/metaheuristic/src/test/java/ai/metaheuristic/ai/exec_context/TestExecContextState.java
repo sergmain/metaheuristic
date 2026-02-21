@@ -323,4 +323,113 @@ public class TestExecContextState {
         assertFalse(r.lines[0].cells[3].empty);
         assertEquals(190L, r.lines[0].cells[3].taskId);
     }
+
+    // Task SKIPPED before variable initialization — has TaskState and TaskInfo but no VariableState
+    @Test
+    public void test_skippedTaskWithoutVariableState() {
+        // DAG: task1(p-init) -> task2(p-process) -> task3(mh.finish)
+        // task1 finished OK, task2 was SKIPPED (no VariableState created), task3 OK
+
+        // Only task1 and task3 have VariableState entries
+        List<ExecContextApiData.VariableState> infos = List.of(
+                new ExecContextApiData.VariableState(1L, 1111L, 1001L, "1", "p-init", "f-init", null, null),
+                new ExecContextApiData.VariableState(3L, 1111L, 1001L, "1", "mh.finish", "mh.finish", null, null)
+        );
+
+        // All tasks have TaskState (from DB)
+        Map<Long, TaskApiData.TaskState> states = Map.of(
+                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false),
+                2L, new TaskApiData.TaskState(2L, TaskExecState.SKIPPED.value, 0L, false),
+                3L, new TaskApiData.TaskState(3L, TaskExecState.OK.value, 0L, false)
+        );
+
+        // All tasks have TaskInfo (processCode + taskContextId)
+        Map<Long, ExecContextApiData.TaskInfo> taskInfos = Map.of(
+                1L, new ExecContextApiData.TaskInfo("p-init", "1"),
+                2L, new ExecContextApiData.TaskInfo("p-process", "1"),
+                3L, new ExecContextApiData.TaskInfo("mh.finish", "1")
+        );
+
+        List<String> processCodes = List.of("p-init", "p-process", "mh.finish");
+        ExecContextApiData.RawExecContextStateResult raw = new ExecContextApiData.RawExecContextStateResult(
+                1L, infos, processCodes, SourceCodeType.common, "skip-test", true, states, taskInfos);
+        ExecContextApiData.ExecContextStateResult r = ExecContextUtils.getExecContextStateResult(42L, raw, true);
+
+        assertNotNull(r);
+        assertEquals(3, r.header.length);
+        assertEquals(1, r.lines.length);
+        assertEquals("1", r.lines[0].context);
+
+        // task1 at col 0 — OK
+        assertFalse(r.lines[0].cells[0].empty);
+        assertEquals(1L, r.lines[0].cells[0].taskId);
+        assertEquals(TaskExecState.OK.toString(), r.lines[0].cells[0].state);
+
+        // task2 at col 1 — SKIPPED (was missing from VariableState, placed via taskInfos)
+        assertFalse(r.lines[0].cells[1].empty);
+        assertEquals(2L, r.lines[0].cells[1].taskId);
+        assertEquals(TaskExecState.SKIPPED.toString(), r.lines[0].cells[1].state);
+
+        // task3 at col 2 — OK
+        assertFalse(r.lines[0].cells[2].empty);
+        assertEquals(3L, r.lines[0].cells[2].taskId);
+        assertEquals(TaskExecState.OK.toString(), r.lines[0].cells[2].state);
+    }
+
+    // Multiple SKIPPED tasks in different contexts
+    @Test
+    public void test_skippedTasksMultipleContexts() {
+        // task1(p-init, ctx "1") OK, has VariableState
+        // task2(p-process, ctx "1,1") SKIPPED, no VariableState
+        // task3(p-process, ctx "1,2") SKIPPED, no VariableState
+        // task4(mh.finish, ctx "1") OK, has VariableState
+
+        List<ExecContextApiData.VariableState> infos = List.of(
+                new ExecContextApiData.VariableState(1L, 1111L, 1001L, "1", "p-init", "f-init", null, null),
+                new ExecContextApiData.VariableState(4L, 1111L, 1001L, "1", "mh.finish", "mh.finish", null, null)
+        );
+
+        Map<Long, TaskApiData.TaskState> states = Map.of(
+                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false),
+                2L, new TaskApiData.TaskState(2L, TaskExecState.SKIPPED.value, 0L, false),
+                3L, new TaskApiData.TaskState(3L, TaskExecState.SKIPPED.value, 0L, false),
+                4L, new TaskApiData.TaskState(4L, TaskExecState.OK.value, 0L, false)
+        );
+
+        Map<Long, ExecContextApiData.TaskInfo> taskInfos = Map.of(
+                1L, new ExecContextApiData.TaskInfo("p-init", "1"),
+                2L, new ExecContextApiData.TaskInfo("p-process", "1,1"),
+                3L, new ExecContextApiData.TaskInfo("p-process", "1,2"),
+                4L, new ExecContextApiData.TaskInfo("mh.finish", "1")
+        );
+
+        List<String> processCodes = List.of("p-init", "p-process", "mh.finish");
+        ExecContextApiData.RawExecContextStateResult raw = new ExecContextApiData.RawExecContextStateResult(
+                1L, infos, processCodes, SourceCodeType.common, "skip-multi", true, states, taskInfos);
+        ExecContextApiData.ExecContextStateResult r = ExecContextUtils.getExecContextStateResult(42L, raw, true);
+
+        assertNotNull(r);
+        assertEquals(3, r.header.length);
+        // 3 contexts: "1", "1,1", "1,2"
+        assertEquals(3, r.lines.length);
+        assertEquals("1", r.lines[0].context);
+        assertEquals("1,1", r.lines[1].context);
+        assertEquals("1,2", r.lines[2].context);
+
+        // line "1": task1 at col 0, task4 at col 2
+        assertFalse(r.lines[0].cells[0].empty);
+        assertEquals(1L, r.lines[0].cells[0].taskId);
+        assertFalse(r.lines[0].cells[2].empty);
+        assertEquals(4L, r.lines[0].cells[2].taskId);
+
+        // line "1,1": task2 SKIPPED at col 1
+        assertFalse(r.lines[1].cells[1].empty);
+        assertEquals(2L, r.lines[1].cells[1].taskId);
+        assertEquals(TaskExecState.SKIPPED.toString(), r.lines[1].cells[1].state);
+
+        // line "1,2": task3 SKIPPED at col 1
+        assertFalse(r.lines[2].cells[1].empty);
+        assertEquals(3L, r.lines[2].cells[1].taskId);
+        assertEquals(TaskExecState.SKIPPED.toString(), r.lines[2].cells[1].state);
+    }
 }
