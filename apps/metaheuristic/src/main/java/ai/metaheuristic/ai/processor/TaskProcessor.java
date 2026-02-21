@@ -23,6 +23,7 @@ import ai.metaheuristic.commons.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.ai.functions.FunctionRepositoryData;
 import ai.metaheuristic.ai.functions.FunctionRepositoryProcessorService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
+import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProvider;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProviderFactory;
@@ -38,14 +39,18 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.commons.dispatcher_schedule.ExtendedTimePeriod;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
+import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import ai.metaheuristic.commons.utils.FunctionCoreUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jspecify.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -213,6 +218,26 @@ public class TaskProcessor {
                 if (assetDir == null) {
                     processorTaskService.markAsFinishedWithError(core, task.taskId, "100.105 Error of configuring of environment. 'asset' directory wasn't created, task can't be processed.");
                     continue;
+                }
+                // copy content of Function's asset dir to Task's asset dir
+                final Path baseResourceDir = MetadataParams.prepareBaseDir(globals.processorResourcesPath,
+                        new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl));
+                final Path functionDir = ArtifactCommonUtils.prepareFunctionPath(baseResourceDir)
+                        .resolve(ArtifactCommonUtils.normalizeCode(taskParamYaml.task.function.code));
+                final Path functionAssetDir = functionDir.resolve(taskParamYaml.task.function.assetDir);
+                if (Files.isDirectory(functionAssetDir)) {
+                    try {
+                        PathUtils.copyDirectory(functionAssetDir, assetDir);
+                    }
+                    catch (IOException e) {
+                        processorTaskService.markAsFinishedWithError(core, task.taskId,
+                                "100.107 Error copying function's asset dir content to task's asset dir: " + e.getMessage());
+                        continue;
+                    }
+                }
+                else {
+                    log.warn("100.106 Function {} has assetDir='{}' configured but directory {} doesn't exist",
+                            taskParamYaml.task.function.code, taskParamYaml.task.function.assetDir, functionAssetDir);
                 }
             }
 
