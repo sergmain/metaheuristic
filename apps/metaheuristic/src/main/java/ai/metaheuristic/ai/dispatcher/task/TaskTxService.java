@@ -65,8 +65,8 @@ public class TaskTxService {
 
         stream.forEach(t-> {
             long updatedOn = t.updatedOn!=null ? t.updatedOn : 0;
-            TaskApiData.TaskState taskState = new TaskApiData.TaskState(t.id, t.execState, updatedOn, t.getTaskParamsYaml().task.fromCache);
-            states.put(taskState.taskId, taskState);
+            TaskApiData.TaskState taskState = new TaskApiData.TaskState(t.id, t.execState, updatedOn, t.getTaskParamsYaml().task.fromCache, t.getTaskParamsYaml().task.taskContextId);
+            states.put(taskState.taskId(), taskState);
         });
         log.info("540.040 getExecStateOfTasks() with {} tasks was finished for {} mills", ids.size(), System.currentTimeMillis()-mills);
         return states;

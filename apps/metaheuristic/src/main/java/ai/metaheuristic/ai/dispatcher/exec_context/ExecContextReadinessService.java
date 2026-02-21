@@ -118,15 +118,15 @@ public class ExecContextReadinessService {
             if (!taskIds.contains(taskId)) {
                 continue;
             }
-            if (!EnumsApi.TaskExecState.isFinishedState(entry.getValue().execState)) {
+            if (!EnumsApi.TaskExecState.isFinishedState(entry.getValue().execState())) {
                 if (dispatcherParamsService.isLongRunning(taskId)) {
-                    if (entry.getValue().execState != EnumsApi.TaskExecState.IN_PROGRESS.value) {
+                    if (entry.getValue().execState() != EnumsApi.TaskExecState.IN_PROGRESS.value) {
                         taskProviderTopLevelService.registerTask(simpleExecContext, taskId);
                     }
                 }
                 else {
                     taskProviderTopLevelService.registerTask(simpleExecContext, taskId);
-                    if (entry.getValue().execState == EnumsApi.TaskExecState.IN_PROGRESS.value) {
+                    if (entry.getValue().execState() == EnumsApi.TaskExecState.IN_PROGRESS.value) {
                         taskProviderTopLevelService.processStartTaskProcessing(new StartTaskProcessingEvent(execContextId, taskId));
                     }
                 }

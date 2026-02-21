@@ -269,21 +269,21 @@ public class ExecContextApiData {
     @AllArgsConstructor
     public static class RawExecContextStateResult extends BaseDataClass {
         public Long sourceCodeId;
-        public List<VariableState> infos;
+        public List<VariableState> variableStates;
         public List<String> processCodes;
         public EnumsApi.SourceCodeType sourceCodeType;
         public String sourceCodeUid;
         public boolean sourceCodeValid;
-        public Map<Long, TaskApiData.TaskState> states;
+        public Map<Long, TaskApiData.TaskState> taskStates;
 
         // Option 5d: when non-empty, defines columns dynamically instead of processCodes
         @Nullable
         public Map<Integer, String> columnNames;
 
-        public RawExecContextStateResult(Long sourceCodeId, List<VariableState> infos, List<String> processCodes,
+        public RawExecContextStateResult(Long sourceCodeId, List<VariableState> variableStates, List<String> processCodes,
                                          EnumsApi.SourceCodeType sourceCodeType, String sourceCodeUid,
-                                         boolean sourceCodeValid, Map<Long, TaskApiData.TaskState> states) {
-            this(sourceCodeId, infos, processCodes, sourceCodeType, sourceCodeUid, sourceCodeValid, states, null);
+                                         boolean sourceCodeValid, Map<Long, TaskApiData.TaskState> taskStates) {
+            this(sourceCodeId, variableStates, processCodes, sourceCodeType, sourceCodeUid, sourceCodeValid, taskStates, null);
         }
 
         public RawExecContextStateResult(String error) {

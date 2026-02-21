@@ -154,8 +154,9 @@ public class ProcessorTaskService {
             long taskId = Long.parseLong(groupDirName) * DigitUtils.DIV + Long.parseLong(name);
             log.info("Found dir of task with id: {}, {}, {}, {}", taskId, groupDirName, name, dispatcherUrl.url);
             Path taskYamlFile = taskDir.resolve(Consts.TASK_YAML);
-            if (Files.notExists(taskYamlFile) || Files.size(taskYamlFile) == 0L) {
-                deleteDir(taskDir, "Delete not valid dir of task " + taskDir + ", exist: " + Files.exists(taskYamlFile) + ", length: " + Files.size(taskYamlFile));
+            boolean exists = Files.exists(taskYamlFile);
+            if (!exists || Files.size(taskYamlFile) == 0L) {
+                deleteDir(taskDir, "Delete not valid dir of task " + taskDir + ", exist: " + exists + ", length: " + (exists ? Files.size(taskYamlFile) : "<none>"));
                 return null;
             }
 
@@ -167,7 +168,9 @@ public class ProcessorTaskService {
                     return null;
                 }
                 if (task.taskId==null || taskId!=task.taskId) {
-                    throw new IllegalStateException("713.120 (task.taskId==null || taskId!=task.taskId)");
+                    deleteDir(taskDir, "713.110 Delete not valid dir of task " + taskDir);
+                    log.warn("713.115 task #{} from dispatcher {} is broken - (task.taskId==null || taskId!=task.taskId). Will be deleted", taskId, dispatcherUrl);
+                    return null;
                 }
                 addTakToCore(core, task);
 

@@ -71,7 +71,7 @@ public class ExecContextUtils {
 
         Set<String> contexts = new HashSet<>();
         Map<String, List<ExecContextApiData.VariableState>> map = new HashMap<>();
-        for (ExecContextApiData.VariableState info : raw.infos) {
+        for (ExecContextApiData.VariableState info : raw.variableStates) {
             contexts.add(info.taskContextId);
             map.computeIfAbsent(info.taskContextId, (o) -> new ArrayList<>()).add(info);
         }
@@ -113,7 +113,7 @@ public class ExecContextUtils {
             }
         }
 
-        for (ExecContextApiData.VariableState variableState : raw.infos) {
+        for (ExecContextApiData.VariableState variableState : raw.variableStates) {
             for (int i = 0; i < r.lines.length; i++) {
                 ExecContextApiData.VariableState simpleTaskInfo = null;
                 List<ExecContextApiData.VariableState> tasksInContext = map.get(r.lines[i].context);
@@ -139,7 +139,7 @@ public class ExecContextUtils {
                     j = findOrAssignCol(r.header, simpleTaskInfo.process);
                 }
 
-                TaskApiData.TaskState state = raw.states.get(simpleTaskInfo.taskId);
+                TaskApiData.TaskState state = raw.taskStates.get(simpleTaskInfo.taskId);
                 String stateAsStr;
                 List<ExecContextApiData.VariableInfo> outputs = null;
                 boolean fromCache = false;
@@ -147,13 +147,13 @@ public class ExecContextUtils {
                     stateAsStr = "<ILLEGAL STATE>";
                 }
                 else {
-                    EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(state.execState);
+                    EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(state.execState());
                     stateAsStr = taskExecState.toString();
 
                     if (managerRole && (taskExecState==EnumsApi.TaskExecState.OK || taskExecState== EnumsApi.TaskExecState.ERROR)) {
                         outputs = simpleTaskInfo.outputs;
                     }
-                    fromCache = state.fromCache;
+                    fromCache = state.fromCache();
                 }
                 // TODO 2023-06-07 p5 add input variables' states here
                 r.lines[i].cells[j] = new ExecContextApiData.StateCell(simpleTaskInfo.taskId, stateAsStr, simpleTaskInfo.taskContextId, fromCache, outputs);

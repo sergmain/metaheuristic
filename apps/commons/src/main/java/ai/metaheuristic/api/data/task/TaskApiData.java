@@ -25,7 +25,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
-import org.springframework.data.domain.Slice;
 
 import java.util.List;
 
@@ -65,13 +64,47 @@ public class TaskApiData {
         public String functionCode;
     }
 
-    @Data
-    @AllArgsConstructor
-    public static class TaskState {
-        public Long taskId;
-        public Integer execState;
-        public long updatedOn;
-        public boolean fromCache;
+    public record TaskState(Long taskId, Integer execState, long updatedOn, boolean fromCache, String taskContextId) {
+
+/*
+        public boolean equals(final Object o) {
+            if (o == this) return true;
+            if (!(o instanceof TaskState)) return false;
+            final TaskState other = (TaskState) o;
+            if (!other.canEqual((Object) this)) return false;
+            final Object this$taskId = this.taskId();
+            final Object other$taskId = other.taskId();
+            if (this$taskId == null ? other$taskId != null : !this$taskId.equals(other$taskId)) return false;
+            final Object this$execState = this.execState();
+            final Object other$execState = other.execState();
+            if (this$execState == null ? other$execState != null : !this$execState.equals(other$execState))
+                return false;
+            if (this.updatedOn() != other.updatedOn()) return false;
+            if (this.fromCache() != other.fromCache()) return false;
+            return true;
+        }
+
+        protected boolean canEqual(final Object other) {
+            return other instanceof TaskState;
+        }
+
+        public int hashCode() {
+            final int PRIME = 59;
+            int result = 1;
+            final Object $taskId = this.taskId();
+            result = result * PRIME + ($taskId == null ? 43 : $taskId.hashCode());
+            final Object $execState = this.execState();
+            result = result * PRIME + ($execState == null ? 43 : $execState.hashCode());
+            final long $updatedOn = this.updatedOn();
+            result = result * PRIME + (int) ($updatedOn >>> 32 ^ $updatedOn);
+            result = result * PRIME + (this.fromCache() ? 79 : 97);
+            return result;
+        }
+*/
+
+        public String toString() {
+            return "TaskApiData.TaskState(taskId=" + this.taskId() + ", execState=" + this.execState() + ", updatedOn=" + this.updatedOn() + ", fromCache=" + this.fromCache() + ")";
+        }
     }
 
 }

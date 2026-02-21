@@ -41,6 +41,7 @@ import org.springframework.context.annotation.*;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
@@ -58,6 +59,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.util.List;
 
+import static org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO;
 import static org.springframework.scheduling.config.TaskSchedulerRouter.DEFAULT_TASK_SCHEDULER_BEAN_NAME;
 
 /**
@@ -100,6 +102,7 @@ public class Config {
 
     @Configuration
     @EnableWebSocketMessageBroker
+    @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
     @Profile("dispatcher & websocket")
     public static class DispatcherWebSocketConfig implements WebSocketMessageBrokerConfigurer {
 

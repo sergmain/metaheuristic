@@ -222,13 +222,12 @@ public class ExecContextParamsYaml implements BaseParams {
     public ExecContextGraph execContextGraph;
 
     @JsonIgnore
-    @SuppressWarnings("unused")
-    private HashMap<String, Process> getProcessMap() {
+    private @Nullable HashMap<String, Process> getProcessMap() {
         return processMap;
     }
 
     // key - processCode, value - Process
-    private HashMap<String, Process> processMap = null;
+    private @Nullable HashMap<String, Process> processMap = null;
 
     @Nullable
     @JsonIgnore
