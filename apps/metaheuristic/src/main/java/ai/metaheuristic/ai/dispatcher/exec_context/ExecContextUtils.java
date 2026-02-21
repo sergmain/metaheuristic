@@ -70,9 +70,12 @@ public class ExecContextUtils {
         r.execContextId = execContextId;
 
         Set<String> contexts = new HashSet<>();
+        for (TaskApiData.TaskState taskState : raw.taskStates.values()) {
+            contexts.add(taskState.taskContextId());
+        }
+
         Map<String, List<ExecContextApiData.VariableState>> map = new HashMap<>();
         for (ExecContextApiData.VariableState info : raw.variableStates) {
-            contexts.add(info.taskContextId);
             map.computeIfAbsent(info.taskContextId, (o) -> new ArrayList<>()).add(info);
         }
         r.header = raw.processCodes.stream().map(o -> new ExecContextApiData.ColumnHeader(o, o)).toArray(ExecContextApiData.ColumnHeader[]::new);
