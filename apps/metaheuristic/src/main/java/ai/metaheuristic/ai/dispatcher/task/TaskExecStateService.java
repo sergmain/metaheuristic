@@ -94,6 +94,12 @@ public class TaskExecStateService {
             case PRE_INIT:
             case CHECK_CACHE:
                 if (task.execState!=state.value) {
+                    // Prevent downgrading from a finished state (SKIPPED, ERROR, OK) to a non-finished state (INIT, NONE, etc.)
+                    // This guards against race conditions between async event handlers
+                    if (EnumsApi.TaskExecState.isFinishedState(task.execState) && !EnumsApi.TaskExecState.isFinishedState(state)) {
+                        log.warn("305.140 Prevented state downgrade for Task #{} from {} to {}", task.id, EnumsApi.TaskExecState.from(task.execState), state);
+                        break;
+                    }
                     task.execState = state.value;
                 }
                 break;

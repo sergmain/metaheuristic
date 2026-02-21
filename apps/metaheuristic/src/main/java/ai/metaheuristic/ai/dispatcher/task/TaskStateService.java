@@ -100,6 +100,7 @@ public class TaskStateService {
         for (ExecContextData.TaskVertex subTask : subTasks) {
             Set<ExecContextData.TaskVertex> parents = ExecContextGraphService.findDirectAncestors(ecg, subTask);
             boolean nextState = true;
+            boolean anyParentError = false;
             for (ExecContextData.TaskVertex vertex : parents) {
                 TaskImpl t = taskRepository.findById(vertex.taskId).orElse(null);
                 if (t==null) {
@@ -112,6 +113,16 @@ public class TaskStateService {
                     nextState = false;
                     break;
                 }
+                if (state == EnumsApi.TaskExecState.ERROR || state == EnumsApi.TaskExecState.SKIPPED) {
+                    anyParentError = true;
+                }
+            }
+            if (anyParentError) {
+                // 189.220 Don't set children to INIT if any parent finished with ERROR or was SKIPPED.
+                // Children of errored tasks will be marked as SKIPPED by the graph update path
+                // (via UpdateTaskExecStatesInExecContextEvent -> setStateForAllChildrenTasksInternal).
+                log.info("189.220 Skipping INIT for task #{} because a parent task finished with ERROR or SKIPPED", subTask.taskId);
+                continue;
             }
             if (nextState) {
                 TaskSyncService.getWithSyncVoid(subTask.taskId,

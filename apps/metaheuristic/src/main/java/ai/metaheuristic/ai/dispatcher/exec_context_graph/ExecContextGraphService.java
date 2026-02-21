@@ -536,12 +536,12 @@ public class ExecContextGraphService {
                         .map(graph::getEdgeSource)
                         .peek(o->{
                             if (log.isDebugEnabled()) {
-                                EnumsApi.TaskExecState state = stateParamsYaml.states.getOrDefault(endVertex.taskId, EnumsApi.TaskExecState.NONE);
+                                EnumsApi.TaskExecState state = stateParamsYaml.states.getOrDefault(o.taskId, EnumsApi.TaskExecState.NONE);
                                 log.debug("\t\tancestor of task #{} is #{}, state {}", endVertex.taskId, o.taskId, state);
                             }
                         })
                         .allMatch( v -> {
-                            EnumsApi.TaskExecState state = stateParamsYaml.states.getOrDefault(endVertex.taskId, EnumsApi.TaskExecState.NONE);
+                            EnumsApi.TaskExecState state = stateParamsYaml.states.getOrDefault(v.taskId, EnumsApi.TaskExecState.NONE);
                             return state != EnumsApi.TaskExecState.NONE && state != EnumsApi.TaskExecState.IN_PROGRESS
                                     && state != EnumsApi.TaskExecState.CHECK_CACHE;
                         });
