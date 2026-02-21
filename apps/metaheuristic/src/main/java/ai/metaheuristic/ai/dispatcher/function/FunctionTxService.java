@@ -34,6 +34,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.InputStream;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static ai.metaheuristic.api.EnumsApi.FunctionSourcing.dispatcher;
 
 @Service
 @Slf4j
@@ -71,12 +74,14 @@ public class FunctionTxService {
 
     @Transactional(readOnly = true, propagation = Propagation.REQUIRES_NEW)
     public List<Pair<EnumsApi.FunctionSourcing, String>> collectInfoAboutFunction1() {
-        return functionRepository.findAllAsStream()
-                .map(function->{
+        try (Stream<Function> stream = functionRepository.findAllAsStream()) {
+            return stream
+                .map(function -> {
                     FunctionConfigYaml fcy = function.getFunctionConfigYaml();
-                    return Pair.of(fcy.function.sourcing, function.code);
+                    return Pair.of(fcy.function.sourcing==null ? dispatcher : fcy.function.sourcing, function.code);
                 })
                 .collect(Collectors.toList());
+        }
     }
 
 }
