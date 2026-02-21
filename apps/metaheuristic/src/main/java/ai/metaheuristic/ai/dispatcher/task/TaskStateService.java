@@ -118,11 +118,15 @@ public class TaskStateService {
                 }
             }
             if (anyParentError) {
-                // 189.220 Don't set children to INIT if any parent finished with ERROR or was SKIPPED.
+                // Don't set children to INIT if any parent finished with ERROR or was SKIPPED,
+                // UNLESS this is a leaf/mh.finish task (no outgoing edges) which should still proceed.
                 // Children of errored tasks will be marked as SKIPPED by the graph update path
                 // (via UpdateTaskExecStatesInExecContextEvent -> setStateForAllChildrenTasksInternal).
-                log.info("189.220 Skipping INIT for task #{} because a parent task finished with ERROR or SKIPPED", subTask.taskId);
-                continue;
+                Set<ExecContextData.TaskVertex> subTaskDescendants = ExecContextGraphService.findDirectDescendants(ecg, subTask.taskId);
+                if (!subTaskDescendants.isEmpty()) {
+                    log.info("189.220 Skipping INIT for task #{} because a parent task finished with ERROR or SKIPPED", subTask.taskId);
+                    continue;
+                }
             }
             if (nextState) {
                 TaskSyncService.getWithSyncVoid(subTask.taskId,
