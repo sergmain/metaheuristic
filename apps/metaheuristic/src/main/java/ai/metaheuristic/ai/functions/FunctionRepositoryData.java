@@ -82,7 +82,7 @@ public class FunctionRepositoryData {
         public TaskParamsYaml.FunctionConfig function;
         @Nullable
         public AssetFile functionAssetFile;
-        public FunctionApiData.SystemExecResult systemExecResult;
+        public FunctionApiData.@Nullable SystemExecResult systemExecResult;
         public boolean isLoaded = true;
         public boolean isError = false;
 

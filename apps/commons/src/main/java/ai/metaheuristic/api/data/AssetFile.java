@@ -16,12 +16,13 @@
 package ai.metaheuristic.api.data;
 
 import lombok.Data;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
 
 @Data
 public class AssetFile {
-    public Path file;
+    public @Nullable Path file;
     // meaningful only for variables
     public long fileLength;
     public boolean isError;

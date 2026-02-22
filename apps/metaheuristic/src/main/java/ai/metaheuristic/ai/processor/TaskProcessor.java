@@ -341,7 +341,7 @@ public class TaskProcessor {
                                   ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
                                   DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
                                   Path taskDir, TaskParamsYaml taskParamYaml,
-                                  Path systemDir, FunctionRepositoryData.FunctionPrepareResult[] results) {
+                                  Path systemDir, FunctionRepositoryData.@Nullable FunctionPrepareResult[] results) {
         List<FunctionApiData.SystemExecResult> preSystemExecResult = new ArrayList<>();
         List<FunctionApiData.SystemExecResult> postSystemExecResult = new ArrayList<>();
         boolean isOk = true;
@@ -477,7 +477,7 @@ public class TaskProcessor {
             switch (functionPrepareResult.function.sourcing) {
                 case dispatcher:
                 case git:
-                    if (functionPrepareResult.functionAssetFile ==null) {
+                    if (functionPrepareResult.functionAssetFile ==null || functionPrepareResult.functionAssetFile.file==null) {
                         throw new IllegalStateException("100.310 functionAssetFile is null");
                     }
                     cmd.add(functionPrepareResult.functionAssetFile.file.toAbsolutePath().toString());
@@ -505,7 +505,7 @@ public class TaskProcessor {
                 // Exec function
                 systemExecResult = SystemProcessLauncher.execCommand(
                         cmd, taskDir, consoleLogFile, taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
-                        globals.processor.taskConsoleOutputMaxLines, List.of(execContextDeletionCheck));
+                        globals.processor.taskConsoleOutputMaxLines, List.of(execContextDeletionCheck), null);
             }
             finally {
                 activeTaskProcessing.decrementAndGet();

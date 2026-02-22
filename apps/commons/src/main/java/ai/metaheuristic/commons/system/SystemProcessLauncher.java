@@ -96,13 +96,14 @@ public class SystemProcessLauncher {
     public static FunctionApiData.SystemExecResult execCommand(
             List<String> cmd, Path execDir, Path consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
             @Nullable final DispatcherSchedule schedule, int taskConsoleOutputMaxLines) throws IOException, InterruptedException {
-        return execCommand(cmd, execDir, consoleLogFile, timeoutBeforeTerminate, functionCode, schedule, taskConsoleOutputMaxLines, List.of());
+        return execCommand(cmd, execDir, consoleLogFile, timeoutBeforeTerminate, functionCode, schedule, taskConsoleOutputMaxLines, List.of(), null);
     }
 
     @SuppressWarnings({"WeakerAccess", "BusyWait"})
     public static FunctionApiData.SystemExecResult execCommand(
             List<String> cmd, Path execDir, Path consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
-            @Nullable final DispatcherSchedule schedule, int taskConsoleOutputMaxLines, List<Supplier<Boolean>> outerInterrupters) throws IOException, InterruptedException {
+            @Nullable final DispatcherSchedule schedule, int taskConsoleOutputMaxLines,
+            List<Supplier<Boolean>> outerInterrupters, @Nullable Path inputPath) throws IOException, InterruptedException {
         log.info("Exec info:");
         log.info("\tcmd: {}", cmd);
         log.info("\ttaskDir: {}", execDir.toAbsolutePath());
@@ -123,6 +124,9 @@ public class SystemProcessLauncher {
         pb.command(cmd);
         pb.directory(execDir.toFile());
         pb.redirectErrorStream(true);
+        if (inputPath!=null) {
+            pb.redirectInput(inputPath.toFile());
+        }
         final Process process = pb.start();
 
         Thread timeoutThread = null;

@@ -46,9 +46,9 @@ public class FunctionApiData {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class FunctionExec {
-        public SystemExecResult exec = new SystemExecResult();
-        public List<SystemExecResult> preExecs;
-        public List<SystemExecResult> postExecs;
+        public @Nullable SystemExecResult exec = new SystemExecResult();
+        public @Nullable List<SystemExecResult> preExecs;
+        public @Nullable List<SystemExecResult> postExecs;
         public @Nullable SystemExecResult generalExec;
 
         public boolean allFunctionsAreOk() {

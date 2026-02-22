@@ -23,8 +23,8 @@ import org.jspecify.annotations.Nullable;
 @Data
 public class Interpreter {
 
-    public final String interpreter;
-    public final String[] list;
+    public @Nullable final String interpreter;
+    public final String @Nullable [] list;
 
     public Interpreter(@Nullable String interpreter) {
         if (StringUtils.isBlank(interpreter)) {

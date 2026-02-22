@@ -111,7 +111,7 @@ public class TaskFinishingTopLevelService {
             }
 
             if (!functionExec.allFunctionsAreOk()) {
-                log.info("#318.080 store result with the state ERROR_WITH_RECOVERY");
+                log.info("318.080 store result with the state ERROR_WITH_RECOVERY");
                 TaskSyncService.getWithSyncVoid(task.id,
                         () -> finishWithErrorWithInternal(
                                 taskId, StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>"));
