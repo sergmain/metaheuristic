@@ -326,4 +326,123 @@ class TestExecContextState {
         assertFalse(r.lines[0].cells[3].empty);
         assertEquals(190L, r.lines[0].cells[3].taskId);
     }
+
+    // Option 5d: dynamic sub-processes where TaskState.processCode contains function names, not SourceCode process codes
+    @Test
+    public void test_dynamicSubProcesses_functionNamesAsProcessCode() {
+        // In dynamic sub-process scenario, tasks are created with processCode = function name
+        // e.g. "fn-read-data", "fn-transform", "fn-store" instead of "process-1", "process-2", "process-3"
+        // processCodes list and columnNames must match what's in TaskState.processCode
+
+        // task 1: init task, processCode = function name "fn-read-data"
+        // task 2: dynamic sub-process task, processCode = function name "fn-transform"
+        // task 3: dynamic sub-process task SKIPPED, processCode = function name "fn-store" (no VariableState)
+        // task 4: mh.finish
+
+        // Only tasks 1, 2, 4 have VariableState; task 3 was SKIPPED before init
+        List<ExecContextApiData.VariableState> infos = List.of(
+                new ExecContextApiData.VariableState(1L, 1111L, 1001L, "1", "fn-read-data", "fn-read-data", null, null),
+                new ExecContextApiData.VariableState(2L, 1111L, 1001L, "1", "fn-transform", "fn-transform", null, null),
+                new ExecContextApiData.VariableState(4L, 1111L, 1001L, "1", "mh.finish", "mh.finish", null, null)
+        );
+
+        // All tasks in DB — task 3 is SKIPPED, no VariableState
+        Map<Long, TaskApiData.TaskState> states = Map.of(
+                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1", "fn-read-data"),
+                2L, new TaskApiData.TaskState(2L, TaskExecState.OK.value, 0L, false, "1", "fn-transform"),
+                3L, new TaskApiData.TaskState(3L, TaskExecState.SKIPPED.value, 0L, false, "1", "fn-store"),
+                4L, new TaskApiData.TaskState(4L, TaskExecState.OK.value, 0L, false, "1", "mh.finish")
+        );
+
+        // processCodes contains function names (as they appear in the dynamic process graph)
+        List<String> processCodes = List.of("fn-read-data", "fn-transform", "fn-store", "mh.finish");
+
+        ExecContextApiData.RawExecContextStateResult raw = new ExecContextApiData.RawExecContextStateResult(
+                1L, infos, processCodes, SourceCodeType.common, "dynamic-sc", true, states);
+
+        // Option 5d: columnNames defines display names for columns
+        raw.columnNames = new java.util.LinkedHashMap<>();
+        raw.columnNames.put(0, "Read Data");
+        raw.columnNames.put(1, "Transform");
+        raw.columnNames.put(2, "Store");
+        raw.columnNames.put(3, "Finish");
+
+        ExecContextApiData.ExecContextStateResult r = ExecContextUtils.getExecContextStateResult(42L, raw, true);
+
+        assertNotNull(r);
+        assertEquals(4, r.header.length);
+        assertEquals("Read Data", r.header[0].process);
+        assertEquals("Transform", r.header[1].process);
+        assertEquals("Store", r.header[2].process);
+        assertEquals("Finish", r.header[3].process);
+
+        assertEquals(1, r.lines.length);
+        assertEquals("1", r.lines[0].context);
+
+        // task 1 at col 0 — OK
+        assertFalse(r.lines[0].cells[0].empty);
+        assertEquals(1L, r.lines[0].cells[0].taskId);
+        assertEquals(TaskExecState.OK.toString(), r.lines[0].cells[0].state);
+
+        // task 2 at col 1 — OK
+        assertFalse(r.lines[0].cells[1].empty);
+        assertEquals(2L, r.lines[0].cells[1].taskId);
+        assertEquals(TaskExecState.OK.toString(), r.lines[0].cells[1].state);
+
+        // task 3 at col 2 — SKIPPED (no VariableState, placed via TaskState)
+        assertFalse(r.lines[0].cells[2].empty);
+        assertEquals(3L, r.lines[0].cells[2].taskId);
+        assertEquals(TaskExecState.SKIPPED.toString(), r.lines[0].cells[2].state);
+
+        // task 4 at col 3 — OK
+        assertFalse(r.lines[0].cells[3].empty);
+        assertEquals(4L, r.lines[0].cells[3].taskId);
+        assertEquals(TaskExecState.OK.toString(), r.lines[0].cells[3].state);
+    }
+
+    // Same as above but without columnNames (legacy path with findOrAssignCol)
+    @Test
+    public void test_dynamicSubProcesses_functionNames_legacyPath() {
+        List<ExecContextApiData.VariableState> infos = List.of(
+                new ExecContextApiData.VariableState(1L, 1111L, 1001L, "1", "fn-read-data", "fn-read-data", null, null),
+                new ExecContextApiData.VariableState(4L, 1111L, 1001L, "1", "mh.finish", "mh.finish", null, null)
+        );
+
+        // task 2 and 3 have no VariableState (SKIPPED)
+        Map<Long, TaskApiData.TaskState> states = Map.of(
+                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1", "fn-read-data"),
+                2L, new TaskApiData.TaskState(2L, TaskExecState.SKIPPED.value, 0L, false, "1", "fn-transform"),
+                3L, new TaskApiData.TaskState(3L, TaskExecState.SKIPPED.value, 0L, false, "1", "fn-store"),
+                4L, new TaskApiData.TaskState(4L, TaskExecState.OK.value, 0L, false, "1", "mh.finish")
+        );
+
+        List<String> processCodes = List.of("fn-read-data", "fn-transform", "fn-store", "mh.finish");
+        ExecContextApiData.RawExecContextStateResult raw = new ExecContextApiData.RawExecContextStateResult(
+                1L, infos, processCodes, SourceCodeType.common, "dynamic-legacy", true, states);
+
+        // No columnNames — legacy path
+        ExecContextApiData.ExecContextStateResult r = ExecContextUtils.getExecContextStateResult(42L, raw, true);
+
+        assertNotNull(r);
+        assertEquals(4, r.header.length);
+        assertEquals(1, r.lines.length);
+
+        // task 1 — OK
+        assertFalse(r.lines[0].cells[0].empty);
+        assertEquals(1L, r.lines[0].cells[0].taskId);
+
+        // task 2 — SKIPPED, placed via TaskState.processCode
+        assertFalse(r.lines[0].cells[1].empty);
+        assertEquals(2L, r.lines[0].cells[1].taskId);
+        assertEquals(TaskExecState.SKIPPED.toString(), r.lines[0].cells[1].state);
+
+        // task 3 — SKIPPED
+        assertFalse(r.lines[0].cells[2].empty);
+        assertEquals(3L, r.lines[0].cells[2].taskId);
+        assertEquals(TaskExecState.SKIPPED.toString(), r.lines[0].cells[2].state);
+
+        // task 4 — OK
+        assertFalse(r.lines[0].cells[3].empty);
+        assertEquals(4L, r.lines[0].cells[3].taskId);
+    }
 }
