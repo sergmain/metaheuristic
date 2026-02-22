@@ -64,7 +64,8 @@ public class TaskApiData {
         public String functionCode;
     }
 
-    public record TaskState(Long taskId, Integer execState, long updatedOn, boolean fromCache, String taskContextId) {
+    public record TaskState(Long taskId, Integer execState, long updatedOn, boolean fromCache, String taskContextId,
+                            String processCode) {
 
 /*
         public boolean equals(final Object o) {
@@ -103,7 +104,7 @@ public class TaskApiData {
 */
 
         public String toString() {
-            return "TaskApiData.TaskState(taskId=" + this.taskId() + ", execState=" + this.execState() + ", updatedOn=" + this.updatedOn() + ", fromCache=" + this.fromCache() + ")";
+            return "TaskApiData.TaskState(taskId=" + this.taskId() + ", execState=" + this.execState() + ", updatedOn=" + this.updatedOn() + ", fromCache=" + this.fromCache() + ", taskContextId=" + this.taskContextId() + ", processCode=" + this.processCode() + ")";
         }
     }
 

@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.task.TaskApiData;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,7 +65,9 @@ public class TaskTxService {
         try (Stream<TaskImpl> stream = taskRepository.findByIds(ids)) {
             stream.forEach(t-> {
                 long updatedOn = t.updatedOn!=null ? t.updatedOn : 0;
-                TaskApiData.TaskState taskState = new TaskApiData.TaskState(t.id, t.execState, updatedOn, t.getTaskParamsYaml().task.fromCache, t.getTaskParamsYaml().task.taskContextId);
+                TaskParamsYaml taskParamsYaml = t.getTaskParamsYaml();
+                TaskApiData.TaskState taskState = new TaskApiData.TaskState(
+                    t.id, t.execState, updatedOn, taskParamsYaml.task.fromCache, taskParamsYaml.task.taskContextId, taskParamsYaml.task.processCode);
                 states.put(taskState.taskId(), taskState);
             });
         }

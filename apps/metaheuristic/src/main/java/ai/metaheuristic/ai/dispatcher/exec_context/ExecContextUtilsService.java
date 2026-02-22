@@ -25,10 +25,12 @@ import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * this is service which contains only methods with access to low-level serices, i.e. xxxCache, xxxRepository
@@ -56,8 +58,8 @@ public class ExecContextUtilsService {
         if (variableType!=null && variableType!=EnumsApi.VariableType.unknown) {
             return variableType.ext;
         }
-        ExecContextApiData.ExecContextVariableStates info = getExecContextVariableStates(execContextVariableStateId);
-        String ext = info.states.stream()
+        List<ExecContextApiData.VariableState> variableStates = getExecContextVariableStates(execContextVariableStateId);
+        String ext = variableStates.stream()
                 .filter(o->o.outputs!=null)
                 .flatMap(o->o.outputs.stream())
                 .filter(o->o.id.equals(variableId) && !S.b(o.ext))
@@ -66,15 +68,11 @@ public class ExecContextUtilsService {
         return ext;
     }
 
-    public ExecContextApiData.ExecContextVariableStates getExecContextVariableStates(@Nullable Long execContextVariableStateId) {
-        ExecContextApiData.ExecContextVariableStates info;
+    public List<ExecContextApiData.VariableState> getExecContextVariableStates(@Nullable Long execContextVariableStateId) {
         if (execContextVariableStateId==null) {
-            info = new ExecContextApiData.ExecContextVariableStates();
+            return List.of();
         }
-        else {
-            ExecContextVariableState ecvs = execContextVariableStateCache.findById(execContextVariableStateId);
-            info = ecvs!=null ? ecvs.getExecContextVariableStateInfo() : new ExecContextApiData.ExecContextVariableStates();
-        }
-        return info;
+        ExecContextVariableState ecvs = execContextVariableStateCache.findById(execContextVariableStateId);
+        return ecvs!=null ? ecvs.getExecContextVariableStateInfo().states : List.of();
     }
 }

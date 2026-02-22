@@ -90,10 +90,6 @@ public class TaskProducingService {
     }
 
     /**
-     * @param simpleExecContext
-     * @param currTaskContextId
-     * @param parentTaskId
-     * @param lastIds
      */
     public void createTasksForSubProcesses(
             ExecContextData.GraphAndStates graphAndStates,
@@ -127,21 +123,18 @@ public class TaskProducingService {
                 throw new BreakFromLambdaException("375.080 Process '" + subProcess.process + "' wasn't found");
             }
 
-            String actualProcessContextId;
-            switch (process.logic) {
-                case and:
-                    actualProcessContextId = subProcess.processContextId;
-                    break;
-                case sequential:
+            String actualProcessContextId = switch (process.logic) {
+                case and -> subProcess.processContextId;
+                case sequential -> {
                     // all subProcesses must have the same processContextId
                     if (!subProcessContextId.equals(subProcess.processContextId)) {
-                        throw new BreakFromLambdaException("375.100 Different contextId, prev: "+ subProcessContextId+", next: " +subProcess.processContextId);
+                        throw new BreakFromLambdaException("375.100 Different contextId, prev: " + subProcessContextId + ", next: " + subProcess.processContextId);
                     }
-                    actualProcessContextId = currTaskContextId;
-                    break;
-                default:
+                    yield currTaskContextId;
+                }
+                default ->
                     throw new BreakFromLambdaException("375.060 only the 'sequential' and 'and' logics are supported");
-            }
+            };
 
             t = createTaskHelper(simpleExecContext.execContextId, execContextParamsYaml, p, actualProcessContextId, inlines, List.of(parentTaskId), EnumsApi.TaskExecState.PRE_INIT);
 
@@ -189,12 +182,22 @@ public class TaskProducingService {
             taskParams.task.function = fConfig;
             if (process.getPreFunctions()!=null) {
                 for (ExecContextParamsYaml.FunctionDefinition preFunction : process.getPreFunctions()) {
-                    taskParams.task.preFunctions.add(functionTopLevelService.getFunctionConfig(preFunction));
+                    TaskParamsYaml.FunctionConfig functionConfig = functionTopLevelService.getFunctionConfig(preFunction);
+                    if (functionConfig==null) {
+                        log.error("375.145 Pre-function '{}' wasn't found", preFunction.code);
+                        continue;
+                    }
+                    taskParams.task.preFunctions.add(functionConfig);
                 }
             }
             if (process.getPostFunctions()!=null) {
                 for (ExecContextParamsYaml.FunctionDefinition postFunction : process.getPostFunctions()) {
-                    taskParams.task.postFunctions.add(functionTopLevelService.getFunctionConfig(postFunction));
+                    TaskParamsYaml.FunctionConfig functionConfig = functionTopLevelService.getFunctionConfig(postFunction);
+                    if (functionConfig==null) {
+                        log.error("375.150 Post-function '{}' wasn't found", postFunction.code);
+                        continue;
+                    }
+                    taskParams.task.postFunctions.add(functionConfig);
                 }
             }
         }

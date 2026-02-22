@@ -118,9 +118,8 @@ public class ExecContextApiData {
 
     @Data
     @NoArgsConstructor
-    @AllArgsConstructor
     public static class ExecContextVariableStates {
-        public List<VariableState> states = new ArrayList<>();
+        public final List<VariableState> states = new ArrayList<>();
     }
 
     @Data

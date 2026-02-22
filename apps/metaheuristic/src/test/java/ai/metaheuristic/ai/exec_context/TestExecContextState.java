@@ -49,12 +49,12 @@ public class TestExecContextState {
         );
 
         Map<Long, TaskApiData.TaskState> states = Map.of(
-                100L, new TaskApiData.TaskState(100L, TaskExecState.OK.value, 0L, false, "1"),
-                120L, new TaskApiData.TaskState(120L, TaskExecState.IN_PROGRESS.value, 0L, false, "1"),
-                140L, new TaskApiData.TaskState(140L, TaskExecState.NONE.value, 0L, false, "1"),
-                160L, new TaskApiData.TaskState(160L, TaskExecState.OK.value, 0L, false, "1"),
-                180L, new TaskApiData.TaskState(180L, TaskExecState.ERROR.value, 0L, false, "1"),
-                190L, new TaskApiData.TaskState(190L, TaskExecState.OK.value, 0L, false, "1")
+                100L, new TaskApiData.TaskState(100L, TaskExecState.OK.value, 0L, false, "1", "process-1"),
+                120L, new TaskApiData.TaskState(120L, TaskExecState.IN_PROGRESS.value, 0L, false, "1", "process-2"),
+                140L, new TaskApiData.TaskState(140L, TaskExecState.NONE.value, 0L, false, "1", "process-3"),
+                160L, new TaskApiData.TaskState(160L, TaskExecState.OK.value, 0L, false, "1", "process-2"),
+                180L, new TaskApiData.TaskState(180L, TaskExecState.ERROR.value, 0L, false, "1", "process-3"),
+                190L, new TaskApiData.TaskState(190L, TaskExecState.OK.value, 0L, false, "1", "mh.finish")
         );
         List<String> processCodes = List.of("process-1", "process-2", "process-3", "mh.finish");
         ExecContextApiData.RawExecContextStateResult raw = new ExecContextApiData.RawExecContextStateResult(
@@ -141,13 +141,13 @@ public class TestExecContextState {
         );
 
         Map<Long, TaskApiData.TaskState> states = Map.of(
-                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1"),
-                2L, new TaskApiData.TaskState(2L, TaskExecState.OK.value, 0L, false, "1"),
-                3L, new TaskApiData.TaskState(3L, TaskExecState.IN_PROGRESS.value, 0L, false, "1"),
-                4L, new TaskApiData.TaskState(4L, TaskExecState.OK.value, 0L, false, "1"),
-                5L, new TaskApiData.TaskState(5L, TaskExecState.NONE.value, 0L, false, "1"),
-                6L, new TaskApiData.TaskState(6L, TaskExecState.ERROR.value, 0L, false, "1"),
-                7L, new TaskApiData.TaskState(7L, TaskExecState.OK.value, 0L, false, "1")
+                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1", "f-init"),
+                2L, new TaskApiData.TaskState(2L, TaskExecState.OK.value, 0L, false, "1", "f-decompose"),
+                3L, new TaskApiData.TaskState(3L, TaskExecState.IN_PROGRESS.value, 0L, false, "1", "f-decompose"),
+                4L, new TaskApiData.TaskState(4L, TaskExecState.OK.value, 0L, false, "1", "f-analyze"),
+                5L, new TaskApiData.TaskState(5L, TaskExecState.NONE.value, 0L, false, "1", "f-analyze"),
+                6L, new TaskApiData.TaskState(6L, TaskExecState.ERROR.value, 0L, false, "1", "f-validate"),
+                7L, new TaskApiData.TaskState(7L, TaskExecState.OK.value, 0L, false, "1", "mh.finish")
         );
 
         List<String> processCodes = List.of("p-init", "p-decompose", "p-analyze", "p-validate", "mh.finish");
@@ -254,7 +254,7 @@ public class TestExecContextState {
                 new ExecContextApiData.VariableState(1L, 1111L, 1001L, "1", "p-only", "f-only", null, null)
         );
         Map<Long, TaskApiData.TaskState> states = Map.of(
-                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1")
+                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1", "f-only")
         );
         List<String> processCodes = List.of("p-only");
         ExecContextApiData.RawExecContextStateResult raw = new ExecContextApiData.RawExecContextStateResult(
@@ -282,12 +282,12 @@ public class TestExecContextState {
         );
 
         Map<Long, TaskApiData.TaskState> states = Map.of(
-                100L, new TaskApiData.TaskState(100L, TaskExecState.OK.value, 0L, false, "1"),
-                120L, new TaskApiData.TaskState(120L, TaskExecState.IN_PROGRESS.value, 0L, false, "1"),
-                140L, new TaskApiData.TaskState(140L, TaskExecState.NONE.value, 0L, false, "1"),
-                160L, new TaskApiData.TaskState(160L, TaskExecState.OK.value, 0L, false, "1"),
-                180L, new TaskApiData.TaskState(180L, TaskExecState.ERROR.value, 0L, false, "1"),
-                190L, new TaskApiData.TaskState(190L, TaskExecState.OK.value, 0L, false, "1")
+                100L, new TaskApiData.TaskState(100L, TaskExecState.OK.value, 0L, false, "1", "function-1"),
+                120L, new TaskApiData.TaskState(120L, TaskExecState.IN_PROGRESS.value, 0L, false, "1", "function-2"),
+                140L, new TaskApiData.TaskState(140L, TaskExecState.NONE.value, 0L, false, "1", "function-3"),
+                160L, new TaskApiData.TaskState(160L, TaskExecState.OK.value, 0L, false, "1", "function-2"),
+                180L, new TaskApiData.TaskState(180L, TaskExecState.ERROR.value, 0L, false, "1", "function-3"),
+                190L, new TaskApiData.TaskState(190L, TaskExecState.OK.value, 0L, false, "1", "mh.finish")
         );
 
         List<String> processCodes = List.of("process-1", "process-2", "process-3", "mh.finish");

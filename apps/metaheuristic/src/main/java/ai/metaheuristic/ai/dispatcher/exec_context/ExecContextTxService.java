@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
@@ -42,6 +41,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextsListItem;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
@@ -62,6 +62,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static ai.metaheuristic.api.EnumsApi.OperationStatus;
 
@@ -128,13 +129,15 @@ public class ExecContextTxService {
             ExecContextApiData.RawExecContextStateResult resultWithError = new ExecContextApiData.RawExecContextStateResult("705.220 Can't find execContext for Id " + execContextId);
             return resultWithError;
         }
-        ExecContextApiData.ExecContextVariableStates info = execContextUtilsServices.getExecContextVariableStates(ec.execContextVariableStateId);
-        ExecContextParamsYaml ecpy = ec.getExecContextParamsYaml();
+        List<ExecContextApiData.VariableState> variableStates = execContextUtilsServices.getExecContextVariableStates(ec.execContextVariableStateId);
 
+        ExecContextParamsYaml ecpy = ec.getExecContextParamsYaml();
         List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ecpy);
+
+        Map<Long, TaskApiData.TaskState> taskStates = taskTxService.getExecStateOfTasks(execContextId);
+
         ExecContextApiData.RawExecContextStateResult rawResult = new ExecContextApiData.RawExecContextStateResult(
-                sourceCodeId, info.states, processCodes, result.sourceCodeType, result.sourceCodeUid, result.sourceCodeValid,
-                taskTxService.getExecStateOfTasks(execContextId)
+            sourceCodeId, variableStates, processCodes, result.sourceCodeType, result.sourceCodeUid, result.sourceCodeValid, taskStates
         );
         // Option 5d: populate columnNames from ExecContextParamsYaml when present
         if (!ecpy.columnNames.isEmpty()) {

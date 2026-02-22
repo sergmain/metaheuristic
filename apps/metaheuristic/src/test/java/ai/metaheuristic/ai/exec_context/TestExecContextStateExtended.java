@@ -27,7 +27,10 @@ import java.util.Map;
 import static ai.metaheuristic.api.EnumsApi.SourceCodeType;
 import static ai.metaheuristic.api.EnumsApi.TaskExecState;
 import ai.metaheuristic.api.EnumsApi;
+import org.junit.jupiter.api.parallel.Execution;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * Extended tests for ExecContextUtils.getExecContextStateResult()
@@ -36,7 +39,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Sergio Lissner
  * Date: 2/16/2026
  */
-public class TestExecContextStateExtended {
+@Execution(CONCURRENT)
+class TestExecContextStateExtended {
 
     // === P0: findOrAssignCol dedicated tests ===
 
@@ -106,11 +110,11 @@ public class TestExecContextStateExtended {
         );
 
         Map<Long, TaskApiData.TaskState> states = Map.of(
-                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1"),
-                2L, new TaskApiData.TaskState(2L, TaskExecState.OK.value, 0L, false, "1"),
-                3L, new TaskApiData.TaskState(3L, TaskExecState.IN_PROGRESS.value, 0L, false, "1"),
-                4L, new TaskApiData.TaskState(4L, TaskExecState.NONE.value, 0L, false, "1"),
-                5L, new TaskApiData.TaskState(5L, TaskExecState.NONE.value, 0L, false, "1")
+                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1", "p-1"),
+                2L, new TaskApiData.TaskState(2L, TaskExecState.OK.value, 0L, false, "1,2", "p-2"),
+                3L, new TaskApiData.TaskState(3L, TaskExecState.IN_PROGRESS.value, 0L, false, "1,2,3", "p-3"),
+                4L, new TaskApiData.TaskState(4L, TaskExecState.NONE.value, 0L, false, "1,2,3,4", "p-4"),
+                5L, new TaskApiData.TaskState(5L, TaskExecState.NONE.value, 0L, false, "1", "mh.finish")
         );
 
         List<String> processCodes = List.of("p-1", "p-2", "p-3", "p-4", "mh.finish");
@@ -184,11 +188,11 @@ public class TestExecContextStateExtended {
         );
 
         Map<Long, TaskApiData.TaskState> states = Map.of(
-                10L, new TaskApiData.TaskState(10L, TaskExecState.OK.value, 0L, false, "1"),
-                11L, new TaskApiData.TaskState(11L, TaskExecState.OK.value, 0L, false, "1"),
-                12L, new TaskApiData.TaskState(12L, TaskExecState.IN_PROGRESS.value, 0L, false, "1"),
-                13L, new TaskApiData.TaskState(13L, TaskExecState.NONE.value, 0L, false, "1"),
-                20L, new TaskApiData.TaskState(20L, TaskExecState.NONE.value, 0L, false, "1")
+                10L, new TaskApiData.TaskState(10L, TaskExecState.OK.value, 0L, false, "1", "splitter"),
+                11L, new TaskApiData.TaskState(11L, TaskExecState.OK.value, 0L, false, "1,2#1", "worker"),
+                12L, new TaskApiData.TaskState(12L, TaskExecState.IN_PROGRESS.value, 0L, false, "1,2#2", "worker"),
+                13L, new TaskApiData.TaskState(13L, TaskExecState.NONE.value, 0L, false, "1,2#3", "worker"),
+                20L, new TaskApiData.TaskState(20L, TaskExecState.NONE.value, 0L, false, "1", "mh.finish")
         );
 
         List<String> processCodes = List.of("splitter", "worker", "mh.finish");
@@ -239,10 +243,10 @@ public class TestExecContextStateExtended {
         );
 
         Map<Long, TaskApiData.TaskState> states = Map.of(
-                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1"),
-                2L, new TaskApiData.TaskState(2L, TaskExecState.OK.value, 0L, false, "1"),
-                3L, new TaskApiData.TaskState(3L, TaskExecState.IN_PROGRESS.value, 0L, false, "1"),
-                4L, new TaskApiData.TaskState(4L, TaskExecState.NONE.value, 0L, false, "1")
+                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1", "rg-level-1"),
+                2L, new TaskApiData.TaskState(2L, TaskExecState.OK.value, 0L, false, "1,2", "rg-level-2"),
+                3L, new TaskApiData.TaskState(3L, TaskExecState.IN_PROGRESS.value, 0L, false, "1,2,3", "rg-level-3"),
+                4L, new TaskApiData.TaskState(4L, TaskExecState.NONE.value, 0L, false, "1", "mh.finish")
         );
 
         List<String> processCodes = List.of("rg-level-1", "rg-level-2", "rg-level-3", "mh.finish");
@@ -293,12 +297,12 @@ public class TestExecContextStateExtended {
         );
 
         Map<Long, TaskApiData.TaskState> states = Map.of(
-                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1"),
-                2L, new TaskApiData.TaskState(2L, TaskExecState.OK.value, 0L, false, "1"),
-                3L, new TaskApiData.TaskState(3L, TaskExecState.OK.value, 0L, false, "1"),
-                4L, new TaskApiData.TaskState(4L, TaskExecState.IN_PROGRESS.value, 0L, false, "1"),
-                5L, new TaskApiData.TaskState(5L, TaskExecState.NONE.value, 0L, false, "1"),
-                99L, new TaskApiData.TaskState(99L, TaskExecState.NONE.value, 0L, false, "1")
+                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1", "rg-analyze"),
+                2L, new TaskApiData.TaskState(2L, TaskExecState.OK.value, 0L, false, "1,2#1", "rg-decompose"),
+                3L, new TaskApiData.TaskState(3L, TaskExecState.OK.value, 0L, false, "1,2#2", "rg-decompose"),
+                4L, new TaskApiData.TaskState(4L, TaskExecState.IN_PROGRESS.value, 0L, false, "1,2,3#1", "rg-process"),
+                5L, new TaskApiData.TaskState(5L, TaskExecState.NONE.value, 0L, false, "1,2,3#2", "rg-process"),
+                99L, new TaskApiData.TaskState(99L, TaskExecState.NONE.value, 0L, false, "1", "mh.finish")
         );
 
         List<String> processCodes = List.of("rg-analyze", "rg-decompose", "rg-process", "mh.finish");
@@ -334,8 +338,8 @@ public class TestExecContextStateExtended {
         );
 
         Map<Long, TaskApiData.TaskState> states = Map.of(
-                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1"),
-                2L, new TaskApiData.TaskState(2L, TaskExecState.OK.value, 0L, false, "1")
+                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1", "f-1"),
+                2L, new TaskApiData.TaskState(2L, TaskExecState.OK.value, 0L, false, "1", "mh.finish")
         );
 
         List<String> processCodes = List.of("p-1", "mh.finish");

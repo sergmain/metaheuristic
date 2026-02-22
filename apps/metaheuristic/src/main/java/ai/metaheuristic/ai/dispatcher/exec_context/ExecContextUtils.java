@@ -18,14 +18,10 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.utils.ContextUtils;
-import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
-import ai.metaheuristic.commons.S;
-import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
-import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,18 +32,6 @@ import java.util.stream.Collectors;
  * Time: 8:20 PM
  */
 public class ExecContextUtils {
-
-    @SneakyThrows
-    public static ExecContextApiData.ExecContextVariableStates getExecContextTasksStatesInfo(@Nullable String tasksStatesInfo) {
-        ExecContextApiData.ExecContextVariableStates info;
-        if (S.b(tasksStatesInfo)) {
-            info = new ExecContextApiData.ExecContextVariableStates();
-        }
-        else {
-            info = JsonUtils.getMapper().readValue(tasksStatesInfo, ExecContextApiData.ExecContextVariableStates.class);
-        }
-        return info;
-    }
 
     public static List<Long> getIdsForSearch(List<ExecContextData.TaskVertex> vertices, int page, int pageSize) {
         final int fromIndex = page * pageSize;

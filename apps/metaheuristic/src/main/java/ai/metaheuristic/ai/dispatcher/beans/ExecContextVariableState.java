@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextUtils;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
@@ -81,9 +81,15 @@ public class ExecContextVariableState implements Serializable {
     private final ThreadUtils.CommonThreadLocker<ExecContextApiData.ExecContextVariableStates> paramsLocked =
             new ThreadUtils.CommonThreadLocker<>(this::parseParams);
 
+    @SneakyThrows
     private ExecContextApiData.ExecContextVariableStates parseParams() {
-        ExecContextApiData.ExecContextVariableStates temp = ExecContextUtils.getExecContextTasksStatesInfo(params);
-        ExecContextApiData.ExecContextVariableStates ecpy = temp==null ? new ExecContextApiData.ExecContextVariableStates() : temp;
+        ExecContextApiData.ExecContextVariableStates ecpy;
+        if (S.b(params)) {
+            ecpy = new ExecContextApiData.ExecContextVariableStates();
+        }
+        else {
+            ecpy = JsonUtils.getMapper().readValue(params, ExecContextApiData.ExecContextVariableStates.class);
+        }
         return ecpy;
     }
 

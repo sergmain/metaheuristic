@@ -74,6 +74,7 @@ public class ExecContextTaskResettingService {
             return;
         }
 
+//        ExecContextTaskState execContextTaskState = Optional.ofNullable(ec.execContextTaskStateId).flatMap(execContextTaskStateRepository::findById).orElse(null);
         ExecContextTaskState execContextTaskState = execContextTaskStateRepository.findById(ec.execContextTaskStateId).orElse(null);
         if (execContextTaskState==null) {
             log.error("155.030 ExecContextTaskState wasn't found for execContext #{}", execContextId);
