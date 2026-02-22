@@ -100,50 +100,52 @@ public class ExecContextUtils {
             }
         }
 
-        for (ExecContextApiData.VariableState variableState : raw.variableStates) {
-            for (int i = 0; i < r.lines.length; i++) {
-                ExecContextApiData.VariableState simpleTaskInfo = null;
-                List<ExecContextApiData.VariableState> tasksInContext = map.get(r.lines[i].context);
-                for (ExecContextApiData.VariableState contextTaskInfo : tasksInContext) {
-                    if (contextTaskInfo.taskId.equals(variableState.taskId)) {
-                        simpleTaskInfo = contextTaskInfo;
+        for (Map.Entry<Long, TaskApiData.TaskState> entry : raw.taskStates.entrySet()) {
+            Long taskId = entry.getKey();
+            TaskApiData.TaskState state = entry.getValue();
+            String taskContextId = state.taskContextId();
+            EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(state.execState());
+            String processCode = state.processCode();
+
+            // find VariableState for this task (may be null for tasks SKIPPED before variable init)
+            ExecContextApiData.VariableState variableState = null;
+            List<ExecContextApiData.VariableState> tasksInContext = map.get(taskContextId);
+            if (tasksInContext!=null) {
+                for (ExecContextApiData.VariableState vs : tasksInContext) {
+                    if (vs.taskId.equals(taskId)) {
+                        variableState = vs;
                         break;
                     }
                 }
-                if (simpleTaskInfo == null) {
-                    continue;
-                }
-                // Option 5d: when columnNames is present, resolve column by processCode index; otherwise use legacy findOrAssignCol
-                int j;
-                if (useColumnNames && processCodeToColIdx!=null) {
-                    Integer colIdx = processCodeToColIdx.get(simpleTaskInfo.process);
-                    if (colIdx==null) {
-                        throw new IllegalStateException("Process code '" + simpleTaskInfo.process + "' not found in processCodes list");
-                    }
-                    j = colIdx;
-                }
-                else {
-                    j = findOrAssignCol(r.header, simpleTaskInfo.process);
-                }
+            }
 
-                TaskApiData.TaskState state = raw.taskStates.get(simpleTaskInfo.taskId);
-                String stateAsStr;
-                List<ExecContextApiData.VariableInfo> outputs = null;
-                boolean fromCache = false;
-                if (state==null) {
-                    stateAsStr = "<ILLEGAL STATE>";
+            // Option 5d: when columnNames is present, resolve column by processCode index; otherwise use legacy findOrAssignCol
+            int j;
+            if (useColumnNames && processCodeToColIdx!=null) {
+                Integer colIdx = processCodeToColIdx.get(processCode);
+                if (colIdx==null) {
+                    throw new IllegalStateException("Process code '" + processCode + "' not found in processCodes list");
                 }
-                else {
-                    EnumsApi.TaskExecState taskExecState = EnumsApi.TaskExecState.from(state.execState());
-                    stateAsStr = taskExecState.toString();
+                j = colIdx;
+            }
+            else {
+                j = findOrAssignCol(r.header, processCode);
+            }
 
-                    if (managerRole && (taskExecState==EnumsApi.TaskExecState.OK || taskExecState== EnumsApi.TaskExecState.ERROR)) {
-                        outputs = simpleTaskInfo.outputs;
-                    }
-                    fromCache = state.fromCache();
+            String stateAsStr = taskExecState.toString();
+            List<ExecContextApiData.VariableInfo> outputs = null;
+            boolean fromCache = state.fromCache();
+            if (managerRole && variableState!=null && (taskExecState==EnumsApi.TaskExecState.OK || taskExecState==EnumsApi.TaskExecState.ERROR)) {
+                outputs = variableState.outputs;
+            }
+
+            // find the line (row) for this task's context
+            for (int i = 0; i < r.lines.length; i++) {
+                if (r.lines[i].context.equals(taskContextId)) {
+                    // TODO 2023-06-07 p5 add input variables' states here
+                    r.lines[i].cells[j] = new ExecContextApiData.StateCell(taskId, stateAsStr, taskContextId, fromCache, outputs);
+                    break;
                 }
-                // TODO 2023-06-07 p5 add input variables' states here
-                r.lines[i].cells[j] = new ExecContextApiData.StateCell(simpleTaskInfo.taskId, stateAsStr, simpleTaskInfo.taskContextId, fromCache, outputs);
             }
         }
         // Option 5d: skip shortName truncation when columnNames provides display names

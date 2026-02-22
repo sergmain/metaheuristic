@@ -338,7 +338,7 @@ class TestExecContextStateExtended {
         );
 
         Map<Long, TaskApiData.TaskState> states = Map.of(
-                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1", "f-1"),
+                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1", "p-1"),
                 2L, new TaskApiData.TaskState(2L, TaskExecState.OK.value, 0L, false, "1", "mh.finish")
         );
 
