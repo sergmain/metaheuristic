@@ -19,23 +19,26 @@ package ai.metaheuristic.ai.exec_context;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 11/14/2020
  * Time: 7:07 PM
  */
+@Execution(CONCURRENT)
 public class TestExecContextJson {
 
-    @SneakyThrows
     @Test
-    public void test() {
+    public void test() throws JsonProcessingException {
         ExecContextApiData.VariableState info;
         info = new ExecContextApiData.VariableState(1L, 1111L, 2L, "1,2###1", "process-1", "function-1",
                 List.of(new ExecContextApiData.VariableInfo(3L, "var-name-3", EnumsApi.VariableContext.local, null)),

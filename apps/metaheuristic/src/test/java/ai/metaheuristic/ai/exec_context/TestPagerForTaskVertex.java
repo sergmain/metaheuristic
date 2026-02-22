@@ -19,17 +19,20 @@ package ai.metaheuristic.ai.exec_context;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 7/25/2019
  * Time: 8:42 PM
  */
-public class TestPagerForTaskVertex {
+@Execution(CONCURRENT)
+class TestPagerForTaskVertex {
 
     @Test
     public void test() {

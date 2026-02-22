@@ -21,22 +21,25 @@ import ai.metaheuristic.ai.dispatcher.data.FunctionData;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.api.EnumsApi;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 4/24/2022
  * Time: 2:25 AM
  */
-public class TestFunctionTopLevelService {
+@Execution(CONCURRENT)
+class TestFunctionTopLevelService {
 
     @Test
-    public void test_() {
+    public void test_1() {
 
         Map<Long, Function> map = Map.of(
                 1L, new Function(1L, 0, "code-1", "type", "params"),

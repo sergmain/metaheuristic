@@ -18,19 +18,22 @@ package ai.metaheuristic.ai.experiment_result;
 
 import ai.metaheuristic.api.data.experiment_result.ExperimentResultParams;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.List;
 
 import static ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultTopLevelService.getMetricsNames;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 4/28/2020
  * Time: 5:56 PM
  */
-public class TestExperimentResultUtils {
+@Execution(CONCURRENT)
+class TestExperimentResultUtils {
 
     @Test
     public void test() {

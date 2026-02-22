@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.exec_context;
 
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,13 +26,15 @@ import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.utils.ContextUtils.CONTEXT_SEPARATOR;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 10/28/2020
  * Time: 1:08 AM
  */
-public class TestExecContextSorting {
+@Execution(CONCURRENT)
+class TestExecContextSorting {
 
     private static final String CTX_1 = "1";
     private static final String CTX_1_2___1 = "1,2"+CONTEXT_SEPARATOR+"1";

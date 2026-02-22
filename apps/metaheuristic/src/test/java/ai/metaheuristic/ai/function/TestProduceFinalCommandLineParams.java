@@ -18,15 +18,18 @@ package ai.metaheuristic.ai.function;
 
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 3/12/2020
  * Time: 12:41 AM
  */
-public class TestProduceFinalCommandLineParams {
+@Execution(CONCURRENT)
+class TestProduceFinalCommandLineParams {
 
     @Test
     public void test() {

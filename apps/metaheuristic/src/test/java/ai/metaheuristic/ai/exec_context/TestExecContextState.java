@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,13 +29,15 @@ import java.util.Map;
 import static ai.metaheuristic.api.EnumsApi.SourceCodeType;
 import static ai.metaheuristic.api.EnumsApi.TaskExecState;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 8/20/2020
  * Time: 12:02 AM
  */
-public class TestExecContextState {
+@Execution(CONCURRENT)
+class TestExecContextState {
 
     @Test
     public void test() {
@@ -50,10 +53,10 @@ public class TestExecContextState {
 
         Map<Long, TaskApiData.TaskState> states = Map.of(
                 100L, new TaskApiData.TaskState(100L, TaskExecState.OK.value, 0L, false, "1", "process-1"),
-                120L, new TaskApiData.TaskState(120L, TaskExecState.IN_PROGRESS.value, 0L, false, "1", "process-2"),
-                140L, new TaskApiData.TaskState(140L, TaskExecState.NONE.value, 0L, false, "1", "process-3"),
-                160L, new TaskApiData.TaskState(160L, TaskExecState.OK.value, 0L, false, "1", "process-2"),
-                180L, new TaskApiData.TaskState(180L, TaskExecState.ERROR.value, 0L, false, "1", "process-3"),
+                120L, new TaskApiData.TaskState(120L, TaskExecState.IN_PROGRESS.value, 0L, false, "1,1", "process-2"),
+                140L, new TaskApiData.TaskState(140L, TaskExecState.NONE.value, 0L, false, "1,1", "process-3"),
+                160L, new TaskApiData.TaskState(160L, TaskExecState.OK.value, 0L, false, "1,2", "process-2"),
+                180L, new TaskApiData.TaskState(180L, TaskExecState.ERROR.value, 0L, false, "1,2", "process-3"),
                 190L, new TaskApiData.TaskState(190L, TaskExecState.OK.value, 0L, false, "1", "mh.finish")
         );
         List<String> processCodes = List.of("process-1", "process-2", "process-3", "mh.finish");
@@ -142,11 +145,11 @@ public class TestExecContextState {
 
         Map<Long, TaskApiData.TaskState> states = Map.of(
                 1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1", "f-init"),
-                2L, new TaskApiData.TaskState(2L, TaskExecState.OK.value, 0L, false, "1", "f-decompose"),
-                3L, new TaskApiData.TaskState(3L, TaskExecState.IN_PROGRESS.value, 0L, false, "1", "f-decompose"),
-                4L, new TaskApiData.TaskState(4L, TaskExecState.OK.value, 0L, false, "1", "f-analyze"),
-                5L, new TaskApiData.TaskState(5L, TaskExecState.NONE.value, 0L, false, "1", "f-analyze"),
-                6L, new TaskApiData.TaskState(6L, TaskExecState.ERROR.value, 0L, false, "1", "f-validate"),
+                2L, new TaskApiData.TaskState(2L, TaskExecState.OK.value, 0L, false, "1,1", "f-decompose"),
+                3L, new TaskApiData.TaskState(3L, TaskExecState.IN_PROGRESS.value, 0L, false, "1,2", "f-decompose"),
+                4L, new TaskApiData.TaskState(4L, TaskExecState.OK.value, 0L, false, "1,1,1", "f-analyze"),
+                5L, new TaskApiData.TaskState(5L, TaskExecState.NONE.value, 0L, false, "1,1,2", "f-analyze"),
+                6L, new TaskApiData.TaskState(6L, TaskExecState.ERROR.value, 0L, false, "1,1,1,1", "f-validate"),
                 7L, new TaskApiData.TaskState(7L, TaskExecState.OK.value, 0L, false, "1", "mh.finish")
         );
 
@@ -283,10 +286,10 @@ public class TestExecContextState {
 
         Map<Long, TaskApiData.TaskState> states = Map.of(
                 100L, new TaskApiData.TaskState(100L, TaskExecState.OK.value, 0L, false, "1", "function-1"),
-                120L, new TaskApiData.TaskState(120L, TaskExecState.IN_PROGRESS.value, 0L, false, "1", "function-2"),
-                140L, new TaskApiData.TaskState(140L, TaskExecState.NONE.value, 0L, false, "1", "function-3"),
-                160L, new TaskApiData.TaskState(160L, TaskExecState.OK.value, 0L, false, "1", "function-2"),
-                180L, new TaskApiData.TaskState(180L, TaskExecState.ERROR.value, 0L, false, "1", "function-3"),
+                120L, new TaskApiData.TaskState(120L, TaskExecState.IN_PROGRESS.value, 0L, false, "1,1", "function-2"),
+                140L, new TaskApiData.TaskState(140L, TaskExecState.NONE.value, 0L, false, "1,1", "function-3"),
+                160L, new TaskApiData.TaskState(160L, TaskExecState.OK.value, 0L, false, "1,2", "function-2"),
+                180L, new TaskApiData.TaskState(180L, TaskExecState.ERROR.value, 0L, false, "1,2", "function-3"),
                 190L, new TaskApiData.TaskState(190L, TaskExecState.OK.value, 0L, false, "1", "mh.finish")
         );
 
