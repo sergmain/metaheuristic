@@ -69,6 +69,7 @@ public class TaskTxService {
                 TaskApiData.TaskState taskState = new TaskApiData.TaskState(
                     t.id, t.execState, updatedOn, taskParamsYaml.task.fromCache, taskParamsYaml.task.taskContextId, taskParamsYaml.task.processCode);
                 states.put(taskState.taskId(), taskState);
+                log.info("540.045 task #{}, execState={}, taskContextId='{}', processCode='{}'", t.id, t.execState, taskParamsYaml.task.taskContextId, taskParamsYaml.task.processCode);
             });
         }
         log.info("540.040 getExecStateOfTasks() with {} tasks was finished for {} mills", ids.size(), System.currentTimeMillis()-mills);

@@ -136,6 +136,11 @@ public class ExecContextTxService {
 
         Map<Long, TaskApiData.TaskState> taskStates = taskTxService.getExecStateOfTasks(execContextId);
 
+        log.info("705.225 execContextId={}, variableStates.size={}, taskStates.size={}", execContextId, variableStates.size(), taskStates.size());
+        for (Map.Entry<Long, TaskApiData.TaskState> e : taskStates.entrySet()) {
+            log.info("705.226 taskId={}, state={}", e.getKey(), e.getValue());
+        }
+
         ExecContextApiData.RawExecContextStateResult rawResult = new ExecContextApiData.RawExecContextStateResult(
             sourceCodeId, variableStates, processCodes, result.sourceCodeType, result.sourceCodeUid, result.sourceCodeValid, taskStates
         );
