@@ -69,6 +69,7 @@ public class TxSupportForTestingService {
     private final ExecContextCreatorService execContextCreatorService;
     private final BatchCache batchCache;
     private final ExecContextCache execContextCache;
+    private final ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache sourceCodeCache;
 
     @Transactional(rollbackFor = CommonRollbackException.class)
     public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, ExecContextApiData.UserExecContext context) {
@@ -236,6 +237,11 @@ public class TxSupportForTestingService {
         OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(graphAndStates, parentTaskIds, taskIds, EnumsApi.TaskExecState.NONE);
         execContextGraphService.save(graphAndStates);
         return osr;
+    }
+
+    @Transactional
+    public void deleteSourceCodeById(Long sourceCodeId) {
+        sourceCodeCache.deleteById(sourceCodeId);
     }
 
 
