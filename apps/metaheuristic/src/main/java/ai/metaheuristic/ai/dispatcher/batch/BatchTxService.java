@@ -157,7 +157,7 @@ public class BatchTxService {
 
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext==null) {
-            return new BatchData.UploadingStatus("#981.205 ExecContext was lost");
+            return new BatchData.UploadingStatus("981.205 ExecContext was lost");
         }
 
         Batch b = createBatch(sourceCode, execContextId, dispatcherContext);
@@ -203,7 +203,7 @@ public class BatchTxService {
 
         Batch batch = batchCache.findById(batchId);
         if (batch == null || !batch.companyId.equals(companyUniqueId)) {
-            final String es = "#981.280 Batch wasn't found, batchId: " + batchId;
+            final String es = "981.280 Batch wasn't found, batchId: " + batchId;
             log.info(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
@@ -247,7 +247,7 @@ public class BatchTxService {
         try {
             Batch batch = batchCache.findById(batchId);
             if (batch == null) {
-                final String es = "#981.440 Batch wasn't found, batchId: " + batchId;
+                final String es = "981.440 Batch wasn't found, batchId: " + batchId;
                 log.warn(es);
                 return new BatchData.Status(es);
             }
@@ -255,14 +255,14 @@ public class BatchTxService {
             CleanerInfo cleanerInfo = getBatchProcessingResultInternal(batch, companyUniqueId, includeDeleted, "batch-status");
             try {
                 if (cleanerInfo.entity==null) {
-                    final String es = "#981.305 Batch wasn't found, batchId: " + batchId;
+                    final String es = "981.305 Batch wasn't found, batchId: " + batchId;
                     log.warn(es);
                     return new BatchData.Status(es);
                 }
 
                 AbstractResource body = cleanerInfo.entity.getBody();
                 if (body == null) {
-                    final String es = "#981.320 Batch wasn't found, batchId: " + batchId;
+                    final String es = "981.320 Batch wasn't found, batchId: " + batchId;
                     log.warn(es);
                     return new BatchData.Status(es);
                 }
@@ -274,7 +274,7 @@ public class BatchTxService {
                 DirUtils.deletePaths(cleanerInfo.toClean);
             }
         } catch (Throwable th) {
-            String es = S.f("#981.380 Error while getting status for batch #%d, error: %s", batchId, th.getMessage());
+            String es = S.f("981.380 Error while getting status for batch #%d, error: %s", batchId, th.getMessage());
             log.warn(es, th);
             return new BatchData.Status(es);
         }
@@ -284,7 +284,7 @@ public class BatchTxService {
     public CleanerInfo getBatchOriginFile(Long batchId) {
         final Batch batch = batchCache.findById(batchId);
         if (batch == null) {
-            final String es = "#981.440 Batch wasn't found, batchId: " + batchId;
+            final String es = "981.440 Batch wasn't found, batchId: " + batchId;
             log.warn(es);
             return new CleanerInfo();
         }
@@ -301,14 +301,14 @@ public class BatchTxService {
     @Nullable
     private static String selectVariable(Long execContextId, SourceCodeParamsYaml scpy) {
         if (scpy.source.variables==null || scpy.source.variables.inputs.size()!=1) {
-            final String es = "#981.410 expected only one input variable in execContext but actual count: " +
+            final String es = "981.410 expected only one input variable in execContext but actual count: " +
                 (scpy.source.variables==null ? "null" : ""+scpy.source.variables.inputs.size());
             log.warn(es);
             return null;
         }
         String variableName = scpy.source.variables.inputs.get(0).name;
         if (S.b(variableName)) {
-            final String es = "#981.420 input variable in execContext #" + execContextId + " is empty";
+            final String es = "981.420 input variable in execContext #" + execContextId + " is empty";
             log.warn(es);
             return null;
         }
@@ -323,7 +323,7 @@ public class BatchTxService {
         try {
             Path resultDir = DirUtils.createMhTempPath("prepare-file-processing-result-");
             if (resultDir==null) {
-                throw new RuntimeException("#981.430 can't create temp directory");
+                throw new RuntimeException("981.430 can't create temp directory");
             }
             resource.toClean.add(resultDir);
 
@@ -332,7 +332,7 @@ public class BatchTxService {
 
             SourceCodeImpl sc = sourceCodeCache.findById(batch.sourceCodeId);
             if (sc==null) {
-                final String es = "#981.460 SourceCode wasn't found, sourceCodeId: " + batch.sourceCodeId;
+                final String es = "981.460 SourceCode wasn't found, sourceCodeId: " + batch.sourceCodeId;
                 log.warn(es);
                 return resource;
             }
@@ -342,7 +342,7 @@ public class BatchTxService {
 
             Variable variable = variableService.getVariableAsSimple(batch.execContextId, resultBatchVariable);
             if (variable==null) {
-                final String es = "#981.480 Can't find variable '"+resultBatchVariable+"'";
+                final String es = "981.480 Can't find variable '"+resultBatchVariable+"'";
                 log.warn(es);
                 return resource;
             }
@@ -351,7 +351,7 @@ public class BatchTxService {
             if (S.b(filename)) {
                 filename = outputFilenameFunction.apply(batch.execContextId, scpy);
                 if (S.b(filename)) {
-                    final String es = "#981.500 Can't find filename for file";
+                    final String es = "981.500 Can't find filename for file";
                     log.warn(es);
                     return resource;
                 }
@@ -370,7 +370,7 @@ public class BatchTxService {
             resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             return resource;
         } catch (Throwable th) {
-            log.error("#981.515 General error", th);
+            log.error("981.515 General error", th);
             resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
             return resource;
         }
@@ -379,7 +379,7 @@ public class BatchTxService {
     private CleanerInfo getBatchProcessingResult(Long batchId, Long companyUniqueId, boolean includeDeleted) {
         Batch batch = batchCache.findById(batchId);
         if (batch == null) {
-            final String es = "#981.520 Batch wasn't found, batchId: " + batchId;
+            final String es = "981.520 Batch wasn't found, batchId: " + batchId;
             log.warn(es);
             return new CleanerInfo();
         }
@@ -390,37 +390,37 @@ public class BatchTxService {
         return getVariable(batch, companyUniqueId, includeDeleted, (execContextId, scpy)-> {
             List<SourceCodeParamsYaml.Variable> vars = SourceCodeTxService.findVariableByType(scpy, variableType);
             if (vars.isEmpty()) {
-                final String es = "#981.540 variable with type '"+variableType+"' wasn't found";
+                final String es = "981.540 variable with type '"+variableType+"' wasn't found";
                 log.warn(es);
                 return null;
             }
             if (vars.size()>1) {
-                final String es = "#981.560 too many variables with type '"+variableType+"'. " + vars;
+                final String es = "981.560 too many variables with type '"+variableType+"'. " + vars;
                 log.warn(es);
                 return null;
             }
             return vars.get(0).name;
         }, (execContextId, scpy) -> {
             if (scpy.source.variables.inputs.size()!=1) {
-                final String es = "#981.580 expected only one input variable in execContext but actual count: " + scpy.source.variables.inputs.size();
+                final String es = "981.580 expected only one input variable in execContext but actual count: " + scpy.source.variables.inputs.size();
                 log.warn(es);
                 return null;
             }
             String variableName = scpy.source.variables.inputs.get(0).name;
             if (S.b(variableName)) {
-                final String es = "#981.600 input variable in execContext #"+batch.execContextId+" is empty";
+                final String es = "981.600 input variable in execContext #"+batch.execContextId+" is empty";
                 log.warn(es);
                 return null;
             }
 
             Variable inputVariable = variableService.getVariableAsSimple(execContextId, variableName);
             if (inputVariable==null) {
-                final String es = "#981.620 Can't find a start input variable '"+variableName+"'";
+                final String es = "981.620 Can't find a start input variable '"+variableName+"'";
                 log.warn(es);
                 return null;
             }
             if (S.b(inputVariable.filename)) {
-                final String es = "#981.640 input variable '"+variableName+"' has an empty filename";
+                final String es = "981.640 input variable '"+variableName+"' has an empty filename";
                 log.warn(es);
                 return null;
             }

@@ -100,7 +100,7 @@ public class ExecContextFSM {
 
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#303.040 execContext wasn't found, execContextId: " + execContextId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "303.040 execContext wasn't found, execContextId: " + execContextId);
         }
         if (execContext.state != execState.code) {
             execContext.setState(execState.code);
@@ -116,7 +116,7 @@ public class ExecContextFSM {
             execContext.setState(state.code);
             execContextCache.save(execContext);
         } else if (execContext.state!= EnumsApi.ExecContextState.FINISHED.code && execContext.completedOn != null) {
-            log.error("#303.080 Integrity failed, current state: {}, new state: {}, but execContext.completedOn!=null",
+            log.error("303.080 Integrity failed, current state: {}, new state: {}, but execContext.completedOn!=null",
                     execContext.state, state.code);
         }
     }
@@ -126,7 +126,7 @@ public class ExecContextFSM {
         TxUtils.checkTxExists();
         TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
         if (task==null) {
-            log.warn("#303.100 Reporting about non-existed task #{}", result.taskId);
+            log.warn("303.100 Reporting about non-existed task #{}", result.taskId);
             return;
         }
         if (task.resultReceived!=0) {

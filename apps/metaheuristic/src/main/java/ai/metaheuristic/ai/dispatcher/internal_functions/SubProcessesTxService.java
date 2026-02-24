@@ -80,7 +80,7 @@ public class SubProcessesTxService {
         } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
             throw e;
         } catch (Throwable th) {
-            String es = "#995.300 An error while saving data to file, " + th.getMessage();
+            String es = "995.300 An error while saving data to file, " + th.getMessage();
             log.error(es, th);
             throw new BatchResourceProcessingException(es);
         }

@@ -50,7 +50,7 @@ public class SourceCodeValidationUtils {
 
         if (sourceCode.getProcesses()!=null && sourceCode.getProcesses().isEmpty()) {
             return new SourceCodeApiData.SourceCodeValidationResult(
-                    EnumsApi.SourceCodeValidateStatus.NO_ANY_PROCESSES_ERROR, "#177.080 At least one process must be defined");
+                    EnumsApi.SourceCodeValidateStatus.NO_ANY_PROCESSES_ERROR, "177.080 At least one process must be defined");
         }
         SourceCodeApiData.SourceCodeValidationResult result = checkStrictNaming(sourceCode);
         if (result.status!=OK) {
@@ -66,7 +66,7 @@ public class SourceCodeValidationUtils {
         for (int i = 0; i < processes.size(); i++) {
             SourceCodeParamsYaml.Process process = processes.get(i);
             if (S.b(process.code)) {
-                final String msg = "#177.090 Code of process is blank";
+                final String msg = "177.090 Code of process is blank";
                 log.error(msg);
                 return new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.PROCESS_CODE_NOT_FOUND_ERROR, msg);
             }
@@ -74,19 +74,19 @@ public class SourceCodeValidationUtils {
             if (code != null) {
                 return new SourceCodeApiData.SourceCodeValidationResult(
                         EnumsApi.SourceCodeValidateStatus.PROCESS_CODE_NOT_UNIQUE_ERROR,
-                        "#177.100 There are at least two processes with the same code '" + code + "'");
+                        "177.100 There are at least two processes with the same code '" + code + "'");
             }
             code = validateProcessCode(process);
             if (code != null) {
                 return new SourceCodeApiData.SourceCodeValidationResult(
                         EnumsApi.SourceCodeValidateStatus.PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR,
-                        "#177.105 The code of process contains not allowed chars: '" + process.code + "'");
+                        "177.105 The code of process contains not allowed chars: '" + process.code + "'");
             }
             code = validateSubProcessLogic(process);
             if (code != null) {
                 return new SourceCodeApiData.SourceCodeValidationResult(
                         EnumsApi.SourceCodeValidateStatus.SUB_PROCESS_LOGIC_NOT_DEFINED,
-                        "#177.107 The process '" + code + "' has sub processes but logic isn't defined");
+                        "177.107 The process '" + code + "' has sub processes but logic isn't defined");
             }
             boolean finish = process.function.code.equals(Consts.MH_FINISH_FUNCTION);
             if (!finish) {
@@ -94,25 +94,25 @@ public class SourceCodeValidationUtils {
                     if (S.b(variable.name)) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR,
-                                "#177.160 Output variable in process " + process.code + " must have a name");
+                                "177.160 Output variable in process " + process.code + " must have a name");
                     }
                     if (variable.getSourcing() == null) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.SOURCING_OF_VARIABLE_NOT_DEFINED_ERROR,
-                                "#177.180 Output variable " + variable.name + " in process " + process.code + " must have a defined sourcing");
+                                "177.180 Output variable " + variable.name + " in process " + process.code + " must have a defined sourcing");
                     }
                     EnumsApi.SourceCodeValidateStatus status = SourceCodeUtils.isVariableNameOk(variable.name);
                     if (status != OK) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_VARIABLE_NAME_ERROR,
-                                "#177.183 Output variable in process " + process.code + " has a wrong chars in name");
+                                "177.183 Output variable in process " + process.code + " has a wrong chars in name");
                     }
                 }
                 for (SourceCodeParamsYaml.Variable variable : process.inputs) {
                     if (S.b(variable.name)) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.INPUT_VARIABLE_NOT_DEFINED_ERROR,
-                                "#177.185 Output variable in process " + process.code + " must have a name");
+                                "177.185 Output variable in process " + process.code + " must have a name");
                     }
                     EnumsApi.SourceCodeValidateStatus status = SourceCodeUtils.isVariableNameOk(variable.name);
                     if (status != OK) {
@@ -152,7 +152,7 @@ public class SourceCodeValidationUtils {
                 if (!(o instanceof Map)) {
                     return new SourceCodeApiData.SourceCodeValidationResult(
                             EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
-                            "#177.225 Inline variables group must be type of Map, actual: " + o.getClass());
+                            "177.225 Inline variables group must be type of Map, actual: " + o.getClass());
 
                 }
 
@@ -161,14 +161,14 @@ public class SourceCodeValidationUtils {
                     if (!(entry.getKey() instanceof String)) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
-                                "#177.227 key in Inline variable must be type of String, actual: " + e.getKey().getClass() + ", value: " + entry.getKey());
+                                "177.227 key in Inline variable must be type of String, actual: " + e.getKey().getClass() + ", value: " + entry.getKey());
                     }
 
                     Object obj = entry.getValue();
                     if (!(obj instanceof String)) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
-                                S.f("#177.229 Value of Inline variables with key '%s' must be type of String, actual: %s", entry.getKey(), o.getClass()));
+                                S.f("177.229 Value of Inline variables with key '%s' must be type of String, actual: %s", entry.getKey(), o.getClass()));
                     }
                 }
             }
@@ -185,13 +185,13 @@ public class SourceCodeValidationUtils {
             if (!badNames.isEmpty()) {
                 return new SourceCodeApiData.SourceCodeValidationResult(
                         EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
-                        S.f("#177.230 SourceCode-level input variables have wrong names: %s", String.join(",", badNames)));
+                        S.f("177.230 SourceCode-level input variables have wrong names: %s", String.join(",", badNames)));
             }
             badNames = sourceCodeYaml.variables.outputs.stream().map(o -> o.name).filter(o -> !StrUtils.isVarNameOk(o)).collect(Collectors.toList());
             if (!badNames.isEmpty()) {
                 return new SourceCodeApiData.SourceCodeValidationResult(
                         EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
-                        S.f("#177.231 SourceCode-level output variables have wrong names: %s", String.join(",", badNames)));
+                        S.f("177.231 SourceCode-level output variables have wrong names: %s", String.join(",", badNames)));
             }
         }
         for (SourceCodeParamsYaml.Process p : sourceCodeYaml.processes) {
@@ -216,13 +216,13 @@ public class SourceCodeValidationUtils {
         if (!badNames.isEmpty()) {
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
-                    S.f("#177.232 SourceCode-level input variables have wrong names: %s", String.join(", ", badNames)));
+                    S.f("177.232 SourceCode-level input variables have wrong names: %s", String.join(", ", badNames)));
         }
         badNames = process.outputs.stream().map(o->o.name).filter(o->!StrUtils.isVarNameOk(o)).collect(Collectors.toList());
         if (!badNames.isEmpty()) {
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus. WRONG_FORMAT_OF_INLINE_VARIABLE_ERROR,
-                    S.f("#177.233 SourceCode-level output variables have wrong names: %s", String.join(", ", badNames)));
+                    S.f("177.233 SourceCode-level output variables have wrong names: %s", String.join(", ", badNames)));
         }
         if (process.subProcesses!=null) {
             for (SourceCodeParamsYaml.Process p : process.subProcesses.processes) {
@@ -315,13 +315,13 @@ public class SourceCodeValidationUtils {
         if (codes.contains(Consts.MH_EVALUATION_FUNCTION) && !Boolean.TRUE.equals(sourceCodeYaml.strictNaming)) {
             return new SourceCodeApiData.SourceCodeValidationResult(
                     EnumsApi.SourceCodeValidateStatus.STRICT_NAMING_REQUIRED_ERROR,
-                    "#177.235 strictNaming must be true if the function 'mh.evaluation' is being used");
+                    "177.235 strictNaming must be true if the function 'mh.evaluation' is being used");
         }
         for (SourceCodeParamsYaml.Process process : sourceCodeYaml.processes) {
             if (checkForCondition(process) && !Boolean.TRUE.equals(sourceCodeYaml.strictNaming)) {
                 return new SourceCodeApiData.SourceCodeValidationResult(
                         EnumsApi.SourceCodeValidateStatus.STRICT_NAMING_REQUIRED_ERROR,
-                        "#177.236 strictNaming must be true if the condition of process is being used");
+                        "177.236 strictNaming must be true if the condition of process is being used");
             }
         }
         return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;

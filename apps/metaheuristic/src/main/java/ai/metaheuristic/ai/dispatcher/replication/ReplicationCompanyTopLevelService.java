@@ -109,7 +109,7 @@ public class ReplicationCompanyTopLevelService {
     private ReplicationData.@Nullable CompanyAsset getCompanyAsset(Long uniqueId) {
         ReplicationData.CompanyAsset companyAsset = requestCompanyAsset(uniqueId);
         if (companyAsset.isErrorMessages()) {
-            log.error("#308.020 Error while getting company with uniqueId "+ uniqueId +", error: " + companyAsset.getErrorMessagesAsStr());
+            log.error("308.020 Error while getting company with uniqueId "+ uniqueId +", error: " + companyAsset.getErrorMessagesAsStr());
             return null;
         }
         return companyAsset;

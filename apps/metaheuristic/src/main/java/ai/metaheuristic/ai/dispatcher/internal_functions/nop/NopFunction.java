@@ -60,6 +60,6 @@ public class NopFunction implements InternalFunction {
                 ExecContextTaskStateSyncService.getWithSync(simpleExecContext.execContextTaskStateId, ()->
                     subProcessesTxService.processSubProcesses(simpleExecContext, taskId, taskParamsYaml)));
 
-        log.debug("#055.020 Nop function was invoked");
+        log.debug("055.020 Nop function was invoked");
     }
 }

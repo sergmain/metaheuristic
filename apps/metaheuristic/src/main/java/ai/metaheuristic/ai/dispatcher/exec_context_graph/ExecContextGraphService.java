@@ -286,11 +286,11 @@ public class ExecContextGraphService {
                         // do nothing
                     }
                     else if (execState == EnumsApi.TaskExecState.SKIPPED) {
-                        log.info("#915.015 TaskExecState for task #{} is SKIPPED", tv.taskId);
+                        log.info("915.015 TaskExecState for task #{} is SKIPPED", tv.taskId);
                         // todo 2020-08-16 need to decide what to do here
                     }
                     else if (execState == EnumsApi.TaskExecState.CHECK_CACHE) {
-                        log.info("#915.017 TaskExecState for task #{} is CHECK_CACHE", tv.taskId);
+                        log.info("915.017 TaskExecState for task #{} is CHECK_CACHE", tv.taskId);
                         // todo 2020-11-01 need to decide what to do here
                     }
                     else if (execState == EnumsApi.TaskExecState.IN_PROGRESS) {
@@ -349,7 +349,7 @@ public class ExecContextGraphService {
                         .collect(Collectors.toList());
                 return vertices;
             } catch (Throwable th) {
-                log.error("#915.019 error", th);
+                log.error("915.019 error", th);
                 throw new RuntimeException("Error", th);
             }
         });

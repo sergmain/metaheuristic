@@ -68,7 +68,7 @@ public class ReplicationFunctionTopLevelService {
     private ReplicationData.@Nullable FunctionAsset getFunctionAsset(String functionCode) {
         ReplicationData.FunctionAsset functionAsset = requestFunctionAsset(functionCode);
         if (functionAsset.isErrorMessages()) {
-            log.error("#306.020 Error while getting function {} , error: {}",  functionCode, functionAsset.getErrorMessagesAsStr());
+            log.error("306.020 Error while getting function {} , error: {}",  functionCode, functionAsset.getErrorMessagesAsStr());
             return null;
         }
         return functionAsset;

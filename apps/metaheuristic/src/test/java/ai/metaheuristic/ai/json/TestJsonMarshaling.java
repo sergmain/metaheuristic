@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class TestJsonMarshaling {
 
-    private static final String JSON = "{\"errorMessages\":[\"#295.230 Fatal error - file is null \"],\"infoMessages\":null,\"status\":\"ERROR\",\"errorMessagesAsList\":[\"#295.230 Fatal error - file is null \"],\"errorMessagesAsStr\":\"#295.230 Fatal error - file is null \",\"infoMessagesAsList\":[]}";
+    private static final String JSON = "{\"errorMessages\":[\"295.230 Fatal error - file is null \"],\"infoMessages\":null,\"status\":\"ERROR\",\"errorMessagesAsList\":[\"295.230 Fatal error - file is null \"],\"errorMessagesAsStr\":\"295.230 Fatal error - file is null \",\"infoMessagesAsList\":[]}";
 
 
     @Data

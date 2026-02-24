@@ -96,7 +96,7 @@ public class InternalFunctionVariableService {
         List<VariableUtils.VariableHolder> holders = discoverVariables(execContextId, taskContextId, inputVariableName);
         if (holders.size()>1) {
             throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#995.040 Too many variables"));
+                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "995.040 Too many variables"));
         }
 
         VariableUtils.VariableHolder variableHolder = holders.get(0);

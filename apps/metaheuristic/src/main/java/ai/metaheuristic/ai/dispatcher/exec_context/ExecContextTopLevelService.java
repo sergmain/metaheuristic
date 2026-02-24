@@ -284,7 +284,7 @@ public class ExecContextTopLevelService {
 
         TaskImpl task = taskRepository.findByIdReadOnly(taskId);
         if (task == null) {
-            log.warn("#210.360 Reporting about non-existed task #{}", taskId);
+            log.warn("210.360 Reporting about non-existed task #{}", taskId);
             return new ExecContextApiData.TaskExecInfo(sourceCodeId, execContextId, taskId, EnumsApi.TaskExecState.ERROR, S.f("Task #%s wasn't found", taskId));
         }
         if (!execContextId.equals(task.execContextId)) {

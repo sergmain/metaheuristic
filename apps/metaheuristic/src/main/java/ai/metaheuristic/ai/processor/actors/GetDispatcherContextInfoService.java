@@ -74,7 +74,7 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
 
             final DispatcherLookupParamsYaml.AssetManager assetManager = processorEnvironment.dispatcherLookupExtendedService.getAssetManager(task.assetManagerUrl);
             if (assetManager==null) {
-                log.error("#806.020 assetManager server wasn't found for url {}", task.assetManagerUrl.url);
+                log.error("806.020 assetManager server wasn't found for url {}", task.assetManagerUrl.url);
                 continue;
             }
 
@@ -97,35 +97,35 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
             }
             catch (HttpResponseException e) {
                 if (e.getStatusCode()== HttpServletResponse.SC_FORBIDDEN) {
-                    log.warn("#806.200 Access denied to Asset manager at {}", assetManager.url);
+                    log.warn("806.200 Access denied to Asset manager at {}", assetManager.url);
                 }
                 else if (e.getStatusCode()== HttpServletResponse.SC_NOT_FOUND) {
-                    log.warn("#806.203 Asset manager at {} wasn't found. Need to check the dispatcher.yaml config file", assetManager.url);
+                    log.warn("806.203 Asset manager at {} wasn't found. Need to check the dispatcher.yaml config file", assetManager.url);
                 }
                 else if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
-                    log.warn("#806.205 Functions wasn't found at {}", assetManager.url);
+                    log.warn("806.205 Functions wasn't found at {}", assetManager.url);
                 }
                 else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
-                    log.warn("#806.210 Functions are broken and need to be recreated");
+                    log.warn("806.210 Functions are broken and need to be recreated");
                 }
                 else if (e.getStatusCode()== HttpServletResponse.SC_SERVICE_UNAVAILABLE) {
-                    log.warn("#806.210 Service Unavailable for url {}", assetManager.url);
+                    log.warn("806.210 Service Unavailable for url {}", assetManager.url);
                 }
                 else {
-                    log.error("#806.220 HttpResponseException for url: "+assetManager.url+ ", code: "+ e.getStatusCode(), e);
+                    log.error("806.220 HttpResponseException for url: "+assetManager.url+ ", code: "+ e.getStatusCode(), e);
                 }
             }
             catch (HttpHostConnectException e) {
-                log.error("#806.170 HttpHostConnectException: {}, assetManagerUrl: {}", e.toString(), assetManager.url);
+                log.error("806.170 HttpHostConnectException: {}, assetManagerUrl: {}", e.toString(), assetManager.url);
             }
             catch (SocketTimeoutException e) {
-                log.error("#806.175 SocketTimeoutException: {}, assetManagerUrl: {}", e.toString(), assetManager.url);
+                log.error("806.175 SocketTimeoutException: {}, assetManagerUrl: {}", e.toString(), assetManager.url);
             }
             catch (IOException e) {
-                log.error(S.f("#806.180 IOException, assetManagerUrl: %s", assetManager.url), e);
+                log.error(S.f("806.180 IOException, assetManagerUrl: %s", assetManager.url), e);
             }
             catch (Throwable th) {
-                log.error(S.f("#806.190 Throwable, assetManagerUrl: %s", assetManager.url), th);
+                log.error(S.f("806.190 Throwable, assetManagerUrl: %s", assetManager.url), th);
             }
         }
     }

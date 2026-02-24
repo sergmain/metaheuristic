@@ -53,7 +53,7 @@ public class AssetUtils {
         final AssetFile assetFile = new AssetFile();
         assetFile.file = file;
         if (Files.isDirectory(file)) {
-            String es = S.f("#025.020 path {} is dir", file.toAbsolutePath());
+            String es = S.f("025.020 path {} is dir", file.toAbsolutePath());
             log.error(es);
             assetFile.error = es;
             assetFile.isError = true;
@@ -85,7 +85,7 @@ public class AssetUtils {
         Files.createDirectories(assetDir);
         if (Files.notExists(assetDir)) {
             assetFile.isError = true;
-            log.error("#025.040 Can't create a variable dir for task: {}", assetDir.toAbsolutePath());
+            log.error("025.040 Can't create a variable dir for task: {}", assetDir.toAbsolutePath());
             return assetFile;
         }
         if (StringUtils.isNotBlank(filename)) {
@@ -96,7 +96,7 @@ public class AssetUtils {
             assetFile.file = assetDir.resolve(resId);
         }
         else {
-            throw new IllegalArgumentException("#025.050 filename==null && S.b(dataId)");
+            throw new IllegalArgumentException("025.050 filename==null && S.b(dataId)");
         }
         assetFile.isExist = Files.exists(assetFile.file);
 
@@ -125,7 +125,7 @@ public class AssetUtils {
         final AssetFile assetFile = new AssetFile();
         if (Files.notExists(resDir)) {
             assetFile.isError = true;
-            log.error("#025.080 Can't create a concrete function dir: {}", resDir.toAbsolutePath());
+            log.error("025.080 Can't create a concrete function dir: {}", resDir.toAbsolutePath());
             return assetFile;
         }
         assetFile.file = (!S.b(resourceFilename) ? resDir.resolve(resourceFilename) : resDir.resolve(resId));

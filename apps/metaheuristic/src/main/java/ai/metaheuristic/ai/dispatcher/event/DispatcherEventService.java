@@ -193,7 +193,7 @@ public class DispatcherEventService {
 //        headers.add(Consts.HEADER_MH_CHUNK_SIZE, Long.toString(f.length()));
 //        headers.add(Consts.HEADER_MH_IS_LAST_CHUNK, Boolean.toString(isLastChunk));
 
-        log.warn("#456.020 size of zip archive with billing events is " + Files.size(zipFile));
+        log.warn("456.020 size of zip archive with billing events is " + Files.size(zipFile));
         resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), headers, HttpStatus.OK);
         return resource;
     }

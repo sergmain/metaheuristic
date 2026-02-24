@@ -69,7 +69,7 @@ public class TaskWithInternalContextTopLevelService {
         TaskImpl task = taskRepository.findByIdReadOnly(taskId);
 
         if (task==null) {
-            throw new InternalFunctionException(task_not_found, "#992.020 Task not found #" + taskId);
+            throw new InternalFunctionException(task_not_found, "992.020 Task not found #" + taskId);
         }
 
         TaskParamsYaml taskParamsYaml = task.getTaskParamsYaml();
@@ -81,22 +81,22 @@ public class TaskWithInternalContextTopLevelService {
     private void copyVariables(Long subExecContextId, TaskImpl task, TaskParamsYaml taskParamsYaml) {
         ExecContextImpl subExecContext = execContextCache.findById(subExecContextId, true);
         if (subExecContext == null) {
-            throw new InternalFunctionException(exec_context_not_found, "#992.040 ExecContext Not found #" +subExecContextId);
+            throw new InternalFunctionException(exec_context_not_found, "992.040 ExecContext Not found #" +subExecContextId);
         }
         ExecContextParamsYaml ecpy = subExecContext.getExecContextParamsYaml();
         if (ecpy.variables.outputs.size() != taskParamsYaml.task.outputs.size()) {
-            throw new InternalFunctionException(number_of_outputs_is_incorrect, "#992.060 number_of_outputs_is_incorrect");
+            throw new InternalFunctionException(number_of_outputs_is_incorrect, "992.060 number_of_outputs_is_incorrect");
         }
         ExecContextImpl ec = execContextCache.findById(task.execContextId, true);
         if (ec == null) {
-            throw new InternalFunctionException(exec_context_not_found, "#992.045 ExecContext Not found, #"+task.execContextId);
+            throw new InternalFunctionException(exec_context_not_found, "992.045 ExecContext Not found, #"+task.execContextId);
         }
         Path tempDir = null;
         try {
             tempDir = DirUtils.createMhTempPath("mh-exec-source-code-result-");
             if (tempDir == null) {
                 throw new InternalFunctionException(system_error,
-                                "#992.100 Can't create temporary directory in dir " + SystemUtils.JAVA_IO_TMPDIR);
+                                "992.100 Can't create temporary directory in dir " + SystemUtils.JAVA_IO_TMPDIR);
             }
 
             for (int i = 0; i < taskParamsYaml.task.outputs.size(); i++) {
@@ -107,17 +107,17 @@ public class TaskWithInternalContextTopLevelService {
                         subExecContextId, Consts.TOP_LEVEL_CONTEXT_ID, execContextOutput.name);
                 if (holders.size() > 1) {
                     throw new InternalFunctionException(source_code_is_broken,
-                                    "#992.110 Too many variables with the same name at top-level context, name: " + execContextOutput.name);
+                                    "992.110 Too many variables with the same name at top-level context, name: " + execContextOutput.name);
                 }
 
                 VariableUtils.VariableHolder variableHolder = holders.get(0);
                 if (variableHolder.variable == null) {
                     throw new InternalFunctionException(variable_not_found,
-                                    "#992.120 only local variable is supported right now. variable with name: " + execContextOutput.name + " wasn't found in local context");
+                                    "992.120 only local variable is supported right now. variable with name: " + execContextOutput.name + " wasn't found in local context");
                 }
                 if (!variableHolder.variable.inited) {
                     throw new InternalFunctionException(variable_not_found,
-                            "#992.120 local variable name " + execContextOutput.name + " wasn't inited, variableId: #"+variableHolder.variable.id);
+                            "992.120 local variable name " + execContextOutput.name + " wasn't inited, variableId: #"+variableHolder.variable.id);
                 }
                 if (variableHolder.variable.nullified) {
                     VariableSyncService.getWithSyncVoidForCreation(output.id,
@@ -135,8 +135,8 @@ public class TaskWithInternalContextTopLevelService {
             }
         }
         catch (IOException e) {
-            log.error("#992.220 Error", e);
-            throw new InternalFunctionException(system_error, "#992.240 error: " + e);
+            log.error("992.220 Error", e);
+            throw new InternalFunctionException(system_error, "992.240 error: " + e);
         }
         finally {
             DirUtils.deletePathAsync(tempDir);

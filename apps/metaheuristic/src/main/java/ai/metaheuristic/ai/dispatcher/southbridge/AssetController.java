@@ -72,7 +72,7 @@ public class AssetController {
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             @Nullable String code, @Nullable String chunkSize, @Nullable Integer chunkNum) {
         if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
-            log.error("#105.020 Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions");
+            log.error("105.020 Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions");
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.UNPROCESSABLE_ENTITY);
         }
         log.debug("deliverFunction(), code: {}, chunkSize: {}, chunkNum: {}", code, chunkSize, chunkNum);

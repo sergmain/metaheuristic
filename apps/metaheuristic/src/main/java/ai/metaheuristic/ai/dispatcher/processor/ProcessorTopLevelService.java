@@ -80,7 +80,7 @@ public class ProcessorTopLevelService {
     public ProcessorData.ProcessorResult getProcessor(Long id) {
         Processor processor = processorCache.findById(id);
         if (processor==null) {
-            return new ProcessorData.ProcessorResult("#808.040 Processor wasn't found for id #"+ id);
+            return new ProcessorData.ProcessorResult("808.040 Processor wasn't found for id #"+ id);
         }
         ProcessorData.ProcessorResult r = new ProcessorData.ProcessorResult(processor);
         return r;
@@ -104,7 +104,7 @@ public class ProcessorTopLevelService {
 
         if (processorRequest.processorCommContext ==null || processorRequest.processorCommContext.processorId==null) {
             // we throw ISE cos all checks have to be made early
-            throw new IllegalStateException("#809.080 processorId is null");
+            throw new IllegalStateException("809.080 processorId is null");
         }
         final Long processorId = processorRequest.processorCommContext.processorId;
         KeepAliveRequestParamYaml.ProcessorStatus status = processorRequest.status;
@@ -136,20 +136,20 @@ public class ProcessorTopLevelService {
 
         ProcessorStatusYaml ss = processor.getProcessorStatusYaml();
         if (StringUtils.isBlank(sessionId)) {
-            log.debug("#809.320 StringUtils.isBlank(sessionId), return ReAssignProcessorId() with new sessionId");
+            log.debug("809.320 StringUtils.isBlank(sessionId), return ReAssignProcessorId() with new sessionId");
             // the same processor but with different and expired sessionId
             // so we can continue to use this processorId with new sessionId
             return Enums.ProcessorAndSessionStatus.newSession;
         }
         if (!ss.sessionId.equals(sessionId)) {
             if ((System.currentTimeMillis() - ss.sessionCreatedOn) > Consts.SESSION_TTL) {
-                log.debug("#809.340 !ss.sessionId.equals(sessionId) && (System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL, return ReAssignProcessorId() with new sessionId");
+                log.debug("809.340 !ss.sessionId.equals(sessionId) && (System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL, return ReAssignProcessorId() with new sessionId");
                 // the same processor but with different and expired sessionId
                 // so we can continue to use this processorId with new sessionId
                 // we won't use processor's sessionIf to be sure that sessionId has valid format
                 return Enums.ProcessorAndSessionStatus.newSession;
             } else {
-                log.debug("#809.360 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignProcessorId() with new processorId and new sessionId");
+                log.debug("809.360 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignProcessorId() with new processorId and new sessionId");
                 // different processors with the same processorId
                 // there is other active processor with valid sessionId
                 return Enums.ProcessorAndSessionStatus.reassignProcessor;
@@ -225,7 +225,7 @@ public class ProcessorTopLevelService {
     @Nullable
     private static String processorBlacklisted(ProcessorStatusYaml status) {
         if (status.taskParamsVersion > TaskParamsYamlUtils.UTILS.getDefault().getVersion()) {
-            return "#809.400 Dispatcher is too old and can't communicate to this processor, needs to be upgraded";
+            return "809.400 Dispatcher is too old and can't communicate to this processor, needs to be upgraded";
         }
         return null;
     }
@@ -240,7 +240,7 @@ public class ProcessorTopLevelService {
             Long execContextId = ((Number)obj[2]).longValue();
 
             if (assignedOn==null) {
-                log.error("#809.440 Processor #{} has a task with assignedOn is null", processorId);
+                log.error("809.440 Processor #{} has a task with assignedOn is null", processorId);
             }
 
             boolean isFound = taskIds.contains(taskId);
@@ -249,7 +249,7 @@ public class ProcessorTopLevelService {
             // if Processor haven't reported back about this task in 90 seconds,
             // this task will be de-assigned from this Processor
             if (!isFound && isExpired) {
-                log.info("#809.480 De-assign task #{} from processor #{}", taskId, processorId);
+                log.info("809.480 De-assign task #{} from processor #{}", taskId, processorId);
                 log.info("\tstatuses: {}", taskIds);
                 log.info("\ttasks: {}", tasks.stream().map( o -> ""+o[0] + ',' + o[1]).collect(Collectors.toList()));
                 log.info("\tassignedOn: {}, isFound: {}, is expired: {}", assignedOn, isFound, isExpired);
@@ -273,7 +273,7 @@ public class ProcessorTopLevelService {
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
             // we throw ISE cos all checks have to be made early
-            throw new IllegalStateException("#809.520 Processor wasn't found for processorId: " + processorId);
+            throw new IllegalStateException("809.520 Processor wasn't found for processorId: " + processorId);
         }
         ProcessorStatusYaml psy = processor.getProcessorStatusYaml();
         if (psy.log!=null && psy.log.logRequested) {

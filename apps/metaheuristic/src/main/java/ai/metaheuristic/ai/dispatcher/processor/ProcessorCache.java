@@ -43,7 +43,7 @@ public class ProcessorCache {
 
     public Processor save(Processor processor) {
         TxUtils.checkTxExists();
-        log.debug("#457.010 save processor, id: #{}, processor: {}", processor.id, processor);
+        log.debug("457.010 save processor, id: #{}, processor: {}", processor.id, processor);
         return processorRepository.save(processor);
     }
 

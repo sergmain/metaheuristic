@@ -81,11 +81,11 @@ public class SeriesService {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
         if (S.b(name)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#354.020 Name of Series can't be empty");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "354.020 Name of Series can't be empty");
         }
         Series series = seriesRepository.findById(id).orElse(null);
         if (series==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#354.040 Series #"+id+" wasn't found");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "354.040 Series #"+id+" wasn't found");
         }
         series.name = name.strip();
         seriesRepository.save(series);
@@ -96,12 +96,12 @@ public class SeriesService {
     public OperationStatusRest processSeriesImport(Long seriesId, Long experimentResultId) {
         final Series series = seriesRepository.findById(seriesId).orElse(null);
         if (series == null) {
-            String errorMessage = "#354.060 series wasn't found, seriesId: " + seriesId;
+            String errorMessage = "354.060 series wasn't found, seriesId: " + seriesId;
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, errorMessage);
         }
         final ExperimentResult experimentResult = experimentResultRepository.findById(experimentResultId).orElse(null);
         if (experimentResult == null) {
-            String errorMessage = "#354.080 experimentResult wasn't found, experimentResultId: " + experimentResultId;
+            String errorMessage = "354.080 experimentResult wasn't found, experimentResultId: " + experimentResultId;
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, errorMessage);
         }
         ExperimentResultParams params = ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.getParams());

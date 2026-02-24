@@ -154,7 +154,7 @@ public class TaskService {
                     continue;
                 }
                 // #303.370 found a lost task #310927, which doesn't exist at processor #352. task exists in db: true, state: OK
-                log.info("#303.370 found a lost task #{}, which doesn't exist at core #{}. state: {}, assignedOn: {}, is old: {}",
+                log.info("303.370 found a lost task #{}, which doesn't exist at core #{}. state: {}, assignedOn: {}, is old: {}",
                         actualTaskId, event.coreId, EnumsApi.TaskExecState.from(task.execState),
                         task.assignedOn, System.currentTimeMillis() - task.assignedOn<60_000);
 
@@ -172,14 +172,14 @@ public class TaskService {
     public void processResendTaskOutputResourceResult(@Nullable Long processorId, Enums.ResendTaskOutputResourceStatus status, Long taskId, Long variableId) {
         switch (status) {
             case SEND_SCHEDULED:
-                log.info("#303.380 Processor #{} scheduled for sending an output variable #{}, task #{}. This is normal operation of Processor", processorId, variableId, taskId);
+                log.info("303.380 Processor #{} scheduled for sending an output variable #{}, task #{}. This is normal operation of Processor", processorId, variableId, taskId);
                 break;
             case TASK_NOT_FOUND:
             case VARIABLE_NOT_FOUND:
             case TASK_IS_BROKEN:
             case TASK_PARAM_FILE_NOT_FOUND:
                 applicationEventPublisher.publishEvent(new TaskFinishWithErrorEvent(taskId,
-                        "#303.390 Task #"+taskId+" was finished while resending variable #"+variableId+" with status " + status));
+                        "303.390 Task #"+taskId+" was finished while resending variable #"+variableId+" with status " + status));
 
                 break;
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:

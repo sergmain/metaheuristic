@@ -70,7 +70,7 @@ public class SystemProcessLauncher {
     public static ExecResult execCmd(List<String> commands, long timeout, int taskConsoleOutputMaxLines) {
         Path gitTemp = DirUtils.createMhTempPath("command-exec-");
         if (gitTemp==null) {
-            return new ExecResult(null, false, "#027.017 Error: can't create temporary directory");
+            return new ExecResult(null, false, "027.017 Error: can't create temporary directory");
         }
         Path consoleLogFile;
         try {
@@ -81,8 +81,8 @@ public class SystemProcessLauncher {
             log.info("systemExecResult: {}" , systemExecResult);
             return new ExecResult(systemExecResult, systemExecResult.isOk, systemExecResult.console);
         } catch (InterruptedException | IOException e) {
-            log.error("#027.020 Error", e);
-            return new ExecResult(null, false, "#027.020 Error: " + e.getMessage());
+            log.error("027.020 Error", e);
+            return new ExecResult(null, false, "027.020 Error: " + e.getMessage());
         }
         finally {
             DirUtils.deletePathAsync(gitTemp);

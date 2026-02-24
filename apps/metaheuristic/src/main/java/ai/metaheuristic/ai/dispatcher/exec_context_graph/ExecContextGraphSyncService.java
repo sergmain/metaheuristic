@@ -35,13 +35,13 @@ public class ExecContextGraphSyncService {
 
     public static void checkWriteLockPresent(Long execContextGraphId) {
         if (!getWriteLock(execContextGraphId).isHeldByCurrentThread()) {
-            throw new IllegalStateException("#974.020 Must be locked by WriteLock");
+            throw new IllegalStateException("974.020 Must be locked by WriteLock");
         }
     }
 
     public static void checkWriteLockNotPresent(Long execContextGraphId) {
         if (getWriteLock(execContextGraphId).isHeldByCurrentThread()) {
-            throw new IllegalStateException("#974.025 The thread was already locked by WriteLock");
+            throw new IllegalStateException("974.025 The thread was already locked by WriteLock");
         }
     }
 

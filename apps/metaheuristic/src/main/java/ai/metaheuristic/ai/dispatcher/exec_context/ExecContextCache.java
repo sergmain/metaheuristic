@@ -66,7 +66,7 @@ public class ExecContextCache {
         try {
             execContextRepository.deleteById(execContextId);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#461.050 Error deleting of execContext by id, {}", e.toString());
+            log.error("461.050 Error deleting of execContext by id, {}", e.toString());
         }
     }
 
@@ -75,7 +75,7 @@ public class ExecContextCache {
         try {
             execContextRepository.deleteById(execContextId);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#461.070 Error deleting of execContext by id, {}", e.toString());
+            log.error("461.070 Error deleting of execContext by id, {}", e.toString());
         }
     }
 

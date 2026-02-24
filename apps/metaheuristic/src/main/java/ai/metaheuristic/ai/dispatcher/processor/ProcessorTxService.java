@@ -237,7 +237,7 @@ public class ProcessorTxService {
         final Processor processor = processorCache.findById(processorId);
         if (processor == null) {
             // we throw ISE cos all checks have to be made early
-            throw new IllegalStateException("#807.100 Processor wasn't found for processorId: " + processorId);
+            throw new IllegalStateException("807.100 Processor wasn't found for processorId: " + processorId);
         }
 
         if (processorStatusDifferent) {

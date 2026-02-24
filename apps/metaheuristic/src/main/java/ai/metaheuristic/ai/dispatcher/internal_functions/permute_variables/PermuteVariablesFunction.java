@@ -100,7 +100,7 @@ public class PermuteVariablesFunction implements InternalFunction {
         TxUtils.checkTxNotExists();
 
         if (MetaUtils.isTrue(taskParamsYaml.task.metas, InlineVariableUtils.PERMUTE_INLINE)) {
-            throw new InternalFunctionException(not_supported_anymore, "#987.120 permutation of inline variables isn't supported anymore");
+            throw new InternalFunctionException(not_supported_anymore, "987.120 permutation of inline variables isn't supported anymore");
         }
 
         final Enums.VariablesAs variablesAs = getVariablesAs(simpleExecContext, taskContextId);
@@ -113,23 +113,23 @@ public class PermuteVariablesFunction implements InternalFunction {
         }
 
         if (executionContextData.subProcesses.isEmpty()) {
-            throw new InternalFunctionException(sub_process_not_found, "#987.040 there isn't any sub-process for process '"+executionContextData.process.processCode+"'");
+            throw new InternalFunctionException(sub_process_not_found, "987.040 there isn't any sub-process for process '"+executionContextData.process.processCode+"'");
         }
 
         Set<ExecContextData.TaskVertex> descendants = execContextGraphService.findDescendants(simpleExecContext.execContextId, simpleExecContext.execContextGraphId, taskId);
         if (descendants.isEmpty()) {
-            throw new InternalFunctionException(broken_graph_error, "#987.060 Graph for ExecContext #"+ simpleExecContext.execContextId +" is broken");
+            throw new InternalFunctionException(broken_graph_error, "987.060 Graph for ExecContext #"+ simpleExecContext.execContextId +" is broken");
         }
 
         final ExecContextParamsYaml.Process process = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
         if (process==null) {
-            throw new InternalFunctionException(process_not_found, "#987.080 Process '"+taskParamsYaml.task.processCode+"'not found");
+            throw new InternalFunctionException(process_not_found, "987.080 Process '"+taskParamsYaml.task.processCode+"'not found");
         }
 
         // variableNames contains a list of variables for permutation
         String variableNames = MetaUtils.getValue(taskParamsYaml.task.metas, "variables-for-permutation");
         if (S.b(variableNames)) {
-            throw new InternalFunctionException(meta_not_found, "#987.100 Meta 'variables-for-permutation' must be defined and can't be empty");
+            throw new InternalFunctionException(meta_not_found, "987.100 Meta 'variables-for-permutation' must be defined and can't be empty");
         }
         String[] names = StringUtils.split(variableNames, ", ");
 
@@ -160,7 +160,7 @@ public class PermuteVariablesFunction implements InternalFunction {
 
         final String variableName = MetaUtils.getValue(process.metas, "output-variable");
         if (S.b(variableName)) {
-            throw new InternalFunctionException(meta_not_found, "#987.160 Meta with key 'output-variable' wasn't found for process '"+process.processCode+"'");
+            throw new InternalFunctionException(meta_not_found, "987.160 Meta with key 'output-variable' wasn't found for process '"+process.processCode+"'");
         }
         final String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
                 taskParamsYaml.task.taskContextId, executionContextData.subProcesses.get(0).processContextId);
@@ -180,14 +180,14 @@ public class PermuteVariablesFunction implements InternalFunction {
 
         if (holders.size()>1) {
             throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#987.030 Too many variables with name 'variablesAs'"));
+                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "987.030 Too many variables with name 'variablesAs'"));
         }
         String vAs = null;
         if (!holders.isEmpty()) {
             VariableUtils.VariableHolder variableHolder = holders.get(0);
             if (variableHolder.variable == null) {
                 throw new InternalFunctionException(
-                        new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#987.035 Variables 'variablesAs' must be local (not global)"));
+                        new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "987.035 Variables 'variablesAs' must be local (not global)"));
             }
             vAs = variableHolder.variable.nullified ? null : variableService.getVariableDataAsString(variableHolder.variable.id);
         }

@@ -66,7 +66,7 @@ public class ArtifactUtils {
             try {
                 FileSystemUtils.writeStringToFileWithSync(paramFile, params, StandardCharsets.UTF_8);
             } catch (IOException e) {
-                log.error("#103.020 Error with writing to " + paramFile.toAbsolutePath() + " file", e);
+                log.error("103.020 Error with writing to " + paramFile.toAbsolutePath() + " file", e);
                 return false;
             }
         }

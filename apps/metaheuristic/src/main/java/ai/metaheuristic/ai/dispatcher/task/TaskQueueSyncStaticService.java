@@ -41,13 +41,13 @@ public class TaskQueueSyncStaticService {
 
     public static void checkWriteLockPresent() {
         if (!getWriteLock().isHeldByCurrentThread()) {
-            throw new IllegalStateException("#975.020 Must be locked by WriteLock");
+            throw new IllegalStateException("975.020 Must be locked by WriteLock");
         }
     }
 
     public static void checkWriteLockNotPresent() {
         if (getWriteLock().isHeldByCurrentThread()) {
-            throw new IllegalStateException("#975.025 The thread was already locked by WriteLock");
+            throw new IllegalStateException("975.025 The thread was already locked by WriteLock");
         }
     }
 

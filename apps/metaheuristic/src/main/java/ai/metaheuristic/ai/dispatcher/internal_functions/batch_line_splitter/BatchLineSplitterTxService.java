@@ -83,17 +83,17 @@ public class BatchLineSplitterTxService {
             throw e;
         }
         catch(UnzipArchiveException e) {
-            final String es = "#994.120 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
+            final String es = "994.120 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
             log.error(es, e);
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
         }
         catch(BatchProcessingException e) {
-            final String es = "#994.140 General error of processing batch.\nError: " + e.getMessage();
+            final String es = "994.140 General error of processing batch.\nError: " + e.getMessage();
             log.error(es, e);
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
         }
         catch(Throwable th) {
-            final String es = "#994.160 General processing error.\nError: " + th.getMessage() + ", class: " + th.getClass();
+            final String es = "994.160 General processing error.\nError: " + th.getMessage() + ", class: " + th.getClass();
             log.error(es, th);
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
         }
@@ -110,13 +110,13 @@ public class BatchLineSplitterTxService {
 
         if (executionContextData.subProcesses.isEmpty()) {
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.sub_process_not_found,
-                    "#994.275 there isn't any sub-process for process '"+executionContextData.process.processCode+"'");
+                    "994.275 there isn't any sub-process for process '"+executionContextData.process.processCode+"'");
         }
 
         final String variableName = MetaUtils.getValue(executionContextData.process.metas, BatchLineSplitterFunction.OUTPUT_VARIABLE);
         if (S.b(variableName)) {
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken,
-                    "#994.280 Meta with key 'output-variable' wasn't found for process '"+executionContextData.process.processCode+"'");
+                    "994.280 Meta with key 'output-variable' wasn't found for process '"+executionContextData.process.processCode+"'");
         }
 
         boolean isArray = MetaUtils.isTrue(executionContextData.process.metas, true, BatchLineSplitterFunction.IS_ARRAY);
@@ -130,7 +130,7 @@ public class BatchLineSplitterTxService {
 
         allLines.forEach( lines -> {
             if (lines.isEmpty()) {
-                log.error("#994.290 there isn't any lines");
+                log.error("994.290 there isn't any lines");
                 return;
             }
             currTaskNumber.incrementAndGet();
@@ -145,7 +145,7 @@ public class BatchLineSplitterTxService {
                 throw e;
             } catch (Throwable th) {
                 // NAME, TASK_CONTEXT_ID, EXEC_CONTEXT_ID
-                String es = S.f("#994.300 An error in createInputVariablesForSubProcess(), name: %s, execContextId: %s, taskCtxId: %s, error: %s",
+                String es = S.f("994.300 An error in createInputVariablesForSubProcess(), name: %s, execContextId: %s, taskCtxId: %s, error: %s",
                         variableName, simpleExecContext.execContextId, currTaskContextId, th.getMessage());
                 log.error(es, th);
                 throw new BatchResourceProcessingException(es);
@@ -156,7 +156,7 @@ public class BatchLineSplitterTxService {
             } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                 throw e;
             } catch (Throwable th) {
-                String es = S.f("#994.360 An error in createTasksForSubProcesses(), name: %s, execContextId: %s, taskCtxId: %s, error: %s",
+                String es = S.f("994.360 An error in createTasksForSubProcesses(), name: %s, execContextId: %s, taskCtxId: %s, error: %s",
                         variableName, simpleExecContext.execContextId, currTaskContextId, th.getMessage());
                 log.error(es, th);
                 throw new BatchResourceProcessingException(es);

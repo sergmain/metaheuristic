@@ -52,7 +52,7 @@ public class ProcessorAndCoreData {
 
         public DispatcherUrl(String url) {
             if (S.b(url)) {
-                throw new IllegalStateException("#819.040 dispatcherUrl is null");
+                throw new IllegalStateException("819.040 dispatcherUrl is null");
             }
             this.url = url;
         }

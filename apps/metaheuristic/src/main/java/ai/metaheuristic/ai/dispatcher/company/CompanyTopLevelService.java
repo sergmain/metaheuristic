@@ -67,11 +67,11 @@ public class CompanyTopLevelService {
     public OperationStatusRest addCompany(Company company) {
         if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#237.010 Can't create a new company while 'replicated' mode of asset is active");
+                    "237.010 Can't create a new company while 'replicated' mode of asset is active");
         }
         if (S.b(company.name)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#237.020 Name of company name must not be null");
+                    "237.020 Name of company name must not be null");
         }
 
         CompanyParamsYaml cpy = company.getCompanyParamsYaml();
@@ -107,7 +107,7 @@ public class CompanyTopLevelService {
     public CompanyData.SimpleCompanyResult getSimpleCompany(Long companyUniqueId){
         Company company = companyCache.findByUniqueId(companyUniqueId);
         if (company == null) {
-            return new CompanyData.SimpleCompanyResult("#237.050 company wasn't found, companyUniqueId: " + companyUniqueId);
+            return new CompanyData.SimpleCompanyResult("237.050 company wasn't found, companyUniqueId: " + companyUniqueId);
         }
         String groups = "";
         CompanyParamsYaml cpy = company.getCompanyParamsYaml();
@@ -132,11 +132,11 @@ public class CompanyTopLevelService {
     public OperationStatusRest editFormCommit(Long companyUniqueId, String name, String groups) {
         if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#237.055 Can't edit a company while 'replicated' mode of asset is active");
+                    "237.055 Can't edit a company while 'replicated' mode of asset is active");
         }
         Company c = companyRepository.findByUniqueIdForUpdate(companyUniqueId);
         if (c == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.060 company wasn't found, companyUniqueId: " + companyUniqueId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"237.060 company wasn't found, companyUniqueId: " + companyUniqueId);
         }
 
         Long createdOn = null;
@@ -153,7 +153,7 @@ public class CompanyTopLevelService {
             cpy.updatedOn = System.currentTimeMillis();
             cpy.ac = new CompanyParamsYaml.AccessControl(groups);
         } catch (Throwable th) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.080 company params is in wrong format, error: " + th.getMessage());
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"237.080 company params is in wrong format, error: " + th.getMessage());
         }
         c.updateParams(cpy);
         c.setName(name);

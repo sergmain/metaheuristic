@@ -111,21 +111,21 @@ public class ExperimentResultTopLevelService {
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#422.010 name of uploaded file is null");
+                    "422.010 name of uploaded file is null");
         }
         String ext = StrUtils.getExtension(originFilename);
         if (ext==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#422.020 file without extension, bad filename: " + originFilename);
+                    "422.020 file without extension, bad filename: " + originFilename);
         }
         if (!StringUtils.equalsAny(ext.toLowerCase(), ZIP_EXT)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#422.030 only '.zip' file is supported, filename: " + originFilename);
+                    "422.030 only '.zip' file is supported, filename: " + originFilename);
         }
         Path resultDir = DirUtils.createMhTempPath("import-result-to-experiment-result-");
         if (resultDir==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#422.033 Error, can't create temporary dir");
+                    "422.033 Error, can't create temporary dir");
         }
 
         try {
@@ -138,19 +138,19 @@ public class ExperimentResultTopLevelService {
             Path zipDir = resultDir.resolve(ZIP_DIR);
             if (Files.notExists(zipDir)){
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#422.035 Error, zip directory doesn't exist at path " + resultDir.normalize());
+                        "422.035 Error, zip directory doesn't exist at path " + resultDir.normalize());
             }
 
             Path tasksDir = zipDir.resolve(TASKS_DIR);
             if (Files.notExists(tasksDir)){
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#422.038 Error, tasks directory doesn't exist at path " + zipDir.normalize());
+                        "422.038 Error, tasks directory doesn't exist at path " + zipDir.normalize());
             }
 
             Path experimentFile = zipDir.resolve(EXPERIMENT_YAML_FILE);
             if (Files.notExists(experimentFile)){
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#422.040 Error, experiment.yaml file doesn't exist at path "+ zipDir.normalize());
+                        "422.040 Error, experiment.yaml file doesn't exist at path "+ zipDir.normalize());
             }
 
             String params = Files.readString(experimentFile);
@@ -172,7 +172,7 @@ public class ExperimentResultTopLevelService {
             int count = 0;
             for (ExperimentTaskFeature taskFeature : apy.taskFeatures) {
                 if (++count%100==0) {
-                    log.info("#422.045 Current number of imported task: {} of total {}", count, apy.taskFeatures.size());
+                    log.info("422.045 Current number of imported task: {} of total {}", count, apy.taskFeatures.size());
                 }
                 Path taskFile = tasksDir.resolve(S.f(TASK_YAML_FILE, taskFeature.taskId));
 
@@ -184,9 +184,9 @@ public class ExperimentResultTopLevelService {
             }
         }
         catch (Exception e) {
-            log.error("#422.040 Error", e);
+            log.error("422.040 Error", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#422.050 can't load experiment results, Error: " + e.getMessage());
+                    "422.050 can't load experiment results, Error: " + e.getMessage());
         }
         finally {
             DirUtils.deletePathAsync(resultDir);
@@ -206,20 +206,20 @@ public class ExperimentResultTopLevelService {
             Path zipDir = resultDir.resolve(ZIP_DIR);
             Files.createDirectory(zipDir);
             if (Files.notExists(zipDir)) {
-                log.error("#422.060 Error, zip dir wasn't created, path: {}", zipDir.normalize());
+                log.error("422.060 Error, zip dir wasn't created, path: {}", zipDir.normalize());
                 resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
                 return resource;
             }
             Path taskDir = zipDir.resolve(TASKS_DIR);
             Files.createDirectory(taskDir);
             if (Files.notExists(taskDir)) {
-                log.error("#422.070 Error, task dir wasn't created, path: {}", taskDir.normalize());
+                log.error("422.070 Error, task dir wasn't created, path: {}", taskDir.normalize());
                 resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
                 return resource;
             }
             Path zipFile = resultDir.resolve(S.f("export-%s.zip", experimentResultId));
             if (Files.isDirectory(zipFile)) {
-                log.error("#422.080 Error, path for zip file is actually directory, path: {}", zipFile.normalize());
+                log.error("422.080 Error, path for zip file is actually directory, path: {}", zipFile.normalize());
                 resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
                 return resource;
             }
@@ -241,18 +241,18 @@ public class ExperimentResultTopLevelService {
             int count = 0;
             for (Long experimentTaskId : experimentTaskIds) {
                 if (++count % 100 == 0) {
-                    log.info("#422.095 Current number of exported task: {} of total {}", count, experimentTaskIds.size());
+                    log.info("422.095 Current number of exported task: {} of total {}", count, experimentTaskIds.size());
                 }
                 ExperimentTask at = experimentTaskRepository.findById(experimentTaskId).orElse(null);
                 if (at == null) {
-                    log.error("#422.100 ExperimentResultTask wasn't found for is #{}", experimentTaskId);
+                    log.error("422.100 ExperimentResultTask wasn't found for is #{}", experimentTaskId);
                     continue;
                 }
                 Path taskFile = taskDir.resolve(S.f(TASK_YAML_FILE, at.taskId));
                 try {
                     Files.writeString(taskFile, at.getParams());
                 } catch (IOException e) {
-                    log.error("#422.110 Error writing task's params to file {}", taskFile.normalize());
+                    log.error("422.110 Error writing task's params to file {}", taskFile.normalize());
                     resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
                     return resource;
                 }
@@ -267,7 +267,7 @@ public class ExperimentResultTopLevelService {
             return resource;
         }
         catch(Throwable th) {
-            log.error("#422.115 General error", th);
+            log.error("422.115 General error", th);
             resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.INTERNAL_SERVER_ERROR);
             return resource;
         }
@@ -277,7 +277,7 @@ public class ExperimentResultTopLevelService {
 
         ExperimentResult experimentResult = experimentResultRepository.findById(experimentResultId).orElse(null);
         if (experimentResult == null) {
-            return new ExperimentResultSimpleResult("#422.120 experiment wasn't found in experimentResult, experimentResultId: " + experimentResultId);
+            return new ExperimentResultSimpleResult("422.120 experiment wasn't found in experimentResult, experimentResultId: " + experimentResultId);
         }
 
         ExperimentResultSimpleResult result = new ExperimentResultSimpleResult();
@@ -295,29 +295,29 @@ public class ExperimentResultTopLevelService {
 
         ExperimentResult experimentResult = experimentResultRepository.findById(experimentResultId).orElse(null);
         if (experimentResult == null) {
-            return new ExperimentInfoExtended("#422.170 experiment wasn't found in experimentResult, experimentResultId: " + experimentResultId);
+            return new ExperimentInfoExtended("422.170 experiment wasn't found in experimentResult, experimentResultId: " + experimentResultId);
         }
 
         ExperimentResultParamsYamlWithCache ypywc;
         try {
             final ExperimentResultParams erpy = checkVersionAndUpgrade(experimentResult.id, experimentResult.getParams());
             if (erpy==null) {
-                String es = "#422.177 Can't prepare experimentResult #" + experimentResult.id;
+                String es = "422.177 Can't prepare experimentResult #" + experimentResult.id;
                 log.error(es);
                 return new ExperimentInfoExtended(es);
             }
             ypywc = new ExperimentResultParamsYamlWithCache(erpy);
         }
         catch (Throwable th) {
-            String es = "#422.180 Can't parse an experimentResult, error: " + th.getMessage();
+            String es = "422.180 Can't parse an experimentResult, error: " + th.getMessage();
             log.error(es, th);
             return new ExperimentInfoExtended(es);
         }
         if (ypywc.experimentResult.execContext == null) {
-            return new ExperimentInfoExtended("#422.200 experiment has broken ref to execContext, experimentId: " + experimentResultId);
+            return new ExperimentInfoExtended("422.200 experiment has broken ref to execContext, experimentId: " + experimentResultId);
         }
         if (ypywc.experimentResult.execContext.execContextId ==null ) {
-            return new ExperimentInfoExtended("#422.210 experiment wasn't startet yet, experimentId: " + experimentResultId);
+            return new ExperimentInfoExtended("422.210 experiment wasn't startet yet, experimentId: " + experimentResultId);
         }
 
         ExperimentResultData experiment = new ExperimentResultData();
@@ -382,7 +382,7 @@ public class ExperimentResultTopLevelService {
         Long experimentResultId = experimentResultRepository.findIdById(id);
         if (experimentResultId == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#422.220 experiment wasn't found in ExperimentResult, id: " + id);
+                    "422.220 experiment wasn't found in ExperimentResult, id: " + id);
         }
         final AtomicBoolean isFound = new AtomicBoolean();
         do {
@@ -401,14 +401,14 @@ public class ExperimentResultTopLevelService {
     public PlotData getPlotData(Long experimentResultId, Long featureId, String[] params, String[] paramsAxis) {
         ExperimentResult experimentResult = experimentResultRepository.findById(experimentResultId).orElse(null);
         if (experimentResult == null) {
-            return new PlotData("#422.230 experiment wasn't found in ExperimentResult, id: " + experimentResultId);
+            return new PlotData("422.230 experiment wasn't found in ExperimentResult, id: " + experimentResultId);
         }
 
         ExperimentResultParamsYamlWithCache ypywc;
         try {
             ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.getParams()));
         } catch (YAMLException e) {
-            String es = "#422.240 Can't parse an experimentResult, error: " + e.getMessage();
+            String es = "422.240 Can't parse an experimentResult, error: " + e.getMessage();
             log.error(es, e);
             return new PlotData(es);
         }
@@ -510,7 +510,7 @@ public class ExperimentResultTopLevelService {
             }
         }
         if (paramCleared.size()!=2) {
-            throw new IllegalStateException("#422.250 Wrong number of params for axes. Expected: 2, actual: " + paramCleared.size());
+            throw new IllegalStateException("422.250 Wrong number of params for axes. Expected: 2, actual: " + paramCleared.size());
         }
         Map<String, Map<String, Integer>> map = estb.getHyperParamsAsMap(false);
         data.x.addAll(map.get(paramCleared.get(0)).keySet());
@@ -627,21 +627,21 @@ public class ExperimentResultTopLevelService {
     public ExperimentFeatureExtendedResult getExperimentFeatureExtended(long experimentResultId, Long experimentId, Long featureId) {
         ExperimentResult experimentResult = experimentResultRepository.findById(experimentResultId).orElse(null);
         if (experimentResult == null) {
-            return new ExperimentFeatureExtendedResult("#422.260 experiment wasn't found in experimentResult, id: " + experimentResultId);
+            return new ExperimentFeatureExtendedResult("422.260 experiment wasn't found in experimentResult, id: " + experimentResultId);
         }
 
         ExperimentResultParamsYamlWithCache ypywc;
         try {
             ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.getParams()));
         } catch (YAMLException e) {
-            final String es = "#422.270 Can't extract experiment from experimentResult, error: " + e.getMessage();
+            final String es = "422.270 Can't extract experiment from experimentResult, error: " + e.getMessage();
             log.error(es, e);
             return new ExperimentFeatureExtendedResult(es);
         }
 
         ExperimentFeature experimentFeature = ypywc.getFeature(featureId);
         if (experimentFeature == null) {
-            return new ExperimentFeatureExtendedResult("#422.280 feature wasn't found, experimentFeatureId: " + featureId);
+            return new ExperimentFeatureExtendedResult("422.280 feature wasn't found, experimentFeatureId: " + featureId);
         }
 
         ExperimentFeatureExtendedResult result = prepareExperimentFeatures(experimentResultId, ypywc, experimentFeature);
@@ -735,18 +735,18 @@ public class ExperimentResultTopLevelService {
     public ConsoleResult getTasksConsolePart(Long experimentResultId, Long taskId) {
         ExperimentResult experimentResult = experimentResultRepository.findById(experimentResultId).orElse(null);
         if (experimentResult == null) {
-            return new ConsoleResult("#422.300 experiment wasn't found in experimentResult, id: " + experimentResultId);
+            return new ConsoleResult("422.300 experiment wasn't found in experimentResult, id: " + experimentResultId);
         }
 
         ExperimentTask task = experimentTaskRepository.findByExperimentResultIdAndTaskId(experimentResultId, taskId);
         if (task==null ) {
-            return new ConsoleResult("#422.310 Can't find a console output");
+            return new ConsoleResult("422.310 Can't find a console output");
         }
         ExperimentResultTaskParams atpy = task.getExperimentResultTaskParams();
 
         FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(atpy.functionExecResults);
         if (functionExec ==null ) {
-            return new ConsoleResult("#422.313 Can't find a console output");
+            return new ConsoleResult("422.313 Can't find a console output");
         }
         return new ConsoleResult(functionExec.exec.exitCode, functionExec.exec.isOk, functionExec.exec.console);
     }
@@ -754,14 +754,14 @@ public class ExperimentResultTopLevelService {
     public ExperimentFeatureExtendedResult getFeatureProgressPart(Long experimentResultId, Long featureId, String[] params, Pageable pageable) {
         ExperimentResult experimentResult = experimentResultRepository.findById(experimentResultId).orElse(null);
         if (experimentResult == null) {
-            return new ExperimentFeatureExtendedResult("#422.320 experiment wasn't found in ExperimentResult, id: " + experimentResultId);
+            return new ExperimentFeatureExtendedResult("422.320 experiment wasn't found in ExperimentResult, id: " + experimentResultId);
         }
 
         ExperimentResultParamsYamlWithCache ypywc;
         try {
             ypywc = new ExperimentResultParamsYamlWithCache(ExperimentResultParamsJsonUtils.BASE_UTILS.to(experimentResult.getParams()));
         } catch (YAMLException e) {
-            final String es = "#422.330 Can't extract experiment from experimentResult, error: " + e.getMessage();
+            final String es = "422.330 Can't extract experiment from experimentResult, error: " + e.getMessage();
             log.error(es, e);
             return new ExperimentFeatureExtendedResult(es);
         }

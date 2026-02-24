@@ -48,7 +48,7 @@ public class TestCommonSync {
 
         public static void checkWriteLockPresent(Long execContextId) {
             if (!getWriteLock(execContextId).isHeldByCurrentThread()) {
-                throw new IllegalStateException("#977.020 Must be locked by WriteLock");
+                throw new IllegalStateException("977.020 Must be locked by WriteLock");
             }
         }
 

@@ -74,21 +74,21 @@ public class DiskVariableProvider implements VariableProvider {
             TaskParamsYaml.InputVariable variable) {
 
         if (variable.sourcing!= EnumsApi.DataSourcing.disk) {
-            throw new VariableProviderException("#015.018 Wrong type of sourcing of data storage" + variable.sourcing);
+            throw new VariableProviderException("015.018 Wrong type of sourcing of data storage" + variable.sourcing);
         }
         if (variable.disk==null) {
-            throw new VariableProviderException("#015.019 variable.sourcing==DataSourcing.disk but variable.disk is null");
+            throw new VariableProviderException("015.019 variable.sourcing==DataSourcing.disk but variable.disk is null");
         }
         DiskInfo diskInfo = variable.disk;
 
         EnvParamsYaml env = processorEnvironment.envParams.getEnvParamsYaml();
         EnvParamsYaml.DiskStorage diskStorage = findDiskStorageByCode(env.disk, diskInfo.code);
         if (diskStorage==null) {
-            throw new VariableProviderException("#015.020 The disk storage wasn't found for code: " + diskInfo.code);
+            throw new VariableProviderException("015.020 The disk storage wasn't found for code: " + diskInfo.code);
         }
         Path path = Path.of(diskStorage.path);
         if (Files.notExists(path)) {
-            throw new VariableProviderException("#015.024 The path of disk storage doesn't exist: " + path.toAbsolutePath());
+            throw new VariableProviderException("015.024 The path of disk storage doesn't exist: " + path.toAbsolutePath());
         }
 
         AssetFile assetFile;
@@ -134,7 +134,7 @@ public class DiskVariableProvider implements VariableProvider {
             return null;
         }
         else {
-            String es = "#015.030 Result data file wasn't found, resultDataFile: " + outputVariableFile.toAbsolutePath();
+            String es = "015.030 Result data file wasn't found, resultDataFile: " + outputVariableFile.toAbsolutePath();
             log.error(es);
             return new FunctionApiData.SystemExecResult(functionConfig.code, false, -1, es);
         }
@@ -148,15 +148,15 @@ public class DiskVariableProvider implements VariableProvider {
 
         EnvParamsYaml env = processorEnvironment.envParams.getEnvParamsYaml();
         if (variable.disk==null) {
-            throw new VariableProviderException("#015.036 The disk storage wasn't defined in variable: " + variable);
+            throw new VariableProviderException("015.036 The disk storage wasn't defined in variable: " + variable);
         }
         EnvParamsYaml.DiskStorage diskStorage = findDiskStorageByCode(env.disk, variable.disk.code);
         if (diskStorage==null) {
-            throw new VariableProviderException("#015.037 The disk storage wasn't found for code: " + variable.disk.code);
+            throw new VariableProviderException("015.037 The disk storage wasn't found for code: " + variable.disk.code);
         }
         Path path = Path.of(diskStorage.path);
         if (Files.notExists(path)) {
-            throw new VariableProviderException("#015.042 The path of disk storage doesn't exist: " + path.toAbsolutePath());
+            throw new VariableProviderException("015.042 The path of disk storage doesn't exist: " + path.toAbsolutePath());
         }
 
         return path.resolve(Long.toString(variable.id));

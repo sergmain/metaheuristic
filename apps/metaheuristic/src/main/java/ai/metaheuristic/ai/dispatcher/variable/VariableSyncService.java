@@ -36,13 +36,13 @@ public class VariableSyncService {
 
     public static void checkWriteLockPresent(Long variableId) {
         if (!getWriteLock(variableId).isHeldByCurrentThread()) {
-            throw new IllegalStateException("#973.020 Must be locked by WriteLock");
+            throw new IllegalStateException("973.020 Must be locked by WriteLock");
         }
     }
 
     public static void checkWriteLockNotPresent(Long variableId) {
         if (getWriteLock(variableId).isHeldByCurrentThread()) {
-            throw new IllegalStateException("#973.025 The thread was already locked by WriteLock");
+            throw new IllegalStateException("973.025 The thread was already locked by WriteLock");
         }
     }
 

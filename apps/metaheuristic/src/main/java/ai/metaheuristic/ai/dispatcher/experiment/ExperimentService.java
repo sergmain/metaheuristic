@@ -106,10 +106,10 @@ public class ExperimentService {
         Experiment e = experimentRepository.findByIdForUpdate(simpleExperiment.id);
         if (e == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#284.020 experiment wasn't found, experimentId: " + simpleExperiment.id);
+                    "284.020 experiment wasn't found, experimentId: " + simpleExperiment.id);
         }
         if (e.code.equals(StringUtils.strip(simpleExperiment.getCode()))) {
-            op.addInfoMessage("#284.040 The code of experiment can't be changed. It will be remained as "+ e.code);
+            op.addInfoMessage("284.040 The code of experiment can't be changed. It will be remained as "+ e.code);
         }
 
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
@@ -132,15 +132,15 @@ public class ExperimentService {
     private OperationStatusRest validate(ExperimentApiData.SimpleExperiment se) {
         if (StringUtils.isBlank(se.getName())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#284.060 Name of experiment is blank.");
+                    "284.060 Name of experiment is blank.");
         }
         if (StringUtils.isBlank(se.getCode())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#284.080 Code of experiment is blank.");
+                    "284.080 Code of experiment is blank.");
         }
         if (StringUtils.isBlank(se.getDescription())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#284.100 Description of experiment is blank.");
+                    "284.100 Description of experiment is blank.");
         }
         return new OperationStatusRest(EnumsApi.OperationStatus.OK);
     }
@@ -149,7 +149,7 @@ public class ExperimentService {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
         ExecContextImpl ec = execContextCache.findById(e.execContextId, true);
         if (ec==null) {
-            log.warn("#284.120 ExecContext wasn't found for id #"+e.execContextId);
+            log.warn("284.120 ExecContext wasn't found for id #"+e.execContextId);
             return null;
         }
 
@@ -175,7 +175,7 @@ public class ExperimentService {
             Experiment experiment = experimentCache.findById(id);
             if (experiment == null) {
                 return  new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#284.140 experiment wasn't found, experimentId: " + id);
+                        "284.140 experiment wasn't found, experimentId: " + id);
             }
             ExecContext ex = execContextCache.findById(experiment.execContextId, true);
             if (ex != null) {
@@ -188,7 +188,7 @@ public class ExperimentService {
         } catch (EmptyResultDataAccessException e) {
             // it's ok
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("#284.160 Error {}", e.toString());
+            log.warn("284.160 Error {}", e.toString());
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

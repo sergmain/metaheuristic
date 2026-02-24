@@ -39,13 +39,13 @@ public class ExecContextTaskStateSyncService {
 
     public static void checkWriteLockPresent(Long execContextTaskStateId) {
         if (!getWriteLock(execContextTaskStateId).isHeldByCurrentThread()) {
-            throw new IllegalStateException("#972.020 Must be locked by WriteLock");
+            throw new IllegalStateException("972.020 Must be locked by WriteLock");
         }
     }
 
     public static void checkWriteLockNotPresent(Long execContextTaskStateId) {
         if (getWriteLock(execContextTaskStateId).isHeldByCurrentThread()) {
-            throw new IllegalStateException("#972.025 The thread was already locked by WriteLock");
+            throw new IllegalStateException("972.025 The thread was already locked by WriteLock");
         }
     }
 

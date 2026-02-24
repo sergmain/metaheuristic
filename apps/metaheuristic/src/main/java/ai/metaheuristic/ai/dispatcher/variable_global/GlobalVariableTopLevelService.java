@@ -62,13 +62,13 @@ public class GlobalVariableTopLevelService {
 
     public OperationStatusRest storeInitialGlobalVariable(MultipartFile file, @Nullable String variable, @Nullable String originFilename) {
         if (S.b(variable)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.010 name of global variable is blank");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "172.010 name of global variable is blank");
         }
         if (originFilename == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.020 name of uploaded file is null");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "172.020 name of uploaded file is null");
         }
         if (file.getSize()==0) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.023 global variables with size as 0, isn't supported");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "172.023 global variables with size as 0, isn't supported");
         }
         try {
             Long globalVariableId = generalBlobTxService.createEmptyGlobalVariable(variable, originFilename);
@@ -76,7 +76,7 @@ public class GlobalVariableTopLevelService {
                 dispatcherBlobStorage.storeGlobalVariableData(globalVariableId, bis, file.getSize());
             }
         } catch (Throwable e) {
-            String es = "#172.040 An error while saving data to file, " + e.getMessage();
+            String es = "172.040 An error while saving data to file, " + e.getMessage();
             log.error(es, e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
@@ -85,10 +85,10 @@ public class GlobalVariableTopLevelService {
 
     public OperationStatusRest createGlobalVariableWithValue(@Nullable String variable, @Nullable String value ) {
         if (S.b(variable)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.050 name of global variable is blank");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "172.050 name of global variable is blank");
         }
         if (value==null || value.length()==0) {
-            String es = "#172.053 value is blank";
+            String es = "172.053 value is blank";
             log.error(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
@@ -100,7 +100,7 @@ public class GlobalVariableTopLevelService {
                 dispatcherBlobStorage.storeGlobalVariableData(globalVariableId, is, bytes.length);
             }
         } catch (Throwable e) {
-            String es = "#172.055 An error while saving data to file, " + e.getMessage();
+            String es = "172.055 An error while saving data to file, " + e.getMessage();
             log.error(es, e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
@@ -109,16 +109,16 @@ public class GlobalVariableTopLevelService {
 
     public OperationStatusRest createGlobalVariableWithExternalStorage(@Nullable String variable, @Nullable String params ) {
         if (S.b(variable)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.057 name of global variable is blank");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "172.057 name of global variable is blank");
         }
         if (S.b(params)) {
-            String es = "#172.060 GlobalVariable params is blank";
+            String es = "172.060 GlobalVariable params is blank";
             log.error(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
         DataStorageParams dsp = DataStorageParamsUtils.UTILS.to(params);
         if (dsp.sourcing==null || dsp.sourcing== EnumsApi.DataSourcing.dispatcher) {
-            String es = "#172.070 Sourcing must be "+ EnumsApi.DataSourcing.disk + " or " +EnumsApi.DataSourcing.git +", actual: " + dsp.sourcing;
+            String es = "172.070 Sourcing must be "+ EnumsApi.DataSourcing.disk + " or " +EnumsApi.DataSourcing.git +", actual: " + dsp.sourcing;
             log.error(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
@@ -128,7 +128,7 @@ public class GlobalVariableTopLevelService {
         try {
             globalVariableService.createGlobalVariableWithExternalStorage(variable, realParams);
         } catch (VariableSavingException e) {
-            String es = "#172.080 An error while saving variable to db, " + e.getMessage();
+            String es = "172.080 An error while saving variable to db, " + e.getMessage();
             log.error(es, e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
@@ -138,7 +138,7 @@ public class GlobalVariableTopLevelService {
     public GlobalVariableData.GlobalVariableResult getGlobalVariableById(Long id) {
         final SimpleGlobalVariable sv = globalVariableService.getByIdAsSimpleGlobalVariable(id);
         if (sv==null) {
-            return new GlobalVariableData.GlobalVariableResult("#172.100 Global variable wasn't found for id: " + id);
+            return new GlobalVariableData.GlobalVariableResult("172.100 Global variable wasn't found for id: " + id);
         }
         return new GlobalVariableData.GlobalVariableResult(sv);
     }
@@ -146,7 +146,7 @@ public class GlobalVariableTopLevelService {
     public OperationStatusRest deleteGlobalVariable(Long id) {
         final GlobalVariable data = globalVariableService.findById(id).orElse(null);
         if (data==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.120 GlobalVariable wasn't found for id: " + id);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "172.120 GlobalVariable wasn't found for id: " + id);
         }
         globalVariableService.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;

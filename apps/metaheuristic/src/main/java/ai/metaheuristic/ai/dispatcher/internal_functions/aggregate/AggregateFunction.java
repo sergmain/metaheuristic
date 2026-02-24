@@ -133,7 +133,7 @@ public class AggregateFunction implements InternalFunction {
 
         if (taskParamsYaml.task.outputs.size()!=1) {
             throw new InternalFunctionException(
-                    number_of_outputs_is_incorrect, "#979.020 There must be only one output variable, current: "+ taskParamsYaml.task.outputs);
+                    number_of_outputs_is_incorrect, "979.020 There must be only one output variable, current: "+ taskParamsYaml.task.outputs);
         }
 
         final boolean produceMetadata = MetaUtils.isTrue(taskParamsYaml.task.metas, true, PRODUCE_METADATA);
@@ -143,7 +143,7 @@ public class AggregateFunction implements InternalFunction {
         List<String> names = getNamesOfVariables(taskParamsYaml.task.metas);
         if (CollectionUtils.isEmpty(names)) {
             throw new InternalFunctionException(
-                    meta_not_found, "#979.080 Meta 'variables' wasn't found or empty, process: " + taskParamsYaml.task.processCode);
+                    meta_not_found, "979.080 Meta 'variables' wasn't found or empty, process: " + taskParamsYaml.task.processCode);
         }
 
         List<Variable> list = variableRepository.getIdAndStorageUrlInVarsForExecContext(simpleExecContext.execContextId, names.toArray(String[]::new));
@@ -156,7 +156,7 @@ public class AggregateFunction implements InternalFunction {
             tempDir = DirUtils.createMhTempPath("mh-aggregate-internal-context-");
             if (tempDir==null) {
                 throw new InternalFunctionException(
-                        system_error, "#979.100 Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR);
+                        system_error, "979.100 Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR);
             }
 
             TaskParamsYaml.OutputVariable outputVariable = taskParamsYaml.task.outputs.get(0);
@@ -197,10 +197,10 @@ public class AggregateFunction implements InternalFunction {
                                         variables.add(v);
                                     }
                                     default -> throw new InternalFunctionException(
-                                            system_error, "#979.100 Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR);
+                                            system_error, "979.100 Can't create temporary directory in dir "+ SystemUtils.JAVA_IO_TMPDIR);
                                 }
                             } catch (VariableDataNotFoundException e) {
-                                log.error("#979.140 Variable #{}, name {},  wasn't found", v.id, v.name);
+                                log.error("979.140 Variable #{}, name {},  wasn't found", v.id, v.name);
                                 if (policy==ErrorControlPolicy.fail) {
                                     throw e;
                                 }
@@ -211,7 +211,7 @@ public class AggregateFunction implements InternalFunction {
                     try {
                         Files.writeString(metadataFile, MetadataAggregateFunctionParamsYamlUtils.BASE_YAML_UTILS.toString(mafpy));
                     } catch (IOException e) {
-                        final String es = "#979.200 error";
+                        final String es = "979.200 error";
                         log.error(es, e);
                         if (policy==ErrorControlPolicy.fail) {
                             throw new RuntimeException(es, e);
@@ -269,7 +269,7 @@ public class AggregateFunction implements InternalFunction {
             if (!S.b(str)) {
                 names.add(StrUtils.getVariableName(str, ()-> {
                     throw new InternalFunctionException(
-                            name_of_variable_in_meta_is_broken, "#979.480 Meta 'variables' wasn't found or empty, s: " + s);
+                            name_of_variable_in_meta_is_broken, "979.480 Meta 'variables' wasn't found or empty, s: " + s);
                 }));
             }
         }

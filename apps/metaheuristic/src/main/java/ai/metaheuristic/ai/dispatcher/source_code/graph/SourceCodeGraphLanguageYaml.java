@@ -47,7 +47,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
         SourceCodeParamsYaml sourceCodeParams = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCode);
         if (CollectionUtils.isEmpty(sourceCodeParams.source.processes)) {
-            throw new SourceCodeGraphException("#564.020 (CollectionUtils.isEmpty(sourceCodeParams.source.processes))");
+            throw new SourceCodeGraphException("564.020 (CollectionUtils.isEmpty(sourceCodeParams.source.processes))");
         }
 
         SourceCodeData.SourceCodeGraph scg = new SourceCodeData.SourceCodeGraph();
@@ -68,7 +68,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
         for (SourceCodeParamsYaml.Process p : sourceCodeParams.source.processes) {
             if (finishPresent) {
-                throw new SourceCodeGraphException("#564.040 mh.finish isn't the last process");
+                throw new SourceCodeGraphException("564.040 mh.finish isn't the last process");
             }
             checkProcessCode(processCodes, p);
 
@@ -136,10 +136,10 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                     // .
                 }
                 else {
-                    throw new NotImplementedException("#564.060 not yet, logic: " + subProcesses.logic);
+                    throw new NotImplementedException("564.060 not yet, logic: " + subProcesses.logic);
                 }
                 if (subInternalContextId==null) {
-                    throw new IllegalStateException("#564.080 (subInternalContextId==null)");
+                    throw new IllegalStateException("564.080 (subInternalContextId==null)");
                 }
                 Set<ExecContextData.ProcessVertex> tempParents;
                 if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and || subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.or) {
@@ -149,7 +149,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                     tempParents = tempLastProcesses;
                 }
                 else {
-                    throw new NotImplementedException("#564.100 not yet");
+                    throw new NotImplementedException("564.100 not yet");
                 }
 
                 ExecContextData.ProcessVertex subV = addProcessVertex(sourceCodeParams, scg, subInternalContextId, ids, currId, tempParents, subP);
@@ -162,7 +162,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                     andProcesses.add(subV);
                 }
                 else {
-                    throw new NotImplementedException("#564.120 not yet");
+                    throw new NotImplementedException("564.120 not yet");
                 }
             }
             lastProcesses.addAll(andProcesses);
@@ -210,7 +210,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
     private static void checkProcessCode(Set<String> processCodes, SourceCodeParamsYaml.Process p) {
         if (processCodes.contains(p.code)) {
-            throw new SourceCodeGraphException("#564.140 (processCodes.contains(p.code))");
+            throw new SourceCodeGraphException("564.140 (processCodes.contains(p.code))");
         }
         processCodes.add(p.code);
     }

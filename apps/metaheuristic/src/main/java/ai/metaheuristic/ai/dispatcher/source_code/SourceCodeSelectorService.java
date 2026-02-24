@@ -62,13 +62,13 @@ public class SourceCodeSelectorService {
 
     @Transactional(readOnly = true)
     public List<SourceCodeData.SourceCodeUid> filterSourceCodes(UserContext context, List<String> uids) {
-        log.debug("#984.005 list for filtering: {}", uids);
+        log.debug("984.005 list for filtering: {}", uids);
         List<SourceCodeData.SourceCodeUid> codes = getAvailableSourceCodesForCompany(context).items.stream()
 //                .peek(o->log.debug("\t#984.010 sourceCodeUid: {}", o.getUid()))
                 .filter(o->uids.contains(o.getUid()))
                 .map(o->new SourceCodeData.SourceCodeUid(o.getId(), o.getUid()))
                 .collect(Collectors.toList());
-        log.debug("#984.015 result list: {}", codes);
+        log.debug("984.015 result list: {}", codes);
         return codes;
     }
 
@@ -88,7 +88,7 @@ public class SourceCodeSelectorService {
     private SourceCodeData.SourceCodesForCompany getSourceCodeInternal(Long companyId, final Function<SourceCode, Boolean> sourceCodeFilter) {
         SourceCodeData.SourceCodesForCompany availableSourceCodesForCompany = getAvailableSourceCodesForCompany(companyId, sourceCodeFilter);
         if (availableSourceCodesForCompany.items.size()>1) {
-            log.error("#984.020 !!!!!!!!!!!!!!!! error in code -  (availableSourceCodesForCompany.items.size()>1) !!!!!!!!!!!!!!!!!!!!!!!!!");
+            log.error("984.020 !!!!!!!!!!!!!!!! error in code -  (availableSourceCodesForCompany.items.size()>1) !!!!!!!!!!!!!!!!!!!!!!!!!");
         }
         return availableSourceCodesForCompany;
     }
@@ -108,11 +108,11 @@ public class SourceCodeSelectorService {
                 SourceCodeStoredParamsYaml scspy = o.getSourceCodeStoredParamsYaml();
                 return !scspy.internalParams.archived;
             } catch (YAMLException e) {
-                final String es = "#984.040 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #" + o.getId();
+                final String es = "984.040 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #" + o.getId();
                 sourceCodesForCompany.addErrorMessage(es);
                 log.error(es);
-                log.error("#984.060 Params:\n{}", o.getParams());
-                log.error("#984.080 Error: {}", e.toString());
+                log.error("984.060 Params:\n{}", o.getParams());
+                log.error("984.080 Error: {}", e.toString());
                 return false;
             }
         }).collect(Collectors.toList());
@@ -129,11 +129,11 @@ public class SourceCodeSelectorService {
                     groups = Set.of();
                 }
             } catch (YAMLException e) {
-                final String es = "#984.100 Can't parse Company params. It's broken or version is unknown. Company companyUniqueId: #" + companyUniqueId;
+                final String es = "984.100 Can't parse Company params. It's broken or version is unknown. Company companyUniqueId: #" + companyUniqueId;
                 sourceCodesForCompany.addErrorMessage(es);
                 log.error(es);
-                log.error("#984.120 Params:\n{}", company.getParams());
-                log.error("#984.140 Error: {}", e.toString());
+                log.error("984.120 Params:\n{}", company.getParams());
+                log.error("984.140 Error: {}", e.toString());
                 return sourceCodesForCompany;
             }
 
@@ -155,11 +155,11 @@ public class SourceCodeSelectorService {
                         }
                         return false;
                     } catch (YAMLException e) {
-                        final String es = "#984.160 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #" + o.getId();
+                        final String es = "984.160 Can't parse SourceCode params. It's broken or unknown version. SourceCode id: #" + o.getId();
                         sourceCodesForCompany.addErrorMessage(es);
                         log.error(es);
-                        log.error("#984.180 Params:\n{}", o.getParams());
-                        log.error("#984.200 Error: {}", e.toString());
+                        log.error("984.180 Params:\n{}", o.getParams());
+                        log.error("984.200 Error: {}", e.toString());
                         return false;
                     }
                 }).collect(Collectors.toList());

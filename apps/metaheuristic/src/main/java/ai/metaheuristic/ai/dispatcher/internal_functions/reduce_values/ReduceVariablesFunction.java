@@ -103,11 +103,11 @@ public class ReduceVariablesFunction implements InternalFunction {
         String filterValue = getValue(filter);
 
         if (S.b(filterValue)) {
-            throw new InternalFunctionException(variable_not_found, "#961.085 value of filter variable is blank");
+            throw new InternalFunctionException(variable_not_found, "961.085 value of filter variable is blank");
         }
         String inputValue = getValue(input);
         if (S.b(filterValue)) {
-            throw new InternalFunctionException(variable_not_found, "#961.090 value of input variable is blank");
+            throw new InternalFunctionException(variable_not_found, "961.090 value of input variable is blank");
         }
 
         InlineVariableUtils.NumberOfVariants filterOfVariants = InlineVariableUtils.getNumberOfVariants(filterValue);

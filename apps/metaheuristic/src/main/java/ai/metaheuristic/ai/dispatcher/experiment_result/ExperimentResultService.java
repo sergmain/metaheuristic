@@ -134,12 +134,12 @@ public class ExperimentResultService {
         Long experimentId = experimentRepository.findIdByExecContextId(simpleExecContext.execContextId);
 
         if (experimentId==null ) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#604.020 Can't find experiment for execContextId #" + simpleExecContext.execContextId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "604.020 Can't find experiment for execContextId #" + simpleExecContext.execContextId);
         }
 
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.040 can't find experiment for id: " + experimentId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"604.040 can't find experiment for id: " + experimentId);
         }
 
         StoredToExperimentResultWithStatus stored = toExperimentStoredToExperimentResult(simpleExecContext, experiment);
@@ -149,24 +149,24 @@ public class ExperimentResultService {
         ExperimentResultParams erpy = stored.experimentResultParamsYamlWithCache.experimentResult;
 
         if (!simpleExecContext.execContextId.equals(erpy.execContext.execContextId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#604.100 Experiment can't be stored, execContextId is different");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "604.100 Experiment can't be stored, execContextId is different");
         }
 
         String metricsVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "metrics");
         if (S.b(metricsVariableName)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.120 Meta 'metrics' must be defined and can't be empty");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"604.120 Meta 'metrics' must be defined and can't be empty");
         }
         String featureVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "feature-item");
         if (S.b(featureVariableName)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.140 Meta 'feature-item' must be defined and can't be empty");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"604.140 Meta 'feature-item' must be defined and can't be empty");
         }
         String fittingVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "fitting");
         if (S.b(fittingVariableName)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.145 Meta 'fitting' must be defined and can't be empty");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"604.145 Meta 'fitting' must be defined and can't be empty");
         }
         String inlineVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "inline-permutation");
         if (S.b(inlineVariableName)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#604.147 Meta 'inline-permutation' must be defined and can't be empty");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"604.147 Meta 'inline-permutation' must be defined and can't be empty");
         }
 
         ExecContextParamsYaml.VariableDeclaration variableDeclaration = simpleExecContext.paramsYaml.variables;
@@ -174,11 +174,11 @@ public class ExperimentResultService {
         StringVariableData.StringVariableItem inlineVariableItem = InlineVariableUtils.getInlineVariableItem(variableDeclaration, taskParamsYaml.task.metas);
         if (S.b(inlineVariableItem.inlineKey)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#604.160 Meta 'inline-key' wasn't found or empty.");
+                    "604.160 Meta 'inline-key' wasn't found or empty.");
         }
         if (inlineVariableItem.inlines == null || inlineVariableItem.inlines.isEmpty()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#604.180 Inline variable '" + inlineVariableItem.inlineKey + "' wasn't found or empty. List of keys in inlines: " + variableDeclaration.inline.keySet());
+                    "604.180 Inline variable '" + inlineVariableItem.inlineKey + "' wasn't found or empty. List of keys in inlines: " + variableDeclaration.inline.keySet());
         }
 
         List<Long> ids = taskRepository.findAllTaskIdsByExecContextId(simpleExecContext.execContextId);
@@ -189,7 +189,7 @@ public class ExperimentResultService {
             a.updateParams(erpy);
         } catch (YAMLException e) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#604.200 General error while storing experiment, " + e.getMessage());
+                    "604.200 General error while storing experiment, " + e.getMessage());
         }
 
         a.name = erpy.name;
@@ -240,7 +240,7 @@ public class ExperimentResultService {
             }
             if (CollectionUtils.isEmpty(tpy.task.inline)) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#604.210 Task inline wasn't found or empty.");
+                        "604.210 Task inline wasn't found or empty.");
             }
 
             ExperimentPart currPart = erpy.parts.stream()
@@ -249,7 +249,7 @@ public class ExperimentResultService {
                     .orElse(null);
 
             if (currPart==null) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#604.213 Task #"+taskId+" has unknown taskContextId #"+taskContextId);
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "604.213 Task #"+taskId+" has unknown taskContextId #"+taskContextId);
             }
 
             MetricValues mvs;
@@ -346,12 +346,12 @@ public class ExperimentResultService {
         if (variables.isEmpty()) {
 
             return new VariableWithStatus(new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    S.f("#604.220 Variable '%s' with taskContext '%s' wasn't found in execContext #%d", varName, taskContextId, execContextId)));
+                    S.f("604.220 Variable '%s' with taskContext '%s' wasn't found in execContext #%d", varName, taskContextId, execContextId)));
         }
 
         if (variables.size()>1) {
             return new VariableWithStatus( new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    S.f("#604.240 Too many variables '%s' with taskContext '%s' in execContext #%d, actual count is ",
+                    S.f("604.240 Too many variables '%s' with taskContext '%s' in execContext #%d, actual count is ",
                             varName, taskContextId, execContextId, variables.size())));
         }
         return new VariableWithStatus(variables.get(0), OperationStatusRest.OPERATION_STATUS_OK);

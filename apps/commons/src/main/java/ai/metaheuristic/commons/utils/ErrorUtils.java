@@ -45,7 +45,7 @@ public class ErrorUtils {
             if (throwableList.size()>skip) {
                 return throwableList.stream().skip(skip).map(Throwable::getMessage).collect(Collectors.joining(". "));
             }
-            log.warn("#714.020 The value of skip is greater or equal to length of causes of Throwable. The list of cause will be returned without skipping of any element");
+            log.warn("714.020 The value of skip is greater or equal to length of causes of Throwable. The list of cause will be returned without skipping of any element");
         }
 
         return throwableList.stream().map(Throwable::getMessage).collect(Collectors.joining(". "));

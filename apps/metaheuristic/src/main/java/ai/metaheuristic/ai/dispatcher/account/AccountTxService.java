@@ -84,21 +84,21 @@ public class AccountTxService {
                 StringUtils.isBlank(acc.getPassword2()) ||
                 StringUtils.isBlank(acc.getPublicName())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#235.010 Username, roles, password, and public name must be not null");
+                    "235.010 Username, roles, password, and public name must be not null");
         }
         if (acc.getUsername().indexOf('=')!=-1 ) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#235.020 Username can't contain '='");
+                    "235.020 Username can't contain '='");
         }
         if (!acc.getPassword().equals(acc.getPassword2())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#235.030 Both passwords must be equal");
+                    "235.030 Both passwords must be equal");
         }
 
         final Account byUsername = accountRepository.findByUsername(acc.getUsername());
         if (byUsername !=null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    String.format("#235.040 Username '%s' was already registered", acc.getUsername()));
+                    String.format("235.040 Username '%s' was already registered", acc.getUsername()));
         }
 
         Account account = new Account();
@@ -124,7 +124,7 @@ public class AccountTxService {
     public AccountData.AccountResult getAccount(Long id, Long companyUniqueId){
         Account account = accountRepository.findById(id).orElse(null);
         if (account == null || !Objects.equals(account.companyId, companyUniqueId)) {
-            return new AccountData.AccountResult("#235.050 account wasn't found, accountId: " + id);
+            return new AccountData.AccountResult("235.050 account wasn't found, accountId: " + id);
         }
         return new AccountData.AccountResult(toSimple(account));
     }
@@ -136,17 +136,17 @@ public class AccountTxService {
     @Transactional
     public OperationStatusRest editFormCommit(@Nullable Long accountId, @Nullable String publicName, boolean enabled, @Nullable Long companyUniqueId) {
         if (accountId==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.055 System error, accountId is null");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"235.055 System error, accountId is null");
         }
         if (S.b(publicName)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.056 System error, publicName is blank");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"235.056 System error, publicName is blank");
         }
         if (companyUniqueId==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.057 System error, companyUniqueId is null");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"235.057 System error, companyUniqueId is null");
         }
         Account a = accountRepository.findByIdForUpdate(accountId);
         if (a == null || !Objects.equals(a.companyId, companyUniqueId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.060 account wasn't found, accountId: " + accountId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"235.060 account wasn't found, accountId: " + accountId);
         }
         a.setEnabled(enabled);
         a.setPublicName(publicName);
@@ -158,15 +158,15 @@ public class AccountTxService {
     @Transactional
     public OperationStatusRest passwordEditFormCommit(Long accountId, String password, String password2, Long companyUniqueId) {
         if (StringUtils.isBlank(password) || StringUtils.isBlank(password2)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.080 Both passwords must be not null");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "235.080 Both passwords must be not null");
         }
 
         if (!password.equals(password2)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.090 Both passwords must be equal");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "235.090 Both passwords must be equal");
         }
         Account a = accountRepository.findByIdForUpdate(accountId);
         if (a == null || !Objects.equals(a.companyId, companyUniqueId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.100 account wasn't found, accountId: " + accountId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "235.100 account wasn't found, accountId: " + accountId);
         }
         a.setPassword(passwordEncoder.encode(password));
         a.updatedOn = System.currentTimeMillis();
@@ -180,7 +180,7 @@ public class AccountTxService {
     public OperationStatusRest roleFormCommit(Long accountId, String roles, Long companyUniqueId) {
         Account account = accountRepository.findByIdForUpdate(accountId);
         if (account == null || !Objects.equals(account.companyId, companyUniqueId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.110 account wasn't found, accountId: " + accountId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"235.110 account wasn't found, accountId: " + accountId);
         }
         List<String> possibleRoles = roleService.getPossibleRoles();
         String str = Arrays.stream(StringUtils.split(roles, ','))
@@ -199,12 +199,12 @@ public class AccountTxService {
     public OperationStatusRest storeRolesForUserById(Long accountId, String role, boolean checkbox, Long companyUniqueId) {
         Account account = accountRepository.findByIdForUpdate(accountId);
         if (account == null || !Objects.equals(account.companyId, companyUniqueId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.120 account wasn't found, accountId: " + accountId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"235.120 account wasn't found, accountId: " + accountId);
         }
 
         List<String> possibleRoles = Consts.ID_1.equals(companyUniqueId) ? roleService.getCompany1PossibleRoles() : roleService.getPossibleRoles();
         if (!possibleRoles.contains(role)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.130 account wasn't found, accountId: " + accountId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"235.130 account wasn't found, accountId: " + accountId);
         }
 
         List<String> currRoles = account.accountRoles.getRolesAsList();
@@ -235,11 +235,11 @@ public class AccountTxService {
     public OperationStatusRest changePasswordCommit(String oldPassword, String newPassword, UserContext context) {
         Account a = accountRepository.findByIdForUpdate(context.getAccountId());
         if (a == null || !Objects.equals(a.companyId, context.getCompanyId())) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.310 account wasn't found, accountId: " + context.getAccountId());
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "235.310 account wasn't found, accountId: " + context.getAccountId());
         }
 
         if (!passwordEncoder.matches(oldPassword, a.getPassword())) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#235.330 Old password is wrong");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "235.330 Old password is wrong");
         }
 
         a.setPassword(passwordEncoder.encode(newPassword));
@@ -268,7 +268,7 @@ public class AccountTxService {
 
         Account account = accountRepository.findByIdForUpdate(accountId);
         if (account == null || !Objects.equals(account.companyId, companyId)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#235.360 account wasn't found, accountId: " + accountId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"235.360 account wasn't found, accountId: " + accountId);
         }
         AccountParamsYaml params = account.getAccountParamsYaml();
         updateFunc.accept(params);

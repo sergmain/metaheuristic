@@ -72,7 +72,7 @@ public class FinishFunction implements InternalFunction {
             ExecContextSyncService.getWithSyncVoid(simpleExecContext.execContextId,
                     () -> execContextFSM.toFinished(simpleExecContext.execContextId));
         } catch (Throwable e) {
-            log.error("#054.040 error", e);
+            log.error("054.040 error", e);
             ExecContextSyncService.getWithSync(simpleExecContext.execContextId,
                     () -> execContextFSM.changeExecContextStateWithTx(EnumsApi.ExecContextState.ERROR, simpleExecContext.execContextId, simpleExecContext.companyId));
         }

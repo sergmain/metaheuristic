@@ -48,21 +48,21 @@ public class ExecSourceCodeTopLevelService {
                     switch (state) {
                         case ERROR:
                             taskFinishingTxService.finishWithErrorWithTx(longRunningExecContext.taskId,
-                                    S.f("#035.020 long-running execContext #%d was finished with an error", longRunningExecContext.execContextId));
+                                    S.f("035.020 long-running execContext #%d was finished with an error", longRunningExecContext.execContextId));
                             break;
                         case FINISHED:
                             try {
                                 taskWithInternalContextTopLevelService.storeResult(longRunningExecContext.taskId, longRunningExecContext.execContextId);
                                 taskFinishingTxService.finishAsOk(longRunningExecContext.taskId);
                             } catch (Throwable th) {
-                                String es = S.f("#035.040 error while finishing a long-running task #%s in execContext #%s with OK, error: %s",
+                                String es = S.f("035.040 error while finishing a long-running task #%s in execContext #%s with OK, error: %s",
                                         longRunningExecContext.taskId, longRunningExecContext.execContextId, th.getMessage());
                                 log.error(es, th);
                                 taskFinishingTxService.finishWithErrorWithTx(longRunningExecContext.taskId, es);
                             }
                             break;
                         default:
-                            throw new IllegalStateException("#035.100 must be FINISHED or ERROR only, actual: " + state);
+                            throw new IllegalStateException("035.100 must be FINISHED or ERROR only, actual: " + state);
                     }
                 });
     }

@@ -69,19 +69,19 @@ public class EnvServiceUtils {
                 Files.createDirectories(artifactDir);
             }
             catch (IOException e) {
-                return "#712.020 An error while creating a path "+ artifactDir.toAbsolutePath();
+                return "712.020 An error while creating a path "+ artifactDir.toAbsolutePath();
             }
         }
         Path envFile = artifactDir.resolve(ConstsApi.MH_ENV_FILE);
         if (Files.isDirectory(envFile)) {
-            return "#712.040 A path "+ artifactDir.toAbsolutePath()+" is dir, can't continue processing";
+            return "712.040 A path "+ artifactDir.toAbsolutePath()+" is dir, can't continue processing";
         }
         final String newEnv = envYamlShortToString(envYaml);
 
         try {
             FileSystemUtils.writeStringToFileWithSync(envFile, newEnv, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            final String es = "#712.060 An error while creating " + ConstsApi.MH_ENV_FILE + ", error: " + ErrorUtils.getAllMessages(e);
+            final String es = "712.060 An error while creating " + ConstsApi.MH_ENV_FILE + ", error: " + ErrorUtils.getAllMessages(e);
             log.error(es, e);
             return es;
         }

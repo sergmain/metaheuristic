@@ -78,7 +78,7 @@ public class ExperimentTopLevelService {
         try {
             experimentService.deleteExperimentByExecContextId(event.execContextId);
         } catch (Throwable th) {
-            log.error("#285.020 Error, need to investigate ", th);
+            log.error("285.020 Error, need to investigate ", th);
         }
     }
 
@@ -106,7 +106,7 @@ public class ExperimentTopLevelService {
     public OperationStatusRest changeExecContextState(String state, Long experimentId, UserContext context) {
         Experiment e = experimentCache.findById(experimentId);
         if (e==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.040 experiment wasn't found, experimentId: " + experimentId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "285.040 experiment wasn't found, experimentId: " + experimentId);
         }
         OperationStatusRest operationStatusRest = execContextTopLevelService.changeExecContextState(state, e.execContextId, context);
         return operationStatusRest;
@@ -115,7 +115,7 @@ public class ExperimentTopLevelService {
     public ExperimentApiData.ExperimentResult getExperimentWithoutProcessing(Long experimentId) {
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
-            return new ExperimentApiData.ExperimentResult("#285.060 experiment wasn't found, experimentId: " + experimentId );
+            return new ExperimentApiData.ExperimentResult("285.060 experiment wasn't found, experimentId: " + experimentId );
         }
         return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(experiment));
     }
@@ -123,7 +123,7 @@ public class ExperimentTopLevelService {
     public ExperimentApiData.ExperimentsEditResult editExperiment(Long id) {
         final Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            return new ExperimentApiData.ExperimentsEditResult("#285.100 experiment wasn't found, experimentId: " + id);
+            return new ExperimentApiData.ExperimentsEditResult("285.100 experiment wasn't found, experimentId: " + id);
         }
         ExperimentApiData.ExperimentsEditResult result = new ExperimentApiData.ExperimentsEditResult();
         result.simpleExperiment = asSimpleExperiment(experiment);
@@ -135,7 +135,7 @@ public class ExperimentTopLevelService {
         if (sc==null) {
             eventPublisher.publishEvent(new DispatcherCacheRemoveSourceCodeEvent(sourceCodeUid));
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.110 SourceCode wasn't found, sourceCodeUid: " + sourceCodeUid+". Try to refresh page");
+                    "285.110 SourceCode wasn't found, sourceCodeUid: " + sourceCodeUid+". Try to refresh page");
         }
         ExecContextCreatorService.ExecContextCreationResult execContextResultRest = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeUid, context);
         if (execContextResultRest.isErrorMessages()) {
@@ -179,11 +179,11 @@ public class ExperimentTopLevelService {
 
     private OperationStatusRest changeExecStateTo(String experimentCode, EnumsApi.ExecContextState execState, Long companyUniqueId) {
         if (S.b(experimentCode)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.120 experiment code is blank");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "285.120 experiment code is blank");
         }
         Experiment experiment = experimentRepository.findByCode(experimentCode);
         if (experiment==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.140 can't find an experiment for code: " + experimentCode);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "285.140 can't find an experiment for code: " + experimentCode);
         }
         OperationStatusRest status = execContextTopLevelService.execContextTargetState(experiment.execContextId, execState, companyUniqueId);
         if (status.isErrorMessages()) {
@@ -202,12 +202,12 @@ public class ExperimentTopLevelService {
         final Experiment e = experimentCache.findById(id);
         if (e == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.260 An experiment wasn't found, experimentId: " + id);
+                    "285.260 An experiment wasn't found, experimentId: " + id);
         }
         ExecContextImpl ec = execContextCache.findById(e.execContextId, true);
         if (ec==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.280 An associated execContext for experimentId #" + id +" wasn't found");
+                    "285.280 An associated execContext for experimentId #" + id +" wasn't found");
         }
         String sourceCodeUid = ec.getExecContextParamsYaml().sourceCodeUid;
 
@@ -217,7 +217,7 @@ public class ExperimentTopLevelService {
             newCode = StrUtils.incCopyNumber(newCode);
             if (i++>100) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#285.300 Can't find a new code for experiment with the code: " + e.getCode());
+                        "285.300 Can't find a new code for experiment with the code: " + e.getCode());
             }
         }
 
@@ -229,7 +229,7 @@ public class ExperimentTopLevelService {
         try {
             return experimentService.editExperimentCommit(simpleExperiment);
         } catch (Throwable th) {
-            String es = "#285.320 Error while updating an Experiment #"+simpleExperiment.id+", error: " + th.getMessage();
+            String es = "285.320 Error while updating an Experiment #"+simpleExperiment.id+", error: " + th.getMessage();
             log.error(es, th);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }

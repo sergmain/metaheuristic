@@ -39,13 +39,13 @@ public class SourceCodeSyncService {
 
     public static void checkWriteLockPresent(Long sourceCodeId) {
         if (!getWriteLock(sourceCodeId).isHeldByCurrentThread()) {
-            throw new IllegalStateException("#969.020 Must be locked by WriteLock");
+            throw new IllegalStateException("969.020 Must be locked by WriteLock");
         }
     }
 
     public static void checkWriteLockNotPresent(Long sourceCodeId) {
         if (getWriteLock(sourceCodeId).isHeldByCurrentThread()) {
-            throw new IllegalStateException("#969.025 The thread was already locked by WriteLock");
+            throw new IllegalStateException("969.025 The thread was already locked by WriteLock");
         }
     }
 

@@ -36,7 +36,7 @@ public class ProcessorSyncService {
 
     public static void checkWriteLockPresent(Long processorId) {
         if (!getWriteLock(processorId).isHeldByCurrentThread()) {
-            throw new IllegalStateException("#302.005 Must be locked by WriteLock");
+            throw new IllegalStateException("302.005 Must be locked by WriteLock");
         }
     }
 

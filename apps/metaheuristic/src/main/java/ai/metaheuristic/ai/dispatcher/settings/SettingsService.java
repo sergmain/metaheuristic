@@ -74,7 +74,7 @@ public class SettingsService {
 
     public OperationStatusRest setLanguage(String lang, UserContext context) {
         if (StringUtils.isBlank(lang)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#236.140 Language must not be null");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "236.140 Language must not be null");
         }
         return accountTxService.setLanguage(context.getAccountId(), context.getCompanyId(), lang);
     }

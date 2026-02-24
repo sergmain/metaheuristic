@@ -73,6 +73,7 @@ import static org.springframework.scheduling.config.TaskSchedulerRouter.DEFAULT_
 @Slf4j
 @EnableConfigurationProperties(Globals.class)
 @RequiredArgsConstructor(onConstructor_={@Autowired})
+@EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
 public class Config {
 
     @Bean
@@ -102,7 +103,6 @@ public class Config {
 
     @Configuration
     @EnableWebSocketMessageBroker
-    @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
     @Profile("dispatcher & websocket")
     public static class DispatcherWebSocketConfig implements WebSocketMessageBrokerConfigurer {
 

@@ -105,7 +105,7 @@ public class ReplicationAccountTopLevelService {
     private ReplicationData.@Nullable AccountAsset getAccountAsset(String username) {
         ReplicationData.AccountAsset accountAsset = requestAccountAsset(username);
         if (accountAsset.isErrorMessages()) {
-            log.error("#308.020 Error while getting account for username "+ username +", error: " + accountAsset.getErrorMessagesAsStr());
+            log.error("308.020 Error while getting account for username "+ username +", error: " + accountAsset.getErrorMessagesAsStr());
             return null;
         }
         return accountAsset;

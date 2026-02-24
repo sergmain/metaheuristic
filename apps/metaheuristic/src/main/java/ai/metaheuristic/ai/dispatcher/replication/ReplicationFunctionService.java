@@ -46,7 +46,7 @@ public class ReplicationFunctionService {
     public void createFunction(ReplicationData.FunctionAsset functionAsset) {
         Function sn = functionRepository.findByCode(functionAsset.function.code);
         if (sn!=null) {
-            log.warn("#240,020 Function {} already registered in db", functionAsset.function.code);
+            log.warn("240.020 Function {} already registered in db", functionAsset.function.code);
             return;
         }
         //noinspection ConstantConditions

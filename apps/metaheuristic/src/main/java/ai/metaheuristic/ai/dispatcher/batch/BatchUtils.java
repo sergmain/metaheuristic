@@ -49,7 +49,7 @@ public class BatchUtils {
     static void changeStateToPreparing(Batch b) {
             if (b.execState!=Enums.BatchExecState.Unknown.code && b.execState!=Enums.BatchExecState.Stored.code &&
                     b.execState != Enums.BatchExecState.Preparing.code) {
-                throw new IllegalStateException("#990.020 Can't change state to Preparing, " +
+                throw new IllegalStateException("990.020 Can't change state to Preparing, " +
                         "current state: " + Enums.BatchExecState.toState(b.execState));
             }
             if (b.execState == Enums.BatchExecState.Preparing.code) {

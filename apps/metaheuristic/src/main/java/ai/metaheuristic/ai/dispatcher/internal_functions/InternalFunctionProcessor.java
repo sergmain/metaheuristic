@@ -66,7 +66,7 @@ public class InternalFunctionProcessor {
             throw e;
         }
         catch(Throwable th) {
-            String es = "#977.060 system error while processing internal function '" + internalFunction.getCode() + "', error: " + th.getMessage();
+            String es = "977.060 system error while processing internal function '" + internalFunction.getCode() + "', error: " + th.getMessage();
             log.error(es, th);
             throw new InternalFunctionException(new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, es));
         }

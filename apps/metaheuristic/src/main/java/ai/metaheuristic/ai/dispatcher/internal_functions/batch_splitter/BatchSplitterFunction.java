@@ -83,20 +83,20 @@ public class BatchSplitterFunction implements InternalFunction {
         String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, "variable-for-splitting");
         if (S.b(inputVariableName)) {
             throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "#995.020 Meta 'variable-for-splitting' wasn't found"));
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.meta_not_found, "995.020 Meta 'variable-for-splitting' wasn't found"));
         }
 
         List<VariableUtils.VariableHolder> holders = internalFunctionVariableService.discoverVariables(simpleExecContext.execContextId, taskContextId, inputVariableName);
         if (holders.size()>1) {
             throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "#995.040 Too many variables"));
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "995.040 Too many variables"));
         }
 
         VariableUtils.VariableHolder variableHolder = holders.get(0);
         String originFilename = variableHolder.getFilename();
         if (S.b(originFilename)) {
             throw new InternalFunctionException(
-                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.input_variable_isnt_file, "#995.060 variable.filename is blank"));
+                new InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.input_variable_isnt_file, "995.060 variable.filename is blank"));
         }
 
         String ext = StrUtils.getExtension(originFilename);
@@ -104,7 +104,7 @@ public class BatchSplitterFunction implements InternalFunction {
         Path tempDir=DirUtils.createMhTempPath("batch-file-upload-");
         try {
             if (tempDir==null || !Files.isDirectory(tempDir)) {
-                String es = "#995.080 can't create temporary directory in " + System.getProperty("java.io.tmpdir");
+                String es = "995.080 can't create temporary directory in " + System.getProperty("java.io.tmpdir");
                 log.error(es);
                 throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
             }
@@ -112,7 +112,7 @@ public class BatchSplitterFunction implements InternalFunction {
             final Path dataFile = Files.createTempFile(tempDir, "uploaded-file-", ext);
             internalFunctionVariableService.storeToFile(variableHolder, dataFile);
             if (Files.size(dataFile)==0) {
-                throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, "#995.100 Empty files aren't supported");
+                throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, "995.100 Empty files aren't supported");
             }
 
             final Path workingDir;
@@ -136,17 +136,17 @@ public class BatchSplitterFunction implements InternalFunction {
                             () -> loadFilesFromDirAfterZip(simpleExecContext, taskId, taskParamsYaml, workingDir, mapping)));
         }
         catch(UnzipArchiveException e) {
-            final String es = "#995.120 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
+            final String es = "995.120 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
             log.error(es, e);
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
         }
         catch(BatchProcessingException e) {
-            final String es = "#995.140 General error of processing batch.\nError: " + e.getMessage();
+            final String es = "995.140 General error of processing batch.\nError: " + e.getMessage();
             log.error(es, e);
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
         }
         catch(Throwable th) {
-            final String es = "#995.160 General processing error.\nError: " + th.getMessage() + ", class: " + th.getClass();
+            final String es = "995.160 General processing error.\nError: " + th.getMessage() + ", class: " + th.getClass();
             log.error(es, th);
             throw new InternalFunctionException(Enums.InternalFunctionProcessing.system_error, es);
         }

@@ -35,13 +35,13 @@ public class ExecContextSyncService {
 
     public static void checkWriteLockPresent(Long execContextId) {
         if (!getWriteLock(execContextId).isHeldByCurrentThread()) {
-            throw new IllegalStateException("#977.020 Must be locked by WriteLock");
+            throw new IllegalStateException("977.020 Must be locked by WriteLock");
         }
     }
 
     public static void checkWriteLockNotPresent(Long execContextId) {
         if (getWriteLock(execContextId).isHeldByCurrentThread()) {
-            throw new IllegalStateException("#977.025 The thread was already locked by WriteLock");
+            throw new IllegalStateException("977.025 The thread was already locked by WriteLock");
         }
     }
 

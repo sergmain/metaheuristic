@@ -48,7 +48,7 @@ public class BatchHelperService {
             return defName;
         }
         if (ecpy.variables.inputs.size()>1) {
-            log.error("#698.020 too many input variables for batch processing: " + ecpy.variables.inputs);
+            log.error("698.020 too many input variables for batch processing: " + ecpy.variables.inputs);
         }
         String startInputVariableName = ecpy.variables.inputs.get(0).name;
         if (S.b(startInputVariableName)) {
@@ -59,7 +59,7 @@ public class BatchHelperService {
             return defName;
         }
         if (filenames.size()>1) {
-            log.warn("#698.040 something wrong, too many startInputAs variables: " + filenames);
+            log.warn("698.040 something wrong, too many startInputAs variables: " + filenames);
         }
         return filenames.get(0);
     }

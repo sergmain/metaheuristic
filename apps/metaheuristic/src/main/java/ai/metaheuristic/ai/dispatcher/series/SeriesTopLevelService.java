@@ -90,7 +90,7 @@ public class SeriesTopLevelService {
     public OperationStatusRest addSeriesCommit(@Nullable String name, UserContext context) {
         if (S.b(name)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#286.020 name of series can be empty");
+                    "286.020 name of series can be empty");
         }
         seriesService.addSeriesCommit(name);
 
@@ -100,7 +100,7 @@ public class SeriesTopLevelService {
     public SeriesData.SeriesResult getSeries(Long seriesId, UserContext context) {
         final Series series = seriesRepository.findById(seriesId).orElse(null);
         if (series == null) {
-            String errorMessage = "#286.040 series wasn't found, seriesId: " + seriesId;
+            String errorMessage = "286.040 series wasn't found, seriesId: " + seriesId;
             return new SeriesData.SeriesResult(errorMessage);
         }
         return new SeriesData.SeriesResult(new SeriesData.SimpleSeries(series.id, series.name));
@@ -111,7 +111,7 @@ public class SeriesTopLevelService {
     public SeriesData.SeriesShortDetails getSeriesDetails(Long seriesId) {
         final Series series = seriesRepository.findById(seriesId).orElse(null);
         if (series == null) {
-            String errorMessage = "#286.040 series wasn't found, seriesId: " + seriesId;
+            String errorMessage = "286.040 series wasn't found, seriesId: " + seriesId;
             return new SeriesData.SeriesShortDetails(errorMessage);
         }
         final SeriesParamsYaml seriesParamsYaml = seriesParamsYamlMap.computeIfAbsent(seriesId, (id) -> series.getSeriesParamsYaml());
@@ -150,7 +150,7 @@ public class SeriesTopLevelService {
     public OperationStatusRest processSeriesImport(Long seriesId, Long experimentResultId) {
         final Series series = seriesRepository.findById(seriesId).orElse(null);
         if (series == null) {
-            String errorMessage = "#286.060 series wasn't found, seriesId: " + seriesId;
+            String errorMessage = "286.060 series wasn't found, seriesId: " + seriesId;
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, errorMessage);
         }
         try {
@@ -158,7 +158,7 @@ public class SeriesTopLevelService {
             return seriesService.processSeriesImport(seriesId, experimentResultId);
         }
         catch (Throwable th) {
-            String es = "#286.080 error while importing an experiment result. error: " + th.getMessage();
+            String es = "286.080 error while importing an experiment result. error: " + th.getMessage();
             log.error(es, th);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
@@ -167,7 +167,7 @@ public class SeriesTopLevelService {
     public SeriesData.SeriesImportDetails getSeriesImportDetails(Long seriesId) {
         final Series series = seriesRepository.findById(seriesId).orElse(null);
         if (series == null) {
-            String errorMessage = "#286.060 series wasn't found, seriesId: " + seriesId;
+            String errorMessage = "286.060 series wasn't found, seriesId: " + seriesId;
             log.error(errorMessage);
             return new SeriesData.SeriesImportDetails(errorMessage);
         }
@@ -189,7 +189,7 @@ public class SeriesTopLevelService {
             return details;
         }
         catch (Throwable th) {
-            String es = "#286.080 error while importing an experiment result. error: " + th.getMessage();
+            String es = "286.080 error while importing an experiment result. error: " + th.getMessage();
             log.error(es, th);
             return new SeriesData.SeriesImportDetails(es);
         }
@@ -198,7 +198,7 @@ public class SeriesTopLevelService {
     public SeriesData.SeriesFittingDetails getSeriesFittingDetails(Long seriesId, String fittingStr) {
         final Series series = seriesRepository.findById(seriesId).orElse(null);
         if (series == null) {
-            String errorMessage = "#286.100 series wasn't found, seriesId: " + seriesId;
+            String errorMessage = "286.100 series wasn't found, seriesId: " + seriesId;
             log.error(errorMessage);
             return new SeriesData.SeriesFittingDetails(errorMessage);
         }
@@ -219,7 +219,7 @@ public class SeriesTopLevelService {
                     .orElse(null);
 
             if (metricsCode==null) {
-                String errorMessage = "#286.110 Code of metrics wasn't found";
+                String errorMessage = "286.110 Code of metrics wasn't found";
                 log.error(errorMessage);
                 return new SeriesData.SeriesFittingDetails(errorMessage);
             }
@@ -249,7 +249,7 @@ public class SeriesTopLevelService {
             return details;
         }
         catch (Throwable th) {
-            String es = "#286.120 error while importing an experiment result. error: " + th.getMessage();
+            String es = "286.120 error while importing an experiment result. error: " + th.getMessage();
             log.error(es, th);
             return new SeriesData.SeriesFittingDetails(es);
         }

@@ -62,7 +62,7 @@ public class TaskFinishingTopLevelService {
         TxUtils.checkTxNotExists();
         TaskImpl task = taskRepository.findByIdReadOnly(taskId);
         if (task == null) {
-            log.warn("#318.010 Reporting about non-existed task #{}", taskId);
+            log.warn("318.010 Reporting about non-existed task #{}", taskId);
             return;
         }
 
@@ -79,7 +79,7 @@ public class TaskFinishingTopLevelService {
                 return;
 
             case NONE:
-                log.info("#318.020 Task {} has a state as NONE, do nothing", task.id);
+                log.info("318.020 Task {} has a state as NONE, do nothing", task.id);
                 // ---> This is a normal operation. do nothing
                 return;
 
@@ -98,13 +98,13 @@ public class TaskFinishingTopLevelService {
             }
             FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.functionExecResults);
             if (functionExec == null) {
-                String es = "#318.040 Task #" + task.id + " has empty execResult";
+                String es = "318.040 Task #" + task.id + " has empty execResult";
                 log.info(es);
                 functionExec = new FunctionApiData.FunctionExec();
             }
             FunctionApiData.SystemExecResult systemExecResult = functionExec.generalExec != null ? functionExec.generalExec : functionExec.exec;
             if (!systemExecResult.isOk) {
-                log.warn("#318.060 Task #{} finished with error, functionCode: {}, console: {}",
+                log.warn("318.060 Task #{} finished with error, functionCode: {}, console: {}",
                         task.id,
                         systemExecResult.functionCode,
                         StringUtils.isNotBlank(systemExecResult.console) ? systemExecResult.console : "<console output is empty>");

@@ -49,7 +49,7 @@ public class ReplicationService {
         }
         ReplicationData.AssetStateResponse assetStateResponse = replicationCoreService.getAssetStates();
         if (assetStateResponse.isErrorMessages()) {
-            log.error("#308.010 Error while getting actual assets: " + assetStateResponse.getErrorMessagesAsStr());
+            log.error("308.010 Error while getting actual assets: " + assetStateResponse.getErrorMessagesAsStr());
             return;
         }
         replicationFunctionTopLevelService.syncFunctions(assetStateResponse.functions);

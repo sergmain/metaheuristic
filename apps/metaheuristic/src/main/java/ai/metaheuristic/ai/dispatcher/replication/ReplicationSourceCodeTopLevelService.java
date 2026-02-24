@@ -94,7 +94,7 @@ public class ReplicationSourceCodeTopLevelService {
     private ReplicationData.@Nullable SourceCodeAsset getSourceCodeAsset(String sourceCodeUid) {
         ReplicationData.SourceCodeAsset sourceCodeAsset = requestSourceCodeAsset(sourceCodeUid);
         if (sourceCodeAsset.isErrorMessages()) {
-            log.error("#308.020 Error while getting sourceCodeUid "+ sourceCodeUid +", error: " + sourceCodeAsset.getErrorMessagesAsStr());
+            log.error("308.020 Error while getting sourceCodeUid "+ sourceCodeUid +", error: " + sourceCodeAsset.getErrorMessagesAsStr());
             return null;
         }
         return sourceCodeAsset;

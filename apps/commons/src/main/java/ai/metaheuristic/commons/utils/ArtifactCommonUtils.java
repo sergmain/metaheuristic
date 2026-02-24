@@ -39,7 +39,7 @@ public class ArtifactCommonUtils {
             case array:
                 return EnumsApi.DataType.variable;
             default:
-                throw new IllegalStateException("#103.040 wrong context: " + context);
+                throw new IllegalStateException("103.040 wrong context: " + context);
         }
     }
 

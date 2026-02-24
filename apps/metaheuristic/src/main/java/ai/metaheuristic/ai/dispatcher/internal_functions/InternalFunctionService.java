@@ -58,20 +58,20 @@ public class InternalFunctionService {
         if (sourceCode==null) {
             return new InternalFunctionData.ExecutionContextData(
                     new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error,
-                    "#994.200 sourceCode wasn't found, sourceCodeId: " + simpleExecContext.sourceCodeId));
+                    "994.200 sourceCode wasn't found, sourceCodeId: " + simpleExecContext.sourceCodeId));
         }
         Set<TaskVertex> descendants = execContextGraphService.findDirectDescendants(simpleExecContext.execContextGraphId, taskId);
         if (descendants.isEmpty()) {
             return new InternalFunctionData.ExecutionContextData(
                 new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.broken_graph_error,
-                    "#994.240 Graph for ExecContext #"+simpleExecContext.execContextId+" is broken"));
+                    "994.240 Graph for ExecContext #"+simpleExecContext.execContextId+" is broken"));
         }
 
         final ExecContextParamsYaml.Process process = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
         if (process==null) {
             return new InternalFunctionData.ExecutionContextData(
                 new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken,
-                    "#994.260 Process '"+taskParamsYaml.task.processCode+"'not found"));
+                    "994.260 Process '"+taskParamsYaml.task.processCode+"'not found"));
         }
 
         DirectedAcyclicGraph<ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(simpleExecContext.paramsYaml);

@@ -86,14 +86,14 @@ public class BatchSplitterTxService {
         if (executionContextData.subProcesses.isEmpty()) {
             throw new InternalFunctionException(
                     new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.sub_process_not_found,
-                            "#995.275 there isn't any sub-process for process '"+executionContextData.process.processCode+"'"));
+                            "995.275 there isn't any sub-process for process '"+executionContextData.process.processCode+"'"));
         }
 
         final String variableName = MetaUtils.getValue(executionContextData.process.metas, "output-variable");
         if (S.b(variableName)) {
             throw new InternalFunctionException(
                     new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.source_code_is_broken,
-                            "#995.280 Meta with key 'output-variable' wasn't found for process '"+executionContextData.process.processCode+"'"));
+                            "995.280 Meta with key 'output-variable' wasn't found for process '"+executionContextData.process.processCode+"'"));
         }
 
         final List<Long> lastIds = new ArrayList<>();
@@ -125,14 +125,14 @@ public class BatchSplitterTxService {
                                 throw e;
                             }
                             catch (Throwable th) {
-                                String es = "#995.300 An error while saving data to file, " + th.getMessage();
+                                String es = "995.300 An error while saving data to file, " + th.getMessage();
                                 log.error(es, th);
                                 throw new BatchResourceProcessingException(es);
                             }
                         });
             }
         } catch (IOException e) {
-            String es = "#995.310 An error while saving data to file, " + e;
+            String es = "995.310 An error while saving data to file, " + e;
             log.error(es, e);
             throw new BatchResourceProcessingException(es);
         }
@@ -156,7 +156,7 @@ public class BatchSplitterTxService {
                         }).collect(Collectors.toList());
             }
             if (files.isEmpty()) {
-                log.error("#995.290 there isn't any files in dir {}", file.toAbsolutePath());
+                log.error("995.290 there isn't any files in dir {}", file.toAbsolutePath());
                 return null;
             }
             variableDataSource = new VariableData.VariableDataSource(files);
