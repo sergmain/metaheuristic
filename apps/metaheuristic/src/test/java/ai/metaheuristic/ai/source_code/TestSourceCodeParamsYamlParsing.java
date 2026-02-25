@@ -24,6 +24,8 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 /**
  * @author Serge
  * Date: 4/5/2020
@@ -50,6 +52,33 @@ public class TestSourceCodeParamsYamlParsing {
         String yaml = IOUtils.resourceToString("/source_code/yaml/source-code-for-preprocessing-and-classification-v1.yaml", StandardCharsets.UTF_8);
         SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
         scpy.checkIntegrity();
+    }
+
+    @Test
+    public void testDefaultSourceCodeV1_noDuplicateInputs() throws IOException {
+        String yaml = IOUtils.resourceToString("/source_code/yaml/default-source-code-for-testing.yaml", StandardCharsets.UTF_8);
+        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+        scpy.checkIntegrity();
+
+        // dataset-processing process should have exactly 1 input (assembled-raw-output)
+        SourceCodeParamsYaml.Process datasetProcessing = scpy.source.processes.stream()
+                .filter(p -> "dataset-processing".equals(p.code))
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull(datasetProcessing, "dataset-processing process not found");
+        System.out.println("dataset-processing inputs: " + datasetProcessing.inputs.size());
+        for (var inp : datasetProcessing.inputs) {
+            System.out.println("  input: " + inp.name);
+        }
+        System.out.println("dataset-processing outputs: " + datasetProcessing.outputs.size());
+        for (var out : datasetProcessing.outputs) {
+            System.out.println("  output: " + out.name);
+        }
+        assertEquals(1, datasetProcessing.inputs.size(), "dataset-processing should have 1 input");
+        assertEquals("assembled-raw-output", datasetProcessing.inputs.get(0).name);
+        assertEquals(1, datasetProcessing.outputs.size(), "dataset-processing should have 1 output");
+        assertEquals("dataset-processing-output", datasetProcessing.outputs.get(0).name);
     }
 
 }

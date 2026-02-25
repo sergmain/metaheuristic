@@ -105,6 +105,11 @@ public class TaskVariableInitTxService {
 
         TaskParamsYaml taskParams = task.getTaskParamsYaml();
 
+        log.info("179.035 prepareVariables() task #{}, processCode: {}, existing inputs: {}, existing outputs: {}",
+                task.id, taskParams.task.processCode,
+                taskParams.task.inputs.stream().map(i -> i.name).toList(),
+                taskParams.task.outputs.stream().map(o -> o.name).toList());
+
         final Long execContextId = task.execContextId;
         ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(taskParams.task.processCode);
         if (p==null) {
@@ -112,9 +117,18 @@ public class TaskVariableInitTxService {
             return;
         }
 
-        p.inputs.stream()
-                .map(v -> toInputVariable(allParentTaskContextIds, v, taskParams.task.taskContextId, execContextId))
-                .collect(Collectors.toCollection(()->taskParams.task.inputs));
+        log.info("179.045 process inputs from ECPY: {}", p.inputs.stream().map(i -> i.name).toList());
+
+        if (taskParams.task.inputs.isEmpty()) {
+            p.inputs.stream()
+                    .map(v -> toInputVariable(allParentTaskContextIds, v, taskParams.task.taskContextId, execContextId))
+                    .collect(Collectors.toCollection(() -> taskParams.task.inputs));
+        }
+        else {
+            log.warn("179.046 task #{} already has inputs: {}, skipping duplicate init", task.id, taskParams.task.inputs.stream().map(i -> i.name).toList());
+        }
+
+        log.info("179.047 after collect, task inputs: {}", taskParams.task.inputs.stream().map(i -> i.name).toList());
 
         variableTxService.initOutputVariables(execContextId, task, p, taskParams);
     }
