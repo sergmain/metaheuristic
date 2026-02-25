@@ -67,8 +67,8 @@ public class CommonSync<T> {
         return getLock(id).readLock();
     }
 
-    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private static final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
 
     public ReentrantReadWriteLock getLock(T id) {
         writeLock.lock();
