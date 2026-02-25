@@ -268,6 +268,15 @@ public class EvaluateExpressionLanguage {
             return new TypeConverter() {
                 @Override
                 public boolean canConvert(@Nullable TypeDescriptor sourceType, TypeDescriptor targetType) {
+                    if (sourceType == null) {
+                        return false;
+                    }
+                    if (sourceType.getObjectType().equals(targetType.getObjectType())) {
+                        return true;
+                    }
+                    if (sourceType.getObjectType().equals(VariableUtils.VariableHolder.class)) {
+                        return targetType.getObjectType().equals(Boolean.class) || targetType.getObjectType().equals(Integer.class);
+                    }
                     return false;
                 }
 
@@ -310,10 +319,39 @@ public class EvaluateExpressionLanguage {
                     if (firstObject==null || secondObject==null) {
                         throw new EvaluationException("(firstObject==null || secondObject==null)");
                     }
+                    // Detect if either operand is Boolean — use boolean comparison
+                    if (isBooleanComparison(firstObject, secondObject)) {
+                        Boolean firstValue = getValueBoolean(firstObject);
+                        Boolean secondValue = getValueBoolean(secondObject);
+                        return firstValue.compareTo(secondValue);
+                    }
                     Integer firstValue = getValueInteger(firstObject);
                     Integer secondValue = getValueInteger(secondObject);
                     final int compare = firstValue.compareTo(secondValue);
                     return compare;
+                }
+
+                private boolean isBooleanComparison(Object first, Object second) {
+                    return first instanceof Boolean || second instanceof Boolean
+                            || isBooleanVariableHolder(first) || isBooleanVariableHolder(second);
+                }
+
+                private boolean isBooleanVariableHolder(Object obj) {
+                    if (!(obj instanceof VariableUtils.VariableHolder vh)) {
+                        return false;
+                    }
+                    if (vh.notInited()) {
+                        return false;
+                    }
+                    String strValue;
+                    if (vh.variable != null) {
+                        strValue = variableTxService.getVariableDataAsString(vh.variable.id);
+                    } else if (vh.globalVariable != null) {
+                        strValue = globalVariableService.getVariableDataAsString(vh.globalVariable.id);
+                    } else {
+                        return false;
+                    }
+                    return "true".equalsIgnoreCase(strValue) || "false".equalsIgnoreCase(strValue);
                 }
             };
         }

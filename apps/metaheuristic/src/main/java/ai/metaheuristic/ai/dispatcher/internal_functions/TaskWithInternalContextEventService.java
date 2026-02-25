@@ -39,6 +39,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
@@ -187,9 +188,14 @@ public class TaskWithInternalContextEventService {
                         (v) -> VariableSyncService.getWithSyncVoidForCreation(v.id,
                                 ()-> variableTxService.setVariableAsNull(taskId, v.id)));
                 if (obj!=null && !(obj instanceof Boolean)) {
-                    final String es = "706.300 condition '" + p.condition + " has returned not boolean value but " + obj.getClass().getSimpleName();
-                    log.error(es);
-                    throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken, es);
+                    if (obj instanceof VariableUtils.VariableHolder variableHolder) {
+                        obj = extractBooleanFromVariableHolder(variableHolder);
+                    }
+                    else {
+                        final String es = "706.300 condition '" + p.condition + " has returned not boolean value but " + obj.getClass().getSimpleName();
+                        log.error(es);
+                        throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken, es);
+                    }
                 }
                 notSkip = Boolean.TRUE.equals(obj);
                 int i=0;
@@ -207,6 +213,23 @@ public class TaskWithInternalContextEventService {
         finally {
             TaskLastProcessingHelper.lastTaskId = taskId;
         }
+    }
+
+    private Boolean extractBooleanFromVariableHolder(VariableUtils.VariableHolder variableHolder) {
+        if (variableHolder.notInited()) {
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken,
+                    "706.330 condition variable is not initialized");
+        }
+        String strValue;
+        if (variableHolder.variable != null) {
+            strValue = variableTxService.getVariableDataAsString(variableHolder.variable.id);
+        } else if (variableHolder.globalVariable != null) {
+            strValue = globalVariableService.getVariableDataAsString(variableHolder.globalVariable.id);
+        } else {
+            throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken,
+                    "706.360 both local and global variables are null in condition variable holder");
+        }
+        return Boolean.parseBoolean(strValue);
     }
 
 }

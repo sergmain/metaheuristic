@@ -1,0 +1,83 @@
+version: 4
+source:
+  clean: false
+  strictNaming: true
+  instances: 1
+  uid: test-evaluation-condition-boolean-1.0
+  variables:
+    inline:
+      keys:
+        boolTrue: 'true'
+        boolFalse: 'false'
+  processes:
+    # Step 1: Initialize boolTrue variable with value "true"
+    - code: mh.string-as-variable-bool-true
+      name: mh.string-as-variable-bool-true
+      function:
+        code: mh.string-as-variable
+        context: internal
+      metas:
+        - mapping: |+
+            mapping:
+              - group: keys
+                name: boolTrue
+                output: boolTrue
+      outputs:
+        - name: boolTrue
+          ext: .txt
+
+    # Step 2: Initialize boolFalse variable with value "false"
+    - code: mh.string-as-variable-bool-false
+      name: mh.string-as-variable-bool-false
+      function:
+        code: mh.string-as-variable
+        context: internal
+      metas:
+        - mapping: |+
+            mapping:
+              - group: keys
+                name: boolFalse
+                output: boolFalse
+      outputs:
+        - name: boolFalse
+          ext: .txt
+
+    # Step 3: Test bare variable reference "condition: boolTrue" — should NOT skip
+    - code: mh.nop-bare-true
+      name: mh.nop-bare-true
+      function:
+        code: mh.nop
+        context: internal
+      condition: boolTrue
+
+    # Step 4: Test bare variable reference "condition: boolFalse" — should SKIP
+    - code: mh.nop-bare-false
+      name: mh.nop-bare-false
+      function:
+        code: mh.nop
+        context: internal
+      condition: boolFalse
+
+    # Step 5: Test equality "condition: boolTrue==true" — should NOT skip
+    - code: mh.nop-eq-true
+      name: mh.nop-eq-true
+      function:
+        code: mh.nop
+        context: internal
+      condition: boolTrue==true
+
+    # Step 6: Test equality "condition: boolFalse==true" — should SKIP
+    - code: mh.nop-eq-false
+      name: mh.nop-eq-false
+      function:
+        code: mh.nop
+        context: internal
+      condition: boolFalse==true
+
+    # Step 7: Test ternary (regression) "condition: 'boolTrue ? true : false'" — should NOT skip
+    - code: mh.nop-ternary-true
+      name: mh.nop-ternary-true
+      function:
+        code: mh.nop
+        context: internal
+      condition: 'boolTrue ? true : false'
