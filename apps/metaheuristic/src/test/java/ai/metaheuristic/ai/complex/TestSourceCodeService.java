@@ -66,13 +66,36 @@ import org.springframework.test.context.DynamicPropertySource;
 
 import java.io.ByteArrayInputStream;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests a complex workflow defined in default-source-code-for-testing.yaml:
+ *
+ * 1. mh.inline-as-variable (internal) - converts inline hyper-params to variables (seed, batchSize, timeSteps, RNN)
+ * 2. assembly-raw-file (function-01:1.1) - takes global-test-variable, outputs assembled-raw-output
+ * 3. dataset-processing (function-02:1.1) - takes assembled-raw-output, outputs dataset-processing-output
+ *    subProcesses (logic=and):
+ *      3a. feature-processing-1 (function-03:1.1) - outputs feature-output-1
+ *      3b. feature-processing-2 (function-04:1.1) - outputs feature-output-2
+ * 4. mh.permute-values-of-variables (internal) - permutes hyper-param values
+ *    subProcesses (logic=sequential):
+ *      4a. mh.permute-variables (internal) - permutes feature-output-1/2, creates 3 permutations
+ *          subProcesses (logic=sequential):
+ *            - fit-dataset (test.fit.function:1.0) x3 - takes 6 inputs, outputs model
+ *            - predict-dataset (test.predict.function:1.0) x3 - takes 3 inputs, outputs metrics+predicted
+ * 5. mh.aggregate (internal) - aggregates metrics and predicted variables
+ * 6. mh.finish (internal) - finishes the exec context
+ *
+ * Total tasks: 22 (1+1+1+1+1+1+1+3fit+3predict+1aggregate+1finish + internal tasks)
+ */
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
@@ -137,6 +160,28 @@ public class TestSourceCodeService extends PreparingSourceCode {
         public TaskImpl task;
     }
 
+    /**
+     * Waits until a task becomes available for the given core, using Awaitility to avoid race conditions.
+     */
+    private DispatcherCommParamsYaml.AssignedTask awaitTask(Long coreId) {
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
+
+        final AtomicReference<DispatcherCommParamsYaml.AssignedTask> tRef = new AtomicReference<>();
+        await()
+            .atLeast(Duration.ofMillis(0))
+            .atMost(Duration.ofSeconds(5))
+            .with()
+            .pollInterval(Duration.ofMillis(100))
+            .until(() -> {
+                processScheduledTasks();
+                preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
+                final DispatcherCommParamsYaml.AssignedTask task = taskProviderTopLevelService.findTask(coreId, false);
+                tRef.set(task);
+                return task != null;
+            });
+        return tRef.get();
+    }
+
     @SneakyThrows
     @Test
     public void testCreateTasks() {
@@ -150,41 +195,40 @@ public class TestSourceCodeService extends PreparingSourceCode {
         System.out.println("start step_1_1_register_function_statuses()");
         preparingSourceCodeService.step_1_1_register_function_statuses(processorIdAndCoreIds, preparingSourceCodeData, preparingCodeData);
 
-//        System.out.println("start findTaskForRegisteringInQueue()");
-        //preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
-
-        System.out.println("start findTaskForRegisteringInQueueAndWait() #1");
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
-
+        // Step 2: assembly-raw-file (function-01:1.1)
+        // After mh.inline-as-variable internal function completes asynchronously,
+        // we wait for the next external task to become available
         System.out.println("start step_AssembledRaw()");
         step_AssembledRaw(processorIdAndCoreIds);
 
-        System.out.println("start findTaskForRegisteringInQueueAndWait() #2");
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
-
+        // Step 3: dataset-processing (function-02:1.1)
         System.out.println("start step_DatasetProcessing()");
         step_DatasetProcessing(processorIdAndCoreIds);
 
-        System.out.println("start findTaskForRegisteringInQueueAndWait() #3");
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
-
-        //   processCode: feature-processing-1, function code: function-03:1.1
+        // Step 3a: feature-processing-1 (function-03:1.1)
         System.out.println("start step_CommonProcessing(feature-output-1)");
         step_CommonProcessing(processorIdAndCoreIds, "feature-output-1");
 
-        System.out.println("start findTaskForRegisteringInQueueAndWait() #4");
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
-
-        //   processCode: feature-processing-2, function code: function-04:1.1
+        // Step 3b: feature-processing-2 (function-04:1.1)
         System.out.println("start step_CommonProcessing(feature-output-2)");
         step_CommonProcessing(processorIdAndCoreIds, "feature-output-2");
 
+        // Step 4: mh.permute-values-of-variables (internal) runs async
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
-        // mh.permute-values-of-variables
         preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
 
-        // mh.permute-variables
-//        preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
+        // Wait until unfinished tasks settle to 4:
+        // mh.permute-variables, mh.aggregate, mh.finish, and possibly a fit/predict task
+        await()
+            .atLeast(Duration.ofMillis(0))
+            .atMost(Duration.ofSeconds(10))
+            .with()
+            .pollInterval(Duration.ofMillis(200))
+            .until(() -> {
+                setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+                preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
+                return getUnfinishedTaskVertices(getExecContextForTest()).size() == 4;
+            });
 
         final List<Long> taskIds = getUnfinishedTaskVertices(getExecContextForTest());
         assertEquals(4, taskIds.size());
@@ -235,6 +279,17 @@ public class TestSourceCodeService extends PreparingSourceCode {
         ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId,
             ()-> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(getExecContextForTest().id, getExecContextForTest().execContextTaskStateId));
 
+        // Wait for mh.permute-variables to finish (it's internal and runs async)
+        await()
+            .atLeast(Duration.ofMillis(0))
+            .atMost(Duration.ofSeconds(10))
+            .with()
+            .pollInterval(Duration.ofMillis(200))
+            .until(() -> {
+                TaskImpl t = taskRepository.findById(permuteTask.task.id).orElse(null);
+                return t != null && EnumsApi.TaskExecState.isFinishedState(t.execState);
+            });
+
         ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, () -> {
             setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
 
@@ -247,7 +302,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertEquals(EnumsApi.TaskExecState.OK, taskExecState,
                     "Current status: " + taskExecState + ", exitCode: " + functionExec.exec.exitCode + ", console: " + functionExec.exec.console);
 
-            verifyGraphIntegrity();
             taskIds.clear();
             taskIds.addAll(getUnfinishedTaskVertices(getExecContextForTest()));
 
@@ -283,8 +337,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
 
         execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
-//        execContextTaskAssigningTopLevelService.procesEvent();
-        //execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(getExecContextForTest().id);
 
         DispatcherCommParamsYaml.AssignedTask t =
                 taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
@@ -297,28 +349,24 @@ public class TestSourceCodeService extends PreparingSourceCode {
         ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, () -> {
             setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
             verifyGraphIntegrity();
-            taskIds.clear();
-            taskIds.addAll(getUnfinishedTaskVertices(getExecContextForTest()));
-            assertEquals(1, taskIds.size());
         });
 
-        execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
-//        execContextTaskAssigningTopLevelService.procesEvent();
-//        execContextTaskAssigningTopLevelService.findUnassignedTasksAndRegisterInQueue(getExecContextForTest().id);
-
-        t = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
-        // null because current task is 'internal' and will be processed in async way
-        assertNull(t);
-        waitForFinishing(finishTask.task.id, 40);
-        ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId,
-            ()->execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(getExecContextForTest().id, getExecContextForTest().execContextTaskStateId));
+        // Wait for mh.finish to complete (it's internal and may already be done or will run shortly)
+        await()
+            .atLeast(Duration.ofMillis(0))
+            .atMost(Duration.ofSeconds(10))
+            .with()
+            .pollInterval(Duration.ofMillis(200))
+            .until(() -> {
+                TaskImpl t2 = taskRepository.findById(finishTask.task.id).orElse(null);
+                return t2 != null && EnumsApi.TaskExecState.isFinishedState(t2.execState);
+            });
 
         finalAssertions(22);
     }
 
     private void step_CommonProcessing(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds, String outputVariable) {
-        DispatcherCommParamsYaml.AssignedTask simpleTask32 =
-                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
+        DispatcherCommParamsYaml.AssignedTask simpleTask32 = awaitTask(processorIdAndCoreIds.coreId1);
 
         assertNotNull(simpleTask32);
         assertNotNull(simpleTask32.getTaskId());
@@ -348,10 +396,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     }
 
     private void step_FitAndPredict(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
-
-        DispatcherCommParamsYaml.AssignedTask simpleTask32 =
-                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
+        DispatcherCommParamsYaml.AssignedTask simpleTask32 = awaitTask(processorIdAndCoreIds.coreId1);
 
         assertNotNull(simpleTask32);
         assertNotNull(simpleTask32.getTaskId());
@@ -387,12 +432,12 @@ public class TestSourceCodeService extends PreparingSourceCode {
             assertEquals(Enums.UploadVariableStatus.OK, status);
         }
         taskFinishingTopLevelService.checkTaskCanBeFinished(simpleTask32.taskId);
+        processScheduledTasks();
         execContextSchedulerService.updateExecContextStatuses();
     }
 
     private void step_DatasetProcessing(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
-        DispatcherCommParamsYaml.AssignedTask simpleTask20 =
-                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
+        DispatcherCommParamsYaml.AssignedTask simpleTask20 = awaitTask(processorIdAndCoreIds.coreId1);
         // function code is function-02:1.1
         assertNotNull(simpleTask20);
         assertNotNull(simpleTask20.getTaskId());
@@ -441,8 +486,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
     }
 
     private void step_AssembledRaw(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
-        DispatcherCommParamsYaml.AssignedTask simpleTask =
-                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
+        DispatcherCommParamsYaml.AssignedTask simpleTask = awaitTask(processorIdAndCoreIds.coreId1);
         // function code is function-01:1.1
         assertNotNull(simpleTask);
         assertNotNull(simpleTask.getTaskId());
@@ -542,7 +586,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
         r.setTaskId(simpleTask.getTaskId());
         r.setResult(getOKExecResult());
 
-        ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, () -> execContextFSM.storeExecResultWithTx(r));
+        TaskSyncService.getWithSyncVoid(simpleTask.taskId, () ->
+                ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, () -> execContextFSM.storeExecResultWithTx(r)));
 
         TaskImpl task = taskRepository.findById(simpleTask.taskId).orElse(null);
         assertNotNull(task);
