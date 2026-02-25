@@ -106,7 +106,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
         assertEquals(EnumsApi.ExecContextState.STARTED, execContextStatusService.getExecContextStatuses().statuses.get(getExecContextForTest().id));
 
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
-        assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(getExecContextForTest().getState()));
+        assertEquals(EnumsApi.ExecContextState.STARTED.code, getExecContextForTest().getState());
     }
 
     protected void storeConsoleResultAsError(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {

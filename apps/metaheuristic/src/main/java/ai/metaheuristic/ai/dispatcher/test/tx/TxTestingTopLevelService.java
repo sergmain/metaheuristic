@@ -79,7 +79,7 @@ public class TxTestingTopLevelService {
 
             mills = System.currentTimeMillis();
             log.info("Start functionRepository.save() #1");
-            byte[] bytes = IOUtils.resourceToByteArray("/bin/test-zip.zip");
+            byte[] bytes = "test file for unzip ".getBytes();
             f = functionTxService.persistFunction(sc, new ByteArrayInputStream(bytes), bytes.length);
 
             log.info("functionRepository.save() #1 was finished for {} milliseconds", System.currentTimeMillis() - mills);

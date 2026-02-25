@@ -49,6 +49,7 @@ public class YamlForVersioning {
 
         Constructor constructor = new Constructor(ParamsVersion.class, loaderOptions);
 
+        // TODO p0 2026-02-24
         Yaml yaml = new Yaml(constructor, representer);
         return yaml;
     }
