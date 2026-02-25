@@ -16,13 +16,10 @@
 
 package ai.metaheuristic.commons.yaml.versioning;
 
-import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.ParamsVersion;
+import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
 import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.Map;
@@ -36,9 +33,9 @@ import java.util.Objects;
 @Slf4j
 public class BaseYamlUtils<T extends BaseParams> {
 
-    private @NonNull final ParamsYamlUtilsFactory FACTORY;
+    private final ParamsYamlUtilsFactory FACTORY;
 
-    public BaseYamlUtils(@NonNull Map<Integer, AbstractParamsYamlUtils> map, @NonNull AbstractParamsYamlUtils defYamlUtils) {
+    public BaseYamlUtils(Map<Integer, AbstractParamsYamlUtils> map, AbstractParamsYamlUtils defYamlUtils) {
         map.forEach((k,v)-> {
             if (k!=v.getVersion()) {
                 final String es = "Versions are different, class: "+ v.getClass() + ", expected version: "+ k+", version of class: " + v.getVersion();
@@ -49,20 +46,20 @@ public class BaseYamlUtils<T extends BaseParams> {
         FACTORY = new ParamsYamlUtilsFactory(map, defYamlUtils);;
     }
 
-    public @Nullable AbstractParamsYamlUtils getForVersion(int version) {
+    public AbstractParamsYamlUtils getForVersion(int version) {
         return FACTORY.getForVersion(version);
     }
 
-    public @NonNull AbstractParamsYamlUtils getDefault() {
+    public AbstractParamsYamlUtils getDefault() {
         return FACTORY.getDefault();
     }
 
-    public @NonNull String toString(@NonNull BaseParams baseParams) {
+    public String toString(BaseParams baseParams) {
         baseParams.checkIntegrity();
         return Objects.requireNonNull(getDefault().getYaml().dumpAsMap(baseParams));
     }
 
-    public @NonNull String toStringAsVersion(@NonNull BaseParams baseParamsYaml, int version) {
+    public String toStringAsVersion(BaseParams baseParamsYaml, int version) {
         if (baseParamsYaml.getVersion()==version) {
             return toString(baseParamsYaml);
         }

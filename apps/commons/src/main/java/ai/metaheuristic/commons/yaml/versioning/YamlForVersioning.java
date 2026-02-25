@@ -18,12 +18,12 @@ package ai.metaheuristic.commons.yaml.versioning;
 
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.ParamsVersion;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.LoaderOptions;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.nodes.Tag;
-import org.yaml.snakeyaml.representer.Representer;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.LineIterator;
+
+import java.io.StringReader;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Serge
@@ -32,11 +32,29 @@ import org.yaml.snakeyaml.representer.Representer;
  */
 public class YamlForVersioning {
 
+    private static final Pattern VERSION_NUMBER_PATTERN = Pattern.compile("^version: (?<version>\\d)\\s*$");
+
     public static ParamsVersion getParamsVersion(String s) {
+        LineIterator it = IOUtils.lineIterator(new StringReader(s));
+        while (it.hasNext()) {
+            String line = it.next();
+            Matcher m = VERSION_NUMBER_PATTERN.matcher(line);
+            boolean b = m.find();
+            if (b) {
+                int version = Integer.parseInt(m.group("version"));
+                return new ParamsVersion(version);
+            }
+        }
+        return ConstsApi.PARAMS_VERSION_1;
+    }
+
+/*
+    public static ParamsVersion getParamsVersion_old(String s) {
         ParamsVersion yamlVersion = getYamlForVersion().load(s);
         return yamlVersion==null ? ConstsApi.PARAMS_VERSION_1 : yamlVersion;
     }
 
+    @SuppressWarnings("deprecation")
     private static Yaml getYamlForVersion() {
         Representer representer = new Representer(new DumperOptions());
         representer.getPropertyUtils().setSkipMissingProperties(true);
@@ -49,8 +67,8 @@ public class YamlForVersioning {
 
         Constructor constructor = new Constructor(ParamsVersion.class, loaderOptions);
 
-        // TODO p0 2026-02-24
         Yaml yaml = new Yaml(constructor, representer);
         return yaml;
     }
+*/
 }

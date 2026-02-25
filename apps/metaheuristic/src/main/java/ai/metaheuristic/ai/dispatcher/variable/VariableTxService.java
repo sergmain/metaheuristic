@@ -127,7 +127,7 @@ public class VariableTxService {
         VariableSyncService.checkWriteLockPresent(data.id);
 
         if (size==0) {
-            throw new IllegalStateException("171.120 Variable can't be with zero length");
+            throw new IllegalStateException("171.120 Variable can't be with zero length, Variable: " + data);
         }
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
         DataStorageParams dsp = data.getDataStorageParams();

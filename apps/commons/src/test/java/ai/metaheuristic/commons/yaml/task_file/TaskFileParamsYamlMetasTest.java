@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 @Execution(CONCURRENT)
-public class TaskFileParamsYamlMetasTest {
+class TaskFileParamsYamlMetasTest {
 
     @Test
     public void test_metas_v2_roundTrip() {

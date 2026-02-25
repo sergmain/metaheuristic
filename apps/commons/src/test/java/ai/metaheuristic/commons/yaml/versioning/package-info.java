@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,27 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.data;
+@NullMarked
+package ai.metaheuristic.commons.yaml.versioning;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.jspecify.annotations.Nullable;
-
-/**
- * @author Serge
- * Date: 6/17/2019
- * Time: 12:32 AM
- */
-@Data
-@NoArgsConstructor
-public class ParamsVersion {
-    public @Nullable Integer version;
-
-    public ParamsVersion(Integer version) {
-        this.version = version;
-    }
-
-    public int getActualVersion() {
-        return version!=null ? version : 1;
-    }
-}
+import org.jspecify.annotations.NullMarked;

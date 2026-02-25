@@ -73,26 +73,32 @@ public abstract class PreparingSourceCode extends PreparingCore {
     }
 
     public Function getF1() {
+        assertNotNull(preparingSourceCodeData.f1);
         return preparingSourceCodeData.f1;
     }
 
     public Function getF2() {
+        assertNotNull(preparingSourceCodeData.f2);
         return preparingSourceCodeData.f2;
     }
 
     public Function getF3() {
+        assertNotNull(preparingSourceCodeData.f3);
         return preparingSourceCodeData.f3;
     }
 
     public Function getF4() {
+        assertNotNull(preparingSourceCodeData.f4);
         return preparingSourceCodeData.f4;
     }
 
     public Function getF5() {
+        assertNotNull(preparingSourceCodeData.f5);
         return preparingSourceCodeData.f5;
     }
 
     public ExecContextImpl getExecContextForTest() {
+        assertNotNull(preparingSourceCodeData.execContextForTest);
         return preparingSourceCodeData.execContextForTest;
     }
 

@@ -60,6 +60,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -99,16 +100,12 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TestSourceCodeService extends PreparingSourceCode {
 
     @org.junit.jupiter.api.io.TempDir
     static Path tempDir;
-
-    @BeforeAll
-    static void setSystemProperties() {
-        System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
-    }
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
@@ -116,6 +113,11 @@ public class TestSourceCodeService extends PreparingSourceCode {
         registry.add("spring.datasource.url", () -> dbUrl);
         registry.add("mh.home", () -> tempDir.toAbsolutePath().toString());
         registry.add("spring.profiles.active", () -> "dispatcher,h2,test");
+    }
+
+    @BeforeAll
+    static void setSystemProperties() {
+        System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
@@ -385,6 +387,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
         processScheduledTasks();
 
+        assertNotNull(getExecContextForTest().execContextTaskStateId);
         ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId,
             () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(getExecContextForTest().id, getExecContextForTest().execContextTaskStateId));
         processScheduledTasks();
@@ -538,6 +541,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         finishTask(task);
     }
 
+    @SuppressWarnings("SameParameterValue")
     @SneakyThrows
     private void waitForFinishing(Long id, int secs) {
         TaskLastProcessingHelper.resetLastTask();

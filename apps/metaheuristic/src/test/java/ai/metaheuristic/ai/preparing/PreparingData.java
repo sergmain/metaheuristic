@@ -50,16 +50,16 @@ public class PreparingData {
 
     @Data
     public static class PreparingSourceCodeData {
-        public SourceCodeImpl sourceCode = null;
+        public @Nullable SourceCodeImpl sourceCode = null;
         public Company company;
         public Account account;
-        public Function f1 = null;
-        public Function f2 = null;
-        public Function f3 = null;
-        public Function f4 = null;
-        public Function f5 = null;
+        public @Nullable Function f1 = null;
+        public @Nullable Function f2 = null;
+        public @Nullable Function f3 = null;
+        public @Nullable Function f4 = null;
+        public @Nullable Function f5 = null;
         public GlobalVariable testGlobalVariable;
         public ExecContextParamsYaml execContextYaml;
-        public ExecContextImpl execContextForTest = null;
+        public @Nullable ExecContextImpl execContextForTest = null;
     }
 }

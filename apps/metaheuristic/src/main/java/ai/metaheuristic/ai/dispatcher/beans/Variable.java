@@ -21,10 +21,7 @@ import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.Nullable;
 
@@ -40,6 +37,7 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @Cacheable
 @org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+@ToString(exclude = {"params"})
 public class Variable implements Serializable {
     @Serial
     private static final long serialVersionUID = 7768428475142175426L;
