@@ -41,6 +41,7 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 public class TestCommonSync {
 
     private static final int DURATION = 10;
+    private static final AtomicLong ID_SEQUENCE = new AtomicLong();
 
     public static class TestSync {
 
@@ -104,6 +105,7 @@ public class TestCommonSync {
         Thread t3 = null;
 
         try {
+            final Long uniqueId = ID_SEQUENCE.incrementAndGet();
             TestSync testSync = new TestSync();
 
             final AtomicBoolean isRun = new AtomicBoolean(true);
@@ -124,7 +126,7 @@ public class TestCommonSync {
 
 
             t1 = new Thread(() -> {
-                TestSync.getWithSyncNullable(42L, () -> {
+                TestSync.getWithSyncNullable(uniqueId, () -> {
                     isStarted.set(true);
                     try {
                         while (isRun.get()) {
@@ -145,7 +147,7 @@ public class TestCommonSync {
             AtomicBoolean insideSync2 = new AtomicBoolean();
             t2 = new Thread(() -> {
                 isStarted2.set(true);
-                TestSync.getWithSyncNullable(42L, () -> {
+                TestSync.getWithSyncNullable(uniqueId, () -> {
                     started2.set(System.currentTimeMillis());
                     insideSync2.set(true);
                     try {
@@ -165,7 +167,7 @@ public class TestCommonSync {
             AtomicBoolean insideSync3 = new AtomicBoolean();
             t3 = new Thread(() -> {
                 isStarted3.set(true);
-                TestSync.getWithSyncNullable(42L, () -> {
+                TestSync.getWithSyncNullable(uniqueId, () -> {
                     started3.set(System.currentTimeMillis());
                     insideSync3.set(true);
                     try {
@@ -210,12 +212,12 @@ public class TestCommonSync {
             waitForStoppingThreads("t2, t3", isStarted2, isStarted3);
 
             boolean lockOk = false;
-            if (!TestSync.getWriteLock(42L).isHeldByCurrentThread()) {
+            if (!TestSync.getWriteLock(uniqueId).isHeldByCurrentThread()) {
                 lockOk = true;
             }
 
             assertTrue(lockOk);
-            final ReentrantReadWriteLock.WriteLock writeLock = TestSync.getWriteLock(42L);
+            final ReentrantReadWriteLock.WriteLock writeLock = TestSync.getWriteLock(uniqueId);
             final boolean condition = writeLock.tryLock();
             assertTrue(condition);
             writeLock.unlock();
