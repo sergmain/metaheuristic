@@ -59,10 +59,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.PublicKey;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
@@ -122,6 +119,7 @@ public class FunctionService {
             "the config file function.yaml",
             (es)-> es, SEE_MORE_INFO
     );
+    public static final int MAX_CACHE_SIZE = 1000;
 
     private final Globals globals;
     private final FunctionRepository functionRepository;
@@ -406,40 +404,59 @@ public class FunctionService {
         public long mills;
     }
 
-    private final Map<String, FunctionSimpleCache> mappingCodeToId = new HashMap<>();
-    private static final long FUNCTION_SIMPLE_CACHE_TTL = TimeUnit.MINUTES.toMillis(15);
+    private final LinkedHashMap<String, FunctionSimpleCache> mappingCodeToId = new LinkedHashMap<>() {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, FunctionSimpleCache> eldest) {
+            return size() > MAX_CACHE_SIZE || eldest.getValue().id==null;
+        }
+    };
+    private static final long FUNCTION_SIMPLE_CACHE_TTL = TimeUnit.MINUTES.toMillis(3);
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+    private final ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
 
-    @Nullable
-    public Function findByCode(String functionCode) {
-        writeLock.lock();
+    public @Nullable Function findByCode(String functionCode) {
+        readLock.lock();
         try {
             FunctionSimpleCache cache = mappingCodeToId.get(functionCode);
-            if (cache!=null) {
-                if (System.currentTimeMillis() - cache.mills > FUNCTION_SIMPLE_CACHE_TTL) {
-                    cache.id = functionRepository.findIdByCode(functionCode);
-                    cache.mills = System.currentTimeMillis();
-                }
+            if (cache!=null && cache.id!=null) {
+                Function function = functionCache.findById(cache.id);
+                return function;
             }
-            else {
-                cache = new FunctionSimpleCache(functionRepository.findIdByCode(functionCode), System.currentTimeMillis());
-                mappingCodeToId.put(functionCode, cache);
-            }
-            if (mappingCodeToId.size()>1000) {
-                mappingCodeToId.clear();
+        } finally {
+            readLock.unlock();
+        }
+
+        writeLock.lock();
+        try {
+            FunctionSimpleCache cache = mappingCodeToId.computeIfAbsent(functionCode,
+                (code)-> new FunctionSimpleCache(functionRepository.findIdByCode(functionCode), System.currentTimeMillis()));
+
+            if (System.currentTimeMillis() - cache.mills > FUNCTION_SIMPLE_CACHE_TTL) {
+                cache.id = functionRepository.findIdByCode(functionCode);
+                cache.mills = System.currentTimeMillis();
             }
 
             if (cache.id==null) {
                 return null;
             }
+
             Function function = functionCache.findById(cache.id);
             if (function == null) {
                 cache.id = null;
                 cache.mills = System.currentTimeMillis();
             }
             return function;
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    public void resetCache() {
+        writeLock.lock();
+        try {
+            mappingCodeToId.clear();
         } finally {
             writeLock.unlock();
         }

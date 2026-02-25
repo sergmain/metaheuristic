@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateUtils;
+import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
@@ -65,6 +66,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private ExecContextGraphService execContextGraphService;
+    @Autowired private FunctionService functionService;
 
     public SourceCodeImpl getSourceCode() {
         return preparingSourceCodeData.sourceCode;
@@ -144,6 +146,8 @@ public abstract class PreparingSourceCode extends PreparingCore {
     }
 
     public void step_0_0_produce_tasks_and_start() {
+        functionService.resetCache();
+
         step_0_0_produceTasks();
 
         ExecContextSyncService.getWithSyncNullable(getExecContextForTest().id, () -> {
