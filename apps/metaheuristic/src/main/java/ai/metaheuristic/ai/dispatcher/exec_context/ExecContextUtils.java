@@ -75,7 +75,7 @@ public class ExecContextUtils {
         r.lines = new ExecContextApiData.LineWithState[contexts.size()];
 
         //noinspection SimplifyStreamApiCallChains
-        List<String> sortedContexts = contexts.stream().sorted(ExecContextUtils::compare).collect(Collectors.toList());
+        List<String> sortedContexts = buildHierarchicalContextOrder(contexts);
 
         for (int i = 0; i < r.lines.length; i++) {
             r.lines[i] = new ExecContextApiData.LineWithState();
@@ -219,5 +219,79 @@ public class ExecContextUtils {
         }
         headers[idx].process = process;
         return idx;
+    }
+
+    /**
+     * Builds a hierarchical ordering of taskContextIds where children are grouped
+     * immediately after their parent, producing an interleaved tree-walk order.
+     *
+     * Example: instead of flat [1, 1,2#1, 1,2#2, 1,2,3,1#0, 1,2,3,2#0]
+     * produces: [1, 1,2#1, 1,2,3,1#0, 1,2#2, 1,2,3,2#0]
+     */
+    public static List<String> buildHierarchicalContextOrder(Set<String> contexts) {
+        // Build parent-child mapping
+        Map<String, List<String>> childrenByParent = new LinkedHashMap<>();
+        Set<String> roots = new LinkedHashSet<>();
+
+        for (String ctx : contexts) {
+            String parent = ContextUtils.deriveParentTaskContextId(ctx);
+            if (parent == null || !contexts.contains(parent)) {
+                // No parent in the set, or parent doesn't exist — treat as root
+                // But try to find the nearest existing ancestor
+                String nearestAncestor = findNearestAncestor(ctx, contexts);
+                if (nearestAncestor != null) {
+                    childrenByParent.computeIfAbsent(nearestAncestor, k -> new ArrayList<>()).add(ctx);
+                }
+                else {
+                    roots.add(ctx);
+                }
+            }
+            else {
+                childrenByParent.computeIfAbsent(parent, k -> new ArrayList<>()).add(ctx);
+            }
+        }
+
+        // Sort roots and children within each group using the existing compare method
+        List<String> sortedRoots = roots.stream().sorted(ExecContextUtils::compare).collect(Collectors.toList());
+        for (List<String> children : childrenByParent.values()) {
+            children.sort(ExecContextUtils::compare);
+        }
+
+        // Recursive tree walk
+        List<String> result = new ArrayList<>();
+        for (String root : sortedRoots) {
+            emitWithChildren(root, childrenByParent, result);
+        }
+        return result;
+    }
+
+    private static void emitWithChildren(String context, Map<String, List<String>> childrenByParent, List<String> result) {
+        result.add(context);
+        List<String> children = childrenByParent.get(context);
+        if (children != null) {
+            for (String child : children) {
+                emitWithChildren(child, childrenByParent, result);
+            }
+        }
+    }
+
+    /**
+     * Finds the nearest existing ancestor of a taskContextId within the given set.
+     * Walks up the parent chain until an ancestor is found in the set, or returns null.
+     */
+    @org.jspecify.annotations.Nullable
+    private static String findNearestAncestor(String taskContextId, Set<String> contexts) {
+        String current = taskContextId;
+        for (int i = 0; i < 20; i++) { // safety limit to prevent infinite loops
+            String parent = ContextUtils.deriveParentTaskContextId(current);
+            if (parent == null) {
+                return null;
+            }
+            if (contexts.contains(parent)) {
+                return parent;
+            }
+            current = parent;
+        }
+        return null;
     }
 }

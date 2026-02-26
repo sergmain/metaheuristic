@@ -355,4 +355,68 @@ class TestExecContextStateExtended {
         ExecContextApiData.ExecContextStateResult resultOperator = ExecContextUtils.getExecContextStateResult(42L, raw, false);
         assertNull(resultOperator.lines[0].cells[0].outs);
     }
+
+    // Test hierarchical ordering: fan-out children grouped under their parent
+    // Simulates the real RG scenario: batch-splitter creates 1,2#1, 1,2#2, 1,2#3
+    // then nop creates nested tasks 1,2,3,1#0, 1,2,3,2#0, 1,2,3,3#0
+    @Test
+    public void test_hierarchicalOrdering_fanOutWithNestedChildren() {
+        List<ExecContextApiData.VariableState> infos = List.of(
+                new ExecContextApiData.VariableState(1L, 1111L, 1001L, "1", "splitter", "mh.batch-line-splitter", null, null),
+                // fan-out instances
+                new ExecContextApiData.VariableState(10L, 1111L, 1001L, "1,2#1", "check", "check-fn", null, null),
+                new ExecContextApiData.VariableState(11L, 1111L, 1001L, "1,2#2", "check", "check-fn", null, null),
+                new ExecContextApiData.VariableState(12L, 1111L, 1001L, "1,2#3", "check", "check-fn", null, null),
+                // nested children of fan-out (path propagated)
+                new ExecContextApiData.VariableState(20L, 1111L, 1001L, "1,2,3,1#0", "evaluate", "eval-fn", null, null),
+                new ExecContextApiData.VariableState(21L, 1111L, 1001L, "1,2,3,2#0", "evaluate", "eval-fn", null, null),
+                new ExecContextApiData.VariableState(22L, 1111L, 1001L, "1,2,3,3#0", "evaluate", "eval-fn", null, null),
+                new ExecContextApiData.VariableState(99L, 1111L, 1001L, "1", "mh.finish", "mh.finish", null, null)
+        );
+
+        Map<Long, TaskApiData.TaskState> states = Map.of(
+                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1", "splitter"),
+                10L, new TaskApiData.TaskState(10L, TaskExecState.OK.value, 0L, false, "1,2#1", "check"),
+                11L, new TaskApiData.TaskState(11L, TaskExecState.OK.value, 0L, false, "1,2#2", "check"),
+                12L, new TaskApiData.TaskState(12L, TaskExecState.OK.value, 0L, false, "1,2#3", "check"),
+                20L, new TaskApiData.TaskState(20L, TaskExecState.ERROR.value, 0L, false, "1,2,3,1#0", "evaluate"),
+                21L, new TaskApiData.TaskState(21L, TaskExecState.ERROR.value, 0L, false, "1,2,3,2#0", "evaluate"),
+                22L, new TaskApiData.TaskState(22L, TaskExecState.ERROR.value, 0L, false, "1,2,3,3#0", "evaluate"),
+                99L, new TaskApiData.TaskState(99L, TaskExecState.NONE.value, 0L, false, "1", "mh.finish")
+        );
+
+        List<String> processCodes = List.of("splitter", "check", "evaluate", "mh.finish");
+        ExecContextApiData.RawExecContextStateResult raw = new ExecContextApiData.RawExecContextStateResult(
+                1L, infos, processCodes, SourceCodeType.common, "test-hierarchical", true, states);
+
+        ExecContextApiData.ExecContextStateResult result = ExecContextUtils.getExecContextStateResult(42L, raw, true);
+
+        assertNotNull(result);
+        assertEquals(4, result.header.length);
+        // 1 + 3 fan-out + 3 nested = 7 contexts
+        assertEquals(7, result.lines.length);
+
+        // Verify hierarchical ordering: each nested child follows its parent
+        // Expected order:
+        // "1"         (root)
+        //   "1,2#1"   (fan-out instance 1)
+        //     "1,2,3,1#0" (child of 1,2#1)
+        //   "1,2#2"   (fan-out instance 2)
+        //     "1,2,3,2#0" (child of 1,2#2)
+        //   "1,2#3"   (fan-out instance 3)
+        //     "1,2,3,3#0" (child of 1,2#3)
+        assertEquals("1", result.lines[0].context);
+        assertEquals("1,2#1", result.lines[1].context);
+        assertEquals("1,2,3,1#0", result.lines[2].context);
+        assertEquals("1,2#2", result.lines[3].context);
+        assertEquals("1,2,3,2#0", result.lines[4].context);
+        assertEquals("1,2#3", result.lines[5].context);
+        assertEquals("1,2,3,3#0", result.lines[6].context);
+
+        // Verify task placement: "1,2,3,1#0" is the child of "1,2#1"
+        assertFalse(result.lines[2].cells[2].empty);
+        assertEquals(20L, result.lines[2].cells[2].taskId);
+        assertEquals(TaskExecState.ERROR.toString(), result.lines[2].cells[2].state);
+    }
+
 }

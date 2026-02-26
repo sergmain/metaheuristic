@@ -155,5 +155,79 @@ public class ContextUtils {
         return list.stream().sorted(ContextUtils::compareTaskContextIds).collect(Collectors.toList());
     }
 
+    /**
+     * Derives the parent taskContextId from a given taskContextId.
+     *
+     * Two categories of taskContextId:
+     *
+     * 1. Without '#' suffix (simple nested processContextId):
+     *    "1,1,1" → parent is "1,1" (strip last comma-component)
+     *    "1,1" → parent is "1"
+     *    "1" → null (root)
+     *
+     * 2. With '#' suffix (fan-out or path-propagated):
+     *    "1,2#8" → parent is "1" (the batch-splitter task that created this fan-out)
+     *    "1,2,3,8#0" → parent is "1,2#8" (path propagation from parent)
+     *    "1,2,3,4,8,0#0" → parent is "1,2,3,8#0" (deeper nesting)
+     *
+     * For case 2, the level (before '#') is composed of processContextId + propagated path components.
+     * Given level = "X1,...,Xn" where the last components are propagated paths:
+     * We need to find where the processContextId ends and the path begins.
+     *
+     * The pattern for path-propagated contexts:
+     * If level has format processCtxId + "," + parentPath components, then:
+     * - Strip last path component to get the remaining level
+     * - The parent's level is the processContextId without the last digit
+     * - The parent's suffix is the last path component stripped
+     */
+    @Nullable
+    public static String deriveParentTaskContextId(String taskContextId) {
+        String level = getLevel(taskContextId);
+        String path = getPath(taskContextId);
+
+        if (!level.contains(String.valueOf(CONTEXT_DIGIT_SEPARATOR))) {
+            // Top-level context like "1" — no parent
+            return null;
+        }
+
+        if (path == null) {
+            // No '#' suffix — simple nested processContextId like "1,1,1"
+            // Parent is the context with last comma-component removed
+            int lastComma = level.lastIndexOf(CONTEXT_DIGIT_SEPARATOR);
+            return level.substring(0, lastComma);
+        }
+
+        // Has '#' suffix — fan-out or path-propagated context
+        // level = processContextId + "," + path_components (from getCurrTaskContextIdForSubProcesses)
+        //
+        // Examples:
+        // "1,2#8" → level="1,2", path="8" → parent is "1"
+        //   (the processContextId is "1,2", the batch-splitter at parent level "1" created instance #8)
+        //   parent level = strip last comma-component from processContextId = "1"
+        //
+        // "1,2,3,8#0" → level="1,2,3,8", path="0"
+        //   This was created by getCurrTaskContextIdForSubProcesses("1,2#8", "1,2,3")
+        //   = "1,2,3" + "," + "8" = "1,2,3,8", then buildTaskContextId("1,2,3,8", "0")
+        //   The last component of level ("8") is the parent's suffix
+        //   The rest ("1,2,3") is the child's processContextId
+        //   Parent's level = strip last from child's processContextId = "1,2"
+        //   Parent = "1,2#8"
+
+        int lastComma = level.lastIndexOf(CONTEXT_DIGIT_SEPARATOR);
+        String beforeLastComma = level.substring(0, lastComma);
+        String lastComponent = level.substring(lastComma + 1);
+
+        // beforeLastComma is the child's processContextId (or prefix thereof)
+        // lastComponent is the propagated path from the parent's suffix
+
+        int parentLevelEnd = beforeLastComma.lastIndexOf(CONTEXT_DIGIT_SEPARATOR);
+        if (parentLevelEnd == -1) {
+            // beforeLastComma is a single value like "1" — parent is top-level
+            return beforeLastComma;
+        }
+
+        String parentLevel = beforeLastComma.substring(0, parentLevelEnd);
+        return parentLevel + CONTEXT_SEPARATOR + lastComponent;
+    }
 
 }
