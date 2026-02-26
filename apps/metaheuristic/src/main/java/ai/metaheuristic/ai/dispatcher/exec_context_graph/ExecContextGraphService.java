@@ -656,18 +656,11 @@ public class ExecContextGraphService {
             Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state, @Nullable String taskContextId) {
 
         Set<ExecContextData.TaskVertex> set = findDescendantsInternal(execContextDAC.graph(), taskId);
-        String context = taskContextId!=null ? ContextUtils.getLevel(taskContextId) : null;
-
-        // find and filter a 'mh.finish' vertex, which doesn't have any outgoing edges
-        //noinspection SimplifiableConditionalExpression
-        Set<ExecContextData.TaskVertex> setFiltered = set.stream()
-                .filter(tv -> (context==null ? true : ContextUtils.getLevel(tv.taskContextId).startsWith(context)))
-                .collect(Collectors.toSet());
 
         // Only mark descendants whose ALL parents are in an error-or-skipped state.
         // This prevents marking a task SKIPPED if it has another parent that is still active (OK, IN_PROGRESS, NONE).
         Set<ExecContextData.TaskVertex> toMark = new LinkedHashSet<>();
-        for (ExecContextData.TaskVertex tv : setFiltered) {
+        for (ExecContextData.TaskVertex tv : set) {
             if (allParentsErrorOrSkipped(execContextDAC.graph(), stateParamsYaml, tv)) {
                 toMark.add(tv);
             }
@@ -681,7 +674,9 @@ public class ExecContextGraphService {
         // Cascade SKIPPED to tasks that are not descendants of taskId but whose ALL parents
         // are now in ERROR or SKIPPED state. This handles the case where siblings in a sequential
         // chain become unreachable because all their predecessors were SKIPPED.
-        propagateSkippedToUnreachableTasks(execContextDAC, stateParamsYaml, withTaskList, state, context);
+        // No context filter is applied — the allParentsErrorOrSkipped check is the proper guard
+        // and handles cross-context cascading (e.g. inner subProcess ERROR propagating to outer sequential tasks).
+        propagateSkippedToUnreachableTasks(execContextDAC, stateParamsYaml, withTaskList, state);
 
         //noinspection unused
         int i=1;
@@ -694,7 +689,7 @@ public class ExecContextGraphService {
      */
     private static void propagateSkippedToUnreachableTasks(
             ExecContextData.ExecContextDAC execContextDAC, ExecContextTaskStateParamsYaml stateParamsYaml,
-            ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state, @Nullable String context) {
+            ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
 
         boolean changed = true;
         while (changed) {
@@ -703,10 +698,6 @@ public class ExecContextGraphService {
                 EnumsApi.TaskExecState currentState = stateParamsYaml.states.getOrDefault(tv.taskId, EnumsApi.TaskExecState.NONE);
                 if (currentState == EnumsApi.TaskExecState.SKIPPED || currentState == EnumsApi.TaskExecState.ERROR || currentState == EnumsApi.TaskExecState.OK) {
                     // already in terminal state
-                    continue;
-                }
-                //noinspection SimplifiableConditionalExpression
-                if (context != null && !ContextUtils.getLevel(tv.taskContextId).startsWith(context)) {
                     continue;
                 }
                 if (execContextDAC.graph().incomingEdgesOf(tv).isEmpty()) {

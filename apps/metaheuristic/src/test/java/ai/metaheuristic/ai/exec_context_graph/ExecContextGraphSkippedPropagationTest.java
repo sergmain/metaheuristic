@@ -270,6 +270,153 @@ class ExecContextGraphSkippedPropagationTest {
         assertEquals(TaskExecState.SKIPPED, stateParams.states.get(4L), "T4 should be SKIPPED — single parent T3 is SKIPPED");
     }
 
+    /**
+     * Reproduces the real DAG scenario: inner subProcess task errors, outer sequential siblings stuck.
+     *
+     * Simplified version of the actual DAG from mhdg-rg-flat-short SourceCode (one batch instance):
+     * <pre>
+     *   641 (check-objectives, ctx="1,2#1")
+     *     → 642 (nop-wrapper, ctx="1,2#1")
+     *       → 691 (nop-objectives, ctx="1,2,3,1#0") [inner subProcess]
+     *         → 643 (read-req, ctx="1,2#1") [outer sequential — depends on 691]
+     *           → 644 (decompose, ctx="1,2#1")
+     *             → 645 (store-reqs, ctx="1,2#1")
+     *               → 640 (mh.finish, ctx="1")
+     * </pre>
+     *
+     * When 691 (nop-objectives, ctx="1,2,3,1#0") gets ERROR:
+     * - 643 (read-req, ctx="1,2#1") has single parent 691 → should be SKIPPED
+     * - 644-645 cascade SKIPPED
+     *
+     * The old code's context filter rejected 643 because "1,2" doesn't startWith "1,2,3,1".
+     */
+    @Test
+    public void test_crossContext_innerErrorPropagesToOuterSiblings() {
+        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = createGraph();
+        ExecContextTaskStateParamsYaml stateParams = new ExecContextTaskStateParamsYaml();
+
+        ExecContextData.TaskVertex t641 = addVertex(graph, 641L, "1,2#1");
+        ExecContextData.TaskVertex t642 = addVertex(graph, 642L, "1,2#1");
+        ExecContextData.TaskVertex t691 = addVertex(graph, 691L, "1,2,3,1#0");
+        ExecContextData.TaskVertex t643 = addVertex(graph, 643L, "1,2#1");
+        ExecContextData.TaskVertex t644 = addVertex(graph, 644L, "1,2#1");
+        ExecContextData.TaskVertex t645 = addVertex(graph, 645L, "1,2#1");
+        ExecContextData.TaskVertex t640 = addVertex(graph, 640L, "1");
+
+        graph.addEdge(t641, t642);
+        graph.addEdge(t642, t691);
+        graph.addEdge(t691, t643);
+        graph.addEdge(t643, t644);
+        graph.addEdge(t644, t645);
+        graph.addEdge(t645, t640);
+
+        stateParams.states.put(641L, TaskExecState.OK);
+        stateParams.states.put(642L, TaskExecState.OK);
+        stateParams.states.put(691L, TaskExecState.IN_PROGRESS);
+        stateParams.states.put(643L, TaskExecState.PRE_INIT);
+        stateParams.states.put(644L, TaskExecState.PRE_INIT);
+        stateParams.states.put(645L, TaskExecState.PRE_INIT);
+        stateParams.states.put(640L, TaskExecState.NONE);
+
+        ExecContextData.ExecContextDAC dac = new ExecContextData.ExecContextDAC(1L, graph, 1);
+        ExecContextOperationStatusWithTaskList status = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
+
+        //act
+        updateTaskState(dac, stateParams, 691L, TaskExecState.ERROR, "1,2,3,1#0", status);
+
+        assertEquals(TaskExecState.OK, stateParams.states.get(641L), "check-objectives stays OK");
+        assertEquals(TaskExecState.OK, stateParams.states.get(642L), "nop-wrapper stays OK");
+        assertEquals(TaskExecState.ERROR, stateParams.states.get(691L), "nop-objectives is ERROR");
+        assertEquals(TaskExecState.SKIPPED, stateParams.states.get(643L),
+                "read-req (ctx 1,2#1) should be SKIPPED — single parent 691 (ctx 1,2,3,1#0) is ERROR");
+        assertEquals(TaskExecState.SKIPPED, stateParams.states.get(644L),
+                "decompose should be SKIPPED — single parent 643 is SKIPPED");
+        assertEquals(TaskExecState.SKIPPED, stateParams.states.get(645L),
+                "store-reqs should be SKIPPED — single parent 644 is SKIPPED");
+        assertEquals(TaskExecState.SKIPPED, stateParams.states.get(640L),
+                "mh.finish should be SKIPPED — single parent 645 is SKIPPED");
+    }
+
+    /**
+     * Same cross-context scenario but mh.finish has multiple parents (from multiple batch instances).
+     * mh.finish should NOT be SKIPPED if other batch instances are still running.
+     */
+    @Test
+    public void test_crossContext_multipleParents_mhFinishNotSkipped() {
+        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = createGraph();
+        ExecContextTaskStateParamsYaml stateParams = new ExecContextTaskStateParamsYaml();
+
+        // Batch instance 1
+        ExecContextData.TaskVertex t641 = addVertex(graph, 641L, "1,2#1");
+        ExecContextData.TaskVertex t642 = addVertex(graph, 642L, "1,2#1");
+        ExecContextData.TaskVertex t691 = addVertex(graph, 691L, "1,2,3,1#0");
+        ExecContextData.TaskVertex t643 = addVertex(graph, 643L, "1,2#1");
+        ExecContextData.TaskVertex t644 = addVertex(graph, 644L, "1,2#1");
+        ExecContextData.TaskVertex t645 = addVertex(graph, 645L, "1,2#1");
+
+        // Batch instance 2
+        ExecContextData.TaskVertex t646 = addVertex(graph, 646L, "1,2#2");
+        ExecContextData.TaskVertex t647 = addVertex(graph, 647L, "1,2#2");
+        ExecContextData.TaskVertex t692 = addVertex(graph, 692L, "1,2,3,2#0");
+        ExecContextData.TaskVertex t648 = addVertex(graph, 648L, "1,2#2");
+        ExecContextData.TaskVertex t649 = addVertex(graph, 649L, "1,2#2");
+        ExecContextData.TaskVertex t650 = addVertex(graph, 650L, "1,2#2");
+
+        ExecContextData.TaskVertex t640 = addVertex(graph, 640L, "1");
+
+        // Batch 1 edges
+        graph.addEdge(t641, t642);
+        graph.addEdge(t642, t691);
+        graph.addEdge(t691, t643);
+        graph.addEdge(t643, t644);
+        graph.addEdge(t644, t645);
+        graph.addEdge(t645, t640);
+
+        // Batch 2 edges
+        graph.addEdge(t646, t647);
+        graph.addEdge(t647, t692);
+        graph.addEdge(t692, t648);
+        graph.addEdge(t648, t649);
+        graph.addEdge(t649, t650);
+        graph.addEdge(t650, t640);
+
+        stateParams.states.put(641L, TaskExecState.OK);
+        stateParams.states.put(642L, TaskExecState.OK);
+        stateParams.states.put(691L, TaskExecState.IN_PROGRESS);
+        stateParams.states.put(643L, TaskExecState.PRE_INIT);
+        stateParams.states.put(644L, TaskExecState.PRE_INIT);
+        stateParams.states.put(645L, TaskExecState.PRE_INIT);
+
+        stateParams.states.put(646L, TaskExecState.OK);
+        stateParams.states.put(647L, TaskExecState.OK);
+        stateParams.states.put(692L, TaskExecState.NONE);
+        stateParams.states.put(648L, TaskExecState.NONE);
+        stateParams.states.put(649L, TaskExecState.NONE);
+        stateParams.states.put(650L, TaskExecState.NONE);
+        stateParams.states.put(640L, TaskExecState.NONE);
+
+        ExecContextData.ExecContextDAC dac = new ExecContextData.ExecContextDAC(1L, graph, 1);
+        ExecContextOperationStatusWithTaskList status = new ExecContextOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
+
+        //act
+        updateTaskState(dac, stateParams, 691L, TaskExecState.ERROR, "1,2,3,1#0", status);
+
+        // batch #1 chain is SKIPPED
+        assertEquals(TaskExecState.SKIPPED, stateParams.states.get(643L), "batch1 read-req SKIPPED");
+        assertEquals(TaskExecState.SKIPPED, stateParams.states.get(644L), "batch1 decompose SKIPPED");
+        assertEquals(TaskExecState.SKIPPED, stateParams.states.get(645L), "batch1 store-reqs SKIPPED");
+
+        // batch #2 chain is untouched
+        assertEquals(TaskExecState.NONE, stateParams.states.get(692L), "batch2 nop-objectives stays NONE");
+        assertEquals(TaskExecState.NONE, stateParams.states.get(648L), "batch2 read-req stays NONE");
+        assertEquals(TaskExecState.NONE, stateParams.states.get(649L), "batch2 decompose stays NONE");
+        assertEquals(TaskExecState.NONE, stateParams.states.get(650L), "batch2 store-reqs stays NONE");
+
+        // mh.finish is NOT SKIPPED — has parent 650 (NONE)
+        assertEquals(TaskExecState.NONE, stateParams.states.get(640L),
+                "mh.finish should stay NONE — parent 650 from batch2 is still NONE");
+    }
+
     // ======================== Helper methods ========================
 
     private static DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> createGraph() {
@@ -285,7 +432,6 @@ class ExecContextGraphSkippedPropagationTest {
 
     /**
      * Mimics the logic of ExecContextGraphService.updateTaskExecState() for a single task state change.
-     * This calls the same propagation logic that the real code uses.
      */
     private static void updateTaskState(
             ExecContextData.ExecContextDAC dac, ExecContextTaskStateParamsYaml stateParams,
