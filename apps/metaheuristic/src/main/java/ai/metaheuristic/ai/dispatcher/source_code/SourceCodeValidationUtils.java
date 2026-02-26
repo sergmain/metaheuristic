@@ -328,7 +328,7 @@ public class SourceCodeValidationUtils {
     }
 
     private static boolean checkForCondition(SourceCodeParamsYaml.Process process) {
-        if (!S.b(process.condition)) {
+        if (process.condition!=null && !S.b(process.condition.conditions)) {
             return true;
         }
         if (process.subProcesses!=null) {
