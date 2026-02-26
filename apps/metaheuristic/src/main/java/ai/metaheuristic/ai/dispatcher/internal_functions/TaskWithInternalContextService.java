@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
+import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInExecContextTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
@@ -41,6 +43,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * @author Serge
  * Date: 9/28/2020
@@ -57,6 +61,7 @@ public class TaskWithInternalContextService {
     private final TaskRepository taskRepository;
     private final ExecContextFSM execContextFSM;
     private final TaskExecStateService taskExecStateService;
+    private final EventPublisherService eventPublisherService;
 
     @Transactional
     public void preProcessing(ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId) {
@@ -77,7 +82,13 @@ public class TaskWithInternalContextService {
             return;
         }
         // TODO 2021-10-15 investigate the possibility to mark as completed such tasks
+        task.setCompleted(1);
+        task.setCompletedOn(System.currentTimeMillis());
+        task.setResultReceived(1);
         taskExecStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.SKIPPED, false);
+        taskTxService.save(task);
+        eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(
+                new UpdateTaskExecStatesInExecContextTxEvent(task.execContextId, List.of(task.id)));
     }
 
     @Transactional

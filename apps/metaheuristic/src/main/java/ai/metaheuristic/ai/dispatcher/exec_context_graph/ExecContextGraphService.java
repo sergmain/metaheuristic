@@ -287,7 +287,8 @@ public class ExecContextGraphService {
                     }
                     else if (execState == EnumsApi.TaskExecState.SKIPPED) {
                         log.info("915.015 TaskExecState for task #{} is SKIPPED", tv.taskId);
-                        // todo 2020-08-16 need to decide what to do here
+                        // Propagate SKIPPED to all children tasks in sub-process, same as ERROR
+                        setStateForAllChildrenTasksInternal(graph, stateParamsYaml, taskId, status, EnumsApi.TaskExecState.SKIPPED, taskWithState.taskContextId);
                     }
                     else if (execState == EnumsApi.TaskExecState.CHECK_CACHE) {
                         log.info("915.017 TaskExecState for task #{} is CHECK_CACHE", tv.taskId);
