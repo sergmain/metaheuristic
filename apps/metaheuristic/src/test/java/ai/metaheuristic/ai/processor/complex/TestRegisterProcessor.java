@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.processor.complex;
 
+import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorUtils;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorRepository;
@@ -29,11 +30,13 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlU
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
+import ch.qos.logback.classic.LoggerContext;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
@@ -42,6 +45,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -49,6 +55,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -64,13 +71,13 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
  * Time: 11:47 AM
  */
 @SuppressWarnings("FieldCanBeLocal")
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@Import({SpringSecurityWebAuxTestConfig.class})
-//@ActiveProfiles({"dispatcher", "mysql"})
-@Slf4j
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@SpringBootTest(classes = MhComplexTestConfig.class)
+@ActiveProfiles({"dispatcher", "h2", "test"})
+@Execution(ExecutionMode.SAME_THREAD)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @AutoConfigureCache
+@Import({SpringSecurityWebAuxTestConfig.class})
+@Slf4j
 public class TestRegisterProcessor {
 
     private MockMvc mockMvc;
@@ -80,11 +87,30 @@ public class TestRegisterProcessor {
     private final Set<Long> processorIds =new HashSet<>();
     private String sessionId = null;
 
-    @Autowired
-    private WebApplicationContext webApplicationContext;
+    @org.junit.jupiter.api.io.TempDir
+    static Path tempDir;
 
-    @Autowired
-    private ProcessorRepository processorRepository;
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        String dbUrl = "jdbc:h2:file:" + tempDir.resolve("db-h2/mh").toAbsolutePath() + ";DB_CLOSE_ON_EXIT=FALSE";
+        registry.add("spring.datasource.url", () -> dbUrl);
+        registry.add("mh.home", () -> tempDir.toAbsolutePath().toString());
+        registry.add("spring.profiles.active", () -> "dispatcher,h2,test");
+    }
+
+    @BeforeAll
+    static void setSystemProperties() {
+        System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
+    }
+
+    @AfterAll
+    static void cleanupLogging() {
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext.stop();
+    }
+
+    @Autowired private WebApplicationContext webApplicationContext;
+    @Autowired private ProcessorRepository processorRepository;
 
     @BeforeEach
     public void setup() {

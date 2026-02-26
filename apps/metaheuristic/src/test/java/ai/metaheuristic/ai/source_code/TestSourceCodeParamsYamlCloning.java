@@ -21,6 +21,8 @@ import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.utils.MetaUtils;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.List;
 import java.util.Map;
@@ -34,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * Date: 1/11/2020
  * Time: 10:38 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestSourceCodeParamsYamlCloning {
 
     @Test

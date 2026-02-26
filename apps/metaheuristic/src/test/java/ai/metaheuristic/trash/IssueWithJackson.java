@@ -26,6 +26,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.List;
 
@@ -34,6 +36,7 @@ import java.util.List;
  * Date: 1/27/2026
  * Time: 8:53 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class IssueWithJackson {
 
 

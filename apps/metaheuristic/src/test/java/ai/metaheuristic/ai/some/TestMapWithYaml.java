@@ -21,6 +21,8 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.HashMap;
@@ -33,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 4/30/2022
  * Time: 9:22 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestMapWithYaml {
 
     private static final String AGGREGATE_COMMAND_INSPECTION_1_5 = "aggregate-command-inspection:1.5";

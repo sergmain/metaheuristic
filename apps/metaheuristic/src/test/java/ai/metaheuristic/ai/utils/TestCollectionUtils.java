@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.utils;
 
 import org.junit.jupiter.api.Test;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -32,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 11/13/2020
  * Time: 4:22 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestCollectionUtils {
 
     @Test

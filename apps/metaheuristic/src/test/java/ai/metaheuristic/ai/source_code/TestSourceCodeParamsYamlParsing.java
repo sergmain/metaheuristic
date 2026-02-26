@@ -20,6 +20,8 @@ import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -31,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 4/5/2020
  * Time: 4:57 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestSourceCodeParamsYamlParsing {
 
     @Test

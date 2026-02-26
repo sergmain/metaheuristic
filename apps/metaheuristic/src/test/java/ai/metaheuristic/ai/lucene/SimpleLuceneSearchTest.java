@@ -37,6 +37,8 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -49,6 +51,7 @@ import java.util.List;
  * Date: 11/9/2023
  * Time: 8:32 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class SimpleLuceneSearchTest {
 
     // https://solr.apache.org/guide/6_6/morelikethis.html

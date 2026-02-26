@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.some;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.text.NumberFormat;
 import java.util.Calendar;
@@ -28,6 +30,7 @@ import static java.util.Calendar.SHORT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
+@Execution(ExecutionMode.CONCURRENT)
 public class TestBreak {
 
     @Test

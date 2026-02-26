@@ -24,6 +24,8 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -39,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 2/17/2020
  * Time: 2:38 AM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestSourceCodeGraphLanguageYaml {
 
     @Test

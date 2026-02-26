@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.commands;
 
+import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
@@ -29,16 +30,24 @@ import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamY
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import ai.metaheuristic.api.ConstsApi;
+import ch.qos.logback.classic.LoggerContext;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -47,20 +56,39 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 5/19/2019
  * Time: 3:14 AM
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
+@SpringBootTest(classes = MhComplexTestConfig.class)
+@ActiveProfiles({"dispatcher", "h2", "test"})
+@Execution(ExecutionMode.SAME_THREAD)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@AutoConfigureCache
 @Slf4j
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class TestRequestProcessorId {
 
-    @Autowired
-    public SouthbridgeService serverService;
+    @org.junit.jupiter.api.io.TempDir
+    static Path tempDir;
 
-    @Autowired
-    public ProcessorCache processorCache;
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        String dbUrl = "jdbc:h2:file:" + tempDir.resolve("db-h2/mh").toAbsolutePath() + ";DB_CLOSE_ON_EXIT=FALSE";
+        registry.add("spring.datasource.url", () -> dbUrl);
+        registry.add("mh.home", () -> tempDir.toAbsolutePath().toString());
+        registry.add("spring.profiles.active", () -> "dispatcher,h2,test");
+    }
 
-    @Autowired
-    public ProcessorTopLevelService processorTopLevelService;
+    @BeforeAll
+    static void setSystemProperties() {
+        System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
+    }
+
+    @AfterAll
+    static void cleanupLogging() {
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext.stop();
+    }
+
+    @Autowired public SouthbridgeService serverService;
+    @Autowired public ProcessorCache processorCache;
+    @Autowired public ProcessorTopLevelService processorTopLevelService;
 
     private Long processorId;
 
@@ -85,7 +113,6 @@ public class TestRequestProcessorId {
 
     @AfterEach
     public void afterPreparingExperiment() {
-        log.info("Start after()");
         if (processorId !=null) {
             try {
                 processorTopLevelService.deleteProcessorById(processorId);

@@ -27,6 +27,8 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -40,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 4/10/2020
  * Time: 8:32 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestProcessGraph {
 
     @Test

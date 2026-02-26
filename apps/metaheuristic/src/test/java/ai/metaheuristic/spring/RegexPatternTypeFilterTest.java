@@ -17,6 +17,8 @@
 package ai.metaheuristic.spring;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.regex.Pattern;
 
@@ -28,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Date: 6/27/2023
  * Time: 9:36 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class RegexPatternTypeFilterTest {
 
     @Test

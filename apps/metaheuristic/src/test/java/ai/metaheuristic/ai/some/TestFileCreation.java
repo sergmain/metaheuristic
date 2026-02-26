@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.some;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.File;
 
@@ -27,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Date: 11/28/2020
  * Time: 4:38 AM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestFileCreation {
 
     @Test

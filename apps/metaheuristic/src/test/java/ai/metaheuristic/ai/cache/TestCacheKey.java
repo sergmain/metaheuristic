@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.cache;
 
 import ai.metaheuristic.ai.dispatcher.data.CacheData;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
  * Date: 10/24/2020
  * Time: 11:32 AM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestCacheKey {
 
     @Test

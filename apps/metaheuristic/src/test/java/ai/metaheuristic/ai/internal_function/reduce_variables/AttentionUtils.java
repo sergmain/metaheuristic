@@ -20,6 +20,8 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -40,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Time: 5:16 PM
  */
 @Disabled
+@Execution(ExecutionMode.CONCURRENT)
 class AttentionUtils {
 
     private static final String EPOCH = "epochs";

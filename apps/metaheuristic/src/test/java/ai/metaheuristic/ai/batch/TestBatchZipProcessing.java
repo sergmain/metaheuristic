@@ -19,6 +19,8 @@ package ai.metaheuristic.ai.batch;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.zip.ZipEntry;
 
@@ -29,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 6/5/2019
  * Time: 11:13 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestBatchZipProcessing {
 
 

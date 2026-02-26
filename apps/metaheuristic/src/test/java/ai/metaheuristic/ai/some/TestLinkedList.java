@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.some;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.ConcurrentModificationException;
 import java.util.LinkedList;
@@ -31,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * Date: 10/11/2020
  * Time: 8:34 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestLinkedList {
 
 /*

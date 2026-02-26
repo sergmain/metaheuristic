@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.processor.processor_environment.FileDispatcherLookupE
 import ai.metaheuristic.commons.yaml.YamlSchemeValidator;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -31,7 +33,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 1/10/2021
  * Time: 10:23 PM
  */
-public class TestDispatcherYamlSchemeValidation {
+@Execution(ExecutionMode.CONCURRENT)
+class TestDispatcherYamlSchemeValidation {
 
     @Test
     public void test_1_v1() throws IOException {

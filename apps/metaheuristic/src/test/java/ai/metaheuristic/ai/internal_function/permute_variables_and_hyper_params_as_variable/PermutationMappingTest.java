@@ -22,6 +22,8 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -40,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Date: 3/10/2021
  * Time: 3:34 AM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class PermutationMappingTest {
 
     @Test

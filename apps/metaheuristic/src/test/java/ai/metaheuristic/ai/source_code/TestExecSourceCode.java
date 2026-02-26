@@ -17,33 +17,37 @@
 package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
-import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
-import lombok.extern.slf4j.Slf4j;
+import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
+import ch.qos.logback.classic.LoggerContext;
 import org.apache.commons.io.IOUtils;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.jspecify.annotations.Nullable;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -53,13 +57,34 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 6/11/2021
  * Time: 3:19 PM
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@Slf4j
-//@ActiveProfiles({"dispatcher", "mysql"})
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@SpringBootTest(classes = MhComplexTestConfig.class)
+@ActiveProfiles({"dispatcher", "h2", "test"})
+@Execution(ExecutionMode.SAME_THREAD)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @AutoConfigureCache
-public class TestExecSourceCode {
+class TestExecSourceCode {
+
+    @org.junit.jupiter.api.io.TempDir
+    static Path tempDir;
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        String dbUrl = "jdbc:h2:file:" + tempDir.resolve("db-h2/mh").toAbsolutePath() + ";DB_CLOSE_ON_EXIT=FALSE";
+        registry.add("spring.datasource.url", () -> dbUrl);
+        registry.add("mh.home", () -> tempDir.toAbsolutePath().toString());
+        registry.add("spring.profiles.active", () -> "dispatcher,h2,test");
+    }
+
+    @BeforeAll
+    static void setSystemProperties() {
+        System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
+    }
+
+    @AfterAll
+    static void cleanupLogging() {
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext.stop();
+    }
 
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
     @Autowired private SourceCodeService sourceCodeService;
@@ -68,7 +93,7 @@ public class TestExecSourceCode {
     @Autowired private CompanyTopLevelService companyTopLevelService;
     @Autowired private CompanyRepository companyRepository;
 
-    private Company company = null;
+    private @Nullable Company company = null;
 
     @BeforeEach
     public void init() {

@@ -19,6 +19,8 @@ package ai.metaheuristic.ai.dispatcher_selection;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.processor.dispatcher_selection.ActiveDispatchers;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +33,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Date: 11/28/2021
  * Time: 11:17 PM
  */
-public class TestActiveDispatchers {
+@Execution(ExecutionMode.CONCURRENT)
+class TestActiveDispatchers {
 
     @Test
     public void testSorting() {

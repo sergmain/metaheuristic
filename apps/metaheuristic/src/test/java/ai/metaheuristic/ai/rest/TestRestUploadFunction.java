@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.rest;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.api.data.BundleData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
@@ -25,10 +26,16 @@ import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ch.qos.logback.classic.LoggerContext;
 import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
@@ -38,6 +45,9 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -45,6 +55,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
@@ -57,25 +68,43 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
  * Date: 10/21/2020
  * Time: 8:18 AM
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@Import({SpringSecurityWebAuxTestConfig.class})
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@SpringBootTest(classes = MhComplexTestConfig.class)
+@ActiveProfiles({"dispatcher", "h2", "test"})
+@Execution(ExecutionMode.SAME_THREAD)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @AutoConfigureCache
+@Import({SpringSecurityWebAuxTestConfig.class})
 public class TestRestUploadFunction {
 
     private static final String FUNCTION_CODE = "get-length-of-file-by-ref-for-test:1.0";
 
     private MockMvc mockMvc;
 
-    @Autowired
-    private WebApplicationContext webApplicationContext;
+    @org.junit.jupiter.api.io.TempDir
+    static Path tempDir;
 
-    @Autowired
-    private FunctionRepository functionRepository;
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        String dbUrl = "jdbc:h2:file:" + tempDir.resolve("db-h2/mh").toAbsolutePath() + ";DB_CLOSE_ON_EXIT=FALSE";
+        registry.add("spring.datasource.url", () -> dbUrl);
+        registry.add("mh.home", () -> tempDir.toAbsolutePath().toString());
+        registry.add("spring.profiles.active", () -> "dispatcher,h2,test");
+    }
 
-    @Autowired
-    private TxSupportForTestingService txSupportForTestingService;
+    @BeforeAll
+    static void setSystemProperties() {
+        System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
+    }
+
+    @AfterAll
+    static void cleanupLogging() {
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext.stop();
+    }
+
+    @Autowired private WebApplicationContext webApplicationContext;
+    @Autowired private FunctionRepository functionRepository;
+    @Autowired private TxSupportForTestingService txSupportForTestingService;
 
     @BeforeEach
     public void setup() {

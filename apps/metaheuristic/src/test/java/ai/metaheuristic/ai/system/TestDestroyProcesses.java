@@ -22,6 +22,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,6 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Time: 9:01 PM
  */
 @Slf4j
+@Execution(ExecutionMode.CONCURRENT)
 public class TestDestroyProcesses {
 
     public static final String HELLO_WORLD_CMD_EXE = "HelloWorldCmd.exe";

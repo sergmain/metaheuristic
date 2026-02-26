@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -28,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Sergio Lissner
  * Date: 2/16/2026
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestContextUtilsExtended {
 
     // === buildTaskContextId ===

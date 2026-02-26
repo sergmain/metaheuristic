@@ -25,6 +25,8 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -37,6 +39,7 @@ import java.nio.file.Path;
  * Date: 6/17/2023
  * Time: 9:17 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class OpenaiImageConverterTest {
 
     @Test

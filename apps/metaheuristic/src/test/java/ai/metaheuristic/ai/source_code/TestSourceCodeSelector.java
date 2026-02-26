@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.Set;
 
@@ -28,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 12/27/2020
  * Time: 8:20 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestSourceCodeSelector {
 
     @Test

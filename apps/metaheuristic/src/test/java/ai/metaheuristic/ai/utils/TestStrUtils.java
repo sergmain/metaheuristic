@@ -18,9 +18,12 @@ package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.commons.utils.StrUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Execution(ExecutionMode.CONCURRENT)
 public class TestStrUtils {
 
     @Test

@@ -22,6 +22,8 @@ import ai.metaheuristic.ai.processor.tasks.DownloadVariableTask;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.nio.file.Path;
 
@@ -32,7 +34,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Date: 11/26/2020
  * Time: 4:42 PM
  */
-public class TestDownloadVariableTask {
+@Execution(ExecutionMode.CONCURRENT)
+class TestDownloadVariableTask {
 
     @Test
     public void test() {

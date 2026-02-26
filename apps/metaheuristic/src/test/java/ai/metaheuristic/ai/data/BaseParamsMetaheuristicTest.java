@@ -63,6 +63,8 @@ import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
@@ -75,6 +77,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 8/23/2022
  * Time: 9:15 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class BaseParamsMetaheuristicTest {
 
     private static final List<Pair<BaseYamlUtils<? extends BaseParams>, Class>> cls = List.of(

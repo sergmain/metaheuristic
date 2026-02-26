@@ -17,15 +17,26 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.mhbp.data.ScenarioData;
+import ch.qos.logback.classic.LoggerContext;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -36,11 +47,34 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Date: 8/28/2023
  * Time: 1:52 PM
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
+@SpringBootTest(classes = MhComplexTestConfig.class)
+@ActiveProfiles({"dispatcher", "h2", "test"})
+@Execution(ExecutionMode.SAME_THREAD)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @AutoConfigureCache
 public class InternalFunctionRegisterServiceTest {
+
+    @org.junit.jupiter.api.io.TempDir
+    static Path tempDir;
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        String dbUrl = "jdbc:h2:file:" + tempDir.resolve("db-h2/mh").toAbsolutePath() + ";DB_CLOSE_ON_EXIT=FALSE";
+        registry.add("spring.datasource.url", () -> dbUrl);
+        registry.add("mh.home", () -> tempDir.toAbsolutePath().toString());
+        registry.add("spring.profiles.active", () -> "dispatcher,h2,test");
+    }
+
+    @BeforeAll
+    static void setSystemProperties() {
+        System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
+    }
+
+    @AfterAll
+    static void cleanupLogging() {
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext.stop();
+    }
 
     @Autowired
     private InternalFunctionRegisterService internalFunctionRegisterService;

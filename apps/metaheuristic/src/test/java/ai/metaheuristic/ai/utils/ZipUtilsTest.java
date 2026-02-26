@@ -20,6 +20,8 @@ import ai.metaheuristic.commons.utils.ZipUtils;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.util.FileCopyUtils;
 
 import java.io.File;
@@ -39,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 6/5/2019
  * Time: 12:24 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 class ZipUtilsTest {
 
     // test how validator is working

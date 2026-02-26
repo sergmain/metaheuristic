@@ -22,6 +22,8 @@ import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -33,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 12/16/2020
  * Time: 3:09 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TaskQueueTest {
 
     private static TaskQueue.QueuedTask createTask(Long execContextId, Long taskId, int priority) {

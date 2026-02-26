@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.utils;
 
 import org.apache.hc.core5.http.HttpHost;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.net.URISyntaxException;
 
@@ -28,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Date: 9/26/2023
  * Time: 6:34 AM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class HttpUtilsTest {
 
     @Test

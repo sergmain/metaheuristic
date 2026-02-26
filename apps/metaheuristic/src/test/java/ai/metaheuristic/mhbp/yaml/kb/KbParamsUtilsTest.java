@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.mhbp.yaml.kb.KbParams;
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParamsUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -32,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 4/16/2023
  * Time: 9:01 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class KbParamsUtilsTest {
 
     @Test

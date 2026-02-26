@@ -19,6 +19,8 @@ package ai.metaheuristic.ai.yaml.communication;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -27,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Date: 11/12/2019
  * Time: 3:16 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestProcessorComm {
 
     @Test

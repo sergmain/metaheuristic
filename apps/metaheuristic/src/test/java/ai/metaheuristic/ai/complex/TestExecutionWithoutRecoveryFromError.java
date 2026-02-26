@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.complex;
 
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.event.events.ResetTasksWithErrorEvent;

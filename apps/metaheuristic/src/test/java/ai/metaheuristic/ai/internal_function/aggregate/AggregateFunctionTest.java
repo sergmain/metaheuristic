@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.internal_function.aggregate;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
  * Date: 5/18/2023
  * Time: 1:22 AM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class AggregateFunctionTest {
 
     @Test

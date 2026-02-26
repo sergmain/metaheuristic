@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.function;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataTxService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
@@ -25,20 +26,24 @@ import ai.metaheuristic.ai.dispatcher.test.tx.TxTestingTopLevelService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
+import ch.qos.logback.classic.LoggerContext;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.jspecify.annotations.Nullable;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -48,33 +53,46 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 7/12/2019
  * Time: 5:42 PM
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-//@ActiveProfiles("dispatcher")
-@Slf4j
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@SpringBootTest(classes = MhComplexTestConfig.class)
+@ActiveProfiles({"dispatcher", "h2", "test"})
+@Execution(ExecutionMode.SAME_THREAD)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @AutoConfigureCache
-public class TestFunctionService {
+@Slf4j
+class TestFunctionService {
 
     public static final String TEST_FUNCTION = "test.function:1.0";
     public static final String FUNCTION_PARAMS = "AAA";
 
-    @Autowired
-    private FunctionTxService functionTxService;
+    @org.junit.jupiter.api.io.TempDir
+    static Path tempDir;
 
-    @Autowired
-    private FunctionService functionTopLevelService;
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        String dbUrl = "jdbc:h2:file:" + tempDir.resolve("db-h2/mh").toAbsolutePath() + ";DB_CLOSE_ON_EXIT=FALSE";
+        registry.add("spring.datasource.url", () -> dbUrl);
+        registry.add("mh.home", () -> tempDir.toAbsolutePath().toString());
+        registry.add("spring.profiles.active", () -> "dispatcher,h2,test");
+    }
 
-    @Autowired
-    private TxTestingTopLevelService txTestingTopLevelService;
+    @BeforeAll
+    static void setSystemProperties() {
+        System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
+    }
 
-    @Autowired
-    private FunctionDataTxService functionDataService;
+    @AfterAll
+    static void cleanupLogging() {
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext.stop();
+    }
 
-    @Autowired
-    private Globals globals;
+    @Autowired private FunctionTxService functionTxService;
+    @Autowired private FunctionService functionTopLevelService;
+    @Autowired private TxTestingTopLevelService txTestingTopLevelService;
+    @Autowired private FunctionDataTxService functionDataService;
+    @Autowired private Globals globals;
 
-    public Function function = null;
+    public @Nullable Function function = null;
 
     @Test
     public void test() {

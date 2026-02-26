@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.binary_data;
 
+import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.internal_functions.batch_result_processor.BatchResultProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -24,16 +25,22 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.batch.BatchItemMappingYaml;
+import ch.qos.logback.classic.LoggerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
@@ -52,10 +59,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Date: 6/6/2019
  * Time: 3:14 PM
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-////@ActiveProfiles("dispatcher")
-@Slf4j
+@SpringBootTest(classes = MhComplexTestConfig.class)
+@ActiveProfiles({"dispatcher", "h2", "test"})
+@Execution(ExecutionMode.SAME_THREAD)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @AutoConfigureCache
 public class TestBinaryDataSaveAndLoad {
 
@@ -64,17 +71,32 @@ public class TestBinaryDataSaveAndLoad {
     private static final String TEST_VARIABLE = "test-variable";
     public static final String SYSTEM_PARAMS_V_2_YAML = "system/params-v2.yaml";
 
-    @Autowired
-    private VariableTxService variableService;
+    @org.junit.jupiter.api.io.TempDir
+    static Path tempDir;
 
-    @Autowired
-    private TxSupportForTestingService txSupportForTestingService;
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        String dbUrl = "jdbc:h2:file:" + tempDir.resolve("db-h2/mh").toAbsolutePath() + ";DB_CLOSE_ON_EXIT=FALSE";
+        registry.add("spring.datasource.url", () -> dbUrl);
+        registry.add("mh.home", () -> tempDir.toAbsolutePath().toString());
+        registry.add("spring.profiles.active", () -> "dispatcher,h2,test");
+    }
 
-    @Autowired
-    private VariableRepository variableRepository;
+    @BeforeAll
+    static void setSystemProperties() {
+        System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
+    }
 
-    @Autowired
-    private VariableTxService variableTxService;
+    @AfterAll
+    static void cleanupLogging() {
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext.stop();
+    }
+
+    @Autowired private VariableTxService variableService;
+    @Autowired private TxSupportForTestingService txSupportForTestingService;
+    @Autowired private VariableRepository variableRepository;
+    @Autowired private VariableTxService variableTxService;
 
     private static final int ARRAY_SIZE = 1_000_000;
     private static final Random r = new Random();

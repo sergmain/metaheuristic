@@ -17,12 +17,15 @@
 package ai.metaheuristic.ai.resource;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.File;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class TestAssetFile {
+@Execution(ExecutionMode.CONCURRENT)
+class TestAssetFile {
 
     @Test
     public void testAssetFile() {

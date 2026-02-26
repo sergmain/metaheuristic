@@ -27,6 +27,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.List;
 
@@ -37,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Date: 6/24/2023
  * Time: 1:47 AM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class JsonUtilsTest {
 
     public record SimpleItem(int id, String name) {}

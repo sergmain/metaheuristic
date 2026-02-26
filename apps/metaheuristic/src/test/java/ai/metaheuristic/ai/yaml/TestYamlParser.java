@@ -100,40 +100,4 @@ public class TestYamlParser {
     public void loadFunctionYamlWithError_01() throws IOException {
         assertThrows(CheckIntegrityFailedException.class, ()-> FunctionConfigYamlUtils.UTILS.to(IOUtils.resourceToString("/yaml/functions-test-error.yaml", StandardCharsets.UTF_8)));
     }
-
-    @Disabled("Need to re-write this test")
-    @Test
-    public void loadFunctionsFromYaml() throws IOException {
-
-        FunctionConfigYaml config = FunctionConfigYamlUtils.UTILS.to(IOUtils.resourceToString("/yaml/functions-test.yaml", StandardCharsets.UTF_8));
-        FunctionCoreUtils.validate(config.function);
-
-/*
-        assertNotNull(config);
-        assertNotNull(config.function);
-        assertEquals(3, config.functions.size());
-
-        FunctionConfigYaml.FunctionConfig sc;
-        sc = config.functions.get(0);
-        assertEquals("aiai.fit.default.function:1.0-SNAPSHOT", sc.code);
-        assertEquals(CommonConsts.FIT_TYPE, sc.type);
-        assertEquals("fit-model.py", sc.file);
-        assertEquals("python-3", sc.env);
-        assertEquals("abc1", sc.params);
-
-        sc = config.functions.get(1);
-        assertEquals("aiai.predict.default.function:1.0-SNAPSHOT", sc.code);
-        assertEquals(CommonConsts.PREDICT_TYPE, sc.type);
-        assertEquals("predict-model.py", sc.file);
-        assertEquals("python-3", sc.env);
-        assertEquals("abc2", sc.params);
-
-        sc = config.functions.get(2);
-        assertEquals("aiai.predict-model-for-test-only.function:1.0-SNAPSHOT", sc.code);
-        assertEquals(CommonConsts.PREDICT_TYPE, sc.type);
-        assertEquals("predict-model-for-test-only.py", sc.file);
-        assertEquals("python-3", sc.env);
-        assertEquals("abc3", sc.params);
-*/
-    }
 }

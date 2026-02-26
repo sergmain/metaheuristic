@@ -24,6 +24,8 @@ import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYa
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.List;
 import java.util.Map;
@@ -35,7 +37,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 1/4/2021
  * Time: 4:34 AM
  */
-public class TestKeepAliveRequestParamYamlUtils_v1_v2 {
+@Execution(ExecutionMode.CONCURRENT)
+class TestKeepAliveRequestParamYamlUtils_v1_v2 {
 
     @Test
     public void testEquals() {

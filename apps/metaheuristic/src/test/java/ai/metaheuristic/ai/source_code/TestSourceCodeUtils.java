@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.source_code;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static ai.metaheuristic.ai.dispatcher.source_code.SourceCodeUtils.isVariableNameOk;
 import static ai.metaheuristic.api.EnumsApi.SourceCodeValidateStatus.OK;
@@ -28,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Date: 4/4/2021
  * Time: 4:49 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestSourceCodeUtils {
 
     @Test

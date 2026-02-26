@@ -17,12 +17,15 @@
 package ai.metaheuristic.ai.utils;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 /**
  * @author Sergio Lissner
  * Date: 10/29/2023
  * Time: 12:19 AM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class StatusUtilsTest {
 
 

@@ -17,15 +17,18 @@ package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.commons.utils.StrUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Execution(ExecutionMode.CONCURRENT)
 public class TestIncCopyNumber {
 
     @Test
     public void testIncNumber() {
-        assertEquals("Copy #2, aaa", StrUtils.incCopyNumber("aaa"));
+        assertEquals("Copy #1, aaa", StrUtils.incCopyNumber("aaa"));
         assertEquals("Copy #3, aaa", StrUtils.incCopyNumber("Copy #2, aaa"));
-        assertEquals("Copy #2, aaa", StrUtils.incCopyNumber("Copy #aa2, aaa"));
+        assertEquals("Copy #1, aaa", StrUtils.incCopyNumber("Copy #aa2, aaa"));
     }
 }

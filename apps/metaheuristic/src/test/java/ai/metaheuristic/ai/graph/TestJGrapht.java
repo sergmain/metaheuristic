@@ -27,6 +27,8 @@ import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.jgrapht.nio.dot.DOTImporter;
 import org.jgrapht.util.SupplierUtil;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.StringReader;
 
@@ -38,6 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * Date: 4/10/2020
  * Time: 5:12 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestJGrapht {
 
     @Data

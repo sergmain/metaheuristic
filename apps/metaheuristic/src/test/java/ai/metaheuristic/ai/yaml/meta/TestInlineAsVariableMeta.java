@@ -19,6 +19,8 @@ package ai.metaheuristic.ai.yaml.meta;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
@@ -34,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * Date: 6/27/2021
  * Time: 11:59 AM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestInlineAsVariableMeta {
 
     @Test

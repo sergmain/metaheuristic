@@ -26,6 +26,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.*;
 
@@ -36,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 10/21/2020
  * Time: 9:27 AM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestJsonMarshaling {
 
     private static final String JSON = "{\"errorMessages\":[\"295.230 Fatal error - file is null \"],\"infoMessages\":null,\"status\":\"ERROR\",\"errorMessagesAsList\":[\"295.230 Fatal error - file is null \"],\"errorMessagesAsStr\":\"295.230 Fatal error - file is null \",\"infoMessagesAsList\":[]}";

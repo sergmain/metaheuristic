@@ -18,7 +18,10 @@ package ai.metaheuristic.ai.internal_function.reduce_variables;
 
 import ai.metaheuristic.ai.dispatcher.data.ReduceVariablesData;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.IOException;
 import java.util.List;
@@ -30,6 +33,8 @@ import java.util.List;
  */
 @SuppressWarnings("NewClassNamingConvention")
 @Disabled
+@Execution(ExecutionMode.CONCURRENT)
+@DisplayName("experiments postponed for very long period of time")
 public class TestReduceVariablesUtils_0 {
 
     @Test

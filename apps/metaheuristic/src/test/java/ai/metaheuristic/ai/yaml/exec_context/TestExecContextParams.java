@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV3;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -28,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 11/12/2019
  * Time: 3:33 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestExecContextParams {
 
     @Test

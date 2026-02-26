@@ -25,6 +25,8 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +45,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 11/13/2021
  * Time: 6:53 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class UtilsForTestReduceVariables {
 
     public static class ParamsAsJson {

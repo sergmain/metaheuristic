@@ -17,12 +17,15 @@
 package ai.metaheuristic.ai.storage;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 /**
  * @author Serge
  * Date: 6/2/2019
  * Time: 8:21 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestDiskStorage {
 
     @Test

@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.core;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -25,7 +27,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Date: 03.08.2017
  * Time: 21:38
  */
-public class TestCreateDatasetPath {
+@Execution(ExecutionMode.CONCURRENT)
+class TestCreateDatasetPath {
 
 
     @Test

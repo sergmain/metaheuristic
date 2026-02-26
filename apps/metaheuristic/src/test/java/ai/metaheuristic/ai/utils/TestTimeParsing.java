@@ -22,6 +22,8 @@ import ai.metaheuristic.commons.dispatcher_schedule.TimePeriods;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.Data;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
@@ -37,6 +39,7 @@ import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Execution(ExecutionMode.CONCURRENT)
 public class TestTimeParsing {
 
     @Data

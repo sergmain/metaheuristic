@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.yaml.dispatcher_lookup;
 
 import ai.metaheuristic.ai.processor.processor_environment.StandaloneDispatcherLookupExtendedParams;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -26,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * Date: 9/27/2023
  * Time: 1:01 AM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class DispatcherLookupExtendedParamsTest {
 
     @Test

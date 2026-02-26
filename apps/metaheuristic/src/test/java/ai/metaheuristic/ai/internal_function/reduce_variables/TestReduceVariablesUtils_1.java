@@ -21,8 +21,11 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.reduce_values.ReduceVar
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYaml;
 import ai.metaheuristic.ai.yaml.reduce_values_function.ReduceVariablesConfigParamsYamlUtils;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,6 +45,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * Time: 6:53 PM
  */
 @Disabled
+@Execution(ExecutionMode.CONCURRENT)
+@DisplayName("experiments postponed for very long period of time")
 public class TestReduceVariablesUtils_1 {
 
     @Test

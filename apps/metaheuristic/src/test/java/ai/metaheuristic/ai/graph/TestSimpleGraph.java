@@ -27,6 +27,8 @@ import org.jgrapht.nio.Attribute;
 import org.jgrapht.nio.DefaultAttribute;
 import org.jgrapht.nio.dot.DOTExporter;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.StringWriter;
 import java.util.HashMap;
@@ -39,6 +41,7 @@ import java.util.function.Function;
  * Date: 7/6/2019
  * Time: 2:10 AM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestSimpleGraph {
 
     @Test
