@@ -22,6 +22,15 @@ import org.jspecify.annotations.Nullable;
 
 public class EnumsApi {
 
+    public enum SkipPolicy {
+        // propagate SKIPPED state in current taskContext and in all children
+        normal,
+        // propagate SKIPPED state in children only
+        children,
+        // only to the first child or to children if subProcess is about dynamic parallel execution
+        next_only
+    }
+
     public enum BundleItemType { function, sourceCode, auth, api }
 
     public enum BatchMappingKey {id, name }

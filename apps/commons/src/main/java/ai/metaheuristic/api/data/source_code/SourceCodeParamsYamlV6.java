@@ -18,13 +18,11 @@ package ai.metaheuristic.api.data.source_code;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
-import ai.metaheuristic.api.data.function.SimpleFunctionDefinition;
 import ai.metaheuristic.api.sourcing.DiskInfo;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import lombok.*;
-import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -34,11 +32,11 @@ import java.util.Map;
 
 /**
  * @author Serge
- * Date: 6/17/2019
- * Time: 9:01 PM
+ * Date: 02/25/2026
+ * Frozen snapshot of version 6 schema (with Condition class replacing String condition)
  */
 @Data
-public class SourceCodeParamsYaml implements BaseParams {
+public class SourceCodeParamsYamlV6 implements BaseParams {
 
     @SuppressWarnings("FieldMayBeStatic")
     public final int version=6;
@@ -51,12 +49,9 @@ public class SourceCodeParamsYaml implements BaseParams {
         if (source.uid.length()>250) {
             throw new CheckIntegrityFailedException("608.040 uid is too long. max 250 chars");
         }
-        for (Process process : source.processes) {
+        for (ProcessV6 process : source.processes) {
             if (process.function ==null) {
                 throw new CheckIntegrityFailedException("608.060 (process.function==null)");
-            }
-            if (StringUtils.containsAny(process.tag, ',', ' ')) {
-                throw new CheckIntegrityFailedException("608.080 process.tag can't contain comma or space and must be handled as single tag");
             }
         }
         return true;
@@ -65,17 +60,17 @@ public class SourceCodeParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class FunctionDefForSourceCode implements SimpleFunctionDefinition {
+    public static class FunctionDefForSourceCodeV6 {
         public String code;
         public String params;
         public EnumsApi.FunctionExecContext context = EnumsApi.FunctionExecContext.external;
         public EnumsApi.FunctionRefType refType = EnumsApi.FunctionRefType.code;
 
-        public FunctionDefForSourceCode(String code) {
+        public FunctionDefForSourceCodeV6(String code) {
             this.code = code;
         }
 
-        public FunctionDefForSourceCode(String code, EnumsApi.FunctionExecContext context) {
+        public FunctionDefForSourceCodeV6(String code, EnumsApi.FunctionExecContext context) {
             this.code = code;
             this.context = context;
         }
@@ -84,7 +79,7 @@ public class SourceCodeParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Variable {
+    public static class VariableV6 {
         public String name;
         private EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
 
@@ -92,7 +87,6 @@ public class SourceCodeParamsYaml implements BaseParams {
         public GitInfo git;
         @Nullable
         public DiskInfo disk;
-        // this field defines in which context put a new variable. useful when SubProcesses.logic==and
         @Nullable
         public Boolean parentContext;
         public boolean array = false;
@@ -101,7 +95,6 @@ public class SourceCodeParamsYaml implements BaseParams {
         @Nullable
         private Boolean nullable;
 
-        // This field is used for creating a download link as extension
         @Nullable
         public String ext;
 
@@ -121,11 +114,11 @@ public class SourceCodeParamsYaml implements BaseParams {
             this.nullable = nullable;
         }
 
-        public Variable(String name) {
+        public VariableV6(String name) {
             this.name = name;
         }
 
-        public Variable(String name, EnumsApi.DataSourcing sourcing) {
+        public VariableV6(String name, EnumsApi.DataSourcing sourcing) {
             this.name = name;
             this.sourcing = sourcing;
         }
@@ -134,16 +127,16 @@ public class SourceCodeParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SubProcesses {
+    public static class SubProcessesV6 {
         public EnumsApi.SourceCodeSubProcessLogic logic;
-        public @Nullable List<Process> processes;
+        public @Nullable List<ProcessV6> processes;
     }
 
     @Data
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Cache {
+    public static class CacheV6 {
         public boolean enabled;
         public boolean omitInline;
         public boolean cacheMeta;
@@ -152,54 +145,49 @@ public class SourceCodeParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Condition {
+    public static class ConditionV6 {
         public String conditions;
         public EnumsApi.SkipPolicy skipPolicy = EnumsApi.SkipPolicy.normal;
 
-        public Condition(String conditions) {
+        public ConditionV6(String conditions) {
             this.conditions = conditions;
         }
     }
 
     @Data
     @ToString
-    public static class Process implements Cloneable {
+    public static class ProcessV6 implements Cloneable {
 
         @SneakyThrows
-        public Process clone() {
-            final Process clone = (Process) super.clone();
+        public ProcessV6 clone() {
+            final ProcessV6 clone = (ProcessV6) super.clone();
             return clone;
         }
 
         public String name;
         public String code;
-        public FunctionDefForSourceCode function;
+        public FunctionDefForSourceCodeV6 function;
         @Nullable
-        public List<FunctionDefForSourceCode> preFunctions = new ArrayList<>();
+        public List<FunctionDefForSourceCodeV6> preFunctions = new ArrayList<>();
         @Nullable
-        public List<FunctionDefForSourceCode> postFunctions = new ArrayList<>();
+        public List<FunctionDefForSourceCodeV6> postFunctions = new ArrayList<>();
 
-        /**
-         * Timeout before terminating a process with function
-         * value in seconds
-         * null or 0 mean the infinite execution
-         */
         @Nullable
         public Long timeoutBeforeTerminate;
-        public final List<Variable> inputs = new ArrayList<>();
-        public final List<Variable> outputs = new ArrayList<>();
+        public final List<VariableV6> inputs = new ArrayList<>();
+        public final List<VariableV6> outputs = new ArrayList<>();
         public List<Map<String, String>> metas = new ArrayList<>();
         @Nullable
-        public SubProcesses subProcesses;
+        public SubProcessesV6 subProcesses;
 
         @Nullable
-        public Cache cache;
+        public CacheV6 cache;
 
         @Nullable
         public String tag;
         public int priority;
         @Nullable
-        public Condition condition;
+        public ConditionV6 condition;
         @Nullable
         public Integer triesAfterError;
     }
@@ -207,36 +195,36 @@ public class SourceCodeParamsYaml implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class AccessControl {
+    public static class AccessControlV6 {
         public String groups;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class VariableDefinition {
+    public static class VariableDefinitionV6 {
         public List<String> globals;
-        public final List<Variable> inputs = new ArrayList<>();
-        public final List<Variable> outputs = new ArrayList<>();
+        public final List<VariableV6> inputs = new ArrayList<>();
+        public final List<VariableV6> outputs = new ArrayList<>();
         public final Map<String, Map<String, String>> inline = new HashMap<>();
     }
 
     @Data
     @ToString
-    public static class SourceCode {
+    public static class SourceCodeV6 {
         @Nullable
         public Integer instances;
         @Nullable
-        public VariableDefinition variables = new VariableDefinition();
-        public @Nullable List<Process> processes = new ArrayList<>();
+        public VariableDefinitionV6 variables = new VariableDefinitionV6();
+        public @Nullable List<ProcessV6> processes = new ArrayList<>();
         public boolean clean = false;
         public String uid;
         @Nullable
         public List<Map<String, String>> metas = new ArrayList<>();
-        public AccessControl ac;
+        public AccessControlV6 ac;
         @Nullable
         public Boolean strictNaming;
     }
 
-    public SourceCode source = new SourceCode();
+    public SourceCodeV6 source = new SourceCodeV6();
 }
