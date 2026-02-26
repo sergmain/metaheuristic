@@ -286,8 +286,9 @@ public class ExecContextGraphService {
                         // do nothing
                     }
                     else if (execState == EnumsApi.TaskExecState.SKIPPED) {
-                        log.info("915.015 TaskExecState for task #{} is SKIPPED", tv.taskId);
-                        // Propagate SKIPPED to all children tasks in sub-process, same as ERROR
+                        // When a task is SKIPPED (e.g. condition-gated mh.nop with false condition),
+                        // propagate SKIPPED to all children tasks in the same context branch.
+                        // This prevents sub-process tasks from being stuck in NONE/PRE_INIT state.
                         setStateForAllChildrenTasksInternal(graph, stateParamsYaml, taskId, status, EnumsApi.TaskExecState.SKIPPED, taskWithState.taskContextId);
                     }
                     else if (execState == EnumsApi.TaskExecState.CHECK_CACHE) {

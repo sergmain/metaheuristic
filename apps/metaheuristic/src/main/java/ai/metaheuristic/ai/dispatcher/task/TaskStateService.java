@@ -113,18 +113,20 @@ public class TaskStateService {
                     nextState = false;
                     break;
                 }
-                if (state == EnumsApi.TaskExecState.ERROR || state == EnumsApi.TaskExecState.SKIPPED) {
+                if (state == EnumsApi.TaskExecState.ERROR) {
                     anyParentError = true;
                 }
             }
             if (anyParentError) {
-                // Don't set children to INIT if any parent finished with ERROR or was SKIPPED,
+                // Don't set children to INIT if any parent finished with ERROR,
                 // UNLESS this is a leaf/mh.finish task (no outgoing edges) which should still proceed.
                 // Children of errored tasks will be marked as SKIPPED by the graph update path
                 // (via UpdateTaskExecStatesInExecContextEvent -> setStateForAllChildrenTasksInternal).
+                // Note: SKIPPED parents (e.g. condition-gated mh.nop) do NOT block siblings —
+                // SKIPPED is normal flow control, not an error.
                 Set<ExecContextData.TaskVertex> subTaskDescendants = ExecContextGraphService.findDirectDescendants(ecg, subTask.taskId);
                 if (!subTaskDescendants.isEmpty()) {
-                    log.info("189.220 Skipping INIT for task #{} because a parent task finished with ERROR or SKIPPED", subTask.taskId);
+                    log.info("189.220 Skipping INIT for task #{} because a parent task finished with ERROR", subTask.taskId);
                     continue;
                 }
             }
