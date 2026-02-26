@@ -661,16 +661,98 @@ public class ExecContextGraphService {
         // find and filter a 'mh.finish' vertex, which doesn't have any outgoing edges
         //noinspection SimplifiableConditionalExpression
         Set<ExecContextData.TaskVertex> setFiltered = set.stream()
-                .filter(tv -> !execContextDAC.graph().outgoingEdgesOf(tv).isEmpty() && (context==null ? true : ContextUtils.getLevel(tv.taskContextId).startsWith(context)))
+                .filter(tv -> (context==null ? true : ContextUtils.getLevel(tv.taskContextId).startsWith(context)))
                 .collect(Collectors.toSet());
 
-        setFiltered.stream()
+        // Only mark descendants whose ALL parents are in an error-or-skipped state.
+        // This prevents marking a task SKIPPED if it has another parent that is still active (OK, IN_PROGRESS, NONE).
+        Set<ExecContextData.TaskVertex> toMark = new LinkedHashSet<>();
+        for (ExecContextData.TaskVertex tv : setFiltered) {
+            if (allParentsErrorOrSkipped(execContextDAC.graph(), stateParamsYaml, tv)) {
+                toMark.add(tv);
+            }
+        }
+
+        toMark.stream()
                 .peek( t-> stateParamsYaml.states.put(t.taskId, state))
                 .map(o->new TaskData.TaskWithState(o.taskId, state))
                 .collect(Collectors.toCollection(()->withTaskList.childrenTasks));
 
+        // Cascade SKIPPED to tasks that are not descendants of taskId but whose ALL parents
+        // are now in ERROR or SKIPPED state. This handles the case where siblings in a sequential
+        // chain become unreachable because all their predecessors were SKIPPED.
+        propagateSkippedToUnreachableTasks(execContextDAC, stateParamsYaml, withTaskList, state, context);
+
         //noinspection unused
         int i=1;
+    }
+
+    /**
+     * After the initial SKIPPED marking, iterate through the entire graph to find tasks
+     * that are not yet SKIPPED but whose ALL parents are in ERROR or SKIPPED state.
+     * Mark them SKIPPED and repeat until no more tasks qualify (fixed-point cascade).
+     */
+    private static void propagateSkippedToUnreachableTasks(
+            ExecContextData.ExecContextDAC execContextDAC, ExecContextTaskStateParamsYaml stateParamsYaml,
+            ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state, @Nullable String context) {
+
+        boolean changed = true;
+        while (changed) {
+            changed = false;
+            for (ExecContextData.TaskVertex tv : execContextDAC.graph().vertexSet()) {
+                EnumsApi.TaskExecState currentState = stateParamsYaml.states.getOrDefault(tv.taskId, EnumsApi.TaskExecState.NONE);
+                if (currentState == EnumsApi.TaskExecState.SKIPPED || currentState == EnumsApi.TaskExecState.ERROR || currentState == EnumsApi.TaskExecState.OK) {
+                    // already in terminal state
+                    continue;
+                }
+                //noinspection SimplifiableConditionalExpression
+                if (context != null && !ContextUtils.getLevel(tv.taskContextId).startsWith(context)) {
+                    continue;
+                }
+                if (execContextDAC.graph().incomingEdgesOf(tv).isEmpty()) {
+                    // root vertex — no parents to check
+                    continue;
+                }
+                if (allParentsErrorOrSkipped(execContextDAC.graph(), stateParamsYaml, tv)) {
+                    stateParamsYaml.states.put(tv.taskId, state);
+                    withTaskList.childrenTasks.add(new TaskData.TaskWithState(tv.taskId, state));
+                    changed = true;
+                }
+            }
+        }
+    }
+
+    /**
+     * Check if ALL parents (direct ancestors) of a task vertex are in ERROR or SKIPPED state.
+     */
+    private static boolean allParentsErrorOrSkipped(
+            DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph,
+            ExecContextTaskStateParamsYaml stateParamsYaml,
+            ExecContextData.TaskVertex tv) {
+
+        Set<DefaultEdge> incoming = graph.incomingEdgesOf(tv);
+        if (incoming.isEmpty()) {
+            return false;
+        }
+        for (DefaultEdge edge : incoming) {
+            ExecContextData.TaskVertex parent = graph.getEdgeSource(edge);
+            EnumsApi.TaskExecState parentState = stateParamsYaml.states.getOrDefault(parent.taskId, EnumsApi.TaskExecState.NONE);
+            if (parentState != EnumsApi.TaskExecState.ERROR && parentState != EnumsApi.TaskExecState.SKIPPED) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Public static entry point for unit tests that operate directly on the graph and state objects
+     * without requiring Spring context or DB access.
+     */
+    public static void setStateForAllChildrenTasksStatic(
+        ExecContextData.ExecContextDAC execContextDAC, ExecContextTaskStateParamsYaml stateParamsYaml,
+        Long taskId, ExecContextOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state, @Nullable String taskContextId) {
+
+        setStateForAllChildrenTasksInternal(execContextDAC, stateParamsYaml, taskId, withTaskList, state, taskContextId);
     }
 
     @SuppressWarnings("SimplifyStreamApiCallChains")
