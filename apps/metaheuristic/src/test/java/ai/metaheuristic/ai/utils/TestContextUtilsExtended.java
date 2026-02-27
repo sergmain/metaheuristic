@@ -153,7 +153,7 @@ public class TestContextUtilsExtended {
 
     @Test
     public void test_getParentContext_deepWithHash() {
-        assertEquals("1,2,3", VariableUtils.getParentContext("1,2,3,4#7"));
+        assertEquals("1,2#4", VariableUtils.getParentContext("1,2,3,4#7"));
     }
 
     // === variable scoping chain walk ===
@@ -180,6 +180,26 @@ public class TestContextUtilsExtended {
     }
 
     // === deriveParentTaskContextId — root contexts ===
+
+    // === variable scoping chain walk for contexts with # suffix ===
+    // This test reproduces the bug where hasObjectives variable created in "1,2#1"
+    // was not found when looking up from "1,2,3,1#0".
+    // The old getParentContext walked: "1,2,3,1#0" → "1,2,3" → "1,2" → "1" → null
+    // The fixed walk goes: "1,2,3,1#0" → "1,2#1" → "1" → null
+
+    @Test
+    public void test_parentContextChain_walksUp_withHashContexts() {
+        String ctx = "1,2,3,1#0";
+
+        String parent1 = VariableUtils.getParentContext(ctx);
+        assertEquals("1,2#1", parent1);
+
+        String parent2 = VariableUtils.getParentContext(parent1);
+        assertEquals("1", parent2);
+
+        String parent3 = VariableUtils.getParentContext(parent2);
+        assertNull(parent3);
+    }
 
     @Test
     public void test_deriveParent_root() {
@@ -257,5 +277,78 @@ public class TestContextUtilsExtended {
         // This test verifies the actual behavior of the algorithm.
         String result = ContextUtils.deriveParentTaskContextId("1,2,3,4,8,0#0");
         assertEquals("1,2,3,4#0", result);
+    }
+
+    // === Variable lookup isolation between sibling fan-out contexts ===
+    // From the real ExecContext state (mhdg-rg-1.0.10):
+    //
+    //   ctx "1,2#1" — Task#511, check-objectives, writes hasObjectives (variable #640)
+    //   ctx "1,2#2" — Task#516, check-objectives, writes hasObjectives (variable #653)
+    //   ctx "1,2#3" — Task#521, check-objectives, writes hasObjectives (variable #610)
+    //
+    //   ctx "1,2,3,1#0" — Task#563, mh.nop-objectives, must find hasObjectives ONLY from "1,2#1"
+    //   ctx "1,2,3,2#0" — Task#564, mh.nop-objectives, must find hasObjectives ONLY from "1,2#2"
+    //   ctx "1,2,3,3#0" — Task#565, mh.nop-objectives, must find hasObjectives ONLY from "1,2#3"
+    //
+    // The parent walk must be isolated — task in ctx "1,2,3,1#0" must never see variables from "1,2#2" or "1,2#3".
+
+    @Test
+    public void test_variableLookup_task563_findsOnlyCtx_1_2_hash1() {
+        // Task#563: ctx "1,2,3,1#0" — its parent chain must include "1,2#1" and NOT "1,2#2" or "1,2#3"
+        String ctx = "1,2,3,1#0";
+        java.util.Set<String> visited = new java.util.LinkedHashSet<>();
+
+        String curr = ctx;
+        while (curr != null) {
+            visited.add(curr);
+            curr = VariableUtils.getParentContext(curr);
+        }
+
+        // walk: "1,2,3,1#0" → "1,2#1" → "1" → null
+        assertEquals(java.util.List.of("1,2,3,1#0", "1,2#1", "1"), new java.util.ArrayList<>(visited));
+
+        assertTrue(visited.contains("1,2#1"), "Task#563 must find variables in ctx 1,2#1");
+        assertFalse(visited.contains("1,2#2"), "Task#563 must NOT see variables from sibling ctx 1,2#2");
+        assertFalse(visited.contains("1,2#3"), "Task#563 must NOT see variables from sibling ctx 1,2#3");
+    }
+
+    @Test
+    public void test_variableLookup_task564_findsOnlyCtx_1_2_hash2() {
+        // Task#564: ctx "1,2,3,2#0" — its parent chain must include "1,2#2" and NOT "1,2#1" or "1,2#3"
+        String ctx = "1,2,3,2#0";
+        java.util.Set<String> visited = new java.util.LinkedHashSet<>();
+
+        String curr = ctx;
+        while (curr != null) {
+            visited.add(curr);
+            curr = VariableUtils.getParentContext(curr);
+        }
+
+        // walk: "1,2,3,2#0" → "1,2#2" → "1" → null
+        assertEquals(java.util.List.of("1,2,3,2#0", "1,2#2", "1"), new java.util.ArrayList<>(visited));
+
+        assertTrue(visited.contains("1,2#2"), "Task#564 must find variables in ctx 1,2#2");
+        assertFalse(visited.contains("1,2#1"), "Task#564 must NOT see variables from sibling ctx 1,2#1");
+        assertFalse(visited.contains("1,2#3"), "Task#564 must NOT see variables from sibling ctx 1,2#3");
+    }
+
+    @Test
+    public void test_variableLookup_task565_findsOnlyCtx_1_2_hash3() {
+        // Task#565: ctx "1,2,3,3#0" — its parent chain must include "1,2#3" and NOT "1,2#1" or "1,2#2"
+        String ctx = "1,2,3,3#0";
+        java.util.Set<String> visited = new java.util.LinkedHashSet<>();
+
+        String curr = ctx;
+        while (curr != null) {
+            visited.add(curr);
+            curr = VariableUtils.getParentContext(curr);
+        }
+
+        // walk: "1,2,3,3#0" → "1,2#3" → "1" → null
+        assertEquals(java.util.List.of("1,2,3,3#0", "1,2#3", "1"), new java.util.ArrayList<>(visited));
+
+        assertTrue(visited.contains("1,2#3"), "Task#565 must find variables in ctx 1,2#3");
+        assertFalse(visited.contains("1,2#1"), "Task#565 must NOT see variables from sibling ctx 1,2#1");
+        assertFalse(visited.contains("1,2#2"), "Task#565 must NOT see variables from sibling ctx 1,2#2");
     }
 }

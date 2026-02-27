@@ -90,13 +90,7 @@ public class VariableUtils {
 
     @Nullable
     public static String getParentContext(String taskContextId) {
-        if (!taskContextId.contains(",")) {
-            if (taskContextId.indexOf(ContextUtils.CONTEXT_DIGIT_SEPARATOR)!=-1) {
-                throw new IllegalStateException("(taskContextId.indexOf(ContextUtils.CONTEXT_DIGIT_SEPARATOR)!=-1)");
-            }
-            return null;
-        }
-        return taskContextId.substring(0, taskContextId.lastIndexOf(ContextUtils.CONTEXT_DIGIT_SEPARATOR)).strip();
+        return ContextUtils.deriveParentTaskContextId(taskContextId);
     }
 
     @Data
