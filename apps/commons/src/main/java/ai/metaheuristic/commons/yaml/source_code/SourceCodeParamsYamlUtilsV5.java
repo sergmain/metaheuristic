@@ -45,15 +45,13 @@ public class SourceCodeParamsYamlUtilsV5
         return 5;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(SourceCodeParamsYamlV5.class);
     }
 
-    @NonNull
     @Override
-    public SourceCodeParamsYamlV6 upgradeTo(@NonNull SourceCodeParamsYamlV5 v5) {
+    public SourceCodeParamsYamlV6 upgradeTo(SourceCodeParamsYamlV5 v5) {
         v5.checkIntegrity();
 
         SourceCodeParamsYamlV6 p = new SourceCodeParamsYamlV6();
@@ -111,9 +109,8 @@ public class SourceCodeParamsYamlUtilsV5
         src.stream().map(v -> new SourceCodeParamsYamlV6.VariableV6(v.name, v.getSourcing(), v.git, v.disk, v.parentContext, v.array, v.type, v.getNullable(), v.ext)).forEach(trg::add);
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         // not supported
         throw new DowngradeNotSupportedException();
     }
@@ -130,13 +127,12 @@ public class SourceCodeParamsYamlUtilsV5
     }
 
     @Override
-    public String toString(@NonNull SourceCodeParamsYamlV5 sourceCodeParamsYaml) {
+    public String toString(SourceCodeParamsYamlV5 sourceCodeParamsYaml) {
         return getYaml().dump(sourceCodeParamsYaml);
     }
 
-    @NonNull
     @Override
-    public SourceCodeParamsYamlV5 to(@NonNull String s) {
+    public SourceCodeParamsYamlV5 to(String s) {
         final SourceCodeParamsYamlV5 p = getYaml().load(s);
         if (p.source ==null) {
             throw new IllegalStateException("635.010 SourceCode Yaml is null");

@@ -44,15 +44,13 @@ public class SourceCodeParamsYamlUtilsV6
         return 6;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(SourceCodeParamsYamlV6.class);
     }
 
-    @NonNull
     @Override
-    public SourceCodeParamsYaml upgradeTo(@NonNull SourceCodeParamsYamlV6 v6) {
+    public SourceCodeParamsYaml upgradeTo(SourceCodeParamsYamlV6 v6) {
         v6.checkIntegrity();
 
         SourceCodeParamsYaml p = new SourceCodeParamsYaml();
@@ -68,7 +66,9 @@ public class SourceCodeParamsYamlUtilsV6
             p.source.variables.inline.putAll(v6.source.variables.inline);
         }
         p.source.clean = v6.source.clean;
-        p.source.processes = v6.source.processes.stream().map(SourceCodeParamsYamlUtilsV6::toProcess).collect(Collectors.toList());
+        if (v6.source.processes!=null) {
+            p.source.processes = v6.source.processes.stream().map(SourceCodeParamsYamlUtilsV6::toProcess).collect(Collectors.toList());
+        }
 
         p.source.uid = v6.source.uid;
         if (v6.source.ac!=null) {
@@ -117,9 +117,8 @@ public class SourceCodeParamsYamlUtilsV6
         src.stream().map(v -> new SourceCodeParamsYaml.Variable(v.name, v.getSourcing(), v.git, v.disk, v.parentContext, v.array, v.type, v.getNullable(), v.ext)).forEach(trg::add);
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         // not supported
         throw new DowngradeNotSupportedException();
     }
@@ -136,15 +135,14 @@ public class SourceCodeParamsYamlUtilsV6
     }
 
     @Override
-    public String toString(@NonNull SourceCodeParamsYamlV6 sourceCodeParamsYaml) {
+    public String toString(SourceCodeParamsYamlV6 sourceCodeParamsYaml) {
         return getYaml().dump(sourceCodeParamsYaml);
     }
 
-    @NonNull
     @Override
-    public SourceCodeParamsYamlV6 to(@NonNull String s) {
+    public SourceCodeParamsYamlV6 to(String s) {
         final SourceCodeParamsYamlV6 p = getYaml().load(s);
-        if (p.source ==null) {
+        if (p.source==null) {
             throw new IllegalStateException("636.010 SourceCode Yaml is null");
         }
         return p;

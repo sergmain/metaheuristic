@@ -221,7 +221,7 @@ public class SourceCodeParamsYamlV6 implements BaseParams {
         public String uid;
         @Nullable
         public List<Map<String, String>> metas = new ArrayList<>();
-        public AccessControlV6 ac;
+        public @Nullable AccessControlV6 ac;
         @Nullable
         public Boolean strictNaming;
     }

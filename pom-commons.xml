@@ -20,7 +20,7 @@
 
     <groupId>ai.metaheuristic</groupId>
     <artifactId>common-only</artifactId>
-    <version>7.0.12</version>
+    <version>7.0.13</version>
     <packaging>pom</packaging>
 
     <properties>
