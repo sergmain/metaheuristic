@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
@@ -84,6 +85,7 @@ import static ai.metaheuristic.api.EnumsApi.DataSourcing;
 public class VariableTxService {
 
     private final VariableRepository variableRepository;
+    private final TaskRepository taskRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final EventPublisherService eventPublisherService;
     private final ExecContextCache execContextCache;
@@ -268,6 +270,15 @@ public class VariableTxService {
 
     @Transactional
     public void setVariableAsNull(Long taskId, Long variableId) {
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task == null) {
+            throw new IllegalArgumentException("171.870 Task #" + taskId + " not found, possible execContextId/taskId mixup");
+        }
+        TaskParamsYaml tpy = task.getTaskParamsYaml();
+        boolean isOutput = tpy.task.outputs.stream().anyMatch(o -> o.id.equals(variableId));
+        if (!isOutput) {
+            throw new IllegalArgumentException("171.880 Variable #" + variableId + " is not an output of Task #" + taskId);
+        }
         setVariableAsNull(variableId);
         eventPublisherService.publishSetVariableReceivedTxEvent(new SetVariableReceivedTxEvent(taskId, variableId, true));
     }
