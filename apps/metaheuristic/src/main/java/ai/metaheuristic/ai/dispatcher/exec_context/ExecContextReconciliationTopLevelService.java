@@ -175,6 +175,10 @@ public class ExecContextReconciliationTopLevelService {
                     // 307.120 Found different states for task , db: IN_PROGRESS, graph: NONE, state in queue: IN_PROGRESS
                     // ---> This is a normal situation
                 }
+                else if (taskState.execState() == TaskExecState.IN_PROGRESS.value &&  tv.state== TaskExecState.NONE && allocatedTask.state== TaskExecState.ERROR_WITH_RECOVERY) {
+                    // 307.270 Found different states for task #1279, db: IN_PROGRESS, graph: NONE, state in queue: ERROR_WITH_RECOVERY
+                    // ---> This is a normal situation
+                }
                 else if (taskState.execState() == TaskExecState.OK.value &&  tv.state== TaskExecState.NONE && allocatedTask.state== TaskExecState.NONE) {
                     // 307.130 Found different states for task #222176, db: OK, graph: NONE, state in queue: NONE, required steps are unknown
                     log.warn("307.130 Found different states for task #{}, db: OK, graph: NONE, allocatedTask: NONE, trying to update a state of task in execContext", tv.taskId);

@@ -17,23 +17,13 @@
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
-import org.apache.hc.client5.http.entity.mime.HttpMultipartMode;
-import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
 import org.apache.hc.client5.http.fluent.Executor;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
-import org.apache.hc.core5.http.ContentType;
-import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.util.Timeout;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
@@ -43,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
  * Time: 9:59 PM
  */
 
-@Disabled("Those tests for manual testing")
+@Disabled("These tests are for manual testing")
 public class StatusRestControllerTest {
 
     @Test

@@ -43,15 +43,6 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/*
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@ActiveProfiles("processor")
-@TestPropertySource(locations="classpath:test-processor-profile.properties")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@AutoConfigureCache
-@Disabled
-*/
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"processor", "test"})
 @Execution(ExecutionMode.SAME_THREAD)

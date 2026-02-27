@@ -113,7 +113,9 @@ public class TaskStateService {
                     nextState = false;
                     break;
                 }
-                if (state == EnumsApi.TaskExecState.ERROR) {
+/*
+// This change, made by Claude Opus 4.6, was reverted because it has broken processing of ExecContext with case in Production, when an error is in subProcess.
+                if (state == EnumsApi.TaskExecState.ERROR || state == EnumsApi.TaskExecState.SKIPPED) {
                     anyParentError = true;
                 }
             }
@@ -129,6 +131,7 @@ public class TaskStateService {
                     log.info("189.220 Skipping INIT for task #{} because a parent task finished with ERROR", subTask.taskId);
                     continue;
                 }
+*/
             }
             if (nextState) {
                 TaskSyncService.getWithSyncVoid(subTask.taskId,
