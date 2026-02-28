@@ -19,4 +19,14 @@ databaseChangeLog:
               path:  00010-PostgreSQL-Initial-revision.sql
               stripComments:  true
               relativeToChangelogFile: true
+         -  sqlFile:
+              dbms:  'hsqldb'
+              path:  00010-hsqldb-Initial-revision.sql
+              stripComments:  true
+              relativeToChangelogFile: true
+         -  sqlFile:
+              dbms:  'derby'
+              path:  00010-derby-Initial-revision.sql
+              stripComments:  true
+              relativeToChangelogFile: true
 

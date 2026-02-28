@@ -350,6 +350,7 @@ CREATE TABLE mh_exec_context
     VERSION                 NUMERIC(5, 0)  NOT NULL,
     SOURCE_CODE_ID          NUMERIC(10, 0) NOT NULL,
     COMPANY_ID              NUMERIC(10, 0) NOT NULL,
+    ACCOUNT_ID              NUMERIC(10, 0) NOT NULL,
     CREATED_ON              bigint         NOT NULL,
     COMPLETED_ON            bigint,
     PARAMS                  VARCHAR(256000)       NOT NULL,
@@ -359,7 +360,6 @@ CREATE TABLE mh_exec_context
     CTX_TASK_STATE_ID       bigint NOT NULL,
     CTX_VARIABLE_STATE_ID   bigint NOT NULL,
     ROOT_EXEC_CONTEXT_ID    bigint,
-    ACCOUNT_ID              NUMERIC(10, 0)
 );
 
 CREATE INDEX mh_exec_context_state_idx

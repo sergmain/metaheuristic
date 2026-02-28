@@ -115,7 +115,8 @@ create table MH_ACCOUNT
   CREATED_ON  bigint not null,
   UPDATED_ON  bigint not null,
   SECRET_KEY  varchar(25),
-  TWO_FA      BOOLEAN not null default false
+  TWO_FA      BOOLEAN not null default false,
+  PARAMS      TEXT
 );
 
 CREATE INDEX mh_account_company_id_idx
@@ -309,6 +310,7 @@ CREATE TABLE MH_EXEC_CONTEXT
   VERSION               NUMERIC(5, 0)  NOT NULL,
   SOURCE_CODE_ID        NUMERIC(10, 0) NOT NULL,
   COMPANY_ID            NUMERIC(10, 0) NOT NULL,
+  ACCOUNT_ID            NUMERIC(10, 0) NOT NULL,
   CREATED_ON            bigint NOT NULL,
   COMPLETED_ON          bigint,
   PARAMS                TEXT NOT NULL,
