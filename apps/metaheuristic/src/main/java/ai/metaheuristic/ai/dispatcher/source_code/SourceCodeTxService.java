@@ -151,6 +151,10 @@ public class SourceCodeTxService {
             return new OperationStatusRest(EnumsApi.OperationStatus.OK,
                     "565.250 sourceCode wasn't found, sourceCodeId: " + sourceCodeId, null);
         }
+        if (!SourceCodeLatchService.isDeleteAllowed(sourceCode.latch)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "565.255 Can't delete sourceCode #" + sourceCodeId + ", active latches exist: " + sourceCode.latch);
+        }
         sourceCodeCache.deleteById(sourceCodeId);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

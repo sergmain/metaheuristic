@@ -63,6 +63,9 @@ public class SourceCodeImpl implements Serializable, SourceCode {
     @Column(name = "IS_VALID")
     public boolean valid;
 
+    @Column(name = "LATCH")
+    public String latch;
+
     @Column(name = "PARAMS")
     private String params;
 

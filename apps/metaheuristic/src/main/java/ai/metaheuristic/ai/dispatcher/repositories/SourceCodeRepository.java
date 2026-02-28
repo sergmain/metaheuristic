@@ -27,6 +27,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Repository
 @Transactional
@@ -88,6 +89,10 @@ public interface SourceCodeRepository extends CrudRepository<SourceCodeImpl, Lon
     @Nullable
     @Query(value="select p.id from SourceCodeImpl p where p.uid=:uid")
     Long findIdByUid(String uid);
+
+    @Transactional(readOnly = true)
+    @Query(value="select p from SourceCodeImpl p")
+    Stream<SourceCodeImpl> findAllAsStream();
 }
 
 

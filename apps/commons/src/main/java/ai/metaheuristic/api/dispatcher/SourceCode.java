@@ -55,4 +55,8 @@ public interface SourceCode {
 
     void setValid(boolean valid);
 
+    String getLatch();
+
+    void setLatch(String latch);
+
 }
