@@ -148,19 +148,8 @@ public class ExecContextUtils {
                 }
             }
         }
-        // Option 5d: skip shortName truncation when columnNames provides display names
-        if (raw.columnNames==null || raw.columnNames.isEmpty()) {
-            for (ExecContextApiData.ColumnHeader ch : r.header) {
-                ch.process = ExecContextUtils.shortName(ch.process);
-                ch.functionCode = ExecContextUtils.shortName(ch.functionCode);
-            }
-        }
+        // shortName truncation moved to UI side
         return r;
-    }
-
-    public static final int MAX_NAME_LENGTH = 15;
-    private static String shortName(String s) {
-        return StringUtils.substring(s, 0, MAX_NAME_LENGTH) + (s.length()>MAX_NAME_LENGTH ? " ..." : "");
     }
 
     public static int compare(String o1, String o2) {

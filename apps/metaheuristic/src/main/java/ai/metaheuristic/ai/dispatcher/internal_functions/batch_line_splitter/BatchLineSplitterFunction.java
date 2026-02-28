@@ -115,6 +115,13 @@ public class BatchLineSplitterFunction implements InternalFunction {
 
         VariableUtils.VariableHolder variableHolder = varHolders.get(0);
 
+        // If the input variable is nullified (e.g. atomic requirement with no children),
+        // there's nothing to split — complete successfully with zero sub-tasks
+        if (variableHolder.variable!=null && variableHolder.variable.nullified) {
+            log.info("994.045 Input variable '{}' is nullified, producing zero sub-tasks", inputVariableName);
+            return;
+        }
+
         String content;
         try {
             if (variableHolder.variable!=null) {
