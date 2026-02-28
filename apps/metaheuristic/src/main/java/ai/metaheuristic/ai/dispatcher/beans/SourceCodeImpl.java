@@ -25,6 +25,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -63,6 +64,7 @@ public class SourceCodeImpl implements Serializable, SourceCode {
     @Column(name = "IS_VALID")
     public boolean valid;
 
+    @Nullable
     @Column(name = "LATCH")
     public String latch;
 

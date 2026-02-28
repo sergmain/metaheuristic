@@ -318,7 +318,7 @@ CREATE TABLE mh_source_code
     PARAMS          TEXT not null,
     IS_LOCKED       BOOLEAN not null default false,
     IS_VALID        BOOLEAN not null default false,
-    LATCH           varchar(50) not null default ''
+    LATCH           varchar(50)
 );
 
 CREATE INDEX mh_source_company_id_idx

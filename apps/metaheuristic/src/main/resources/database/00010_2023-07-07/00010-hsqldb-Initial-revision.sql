@@ -331,7 +331,7 @@ CREATE TABLE mh_source_code
     PARAMS          LONGVARCHAR not null,
     IS_LOCKED       BOOLEAN not null default false,
     IS_VALID        BOOLEAN not null default false,
-    LATCH           varchar(50) not null default ''
+    LATCH           varchar(50)
 );
 
 CREATE UNIQUE INDEX mh_source_code_uid_unq_idx

@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.api.dispatcher;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * @author Serge
  * Date: 5/9/2019
@@ -55,8 +57,8 @@ public interface SourceCode {
 
     void setValid(boolean valid);
 
-    String getLatch();
+    @Nullable String getLatch();
 
-    void setLatch(String latch);
+    void setLatch(@Nullable String latch);
 
 }
