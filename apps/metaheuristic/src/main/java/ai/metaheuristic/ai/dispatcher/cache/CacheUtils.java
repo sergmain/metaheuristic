@@ -70,7 +70,9 @@ public class CacheUtils {
         return fullKey;
     }
 
-    private static void collectChecksums(TaskParamsYaml tpy, Function<Long, Long> variableBlobIdRefFunc, Function<Long, String> variableAsStringFunc,
+    public static final String NULL_VARIABLE = "<null-variable>";
+
+    private static void collectChecksums(TaskParamsYaml tpy, Function<Long, @Nullable Long> variableBlobIdRefFunc, Function<Long, String> variableAsStringFunc,
                                          Function<Long, InputStream> variableAsStreamFunc, Function<Long, InputStream> globalVariableAsStreamFunc, CacheData.FullKey fullKey) {
         for (TaskParamsYaml.InputVariable input : tpy.task.inputs) {
             if (input.context==global) {
@@ -80,7 +82,8 @@ public class CacheUtils {
 
             Long variableBlobId = variableBlobIdRefFunc.apply(input.id);
             if (variableBlobId==null) {
-                throw new IllegalStateException("(variableBlobId==null)");
+                fullKey.inputs.add(getSha256PlusLength(NULL_VARIABLE));
+                continue;
             }
 
             switch (input.context) {
@@ -143,6 +146,10 @@ public class CacheUtils {
             log.error(es, e);
             throw new VariableCommonException(es, variableId);
         }
+    }
+
+    public static CacheData.Sha256PlusLength getSha256PlusLength(String s) {
+        return getSha256PlusLength(new ByteArrayInputStream(s.getBytes()));
     }
 
     @SneakyThrows
