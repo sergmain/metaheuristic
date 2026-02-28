@@ -21,7 +21,7 @@
 
     <groupId>ai.metaheuristic</groupId>
     <artifactId>srv</artifactId>
-    <version>7.0.13</version>
+    <version>7.1.0</version>
     <packaging>jar</packaging>
 
     <name>ai.metaheuristic.srv</name>
@@ -46,7 +46,7 @@
         <dependency>
             <groupId>ai.metaheuristic</groupId>
             <artifactId>mh-commons</artifactId>
-            <version>7.0.13</version>
+            <version>7.1.0</version>
         </dependency>
 
         <dependency>
