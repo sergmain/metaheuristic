@@ -57,10 +57,6 @@ public class SourceCodeImpl implements Serializable, SourceCode {
     @Column(name="CREATED_ON")
     public long createdOn;
 
-    @Deprecated(forRemoval = true)
-    @Column(name = "IS_LOCKED")
-    public boolean locked;
-
     @Column(name = "IS_VALID")
     public boolean valid;
 

@@ -316,7 +316,6 @@ CREATE TABLE mh_source_code
     UID             varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
     CREATED_ON      bigint NOT NULL,
     PARAMS          TEXT not null,
-    IS_LOCKED       BOOLEAN not null default false,
     IS_VALID        BOOLEAN not null default false,
     LATCH           varchar(50)
 );

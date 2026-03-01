@@ -337,7 +337,6 @@ CREATE TABLE mh_source_code
     UID             varchar(250) NOT NULL,
     CREATED_ON      bigint NOT NULL,
     PARAMS          LONG VARCHAR not null,
-    IS_LOCKED       BOOLEAN not null default false,
     IS_VALID        BOOLEAN not null default false,
     LATCH           varchar(50)
 );

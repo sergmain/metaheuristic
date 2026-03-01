@@ -37,8 +37,6 @@ public interface SourceCode {
 
     String getParams();
 
-    boolean isLocked();
-
     boolean isValid();
 
     void setId(Long id);
@@ -52,8 +50,6 @@ public interface SourceCode {
     void setCreatedOn(long createdOn);
 
     void setParams(String params);
-
-    void setLocked(boolean locked);
 
     void setValid(boolean valid);
 

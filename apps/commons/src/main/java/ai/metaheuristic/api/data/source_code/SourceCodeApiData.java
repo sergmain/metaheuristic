@@ -134,7 +134,6 @@ public class SourceCodeApiData {
         public String uid;
         public Long companyId;
         public long createdOn;
-        public boolean locked;
         public boolean valid;
         public String source;
         public EnumsApi.DispatcherAssetMode assetMode;
@@ -171,7 +170,6 @@ public class SourceCodeApiData {
             this.uid = sc.getUid();
             this.companyId = sc.getCompanyId();
             this.createdOn = sc.getCreatedOn();
-            this.locked = sc.isLocked();
             this.valid = sc.isValid();
 
             this.source = sourceCode.source;
@@ -185,7 +183,6 @@ public class SourceCodeApiData {
             this.uid = sc.getUid();
             this.companyId = sc.getCompanyId();
             this.createdOn = sc.getCreatedOn();
-            this.locked = sc.isLocked();
             this.valid = sc.isValid();
 
             this.source= sourceCode;
