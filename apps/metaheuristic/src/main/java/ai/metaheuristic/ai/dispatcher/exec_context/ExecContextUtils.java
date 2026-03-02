@@ -134,16 +134,18 @@ public class ExecContextUtils {
 
             String stateAsStr = taskExecState.toString();
             List<ExecContextApiData.VariableInfo> outputs = null;
+            List<ExecContextApiData.VariableInfo> inputs = null;
             boolean fromCache = state.fromCache();
             if (managerRole && variableState!=null && (taskExecState==EnumsApi.TaskExecState.OK || taskExecState==EnumsApi.TaskExecState.ERROR)) {
                 outputs = variableState.outputs;
+                inputs = variableState.inputs;
             }
 
             // find the line (row) for this task's context
             for (int i = 0; i < r.lines.length; i++) {
                 if (r.lines[i].context.equals(taskContextId)) {
                     // TODO 2023-06-07 p5 add input variables' states here
-                    r.lines[i].cells[j] = new ExecContextApiData.StateCell(taskId, stateAsStr, taskContextId, fromCache, outputs);
+                    r.lines[i].cells[j] = new ExecContextApiData.StateCell(taskId, stateAsStr, taskContextId, fromCache, inputs, outputs);
                     break;
                 }
             }
