@@ -659,8 +659,13 @@ public class ExecContextGraphService {
 
         // Only mark descendants whose ALL parents are in an error-or-skipped state.
         // This prevents marking a task SKIPPED if it has another parent that is still active (OK, IN_PROGRESS, NONE).
+        // Leaf vertices (no outgoing edges, i.e. mh.finish) are never marked SKIPPED — they must always execute.
         Set<ExecContextData.TaskVertex> toMark = new LinkedHashSet<>();
         for (ExecContextData.TaskVertex tv : set) {
+            if (execContextDAC.graph().outgoingEdgesOf(tv).isEmpty()) {
+                // leaf vertex (mh.finish) — never skip
+                continue;
+            }
             if (allParentsErrorOrSkipped(execContextDAC.graph(), stateParamsYaml, tv)) {
                 toMark.add(tv);
             }
@@ -702,6 +707,10 @@ public class ExecContextGraphService {
                 }
                 if (execContextDAC.graph().incomingEdgesOf(tv).isEmpty()) {
                     // root vertex — no parents to check
+                    continue;
+                }
+                // leaf vertex (no outgoing edges, i.e. mh.finish) — never skip, it must always execute
+                if (execContextDAC.graph().outgoingEdgesOf(tv).isEmpty()) {
                     continue;
                 }
                 if (allParentsErrorOrSkipped(execContextDAC.graph(), stateParamsYaml, tv)) {

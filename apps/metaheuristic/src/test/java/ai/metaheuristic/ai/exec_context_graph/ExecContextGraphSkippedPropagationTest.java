@@ -103,16 +103,17 @@ class ExecContextGraphSkippedPropagationTest {
 
         updateTaskState(dac, stateParams, 1L, TaskExecState.ERROR, "1", status);
 
-        // Assert: T1=ERROR, T2=SKIPPED, T3=SKIPPED, T4=SKIPPED
+        // Assert: T1=ERROR, T2=SKIPPED, T3=SKIPPED, T4(mh.finish/leaf)=NONE
         assertEquals(TaskExecState.ERROR, stateParams.states.get(1L));
         assertEquals(TaskExecState.SKIPPED, stateParams.states.get(2L));
         assertEquals(TaskExecState.SKIPPED, stateParams.states.get(3L));
-        // T4 is a leaf (no outgoing edges) — current code filters out leaves (mh.finish filter)
-        // This is expected existing behavior
+        // T4 is a leaf (no outgoing edges, i.e. mh.finish) — leaf vertices are never SKIPPED
+        assertEquals(TaskExecState.NONE, stateParams.states.get(4L), "T4 (mh.finish, leaf) should NOT be SKIPPED");
     }
 
     /**
      * Test the critical scenario: sibling task with single SKIPPED parent gets SKIPPED too.
+     * Both branches converge to a single mh.finish leaf (T9).
      *
      * Graph structure (mimics objective processing in SourceCode):
      * <pre>
@@ -123,6 +124,8 @@ class ExecContextGraphSkippedPropagationTest {
      *   T4 → T5 (store-objective-result)
      *   T6 → T7 (decompose)
      *   T7 → T8 (store-reqs)
+     *   T5 → T9 (mh.finish)
+     *   T8 → T9 (mh.finish)
      * </pre>
      *
      * When T2 (nop-wrapper) gets ERROR:
@@ -131,7 +134,8 @@ class ExecContextGraphSkippedPropagationTest {
      * - T5 should be SKIPPED (child of T4, single parent T4 is SKIPPED)
      * - T6 should be SKIPPED (sibling, single parent T2 is ERROR → all parents finished)
      * - T7 should be SKIPPED (single parent T6 is SKIPPED)
-     * - T8 should be SKIPPED (single parent T7 is SKIPPED) — leaf node, but still should be marked
+     * - T8 should be SKIPPED (single parent T7 is SKIPPED)
+     * - T9 (mh.finish, leaf) should NOT be SKIPPED — leaf vertices must always execute
      */
     @Test
     public void test_errorPropagation_skipsSiblingsWithSingleSkippedParent() {
@@ -146,6 +150,7 @@ class ExecContextGraphSkippedPropagationTest {
         ExecContextData.TaskVertex t6 = addVertex(graph, 6L, "1,1");
         ExecContextData.TaskVertex t7 = addVertex(graph, 7L, "1,1");
         ExecContextData.TaskVertex t8 = addVertex(graph, 8L, "1,1");
+        ExecContextData.TaskVertex t9 = addVertex(graph, 9L, "1");
 
         graph.addEdge(t1, t2);
         graph.addEdge(t2, t3);
@@ -154,8 +159,10 @@ class ExecContextGraphSkippedPropagationTest {
         graph.addEdge(t4, t5);
         graph.addEdge(t6, t7);
         graph.addEdge(t7, t8);
+        graph.addEdge(t5, t9);
+        graph.addEdge(t8, t9);
 
-        for (long i = 1; i <= 8; i++) {
+        for (long i = 1; i <= 9; i++) {
             stateParams.states.put(i, TaskExecState.NONE);
         }
         // T1 already finished OK
@@ -174,10 +181,11 @@ class ExecContextGraphSkippedPropagationTest {
         assertEquals(TaskExecState.ERROR, stateParams.states.get(2L), "T2 should be ERROR");
         assertEquals(TaskExecState.SKIPPED, stateParams.states.get(3L), "T3 (subProcess child of T2) should be SKIPPED");
         assertEquals(TaskExecState.SKIPPED, stateParams.states.get(4L), "T4 (child of T3) should be SKIPPED");
-        assertEquals(TaskExecState.SKIPPED, stateParams.states.get(5L), "T5 (child of T4, leaf) should be SKIPPED");
+        assertEquals(TaskExecState.SKIPPED, stateParams.states.get(5L), "T5 (child of T4) should be SKIPPED");
         assertEquals(TaskExecState.SKIPPED, stateParams.states.get(6L), "T6 (sibling, single parent T2 is ERROR) should be SKIPPED");
         assertEquals(TaskExecState.SKIPPED, stateParams.states.get(7L), "T7 (child of T6) should be SKIPPED");
-        assertEquals(TaskExecState.SKIPPED, stateParams.states.get(8L), "T8 (child of T7, leaf) should be SKIPPED");
+        assertEquals(TaskExecState.SKIPPED, stateParams.states.get(8L), "T8 (child of T7) should be SKIPPED");
+        assertEquals(TaskExecState.NONE, stateParams.states.get(9L), "T9 (mh.finish, leaf) should NOT be SKIPPED — leaf vertices must always execute");
     }
 
     /**
@@ -267,7 +275,7 @@ class ExecContextGraphSkippedPropagationTest {
         assertEquals(TaskExecState.OK, stateParams.states.get(1L));
         assertEquals(TaskExecState.SKIPPED, stateParams.states.get(2L));
         assertEquals(TaskExecState.SKIPPED, stateParams.states.get(3L), "T3 should be SKIPPED — single parent T2 is SKIPPED");
-        assertEquals(TaskExecState.SKIPPED, stateParams.states.get(4L), "T4 should be SKIPPED — single parent T3 is SKIPPED");
+        assertEquals(TaskExecState.NONE, stateParams.states.get(4L), "T4 (leaf) should NOT be SKIPPED — leaf vertices must always execute");
     }
 
     /**
@@ -333,8 +341,8 @@ class ExecContextGraphSkippedPropagationTest {
                 "decompose should be SKIPPED — single parent 643 is SKIPPED");
         assertEquals(TaskExecState.SKIPPED, stateParams.states.get(645L),
                 "store-reqs should be SKIPPED — single parent 644 is SKIPPED");
-        assertEquals(TaskExecState.SKIPPED, stateParams.states.get(640L),
-                "mh.finish should be SKIPPED — single parent 645 is SKIPPED");
+        assertEquals(TaskExecState.NONE, stateParams.states.get(640L),
+                "mh.finish (leaf) should NOT be SKIPPED — leaf vertices must always execute");
     }
 
     /**
