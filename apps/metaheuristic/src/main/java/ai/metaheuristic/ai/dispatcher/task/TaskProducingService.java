@@ -21,11 +21,17 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
+import ai.metaheuristic.ai.dispatcher.el.ElEvaluator;
 import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
+import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -57,6 +63,10 @@ public class TaskProducingService {
     private final TaskTxService taskTxService;
     private final Globals globals;
     private final ApplicationEventPublisher eventPublisher;
+    private final InternalFunctionVariableService internalFunctionVariableService;
+    private final GlobalVariableTxService globalVariableService;
+    private final VariableTxService variableTxService;
+    private final VariableRepository variableRepository;
 
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParamsYaml.Process process,
@@ -168,6 +178,16 @@ public class TaskProducingService {
         taskParams.task.inline = inlines;
 
         // TODO p0 2026-03-01 add SpEL evaluation of Metas here
+        if (!taskParams.task.metas.isEmpty()) {
+            var evaluator = ElEvaluator.createMhEvaluator(
+                    execContextId, 0L, taskContextId,
+                    internalFunctionVariableService, globalVariableService, variableTxService,
+                    variableRepository,
+                    (v) -> VariableSyncService.getWithSyncVoidForCreation(v.id,
+                            () -> variableTxService.setVariableAsNull(0L, v.id)));
+            taskParams.task.metas.clear();
+            taskParams.task.metas.addAll(ElEvaluator.resolveMetas(process.metas, evaluator));
+        }
 
         if (taskParams.task.context== EnumsApi.FunctionExecContext.internal) {
             taskParams.task.function = new TaskParamsYaml.FunctionConfig(
