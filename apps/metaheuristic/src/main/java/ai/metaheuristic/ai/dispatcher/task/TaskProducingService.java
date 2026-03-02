@@ -167,6 +167,8 @@ public class TaskProducingService {
         taskParams.task.metas.addAll(process.metas);
         taskParams.task.inline = inlines;
 
+        // TODO p0 2026-03-01 add SpEL evaluation of Metas here
+
         if (taskParams.task.context== EnumsApi.FunctionExecContext.internal) {
             taskParams.task.function = new TaskParamsYaml.FunctionConfig(
                     process.function.code, "internal", null, S.b(process.function.params) ? "" : process.function.params, "internal",

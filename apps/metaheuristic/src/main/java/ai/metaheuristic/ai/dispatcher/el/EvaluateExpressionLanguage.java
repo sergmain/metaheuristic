@@ -58,11 +58,7 @@ public class EvaluateExpressionLanguage {
 
     // https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#expressions
 
-    @AllArgsConstructor
-    public static class MhContext {
-        public final String taskContextId;
-        public final Long execContextId;
-    }
+    public record MhContext(String taskContextId, Long execContextId) { }
 
     public static class MhEvalContext implements EvaluationContext {
         public final String taskContextId;
@@ -174,7 +170,7 @@ public class EvaluateExpressionLanguage {
                             bytes = strValue.getBytes();
                         }
                         else {
-                            throw new InternalFunctionException(system_error, "509.120 not supported type: " + newValue.getClass());
+                            throw new InternalFunctionException(system_error, "509.100 not supported type: " + newValue.getClass());
                         }
 
                         try (InputStream is = new ByteArrayInputStream(bytes)) {
@@ -187,7 +183,7 @@ public class EvaluateExpressionLanguage {
                         throw e;
                     }
                     catch (Throwable th) {
-                        final String es = "509.150 error " + th.getMessage();
+                        final String es = "509.120 error " + th.getMessage();
                         log.error(es, th);
                         throw new InternalFunctionException(system_error, es);
                     }
@@ -202,7 +198,7 @@ public class EvaluateExpressionLanguage {
             try {
                 tempDir = DirUtils.createMhTempPath("mh-evaluation-");
                 if (tempDir == null) {
-                    throw new InternalFunctionException(system_error, "509.180 can't create a temporary file");
+                    throw new InternalFunctionException(system_error, "509.140 can't create a temporary file");
                 }
                 Path tempFile = Files.createTempFile(tempDir, "input-", CommonConsts.BIN_EXT);
                 if (variableHolderInput.globalVariable!=null) {
@@ -210,7 +206,7 @@ public class EvaluateExpressionLanguage {
                 } else if (variableHolderInput.variable!=null) {
                     variableTxService.storeToFileWithTx(variableHolderInput.variable.id, tempFile);
                 } else {
-                    throw new InternalFunctionException(system_error, "509.210 both local and global variables are null");
+                    throw new InternalFunctionException(system_error, "509.160 both local and global variables are null");
                 }
                 try (InputStream is = Files.newInputStream(tempFile)) {
                     final long size = Files.size(tempFile);
@@ -240,7 +236,7 @@ public class EvaluateExpressionLanguage {
                 @Nullable
                 @Override
                 public MethodExecutor resolve(EvaluationContext context, Object targetObject, String name, List<TypeDescriptor> argumentTypes) throws AccessException {
-                    throw new NotImplementedException("resolver not configured for " + name);
+                    throw new NotImplementedException("509.180 resolver not configured for " + name);
                 }
             };
             return List.of(mr);
@@ -300,10 +296,9 @@ public class EvaluateExpressionLanguage {
                             return getValueInteger(value);
                         }
                     }
-                    throw new NotImplementedException("Not yet, srcType: "+sourceType.getObjectType().getSimpleName()+", trgType: " + targetType.getObjectType().getSimpleName());
+                    throw new NotImplementedException("509.200 Not yet, srcType: "+sourceType.getObjectType().getSimpleName()+", trgType: " + targetType.getObjectType().getSimpleName());
                 }
             };
-//            return new StandardTypeConverter();
         }
 
         @Override
@@ -317,7 +312,7 @@ public class EvaluateExpressionLanguage {
                 @Override
                 public int compare(@Nullable Object firstObject, @Nullable Object secondObject) throws EvaluationException {
                     if (firstObject==null || secondObject==null) {
-                        throw new EvaluationException("(firstObject==null || secondObject==null)");
+                        throw new EvaluationException("509.220 (firstObject==null || secondObject==null)");
                     }
                     // Detect if either operand is Boolean — use boolean comparison
                     if (isBooleanComparison(firstObject, secondObject)) {
@@ -368,27 +363,26 @@ public class EvaluateExpressionLanguage {
                 public Object operate(Operation operation, @Nullable Object leftOperand, @Nullable Object rightOperand) throws EvaluationException {
                     if (leftOperand==null || rightOperand==null) {
                         throw new InternalFunctionException(
-                                new InternalFunctionData.InternalFunctionProcessingResult(system_error,
-                                        "509.240 (leftOperand==null || rightOperand==null)"));
+                            new InternalFunctionData.InternalFunctionProcessingResult(system_error,
+                                "509.240 (leftOperand==null || rightOperand==null)"));
                     }
                     Integer leftValue = getValueInteger(leftOperand);
                     Integer rightValue = getValueInteger(rightOperand);
-                    switch (operation) {
-                        case ADD:
-                            return leftValue + rightValue;
-                        case SUBTRACT:
-                            return leftValue - rightValue;
-                        case DIVIDE:
-                            return leftValue / rightValue;
-                        case MULTIPLY:
-                            return leftValue * rightValue;
-                        case MODULUS:
-                            return leftValue % rightValue;
-                        case POWER:
-                            return leftValue ^ rightValue;
+                    try {
+                        return switch (operation) {
+                            case ADD -> leftValue + rightValue;
+                            case SUBTRACT -> leftValue - rightValue;
+                            case DIVIDE -> leftValue / rightValue;
+                            case MULTIPLY -> leftValue * rightValue;
+                            case MODULUS -> leftValue % rightValue;
+                            case POWER -> leftValue ^ rightValue;
+                        };
+                    } catch (Throwable th) {
+                        throw new InternalFunctionException(
+                            new InternalFunctionData.InternalFunctionProcessingResult(system_error,
+                                "509.260 (leftOperand==null || rightOperand==null)"));
+
                     }
-                    throw new EvaluationException(S.f("Not supported operation %s, left: %, right: %s",
-                            operation, leftOperand.getClass(), rightOperand.getClass()));
                 }
             };
             return ool;
@@ -399,7 +393,7 @@ public class EvaluateExpressionLanguage {
                 return (Integer)operand;
             }
             if (!(operand instanceof VariableUtils.VariableHolder variableHolder)) {
-                throw new EvaluationException("not supported type: " + operand.getClass());
+                throw new EvaluationException("509.280 not supported type: " + operand.getClass());
             }
 
             String strValue = getAsString(variableHolder);
@@ -411,7 +405,7 @@ public class EvaluateExpressionLanguage {
                 return (Boolean)operand;
             }
             if (!(operand instanceof VariableUtils.VariableHolder variableHolder)) {
-                throw new EvaluationException("not supported type: " + operand.getClass());
+                throw new EvaluationException("509.300 not supported type: " + operand.getClass());
             }
 
             String strValue = getAsString(variableHolder);
@@ -420,7 +414,7 @@ public class EvaluateExpressionLanguage {
 
         private String getAsString(VariableUtils.VariableHolder variableHolder) {
             if (variableHolder.notInited()) {
-                throw new EvaluationException("(variableHolder.notInited())");
+                throw new EvaluationException("509.320 (variableHolder.notInited())");
             }
             String strValue;
             if (variableHolder.variable!=null) {
@@ -430,7 +424,7 @@ public class EvaluateExpressionLanguage {
                 strValue = globalVariableService.getVariableDataAsString(variableHolder.globalVariable.id);
             }
             else {
-                throw new IllegalStateException("both are null");
+                throw new IllegalStateException("509.340 both are null");
             }
             return strValue;
         }
@@ -438,7 +432,7 @@ public class EvaluateExpressionLanguage {
         @Override
         public void setVariable(String name, @Nullable Object o) {
             VariableUtils.VariableHolder variableHolder = getVariableHolder(name);
-            throw new NotImplementedException("Not yet");
+            throw new NotImplementedException("509.360 Not yet");
         }
 
         @Nullable
@@ -457,7 +451,7 @@ public class EvaluateExpressionLanguage {
                     execContextId, taskContextId, name);
             if (holders.size()>1) {
                 throw new InternalFunctionException(Enums.InternalFunctionProcessing.source_code_is_broken,
-                                "509.270 Too many variables with the same name at top-level context, name: "+ name);
+                                "509.400 Too many variables with the same name at top-level context, name: "+ name);
             }
 
             VariableUtils.VariableHolder variableHolder = holders.get(0);
@@ -484,7 +478,7 @@ public class EvaluateExpressionLanguage {
             return obj;
         }
         catch (EvaluationException e) {
-            log.error("Error while evaluating exp: " + expression, e);
+            log.error("509.420 Error while evaluating exp: " + expression, e);
             throw e;
         }
     }

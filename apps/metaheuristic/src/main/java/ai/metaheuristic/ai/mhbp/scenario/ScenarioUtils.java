@@ -172,7 +172,7 @@ public class ScenarioUtils {
         return getProcess(step, processNumber, apiSchemeResolverFunc, uuid);
     }
 
-    public static SourceCodeParamsYaml.Process getProcess(ScenarioParams.Step step, AtomicInteger processNumber, Function<String, ApiScheme> apiSchemeResolverFunc, String uuid) {
+    public static SourceCodeParamsYaml.Process getProcess(ScenarioParams.Step step, AtomicInteger processNumber, Function<String, @Nullable ApiScheme> apiSchemeResolverFunc, String uuid) {
         boolean isApi = step.function==null;
         if (isApi && step.api==null) {
             throw new IllegalStateException("376.080 (isApi && step.api==null)");
