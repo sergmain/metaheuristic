@@ -150,6 +150,12 @@ public class ExecContextTaskResettingService {
         }
         task.setResultReceived(1);
         task.setResultResourceScheduledOn(0);
+
+        // Clear the fromCache flag so the task is no longer marked as served from cache.
+        // Output variables are reset below, so the cached data is gone — the flag must reflect that.
+        taskParams.task.fromCache = false;
+        task.updateParams(taskParams);
+
         taskTxService.save(task);
         for (TaskParamsYaml.OutputVariable output : taskParams.task.outputs) {
             if (output.context== EnumsApi.VariableContext.global) {
