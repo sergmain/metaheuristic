@@ -39,16 +39,28 @@ public class ContextUtils {
 
     public static final String CONTEXT_SEPARATOR = "#";
     public static final char CONTEXT_DIGIT_SEPARATOR = ',';
+    public static final String ANCESTOR_SEPARATOR = "|";
 
     public static String buildTaskContextId(String processContextId, String subContext) {
         return processContextId + CONTEXT_SEPARATOR + subContext;
     }
 
+    /**
+     * Returns everything before the '#' separator.
+     * May contain '|'-separated ancestor segments.
+     * Examples:
+     *   "1,2#1" -> "1,2"
+     *   "1,2,5|1#0" -> "1,2,5|1"
+     *   "1,2,5,6|1|0#0" -> "1,2,5,6|1|0"
+     */
     public static String getLevel(String taskContextId) {
         int idx = taskContextId.indexOf(CONTEXT_SEPARATOR);
         return idx==-1 ?  taskContextId : taskContextId.substring(0, idx);
     }
 
+    /**
+     * Returns the instance number (everything after '#'), or null if no '#'.
+     */
     @Nullable
     public static String getPath(String taskContextId) {
         if (StringUtils.contains(taskContextId, CONTEXT_SEPARATOR)) {
@@ -57,11 +69,57 @@ public class ContextUtils {
         return null;
     }
 
+    /**
+     * Extracts the processContextId (first segment before first '|', or the whole level if no '|').
+     * Examples:
+     *   "1,2" -> "1,2"
+     *   "1,2,5|1" -> "1,2,5"
+     *   "1,2,5,6|1|0" -> "1,2,5,6"
+     */
+    public static String getProcessContextId(String level) {
+        int idx = level.indexOf(ANCESTOR_SEPARATOR);
+        return idx == -1 ? level : level.substring(0, idx);
+    }
+
+    /**
+     * Extracts the ancestor path (everything after first '|'), or null if no '|'.
+     * Examples:
+     *   "1,2" -> null
+     *   "1,2,5|1" -> "1"
+     *   "1,2,5,6|1|0" -> "1|0"
+     */
+    @Nullable
+    public static String getAncestorPath(String level) {
+        int idx = level.indexOf(ANCESTOR_SEPARATOR);
+        return idx == -1 ? null : level.substring(idx + ANCESTOR_SEPARATOR.length());
+    }
+
+    /**
+     * Builds the sub-process level for entering a subprocess from a parent context.
+     *
+     * Format: processContextId[|ancestorInstance]*#instanceNumber
+     * Uses '|' to separate processContextId from ancestor instance segments.
+     * This makes parent derivation unambiguous at any nesting depth.
+     *
+     * Examples:
+     *   getCurrTaskContextIdForSubProcesses("1", "1,2") -> "1,2"
+     *   getCurrTaskContextIdForSubProcesses("1,2#1", "1,2,5") -> "1,2,5|1"
+     *   getCurrTaskContextIdForSubProcesses("1,2,5|1#0", "1,2,5,6") -> "1,2,5,6|1|0"
+     *   getCurrTaskContextIdForSubProcesses("1,2,5,6|1|0#2", "1,2,5,6,7") -> "1,2,5,6,7|1|0|2"
+     */
     public static String getCurrTaskContextIdForSubProcesses(String currTaskContextId, String processContextId) {
-        String level = processContextId;
-        String path = ContextUtils.getPath(currTaskContextId);
-        final String result = path!=null ? level + ContextUtils.CONTEXT_DIGIT_SEPARATOR + path : level;
-        return result;
+        String parentPath = ContextUtils.getPath(currTaskContextId);
+        if (parentPath == null) {
+            // parent has no '#' suffix - just use the processContextId directly
+            return processContextId;
+        }
+        String parentLevel = getLevel(currTaskContextId);
+        String parentAncestorPath = getAncestorPath(parentLevel);
+        // Append parent's ancestor path (if any) and parent's instance number
+        String newAncestorPath = parentAncestorPath != null
+                ? parentAncestorPath + ANCESTOR_SEPARATOR + parentPath
+                : parentPath;
+        return processContextId + ANCESTOR_SEPARATOR + newAncestorPath;
     }
 
     @Nullable
@@ -104,50 +162,70 @@ public class ContextUtils {
         return new TaskData.DetailedTaskContextId(curr.substring(0, endIndexBase), null);
     }
 
+    /**
+     * Compares two taskContextIds for sorting purposes (descending: deepest/most-specific first).
+     * Format: processContextId[|ancestorInstance]*#instanceNumber
+     *
+     * Sort order (descending): longer processContextIds first, then by ancestor segments,
+     * then by instance number (#suffix). This ensures variable lookup finds the most specific match first.
+     */
     @SuppressWarnings("ConstantConditions")
     public static int compareTaskContextIds(String taskContextId1, String taskContextId2) {
         if (taskContextId1.equals(taskContextId2)) {
             return 0;
         }
 
-        String[] split1 = taskContextId1.split(",");
-        String[] split2 = taskContextId2.split(",");
-        if (split1.length!=split2.length) {
-            return split1.length>split2.length ? -1 : 1;
+        String level1 = getLevel(taskContextId1);
+        String level2 = getLevel(taskContextId2);
+        String path1 = getPath(taskContextId1);
+        String path2 = getPath(taskContextId2);
+
+        // Compare processContextId first (descending: longer/deeper first)
+        String processCtxId1 = getProcessContextId(level1);
+        String processCtxId2 = getProcessContextId(level2);
+
+        String[] pca1 = StringUtils.split(processCtxId1, CONTEXT_DIGIT_SEPARATOR);
+        String[] pca2 = StringUtils.split(processCtxId2, CONTEXT_DIGIT_SEPARATOR);
+
+        if (pca1.length != pca2.length) {
+            // Descending by depth: longer processContextId first
+            return Integer.compare(pca2.length, pca1.length);
         }
-        for (int i = 0; i < split1.length; i++) {
-            String s1 = split1[i];
-            String s2 = split2[i];
-            int cmp;
-            if (s1.contains(CONTEXT_SEPARATOR) || s2.contains(CONTEXT_SEPARATOR)) {
-                String sc1 = getLevel(s1);
-                String sc2 = getLevel(s2);
-                String sub1 = getPath(s1);
-                String sub2 = getPath(s2);
-                if (sc1.equals(sc2)) {
-                    if (sub1==null && sub2!=null) {
-                        return 1;
-                    }
-                    else if (sub1!=null && sub2==null) {
-                        return -1;
-                    }
-                    else if (sub1!=null && sub2!=null) {
-                        return sub2.compareTo(sub1);
-                    }
-                }
-                else {
-                    return sc2.compareTo(sc1);
-                }
-                cmp = s2.compareTo(s1);
-            }
-            else {
-                cmp = s2.compareTo(s1);
-            }
-            if (cmp!=0) {
+        for (int i = 0; i < pca1.length; i++) {
+            int cmp = Integer.compare(Integer.parseInt(pca2[i]), Integer.parseInt(pca1[i]));
+            if (cmp != 0) {
                 return cmp;
             }
         }
-        throw new IllegalStateException("?");
+
+        // ProcessContextIds are equal - compare ancestor paths (descending)
+        String ancestorPath1 = getAncestorPath(level1);
+        String ancestorPath2 = getAncestorPath(level2);
+
+        // Contexts with ancestors come before those without (more specific first)
+        if (ancestorPath1 != null && ancestorPath2 == null) return -1;
+        if (ancestorPath1 == null && ancestorPath2 != null) return 1;
+        if (ancestorPath1 != null && ancestorPath2 != null) {
+            String[] ap1 = ancestorPath1.split("\\|");
+            String[] ap2 = ancestorPath2.split("\\|");
+            if (ap1.length != ap2.length) {
+                return Integer.compare(ap2.length, ap1.length);
+            }
+            for (int i = 0; i < ap1.length; i++) {
+                int cmp = Integer.compare(Integer.parseInt(ap2[i]), Integer.parseInt(ap1[i]));
+                if (cmp != 0) {
+                    return cmp;
+                }
+            }
+        }
+
+        // Levels are equal - compare instance numbers (#suffix, descending)
+        if (path1 != null && path2 == null) return -1;
+        if (path1 == null && path2 != null) return 1;
+        if (path1 != null && path2 != null) {
+            return Integer.compare(Integer.parseInt(path2), Integer.parseInt(path1));
+        }
+        return 0;
     }
 
     public static List<String> sortSetAsTaskContextId(Collection<String> collection) {
@@ -158,76 +236,75 @@ public class ContextUtils {
     /**
      * Derives the parent taskContextId from a given taskContextId.
      *
-     * Two categories of taskContextId:
+     * Format: processContextId[|ancestorInstance]*#instanceNumber
+     *
+     * Three categories:
      *
      * 1. Without '#' suffix (simple nested processContextId):
-     *    "1,1,1" → parent is "1,1" (strip last comma-component)
-     *    "1,1" → parent is "1"
-     *    "1" → null (root)
+     *    "1,2,3" -> parent is "1,2" (strip last comma-component)
+     *    "1,2" -> parent is "1"
+     *    "1" -> null (root)
      *
-     * 2. With '#' suffix (fan-out or path-propagated):
-     *    "1,2#8" → parent is "1" (the batch-splitter task that created this fan-out)
-     *    "1,2,3,8#0" → parent is "1,2#8" (path propagation from parent)
-     *    "1,2,3,4,8,0#0" → parent is "1,2,3,8#0" (deeper nesting)
+     * 2. With '#' suffix, NO '|' (first-level fan-out):
+     *    "1,2#8" -> parent is "1"
+     *    Strip last comma-component from processContextId.
      *
-     * For case 2, the level (before '#') is composed of processContextId + propagated path components.
-     * Given level = "X1,...,Xn" where the last components are propagated paths:
-     * We need to find where the processContextId ends and the path begins.
+     * 3. With '#' suffix AND '|' (deep nested fan-out):
+     *    "1,2,5|1#0" -> parent is "1,2#1"
+     *      segments = ["1,2,5", "1"], instance="0"
+     *      parent processCtxId = strip last from "1,2,5" -> "1,2"
+     *      pop last ancestor "1" -> becomes parent's instance
+     *      no more ancestors -> parent = "1,2#1"
      *
-     * The pattern for path-propagated contexts:
-     * If level has format processCtxId + "," + parentPath components, then:
-     * - Strip last path component to get the remaining level
-     * - The parent's level is the processContextId without the last digit
-     * - The parent's suffix is the last path component stripped
+     *    "1,2,5,6|1|0#0" -> parent is "1,2,5|1#0"
+     *      segments = ["1,2,5,6", "1", "0"], instance="0"
+     *      parent processCtxId = "1,2,5"
+     *      pop last ancestor "0" -> parent's instance
+     *      remaining ancestors = ["1"]
+     *      parent = "1,2,5|1#0"
+     *
+     *    "1,2,5,6,7|1|0|2#0" -> parent is "1,2,5,6|1|0#2"
      */
     @Nullable
     public static String deriveParentTaskContextId(String taskContextId) {
         String level = getLevel(taskContextId);
         String path = getPath(taskContextId);
 
-        if (!level.contains(String.valueOf(CONTEXT_DIGIT_SEPARATOR))) {
-            // Top-level context like "1" — no parent
+        String processCtxId = getProcessContextId(level);
+
+        if (!processCtxId.contains(String.valueOf(CONTEXT_DIGIT_SEPARATOR))) {
+            // Top-level context like "1" - no parent
             return null;
         }
 
         if (path == null) {
-            // No '#' suffix — simple nested processContextId like "1,1,1"
-            // Parent is the context with last comma-component removed
-            int lastComma = level.lastIndexOf(CONTEXT_DIGIT_SEPARATOR);
-            return level.substring(0, lastComma);
+            // No '#' suffix - simple nested processContextId like "1,2,3"
+            int lastComma = processCtxId.lastIndexOf(CONTEXT_DIGIT_SEPARATOR);
+            return processCtxId.substring(0, lastComma);
         }
 
-        // Has '#' suffix — fan-out or path-propagated context
-        // level = processContextId + "," + path_components (from getCurrTaskContextIdForSubProcesses)
-        //
-        // Examples:
-        // "1,2#8" → level="1,2", path="8" → parent is "1"
-        //   (the processContextId is "1,2", the batch-splitter at parent level "1" created instance #8)
-        //   parent level = strip last comma-component from processContextId = "1"
-        //
-        // "1,2,3,8#0" → level="1,2,3,8", path="0"
-        //   This was created by getCurrTaskContextIdForSubProcesses("1,2#8", "1,2,3")
-        //   = "1,2,3" + "," + "8" = "1,2,3,8", then buildTaskContextId("1,2,3,8", "0")
-        //   The last component of level ("8") is the parent's suffix
-        //   The rest ("1,2,3") is the child's processContextId
-        //   Parent's level = strip last from child's processContextId = "1,2"
-        //   Parent = "1,2#8"
+        String ancestorPath = getAncestorPath(level);
 
-        int lastComma = level.lastIndexOf(CONTEXT_DIGIT_SEPARATOR);
-        String beforeLastComma = level.substring(0, lastComma);
-        String lastComponent = level.substring(lastComma + 1);
+        // Strip last component from processContextId to go one level up in the DAG
+        int lastComma = processCtxId.lastIndexOf(CONTEXT_DIGIT_SEPARATOR);
+        String parentProcessCtxId = processCtxId.substring(0, lastComma);
 
-        // beforeLastComma is the child's processContextId (or prefix thereof)
-        // lastComponent is the propagated path from the parent's suffix
-
-        int parentLevelEnd = beforeLastComma.lastIndexOf(CONTEXT_DIGIT_SEPARATOR);
-        if (parentLevelEnd == -1) {
-            // beforeLastComma is a single value like "1" — parent is top-level
-            return beforeLastComma;
+        if (ancestorPath == null) {
+            // First-level fan-out: "1,2#8" -> parent is "1"
+            return parentProcessCtxId;
         }
 
-        String parentLevel = beforeLastComma.substring(0, parentLevelEnd);
-        return parentLevel + CONTEXT_SEPARATOR + lastComponent;
+        // Deep nested fan-out: pop the last ancestor segment
+        int lastPipe = ancestorPath.lastIndexOf(ANCESTOR_SEPARATOR);
+        if (lastPipe == -1) {
+            // Single ancestor segment: "1,2,5|1#0" -> parent = "1,2#1"
+            return parentProcessCtxId + CONTEXT_SEPARATOR + ancestorPath;
+        }
+
+        // Multiple ancestor segments: "1,2,5,6|1|0#0" -> parent = "1,2,5|1#0"
+        String parentAncestorPath = ancestorPath.substring(0, lastPipe);
+        String parentInstanceNumber = ancestorPath.substring(lastPipe + ANCESTOR_SEPARATOR.length());
+        return parentProcessCtxId + ANCESTOR_SEPARATOR + parentAncestorPath + CONTEXT_SEPARATOR + parentInstanceNumber;
     }
 
 }

@@ -132,9 +132,9 @@ public class TestContextUtils {
     @Test
     public void test_getCurrTaskContextIdForSubProcesses_withPath() {
         // currTaskContextId = "1,2#1", processContextId = "3"
-        // level = "3", path = "1" => result = "3,1"
+        // path = "1" => result = "3|1"
         String result = ContextUtils.getCurrTaskContextIdForSubProcesses("1,2#1", "3");
-        assertEquals("3,1", result);
+        assertEquals("3|1", result);
     }
 
     @Test
@@ -149,7 +149,7 @@ public class TestContextUtils {
     public void test_getCurrTaskContextIdForSubProcesses_deepPath() {
         // currTaskContextId = "1,2,3#5", path = "5"
         String result = ContextUtils.getCurrTaskContextIdForSubProcesses("1,2,3#5", "4");
-        assertEquals("4,5", result);
+        assertEquals("4|5", result);
     }
 
     // === P1: VariableUtils.getParentContext tests ===

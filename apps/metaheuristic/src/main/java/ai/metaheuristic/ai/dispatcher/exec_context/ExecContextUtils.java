@@ -155,40 +155,7 @@ public class ExecContextUtils {
     }
 
     public static int compare(String o1, String o2) {
-        int i1 = o1.indexOf(ContextUtils.CONTEXT_SEPARATOR);
-        int i2 = o2.indexOf(ContextUtils.CONTEXT_SEPARATOR);
-
-        String s1 = i1!=-1 ? StringUtils.substring(o1, 0, i1) : o1;
-        String s2 = i2!=-1 ? StringUtils.substring(o2, 0, i2) : o2;
-
-        if (s1.equals(s2)) {
-            if (i1!=-1 && i2!=-1) {
-                int sc1 = Integer.parseInt(o1.substring(i1+ContextUtils.CONTEXT_SEPARATOR.length()));
-                int sc2 = Integer.parseInt(o2.substring(i2+ContextUtils.CONTEXT_SEPARATOR.length()));
-                return Integer.compare(sc1, sc2);
-            }
-            if (i1==-1 && i2==-1) {
-                return 0;
-            }
-            if (i1==-1) {
-                return -1;
-            }
-            else {
-                return 0;
-            }
-        }
-        String[] sa1 = StringUtils.split(s1, ',');
-        String[] sa2 = StringUtils.split(s2, ',');
-        int minLen = Math.min(sa1.length, sa2.length);
-        for (int i = 0; i < minLen; i++) {
-            int v1 = Integer.parseInt(sa1[i]);
-            int v2 = Integer.parseInt(sa2[i]);
-            int compare = Integer.compare(v1, v2);
-            if (compare!=0) {
-                return compare;
-            }
-        }
-        return sa1.length > sa2.length ? 1 : -1;
+        return ContextUtils.compareTaskContextIds(o1, o2);
     }
 
     // public for testing - will be refactored in Option 5d
@@ -242,10 +209,12 @@ public class ExecContextUtils {
             }
         }
 
-        // Sort roots and children within each group using the existing compare method
-        List<String> sortedRoots = roots.stream().sorted(ExecContextUtils::compare).collect(Collectors.toList());
+        // Sort roots and children within each group in ascending order for visualization
+        // (ExecContextUtils::compare is descending, so we reverse it)
+        java.util.Comparator<String> ascendingComparator = (a, b) -> ExecContextUtils.compare(b, a);
+        List<String> sortedRoots = roots.stream().sorted(ascendingComparator).collect(Collectors.toList());
         for (List<String> children : childrenByParent.values()) {
-            children.sort(ExecContextUtils::compare);
+            children.sort(ascendingComparator);
         }
 
         // Recursive tree walk
@@ -268,7 +237,11 @@ public class ExecContextUtils {
 
     /**
      * Finds the nearest existing ancestor of a taskContextId within the given set.
-     * Walks up the parent chain until an ancestor is found in the set, or returns null.
+     * Walks up the parent chain via deriveParentTaskContextId until an ancestor
+     * is found in the set, or returns null.
+     *
+     * With the new '|' format, deriveParentTaskContextId is unambiguous at any depth,
+     * so this walk should always find the correct parent if it exists in the set.
      */
     @org.jspecify.annotations.Nullable
     private static String findNearestAncestor(String taskContextId, Set<String> contexts) {

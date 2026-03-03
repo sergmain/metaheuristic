@@ -24,8 +24,18 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for ContextUtils.buildTaskContextId, getCurrTaskContextIdForSubProcesses
- * and VariableUtils.getParentContext - baseline before Option 5d refactoring.
+ * Tests for ContextUtils with '|' format for unambiguous parent derivation at any nesting depth.
+ *
+ * Format: processContextId[|ancestorInstance]*#instanceNumber
+ *   processContextId: comma-separated DAG path (e.g., "1,2,5")
+ *   ancestorInstance: single integer, separated by '|'
+ *   instanceNumber: fan-out instance, separated by '#'
+ *
+ * Examples:
+ *   "1"              - top-level, no fan-out
+ *   "1,2#1"          - first-level fan-out, instance 1
+ *   "1,2,5|1#0"      - second-level, ancestor instance 1
+ *   "1,2,5,6|1|0#0"  - third-level, ancestors: grandparent=1, parent=0
  *
  * @author Sergio Lissner
  * Date: 2/16/2026
@@ -37,9 +47,7 @@ public class TestContextUtilsExtended {
 
     @Test
     public void test_buildTaskContextId_simple() {
-        // top-level sub-process context, instance 0
-        String result = ContextUtils.buildTaskContextId("1,2", "0");
-        assertEquals("1,2#0", result);
+        assertEquals("1,2#0", ContextUtils.buildTaskContextId("1,2", "0"));
     }
 
     @Test
@@ -50,305 +58,239 @@ public class TestContextUtilsExtended {
     }
 
     @Test
-    public void test_buildTaskContextId_deepContext() {
-        // 4th level nesting
-        String result = ContextUtils.buildTaskContextId("1,2,3,4", "5");
-        assertEquals("1,2,3,4#5", result);
+    public void test_buildTaskContextId_withAncestors() {
+        assertEquals("1,2,5|1#0", ContextUtils.buildTaskContextId("1,2,5|1", "0"));
+        assertEquals("1,2,5,6|1|0#0", ContextUtils.buildTaskContextId("1,2,5,6|1|0", "0"));
     }
 
     // === getCurrTaskContextIdForSubProcesses ===
 
     @Test
     public void test_getCurrTaskContextIdForSubProcesses_topLevel() {
-        // parent task at top level "1", sub-process at level "1,2"
-        // path of "1" is null -> result is just the processContextId
-        String result = ContextUtils.getCurrTaskContextIdForSubProcesses("1", "1,2");
-        assertEquals("1,2", result);
+        assertEquals("1,2", ContextUtils.getCurrTaskContextIdForSubProcesses("1", "1,2"));
     }
 
     @Test
-    public void test_getCurrTaskContextIdForSubProcesses_withPath() {
-        // parent task at "1,2#3", sub-process level "1,2,4"
-        // path of "1,2#3" is "3" -> result is "1,2,4,3"
-        String result = ContextUtils.getCurrTaskContextIdForSubProcesses("1,2#3", "1,2,4");
-        assertEquals("1,2,4,3", result);
+    public void test_getCurrTaskContextIdForSubProcesses_firstLevel() {
+        // "1,2#1" -> path="1", no ancestors -> "1,2,5|1"
+        assertEquals("1,2,5|1", ContextUtils.getCurrTaskContextIdForSubProcesses("1,2#1", "1,2,5"));
     }
 
     @Test
-    public void test_getCurrTaskContextIdForSubProcesses_deeperPath() {
-        // parent context has deeper path
-        // "1,2,3#5" -> level="1,2,3", path="5" -> result = "1,2,4" + "," + "5" = "1,2,4,5"
-        String result = ContextUtils.getCurrTaskContextIdForSubProcesses("1,2,3#5", "1,2,4");
-        assertEquals("1,2,4,5", result);
+    public void test_getCurrTaskContextIdForSubProcesses_secondLevel() {
+        // "1,2,5|1#0" -> path="0", ancestors="1" -> new ancestors="1|0"
+        assertEquals("1,2,5,6|1|0", ContextUtils.getCurrTaskContextIdForSubProcesses("1,2,5|1#0", "1,2,5,6"));
     }
 
     @Test
-    public void test_getCurrTaskContextIdForSubProcesses_noSubContext() {
-        // parent task at "1,2" (no #N suffix), sub-process "1,2,3"
-        // path of "1,2" is null -> result is just processContextId
-        String result = ContextUtils.getCurrTaskContextIdForSubProcesses("1,2", "1,2,3");
-        assertEquals("1,2,3", result);
+    public void test_getCurrTaskContextIdForSubProcesses_thirdLevel() {
+        // "1,2,5,6|1|0#2" -> path="2", ancestors="1|0" -> new ancestors="1|0|2"
+        assertEquals("1,2,5,6,7|1|0|2", ContextUtils.getCurrTaskContextIdForSubProcesses("1,2,5,6|1|0#2", "1,2,5,6,7"));
+    }
+
+    @Test
+    public void test_getCurrTaskContextIdForSubProcesses_noHash() {
+        assertEquals("1,2,3", ContextUtils.getCurrTaskContextIdForSubProcesses("1,2", "1,2,3"));
+    }
+
+    // === getProcessContextId and getAncestorPath ===
+
+    @Test
+    public void test_getProcessContextId() {
+        assertEquals("1,2", ContextUtils.getProcessContextId("1,2"));
+        assertEquals("1,2,5", ContextUtils.getProcessContextId("1,2,5|1"));
+        assertEquals("1,2,5,6", ContextUtils.getProcessContextId("1,2,5,6|1|0"));
+    }
+
+    @Test
+    public void test_getAncestorPath() {
+        assertNull(ContextUtils.getAncestorPath("1,2"));
+        assertEquals("1", ContextUtils.getAncestorPath("1,2,5|1"));
+        assertEquals("1|0", ContextUtils.getAncestorPath("1,2,5,6|1|0"));
+        assertEquals("1|0|2", ContextUtils.getAncestorPath("1,2,5,6,7|1|0|2"));
     }
 
     // === getLevel and getPath ===
 
     @Test
-    public void test_getLevel_withHash() {
+    public void test_getLevel() {
         assertEquals("1,2", ContextUtils.getLevel("1,2#3"));
-        assertEquals("1,2,3,4", ContextUtils.getLevel("1,2,3,4#99"));
-    }
-
-    @Test
-    public void test_getLevel_withoutHash() {
+        assertEquals("1,2,5|1", ContextUtils.getLevel("1,2,5|1#0"));
+        assertEquals("1,2,5,6|1|0", ContextUtils.getLevel("1,2,5,6|1|0#0"));
         assertEquals("1", ContextUtils.getLevel("1"));
-        assertEquals("1,2,3", ContextUtils.getLevel("1,2,3"));
     }
 
     @Test
-    public void test_getPath_withHash() {
+    public void test_getPath() {
         assertEquals("3", ContextUtils.getPath("1,2#3"));
-        assertEquals("99", ContextUtils.getPath("1,2,3,4#99"));
-    }
-
-    @Test
-    public void test_getPath_withoutHash() {
+        assertEquals("0", ContextUtils.getPath("1,2,5|1#0"));
         assertNull(ContextUtils.getPath("1"));
-        assertNull(ContextUtils.getPath("1,2,3"));
     }
 
-    // === VariableUtils.getParentContext - safety net ===
-
-    @Test
-    public void test_getParentContext_topLevel() {
-        // "1" has no parent
-        assertNull(VariableUtils.getParentContext("1"));
-    }
-
-    @Test
-    public void test_getParentContext_twoLevels() {
-        assertEquals("1", VariableUtils.getParentContext("1,2"));
-    }
-
-    @Test
-    public void test_getParentContext_threeLevels() {
-        assertEquals("1,2", VariableUtils.getParentContext("1,2,3"));
-    }
-
-    @Test
-    public void test_getParentContext_fourLevels() {
-        assertEquals("1,2,3", VariableUtils.getParentContext("1,2,3,4"));
-    }
-
-    @Test
-    public void test_getParentContext_fiveLevels() {
-        assertEquals("1,2,3,4", VariableUtils.getParentContext("1,2,3,4,5"));
-    }
-
-    @Test
-    public void test_getParentContext_withHashSuffix() {
-        // "1,2#3" - the comma is between "1" and "2", not before "#3"
-        // lastIndexOf(',') returns index of comma between 1 and 2
-        assertEquals("1", VariableUtils.getParentContext("1,2#3"));
-    }
-
-    @Test
-    public void test_getParentContext_deepWithHash() {
-        assertEquals("1,2#4", VariableUtils.getParentContext("1,2,3,4#7"));
-    }
-
-    // === variable scoping chain walk ===
-
-    @Test
-    public void test_parentContextChain_walksUpCorrectly() {
-        // simulate findVariableInAllInternalContexts walking up
-        String ctx = "1,2,3,4,5";
-
-        String parent1 = VariableUtils.getParentContext(ctx);
-        assertEquals("1,2,3,4", parent1);
-
-        String parent2 = VariableUtils.getParentContext(parent1);
-        assertEquals("1,2,3", parent2);
-
-        String parent3 = VariableUtils.getParentContext(parent2);
-        assertEquals("1,2", parent3);
-
-        String parent4 = VariableUtils.getParentContext(parent3);
-        assertEquals("1", parent4);
-
-        String parent5 = VariableUtils.getParentContext(parent4);
-        assertNull(parent5);
-    }
-
-    // === deriveParentTaskContextId — root contexts ===
-
-    // === variable scoping chain walk for contexts with # suffix ===
-    // This test reproduces the bug where hasObjectives variable created in "1,2#1"
-    // was not found when looking up from "1,2,3,1#0".
-    // The old getParentContext walked: "1,2,3,1#0" → "1,2,3" → "1,2" → "1" → null
-    // The fixed walk goes: "1,2,3,1#0" → "1,2#1" → "1" → null
-
-    @Test
-    public void test_parentContextChain_walksUp_withHashContexts() {
-        String ctx = "1,2,3,1#0";
-
-        String parent1 = VariableUtils.getParentContext(ctx);
-        assertEquals("1,2#1", parent1);
-
-        String parent2 = VariableUtils.getParentContext(parent1);
-        assertEquals("1", parent2);
-
-        String parent3 = VariableUtils.getParentContext(parent2);
-        assertNull(parent3);
-    }
+    // === deriveParentTaskContextId - root ===
 
     @Test
     public void test_deriveParent_root() {
-        // "1" is root → no parent
         assertNull(ContextUtils.deriveParentTaskContextId("1"));
     }
 
-    // === deriveParentTaskContextId — simple nested processContextIds (no # suffix) ===
+    // === deriveParentTaskContextId - simple nested (no #) ===
 
     @Test
-    public void test_deriveParent_simpleNested_twoLevels() {
-        // "1,1" → parent is "1"
-        assertEquals("1", ContextUtils.deriveParentTaskContextId("1,1"));
-    }
-
-    @Test
-    public void test_deriveParent_simpleNested_threeLevels() {
-        // "1,1,1" → parent is "1,1"
-        assertEquals("1,1", ContextUtils.deriveParentTaskContextId("1,1,1"));
-    }
-
-    @Test
-    public void test_deriveParent_simpleNested_fourLevels() {
-        // "1,1,1,1" → parent is "1,1,1"
-        assertEquals("1,1,1", ContextUtils.deriveParentTaskContextId("1,1,1,1"));
-    }
-
-    @Test
-    public void test_deriveParent_simpleNested_1_2() {
-        // "1,2" → parent is "1"
+    public void test_deriveParent_simpleNested() {
         assertEquals("1", ContextUtils.deriveParentTaskContextId("1,2"));
+        assertEquals("1,2", ContextUtils.deriveParentTaskContextId("1,2,3"));
+        assertEquals("1,2,3", ContextUtils.deriveParentTaskContextId("1,2,3,4"));
     }
 
-    // === deriveParentTaskContextId — fan-out with # suffix ===
+    // === deriveParentTaskContextId - first-level fan-out (no |) ===
 
     @Test
-    public void test_deriveParent_fanOut_level1() {
-        // "1,2#8" → parent is "1" (batch-splitter at top level)
+    public void test_deriveParent_firstLevelFanOut() {
+        assertEquals("1", ContextUtils.deriveParentTaskContextId("1,2#1"));
         assertEquals("1", ContextUtils.deriveParentTaskContextId("1,2#8"));
     }
 
+    // === deriveParentTaskContextId - second-level (single ancestor) ===
+
     @Test
-    public void test_deriveParent_fanOut_level1_instance1() {
-        // "1,2#1" → parent is "1"
-        assertEquals("1", ContextUtils.deriveParentTaskContextId("1,2#1"));
+    public void test_deriveParent_secondLevel() {
+        // "1,2,5|1#0" -> parent = "1,2#1"
+        assertEquals("1,2#1", ContextUtils.deriveParentTaskContextId("1,2,5|1#0"));
+        assertEquals("1,2#1", ContextUtils.deriveParentTaskContextId("1,2,5|1#1"));
+        assertEquals("1,2#1", ContextUtils.deriveParentTaskContextId("1,2,5|1#2"));
+        assertEquals("1,2#2", ContextUtils.deriveParentTaskContextId("1,2,5|2#0"));
+        assertEquals("1,2#3", ContextUtils.deriveParentTaskContextId("1,2,3|3#0"));
     }
 
-    // === deriveParentTaskContextId — path-propagated contexts ===
+    // === deriveParentTaskContextId - third-level (two ancestors) ===
 
     @Test
-    public void test_deriveParent_pathPropagated_level2() {
-        // "1,2,3,8#0" → parent is "1,2#8"
-        assertEquals("1,2#8", ContextUtils.deriveParentTaskContextId("1,2,3,8#0"));
+    public void test_deriveParent_thirdLevel() {
+        // "1,2,5,6|1|0#0" -> parent = "1,2,5|1#0"
+        assertEquals("1,2,5|1#0", ContextUtils.deriveParentTaskContextId("1,2,5,6|1|0#0"));
+        // "1,2,5,6|1|2#0" -> parent = "1,2,5|1#2"
+        assertEquals("1,2,5|1#2", ContextUtils.deriveParentTaskContextId("1,2,5,6|1|2#0"));
+        // "1,2,5,6|2|0#0" -> parent = "1,2,5|2#0"
+        assertEquals("1,2,5|2#0", ContextUtils.deriveParentTaskContextId("1,2,5,6|2|0#0"));
+    }
+
+    // === deriveParentTaskContextId - fourth-level (three ancestors) ===
+
+    @Test
+    public void test_deriveParent_fourthLevel() {
+        // "1,2,5,6,7|1|0|2#0" -> parent = "1,2,5,6|1|0#2"
+        assertEquals("1,2,5,6|1|0#2", ContextUtils.deriveParentTaskContextId("1,2,5,6,7|1|0|2#0"));
+    }
+
+    // === Full chain walk: getCurrTaskContextIdForSubProcesses -> buildTaskContextId -> deriveParent roundtrip ===
+
+    @Test
+    public void test_fullRoundtrip_threeLevel() {
+        // Level 0: top-level context "1"
+        // Level 1: batch-splitter creates "1,2#1"
+        String level1ctx = ContextUtils.buildTaskContextId("1,2", "1");
+        assertEquals("1,2#1", level1ctx);
+        assertEquals("1", ContextUtils.deriveParentTaskContextId(level1ctx));
+
+        // Level 2: entering subprocess 1,2,5 from "1,2#1"
+        String level2base = ContextUtils.getCurrTaskContextIdForSubProcesses("1,2#1", "1,2,5");
+        assertEquals("1,2,5|1", level2base);
+        // batch-splitter creates instance 0
+        String level2ctx = ContextUtils.buildTaskContextId(level2base, "0");
+        assertEquals("1,2,5|1#0", level2ctx);
+        assertEquals("1,2#1", ContextUtils.deriveParentTaskContextId(level2ctx));
+
+        // Level 3: entering subprocess 1,2,5,6 from "1,2,5|1#0"
+        String level3base = ContextUtils.getCurrTaskContextIdForSubProcesses("1,2,5|1#0", "1,2,5,6");
+        assertEquals("1,2,5,6|1|0", level3base);
+        String level3ctx = ContextUtils.buildTaskContextId(level3base, "0");
+        assertEquals("1,2,5,6|1|0#0", level3ctx);
+        assertEquals("1,2,5|1#0", ContextUtils.deriveParentTaskContextId(level3ctx));
     }
 
     @Test
-    public void test_deriveParent_pathPropagated_level3() {
-        // "1,2,3,4,8,0#0" → parent is "1,2,3,8#0"
-        // level="1,2,3,4,8,0", lastComma=9, beforeLastComma="1,2,3,4,8", lastComponent="0"
-        // parentLevelEnd in "1,2,3,4,8" → index 7 → parentLevel="1,2,3,4"
-        // wait — that would give "1,2,3,4#0" but expected "1,2,3,8#0"
-        // Actually let me re-derive: "1,2,3,4,8,0#0"
-        // level="1,2,3,4,8,0", beforeLastComma="1,2,3,4,8", lastComponent="0"
-        // parentLevelEnd in "1,2,3,4,8" is at index 7 (between 4 and 8)
-        // parentLevel = "1,2,3,4", return "1,2,3,4#0"
-        // Hmm, but the plan says parent should be "1,2,3,8#0"
-        // For 3-level: this depends on how the path was actually propagated
-        // getCurrTaskContextIdForSubProcesses("1,2,3,8#0", "1,2,3,4,5") would give "1,2,3,4,5,0"
-        // then buildTaskContextId("1,2,3,4,5,0", "0") = "1,2,3,4,5,0#0"
-        // parent of "1,2,3,4,5,0#0": beforeLastComma="1,2,3,4,5", lastComponent="0",
-        //   parentLevelEnd in "1,2,3,4,5" at 7 → parentLevel="1,2,3,4", return "1,2,3,4#0" — not right either
-        //
-        // The string-only derivation has ambiguity at 3+ nesting levels without DAG knowledge.
-        // For practical purposes (visualization), the 2-level case covers the RG scenario.
-        // This test verifies the actual behavior of the algorithm.
-        String result = ContextUtils.deriveParentTaskContextId("1,2,3,4,8,0#0");
-        assertEquals("1,2,3,4#0", result);
+    public void test_fullRoundtrip_fourLevel() {
+        // Continue from level 3: "1,2,5,6|1|0#2" enters subprocess 1,2,5,6,7
+        String level4base = ContextUtils.getCurrTaskContextIdForSubProcesses("1,2,5,6|1|0#2", "1,2,5,6,7");
+        assertEquals("1,2,5,6,7|1|0|2", level4base);
+        String level4ctx = ContextUtils.buildTaskContextId(level4base, "0");
+        assertEquals("1,2,5,6,7|1|0|2#0", level4ctx);
+        assertEquals("1,2,5,6|1|0#2", ContextUtils.deriveParentTaskContextId(level4ctx));
     }
 
-    // === Variable lookup isolation between sibling fan-out contexts ===
-    // From the real ExecContext state (mhdg-rg-1.0.10):
-    //
-    //   ctx "1,2#1" — Task#511, check-objectives, writes hasObjectives (variable #640)
-    //   ctx "1,2#2" — Task#516, check-objectives, writes hasObjectives (variable #653)
-    //   ctx "1,2#3" — Task#521, check-objectives, writes hasObjectives (variable #610)
-    //
-    //   ctx "1,2,3,1#0" — Task#563, mh.nop-objectives, must find hasObjectives ONLY from "1,2#1"
-    //   ctx "1,2,3,2#0" — Task#564, mh.nop-objectives, must find hasObjectives ONLY from "1,2#2"
-    //   ctx "1,2,3,3#0" — Task#565, mh.nop-objectives, must find hasObjectives ONLY from "1,2#3"
-    //
-    // The parent walk must be isolated — task in ctx "1,2,3,1#0" must never see variables from "1,2#2" or "1,2#3".
+    // === Variable scoping chain walk ===
 
     @Test
-    public void test_variableLookup_task563_findsOnlyCtx_1_2_hash1() {
-        // Task#563: ctx "1,2,3,1#0" — its parent chain must include "1,2#1" and NOT "1,2#2" or "1,2#3"
-        String ctx = "1,2,3,1#0";
+    public void test_variableLookup_secondLevel_isolation() {
+        String ctx = "1,2,3|1#0";
         java.util.Set<String> visited = new java.util.LinkedHashSet<>();
-
         String curr = ctx;
         while (curr != null) {
             visited.add(curr);
             curr = VariableUtils.getParentContext(curr);
         }
-
-        // walk: "1,2,3,1#0" → "1,2#1" → "1" → null
-        assertEquals(java.util.List.of("1,2,3,1#0", "1,2#1", "1"), new java.util.ArrayList<>(visited));
-
-        assertTrue(visited.contains("1,2#1"), "Task#563 must find variables in ctx 1,2#1");
-        assertFalse(visited.contains("1,2#2"), "Task#563 must NOT see variables from sibling ctx 1,2#2");
-        assertFalse(visited.contains("1,2#3"), "Task#563 must NOT see variables from sibling ctx 1,2#3");
+        assertEquals(java.util.List.of("1,2,3|1#0", "1,2#1", "1"), new java.util.ArrayList<>(visited));
+        assertFalse(visited.contains("1,2#2"));
+        assertFalse(visited.contains("1,2#3"));
     }
 
     @Test
-    public void test_variableLookup_task564_findsOnlyCtx_1_2_hash2() {
-        // Task#564: ctx "1,2,3,2#0" — its parent chain must include "1,2#2" and NOT "1,2#1" or "1,2#3"
-        String ctx = "1,2,3,2#0";
+    public void test_variableLookup_thirdLevel_fullChain() {
+        // "1,2,5,6|1|0#0" -> "1,2,5|1#0" -> "1,2#1" -> "1" -> null
+        String ctx = "1,2,5,6|1|0#0";
         java.util.Set<String> visited = new java.util.LinkedHashSet<>();
-
         String curr = ctx;
         while (curr != null) {
             visited.add(curr);
             curr = VariableUtils.getParentContext(curr);
         }
-
-        // walk: "1,2,3,2#0" → "1,2#2" → "1" → null
-        assertEquals(java.util.List.of("1,2,3,2#0", "1,2#2", "1"), new java.util.ArrayList<>(visited));
-
-        assertTrue(visited.contains("1,2#2"), "Task#564 must find variables in ctx 1,2#2");
-        assertFalse(visited.contains("1,2#1"), "Task#564 must NOT see variables from sibling ctx 1,2#1");
-        assertFalse(visited.contains("1,2#3"), "Task#564 must NOT see variables from sibling ctx 1,2#3");
+        assertEquals(
+                java.util.List.of("1,2,5,6|1|0#0", "1,2,5|1#0", "1,2#1", "1"),
+                new java.util.ArrayList<>(visited));
     }
 
     @Test
-    public void test_variableLookup_task565_findsOnlyCtx_1_2_hash3() {
-        // Task#565: ctx "1,2,3,3#0" — its parent chain must include "1,2#3" and NOT "1,2#1" or "1,2#2"
-        String ctx = "1,2,3,3#0";
+    public void test_variableLookup_fourthLevel_fullChain() {
+        // "1,2,5,6,7|1|0|2#0" -> "1,2,5,6|1|0#2" -> "1,2,5|1#0" -> "1,2#1" -> "1" -> null
+        String ctx = "1,2,5,6,7|1|0|2#0";
         java.util.Set<String> visited = new java.util.LinkedHashSet<>();
-
         String curr = ctx;
         while (curr != null) {
             visited.add(curr);
             curr = VariableUtils.getParentContext(curr);
         }
+        assertEquals(
+                java.util.List.of("1,2,5,6,7|1|0|2#0", "1,2,5,6|1|0#2", "1,2,5|1#0", "1,2#1", "1"),
+                new java.util.ArrayList<>(visited));
+    }
 
-        // walk: "1,2,3,3#0" → "1,2#3" → "1" → null
-        assertEquals(java.util.List.of("1,2,3,3#0", "1,2#3", "1"), new java.util.ArrayList<>(visited));
+    // === buildHierarchicalContextOrder - deep nesting ===
 
-        assertTrue(visited.contains("1,2#3"), "Task#565 must find variables in ctx 1,2#3");
-        assertFalse(visited.contains("1,2#1"), "Task#565 must NOT see variables from sibling ctx 1,2#1");
-        assertFalse(visited.contains("1,2#2"), "Task#565 must NOT see variables from sibling ctx 1,2#2");
+    @Test
+    public void test_buildHierarchicalContextOrder_deepNesting() {
+        java.util.Set<String> contexts = new java.util.LinkedHashSet<>(java.util.List.of(
+                "1",
+                "1,2#0", "1,2,3|0#0", "1,2,5|0#0", "1,2,5,6|0|0#0",
+                "1,2#1", "1,2,3|1#0", "1,2,5|1#0", "1,2,5,6|1|0#0", "1,2,5|1#1", "1,2,5|1#2",
+                "1,2#2", "1,2,3|2#0"
+        ));
+
+        java.util.List<String> result = ai.metaheuristic.ai.dispatcher.exec_context.ExecContextUtils.buildHierarchicalContextOrder(contexts);
+
+        int idx_1_2_hash1 = result.indexOf("1,2#1");
+        int idx_1_2_5_p1_hash0 = result.indexOf("1,2,5|1#0");
+        int idx_deep = result.indexOf("1,2,5,6|1|0#0");
+        int idx_1_2_5_p1_hash2 = result.indexOf("1,2,5|1#2");
+        int idx_1_2_hash2 = result.indexOf("1,2#2");
+
+        assertTrue(idx_1_2_hash1 < idx_1_2_5_p1_hash0,
+                "1,2#1 before 1,2,5|1#0. Order: " + result);
+        assertTrue(idx_1_2_5_p1_hash0 < idx_deep,
+                "1,2,5|1#0 before 1,2,5,6|1|0#0. Order: " + result);
+        assertTrue(idx_deep < idx_1_2_hash2,
+                "1,2,5,6|1|0#0 before 1,2#2. Order: " + result);
+        assertTrue(idx_1_2_5_p1_hash2 < idx_1_2_hash2,
+                "1,2,5|1#2 before 1,2#2. Order: " + result);
     }
 }
