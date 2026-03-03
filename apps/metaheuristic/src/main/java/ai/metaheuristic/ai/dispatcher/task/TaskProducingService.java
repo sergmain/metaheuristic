@@ -174,20 +174,21 @@ public class TaskProducingService {
         taskParams.task.taskContextId = taskContextId;
         taskParams.task.processCode = process.processCode;
         taskParams.task.context = process.function.context;
-        taskParams.task.metas.addAll(process.metas);
         taskParams.task.inline = inlines;
 
+        taskParams.task.metas.addAll(process.metas);
+/*
         // TODO p0 2026-03-01 add SpEL evaluation of Metas here
-        if (!taskParams.task.metas.isEmpty()) {
+        if (!process.metas.isEmpty()) {
             var evaluator = ElEvaluator.createMhEvaluator(
                     execContextId, 0L, taskContextId,
                     internalFunctionVariableService, globalVariableService, variableTxService,
                     variableRepository,
                     (v) -> VariableSyncService.getWithSyncVoidForCreation(v.id,
                             () -> variableTxService.setVariableAsNull(0L, v.id)));
-            taskParams.task.metas.clear();
             taskParams.task.metas.addAll(ElEvaluator.resolveMetas(process.metas, evaluator));
         }
+*/
 
         if (taskParams.task.context== EnumsApi.FunctionExecContext.internal) {
             taskParams.task.function = new TaskParamsYaml.FunctionConfig(
