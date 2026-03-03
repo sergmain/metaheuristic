@@ -700,7 +700,7 @@ public class VariableTxService {
         TaskCreatedTxEvent event = new TaskCreatedTxEvent(
                 new ExecContextApiData.VariableState(task.id, task.coreId, execContextId,
                         taskParamsYaml.task.taskContextId, taskParamsYaml.task.processCode, taskParamsYaml.task.function.code,
-                        null,
+                        taskParamsYaml.task.inputs.stream().map(o -> new ExecContextApiData.VariableInfo(o.id, o.name, o.context, null)).collect(Collectors.toList()),
                         taskParamsYaml.task.outputs.stream().map(o -> new ExecContextApiData.VariableInfo(o.id, o.name, o.context, o.ext)).collect(Collectors.toList())));
 
         eventPublisherService.publishTaskCreatedTxEvent(event);
