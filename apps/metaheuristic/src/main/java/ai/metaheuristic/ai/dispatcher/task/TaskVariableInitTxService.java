@@ -150,6 +150,7 @@ public class TaskVariableInitTxService {
             }
             iv.id = (Long)variable[0];
             iv.filename = (String)variable[1];
+            iv.empty = (Boolean)variable[2];
         }
         else {
             SimpleGlobalVariable variable = globalVariableRepository.findIdByName(v.name);
