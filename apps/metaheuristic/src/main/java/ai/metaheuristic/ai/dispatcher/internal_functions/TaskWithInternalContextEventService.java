@@ -21,8 +21,10 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.commons.ArtifactCleanerAtDispatcher;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.el.EvaluateExpressionLanguage;
+import ai.metaheuristic.ai.dispatcher.event.events.InputVariablesInitedEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskWithInternalContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
@@ -58,6 +60,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Serge
@@ -201,6 +205,7 @@ public class TaskWithInternalContextEventService {
                 int i=0;
             }
             if (notSkip) {
+                initInputVariableEmptiness(simpleExecContext.execContextId, taskId, taskParamsYaml);
                 boolean isLongRunning = internalFunctionProcessor.process(simpleExecContext, taskId, taskParamsYaml.task.taskContextId, taskParamsYaml);
                 if (!isLongRunning) {
                     taskWithInternalContextService.storeResult(taskId, taskParamsYaml.task.function.code);
@@ -213,6 +218,18 @@ public class TaskWithInternalContextEventService {
         finally {
             TaskLastProcessingHelper.lastTaskId = taskId;
         }
+    }
+
+    private void initInputVariableEmptiness(Long execContextId, Long taskId, TaskParamsYaml taskParamsYaml) {
+        List<InputVariablesInitedEvent.InputVariableState> inputStates = new ArrayList<>();
+        for (TaskParamsYaml.InputVariable input : taskParamsYaml.task.inputs) {
+            if (input.context != EnumsApi.VariableContext.global) {
+                Variable sv = variableTxService.getVariable(input.id);
+                input.empty = sv.nullified;
+            }
+            inputStates.add(new InputVariablesInitedEvent.InputVariableState(input.id, input.empty));
+        }
+        eventPublisher.publishEvent(new InputVariablesInitedEvent(execContextId, taskId, inputStates));
     }
 
     private Boolean extractBooleanFromVariableHolder(VariableUtils.VariableHolder variableHolder) {
