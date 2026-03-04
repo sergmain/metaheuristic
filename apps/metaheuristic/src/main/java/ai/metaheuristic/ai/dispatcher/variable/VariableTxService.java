@@ -683,16 +683,16 @@ public class VariableTxService {
 
             Variable sv = findVariableInAllInternalContexts(variable.name, contextId, execContextId);
             if (sv == null) {
-                Variable v = createUninitialized(variable.name, execContextId, contextId);
-
-                // even that a variable.getNullable() can be false, we set a field 'empty' as true because variable will be inited later
-                // and consistency of fields 'empty'  and 'nullable' will be enforced before calling Functions
-                taskParamsYaml.task.outputs.add(
-                        new TaskParamsYaml.OutputVariable(
-                                v.id, EnumsApi.VariableContext.local, variable.name, variable.sourcing, variable.git, variable.disk,
-                                null, false, variable.type, true, variable.getNullable(), variable.ext
-                        ));
+                sv = createUninitialized(variable.name, execContextId, contextId);
             }
+
+            // even that a variable.getNullable() can be false, we set a field 'empty' as true because variable will be inited later
+            // and consistency of fields 'empty'  and 'nullable' will be enforced before calling Functions
+            taskParamsYaml.task.outputs.add(
+                    new TaskParamsYaml.OutputVariable(
+                            sv.id, EnumsApi.VariableContext.local, variable.name, variable.sourcing, variable.git, variable.disk,
+                            null, false, variable.type, true, variable.getNullable(), variable.ext
+                    ));
         }
         task.updatedOn = System.currentTimeMillis();
         task.updateParams(taskParamsYaml);
