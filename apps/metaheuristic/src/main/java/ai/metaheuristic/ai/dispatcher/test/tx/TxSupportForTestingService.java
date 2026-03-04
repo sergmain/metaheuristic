@@ -223,10 +223,18 @@ public class TxSupportForTestingService {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        return addTasksToGraph(execContextCache.findById(execContextId, true), parentTaskIds, taskIds);
+        return addTasksToGraph(execContextCache.findById(execContextId, true), parentTaskIds, taskIds, EnumsApi.TaskExecState.NONE);
     }
 
-    private OperationStatusRest addTasksToGraph(@Nullable ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
+    @Transactional
+    public OperationStatusRest addTasksToGraphWithTx(Long execContextId, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds, EnumsApi.TaskExecState initialState) {
+        if (!globals.testing) {
+            throw new IllegalStateException("Only for testing");
+        }
+        return addTasksToGraph(execContextCache.findById(execContextId, true), parentTaskIds, taskIds, initialState);
+    }
+
+    private OperationStatusRest addTasksToGraph(@Nullable ExecContextImpl execContext, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds, EnumsApi.TaskExecState initialState) {
         TxUtils.checkTxExists();
 
         if (execContext==null) {
@@ -234,7 +242,7 @@ public class TxSupportForTestingService {
         }
         ExecContextSyncService.checkWriteLockPresent(execContext.id);
         ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(execContext.execContextGraphId, execContext.execContextTaskStateId);
-        OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(graphAndStates, parentTaskIds, taskIds, EnumsApi.TaskExecState.NONE);
+        OperationStatusRest osr = execContextGraphService.addNewTasksToGraph(graphAndStates, parentTaskIds, taskIds, initialState);
         execContextGraphService.save(graphAndStates);
         return osr;
     }

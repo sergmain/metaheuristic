@@ -544,8 +544,7 @@ public class ExecContextGraphService {
                         })
                         .allMatch( v -> {
                             EnumsApi.TaskExecState state = stateParamsYaml.states.getOrDefault(v.taskId, EnumsApi.TaskExecState.NONE);
-                            return state != EnumsApi.TaskExecState.NONE && state != EnumsApi.TaskExecState.IN_PROGRESS
-                                    && state != EnumsApi.TaskExecState.CHECK_CACHE;
+                            return EnumsApi.TaskExecState.isFinishedState(state);
                         });
 
                 log.debug("\tall done: {}", allDone);
