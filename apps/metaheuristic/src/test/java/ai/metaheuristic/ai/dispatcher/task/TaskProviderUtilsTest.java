@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.dispatcher.event.events.InputVariablesInitedEvent;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -56,11 +57,19 @@ public class TaskProviderUtilsTest {
 */
         tpy.task.inputs.add(iv);
         String taskParams = TaskParamsYamlUtils.UTILS.toString(tpy);
-        final List<String> events = new ArrayList<>();
+        final List<Object> events = new ArrayList<>();
 
-        final String params = TaskProviderUtils.initEmptiness(2L, new TaskParamsYaml().version, taskParams, 42L,
-                (id)->null, (event) -> {events.add(event.toString());});
+        final String params = TaskProviderUtils.initEmptiness(2L, new TaskParamsYaml().version, taskParams, 42L, 1L,
+                (id)->null, events::add);
         assertNotNull(params);
-        assertTrue(events.isEmpty());
+        assertEquals(1, events.size());
+        assertInstanceOf(InputVariablesInitedEvent.class, events.getFirst());
+
+        InputVariablesInitedEvent initedEvent = (InputVariablesInitedEvent) events.getFirst();
+        assertEquals(1L, initedEvent.execContextId);
+        assertEquals(42L, initedEvent.taskId);
+        assertEquals(1, initedEvent.inputStates.size());
+        assertEquals(iv.id, initedEvent.inputStates.getFirst().variableId);
+        assertFalse(initedEvent.inputStates.getFirst().nullified);
     }
 }

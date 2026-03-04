@@ -78,6 +78,16 @@ public class EventBusService {
 
     @Async
     @EventListener
+    public void inputVariablesInited(InputVariablesInitedEvent event) {
+        try {
+            execContextVariableStateTopLevelService.updateInputVariableStates(event);
+        } catch (Throwable th) {
+            log.error("Error, need to investigate ", th);
+        }
+    }
+
+    @Async
+    @EventListener
     public void checkTaskCanBeFinished(CheckTaskCanBeFinishedEvent event) {
         try {
             log.debug("call EventBusService.checkTaskCanBeFinished(execContextId:#{}, taskId:#{})", event.execContextId, event.taskId);

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context_variable_state;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.CheckTaskCanBeFinishedTxEvent;
+import ai.metaheuristic.ai.dispatcher.event.events.InputVariablesInitedEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
@@ -75,6 +76,18 @@ public class ExecContextVariableStateService {
                         break;
                     }
                 }
+                // propagate inited/nullified status to input variables of all tasks that reference this variable
+                for (ExecContextApiData.VariableState state : ecpy.states) {
+                    if (state.inputs==null) {
+                        continue;
+                    }
+                    for (ExecContextApiData.VariableInfo input : state.inputs) {
+                        if (input.id.equals(event.variableId)) {
+                            input.inited = true;
+                            input.nullified = event.nullified;
+                        }
+                    }
+                }
             }
             for (CheckTaskCanBeFinishedTxEvent checkTaskCanBeFinishedTxEvent : eventsForChecking) {
                 eventPublisherService.publishCheckTaskCanBeFinishedTxEvent(checkTaskCanBeFinishedTxEvent);
@@ -103,6 +116,29 @@ public class ExecContextVariableStateService {
                 }
                 if (isNew) {
                     ecpy.states.add(event);
+                }
+            }
+        });
+    }
+
+    @Transactional
+    public void updateInputVariableStates(Long execContextVariableStateId, List<InputVariablesInitedEvent> events) {
+        register(execContextVariableStateId, (ecpy)-> {
+            for (InputVariablesInitedEvent event : events) {
+                for (ExecContextApiData.VariableState state : ecpy.states) {
+                    if (state.taskId.equals(event.taskId)) {
+                        if (state.inputs!=null) {
+                            for (ExecContextApiData.VariableInfo input : state.inputs) {
+                                for (InputVariablesInitedEvent.InputVariableState ivs : event.inputStates) {
+                                    if (input.id.equals(ivs.variableId)) {
+                                        input.inited = true;
+                                        input.nullified = ivs.nullified;
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    }
                 }
             }
         });

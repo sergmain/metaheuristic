@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.event.events.InputVariablesInitedEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskFinishWithErrorEvent;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
@@ -26,6 +27,8 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -39,9 +42,10 @@ public class TaskProviderUtils {
 
     @Nullable
     public static String initEmptiness(
-            Long coreId, int taskParamsVersion, String taskParams, Long taskId,
-            Function<Long, Variable> variableFunction, Consumer<TaskFinishWithErrorEvent> eventPublisherFunc) {
+            Long coreId, int taskParamsVersion, String taskParams, Long taskId, Long execContextId,
+            Function<Long, Variable> variableFunction, Consumer<Object> eventPublisherFunc) {
         String params;
+        List<InputVariablesInitedEvent.InputVariableState> inputStates = new ArrayList<>();
         try {
             TaskParamsYaml tpy = TaskParamsYamlUtils.UTILS.to(taskParams);
 
@@ -56,6 +60,7 @@ public class TaskProviderUtils {
                     }
                     input.empty = sv.nullified;
                 }
+                inputStates.add(new InputVariablesInitedEvent.InputVariableState(input.id, input.empty));
             }
             params = TaskParamsYamlUtils.UTILS.toStringAsVersion(tpy, taskParamsVersion);
 
@@ -64,6 +69,7 @@ public class TaskProviderUtils {
                     taskId, coreId, taskParamsVersion);
             return null;
         }
+        eventPublisherFunc.accept(new InputVariablesInitedEvent(execContextId, taskId, inputStates));
         return params;
     }
 }

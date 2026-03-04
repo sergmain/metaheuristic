@@ -375,7 +375,7 @@ public class TaskProviderTopLevelService {
             return null;
         }
         try {
-            String params = TaskProviderUtils.initEmptiness(processorAndCoreParams.coreId(), processorAndCoreParams.psy().taskParamsVersion, task.task.getParams(), task.task.id,
+            String params = TaskProviderUtils.initEmptiness(processorAndCoreParams.coreId(), processorAndCoreParams.psy().taskParamsVersion, task.task.getParams(), task.task.id, task.task.getExecContextId(),
                     variableService::getVariable, eventPublisher::publishEvent);
             if (params==null) {
                 return null;

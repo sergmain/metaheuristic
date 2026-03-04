@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.exec_context_variable_state;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.event.events.InputVariablesInitedEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskCreatedEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
@@ -75,9 +76,24 @@ public class ExecContextVariableStateTopLevelService {
         }
     }
 
+    private static Map<Long, List<InputVariablesInitedEvent>> inputVariablesInitedEvents = new HashMap<>();
+
+    private final ReentrantReadWriteLock inputVarLock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock.WriteLock inputVarWriteLock = inputVarLock.writeLock();
+
+    public void updateInputVariableStates(InputVariablesInitedEvent event) {
+        inputVarWriteLock.lock();
+        try {
+            inputVariablesInitedEvents.computeIfAbsent(event.execContextId, k -> new ArrayList<>()).add(event);
+        } finally {
+            inputVarWriteLock.unlock();
+        }
+    }
+
     public void processFlushing() {
         processFlushingTaskCreatedEvents();
         processFlushingVariableUploadedEvents();
+        processFlushingInputVariablesInitedEvents();
     }
 
     private void processFlushingVariableUploadedEvents() {
@@ -97,6 +113,32 @@ public class ExecContextVariableStateTopLevelService {
             entry.getValue().clear();
         }
         variableUploadedEventsTemp.clear();
+    }
+
+    private void processFlushingInputVariablesInitedEvents() {
+        Map<Long, List<InputVariablesInitedEvent>> eventsTemp;
+        inputVarWriteLock.lock();
+        try {
+            if (inputVariablesInitedEvents.isEmpty()) {
+                return;
+            }
+            eventsTemp = inputVariablesInitedEvents;
+            inputVariablesInitedEvents = new HashMap<>();
+        } finally {
+            inputVarWriteLock.unlock();
+        }
+        for (Map.Entry<Long, List<InputVariablesInitedEvent>> entry : eventsTemp.entrySet()) {
+            Long execContextVariableStateId = getExecContextVariableStateId(entry.getKey());
+            if (execContextVariableStateId == null) {
+                continue;
+            }
+            ExecContextVariableStateSyncService.getWithSyncVoid(execContextVariableStateId,
+                    () -> execContextVariableStateService.updateInputVariableStates(execContextVariableStateId, entry.getValue()));
+        }
+        for (Map.Entry<Long, List<InputVariablesInitedEvent>> entry : eventsTemp.entrySet()) {
+            entry.getValue().clear();
+        }
+        eventsTemp.clear();
     }
 
     private void processFlushingTaskCreatedEvents() {
