@@ -23,8 +23,10 @@ import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.commons.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.Data;
@@ -33,7 +35,9 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -91,6 +95,61 @@ public class VariableUtils {
     @Nullable
     public static String getParentContext(String taskContextId) {
         return ContextUtils.deriveParentTaskContextId(taskContextId);
+    }
+
+    /**
+     * Resolves output variables for a task, creating new DB variables when needed and skipping
+     * outputs that are already present in taskOutputs (e.g. after a task reset).
+     *
+     * @param processOutputs output variable definitions from the process
+     * @param taskOutputs existing output variables in the task (may already have entries after reset)
+     * @param taskContextId the task's context ID
+     * @param findVariable function that finds an existing variable by name and contextId, returns its ID or null
+     * @param createVariable function that creates a new uninitialized variable by name and contextId, returns its ID
+     */
+    public static void initOutputVariables(
+            List<ExecContextParamsYaml.Variable> processOutputs,
+            List<TaskParamsYaml.OutputVariable> taskOutputs,
+            String taskContextId,
+            VariableResolver findVariable,
+            VariableCreator createVariable) {
+
+        Set<String> existingOutputNames = taskOutputs.stream()
+                .map(o -> o.name)
+                .collect(Collectors.toSet());
+
+        for (ExecContextParamsYaml.Variable variable : processOutputs) {
+            if (existingOutputNames.contains(variable.name)) {
+                continue;
+            }
+            String contextId = Boolean.TRUE.equals(variable.parentContext) ? VariableUtils.getParentContext(taskContextId) : taskContextId;
+            if (S.b(contextId)) {
+                throw new IllegalStateException(
+                        S.f("171.860 (S.b(contextId)), variableContext: %s, taskContextId: %s",
+                                variable.context, taskContextId));
+            }
+
+            Long variableId = findVariable.find(variable.name, contextId);
+            if (variableId == null) {
+                variableId = createVariable.create(variable.name, contextId);
+            }
+
+            taskOutputs.add(
+                    new TaskParamsYaml.OutputVariable(
+                            variableId, EnumsApi.VariableContext.local, variable.name, variable.sourcing, variable.git, variable.disk,
+                            null, false, variable.type, true, variable.getNullable(), variable.ext
+                    ));
+        }
+    }
+
+    @FunctionalInterface
+    public interface VariableResolver {
+        @Nullable Long find(String name, String contextId);
+    }
+
+    @FunctionalInterface
+    public interface VariableCreator {
+        Long create(String name, String contextId);
     }
 
     @Data

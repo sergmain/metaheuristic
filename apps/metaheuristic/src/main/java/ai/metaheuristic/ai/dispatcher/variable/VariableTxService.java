@@ -673,27 +673,16 @@ public class VariableTxService {
     public void initOutputVariables(Long execContextId, TaskImpl task, ExecContextParamsYaml.Process p, TaskParamsYaml taskParamsYaml) {
         TxUtils.checkTxExists();
 
-        for (ExecContextParamsYaml.Variable variable : p.outputs) {
-            String contextId = Boolean.TRUE.equals(variable.parentContext) ? VariableUtils.getParentContext(taskParamsYaml.task.taskContextId) : taskParamsYaml.task.taskContextId;
-            if (S.b(contextId)) {
-                throw new IllegalStateException(
-                        S.f("171.860 (S.b(contextId)), process code: %s, variableContext: %s, internalContextId: %s, execContextId: %s",
-                                p.processCode, variable.context, p.internalContextId, execContextId));
-            }
-
-            Variable sv = findVariableInAllInternalContexts(variable.name, contextId, execContextId);
-            if (sv == null) {
-                sv = createUninitialized(variable.name, execContextId, contextId);
-            }
-
-            // even that a variable.getNullable() can be false, we set a field 'empty' as true because variable will be inited later
-            // and consistency of fields 'empty'  and 'nullable' will be enforced before calling Functions
-            taskParamsYaml.task.outputs.add(
-                    new TaskParamsYaml.OutputVariable(
-                            sv.id, EnumsApi.VariableContext.local, variable.name, variable.sourcing, variable.git, variable.disk,
-                            null, false, variable.type, true, variable.getNullable(), variable.ext
-                    ));
-        }
+        VariableUtils.initOutputVariables(
+                p.outputs,
+                taskParamsYaml.task.outputs,
+                taskParamsYaml.task.taskContextId,
+                (name, contextId) -> {
+                    Variable sv = findVariableInAllInternalContexts(name, contextId, execContextId);
+                    return sv != null ? sv.id : null;
+                },
+                (name, contextId) -> createUninitialized(name, execContextId, contextId).id
+        );
         task.updatedOn = System.currentTimeMillis();
         task.updateParams(taskParamsYaml);
 
