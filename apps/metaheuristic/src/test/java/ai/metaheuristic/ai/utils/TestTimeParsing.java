@@ -21,6 +21,7 @@ import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.commons.dispatcher_schedule.TimePeriods;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.Data;
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -28,6 +29,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -37,6 +39,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
 
+import static java.nio.charset.StandardCharsets.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Execution(ExecutionMode.CONCURRENT)
@@ -73,13 +76,10 @@ public class TestTimeParsing {
 
     @Test
     public void parseExtendedTimeYaml() throws IOException, ParseException {
-
-
         SimpleYamlHolder holder;
-        try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/time_periods/extended-time-period.yaml")) {
-            assertNotNull(is);
-            holder = SimpleYamlHolderUtils.to(is);
-        }
+        String s = IOUtils.resourceToString("/yaml/time_periods/extended-time-period.yaml", UTF_8);
+        holder = SimpleYamlHolderUtils.to(s);
+
         assertNotNull(holder);
         assertNotNull(holder.holder);
         ExtendedTimePeriod period = ExtendedTimePeriodUtils.to(holder.holder);
@@ -161,7 +161,7 @@ public class TestTimeParsing {
 
 
         SimpleYamlHolder holder;
-        try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/time_periods//extended-time-period-short.yaml")) {
+        try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/time_periods/extended-time-period-short.yaml")) {
             assertNotNull(is);
             holder = SimpleYamlHolderUtils.to(is);
         }
@@ -189,7 +189,7 @@ public class TestTimeParsing {
     @Test
     public void parseExtendedTimeYaml_alwaysPermitted() throws IOException {
         SimpleYamlHolder holder;
-        try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/time_periods//extended-time-period-always-permitted.yaml")) {
+        try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/time_periods/extended-time-period-always-permitted.yaml")) {
             assertNotNull(is);
             holder = SimpleYamlHolderUtils.to(is);
         }

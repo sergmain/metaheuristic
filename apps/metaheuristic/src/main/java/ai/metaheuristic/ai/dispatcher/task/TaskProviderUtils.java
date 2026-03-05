@@ -43,7 +43,7 @@ public class TaskProviderUtils {
     @Nullable
     public static String initEmptiness(
             Long coreId, int taskParamsVersion, String taskParams, Long taskId, Long execContextId,
-            Function<Long, Variable> variableFunction, Consumer<Object> eventPublisherFunc) {
+            Function<Long, @Nullable Variable> variableFunction, Consumer<Object> eventPublisherFunc) {
         String params;
         List<InputVariablesInitedEvent.InputVariableState> inputStates = new ArrayList<>();
         try {
