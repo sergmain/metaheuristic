@@ -65,6 +65,7 @@ public class ExecContextReconciliationTxService {
         }
 
         for (Long taskForResettingId : status.taskForResettingIds) {
+            log.warn("999.090 reconciliation resetting task #{}, execContextId: {}", taskForResettingId, status.execContextId);
             TaskSyncService.getWithSyncVoid(taskForResettingId, ()-> execContextTaskResettingService.resetTask(execContext, taskForResettingId));
         }
         for (Long taskIsOkId : status.taskIsOkIds) {
