@@ -37,6 +37,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -70,12 +72,28 @@ public class SubProcessesTxService {
 
         String currTaskContextId = ContextUtils.buildTaskContextId(subProcessContextId, "0");
 
+        // Filter out old dynamically-created children from a previous execution of this task.
+        // When a task with subProcesses is reset and re-executed, findDirectDescendants returns
+        // both old children (from the prior run) and real downstream tasks. Old children have
+        // a taskContextId that starts with the subProcess context prefix (they were created by
+        // a previous invocation of this same task). We must exclude them so createEdges only
+        // connects the new subProcess chain to the real downstream tasks, avoiding duplicate branches.
+        String subProcessCtxPrefix = subProcessContextId + ContextUtils.CONTEXT_SEPARATOR;
+        Set<ExecContextData.TaskVertex> filteredDescendants = executionContextData.descendants.stream()
+                .filter(v -> v.taskContextId == null || !v.taskContextId.startsWith(subProcessCtxPrefix))
+                .collect(Collectors.toSet());
+
+        if (filteredDescendants.size() != executionContextData.descendants.size()) {
+            log.info("995.100 Filtered out {} old subProcess children from descendants of task #{} (subProcessCtxPrefix: {})",
+                    executionContextData.descendants.size() - filteredDescendants.size(), taskId, subProcessCtxPrefix);
+        }
+
         try {
             ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId);
             taskProducingService.createTasksForSubProcesses(
                 graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
 
-            execContextGraphService.createEdges(graphAndStates.graph(), lastIds, executionContextData.descendants);
+            execContextGraphService.createEdges(graphAndStates.graph(), lastIds, filteredDescendants);
 
         } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
             throw e;
