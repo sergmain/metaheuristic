@@ -57,12 +57,17 @@ public class SettingsService {
                         .map(o->new SettingsData.ApiKey(o.name, o.value))
                         .collect(Collectors.toList()));
         apiKeys.openaiKey = params.openaiKey;
+        apiKeys.anthropicKey = params.anthropicKey;
 
         return apiKeys;
     }
 
     public OperationStatusRest saveOpenaiKey(String openaiKey, UserContext context) {
         return accountTxService.saveOpenaiKey(context.getAccountId(), context.getCompanyId(), openaiKey);
+    }
+
+    public OperationStatusRest saveAnthropicKey(String anthropicKey, UserContext context) {
+        return accountTxService.saveAnthropicKey(context.getAccountId(), context.getCompanyId(), anthropicKey);
     }
 
     public OperationStatusRest changePasswordCommit(String oldPassword, String newPassword, UserContext context) {

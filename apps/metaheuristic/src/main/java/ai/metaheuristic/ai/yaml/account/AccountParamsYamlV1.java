@@ -46,6 +46,7 @@ public class AccountParamsYamlV1 implements BaseParams {
     public final List<ApiKeyV1> apiKeys = new ArrayList<>();
 
     public String openaiKey;
+    public String anthropicKey;
     public String language = "en";
 
 }

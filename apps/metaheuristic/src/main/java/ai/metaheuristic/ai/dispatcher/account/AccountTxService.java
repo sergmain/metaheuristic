@@ -255,6 +255,11 @@ public class AccountTxService {
     }
 
     @Transactional
+    public OperationStatusRest saveAnthropicKey(Long accountId, Long companyId, String anthropicKey) {
+        return updateAccountParams(accountId, companyId, p -> p.anthropicKey=anthropicKey, "The ANTHROPIC_API_KEY was saved successfully");
+    }
+
+    @Transactional
     public OperationStatusRest setLanguage(Long accountId, Long companyId, String lang) {
         return updateAccountParams(accountId, companyId, p -> p.language=lang, "Language was changed");
     }

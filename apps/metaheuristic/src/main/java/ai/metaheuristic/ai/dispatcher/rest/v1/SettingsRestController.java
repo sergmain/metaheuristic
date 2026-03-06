@@ -60,6 +60,12 @@ public class SettingsRestController {
         return settingsService.saveOpenaiKey(openaiKey, context);
     }
 
+    @PostMapping("/save-anthropic-key-commit")
+    public OperationStatusRest saveAnthropicKey(@RequestParam String anthropicKey, Authentication authentication) {
+        UserContext context = userContextService.getContext(authentication);
+        return settingsService.saveAnthropicKey(anthropicKey, context);
+    }
+
     @PostMapping("/change-password-commit")
     public OperationStatusRest changePasswordCommit(@RequestParam String oldPassword, @RequestParam String newPassword, Authentication authentication) {
         UserContext context = userContextService.getContext(authentication);

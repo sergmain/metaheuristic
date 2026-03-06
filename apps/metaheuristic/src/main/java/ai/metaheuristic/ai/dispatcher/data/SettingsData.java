@@ -42,6 +42,8 @@ public class SettingsData {
         public List<ApiKey> apiKeys;
         @Nullable
         public String openaiKey;
+        @Nullable
+        public String anthropicKey;
 
         public ApiKeys(List<ApiKey> apiKeys) {
             this.apiKeys = apiKeys;

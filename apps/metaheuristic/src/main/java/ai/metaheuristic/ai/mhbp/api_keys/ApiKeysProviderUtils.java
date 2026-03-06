@@ -75,6 +75,7 @@ public class ApiKeysProviderUtils {
     public static String getPredefinedApiKey(String keyName, AccountParamsYaml params) {
         return switch(keyName) {
             case Consts.OPENAI_API_KEY: yield params.openaiKey;
+            case Consts.ANTHROPIC_API_KEY: yield params.anthropicKey;
             default: yield null;
         };
     }

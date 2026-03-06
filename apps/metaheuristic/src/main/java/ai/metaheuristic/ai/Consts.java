@@ -180,6 +180,7 @@ public class Consts {
     public static final String STANDALONE_PROFILE = "standalone";
     public static final String WEBSOCKET_PROFILE = "websocket";
     public static final String OPENAI_API_KEY = "OPENAI_API_KEY";
+    public static final String ANTHROPIC_API_KEY = "ANTHROPIC_API_KEY";
     public static final String REST_USER = "rest_user";
 
     public static final int STANDALONE_PORT_NUMBER = 64967;
