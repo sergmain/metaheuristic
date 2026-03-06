@@ -54,8 +54,73 @@ public class ExecContextUtils {
         r.execContextId = execContextId;
 
         Set<String> contexts = new HashSet<>();
-        for (TaskApiData.TaskState taskState : raw.taskStates.values()) {
-            contexts.add(taskState.taskContextId());
+        // Track taskId→displayContext mapping for cases where multiple tasks share the same
+        // (taskContextId, processCode) — e.g. when two subProcess branches have the same taskContextId.
+        // In that case, we create separate display rows with disambiguating suffixes.
+        Map<Long, String> taskDisplayContext = new HashMap<>();
+
+        // Group tasks by (taskContextId, column/processCode) to detect collisions
+        Map<String, Map<String, List<Long>>> ctxProcessToTasks = new HashMap<>();
+        for (Map.Entry<Long, TaskApiData.TaskState> entry : raw.taskStates.entrySet()) {
+            Long taskId = entry.getKey();
+            TaskApiData.TaskState state = entry.getValue();
+            ctxProcessToTasks
+                    .computeIfAbsent(state.taskContextId(), k -> new HashMap<>())
+                    .computeIfAbsent(state.processCode(), k -> new ArrayList<>())
+                    .add(taskId);
+        }
+
+        // For each task, determine the display context — append " [#N]" suffix if collisions exist
+        for (Map.Entry<String, Map<String, List<Long>>> ctxEntry : ctxProcessToTasks.entrySet()) {
+            String taskContextId = ctxEntry.getKey();
+            boolean hasCollision = ctxEntry.getValue().values().stream().anyMatch(taskIds -> taskIds.size() > 1);
+
+            if (!hasCollision) {
+                // No collision — all tasks in this context get the original context string
+                contexts.add(taskContextId);
+                for (List<Long> taskIds : ctxEntry.getValue().values()) {
+                    for (Long taskId : taskIds) {
+                        taskDisplayContext.put(taskId, taskContextId);
+                    }
+                }
+            }
+            else {
+                // Collision detected — group tasks by their taskId to create separate display rows.
+                // Collect all unique taskIds in this context across all processCodes.
+                Set<Long> allTaskIdsInCtx = new LinkedHashSet<>();
+                for (List<Long> taskIds : ctxEntry.getValue().values()) {
+                    allTaskIdsInCtx.addAll(taskIds);
+                }
+                // Sort taskIds to get stable ordering
+                List<Long> sortedTaskIds = allTaskIdsInCtx.stream().sorted().toList();
+
+                // We need to figure out which tasks belong to the same "branch".
+                // Tasks from the same branch share the same (taskContextId, processCode) slot
+                // but we need to separate branches. Group by the set of processCodes a task appears in.
+                // Simpler approach: just use taskId ranges — the old branch has lower taskIds, new branch has higher.
+                // Even simpler: for each colliding processCode, assign tasks in order to separate display contexts.
+
+                // Build branch assignment: for each colliding processCode, tag each task with its branch index
+                Map<Long, Integer> taskBranchIndex = new HashMap<>();
+                for (Map.Entry<String, List<Long>> processEntry : ctxEntry.getValue().entrySet()) {
+                    List<Long> taskIds = processEntry.getValue();
+                    if (taskIds.size() > 1) {
+                        List<Long> sorted = taskIds.stream().sorted().toList();
+                        for (int idx = 0; idx < sorted.size(); idx++) {
+                            // Use max branch index seen so far for this task
+                            taskBranchIndex.merge(sorted.get(idx), idx, Math::max);
+                        }
+                    }
+                }
+
+                // Assign display contexts
+                for (Long taskId : sortedTaskIds) {
+                    int branchIdx = taskBranchIndex.getOrDefault(taskId, 0);
+                    String displayCtx = branchIdx == 0 ? taskContextId : taskContextId + " [#" + branchIdx + "]";
+                    contexts.add(displayCtx);
+                    taskDisplayContext.put(taskId, displayCtx);
+                }
+            }
         }
 
         Map<String, List<ExecContextApiData.VariableState>> map = new HashMap<>();
@@ -141,9 +206,10 @@ public class ExecContextUtils {
                 inputs = variableState.inputs;
             }
 
-            // find the line (row) for this task's context
+            // find the line (row) for this task's display context
+            String displayCtx = taskDisplayContext.getOrDefault(taskId, taskContextId);
             for (int i = 0; i < r.lines.length; i++) {
-                if (r.lines[i].context.equals(taskContextId)) {
+                if (r.lines[i].context.equals(displayCtx)) {
                     // TODO 2023-06-07 p5 add input variables' states here
                     r.lines[i].cells[j] = new ExecContextApiData.StateCell(taskId, stateAsStr, taskContextId, fromCache, inputs, outputs);
                     break;
