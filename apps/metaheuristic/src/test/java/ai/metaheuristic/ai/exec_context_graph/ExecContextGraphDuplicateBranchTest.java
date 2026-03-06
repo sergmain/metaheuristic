@@ -310,18 +310,14 @@ class ExecContextGraphDuplicateBranchTest {
      * </pre>
      *
      * Phase 2 — Splitter re-executes with 2 lines:
-     *   findDirectDescendants(T100) returns [T101, T200]  (T200 via T101)
-     *   Actually direct descendants of T100 are only [T101]
-     *   With fix: T101 is filtered out (its ctx "1,2#0" starts with subProcessCtxPrefix "1,2#")
-     *   New tasks T102 (ctx="1,2#0") and T103 (ctx="1,2#1") are created
-     *   createEdges connects last new task to filtered descendants (which should include T200 via re-wiring)
+     *   processSubProcesses must:
+     *   1. Detect old children (T101) by subProcessCtxPrefix match
+     *   2. Remove old children from graph (edges and vertex)
+     *   3. Create 2 new children (T102, T103)
+     *   4. Wire new chain to mh.finish (T200)
      *
-     * After fix: graph has T102 and T103 as the ONLY subProcess children of T100.
-     * T101 (old child) still exists in graph but is orphaned from the new chain.
-     * Total subProcess tasks with ctx starting with "1,2#" = 2 (T102, T103), not 3.
-     *
-     * NOTE: In production, the old T101 would also need cleanup. But the critical fix is that
-     * createEdges does NOT create T102→T101 or T103→T101 edges (the duplicate branch bug).
+     * After fix: graph has T102 and T103 as the ONLY subProcess children.
+     * T101 is removed entirely. Total subProcess tasks with ctx starting with "1,2#" = 2.
      */
     @Test
     public void test_batchLineSplitter_reexecutionDoesNotDuplicateTasks() {
@@ -345,7 +341,7 @@ class ExecContextGraphDuplicateBranchTest {
 
         // ---- Phase 2: Splitter re-executes with 2 lines ----
 
-        // Simulate what processSubProcesses does:
+        // Simulate what processSubProcesses should do:
         // 1. Get direct descendants of wrapper (T100)
         Set<ExecContextData.TaskVertex> directDescendants = graph.outgoingEdgesOf(t100).stream()
                 .map(graph::getEdgeTarget)
@@ -354,69 +350,74 @@ class ExecContextGraphDuplicateBranchTest {
         assertEquals(101L, directDescendants.iterator().next().taskId);
 
         // 2. Compute subProcessCtxPrefix
-        // Wrapper ctx = "1", subProcess processContextId = "1,2"
-        // getCurrTaskContextIdForSubProcesses("1", "1,2") → "1,2"
         String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses("1", "1,2");
         assertEquals("1,2", subProcessContextId);
         String subProcessCtxPrefix = subProcessContextId + ContextUtils.CONTEXT_SEPARATOR;
-        // subProcessCtxPrefix = "1,2#"
 
-        // 3. Filter out old children
-        Set<ExecContextData.TaskVertex> filteredDescendants = directDescendants.stream()
-                .filter(v -> v.taskContextId == null || !v.taskContextId.startsWith(subProcessCtxPrefix))
+        // 3. Identify old children to remove
+        Set<ExecContextData.TaskVertex> oldChildren = directDescendants.stream()
+                .filter(v -> v.taskContextId != null && v.taskContextId.startsWith(subProcessCtxPrefix))
                 .collect(Collectors.toSet());
+        assertEquals(1, oldChildren.size(), "Should detect 1 old child (T101)");
+        assertEquals(101L, oldChildren.iterator().next().taskId);
 
-        // T101 (ctx="1,2#0") starts with "1,2#" → filtered out
-        assertTrue(filteredDescendants.isEmpty(),
-                "All direct descendants should be filtered — T101 is an old subProcess child");
+        // 4. Collect non-subProcess descendants that old children pointed to (mh.finish etc.)
+        //    These need to be reconnected to the new chain later.
+        Set<ExecContextData.TaskVertex> downstreamOfOldChildren = new LinkedHashSet<>();
+        for (ExecContextData.TaskVertex oldChild : oldChildren) {
+            for (DefaultEdge edge : graph.outgoingEdgesOf(oldChild)) {
+                ExecContextData.TaskVertex target = graph.getEdgeTarget(edge);
+                if (target.taskContextId == null || !target.taskContextId.startsWith(subProcessCtxPrefix)) {
+                    downstreamOfOldChildren.add(target);
+                }
+            }
+        }
+        assertEquals(1, downstreamOfOldChildren.size(), "T200 (mh.finish) is downstream of old child");
+        assertEquals(200L, downstreamOfOldChildren.iterator().next().taskId);
 
-        // 4. Create 2 new child tasks (2 lines of input)
-        ExecContextData.TaskVertex t102 = addVertex(graph, 102L, "1,2#0");   // new child for line 1
-        ExecContextData.TaskVertex t103 = addVertex(graph, 103L, "1,2#1");   // new child for line 2
+        // 5. Remove old children from graph
+        for (ExecContextData.TaskVertex oldChild : oldChildren) {
+            graph.removeVertex(oldChild);
+        }
+
+        // Verify T101 is gone
+        assertFalse(graph.vertexSet().stream().anyMatch(v -> v.taskId == 101L),
+                "T101 should be removed from graph");
+        assertEquals(2, graph.vertexSet().size(), "Only T100 and T200 remain");
+
+        // 6. Create 2 new child tasks (2 lines of input)
+        ExecContextData.TaskVertex t102 = addVertex(graph, 102L, "1,2#0");
+        ExecContextData.TaskVertex t103 = addVertex(graph, 103L, "1,2#1");
         graph.addEdge(t100, t102);
         graph.addEdge(t100, t103);
-
-        // In real code, createTasksForSubProcesses chains them: T102 → T103
-        // (sequential subProcess)
+        // Sequential subProcess chain
         graph.addEdge(t102, t103);
 
-        // 5. createEdges(lastIds=[T103], filteredDescendants=[]) — nothing to connect
-        // But we need T103 → T200 (mh.finish). In production, T200 is reached because
-        // it was a descendant of the OLD chain. The fix needs to reconnect.
-        // For now, manually add this edge to represent the expected final topology:
-        graph.addEdge(t103, t200);
+        // 7. createEdges: connect last new task to downstream (mh.finish)
+        for (ExecContextData.TaskVertex downstream : downstreamOfOldChildren) {
+            graph.addEdge(t103, downstream);
+        }
 
         // ---- Verify final state ----
 
-        // Count all subProcess tasks (ctx starts with "1,2#")
+        // Total subProcess tasks = exactly 2
         long allSubProcessTasks = graph.vertexSet().stream()
                 .filter(v -> v.taskContextId != null && v.taskContextId.startsWith("1,2" + ContextUtils.CONTEXT_SEPARATOR))
                 .count();
-        // T101 (old), T102 (new), T103 (new) = 3 vertices in graph with subProcess ctx
-        // But T101 should NOT have edges from the new chain
-        assertEquals(3, allSubProcessTasks,
-                "Graph has 3 vertices with subProcess ctx (1 old orphan + 2 new)");
+        assertEquals(2, allSubProcessTasks,
+                "After re-execution with 2 lines: exactly 2 subProcess tasks (no old orphans)");
 
-        // The critical check: no edge from new tasks to old task
-        assertFalse(graph.containsEdge(t102, t101), "T102 → T101 should NOT exist");
-        assertFalse(graph.containsEdge(t103, t101), "T103 → T101 should NOT exist");
+        // Total vertices = 4 (T100, T102, T103, T200)
+        assertEquals(4, graph.vertexSet().size());
 
-        // Verify new chain is correct
-        assertTrue(graph.containsEdge(t100, t102), "T100 → T102 should exist");
-        assertTrue(graph.containsEdge(t100, t103), "T100 → T103 should exist");
-        assertTrue(graph.containsEdge(t102, t103), "T102 → T103 should exist (sequential)");
-        assertTrue(graph.containsEdge(t103, t200), "T103 → T200 (mh.finish) should exist");
+        // Verify new chain topology
+        assertTrue(graph.containsEdge(t100, t102), "T100 → T102");
+        assertTrue(graph.containsEdge(t100, t103), "T100 → T103");
+        assertTrue(graph.containsEdge(t102, t103), "T102 → T103 (sequential)");
+        assertTrue(graph.containsEdge(t103, t200), "T103 → T200 (mh.finish)");
 
-        // Verify T101 is NOT a descendant of any new task
-        Set<ExecContextData.TaskVertex> descendantsOfT102 = findDescendants(graph, t102);
-        assertFalse(descendantsOfT102.stream().anyMatch(v -> v.taskId == 101L),
-                "T101 should NOT be a descendant of T102");
-
+        // Verify mh.finish is reachable from the new chain
         Set<ExecContextData.TaskVertex> descendantsOfT103 = findDescendants(graph, t103);
-        assertFalse(descendantsOfT103.stream().anyMatch(v -> v.taskId == 101L),
-                "T101 should NOT be a descendant of T103");
-
-        // Verify mh.finish IS reachable from the new chain
         assertTrue(descendantsOfT103.stream().anyMatch(v -> v.taskId == 200L),
                 "T200 (mh.finish) should be reachable from T103");
     }

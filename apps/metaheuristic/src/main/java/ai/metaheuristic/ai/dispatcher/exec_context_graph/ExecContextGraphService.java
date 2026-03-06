@@ -786,6 +786,41 @@ public class ExecContextGraphService {
         );
     }
 
+    /**
+     * Remove old dynamically-created subProcess children from the graph.
+     * Collects downstream non-subProcess vertices that old children pointed to (e.g. mh.finish)
+     * so the caller can reconnect the new chain to them.
+     *
+     * @return set of downstream TaskVertex that were targets of old children's outgoing edges
+     *         and whose taskContextId does NOT start with subProcessCtxPrefix
+     */
+    public Set<ExecContextData.TaskVertex> removeOldSubProcessChildren(
+            ExecContextGraph execContextGraph, Set<ExecContextData.TaskVertex> oldChildren, String subProcessCtxPrefix) {
+        TxUtils.checkTxExists();
+        Set<ExecContextData.TaskVertex> downstreamVertices = new java.util.LinkedHashSet<>();
+        changeGraph(execContextGraph, graph -> {
+            for (ExecContextData.TaskVertex oldChild : oldChildren) {
+                ExecContextData.TaskVertex graphVertex = graph.vertexSet().stream()
+                        .filter(v -> v.taskId.equals(oldChild.taskId))
+                        .findFirst().orElse(null);
+                if (graphVertex == null) {
+                    log.warn("995.110 Old subProcess child task #{} not found in graph, skipping removal", oldChild.taskId);
+                    continue;
+                }
+                // Collect downstream targets before removing
+                for (DefaultEdge edge : graph.outgoingEdgesOf(graphVertex)) {
+                    ExecContextData.TaskVertex target = graph.getEdgeTarget(edge);
+                    if (target.taskContextId == null || !target.taskContextId.startsWith(subProcessCtxPrefix)) {
+                        downstreamVertices.add(target);
+                    }
+                }
+                graph.removeVertex(graphVertex);
+                log.info("995.120 Removed old subProcess child task #{} (ctx: {}) from graph", oldChild.taskId, oldChild.taskContextId);
+            }
+        });
+        return downstreamVertices;
+    }
+
     public ExecContextGraph prepareExecContextGraph(Long execContextGraphId) {
         ExecContextGraph execContextGraph = execContextGraphCache.findById(execContextGraphId);
         if (execContextGraph==null) {

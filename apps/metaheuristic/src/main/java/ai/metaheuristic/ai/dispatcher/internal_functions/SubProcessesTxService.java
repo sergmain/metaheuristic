@@ -72,24 +72,42 @@ public class SubProcessesTxService {
 
         String currTaskContextId = ContextUtils.buildTaskContextId(subProcessContextId, "0");
 
-        // Filter out old dynamically-created children from a previous execution of this task.
+        // Detect old dynamically-created children from a previous execution of this task.
         // When a task with subProcesses is reset and re-executed, findDirectDescendants returns
         // both old children (from the prior run) and real downstream tasks. Old children have
         // a taskContextId that starts with the subProcess context prefix (they were created by
-        // a previous invocation of this same task). We must exclude them so createEdges only
-        // connects the new subProcess chain to the real downstream tasks, avoiding duplicate branches.
+        // a previous invocation of this same task). We must remove them from the graph and
+        // reconnect the new subProcess chain to the real downstream tasks.
         String subProcessCtxPrefix = subProcessContextId + ContextUtils.CONTEXT_SEPARATOR;
-        Set<ExecContextData.TaskVertex> filteredDescendants = executionContextData.descendants.stream()
-                .filter(v -> v.taskContextId == null || !v.taskContextId.startsWith(subProcessCtxPrefix))
+        Set<ExecContextData.TaskVertex> oldChildren = executionContextData.descendants.stream()
+                .filter(v -> v.taskContextId != null && v.taskContextId.startsWith(subProcessCtxPrefix))
                 .collect(Collectors.toSet());
 
-        if (filteredDescendants.size() != executionContextData.descendants.size()) {
-            log.info("995.100 Filtered out {} old subProcess children from descendants of task #{} (subProcessCtxPrefix: {})",
-                    executionContextData.descendants.size() - filteredDescendants.size(), taskId, subProcessCtxPrefix);
+        Set<ExecContextData.TaskVertex> filteredDescendants;
+        Set<ExecContextData.TaskVertex> downstreamOfOldChildren = Set.of();
+        if (!oldChildren.isEmpty()) {
+            log.info("995.100 Detected {} old subProcess children of task #{} (subProcessCtxPrefix: {}), removing from graph",
+                    oldChildren.size(), taskId, subProcessCtxPrefix);
+            filteredDescendants = new java.util.LinkedHashSet<>(executionContextData.descendants.stream()
+                    .filter(v -> v.taskContextId == null || !v.taskContextId.startsWith(subProcessCtxPrefix))
+                    .collect(Collectors.toSet()));
+        }
+        else {
+            filteredDescendants = executionContextData.descendants;
         }
 
         try {
             ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId);
+
+            // Remove old children from graph before creating new tasks.
+            // Collect downstream vertices (e.g. mh.finish) that old children pointed to — they need to be reconnected.
+            if (!oldChildren.isEmpty()) {
+                downstreamOfOldChildren = execContextGraphService.removeOldSubProcessChildren(
+                        graphAndStates.graph(), oldChildren, subProcessCtxPrefix);
+                // Add downstream vertices to filteredDescendants so createEdges reconnects them
+                filteredDescendants.addAll(downstreamOfOldChildren);
+            }
+
             taskProducingService.createTasksForSubProcesses(
                 graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
 
