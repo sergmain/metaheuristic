@@ -125,6 +125,7 @@ public class ExecContextTaskResettingTopLevelService {
             int maxTries = tpy.task.triesAfterError == null ? 0 : tpy.task.triesAfterError;
             // after a try of recovering, we don't need to use CACHE. so it'll be NONE
             final EnumsApi.TaskExecState targetState = maxTries > triesWasMade ? EnumsApi.TaskExecState.NONE : EnumsApi.TaskExecState.ERROR;
+            log.warn("999.010 resetTasksWithErrorForRecovery: task #{}, currentState: {}, targetState: {}, triesWasMade: {}, maxTries: {}, execContextId: {}", taskId, EnumsApi.TaskExecState.from(task.execState), targetState, triesWasMade, maxTries, event.execContextId);
             statuses.add(new TaskData.TaskWithRecoveryStatus(taskId, triesWasMade+1, targetState));
         }
         ExecContextSyncService.getWithSyncVoid(event.execContextId, ()->

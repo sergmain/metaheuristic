@@ -80,6 +80,7 @@ public class TaskStateService {
         if (task==null) {
             return;
         }
+        log.warn("999.040 changeTaskStateToInitForChildren: task #{}, taskState: {}, execContextId: {}", event.taskId, EnumsApi.TaskExecState.from(task.execState), task.execContextId);
         if (!EnumsApi.TaskExecState.isFinishedState(task.execState)) {
             log.warn("189.080 task #{} has a not finished state: {}", event.taskId, task.execState);
             return;
@@ -134,6 +135,7 @@ public class TaskStateService {
 */
             }
             if (nextState) {
+                log.warn("999.050 setting child task #{} to INIT, parent task #{}", subTask.taskId, event.taskId);
                 TaskSyncService.getWithSyncVoid(subTask.taskId,
                     ()-> taskExecStateService.updateTaskExecStates(subTask.taskId, EnumsApi.TaskExecState.INIT));
             }

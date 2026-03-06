@@ -278,6 +278,7 @@ public class ExecContextGraphService {
 
                 // Don't combine with stream, a side-effect could be occurred
                 if (tv!=null) {
+                    log.warn("999.080 updateTaskExecState in graph: task #{}, newState: {}, ctxId: {}", tv.taskId, execState, taskWithState.taskContextId);
                     stateParamsYaml.states.put(tv.taskId, execState);
                     if (execState==EnumsApi.TaskExecState.ERROR) {
                         setStateForAllChildrenTasksInternal(graph, stateParamsYaml, taskId, status, EnumsApi.TaskExecState.SKIPPED, taskWithState.taskContextId);

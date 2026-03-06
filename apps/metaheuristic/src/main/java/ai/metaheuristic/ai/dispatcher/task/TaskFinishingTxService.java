@@ -142,6 +142,7 @@ public class TaskFinishingTxService {
     }
 
     private void finishTaskAsError(TaskImpl task, @Nullable String console, EnumsApi.TaskExecState targetState) {
+        log.warn("999.030 finishTaskAsError: task #{}, currentState: {}, targetState: {}, execContextId: {}", task.id, EnumsApi.TaskExecState.from(task.execState), targetState, task.execContextId);
         final boolean updatePossible = targetState.value == task.execState &&
                                        (task.execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value || task.execState == EnumsApi.TaskExecState.ERROR.value) &&
                                        task.completed!=0 && task.resultReceived!=0 && !S.b(task.functionExecResults);

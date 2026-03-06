@@ -122,6 +122,7 @@ public class ExecContextTaskResettingService {
 
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         log.info("155.080 Start re-setting task #{}", taskId);
+        log.warn("999.020 resetTask: task #{}, targetExecState: {}, execContextId: {}", taskId, targetExecState, execContext.id);
         if (task == null) {
             String es = S.f("155.120 Found a non-existed task, graph consistency for execContextId #%s is failed",
                     execContext.id);

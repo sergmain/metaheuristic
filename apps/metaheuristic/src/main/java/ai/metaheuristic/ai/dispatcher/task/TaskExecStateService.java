@@ -75,6 +75,7 @@ public class TaskExecStateService {
         TaskSyncService.checkWriteLockPresent(task.id);
 
         log.info("305.040 set the state of Task #{} as {}, Processor #{}", task.id, state, task.coreId);
+        log.warn("999.060 changeTaskState: task #{}, currentState: {}, newState: {}, execContextId: {}", task.id, EnumsApi.TaskExecState.from(task.execState), state, task.execContextId);
         switch (state) {
             case ERROR:
             case ERROR_WITH_RECOVERY:
@@ -98,6 +99,7 @@ public class TaskExecStateService {
                     // This guards against race conditions between async event handlers
                     if (EnumsApi.TaskExecState.isFinishedState(task.execState) && !EnumsApi.TaskExecState.isFinishedState(state)) {
                         log.warn("305.140 Prevented state downgrade for Task #{} from {} to {}", task.id, EnumsApi.TaskExecState.from(task.execState), state);
+                        log.warn("999.070 DOWNGRADE PREVENTED: task #{}, from {} to {}, execContextId: {}", task.id, EnumsApi.TaskExecState.from(task.execState), state, task.execContextId);
                         break;
                     }
                     task.execState = state.value;
