@@ -220,8 +220,19 @@ public class ExecContextUtils {
         return r;
     }
 
+    private static final String DISPLAY_SUFFIX_PREFIX = " [#";
+
+    /**
+     * Strips the display disambiguation suffix " [#N]" from a context string.
+     * Returns the original taskContextId suitable for ContextUtils operations.
+     */
+    private static String stripDisplaySuffix(String displayCtx) {
+        int idx = displayCtx.indexOf(DISPLAY_SUFFIX_PREFIX);
+        return idx == -1 ? displayCtx : displayCtx.substring(0, idx);
+    }
+
     public static int compare(String o1, String o2) {
-        return ContextUtils.compareTaskContextIds(o1, o2);
+        return ContextUtils.compareTaskContextIds(stripDisplaySuffix(o1), stripDisplaySuffix(o2));
     }
 
     // public for testing - will be refactored in Option 5d
@@ -257,21 +268,33 @@ public class ExecContextUtils {
         Map<String, List<String>> childrenByParent = new LinkedHashMap<>();
         Set<String> roots = new LinkedHashSet<>();
 
+        // Build a set of stripped contexts for parent lookup
+        Map<String, String> strippedToDisplay = new LinkedHashMap<>();
         for (String ctx : contexts) {
-            String parent = ContextUtils.deriveParentTaskContextId(ctx);
-            if (parent == null || !contexts.contains(parent)) {
-                // No parent in the set, or parent doesn't exist — treat as root
-                // But try to find the nearest existing ancestor
-                String nearestAncestor = findNearestAncestor(ctx, contexts);
+            String stripped = stripDisplaySuffix(ctx);
+            // If multiple display contexts map to the same stripped context,
+            // keep one mapping for parent resolution (the first one seen)
+            strippedToDisplay.putIfAbsent(stripped, ctx);
+        }
+        Set<String> strippedContexts = strippedToDisplay.keySet();
+
+        for (String ctx : contexts) {
+            String stripped = stripDisplaySuffix(ctx);
+            String parent = ContextUtils.deriveParentTaskContextId(stripped);
+            if (parent == null || !strippedContexts.contains(parent)) {
+                String nearestAncestor = findNearestAncestor(stripped, strippedContexts);
                 if (nearestAncestor != null) {
-                    childrenByParent.computeIfAbsent(nearestAncestor, k -> new ArrayList<>()).add(ctx);
+                    // Find the display context for the nearest ancestor
+                    String ancestorDisplay = strippedToDisplay.getOrDefault(nearestAncestor, nearestAncestor);
+                    childrenByParent.computeIfAbsent(ancestorDisplay, k -> new ArrayList<>()).add(ctx);
                 }
                 else {
                     roots.add(ctx);
                 }
             }
             else {
-                childrenByParent.computeIfAbsent(parent, k -> new ArrayList<>()).add(ctx);
+                String parentDisplay = strippedToDisplay.getOrDefault(parent, parent);
+                childrenByParent.computeIfAbsent(parentDisplay, k -> new ArrayList<>()).add(ctx);
             }
         }
 
