@@ -23,17 +23,21 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataTxService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import lombok.RequiredArgsConstructor;
@@ -69,6 +73,8 @@ public class TxSupportForTestingService {
     private final ExecContextCreatorService execContextCreatorService;
     private final BatchCache batchCache;
     private final ExecContextCache execContextCache;
+    private final ExecContextTaskResettingService execContextTaskResettingService;
+    private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache sourceCodeCache;
 
     @Transactional(rollbackFor = CommonRollbackException.class)
@@ -250,6 +256,53 @@ public class TxSupportForTestingService {
     @Transactional
     public void deleteSourceCodeById(Long sourceCodeId) {
         sourceCodeCache.deleteById(sourceCodeId);
+    }
+
+    /**
+     * Reset all tasks in the ExecContext to NONE state and change ExecContext from FINISHED to STARTED.
+     * Only for testing — simulates the storeObjectiveAndResetTask flow from RgObjectiveTxService.
+     */
+    @Transactional
+    public void resetAllTasksToNone(Long execContextId, Long execContextTaskStateId) {
+        if (!globals.testing) {
+            throw new IllegalStateException("Only for testing");
+        }
+        ExecContextSyncService.checkWriteLockPresent(execContextId);
+        ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
+
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        if (ec == null) {
+            return;
+        }
+
+        // Change ExecContext state from FINISHED to STARTED
+        if (ec.state == EnumsApi.ExecContextState.FINISHED.code) {
+            ec.setState(EnumsApi.ExecContextState.STARTED.code);
+            ec.setCompletedOn(null);
+            execContextCache.save(ec);
+            log.info("resetAllTasksToNone: ExecContext #{} state changed from FINISHED to STARTED", execContextId);
+        }
+
+        // Reset every task in the DAG to NONE
+        java.util.List<ExecContextData.TaskVertex> allVertices = execContextGraphService.findAll(ec.execContextGraphId);
+        for (ExecContextData.TaskVertex vertex : allVertices) {
+            TaskSyncService.getWithSyncVoid(vertex.taskId, () ->
+                    execContextTaskResettingService.resetTask(ec, vertex.taskId, EnumsApi.TaskExecState.NONE));
+        }
+
+        // Update graph state
+        ExecContextTaskState execContextTaskState = execContextTaskStateRepository.findById(execContextTaskStateId).orElse(null);
+        if (execContextTaskState == null) {
+            log.error("resetAllTasksToNone: ExecContextTaskState #{} not found", execContextTaskStateId);
+            return;
+        }
+        ExecContextTaskStateParamsYaml stateParams = execContextTaskState.getExecContextTaskStateParamsYaml();
+        for (ExecContextData.TaskVertex vertex : allVertices) {
+            stateParams.states.put(vertex.taskId, EnumsApi.TaskExecState.NONE);
+        }
+        execContextTaskState.updateParams(stateParams);
+        execContextTaskStateRepository.save(execContextTaskState);
+        log.info("resetAllTasksToNone: Reset {} tasks to NONE", allVertices.size());
     }
 
 

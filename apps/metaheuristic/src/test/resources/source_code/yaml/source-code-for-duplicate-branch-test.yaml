@@ -1,0 +1,46 @@
+version: 6
+source:
+  strictNaming: true
+  uid: source-code-for-duplicate-branch-test-1.0
+  variables:
+    globals:
+      - global-test-variable
+  processes:
+    - code: checkObjectives
+      name: Check for pending objectives
+      function:
+        code: function-01:1.1
+      outputs:
+        - name: hasObjectives
+          type: boolean
+          nullable: false
+          ext: .txt
+    - code: nopObjectivesWrapper
+      name: nopObjectivesWrapper
+      function:
+        code: mh.nop
+        context: internal
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: nopObjectives
+            name: nopObjectives
+            function:
+              code: mh.nop
+              context: internal
+            condition:
+              conditions: 'hasObjectives ? true : false'
+            subProcesses:
+              logic: sequential
+              processes:
+                - code: evaluateObjective
+                  name: Evaluate objective
+                  function:
+                    code: function-02:1.1
+                  inputs:
+                    - name: hasObjectives
+                  outputs:
+                    - name: objectiveResult
+                      type: objectiveResult
+                      nullable: true
+                      ext: .txt
