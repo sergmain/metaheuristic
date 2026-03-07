@@ -88,7 +88,7 @@ public class TaskQueueSyncStaticService {
     }
 
     @Nullable
-    public static <T> T getWithSyncNullable(Supplier<T> supplier) {
+    public static <T> T getWithSyncNullable(Supplier<@Nullable T> supplier) {
         checkWriteLockNotPresent();
 
         final ReentrantReadWriteLock.WriteLock lock = getWriteLock();

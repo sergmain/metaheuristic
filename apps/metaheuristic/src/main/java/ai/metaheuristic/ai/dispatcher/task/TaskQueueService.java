@@ -109,9 +109,9 @@ public class TaskQueueService {
         return getWithSync(() -> taskQueue.alreadyRegistered(taskId));
     }
 
-    public static TaskQueue.AllocatedTask alreadyRegisteredAsTaskWithSync(Long taskId) {
+    public static TaskQueue.@Nullable AllocatedTask alreadyRegisteredAsTaskWithSync(Long taskId) {
         checkWriteLockNotPresent();
-        return getWithSync(() -> taskQueue.alreadyRegisteredAsTask(taskId));
+        return getWithSyncNullable(() -> taskQueue.alreadyRegisteredAsTask(taskId));
     }
 
     public static void addNewTask(TaskQueue.QueuedTask queuedTask) {

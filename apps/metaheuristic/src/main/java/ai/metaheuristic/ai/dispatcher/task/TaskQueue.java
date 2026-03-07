@@ -89,7 +89,7 @@ public class TaskQueue {
         @Nullable
         public Long execContextId;
 
-        public final AllocatedTask[] tasks;
+        public final @Nullable AllocatedTask[] tasks;
         public int allocated = 0;
         public int priority;
         public boolean locked;
@@ -101,7 +101,7 @@ public class TaskQueue {
             this.tasks = new AllocatedTask[groupSize];
         }
 
-        // we dont need execContextId because taskIds are unique across entire database
+        // we don't need execContextId because taskIds are unique across entire database
         public boolean alreadyRegistered(Long taskId) {
             return alreadyRegisteredAsTask(taskId)!=null;
         }
@@ -611,8 +611,8 @@ public class TaskQueue {
         return alreadyRegisteredAsTask(taskId)!=null;
     }
 
-    @Nullable
-    public AllocatedTask alreadyRegisteredAsTask(Long taskId) {
+
+    public TaskQueue.@Nullable AllocatedTask alreadyRegisteredAsTask(Long taskId) {
         for (TaskGroup o : taskGroups) {
             final AllocatedTask allocatedTask = o.alreadyRegisteredAsTask(taskId);
             if (allocatedTask !=null) {

@@ -117,10 +117,8 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
     @AfterEach
     public void afterTestExecutionWithRecoveryFromError() {
         System.out.println("Finished TestSourceCodeService.afterTestSourceCodeService()");
-        if (getExecContextForTest() !=null) {
-            ExecContextSyncService.getWithSyncNullable(getExecContextForTest().id,
-                    () -> txSupportForTestingService.deleteByExecContextId(getExecContextForTest().id));
-        }
+        ExecContextSyncService.getWithSyncNullable(getExecContextForTest().id,
+            () -> txSupportForTestingService.deleteByExecContextId(getExecContextForTest().id));
     }
 
     @Data

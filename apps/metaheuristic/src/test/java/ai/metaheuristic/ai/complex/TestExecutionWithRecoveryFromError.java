@@ -118,10 +118,8 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
     @AfterEach
     public void afterTestExecutionWithRecoveryFromError() {
         System.out.println("Finished TestSourceCodeService.afterTestSourceCodeService()");
-        if (getExecContextForTest() !=null) {
-            ExecContextSyncService.getWithSyncNullable(getExecContextForTest().id,
-                    () -> txSupportForTestingService.deleteByExecContextId(getExecContextForTest().id));
-        }
+        ExecContextSyncService.getWithSyncNullable(getExecContextForTest().id,
+            () -> txSupportForTestingService.deleteByExecContextId(getExecContextForTest().id));
     }
 
     @Data
@@ -166,6 +164,8 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
         taskFinishingTopLevelService.checkTaskCanBeFinished(task32.id);
 
         processScheduledTasks();
+
+        assertNotNull(getExecContextForTest().execContextTaskStateId);
 
         ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId,
             () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(getExecContextForTest().id, getExecContextForTest().execContextTaskStateId));

@@ -79,6 +79,7 @@ public class ExecContextTxService {
     private final ExecContextCache execContextCache;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     private final TaskTxService taskTxService;
+    private final TaskRepository taskRepository;
     private final VariableRepository variableRepository;
     private final VariableTxService variableService;
     private final EventPublisherService eventPublisherService;
