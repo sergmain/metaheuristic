@@ -48,10 +48,14 @@ public class EventsBoundedToTx {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleSetTaskExecStateTxEvent(SetTaskExecStateInQueueTxEvent event) {
         log.debug("call EventsBoundedToTx.handleSetTaskExecStateTxEvent(execContextId:#{}, taskId:#{}, state:{})", event.execContextId, event.taskId, event.state);
+
+        // logic behind this event doesn't do anything to other Tasks in DAG
         eventPublisher.publishEvent(event.to());
-        if (event.state== EnumsApi.TaskExecState.OK || event.state== EnumsApi.TaskExecState.ERROR) {
+
+        if (EnumsApi.TaskExecState.isFinishedState(event.state)) {
+            // This is for logging of MH internal event, Doesn't do actual business logic
             dispatcherEventService.publishTaskEvent(
-                    event.state== EnumsApi.TaskExecState.OK ? EnumsApi.DispatcherEventType.TASK_FINISHED : EnumsApi.DispatcherEventType.TASK_ERROR,
+                event.state == EnumsApi.TaskExecState.ERROR ? EnumsApi.DispatcherEventType.TASK_ERROR : EnumsApi.DispatcherEventType.TASK_FINISHED,
                     event.coreId, event.taskId,
                     event.execContextId, event.context, event.funcCode);
         }

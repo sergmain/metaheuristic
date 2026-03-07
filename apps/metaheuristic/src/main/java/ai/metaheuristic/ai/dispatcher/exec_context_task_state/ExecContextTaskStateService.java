@@ -63,10 +63,12 @@ public class ExecContextTaskStateService {
 
 
     private final MultiTenantedQueue<Long, TransferStateFromTaskQueueToExecContextEvent> threadedPoolMap =
-        new MultiTenantedQueue<>(2, Duration.ZERO, false, "TransferStateFromTaskQueueToExecContext-", this::transferStateFromTaskQueueToExecContext);
+        new MultiTenantedQueue<>(2, Duration.ZERO, false, "TransferStateFromTaskQueueToExecContext-",
+            this::transferStateFromTaskQueueToExecContext);
 
     private final MultiTenantedQueue<Long, UpdateTaskExecStatesInExecContextEvent> updateTaskExecStatesInGraphEventThreadedPool =
-        new MultiTenantedQueue<>(100, Duration.ZERO, false, "UpdateTaskExecStatesInGraph-", this::updateTaskExecStatesExecContext);
+        new MultiTenantedQueue<>(100, Duration.ZERO, false, "UpdateTaskExecStatesInGraph-",
+            this::updateTaskExecStatesExecContext);
 
     @PreDestroy
     public void onExit() {

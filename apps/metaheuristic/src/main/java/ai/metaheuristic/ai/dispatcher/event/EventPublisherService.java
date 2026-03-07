@@ -40,6 +40,7 @@ public class EventPublisherService {
 
     public void publishSetTaskExecStateInQueueTxEvent(SetTaskExecStateInQueueTxEvent event) {
         TxUtils.checkTxExists();
+        // it will land at ai.metaheuristic.ai.dispatcher.event.EventsBoundedToTx.handleSetTaskExecStateTxEvent
         eventPublisher.publishEvent(event);
     }
 

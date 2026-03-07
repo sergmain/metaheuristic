@@ -92,8 +92,7 @@ public class TaskFinishingTopLevelService {
         }
 
         if (!S.b(task.functionExecResults)) {
-            //noinspection DoubleNegation
-            if (!(task.resultReceived!=0)) {
+            if (task.resultReceived==0) {
                 throw new IllegalStateException("(!task.resultReceived)");
             }
             FunctionApiData.FunctionExec functionExec = FunctionExecUtils.to(task.functionExecResults);

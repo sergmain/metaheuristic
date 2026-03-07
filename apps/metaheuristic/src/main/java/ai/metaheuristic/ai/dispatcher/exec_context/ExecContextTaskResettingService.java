@@ -35,7 +35,6 @@ import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStatePara
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
-import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,7 +73,6 @@ public class ExecContextTaskResettingService {
             return;
         }
 
-//        ExecContextTaskState execContextTaskState = Optional.ofNullable(ec.execContextTaskStateId).flatMap(execContextTaskStateRepository::findById).orElse(null);
         ExecContextTaskState execContextTaskState = execContextTaskStateRepository.findById(ec.execContextTaskStateId).orElse(null);
         if (execContextTaskState==null) {
             log.error("155.030 ExecContextTaskState wasn't found for execContext #{}", execContextId);
@@ -125,9 +123,7 @@ public class ExecContextTaskResettingService {
         log.warn("999.020 resetTask: task #{}, targetExecState: {}, execContextId: {}", taskId, targetExecState, execContext.id);
         log.warn("999.021 resetTask caller stack for task #{}:", taskId, new Exception("stack trace"));
         if (task == null) {
-            String es = S.f("155.120 Found a non-existed task, graph consistency for execContextId #%s is failed",
-                    execContext.id);
-            log.error(es);
+            log.error("155.120 Found a non-existed task, graph consistency for ExecContext#{} is failed", execContext.id);
             execContext.completedOn = System.currentTimeMillis();
             execContext.state = EnumsApi.ExecContextState.ERROR.code;
             return;
@@ -150,7 +146,7 @@ public class ExecContextTaskResettingService {
         else {
             task.execState = targetExecState.value;
         }
-        task.setResultReceived(1);
+        task.setResultReceived(0);
         task.setResultResourceScheduledOn(0);
 
         // Clear the fromCache flag so the task is no longer marked as served from cache.
@@ -166,12 +162,9 @@ public class ExecContextTaskResettingService {
             VariableSyncService.getWithSyncVoidForCreation(output.id, ()-> variableTxService.resetVariable(execContext.id, output.id));
         }
 
+        // logic behind this event doesn't do anything to other Tasks in DAG
         eventPublisherService.publishSetTaskExecStateInQueueTxEvent(
                 new SetTaskExecStateInQueueTxEvent(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState), null, null, null));
-
-        // we don't have to un-register task because it could un-register already de-registered task.
-        // actual deregistering will be done via reconsiliationService
-//        eventPublisherService.publishUnAssignTaskTxEventAfterCommit(new UnAssignTaskTxAfterCommitEvent(task.execContextId, task.id));
 
         log.info("155.240 task #{} and its output variables were re-setted to initial state", taskId);
     }

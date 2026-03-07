@@ -262,9 +262,13 @@ public class TaskProviderTopLevelService {
         }
         TaskQueueSyncStaticService.getWithSyncVoid(()-> {
             boolean b = TaskQueueService.setTaskExecState(execContextId, taskId, state);
+            // inform Processors that they can request a new task
             eventPublisher.publishEvent(new NewWebsocketEvent(Enums.WebsocketEventType.task));
+
             log.debug("393.400 task #{}, state: {}, result: {}", taskId, state, b);
             if (b) {
+                // event will land at ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService#handleEvent
+                // logic behind this event doesn't do anything to other Tasks in DAG
                 eventPublisher.publishEvent(new TransferStateFromTaskQueueToExecContextEvent(
                         execContextId, execContext.execContextTaskStateId));
             }

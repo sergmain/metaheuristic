@@ -22,8 +22,6 @@ import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.utils.threads.ThreadUtils.CommonThreadLocker;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-//import jakarta.validation.constraints.NotBlank;
-//import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -59,7 +57,6 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name = "COMPANY_ID")
     public Long companyId;
 
-    @Nullable
     @Column(name = "ACCOUNT_ID")
     public Long accountId;
 
@@ -79,7 +76,6 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name = "CTX_GRAPH_ID")
     public Long execContextGraphId;
 
-    @Nullable
     @Column(name = "CTX_TASK_STATE_ID")
     public Long execContextTaskStateId;
 
@@ -90,7 +86,6 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name = "ROOT_EXEC_CONTEXT_ID")
     public Long rootExecContextId;
 
-//    @NotBlank
     @Column(name = "PARAMS")
     private String params;
 
