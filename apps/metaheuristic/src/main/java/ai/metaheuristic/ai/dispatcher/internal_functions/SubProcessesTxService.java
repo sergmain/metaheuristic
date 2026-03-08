@@ -76,8 +76,9 @@ public class SubProcessesTxService {
         // When a task with subProcesses is reset and re-executed, findDirectDescendants returns
         // both old children (from the prior run) and real downstream tasks. Old children have
         // a taskContextId that starts with the subProcess context prefix (they were created by
-        // a previous invocation of this same task). We must remove them from the graph and
-        // reconnect the new subProcess chain to the real downstream tasks.
+        // a previous invocation of this same task). We must remove them and their entire
+        // sub-layer subtree from the graph, then reconnect the new subProcess chain to the
+        // real downstream tasks.
         String subProcessCtxPrefix = subProcessContextId + ContextUtils.CONTEXT_SEPARATOR;
         Set<ExecContextData.TaskVertex> oldChildren = executionContextData.descendants.stream()
                 .filter(v -> v.taskContextId != null && v.taskContextId.startsWith(subProcessCtxPrefix))
@@ -98,11 +99,12 @@ public class SubProcessesTxService {
         try {
             ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(simpleExecContext.execContextGraphId, simpleExecContext.execContextTaskStateId);
 
-            // Remove old children from graph before creating new tasks.
-            // Collect downstream vertices (e.g. mh.finish) that old children pointed to — they need to be reconnected.
+            // Remove old children and their entire sub-layer subtree from graph before creating new tasks.
+            // Uses deriveParentTaskContextId walk to identify all sub-layers belonging to this wrapper.
+            // Collects downstream vertices (e.g. mh.finish) that the subtree pointed to — they need to be reconnected.
             if (!oldChildren.isEmpty()) {
                 Set<ExecContextData.TaskVertex> downstreamOfOldChildren = execContextGraphService.removeOldSubProcessChildren(
-                        graphAndStates.graph(), oldChildren, subProcessCtxPrefix);
+                        graphAndStates.graph(), oldChildren, taskParamsYaml.task.taskContextId);
                 // Add downstream vertices to filteredDescendants so createEdges reconnects them
                 filteredDescendants.addAll(downstreamOfOldChildren);
             }

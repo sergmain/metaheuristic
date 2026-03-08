@@ -787,18 +787,26 @@ public class ExecContextGraphService {
     }
 
     /**
-     * Remove old dynamically-created subProcess children from the graph.
-     * Collects downstream non-subProcess vertices that old children pointed to (e.g. mh.finish)
-     * so the caller can reconnect the new chain to them.
+     * Remove old dynamically-created subProcess children and their entire subtree from the graph.
+     * When a task with subProcesses is reset and re-executed, old children from the previous run
+     * may themselves have descendant tasks at deeper sub-layers of the layered st-DAG.
+     * All such subtree vertices are removed; vertices outside the subprocess subtree
+     * (e.g. mh.finish) are collected for reconnection.
      *
-     * @return set of downstream TaskVertex that were targets of old children's outgoing edges
-     *         and whose taskContextId does NOT start with subProcessCtxPrefix
+     * A vertex belongs to the subprocess subtree if walking up via
+     * {@link ContextUtils#deriveParentTaskContextId} eventually reaches parentTaskContextId.
+     *
+     * @param parentTaskContextId the taskContextId of the wrapper task that owns the subProcesses
+     * @return set of downstream TaskVertex reachable from old children but NOT belonging
+     *         to the subprocess subtree (e.g. mh.finish)
      */
     public Set<ExecContextData.TaskVertex> removeOldSubProcessChildren(
-            ExecContextGraph execContextGraph, Set<ExecContextData.TaskVertex> oldChildren, String subProcessCtxPrefix) {
+            ExecContextGraph execContextGraph, Set<ExecContextData.TaskVertex> oldChildren, String parentTaskContextId) {
         TxUtils.checkTxExists();
         Set<ExecContextData.TaskVertex> downstreamVertices = new java.util.LinkedHashSet<>();
         changeGraph(execContextGraph, graph -> {
+            // Collect the full subtree of all old children across all sub-layers
+            Set<ExecContextData.TaskVertex> toRemove = new java.util.LinkedHashSet<>();
             for (ExecContextData.TaskVertex oldChild : oldChildren) {
                 ExecContextData.TaskVertex graphVertex = graph.vertexSet().stream()
                         .filter(v -> v.taskId.equals(oldChild.taskId))
@@ -807,18 +815,69 @@ public class ExecContextGraphService {
                     log.warn("995.110 Old subProcess child task #{} not found in graph, skipping removal", oldChild.taskId);
                     continue;
                 }
-                // Collect downstream targets before removing
-                for (DefaultEdge edge : graph.outgoingEdgesOf(graphVertex)) {
-                    ExecContextData.TaskVertex target = graph.getEdgeTarget(edge);
-                    if (target.taskContextId == null || !target.taskContextId.startsWith(subProcessCtxPrefix)) {
-                        downstreamVertices.add(target);
-                    }
-                }
-                graph.removeVertex(graphVertex);
-                log.info("995.120 Removed old subProcess child task #{} (ctx: {}) from graph", oldChild.taskId, oldChild.taskContextId);
+                // BFS to collect the entire subtree rooted at this old child
+                collectSubtreeForRemoval(graph, graphVertex, parentTaskContextId, toRemove, downstreamVertices);
+            }
+            // Remove all collected subprocess-subtree vertices from the graph
+            for (ExecContextData.TaskVertex vertexToRemove : toRemove) {
+                graph.removeVertex(vertexToRemove);
+                log.info("995.120 Removed old subProcess task #{} (ctx: {}) from graph", vertexToRemove.taskId, vertexToRemove.taskContextId);
             }
         });
         return downstreamVertices;
+    }
+
+    /**
+     * Checks whether a taskContextId belongs to the subprocess subtree of parentTaskContextId.
+     * Walks up via {@link ContextUtils#deriveParentTaskContextId} until parentTaskContextId
+     * is reached (true) or null/root is reached (false).
+     */
+    public static boolean isDescendantContext(String taskContextId, String parentTaskContextId) {
+        String current = taskContextId;
+        // Safety limit to prevent infinite loop on malformed context ids
+        for (int i = 0; i < 100; i++) {
+            String parent = ContextUtils.deriveParentTaskContextId(current);
+            if (parent == null) {
+                return false;
+            }
+            if (parent.equals(parentTaskContextId)) {
+                return true;
+            }
+            current = parent;
+        }
+        return false;
+    }
+
+    /**
+     * BFS traversal from a starting vertex, collecting all reachable vertices that belong to the
+     * subprocess subtree (context is a descendant of parentTaskContextId) into toRemove,
+     * and all other reachable vertices into downstream.
+     */
+    private static void collectSubtreeForRemoval(
+            DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph,
+            ExecContextData.TaskVertex startVertex,
+            String parentTaskContextId,
+            Set<ExecContextData.TaskVertex> toRemove,
+            Set<ExecContextData.TaskVertex> downstream) {
+        java.util.Queue<ExecContextData.TaskVertex> queue = new java.util.ArrayDeque<>();
+        queue.add(startVertex);
+        toRemove.add(startVertex);
+        while (!queue.isEmpty()) {
+            ExecContextData.TaskVertex current = queue.poll();
+            for (DefaultEdge edge : graph.outgoingEdgesOf(current)) {
+                ExecContextData.TaskVertex target = graph.getEdgeTarget(edge);
+                if (toRemove.contains(target) || downstream.contains(target)) {
+                    continue;
+                }
+                if (target.taskContextId != null && isDescendantContext(target.taskContextId, parentTaskContextId)) {
+                    toRemove.add(target);
+                    queue.add(target);
+                }
+                else {
+                    downstream.add(target);
+                }
+            }
+        }
     }
 
     public ExecContextGraph prepareExecContextGraph(Long execContextGraphId) {
