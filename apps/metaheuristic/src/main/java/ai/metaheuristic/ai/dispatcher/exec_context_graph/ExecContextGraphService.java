@@ -880,6 +880,26 @@ public class ExecContextGraphService {
         }
     }
 
+    /**
+     * Remove a set of vertices from the graph. Used during reset to delete dynamically-created
+     * sub-layer tasks that will be re-created by their parent internal function.
+     */
+    public void removeVertices(ExecContextGraph execContextGraph, Set<ExecContextData.TaskVertex> vertices) {
+        TxUtils.checkTxExists();
+        changeGraph(execContextGraph, graph -> {
+            for (ExecContextData.TaskVertex vertex : vertices) {
+                ExecContextData.TaskVertex graphVertex = graph.vertexSet().stream()
+                        .filter(v -> v.taskId.equals(vertex.taskId))
+                        .findFirst().orElse(null);
+                if (graphVertex != null) {
+                    graph.removeVertex(graphVertex);
+                    log.info("995.130 Removed dynamic sub-layer task #{} (ctx: {}) from graph during reset",
+                            vertex.taskId, vertex.taskContextId);
+                }
+            }
+        });
+    }
+
     public ExecContextGraph prepareExecContextGraph(Long execContextGraphId) {
         ExecContextGraph execContextGraph = execContextGraphCache.findById(execContextGraphId);
         if (execContextGraph==null) {
