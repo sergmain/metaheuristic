@@ -223,11 +223,15 @@ public class TaskParamsYaml implements BaseParams {
     }
 
     @Data
-    @AllArgsConstructor
     @NoArgsConstructor
     public static class Init {
         public List<Long> parentTaskIds;
         public EnumsApi.TaskExecState nextState;
+
+        public Init(List<Long> parentTaskIds, EnumsApi.TaskExecState nextState) {
+            this.parentTaskIds = parentTaskIds;
+            this.nextState = nextState;
+        }
     }
 
     @Data

@@ -81,7 +81,7 @@ public class TaskResetTxService {
 
         // Reset the specified task in DB
         TaskSyncService.getWithSyncVoid(taskId, () ->
-            execContextTaskResettingService.resetTask(ec, taskId, EnumsApi.TaskExecState.NONE));
+            execContextTaskResettingService.resetTask(ec, taskId, EnumsApi.TaskExecState.INIT));
 
         // Reset all descendant tasks in the DAG (downstream tasks including mh.finish)
         Set<ExecContextData.TaskVertex> descendants = execContextGraphService.findDescendants(
@@ -91,7 +91,7 @@ public class TaskResetTxService {
 
         for (ExecContextData.TaskVertex descendant : descendants) {
             TaskSyncService.getWithSyncVoid(descendant.taskId, () ->
-                execContextTaskResettingService.resetTask(ec, descendant.taskId, EnumsApi.TaskExecState.NONE));
+                execContextTaskResettingService.resetTask(ec, descendant.taskId, EnumsApi.TaskExecState.PRE_INIT));
             log.info("801.215 Reset descendant task #{}", descendant.taskId);
         }
 

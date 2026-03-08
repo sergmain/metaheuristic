@@ -75,7 +75,7 @@ public class TaskExecStateService {
         TaskSyncService.checkWriteLockPresent(task.id);
 
         log.info("305.040 set the state of Task #{} as {}, Processor #{}", task.id, state, task.coreId);
-        log.warn("999.060 changeTaskState: task #{}, currentState: {}, newState: {}, execContextId: {}", task.id, EnumsApi.TaskExecState.from(task.execState), state, task.execContextId);
+//        log.warn("999.060 changeTaskState: task #{}, currentState: {}, newState: {}, execContextId: {}", task.id, EnumsApi.TaskExecState.from(task.execState), state, task.execContextId);
         switch (state) {
             case ERROR:
             case ERROR_WITH_RECOVERY:

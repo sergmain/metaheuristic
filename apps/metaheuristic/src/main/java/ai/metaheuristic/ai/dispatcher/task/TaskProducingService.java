@@ -240,6 +240,7 @@ public class TaskProducingService {
 
         task = taskTxService.save(task);
 
+        // event will land at ai.metaheuristic.ai.dispatcher.task.TaskVariableInitService.handleEvent
         eventPublisher.publishEvent(new InitVariablesTxEvent(task.id));
 
         return task;

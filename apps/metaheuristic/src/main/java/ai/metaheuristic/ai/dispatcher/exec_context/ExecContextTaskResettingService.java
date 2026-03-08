@@ -78,7 +78,6 @@ public class ExecContextTaskResettingService {
             log.error("155.030 ExecContextTaskState wasn't found for execContext #{}", execContextId);
             return;
         }
-        ExecContextTaskStateParamsYaml ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
 
         for (TaskData.TaskWithRecoveryStatus status : statuses) {
             if (status.targetState== EnumsApi.TaskExecState.ERROR) {
@@ -88,14 +87,17 @@ public class ExecContextTaskResettingService {
             }
             else if (status.targetState==EnumsApi.TaskExecState.NONE) {
                 TaskSyncService.getWithSyncVoid(status.taskId, ()->resetTask(ec, status.taskId, EnumsApi.TaskExecState.NONE));
+
+                ExecContextTaskStateParamsYaml ectspy = execContextTaskState.getExecContextTaskStateParamsYaml();
                 ectspy.triesWasMade.put(status.taskId, status.triesWasMade);
+
+                execContextTaskState.updateParams(ectspy);
+                execContextTaskStateRepository.save(execContextTaskState);
             }
             else {
                 throw new IllegalStateException("status.targetState==");
             }
         }
-        execContextTaskState.updateParams(ectspy);
-        execContextTaskStateRepository.save(execContextTaskState);
     }
 
     @Transactional
@@ -121,7 +123,7 @@ public class ExecContextTaskResettingService {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         log.info("155.080 Start re-setting task #{}", taskId);
         log.warn("999.020 resetTask: task #{}, targetExecState: {}, execContextId: {}", taskId, targetExecState, execContext.id);
-        log.warn("999.021 resetTask caller stack for task #{}:", taskId, new Exception("stack trace"));
+//        log.warn("999.021 resetTask caller stack for task #{}:", taskId, new Exception("stack trace"));
         if (task == null) {
             log.error("155.120 Found a non-existed task, graph consistency for ExecContext#{} is failed", execContext.id);
             execContext.completedOn = System.currentTimeMillis();

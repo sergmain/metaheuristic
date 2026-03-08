@@ -50,6 +50,7 @@ public class EventsBoundedToTx {
         log.debug("call EventsBoundedToTx.handleSetTaskExecStateTxEvent(execContextId:#{}, taskId:#{}, state:{})", event.execContextId, event.taskId, event.state);
 
         // logic behind this event doesn't do anything to other Tasks in DAG
+        // event will land at ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService.setTaskExecStateInQueue
         eventPublisher.publishEvent(event.to());
 
         if (EnumsApi.TaskExecState.isFinishedState(event.state)) {

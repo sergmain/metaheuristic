@@ -229,8 +229,8 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
         System.out.println("ExecContext state after Phase 1: " + EnumsApi.ExecContextState.toState(getExecContextForTest().getState()));
 
-        // === Phase 2: Reset all tasks to NONE (simulating storeObjectiveAndResetTask flow) ===
-        System.out.println("=== Phase 2: Resetting all tasks to NONE ===");
+        // === Phase 2: Reset all tasks to PRE_INIT (simulating storeObjectiveAndResetTask flow) ===
+        System.out.println("=== Phase 2: Resetting all tasks to PRE_INIT ===");
 
         ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, ()->
             ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().execContextGraphId, ()->
