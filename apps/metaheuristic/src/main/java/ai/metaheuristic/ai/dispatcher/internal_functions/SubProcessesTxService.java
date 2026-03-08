@@ -84,7 +84,6 @@ public class SubProcessesTxService {
                 .collect(Collectors.toSet());
 
         Set<ExecContextData.TaskVertex> filteredDescendants;
-        Set<ExecContextData.TaskVertex> downstreamOfOldChildren = Set.of();
         if (!oldChildren.isEmpty()) {
             log.info("995.100 Detected {} old subProcess children of task #{} (subProcessCtxPrefix: {}), removing from graph",
                     oldChildren.size(), taskId, subProcessCtxPrefix);
@@ -102,7 +101,7 @@ public class SubProcessesTxService {
             // Remove old children from graph before creating new tasks.
             // Collect downstream vertices (e.g. mh.finish) that old children pointed to — they need to be reconnected.
             if (!oldChildren.isEmpty()) {
-                downstreamOfOldChildren = execContextGraphService.removeOldSubProcessChildren(
+                Set<ExecContextData.TaskVertex> downstreamOfOldChildren = execContextGraphService.removeOldSubProcessChildren(
                         graphAndStates.graph(), oldChildren, subProcessCtxPrefix);
                 // Add downstream vertices to filteredDescendants so createEdges reconnects them
                 filteredDescendants.addAll(downstreamOfOldChildren);
