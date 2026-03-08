@@ -78,6 +78,11 @@ public class PermuteValuesOfVariablesFunction implements InternalFunction {
     }
 
     @Override
+    public boolean isDynamicSubProcesses(ExecContextApiData.SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml, Long taskId) {
+        return true;
+    }
+
+    @Override
     public void process(
             ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
             TaskParamsYaml taskParamsYaml) {

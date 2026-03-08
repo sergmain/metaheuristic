@@ -35,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 
@@ -54,7 +55,12 @@ public class TaskResetTxService {
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final EventPublisherService eventPublisherService;
-    
+
+    @Transactional
+    public void resetTaskAndExecContextTx(Long execContextId, Long taskId) {
+        resetTaskAndExecContext(execContextId, taskId);
+    }
+
     public void resetTaskAndExecContext(Long execContextId, Long taskId) {
         TxUtils.checkTxExists();
 
@@ -88,6 +94,8 @@ public class TaskResetTxService {
                 execContextTaskResettingService.resetTask(ec, descendant.taskId, EnumsApi.TaskExecState.NONE));
             log.info("801.215 Reset descendant task #{}", descendant.taskId);
         }
+
+        int _=0;
 
         // Update graph state (ExecContextTaskState) to mark reset tasks as NONE
         ExecContextTaskState execContextTaskState = execContextTaskStateRepository.findById(ec.execContextTaskStateId).orElse(null);

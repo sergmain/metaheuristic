@@ -80,6 +80,10 @@ public class PermuteVariablesFunction implements InternalFunction {
         return Consts.MH_PERMUTE_VARIABLES_FUNCTION;
     }
 
+    public boolean isDynamicSubProcesses(ExecContextApiData.SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml, Long taskId) {
+        return true;
+    }
+
     @Override
     public void process(
             ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,

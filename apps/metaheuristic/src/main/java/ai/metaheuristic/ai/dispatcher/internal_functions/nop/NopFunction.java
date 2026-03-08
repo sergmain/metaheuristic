@@ -17,8 +17,14 @@
 package ai.metaheuristic.ai.dispatcher.internal_functions.nop;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
+import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
+import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
+import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.api.dispatcher.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.SubProcessesTxService;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
@@ -40,6 +46,9 @@ import org.springframework.stereotype.Service;
 public class NopFunction implements InternalFunction {
 
     private final SubProcessesTxService subProcessesTxService;
+    private final InternalFunctionService internalFunctionService;
+    private final TaskProducingService taskProducingService;
+    private final ExecContextGraphService execContextGraphService;
 
     @Override
     public String getCode() {
@@ -49,6 +58,24 @@ public class NopFunction implements InternalFunction {
     @Override
     public String getName() {
         return Consts.MH_NOP_FUNCTION;
+    }
+
+    @Override
+    public boolean isDynamicSubProcesses(ExecContextApiData.SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml, Long taskId) {
+        InternalFunctionData.ExecutionContextData executionContextData = internalFunctionService.getSubProcesses(simpleExecContext, taskParamsYaml, taskId);
+        if (executionContextData.internalFunctionProcessingResult.processing!= Enums.InternalFunctionProcessing.ok) {
+            throw new InternalFunctionException(executionContextData.internalFunctionProcessingResult);
+        }
+
+        String condition = executionContextData.process.condition;
+        if (condition==null || condition.isEmpty()) {
+            return false;
+        }
+
+        if (executionContextData.subProcesses.isEmpty()) {
+            return false;
+        }
+        return true;
     }
 
     @Override

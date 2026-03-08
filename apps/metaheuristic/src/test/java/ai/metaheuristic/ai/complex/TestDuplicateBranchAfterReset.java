@@ -133,6 +133,7 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
     @Autowired private ExecContextGraphService execContextGraphService;
     @Autowired private ExecContextCache execContextCache;
+    @Autowired private TaskResetTxService taskResetTxService;
 
     @Override
     @SneakyThrows
@@ -182,6 +183,12 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
         preparingSourceCodeService.step_1_1_register_function_statuses(processorIdAndCoreIds, preparingSourceCodeData, preparingCodeData);
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
+
+        List<ExecContextData.TaskVertex> rootVertices = execContextGraphService.findAllRootVertices(getExecContextForTest().execContextGraphId);
+        assertEquals(1, rootVertices.size());
+
+        Long resetTaskId = rootVertices.getFirst().taskId;
+
         // Record the initial task count before executing anything
         List<ExecContextData.TaskVertex> initialVertices = execContextGraphService.findAll(getExecContextForTest().execContextGraphId);
         int initialTaskCount = initialVertices.size();
@@ -224,7 +231,13 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
 
         // === Phase 2: Reset all tasks to NONE (simulating storeObjectiveAndResetTask flow) ===
         System.out.println("=== Phase 2: Resetting all tasks to NONE ===");
-        resetAllTasksToNone();
+
+        ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, ()->
+            ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().execContextGraphId, ()->
+                ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().execContextTaskStateId, ()->
+                        taskResetTxService.resetTaskAndExecContextTx(getExecContextForTest().id, resetTaskId)
+                )));
+
 
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
         List<ExecContextData.TaskVertex> phase2Vertices = execContextGraphService.findAll(getExecContextForTest().execContextGraphId);

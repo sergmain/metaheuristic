@@ -42,6 +42,10 @@ public interface InternalFunction {
         return false;
     }
 
+    default boolean isDynamicSubProcesses(ExecContextApiData.SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml, Long taskId) {
+        return false;
+    }
+
     /**
      * @param simpleExecContext
      * @param taskId

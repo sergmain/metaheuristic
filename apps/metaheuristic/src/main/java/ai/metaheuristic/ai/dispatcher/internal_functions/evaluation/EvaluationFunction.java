@@ -99,7 +99,7 @@ public class EvaluationFunction implements InternalFunction {
         if (log.isDebugEnabled()) {
             log.debug("mh.evaluation, expression: {} result: {}", expression, obj);
         }
-        int i=0;
+        int _=0;
     }
 
 }

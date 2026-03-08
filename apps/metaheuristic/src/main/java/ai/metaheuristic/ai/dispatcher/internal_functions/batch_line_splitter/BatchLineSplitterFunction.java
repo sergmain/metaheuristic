@@ -71,7 +71,13 @@ public class BatchLineSplitterFunction implements InternalFunction {
         return Consts.MH_BATCH_LINE_SPLITTER_FUNCTION;
     }
 
+    @Override
     public boolean isScenarioCompatible() {
+        return true;
+    }
+
+    @Override
+    public boolean isDynamicSubProcesses(ExecContextApiData.SimpleExecContext simpleExecContext, TaskParamsYaml taskParamsYaml, Long taskId) {
         return true;
     }
 
