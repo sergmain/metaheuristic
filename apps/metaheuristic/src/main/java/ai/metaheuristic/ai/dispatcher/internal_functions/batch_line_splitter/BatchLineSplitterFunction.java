@@ -99,6 +99,9 @@ public class BatchLineSplitterFunction implements InternalFunction {
         ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, String taskContextId,
         TaskParamsYaml taskParamsYaml) {
 
+        log.warn("998.010 BatchLineSplitterFunction.processInternal(), taskId: {}, taskContextId: {}, execContextId: {}",
+                taskId, taskContextId, simpleExecContext.execContextId);
+
         // variable-for-splitting
         String inputVariableName = MetaUtils.getValue(taskParamsYaml.task.metas, VARIABLE_FOR_SPLITTING);
         if (S.b(inputVariableName)) {

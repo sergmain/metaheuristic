@@ -114,13 +114,8 @@ public class TaskResetTxService {
 
         log.info("801.210 Found {} descendant tasks to reset for task #{}", descendants.size(), taskId);
 
-        Set<String> subProcessesCtxId = ContextUtils.filterTaskContexts(taskContextId, allTaskContextIds);
-
         Set<String> dynamicTaskContextIds = new LinkedHashSet<>();
         for (ExecContextData.TaskVertex descendant : descendants) {
-            if (subProcessesCtxId.contains(descendant.taskContextId)) {
-                continue;
-            }
             TaskImpl task = taskRepository.findById(descendant.taskId).orElse(null);
             if (task == null) {
                 continue;
@@ -140,6 +135,7 @@ public class TaskResetTxService {
                 continue;
             }
             dynamicTaskContextIds.add(tpy.task.taskContextId);
+            log.warn("998.020 Found dynamic-subprocess task #{}, function: {}, context: {}", descendant.taskId, tpy.task.function.code, tpy.task.taskContextId);
         }
 
         // For each dynamic-subprocess internal function (e.g. mh.batch-line-splitter) among
