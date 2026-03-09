@@ -70,7 +70,7 @@ public class SourceCodeValidationService {
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     private final SourceCodeRepository sourceCodeRepository;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
-//
+
     public SourceCodeApiData.SourceCodeValidationResult checkConsistencyOfSourceCode(SourceCodeImpl sourceCode) {
         List<String> checkedUids = new ArrayList<>();
         return checkConsistencyOfSourceCodeInternal(sourceCode, checkedUids);

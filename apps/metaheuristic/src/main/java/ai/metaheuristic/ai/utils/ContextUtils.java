@@ -21,9 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.Consts.SECOND_LEVEL_CONTEXT_ID;
@@ -229,8 +229,7 @@ public class ContextUtils {
     }
 
     public static List<String> sortSetAsTaskContextId(Collection<String> collection) {
-        List<String> list = collection instanceof List listTemp ? listTemp : new ArrayList<>(collection);
-        return list.stream().sorted(ContextUtils::compareTaskContextIds).collect(Collectors.toList());
+        return collection.stream().sorted(ContextUtils::compareTaskContextIds).collect(Collectors.toList());
     }
 
     /**
@@ -307,4 +306,7 @@ public class ContextUtils {
         return parentProcessCtxId + ANCESTOR_SEPARATOR + parentAncestorPath + CONTEXT_SEPARATOR + parentInstanceNumber;
     }
 
+    public static Set<String> filterTaskContexts(String taskContextId, List<String> allTaskContextIds) {
+        return allTaskContextIds.stream().filter(ctxId-> compareTaskContextIds(taskContextId, ctxId)>=0).collect(Collectors.toSet());
+    }
 }

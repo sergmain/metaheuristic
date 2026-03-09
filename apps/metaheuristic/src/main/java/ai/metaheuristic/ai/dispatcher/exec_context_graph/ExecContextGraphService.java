@@ -884,7 +884,7 @@ public class ExecContextGraphService {
      * Remove a set of vertices from the graph. Used during reset to delete dynamically-created
      * sub-layer tasks that will be re-created by their parent internal function.
      */
-    public void removeVertices(ExecContextGraph execContextGraph, Set<ExecContextData.TaskVertex> vertices) {
+    public void removeVertices(ExecContextGraph execContextGraph, Collection<ExecContextData.TaskVertex> vertices) {
         TxUtils.checkTxExists();
         changeGraph(execContextGraph, graph -> {
             for (ExecContextData.TaskVertex vertex : vertices) {

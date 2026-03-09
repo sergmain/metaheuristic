@@ -111,11 +111,13 @@ public class ExecContextTaskResettingService {
         TaskSyncService.getWithSyncVoid(taskId, ()->resetTask(execContext, taskId));
     }
 
-    public void resetTask(ExecContextImpl execContext, Long taskId) {
-        resetTask(execContext, taskId, null);
+    @Nullable
+    public String resetTask(ExecContextImpl execContext, Long taskId) {
+        return resetTask(execContext, taskId, null);
     }
 
-    public void resetTask(ExecContextImpl execContext, Long taskId, EnumsApi.@Nullable TaskExecState targetExecState) {
+    @Nullable
+    public String resetTask(ExecContextImpl execContext, Long taskId, EnumsApi.@Nullable TaskExecState targetExecState) {
         TxUtils.checkTxExists();
         ExecContextSyncService.checkWriteLockPresent(execContext.id);
         TaskSyncService.checkWriteLockPresent(taskId);
@@ -128,7 +130,7 @@ public class ExecContextTaskResettingService {
             log.error("155.120 Found a non-existed task, graph consistency for ExecContext#{} is failed", execContext.id);
             execContext.completedOn = System.currentTimeMillis();
             execContext.state = EnumsApi.ExecContextState.ERROR.code;
-            return;
+            return null;
         }
 
         TaskParamsYaml taskParams = task.getTaskParamsYaml();
@@ -169,6 +171,8 @@ public class ExecContextTaskResettingService {
                 new SetTaskExecStateInQueueTxEvent(task.execContextId, task.id, EnumsApi.TaskExecState.from(task.execState), null, null, null));
 
         log.info("155.240 task #{} and its output variables were re-setted to initial state", taskId);
+
+        return taskParams.task.taskContextId;
     }
 
 }
