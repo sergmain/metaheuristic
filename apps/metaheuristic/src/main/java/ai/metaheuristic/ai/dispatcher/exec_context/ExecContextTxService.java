@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
@@ -26,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.DeleteExecContextInListTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.ProcessDeletedExecContextTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskQueueCleanByExecContextIdTxEvent;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
@@ -63,6 +65,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.OperationStatus;
 
@@ -136,6 +140,15 @@ public class ExecContextTxService {
         List<String> processCodes = ExecContextProcessGraphService.getTopologyOfProcesses(ecpy);
 
         Map<Long, TaskApiData.TaskState> taskStates = taskTxService.getExecStateOfTasks(execContextId);
+
+        // Filter out orphan tasks that were removed from the graph (e.g. after task reset)
+        // but not yet cleaned up from DB by the Scheduler
+        ExecContextGraph execContextGraph = execContextGraphRepository.findById(ec.execContextGraphId).orElse(null);
+        if (execContextGraph != null) {
+            Set<Long> graphTaskIds = ExecContextGraphService.importExecContextGraph(execContextGraph.getExecContextGraphParamsYaml())
+                    .vertexSet().stream().map(v -> v.taskId).collect(Collectors.toSet());
+            taskStates.keySet().retainAll(graphTaskIds);
+        }
 
         log.info("705.225 execContextId={}, variableStates.size={}, taskStates.size={}", execContextId, variableStates.size(), taskStates.size());
         for (Map.Entry<Long, TaskApiData.TaskState> e : taskStates.entrySet()) {
