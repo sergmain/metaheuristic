@@ -108,16 +108,15 @@ public class TaskResetTxService {
         Set<ExecContextData.TaskVertex> descendants =
             execContextGraphService.findDescendants(execContextId, ec.execContextGraphId, taskId);
 
-        List<Long> allTaskIds = descendants.stream().map(ExecContextData.TaskVertex::getTaskId).collect(Collectors.toList());
         List<String > allTaskContextIds = descendants.stream().map(ExecContextData.TaskVertex::getTaskContextId).collect(Collectors.toList());
 
         log.info("801.210 Found {} descendant tasks to reset for task #{}", descendants.size(), taskId);
 
-        Set<String> subProcessesCtxTx = ContextUtils.filterTaskContexts(taskContextId, allTaskContextIds);
+        Set<String> subProcessesCtxId = ContextUtils.filterTaskContexts(taskContextId, allTaskContextIds);
 
         Set<String> dynamicTaskContextIds = new LinkedHashSet<>();
         for (ExecContextData.TaskVertex descendant : descendants) {
-            if (dynamicTaskContextIds.contains(descendant.taskContextId)) {
+            if (subProcessesCtxId.contains(descendant.taskContextId)) {
                 continue;
             }
             TaskImpl task = taskRepository.findById(descendant.taskId).orElse(null);
@@ -152,6 +151,8 @@ public class TaskResetTxService {
             execContextGraphService.removeVertices(graphAndStates.graph(), forDeletion);
             forDeletion.forEach(v->TaskQueueService.deRegisterTask(execContextId, v.taskId));
         }
+
+        // TODO p0 2025-03-08 fix code below
 
         // Reset remaining descendant tasks (those NOT deleted from graph)
         for (ExecContextData.TaskVertex descendant : descendants) {
