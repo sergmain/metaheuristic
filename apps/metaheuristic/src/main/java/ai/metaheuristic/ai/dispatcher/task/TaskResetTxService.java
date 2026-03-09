@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskSta
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
@@ -70,6 +71,7 @@ public class TaskResetTxService {
     private final TaskRepository taskRepository;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
     private final TaskFinishingTxService taskFinishingTxService;
+    private final VariableRepository variableRepository;
 
     @Transactional
     public void resetTaskAndExecContextTx(Long execContextId, Long taskId) {
@@ -150,10 +152,20 @@ public class TaskResetTxService {
             List<String> actualListCtxId = sorted.subList(0, sorted.size()-1);
             List<ExecContextData.TaskVertex> forDeletion = descendants.stream().filter(v->actualListCtxId.contains(v.taskContextId)).collect(Collectors.toList());
             execContextGraphService.removeVertices(graphAndStates.graph(), forDeletion);
+            // Collect distinct taskContextIds of deleted tasks for variable cleanup
+            Set<String> deletedCtxIds = new LinkedHashSet<>();
             forDeletion.forEach(v->{
                 deletedTaskIds.add(v.taskId);
+                deletedCtxIds.add(v.taskContextId);
                 TaskProviderTopLevelService.deregisterTask(execContextId, v.taskId);
             });
+            // Delete orphan variables from sub-process contexts that were removed from graph.
+            // Without this, re-running mh.batch-line-splitter would hit unique constraint
+            // on (name, taskContextId, execContextId) when creating new input variables.
+            for (String ctxId : deletedCtxIds) {
+                variableRepository.deleteByExecContextIdAndTaskContextId(execContextId, ctxId);
+                log.info("801.212 Deleted variables for removed context {} in execContext #{}", ctxId, execContextId);
+            }
         }
 
         // Reset remaining descendant tasks (those NOT deleted from graph)

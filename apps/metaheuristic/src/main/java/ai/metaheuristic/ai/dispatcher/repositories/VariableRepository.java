@@ -93,6 +93,10 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     void deleteByExecContextId(Long execContextId);
 
     @Modifying
+    @Query(value="delete from Variable v where v.execContextId=:execContextId and v.taskContextId=:taskContextId")
+    void deleteByExecContextIdAndTaskContextId(Long execContextId, String taskContextId);
+
+    @Modifying
     void deleteByName(String variable);
 
 }
