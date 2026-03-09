@@ -889,41 +889,42 @@ public class ExecContextGraphService {
      */
     public void removeVertices(ExecContextGraph execContextGraph, Collection<ExecContextData.TaskVertex> vertices) {
         TxUtils.checkTxExists();
-        Set<Long> toRemoveIds = vertices.stream().map(v -> v.taskId).collect(Collectors.toSet());
-        changeGraph(execContextGraph, graph -> {
-            for (ExecContextData.TaskVertex vertex : vertices) {
-                ExecContextData.TaskVertex graphVertex = graph.vertexSet().stream()
-                        .filter(v -> v.taskId.equals(vertex.taskId))
-                        .findFirst().orElse(null);
-                if (graphVertex == null) {
-                    continue;
-                }
-                // Collect parents and children before removal
-                Set<ExecContextData.TaskVertex> parents = graph.incomingEdgesOf(graphVertex).stream()
-                        .map(graph::getEdgeSource)
-                        .collect(Collectors.toCollection(LinkedHashSet::new));
-                Set<ExecContextData.TaskVertex> children = graph.outgoingEdgesOf(graphVertex).stream()
-                        .map(graph::getEdgeTarget)
-                        .collect(Collectors.toCollection(LinkedHashSet::new));
+        changeGraph(execContextGraph, graph -> removeVerticesFromGraph(graph, vertices));
+    }
 
-                graph.removeVertex(graphVertex);
+    /**
+     * Static entry point for unit tests that operate directly on the graph
+     * without requiring Spring context or DB access.
+     */
+    public static void removeVerticesFromGraph(DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph, Collection<ExecContextData.TaskVertex> vertices) {
+        for (ExecContextData.TaskVertex vertex : vertices) {
+            ExecContextData.TaskVertex graphVertex = graph.vertexSet().stream()
+                    .filter(v -> v.taskId.equals(vertex.taskId))
+                    .findFirst().orElse(null);
+            if (graphVertex == null) {
+                continue;
+            }
+            // Collect parents and children before removal
+            Set<ExecContextData.TaskVertex> parents = graph.incomingEdgesOf(graphVertex).stream()
+                    .map(graph::getEdgeSource)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            Set<ExecContextData.TaskVertex> children = graph.outgoingEdgesOf(graphVertex).stream()
+                    .map(graph::getEdgeTarget)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
 
-                // Reconnect: for each parent-child pair, add a direct edge
-                // but only if the child is not itself scheduled for removal
-                for (ExecContextData.TaskVertex parent : parents) {
-                    for (ExecContextData.TaskVertex child : children) {
-                        if (toRemoveIds.contains(child.taskId)) {
-                            continue;
-                        }
-                        if (graph.containsVertex(parent) && graph.containsVertex(child) && !graph.containsEdge(parent, child)) {
-                            graph.addEdge(parent, child);
-                        }
+            graph.removeVertex(graphVertex);
+
+            // Reconnect: for each parent-child pair, add a direct edge
+            for (ExecContextData.TaskVertex parent : parents) {
+                for (ExecContextData.TaskVertex child : children) {
+                    if (graph.containsVertex(parent) && graph.containsVertex(child) && !graph.containsEdge(parent, child)) {
+                        graph.addEdge(parent, child);
                     }
                 }
-                log.info("995.130 Removed dynamic sub-layer task #{} (ctx: {}) from graph during reset",
-                        vertex.taskId, vertex.taskContextId);
             }
-        });
+            log.info("995.130 Removed dynamic sub-layer task #{} (ctx: {}) from graph during reset",
+                    vertex.taskId, vertex.taskContextId);
+        }
     }
 
     public ExecContextGraph prepareExecContextGraph(Long execContextGraphId) {
