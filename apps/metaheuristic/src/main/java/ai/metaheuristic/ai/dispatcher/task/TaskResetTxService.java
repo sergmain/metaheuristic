@@ -142,21 +142,23 @@ public class TaskResetTxService {
 
         // the last element is at top layer, so skip last
         List<String> sorted = ContextUtils.sortSetAsTaskContextId(dynamicTaskContextIds);
+        Set<Long> deletedTaskIds = new LinkedHashSet<>();
         if (sorted.size()>1) {
             ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(
                 ec.execContextGraphId, ec.execContextTaskStateId);
 
-            List<String> actualListCtxId = sorted.subList(0, sorted.size()-2);
+            List<String> actualListCtxId = sorted.subList(0, sorted.size()-1);
             List<ExecContextData.TaskVertex> forDeletion = descendants.stream().filter(v->actualListCtxId.contains(v.taskContextId)).collect(Collectors.toList());
             execContextGraphService.removeVertices(graphAndStates.graph(), forDeletion);
-            forDeletion.forEach(v->TaskQueueService.deRegisterTask(execContextId, v.taskId));
+            forDeletion.forEach(v->{
+                deletedTaskIds.add(v.taskId);
+                TaskProviderTopLevelService.deregisterTask(execContextId, v.taskId);
+            });
         }
-
-        // TODO p0 2025-03-08 fix code below
 
         // Reset remaining descendant tasks (those NOT deleted from graph)
         for (ExecContextData.TaskVertex descendant : descendants) {
-            if (dynamicSubLayerTaskIds.contains(descendant.taskId)) {
+            if (deletedTaskIds.contains(descendant.taskId)) {
                 log.info("801.214 Skipping reset of dynamically-deleted task #{}", descendant.taskId);
                 continue;
             }
@@ -176,7 +178,7 @@ public class TaskResetTxService {
         ExecContextTaskStateParamsYaml stateParams = execContextTaskState.getExecContextTaskStateParamsYaml();
         stateParams.states.put(taskId, EnumsApi.TaskExecState.INIT);
         for (ExecContextData.TaskVertex descendant : descendants) {
-            if (dynamicSubLayerTaskIds.contains(descendant.taskId)) {
+            if (deletedTaskIds.contains(descendant.taskId)) {
                 // Remove state entry for deleted tasks
                 stateParams.states.remove(descendant.taskId);
             }

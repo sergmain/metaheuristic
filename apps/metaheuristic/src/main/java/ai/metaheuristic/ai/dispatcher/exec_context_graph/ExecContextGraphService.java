@@ -881,21 +881,47 @@ public class ExecContextGraphService {
     }
 
     /**
-     * Remove a set of vertices from the graph. Used during reset to delete dynamically-created
-     * sub-layer tasks that will be re-created by their parent internal function.
+     * Remove a set of vertices from the graph one-by-one, preserving DAG consistency.
+     * When a vertex in the middle of the DAG is removed, its parents are connected
+     * directly to its children so the graph remains connected.
+     * Used during reset to delete dynamically-created sub-layer tasks that will be
+     * re-created by their parent internal function.
      */
     public void removeVertices(ExecContextGraph execContextGraph, Collection<ExecContextData.TaskVertex> vertices) {
         TxUtils.checkTxExists();
+        Set<Long> toRemoveIds = vertices.stream().map(v -> v.taskId).collect(Collectors.toSet());
         changeGraph(execContextGraph, graph -> {
             for (ExecContextData.TaskVertex vertex : vertices) {
                 ExecContextData.TaskVertex graphVertex = graph.vertexSet().stream()
                         .filter(v -> v.taskId.equals(vertex.taskId))
                         .findFirst().orElse(null);
-                if (graphVertex != null) {
-                    graph.removeVertex(graphVertex);
-                    log.info("995.130 Removed dynamic sub-layer task #{} (ctx: {}) from graph during reset",
-                            vertex.taskId, vertex.taskContextId);
+                if (graphVertex == null) {
+                    continue;
                 }
+                // Collect parents and children before removal
+                Set<ExecContextData.TaskVertex> parents = graph.incomingEdgesOf(graphVertex).stream()
+                        .map(graph::getEdgeSource)
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+                Set<ExecContextData.TaskVertex> children = graph.outgoingEdgesOf(graphVertex).stream()
+                        .map(graph::getEdgeTarget)
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+
+                graph.removeVertex(graphVertex);
+
+                // Reconnect: for each parent-child pair, add a direct edge
+                // but only if the child is not itself scheduled for removal
+                for (ExecContextData.TaskVertex parent : parents) {
+                    for (ExecContextData.TaskVertex child : children) {
+                        if (toRemoveIds.contains(child.taskId)) {
+                            continue;
+                        }
+                        if (graph.containsVertex(parent) && graph.containsVertex(child) && !graph.containsEdge(parent, child)) {
+                            graph.addEdge(parent, child);
+                        }
+                    }
+                }
+                log.info("995.130 Removed dynamic sub-layer task #{} (ctx: {}) from graph during reset",
+                        vertex.taskId, vertex.taskContextId);
             }
         });
     }
