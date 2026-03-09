@@ -142,30 +142,38 @@ public class TaskResetTxService {
             dynamicTaskContextIds.add(tpy.task.taskContextId);
         }
 
-        // the last element is at top layer, so skip last
-        List<String> sorted = ContextUtils.sortSetAsTaskContextId(dynamicTaskContextIds);
+        // For each dynamic-subprocess internal function (e.g. mh.batch-line-splitter) among
+        // descendants, ALL its sub-process children must be deleted from the graph.
+        // When the splitter is reset to PRE_INIT and re-runs, it will recreate new sub-process
+        // tasks and variables. Old sub-process tasks and their variables must be removed.
+        // A descendant vertex is a sub-process child if its context is a child (at any depth)
+        // of one of the dynamicTaskContextIds.
         Set<Long> deletedTaskIds = new LinkedHashSet<>();
-        if (sorted.size()>1) {
-            ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(
-                ec.execContextGraphId, ec.execContextTaskStateId);
+        Set<String> deletedCtxIds = new LinkedHashSet<>();
+        if (!dynamicTaskContextIds.isEmpty()) {
+            List<ExecContextData.TaskVertex> forDeletion = descendants.stream()
+                    .filter(v -> isChildOfDynamicContext(v.taskContextId, dynamicTaskContextIds))
+                    .collect(Collectors.toList());
 
-            List<String> actualListCtxId = sorted.subList(0, sorted.size()-1);
-            List<ExecContextData.TaskVertex> forDeletion = descendants.stream().filter(v->actualListCtxId.contains(v.taskContextId)).collect(Collectors.toList());
-            execContextGraphService.removeVertices(graphAndStates.graph(), forDeletion);
-            // Collect distinct taskContextIds of deleted tasks for variable cleanup
-            Set<String> deletedCtxIds = new LinkedHashSet<>();
-            forDeletion.forEach(v->{
-                deletedTaskIds.add(v.taskId);
-                deletedCtxIds.add(v.taskContextId);
-                TaskProviderTopLevelService.deregisterTask(execContextId, v.taskId);
-            });
-            // Delete orphan variables from sub-process contexts that were removed from graph.
-            // Without this, re-running mh.batch-line-splitter would hit unique constraint
-            // on (name, taskContextId, execContextId) when creating new input variables.
-            for (String ctxId : deletedCtxIds) {
-                variableRepository.deleteByExecContextIdAndTaskContextId(execContextId, ctxId);
-                log.info("801.212 Deleted variables for removed context {} in execContext #{}", ctxId, execContextId);
+            if (!forDeletion.isEmpty()) {
+                ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(
+                        ec.execContextGraphId, ec.execContextTaskStateId);
+                execContextGraphService.removeVertices(graphAndStates.graph(), forDeletion);
+                forDeletion.forEach(v -> {
+                    deletedTaskIds.add(v.taskId);
+                    deletedCtxIds.add(v.taskContextId);
+                    TaskProviderTopLevelService.deregisterTask(execContextId, v.taskId);
+                });
+                log.info("801.212 Deleted {} sub-process tasks from graph, contexts: {}", forDeletion.size(), deletedCtxIds);
             }
+        }
+
+        // Delete variables for all sub-process contexts removed from graph.
+        // This removes input variables created by mh.batch-line-splitter for its sub-process children
+        // and also output variables of the deleted tasks — all will be recreated when the splitter re-runs.
+        for (String ctxId : deletedCtxIds) {
+            variableRepository.deleteByExecContextIdAndTaskContextId(execContextId, ctxId);
+            log.info("801.213 Deleted variables for removed context {} in execContext #{}", ctxId, execContextId);
         }
 
         // Reset remaining descendant tasks (those NOT deleted from graph)
@@ -203,6 +211,25 @@ public class TaskResetTxService {
 
         // Trigger task assignment so the scheduler picks up the reset tasks
         eventPublisherService.handleFindUnassignedTasksAndRegisterInQueueEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
+    }
+
+    /**
+     * Check whether a taskContextId is a child (at any depth) of one of the dynamic-subprocess contexts.
+     * Walks up via {@link ContextUtils#deriveParentTaskContextId} until a match is found or root is reached.
+     */
+    private static boolean isChildOfDynamicContext(String taskContextId, Set<String> dynamicContextIds) {
+        String current = taskContextId;
+        for (int i = 0; i < 100; i++) {
+            String parent = ContextUtils.deriveParentTaskContextId(current);
+            if (parent == null) {
+                return false;
+            }
+            if (dynamicContextIds.contains(parent)) {
+                return true;
+            }
+            current = parent;
+        }
+        return false;
     }
 
 }
