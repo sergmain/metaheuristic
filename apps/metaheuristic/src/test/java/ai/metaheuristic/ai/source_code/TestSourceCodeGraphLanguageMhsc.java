@@ -526,6 +526,197 @@ public class TestSourceCodeGraphLanguageMhsc {
         assertEquals(".xml", p.inputs.get(0).ext);
     }
 
+    // ===================== Templated mhdg-rg-flat: parse + structural =====================
+
+    @Test
+    public void test_rg_flat_templated_parses() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
+        assertNotNull(graph);
+        assertEquals(1, findLeafs(graph).size(), "Graph:\n" + asString(graph.processGraph));
+    }
+
+    @Test
+    public void test_rg_flat_templated_vs_yaml_process_count() throws IOException {
+        SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-1.0.0.yaml");
+        SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
+
+        assertEquals(yamlGraph.processes.size(), mhscGraph.processes.size(),
+                "Process count mismatch.\nYAML processes: " +
+                yamlGraph.processes.stream().map(p -> p.processCode).sorted().toList() +
+                "\nMHSC processes: " +
+                mhscGraph.processes.stream().map(p -> p.processCode).sorted().toList());
+    }
+
+    @Test
+    public void test_rg_flat_templated_vs_yaml_vertex_count() throws IOException {
+        SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-1.0.0.yaml");
+        SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
+
+        assertEquals(yamlGraph.processGraph.vertexSet().size(), mhscGraph.processGraph.vertexSet().size(),
+                "Vertex count mismatch.\nYAML graph:\n" + asString(yamlGraph.processGraph) +
+                "\nMHSC graph:\n" + asString(mhscGraph.processGraph));
+    }
+
+    @Test
+    public void test_rg_flat_templated_vs_yaml_all_process_codes_present() throws IOException {
+        SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-1.0.0.yaml");
+        SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
+
+        for (ExecContextParamsYaml.Process yp : yamlGraph.processes) {
+            ExecContextParamsYaml.Process mp = mhscGraph.processes.stream()
+                    .filter(p -> p.processCode.equals(yp.processCode))
+                    .findFirst().orElse(null);
+            assertNotNull(mp, "Process code '" + yp.processCode + "' missing in MHSC graph");
+        }
+    }
+
+    @Test
+    public void test_rg_flat_templated_vs_yaml_function_codes() throws IOException {
+        SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-1.0.0.yaml");
+        SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
+
+        for (ExecContextParamsYaml.Process yp : yamlGraph.processes) {
+            ExecContextParamsYaml.Process mp = mhscGraph.processes.stream()
+                    .filter(p -> p.processCode.equals(yp.processCode))
+                    .findFirst().orElse(null);
+            if (mp == null) continue;
+            assertEquals(yp.function.code, mp.function.code,
+                    "Function code mismatch for process '" + yp.processCode + "'");
+            assertEquals(yp.function.context, mp.function.context,
+                    "Function context mismatch for process '" + yp.processCode + "'");
+        }
+    }
+
+    @Test
+    public void test_rg_flat_templated_vs_yaml_io_counts() throws IOException {
+        SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-1.0.0.yaml");
+        SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
+
+        for (ExecContextParamsYaml.Process yp : yamlGraph.processes) {
+            ExecContextParamsYaml.Process mp = mhscGraph.processes.stream()
+                    .filter(p -> p.processCode.equals(yp.processCode))
+                    .findFirst().orElse(null);
+            if (mp == null) continue;
+            assertEquals(yp.inputs.size(), mp.inputs.size(),
+                    "Input count mismatch for '" + yp.processCode + "'" +
+                    "\nYAML: " + yp.inputs.stream().map(v -> v.name).toList() +
+                    "\nMHSC: " + mp.inputs.stream().map(v -> v.name).toList());
+            assertEquals(yp.outputs.size(), mp.outputs.size(),
+                    "Output count mismatch for '" + yp.processCode + "'" +
+                    "\nYAML: " + yp.outputs.stream().map(v -> v.name).toList() +
+                    "\nMHSC: " + mp.outputs.stream().map(v -> v.name).toList());
+        }
+    }
+
+    @Test
+    public void test_rg_flat_templated_vs_yaml_timeouts() throws IOException {
+        SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-1.0.0.yaml");
+        SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
+
+        for (ExecContextParamsYaml.Process yp : yamlGraph.processes) {
+            ExecContextParamsYaml.Process mp = mhscGraph.processes.stream()
+                    .filter(p -> p.processCode.equals(yp.processCode))
+                    .findFirst().orElse(null);
+            if (mp == null) continue;
+            assertEquals(yp.timeoutBeforeTerminate, mp.timeoutBeforeTerminate,
+                    "Timeout mismatch for '" + yp.processCode + "'");
+        }
+    }
+
+    @Test
+    public void test_rg_flat_templated_vs_yaml_conditions() throws IOException {
+        SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-1.0.0.yaml");
+        SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
+
+        for (ExecContextParamsYaml.Process yp : yamlGraph.processes) {
+            ExecContextParamsYaml.Process mp = mhscGraph.processes.stream()
+                    .filter(p -> p.processCode.equals(yp.processCode))
+                    .findFirst().orElse(null);
+            if (mp == null) continue;
+            assertEquals(yp.condition, mp.condition,
+                    "Condition mismatch for '" + yp.processCode + "'");
+        }
+    }
+
+    @Test
+    public void test_rg_flat_templated_vs_yaml_cache() throws IOException {
+        SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-1.0.0.yaml");
+        SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
+
+        for (ExecContextParamsYaml.Process yp : yamlGraph.processes) {
+            ExecContextParamsYaml.Process mp = mhscGraph.processes.stream()
+                    .filter(p -> p.processCode.equals(yp.processCode))
+                    .findFirst().orElse(null);
+            if (mp == null) continue;
+            if (yp.cache != null) {
+                assertNotNull(mp.cache, "Cache should not be null for '" + yp.processCode + "'");
+                assertEquals(yp.cache.enabled, mp.cache.enabled,
+                        "Cache enabled mismatch for '" + yp.processCode + "'");
+            }
+        }
+    }
+
+    @Test
+    public void test_rg_flat_templated_vs_yaml_logic() throws IOException {
+        SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-1.0.0.yaml");
+        SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
+
+        for (ExecContextParamsYaml.Process yp : yamlGraph.processes) {
+            ExecContextParamsYaml.Process mp = mhscGraph.processes.stream()
+                    .filter(p -> p.processCode.equals(yp.processCode))
+                    .findFirst().orElse(null);
+            if (mp == null) continue;
+            assertEquals(yp.logic, mp.logic,
+                    "Logic mismatch for '" + yp.processCode + "'");
+        }
+    }
+
+    @Test
+    public void test_rg_flat_templated_template_expansion_level0_no_parentId() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
+        // Level 0 store-req should NOT have parentId input
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("mhdg-rg.store-req-0"))
+                .findFirst().orElseThrow();
+        assertEquals(2, p.inputs.size(),
+                "Level 0 store-req should have 2 inputs (projectCode, reqJson0). Got: " +
+                p.inputs.stream().map(v -> v.name).toList());
+    }
+
+    @Test
+    public void test_rg_flat_templated_template_expansion_level1_has_parentId() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
+        // Level 1+ store-req should have parentId input
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("mhdg-rg.store-req-1"))
+                .findFirst().orElseThrow();
+        assertEquals(3, p.inputs.size(),
+                "Level 1 store-req should have 3 inputs (projectCode, reqJson1, parentId1). Got: " +
+                p.inputs.stream().map(v -> v.name).toList());
+    }
+
+    @Test
+    public void test_rg_flat_templated_parameterized_ids_resolved() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
+        // Check that {L} and {L+1} are properly resolved for level 3
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("mhdg-rg.check-objectives-4"))
+                .findFirst().orElseThrow();
+        // Input should be requirementId3 (L=3)
+        assertEquals("requirementId3", p.inputs.get(0).name);
+        // Outputs should have hasObjectives4, requirementIdObj4 etc. (L+1=4)
+        assertTrue(p.outputs.stream().anyMatch(v -> v.name.equals("hasObjectives4")));
+        assertTrue(p.outputs.stream().anyMatch(v -> v.name.equals("requirementIdObj4")));
+    }
+
+    @Test
+    public void test_rg_flat_templated_leaf_level_store_only() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-1.0.0.mhsc");
+        // Level 5 batch-splitter should contain only store-req-5 and set-reset-task-id-5
+        assertTrue(graph.processes.stream().anyMatch(p -> p.processCode.equals("mhdg-rg.store-req-5")));
+        assertTrue(graph.processes.stream().anyMatch(p -> p.processCode.equals("mhdg-rg.set-reset-task-id-5")));
+    }
+
     // ============ Helpers ============
 
     private SourceCodeGraph parseYaml(String resourcePath) throws IOException {

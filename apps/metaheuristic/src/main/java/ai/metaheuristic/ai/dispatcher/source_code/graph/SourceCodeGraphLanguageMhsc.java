@@ -405,10 +405,36 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                 throw new SourceCodeGraphException("564.320 Unknown template: " + templateName);
             }
 
-            // Bind template parameters
-            // For now, template args are simple values bound to parameter names
-            // The actual mechanism would need to store arg values and resolve them in idRef
-            // This is a simplified implementation
+            // Bind template parameters to argument values
+            Map<String, Integer> savedVars = new HashMap<>();
+            List<String> paramNames = new ArrayList<>();
+            if (tmpl.paramList() != null) {
+                List<TerminalNode> paramIds = tmpl.paramList().ID();
+                List<MhSourceCodeParser.ArgContext> args =
+                        ctx.argList() != null ? ctx.argList().arg() : List.of();
+                for (int i = 0; i < paramIds.size(); i++) {
+                    String paramName = paramIds.get(i).getText();
+                    paramNames.add(paramName);
+                    // Save existing binding if any
+                    if (loopVariables.containsKey(paramName)) {
+                        savedVars.put(paramName, loopVariables.get(paramName));
+                    }
+                    if (i < args.size()) {
+                        MhSourceCodeParser.ArgContext arg = args.get(i);
+                        if (arg.INT() != null) {
+                            loopVariables.put(paramName, Integer.parseInt(arg.INT().getText()));
+                        } else if (arg.idRef() != null) {
+                            // idRef arg — might be a loop variable reference like L
+                            String argText = resolveIdRef(arg.idRef());
+                            try {
+                                loopVariables.put(paramName, Integer.parseInt(argText));
+                            } catch (NumberFormatException e) {
+                                // Non-numeric arg — not supported for parameterized ids
+                            }
+                        }
+                    }
+                }
+            }
 
             Set<ExecContextData.ProcessVertex> currentParents = parents;
             for (MhSourceCodeParser.ProcessOrControlContext poc : tmpl.processOrControl()) {
@@ -420,6 +446,16 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                     currentParents = processTemplateCall(poc.templateCall(), internalContextId, currentParents);
                 }
             }
+
+            // Restore previous bindings
+            for (String paramName : paramNames) {
+                if (savedVars.containsKey(paramName)) {
+                    loopVariables.put(paramName, savedVars.get(paramName));
+                } else {
+                    loopVariables.remove(paramName);
+                }
+            }
+
             return currentParents;
         }
 

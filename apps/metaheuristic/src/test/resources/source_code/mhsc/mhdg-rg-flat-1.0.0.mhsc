@@ -1,0 +1,226 @@
+source "mhdg-rg-flat-1.0.12" (strict) {
+
+    variables {
+        <- projectCode
+    }
+
+    // === Level 0: Read project and create top-level requirements ===
+
+    mhdg-rg.read-project-task := internal mhdg-rg.read-project-task {
+        meta projectCode = "projectCode"
+        -> projectTask: type=task, ext=".txt",
+           decompositionPolicy: type=decomposition-policy, ext=".txt",
+           topLevelPolicy: type=top-level-policy, ext=".txt"
+        timeout 60
+    }
+
+    mhdg-rg.top-level-task := mhdg-rg.call-cc-1.0.12 {
+        name "Convert project-level task to top-level requirements"
+        meta rg-mode = "task",
+             variable-for-topLevelPolicy = "topLevelPolicy",
+             variable-for-output = "topLevelReqs"
+        <- projectCode, projectTask, topLevelPolicy
+        -> topLevelReqs: type=requirement, ext=".jsonl"
+        timeout 120
+        cache on
+    }
+
+    // === Templates for repeating patterns ===
+
+    // Store requirement (level 0 — no parentId)
+    template storeLevel0() {
+        mhdg-rg.store-req-0 := internal mhdg-rg.store-req {
+            name "Store single top-level requirement"
+            meta reqJson = "reqJson0"
+            <- projectCode, reqJson0
+            -> requirementId0: type=requirement-id, ext=".txt"
+            timeout 60
+        }
+        mhdg-rg.set-reset-task-id-0 := internal mhdg-rg.set-reset-task-id {
+            name "Set resetTaskId on top-level requirement"
+            meta requirementId = "requirementId0"
+            <- requirementId0
+            timeout 60
+        }
+    }
+
+    // Store requirement (levels 1+ — has parentId)
+    template storeLevel(L) {
+        mhdg-rg.store-req-{L} := internal mhdg-rg.store-req {
+            name "Store single requirement"
+            meta reqJson = "reqJson{L}",
+                 parentId = "parentId{L}"
+            <- projectCode, reqJson{L}, parentId{L}
+            -> requirementId{L}: type=requirement-id, ext=".txt"
+            timeout 60
+        }
+        mhdg-rg.set-reset-task-id-{L} := internal mhdg-rg.set-reset-task-id {
+            name "Set resetTaskId on requirement"
+            meta requirementId = "requirementId{L}"
+            <- requirementId{L}
+            timeout 60
+        }
+    }
+
+    // Objective checking and evaluation
+    template objectives(L) {
+        mhdg-rg.check-objectives-{L+1} := internal mhdg-rg.check-objectives {
+            name "Check for pending objectives"
+            meta requirementId = "requirementId{L}",
+                 hasObjectives = "hasObjectives{L+1}",
+                 requirementIdObj = "requirementIdObj{L+1}",
+                 requirementContentObj = "requirementContentObj{L+1}",
+                 objectiveTextObj = "objectiveTextObj{L+1}",
+                 amendmentStatus = "amendmentStatus{L+1}"
+            <- requirementId{L}
+            -> hasObjectives{L+1}: type=boolean, ext=".txt",
+               requirementIdObj{L+1}: type=requirement-id, nullable, ext=".txt",
+               requirementContentObj{L+1}: type=requirement-content, nullable, ext=".txt",
+               objectiveTextObj{L+1}: type=objective-text, nullable, ext=".txt",
+               amendmentStatus{L+1}: type=amendment-status, ext=".txt"
+            timeout 60
+        }
+        mh.nop-objectives-wrapper-{L+1} := internal mh.nop {
+            sequential {
+                mh.nop-objectives-{L+1} := internal mh.nop {
+                    when hasObjectives{L+1} ? true : false
+                    sequential {
+                        mhdg-rg.evaluate-objective-{L+1} := mhdg-rg.call-cc-1.0.12 {
+                            name "Evaluate and apply objective"
+                            meta rg-mode = "req-objective",
+                                 variable-for-projectCode = "projectCode",
+                                 variable-for-requirementContent = "requirementContentObj{L+1}",
+                                 variable-for-requirementId = "requirementIdObj{L+1}",
+                                 variable-for-objectiveText = "objectiveTextObj{L+1}",
+                                 variable-for-output = "objectiveResult{L+1}"
+                            <- projectCode, requirementContentObj{L+1}, requirementIdObj{L+1}, objectiveTextObj{L+1}
+                            -> objectiveResult{L+1}: type=objective-result, nullable, ext=".jsonl"
+                            timeout 300
+                        }
+                        mhdg-rg.store-objective-result-{L+1} := internal mhdg-rg.store-objective-result {
+                            name "Store objective result"
+                            meta objectiveResult = "objectiveResult{L+1}",
+                                 amendmentStatus = "amendmentStatus{L+1}"
+                            <- projectCode, objectiveResult{L+1}
+                            -> cascadeResult{L+1}: type=cascade-result, nullable, ext=".json",
+                               amendmentStatus{L+1}: type=amendment-status, ext=".txt"
+                            timeout 60
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Read and decompose into next level
+    template readDecompose(L) {
+        mhdg-rg.read-req-{L+1} := internal mhdg-rg.read-req {
+            meta reqId = "requirementId{L}",
+                 requirementContent = "requirementContent{L+1}",
+                 parentId = "parentId{L+1}",
+                 ancestorStack = "ancestorStack{L+1}"
+            <- requirementId{L}
+            -> requirementContent{L+1}: type=requirement-content, ext=".txt",
+               parentId{L+1}: type=parent-id, ext=".txt",
+               ancestorStack{L+1}: type=ancestor-stack, nullable, ext=".jsonl"
+            timeout 60
+        }
+        mhdg-rg.decompose-{L+1} := mhdg-rg.call-cc-1.0.12 {
+            meta rg-mode = "decompose",
+                 variable-for-projectCode = "projectCode",
+                 variable-for-requirementContent = "requirementContent{L+1}",
+                 variable-for-parentId = "parentId{L+1}",
+                 variable-for-decompositionPolicy = "decompositionPolicy",
+                 variable-for-output = "topLevelReqs{L+1}",
+                 variable-for-ancestorStack = "ancestorStack{L+1}"
+            <- projectCode, requirementContent{L+1}, parentId{L+1}, decompositionPolicy, ancestorStack{L+1}?
+            -> topLevelReqs{L+1}: type=requirement, ext=".jsonl"
+            timeout 180
+            cache on
+        }
+    }
+
+    // Batch splitter wrapper for a given level
+    template batchSplitter(L) {
+        mh.batch-line-splitter-{L} := internal mh.batch-line-splitter {
+            meta number-of-lines-per-task = "1",
+                 variable-for-splitting = "topLevelReqs{L}",
+                 output-is-dynamic = "true",
+                 output-variable = "reqJson{L}",
+                 is-array = "false"
+        }
+    }
+
+    // === Nested batch splitters: level 0 contains level 1 contains ... level 5 ===
+
+    mh.batch-line-splitter-0 := internal mh.batch-line-splitter {
+        meta number-of-lines-per-task = "1",
+             variable-for-splitting = "topLevelReqs",
+             output-is-dynamic = "true",
+             output-variable = "reqJson0",
+             is-array = "false"
+        sequential {
+            @storeLevel0()
+            @objectives(0)
+            @readDecompose(0)
+            mh.batch-line-splitter-1 := internal mh.batch-line-splitter {
+                meta number-of-lines-per-task = "1",
+                     variable-for-splitting = "topLevelReqs1",
+                     output-is-dynamic = "true",
+                     output-variable = "reqJson1",
+                     is-array = "false"
+                sequential {
+                    @storeLevel(1)
+                    @objectives(1)
+                    @readDecompose(1)
+                    mh.batch-line-splitter-2 := internal mh.batch-line-splitter {
+                        meta number-of-lines-per-task = "1",
+                             variable-for-splitting = "topLevelReqs2",
+                             output-is-dynamic = "true",
+                             output-variable = "reqJson2",
+                             is-array = "false"
+                        sequential {
+                            @storeLevel(2)
+                            @objectives(2)
+                            @readDecompose(2)
+                            mh.batch-line-splitter-3 := internal mh.batch-line-splitter {
+                                meta number-of-lines-per-task = "1",
+                                     variable-for-splitting = "topLevelReqs3",
+                                     output-is-dynamic = "true",
+                                     output-variable = "reqJson3",
+                                     is-array = "false"
+                                sequential {
+                                    @storeLevel(3)
+                                    @objectives(3)
+                                    @readDecompose(3)
+                                    mh.batch-line-splitter-4 := internal mh.batch-line-splitter {
+                                        meta number-of-lines-per-task = "1",
+                                             variable-for-splitting = "topLevelReqs4",
+                                             output-is-dynamic = "true",
+                                             output-variable = "reqJson4",
+                                             is-array = "false"
+                                        sequential {
+                                            @storeLevel(4)
+                                            @objectives(4)
+                                            @readDecompose(4)
+                                            mh.batch-line-splitter-5 := internal mh.batch-line-splitter {
+                                                meta number-of-lines-per-task = "1",
+                                                     variable-for-splitting = "topLevelReqs5",
+                                                     output-is-dynamic = "true",
+                                                     output-variable = "reqJson5",
+                                                     is-array = "false"
+                                                sequential {
+                                                    @storeLevel(5)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
