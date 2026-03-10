@@ -1,0 +1,12 @@
+source "mh-factorial-main-1.8" (strict) {
+
+    variables {
+        global mh_int_0, mh_int_1, mh_int_5
+    }
+
+    mh.exec-source-code := internal mh.exec-source-code {
+        <- mh_int_0, mh_int_1, mh_int_5
+        -> resultOutput: ext=".txt"
+        meta source-code-uid = "mh-factorial-recursion-1.17"
+    }
+}

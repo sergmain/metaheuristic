@@ -1,0 +1,37 @@
+source "mh-factorial-recursion-1.17" (strict) {
+
+    variables {
+        <- currIndex, inputValue, factorialOf
+        -> factorialResult
+    }
+
+    mh.evaluation0 := internal mh.evaluation {
+        meta expression = "factorialResult = inputValue"
+        when currIndex > factorialOf - 1
+    }
+
+    mh.nop := internal mh.nop {
+        when currIndex < factorialOf
+        sequential {
+            mh.evaluation1 := internal mh.evaluation {
+                -> index: ext=".txt"
+                meta expression = "index = currIndex + 1"
+            }
+
+            mh.multiply_1.2 := mh.multiply_1.2 {
+                <- inputValue, index
+                -> result: ext=".txt"
+            }
+
+            mh.exec-source-code := internal mh.exec-source-code {
+                <- index, result, factorialOf
+                -> subResult: ext=".txt"
+                meta source-code-uid = "mh-factorial-recursion-1.17"
+            }
+
+            mh.evaluation2 := internal mh.evaluation {
+                meta expression = "factorialResult = subResult"
+            }
+        }
+    }
+}

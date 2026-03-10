@@ -496,6 +496,14 @@ public class TestMhscParserRules {
         r.assertNoErrors();
     }
 
+    @Test public void test_processDecl_with_zero_priority() {
+        var r = parseProcessDecl(
+                "my-process := some-function {\n" +
+                "    priority 0\n" +
+                "}");
+        r.assertNoErrors();
+    }
+
     @Test public void test_processDecl_with_tries() {
         var r = parseProcessDecl(
                 "my-process := some-function {\n" +

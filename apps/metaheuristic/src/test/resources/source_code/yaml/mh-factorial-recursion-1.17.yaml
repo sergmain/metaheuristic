@@ -1,0 +1,70 @@
+version: 3
+source:
+  strictNaming: true
+  uid: mh-factorial-recursion-1.17
+  variables:
+    inputs:
+      - name: currIndex
+      - name: inputValue
+      - name: factorialOf
+    outputs:
+      - name: factorialResult
+  processes:
+    - code: mh.evaluation0
+      name: mh.evaluation0
+      function:
+        code: mh.evaluation
+        context: internal
+      metas:
+        - expression: factorialResult = inputValue
+      condition: currIndex > factorialOf - 1
+    - code: mh.nop
+      name: mh.nop
+      function:
+        code: mh.nop
+        context: internal
+      condition: currIndex < factorialOf
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: mh.evaluation1
+            name: mh.evaluation1
+            function:
+              code: mh.evaluation
+              context: internal
+            outputs:
+              - name: index
+                ext: .txt
+            metas:
+              - expression: index = currIndex + 1
+          - code: mh.multiply:1.2
+            name: mh.multiply:1.2
+            function:
+              code: mh.multiply:1.2
+            inputs:
+              - name: inputValue
+              - name: index
+            outputs:
+              - name: result
+                ext: .txt
+          - code: mh.exec-source-code
+            name: mh.exec-source-code
+            function:
+              code: mh.exec-source-code
+              context: internal
+            inputs:
+              - name: index
+              - name: result
+              - name: factorialOf
+            outputs:
+              - name: subResult
+                ext: .txt
+            metas:
+              - source-code-uid: mh-factorial-recursion-1.17
+          - code: mh.evaluation2
+            name: mh.evaluation2
+            function:
+              code: mh.evaluation
+              context: internal
+            metas:
+              - expression: factorialResult = subResult

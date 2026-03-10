@@ -29,6 +29,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.SourceCodeGraph;
@@ -197,6 +198,194 @@ public class TestSourceCodeGraphLanguageMhsc {
         assertEquals("hello", SourceCodeGraphLanguageMhsc.unquote("'hello'"));
         assertEquals("he\"llo", SourceCodeGraphLanguageMhsc.unquote("\"he\\\"llo\""));
         assertEquals("plain", SourceCodeGraphLanguageMhsc.unquote("plain"));
+    }
+
+    @Test
+    public void test_priority_negative() throws IOException {
+        String mhsc =
+                "source \"test\" {\n" +
+                "    my-proc := some-func {\n" +
+                "        priority -1\n" +
+                "        timeout 10\n" +
+                "    }\n" +
+                "}";
+        AtomicLong contextId = new AtomicLong();
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc, () -> "" + contextId.incrementAndGet());
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("my-proc"))
+                .findFirst().orElseThrow();
+        assertEquals(-1, p.priority);
+    }
+
+    @Test
+    public void test_priority_positive() throws IOException {
+        String mhsc =
+                "source \"test\" {\n" +
+                "    my-proc := some-func {\n" +
+                "        priority 5\n" +
+                "        timeout 10\n" +
+                "    }\n" +
+                "}";
+        AtomicLong contextId = new AtomicLong();
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc, () -> "" + contextId.incrementAndGet());
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("my-proc"))
+                .findFirst().orElseThrow();
+        assertEquals(5, p.priority);
+    }
+
+    @Test
+    public void test_priority_zero() throws IOException {
+        String mhsc =
+                "source \"test\" {\n" +
+                "    my-proc := some-func {\n" +
+                "        priority 0\n" +
+                "    }\n" +
+                "}";
+        AtomicLong contextId = new AtomicLong();
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc, () -> "" + contextId.incrementAndGet());
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("my-proc"))
+                .findFirst().orElseThrow();
+        assertEquals(0, p.priority);
+    }
+
+    // ===================== Factorial: parse without errors =====================
+
+    @Test
+    public void test_factorial_main_parses() throws IOException {
+        String mhsc = IOUtils.resourceToString("/source_code/mhsc/mh-factorial-main-1.8.mhsc", StandardCharsets.UTF_8);
+        AtomicLong contextId = new AtomicLong();
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc, () -> "" + contextId.incrementAndGet());
+        assertNotNull(graph);
+        assertEquals(1, findLeafs(graph).size(), "Graph:\n" + asString(graph.processGraph));
+    }
+
+    @Test
+    public void test_factorial_recursion_parses() throws IOException {
+        String mhsc = IOUtils.resourceToString("/source_code/mhsc/mh-factorial-recursion-1.17.mhsc", StandardCharsets.UTF_8);
+        AtomicLong contextId = new AtomicLong();
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc, () -> "" + contextId.incrementAndGet());
+        assertNotNull(graph);
+        assertEquals(1, findLeafs(graph).size(), "Graph:\n" + asString(graph.processGraph));
+    }
+
+    // ===================== Factorial main: structural tests =====================
+
+    @Test
+    public void test_factorial_main_globals() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mh-factorial-main-1.8.mhsc");
+        assertNotNull(graph.variables.globals);
+        assertEquals(3, graph.variables.globals.size());
+        assertTrue(graph.variables.globals.contains("mh_int_0"));
+        assertTrue(graph.variables.globals.contains("mh_int_1"));
+        assertTrue(graph.variables.globals.contains("mh_int_5"));
+    }
+
+    @Test
+    public void test_factorial_main_process_count() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mh-factorial-main-1.8.mhsc");
+        // 1 declared process + 1 auto-added mh.finish
+        assertEquals(2, graph.processes.size(),
+                "Processes: " + graph.processes.stream().map(p -> p.processCode).toList());
+    }
+
+    @Test
+    public void test_factorial_main_exec_source_code_process() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mh-factorial-main-1.8.mhsc");
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("mh.exec-source-code"))
+                .findFirst().orElseThrow();
+        assertEquals("mh.exec-source-code", p.function.code);
+        assertEquals(EnumsApi.FunctionExecContext.internal, p.function.context);
+        assertEquals(3, p.inputs.size());
+        assertEquals(1, p.outputs.size());
+        assertEquals("resultOutput", p.outputs.get(0).name);
+        assertEquals(".txt", p.outputs.get(0).ext);
+        assertEquals(1, p.metas.size());
+    }
+
+    // ===================== Factorial recursion: structural tests =====================
+
+    @Test
+    public void test_factorial_recursion_variables() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mh-factorial-recursion-1.17.mhsc");
+        assertEquals(3, graph.variables.inputs.size());
+        assertEquals("currIndex", graph.variables.inputs.get(0).name);
+        assertEquals("inputValue", graph.variables.inputs.get(1).name);
+        assertEquals("factorialOf", graph.variables.inputs.get(2).name);
+        assertEquals(1, graph.variables.outputs.size());
+        assertEquals("factorialResult", graph.variables.outputs.get(0).name);
+    }
+
+    @Test
+    public void test_factorial_recursion_process_count() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mh-factorial-recursion-1.17.mhsc");
+        // mh.evaluation0, mh.nop (with 4 sequential children), mh.finish = 7
+        assertEquals(7, graph.processes.size(),
+                "Processes: " + graph.processes.stream().map(p -> p.processCode).toList());
+    }
+
+    @Test
+    public void test_factorial_recursion_vertex_count() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mh-factorial-recursion-1.17.mhsc");
+        assertEquals(7, graph.processGraph.vertexSet().size(),
+                "Graph:\n" + asString(graph.processGraph));
+    }
+
+    @Test
+    public void test_factorial_recursion_evaluation0_condition() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mh-factorial-recursion-1.17.mhsc");
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("mh.evaluation0"))
+                .findFirst().orElseThrow();
+        assertEquals("mh.evaluation", p.function.code);
+        assertEquals(EnumsApi.FunctionExecContext.internal, p.function.context);
+        // condition: currIndex > factorialOf - 1
+        assertNotNull(p.condition);
+        assertEquals("currIndex > factorialOf - 1", p.condition);
+    }
+
+    @Test
+    public void test_factorial_recursion_nop_condition() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mh-factorial-recursion-1.17.mhsc");
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("mh.nop"))
+                .findFirst().orElseThrow();
+        assertNotNull(p.condition);
+        assertEquals("currIndex < factorialOf", p.condition);
+        assertEquals(EnumsApi.SourceCodeSubProcessLogic.sequential, p.logic);
+    }
+
+    @Test
+    public void test_factorial_recursion_multiply_process() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mh-factorial-recursion-1.17.mhsc");
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("mh.multiply_1.2"))
+                .findFirst().orElseThrow();
+        assertEquals("mh.multiply_1.2", p.function.code);
+        assertEquals(EnumsApi.FunctionExecContext.external, p.function.context);
+        assertEquals(2, p.inputs.size());
+        assertEquals(1, p.outputs.size());
+    }
+
+    @Test
+    public void test_factorial_recursion_sequential_chain() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mh-factorial-recursion-1.17.mhsc");
+        // mh.evaluation1 -> mh.multiply_1.2 -> mh.exec-source-code -> mh.evaluation2
+        ExecContextData.ProcessVertex eval1 = findVertex(graph.processGraph, "mh.evaluation1");
+        assertNotNull(eval1);
+        List<ExecContextData.ProcessVertex> afterEval1 = findTargets(graph.processGraph, eval1.process);
+        assertEquals(1, afterEval1.size());
+        assertEquals("mh.multiply_1.2", afterEval1.get(0).process);
+
+        List<ExecContextData.ProcessVertex> afterMultiply = findTargets(graph.processGraph, "mh.multiply_1.2");
+        assertEquals(1, afterMultiply.size());
+        assertEquals("mh.exec-source-code", afterMultiply.get(0).process);
+
+        List<ExecContextData.ProcessVertex> afterExec = findTargets(graph.processGraph, "mh.exec-source-code");
+        assertEquals(1, afterExec.size());
+        assertEquals("mh.evaluation2", afterExec.get(0).process);
     }
 
     // ============ Helpers ============
