@@ -521,6 +521,26 @@ public class TestMhscParserRules {
         r.assertNoErrors();
     }
 
+    @Test public void test_processDecl_with_params() {
+        var r = parseProcessDecl(
+                "edition-maker := edition-maker-5.0.26 {\n" +
+                "    params \"--fill-comment\"\n" +
+                "    <- var-batch-item: array\n" +
+                "    -> result: ext=\".txt\"\n" +
+                "    timeout 1200\n" +
+                "}");
+        r.assertNoErrors();
+    }
+
+    @Test public void test_processDecl_with_long_params() {
+        var r = parseProcessDecl(
+                "image-converter := image-converter-4.2.8 {\n" +
+                "    params \"--dpi 150 --max-width 140 --max-height 250 --convert-wmf false --gray\"\n" +
+                "    timeout 180\n" +
+                "}");
+        r.assertNoErrors();
+    }
+
     // ===================== compilationUnit (minimal sources) =====================
 
     @Test public void test_compilationUnit_empty_source() {
@@ -657,5 +677,22 @@ public class TestMhscParserRules {
     @Test public void test_varDef_missing_value_after_type() {
         var r = parseVarDef("x: type=");
         r.assertHasErrors();
+    }
+
+    @Test public void test_metaDecl_keyword_as_key() {
+        var r = parseMetaDecl("meta variables = \"varStatisticsResult\"");
+        r.assertNoErrors();
+        assertEquals(1, r.tree.metaEntry().size());
+    }
+
+    @Test public void test_metaDecl_keyword_expression_as_key() {
+        var r = parseMetaDecl("meta expression = \"factorialResult = inputValue\"");
+        r.assertNoErrors();
+    }
+
+    @Test public void test_idRef_keyword_as_identifier() {
+        var r = parseIdRef("variables");
+        r.assertNoErrors();
+        assertEquals("variables", r.tree.getText());
     }
 }

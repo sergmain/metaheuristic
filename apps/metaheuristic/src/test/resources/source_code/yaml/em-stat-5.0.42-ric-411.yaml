@@ -1,0 +1,122 @@
+version: 4
+source:
+  instances: 1
+  strictNaming: true
+  uid: em-stat-5.0.42-ric-411
+  ac:
+    groups: stat
+  metas:
+    - mh.result-file-extension: .zip
+  variables:
+    inline:
+      list-files:
+        dir-code: 'test-files'
+        statistics-path: 'edition/statistics-unpacked'
+  processes:
+    - code: mh.evaluation1
+      name: mh.evaluation1
+      function:
+        code: mh.evaluation
+        context: internal
+      outputs:
+        - name: dataSeed
+          nullable: true
+      metas:
+        # change dataSeed every time when new edition was added-removed-updated in test-files
+        - expression: dataSeed = '50'
+    - code: get-list-of-edition-pairs
+      function:
+        code: get-list-of-edition-pairs:2.0.3
+      inputs:
+        - name: dataSeed
+      outputs:
+        - name: varLoggerListOfFiles
+          ext: .txt
+        - name: varListOfFiles
+          ext: .txt
+      tag: pc13
+      priority: -1
+      cache:
+        enabled: true
+    - code: mh.evaluation2
+      name: mh.evaluation2
+      function:
+        code: mh.evaluation
+        context: internal
+      outputs:
+        - name: ricList
+          nullable: true
+      metas:
+        - expression: ricList = 'RLAW251,RLAW411'
+    - code: filter-lines
+      function:
+        code: filter-lines-for-ric-1.4
+      inputs:
+        - name: varListOfFiles
+        - name: ricList
+      outputs:
+        - name: varLoggerFilteredList
+          ext: .txt
+          nullable: true
+        - name: varFilteredListOfFiles
+          ext: .txt
+          nullable: true
+      tag: pc13
+      priority: -1
+      cache:
+        enabled: true
+    - code: mh.batch-line-splitter
+      name: mh.batch-line-splitter
+      function:
+        code: mh.batch-line-splitter
+        context: internal
+      metas:
+        - number-of-lines-per-task: 10
+        - variable-for-splitting: varFilteredListOfFiles
+        - output-is-dynamic: true
+        - output-variable: varBatchItem
+        - is-array: false
+      tag: stat
+      priority: -1
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: edition-maker-statistics
+            function:
+              code: edition-maker-5.0.42
+              params: --collect-statistics
+            inputs:
+              - name: varBatchItem
+            outputs:
+              - name: varStatisticsResult
+                type: output-statistics-type
+                ext: .json
+            timeoutBeforeTerminate: 36000
+            triesAfterError: 0
+            tag: stat
+            priority: -1
+            cache:
+              enabled: true
+    - code: mh.aggregate
+      name: mh.aggregate
+      function:
+        code: mh.aggregate
+        context: internal
+      metas:
+        - variables: varStatisticsResult
+      outputs:
+        - name: varAggregatedResult
+          ext: .zip
+      tag: stat
+      priority: -1
+    - code: aggregate-statistics
+      function:
+        code: aggregate-statistics:2.3
+      inputs:
+        - name: varAggregatedResult
+      outputs:
+        - name: varResultArchive
+          type: result-archive-type
+          ext: .stat-ric-411.5.0.42-411-stat.zip
+      tag: pc13-aggregate
+      priority: -1

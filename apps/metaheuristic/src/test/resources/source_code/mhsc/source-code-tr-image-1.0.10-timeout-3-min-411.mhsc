@@ -1,0 +1,44 @@
+source "trafaret-image-1.0.10-411" {
+
+    variables {
+        <- input-data
+    }
+
+    mh.batch-splitter := internal mh.batch-splitter {
+        meta variable-for-splitting = "input-data",
+             output-variable = "var-batch-item"
+        priority 10000
+        sequential {
+            trafaret := trafaret-4.3.10 {
+                params "--region RLAW411"
+                <- var-batch-item: array
+                -> var-after-trafaret: type=processed-file-type, nullable, ext=".xml",
+                   var-card-file: type=card-file-type, nullable, ext=".yaml",
+                   var-processing-status: type=item-processing-status-type, ext=".txt",
+                   var-item-mapping: type=item-mapping-type, nullable, ext=".yaml",
+                   var-doc-name: type=doc-name-type, nullable, ext=".txt"
+                timeout 180
+            }
+
+            image-converter := image-converter-4.2.8 {
+                name "Convert images in document"
+                params "--dpi 150 --max-width 140 --max-height 250 --convert-wmf false --gray"
+                <- var-after-trafaret: nullable, ext=".xml",
+                   var-doc-name: nullable, ext=".txt"
+                -> var-image-processed-file: type=image-processed-file-type, nullable, ext=".xml",
+                   var-image-processing-status: type=image-item-processing-status-type, nullable, ext=".txt",
+                   var-image-item-mapping: type=image-item-mapping-type, nullable, ext=".yaml"
+                timeout 180
+            }
+        }
+    }
+
+    mh.batch-result-processor := internal mh.batch-result-processor {
+        name "batch result processor"
+        -> var-batch-result: type=batch-result, ext=".trafaret-image-1.0.10-411.zip",
+           var-batch-status: type=batch-status, ext=".txt"
+        meta batch-type-processed-file = "processed-file-type, image-processed-file-type, card-file-type",
+             batch-type-processing-status = "item-processing-status-type, image-item-processing-status-type",
+             batch-type-mapping = "item-mapping-type, image-item-mapping-type"
+    }
+}

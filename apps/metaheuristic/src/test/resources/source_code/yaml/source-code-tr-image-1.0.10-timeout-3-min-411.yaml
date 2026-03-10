@@ -1,0 +1,93 @@
+version: 5
+source:
+  uid: trafaret-image-1.0.10-411
+  ac:
+    groups: ric411,test
+  variables:
+    inputs:
+      - name: input-data
+  metas:
+    - mh.result-file-extension: -result.trafaret-image-1.0.10-411.zip
+  processes:
+    - code: mh.batch-splitter
+      name: mh.batch-splitter
+      function:
+        code: mh.batch-splitter
+        context: internal
+      metas:
+        - variable-for-splitting: input-data
+        - output-variable: var-batch-item
+      priority: 10000
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: trafaret
+            function:
+              code: trafaret-4.3.10
+              params: --region RLAW411
+            inputs:
+              - name: var-batch-item
+                array: true
+            outputs:
+              - name: var-after-trafaret
+                type: processed-file-type
+                nullable: true
+                ext: .xml
+              - name: var-card-file
+                type: card-file-type
+                nullable: true
+                ext: .yaml
+              - name: var-processing-status
+                type: item-processing-status-type
+                ext: .txt
+              - name: var-item-mapping
+                type: item-mapping-type
+                nullable: true
+                ext: .yaml
+              - name: var-doc-name
+                type: doc-name-type
+                nullable: true
+                ext: .txt
+            timeoutBeforeTerminate: 180
+          - code: image-converter
+            name: Convert images in document
+            function:
+              code: image-converter-4.2.8
+              params: --dpi 150 --max-width 140 --max-height 250 --convert-wmf false --gray
+            inputs:
+              - name: var-after-trafaret
+                nullable: true
+                ext: .xml
+              - name: var-doc-name
+                nullable: true
+                ext: .txt
+            outputs:
+              - name: var-image-processed-file
+                type: image-processed-file-type
+                nullable: true
+                ext: .xml
+              - name: var-image-processing-status
+                type: image-item-processing-status-type
+                nullable: true
+                ext: .txt
+              - name: var-image-item-mapping
+                type: image-item-mapping-type
+                nullable: true
+                ext: .yaml
+            timeoutBeforeTerminate: 180
+    - code: mh.batch-result-processor
+      name: batch result processor
+      function:
+        code: mh.batch-result-processor
+        context: internal
+      outputs:
+        - name: var-batch-result
+          type: batch-result
+          ext: .trafaret-image-1.0.10-411.zip
+        - name: var-batch-status
+          type: batch-status
+          ext: .txt
+      metas:
+        - batch-type-processed-file: processed-file-type, image-processed-file-type, card-file-type
+        - batch-type-processing-status: item-processing-status-type, image-item-processing-status-type
+        - batch-type-mapping: item-mapping-type, image-item-mapping-type

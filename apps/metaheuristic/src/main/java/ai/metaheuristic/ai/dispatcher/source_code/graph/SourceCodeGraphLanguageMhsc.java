@@ -240,6 +240,10 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                         process.postFunctions.add(parseFunctionRef(pe.postFunctionDecl().functionRef()));
                     } else if (pe.nameDecl() != null) {
                         process.processName = unquote(pe.nameDecl().STRING().getText());
+                    } else if (pe.paramsDecl() != null) {
+                        process.function = new ExecContextParamsYaml.FunctionDefinition(
+                                process.function.code, unquote(pe.paramsDecl().STRING().getText()),
+                                process.function.context, process.function.refType);
                     } else if (pe.subProcessBlock() != null) {
                         MhSourceCodeParser.SubProcessBlockContext spb = pe.subProcessBlock();
                         if (spb.getStart().getText().equals("sequential")) {
@@ -275,6 +279,10 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                         process.priority = parsePriority(pa.priorityDecl());
                     } else if (pa.nameDecl() != null) {
                         process.processName = unquote(pa.nameDecl().STRING().getText());
+                    } else if (pa.paramsDecl() != null) {
+                        process.function = new ExecContextParamsYaml.FunctionDefinition(
+                                process.function.code, unquote(pa.paramsDecl().STRING().getText()),
+                                process.function.context, process.function.refType);
                     }
                 }
             }
@@ -546,9 +554,9 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
         private String resolveIdRef(MhSourceCodeParser.IdRefContext ctx) {
             StringBuilder sb = new StringBuilder();
             for (MhSourceCodeParser.IdPartContext part : ctx.idPart()) {
-                if (part.getChildCount() == 1 && part.ID() != null) {
-                    // Simple ID token
-                    sb.append(part.ID().getText());
+                if (part.getChildCount() == 1 && (part.ID() != null || part.keyword() != null)) {
+                    // Simple ID or keyword-as-identifier
+                    sb.append(part.getText());
                 } else {
                     // Parameterized: {L}, {L+1}, {L-1}
                     TerminalNode idNode = part.ID();

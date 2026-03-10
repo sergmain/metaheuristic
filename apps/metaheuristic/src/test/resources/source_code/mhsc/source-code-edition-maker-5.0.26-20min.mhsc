@@ -1,0 +1,36 @@
+source "edition-maker-5.0.26-20min" {
+
+    variables {
+        <- input-data
+    }
+
+    mh.batch-splitter := internal mh.batch-splitter {
+        meta variable-for-splitting = "input-data",
+             output-variable = "var-batch-item"
+        priority 10000
+        sequential {
+            edition-maker := edition-maker-5.0.26 {
+                params "--fill-comment"
+                <- var-batch-item: array
+                -> var-processed-file-a: type=processed-file-type-a, nullable,
+                   var-processed-file-a1: type=processed-file-type-a1, nullable,
+                   var-processed-file-b: type=processed-file-type-b, nullable,
+                   var-processing-status: type=item-processing-status-type, nullable, ext=".txt",
+                   var-params-yaml: type=params-yaml-type, nullable, ext=".yaml",
+                   var-item-mapping: type=item-mapping-type, nullable, ext=".yaml"
+                timeout 1200
+                priority 10000
+            }
+        }
+    }
+
+    mh.batch-result-processor := internal mh.batch-result-processor {
+        name "batch result processor"
+        -> var-batch-result: type=batch-result,
+           var-batch-status: type=batch-status
+        meta batch-type-processed-file = "processed-file-type-a, processed-file-type-a1, processed-file-type-b, params-yaml-type",
+             batch-type-processing-status = "item-processing-status-type",
+             batch-type-mapping = "item-mapping-type"
+        priority 10000
+    }
+}

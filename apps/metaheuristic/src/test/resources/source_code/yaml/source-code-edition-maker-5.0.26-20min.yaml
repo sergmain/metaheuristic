@@ -1,0 +1,69 @@
+version: 5
+source:
+  uid: edition-maker-5.0.26-20min
+  ac:
+    groups: test
+  variables:
+    inputs:
+      - name:  input-data
+  metas:
+    - mh.result-file-extension: -result.5.0.26.zip
+  processes:
+    - code: mh.batch-splitter
+      name: mh.batch-splitter
+      function:
+        code: mh.batch-splitter
+        context: internal
+      metas:
+        - variable-for-splitting: input-data
+        - output-variable: var-batch-item
+      priority: 10000
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: edition-maker
+            function:
+              code: edition-maker-5.0.26
+              params: --fill-comment
+            inputs:
+              - name: var-batch-item
+                array: true
+            outputs:
+              - name: var-processed-file-a
+                type: processed-file-type-a
+                nullable: true
+              - name: var-processed-file-a1
+                type: processed-file-type-a1
+                nullable: true
+              - name: var-processed-file-b
+                type: processed-file-type-b
+                nullable: true
+              - name: var-processing-status
+                type: item-processing-status-type
+                nullable: true
+                ext: .txt
+              - name: var-params-yaml
+                type: params-yaml-type
+                nullable: true
+                ext: .yaml
+              - name: var-item-mapping
+                type: item-mapping-type
+                nullable: true
+                ext: .yaml
+            timeoutBeforeTerminate: 1200
+            priority: 10000
+    - code: mh.batch-result-processor
+      name: batch result processor
+      function:
+        code: mh.batch-result-processor
+        context: internal
+      outputs:
+        - name: var-batch-result
+          type: batch-result
+        - name: var-batch-status
+          type: batch-status
+      metas:
+        - batch-type-processed-file: processed-file-type-a, processed-file-type-a1, processed-file-type-b, params-yaml-type
+        - batch-type-processing-status: item-processing-status-type
+        - batch-type-mapping: item-mapping-type
+      priority: 10000

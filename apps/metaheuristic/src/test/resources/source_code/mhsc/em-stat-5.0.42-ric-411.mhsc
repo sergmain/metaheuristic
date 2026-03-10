@@ -1,0 +1,73 @@
+source "em-stat-5.0.42-ric-411" (strict, instances = 1) {
+
+    variables {
+        inline list-files {
+            dir-code = "'test-files'"
+            statistics-path = "'edition/statistics-unpacked'"
+        }
+    }
+
+    mh.evaluation1 := internal mh.evaluation {
+        -> dataSeed: nullable
+        meta expression = "dataSeed = '50'"
+    }
+
+    get-list-of-edition-pairs := get-list-of-edition-pairs_2.0.3 {
+        <- dataSeed
+        -> varLoggerListOfFiles: ext=".txt",
+           varListOfFiles: ext=".txt"
+        tag pc13
+        priority -1
+        cache on
+    }
+
+    mh.evaluation2 := internal mh.evaluation {
+        -> ricList: nullable
+        meta expression = "ricList = 'RLAW251,RLAW411'"
+    }
+
+    filter-lines := filter-lines-for-ric-1.4 {
+        <- varListOfFiles, ricList
+        -> varLoggerFilteredList: ext=".txt", nullable,
+           varFilteredListOfFiles: ext=".txt", nullable
+        tag pc13
+        priority -1
+        cache on
+    }
+
+    mh.batch-line-splitter := internal mh.batch-line-splitter {
+        meta number-of-lines-per-task = "10",
+             variable-for-splitting = "varFilteredListOfFiles",
+             output-is-dynamic = "true",
+             output-variable = "varBatchItem",
+             is-array = "false"
+        tag stat
+        priority -1
+        sequential {
+            edition-maker-statistics := edition-maker-5.0.42 {
+                params "--collect-statistics"
+                <- varBatchItem
+                -> varStatisticsResult: type=output-statistics-type, ext=".json"
+                timeout 36000
+                tries 0
+                tag stat
+                priority -1
+                cache on
+            }
+        }
+    }
+
+    mh.aggregate := internal mh.aggregate {
+        meta variables = "varStatisticsResult"
+        -> varAggregatedResult: ext=".zip"
+        tag stat
+        priority -1
+    }
+
+    aggregate-statistics := aggregate-statistics_2.3 {
+        <- varAggregatedResult
+        -> varResultArchive: type=result-archive-type, ext=".stat-ric-411.5.0.42-411-stat.zip"
+        tag pc13-aggregate
+        priority -1
+    }
+}

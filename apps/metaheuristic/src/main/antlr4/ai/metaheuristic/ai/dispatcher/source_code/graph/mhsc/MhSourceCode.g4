@@ -84,6 +84,7 @@ processElement
     | preFunctionDecl
     | postFunctionDecl
     | nameDecl
+    | paramsDecl
     | subProcessBlock
     ;
 
@@ -98,6 +99,7 @@ processAttr
     | tagDecl
     | priorityDecl
     | nameDecl
+    | paramsDecl
     ;
 
 // --- Inputs / Outputs ---
@@ -139,6 +141,10 @@ metaEntry
 // --- Process attributes ---
 nameDecl
     : 'name' STRING
+    ;
+
+paramsDecl
+    : 'params' STRING
     ;
 
 timeoutDecl
@@ -265,9 +271,21 @@ idRef
 
 idPart
     : ID
+    | keyword                             // allow keywords as identifiers in idRef context
     | '{' ID '}'                          // simple param substitution
     | '{' ID '+' INT '}'                  // param + offset
     | '{' ID '-' INT '}'                  // param - offset
+    ;
+
+// Keywords that may also appear as identifiers (e.g. meta keys)
+keyword
+    : 'source' | 'strict' | 'clean' | 'instances' | 'variables' | 'global' | 'inline'
+    | 'metas' | 'meta' | 'name' | 'timeout' | 'cache' | 'when' | 'skip'
+    | 'tries' | 'tag' | 'priority' | 'pre' | 'post' | 'params'
+    | 'sequential' | 'parallel' | 'race' | 'template' | 'for' | 'in'
+    | 'internal' | 'type' | 'ext' | 'nullable' | 'array' | 'parentContext' | 'sourcing'
+    | 'on' | 'off' | 'omitInline' | 'cacheMeta'
+    | 'normal' | 'always'
     ;
 
 // =====================================================================

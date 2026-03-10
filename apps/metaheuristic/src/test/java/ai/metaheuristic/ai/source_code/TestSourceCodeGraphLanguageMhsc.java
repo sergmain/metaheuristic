@@ -388,6 +388,144 @@ public class TestSourceCodeGraphLanguageMhsc {
         assertEquals("mh.evaluation2", afterExec.get(0).process);
     }
 
+    // ===================== em-stat: parse + structural =====================
+
+    @Test
+    public void test_em_stat_parses() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/em-stat-5.0.42-ric-411.mhsc");
+        assertNotNull(graph);
+        assertEquals(1, findLeafs(graph).size(), "Graph:\n" + asString(graph.processGraph));
+    }
+
+    @Test
+    public void test_em_stat_process_count() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/em-stat-5.0.42-ric-411.mhsc");
+        // 7 top-level + 1 batch subprocess + 1 mh.finish = 9
+        assertEquals(9, graph.processes.size(),
+                "Processes: " + graph.processes.stream().map(p -> p.processCode).toList());
+    }
+
+    @Test
+    public void test_em_stat_inline_variables() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/em-stat-5.0.42-ric-411.mhsc");
+        assertTrue(graph.variables.inline.containsKey("list-files"));
+        assertEquals("'test-files'", graph.variables.inline.get("list-files").get("dir-code"));
+        assertEquals("'edition/statistics-unpacked'", graph.variables.inline.get("list-files").get("statistics-path"));
+    }
+
+    @Test
+    public void test_em_stat_tag_and_priority() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/em-stat-5.0.42-ric-411.mhsc");
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("get-list-of-edition-pairs"))
+                .findFirst().orElseThrow();
+        assertEquals("pc13", p.tag);
+        assertEquals(-1, p.priority);
+        assertNotNull(p.cache);
+        assertTrue(p.cache.enabled);
+    }
+
+    @Test
+    public void test_em_stat_batch_subprocess_with_params() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/em-stat-5.0.42-ric-411.mhsc");
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("edition-maker-statistics"))
+                .findFirst().orElseThrow();
+        assertEquals("edition-maker-5.0.42", p.function.code);
+        assertEquals("--collect-statistics", p.function.params);
+        assertEquals(36000L, p.timeoutBeforeTerminate);
+        assertEquals(0, p.triesAfterError);
+    }
+
+    // ===================== edition-maker: parse + structural =====================
+
+    @Test
+    public void test_edition_maker_parses() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/source-code-edition-maker-5.0.26-20min.mhsc");
+        assertNotNull(graph);
+        assertEquals(1, findLeafs(graph).size(), "Graph:\n" + asString(graph.processGraph));
+    }
+
+    @Test
+    public void test_edition_maker_process_count() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/source-code-edition-maker-5.0.26-20min.mhsc");
+        assertEquals(4, graph.processes.size(),
+                "Processes: " + graph.processes.stream().map(p -> p.processCode).toList());
+    }
+
+    @Test
+    public void test_edition_maker_array_input() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/source-code-edition-maker-5.0.26-20min.mhsc");
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("edition-maker"))
+                .findFirst().orElseThrow();
+        assertEquals("--fill-comment", p.function.params);
+        assertEquals(1, p.inputs.size());
+        assertEquals(EnumsApi.VariableContext.array, p.inputs.get(0).context);
+        assertEquals(6, p.outputs.size());
+    }
+
+    @Test
+    public void test_edition_maker_batch_result_processor() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/source-code-edition-maker-5.0.26-20min.mhsc");
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("mh.batch-result-processor"))
+                .findFirst().orElseThrow();
+        assertEquals("batch result processor", p.processName);
+        assertEquals(2, p.outputs.size());
+        assertEquals(3, p.metas.size());
+        assertEquals(10000, p.priority);
+    }
+
+    // ===================== trafaret-image: parse + structural =====================
+
+    @Test
+    public void test_tr_image_parses() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/source-code-tr-image-1.0.10-timeout-3-min-411.mhsc");
+        assertNotNull(graph);
+        assertEquals(1, findLeafs(graph).size(), "Graph:\n" + asString(graph.processGraph));
+    }
+
+    @Test
+    public void test_tr_image_process_count() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/source-code-tr-image-1.0.10-timeout-3-min-411.mhsc");
+        assertEquals(5, graph.processes.size(),
+                "Processes: " + graph.processes.stream().map(p -> p.processCode).toList());
+    }
+
+    @Test
+    public void test_tr_image_two_sequential_subprocesses() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/source-code-tr-image-1.0.10-timeout-3-min-411.mhsc");
+        ExecContextData.ProcessVertex trafaret = findVertex(graph.processGraph, "trafaret");
+        assertNotNull(trafaret);
+        List<ExecContextData.ProcessVertex> afterTrafaret = findTargets(graph.processGraph, "trafaret");
+        assertEquals(1, afterTrafaret.size());
+        assertEquals("image-converter", afterTrafaret.get(0).process);
+    }
+
+    @Test
+    public void test_tr_image_function_params() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/source-code-tr-image-1.0.10-timeout-3-min-411.mhsc");
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("image-converter"))
+                .findFirst().orElseThrow();
+        assertEquals("image-converter-4.2.8", p.function.code);
+        assertEquals("--dpi 150 --max-width 140 --max-height 250 --convert-wmf false --gray", p.function.params);
+        assertEquals("Convert images in document", p.processName);
+    }
+
+    @Test
+    public void test_tr_image_input_modifiers() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/source-code-tr-image-1.0.10-timeout-3-min-411.mhsc");
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("image-converter"))
+                .findFirst().orElseThrow();
+        assertEquals(2, p.inputs.size());
+        assertEquals("var-after-trafaret", p.inputs.get(0).name);
+        assertTrue(p.inputs.get(0).getNullable());
+        assertEquals(".xml", p.inputs.get(0).ext);
+    }
+
     // ============ Helpers ============
 
     private SourceCodeGraph parseYaml(String resourcePath) throws IOException {
