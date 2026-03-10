@@ -1,0 +1,261 @@
+source "mhdg-rg-1.0.4" (strict) {
+
+    variables {
+        <- projectCode
+    }
+
+    // === Level 0: Evaluation, Read project, create top-level requirements ===
+
+    mh.evaluation2 := internal mh.evaluation {
+        -> synthetic: ext=".txt"
+        meta expression = "synthetic = true"
+    }
+
+    mhdg-rg.read-project-task := internal mhdg-rg.read-project-task {
+        meta projectCode = "projectCode",
+             decompositionPolicy = "'When decomposing a requirement, produce 1-2 child requirements.'"
+        -> projectTask: type=task, ext=".txt",
+           decompositionPolicy: type=decomposition-policy, ext=".txt",
+           topLevelPolicy: type=top-level-policy, ext=".txt"
+        timeout 60
+    }
+
+    mhdg-rg.top-level-task := mhdg-rg.call-cc-1.0.4 {
+        name "Convert project-level task to top-level requirements"
+        meta rg-mode = "task",
+             variable-for-topLevelPolicy = "topLevelPolicy",
+             variable-for-output = "topLevelReqs"
+        <- synthetic, projectCode, projectTask, topLevelPolicy
+        -> topLevelReqs: type=requirement, ext=".jsonl"
+        timeout 120
+        cache on
+    }
+
+    // === Split top-level JSONL and store each requirement individually ===
+
+    mh.batch-line-splitter-0 := internal mh.batch-line-splitter {
+        meta number-of-lines-per-task = "1",
+             variable-for-splitting = "topLevelReqs",
+             output-is-dynamic = "true",
+             output-variable = "reqJson0",
+             is-array = "false"
+        sequential {
+            mhdg-rg.store-req-0 := internal mhdg-rg.store-req {
+                name "Store single top-level requirement"
+                meta reqJson = "reqJson0"
+                <- projectCode, reqJson0: ext=".json"
+                -> requirementId0: type=requirement-id, ext=".txt"
+                timeout 60
+            }
+
+            mhdg-rg.set-reset-task-id-0 := internal mhdg-rg.set-reset-task-id {
+                name "Set resetTaskId on top-level requirement"
+                meta requirementId = "requirementId0"
+                <- requirementId0
+                timeout 60
+            }
+
+            // === Objective processing for this top-level requirement ===
+
+            mhdg-rg.check-objectives := internal mhdg-rg.check-objectives {
+                name "Check for pending objectives"
+                meta requirementId = "requirementId0",
+                     hasObjectives = "hasObjectives",
+                     requirementIdObj = "requirementIdObj",
+                     requirementContentObj = "requirementContentObj",
+                     objectiveTextObj = "objectiveTextObj",
+                     amendmentStatus = "amendmentStatus"
+                <- requirementId0
+                -> hasObjectives: type=boolean, ext=".txt",
+                   requirementIdObj: type=requirement-id, nullable, ext=".txt",
+                   requirementContentObj: type=requirement-content, nullable, ext=".txt",
+                   objectiveTextObj: type=objective-text, nullable, ext=".txt",
+                   amendmentStatus: type=amendment-status, ext=".txt"
+                timeout 60
+            }
+
+            mh.nop-objectives-wrapper := internal mh.nop {
+                sequential {
+                    mh.nop-objectives := internal mh.nop {
+                        when hasObjectives ? true : false
+                        sequential {
+                            mhdg-rg.evaluate-objective := mhdg-rg.call-cc-1.0.4 {
+                                name "Evaluate and apply objective"
+                                meta rg-mode = "req-objective",
+                                     variable-for-projectCode = "projectCode",
+                                     variable-for-requirementContent = "requirementContentObj",
+                                     variable-for-requirementId = "requirementIdObj",
+                                     variable-for-objectiveText = "objectiveTextObj",
+                                     variable-for-output = "objectiveResult"
+                                <- synthetic, projectCode, requirementContentObj, requirementIdObj, objectiveTextObj
+                                -> objectiveResult: type=objective-result, nullable, ext=".jsonl"
+                                timeout 300
+                            }
+
+                            mhdg-rg.store-objective-result := internal mhdg-rg.store-objective-result {
+                                name "Store objective result"
+                                meta objectiveResult = "objectiveResult",
+                                     amendmentStatus = "amendmentStatus"
+                                <- projectCode, objectiveResult
+                                -> cascadeResult: type=cascade-result, nullable, ext=".json",
+                                   amendmentStatus: type=amendment-status, ext=".txt"
+                                timeout 60
+                            }
+                        }
+                    }
+                }
+            }
+
+            // === ACTIVE/OBSOLETE condition gate ===
+
+            mh.nop-amendment-gate := internal mh.nop {
+                parallel {
+                    // === ACTIVE branch ===
+                    mh.nop-active-branch := internal mh.nop {
+                        when amendmentStatus == "ACTIVE" ? true : false
+                        sequential {
+                            mhdg-rg.read-req-1 := internal mhdg-rg.read-req {
+                                meta reqId = "requirementId0",
+                                     requirementContent = "requirementContent1",
+                                     parentId = "parentId1",
+                                     ancestorStack = "ancestorStack1"
+                                <- requirementId0
+                                -> requirementContent1: type=requirement-content, ext=".txt",
+                                   parentId1: type=parent-id, ext=".txt",
+                                   ancestorStack1: type=ancestor-stack, nullable, ext=".jsonl"
+                                timeout 60
+                            }
+
+                            mhdg-rg.decompose-1 := mhdg-rg.call-cc-1.0.4 {
+                                meta rg-mode = "decompose",
+                                     variable-for-projectCode = "projectCode",
+                                     variable-for-requirementContent = "requirementContent1",
+                                     variable-for-parentId = "parentId1",
+                                     variable-for-decompositionPolicy = "decompositionPolicy",
+                                     variable-for-output = "topLevelReqs1",
+                                     variable-for-ancestorStack = "ancestorStack1"
+                                <- synthetic, projectCode, requirementContent1, parentId1, decompositionPolicy, ancestorStack1?
+                                -> topLevelReqs1: type=requirement, ext=".jsonl"
+                                timeout 180
+                                cache on
+                            }
+
+                            // === Level 2: Split decomposed JSONL and store each child requirement ===
+
+                            mh.batch-line-splitter-1 := internal mh.batch-line-splitter {
+                                meta number-of-lines-per-task = "1",
+                                     variable-for-splitting = "topLevelReqs1",
+                                     output-is-dynamic = "true",
+                                     output-variable = "reqJson1",
+                                     is-array = "false"
+                                sequential {
+                                    mhdg-rg.store-req-1 := internal mhdg-rg.store-req {
+                                        name "Store single level-1 requirement"
+                                        meta reqJson = "reqJson1",
+                                             parentId = "parentId1"
+                                        <- projectCode, reqJson1, parentId1
+                                        -> requirementId1: type=requirement-id, ext=".txt"
+                                        timeout 60
+                                    }
+
+                                    mhdg-rg.set-reset-task-id-1 := internal mhdg-rg.set-reset-task-id {
+                                        name "Set resetTaskId on level-1 requirement"
+                                        meta requirementId = "requirementId1"
+                                        <- requirementId1
+                                        timeout 60
+                                    }
+
+                                    // === Objective processing for level-1 requirement ===
+
+                                    mhdg-rg.check-objectives-2 := internal mhdg-rg.check-objectives {
+                                        name "Check for pending objectives"
+                                        meta requirementId = "requirementId1",
+                                             hasObjectives = "hasObjectives2",
+                                             requirementIdObj = "requirementIdObj2",
+                                             requirementContentObj = "requirementContentObj2",
+                                             objectiveTextObj = "objectiveTextObj2",
+                                             amendmentStatus = "amendmentStatus2"
+                                        <- requirementId1
+                                        -> hasObjectives2: type=boolean, ext=".txt",
+                                           requirementIdObj2: type=requirement-id, nullable, ext=".txt",
+                                           requirementContentObj2: type=requirement-content, nullable, ext=".txt",
+                                           objectiveTextObj2: type=objective-text, nullable, ext=".txt",
+                                           amendmentStatus2: type=amendment-status, ext=".txt"
+                                        timeout 60
+                                    }
+
+                                    mh.nop-objectives-wrapper-2 := internal mh.nop {
+                                        sequential {
+                                            mh.nop-objectives-2 := internal mh.nop {
+                                                when hasObjectives2 ? true : false
+                                                sequential {
+                                                    mhdg-rg.evaluate-objective-2 := mhdg-rg.call-cc-1.0.4 {
+                                                        name "Evaluate and apply objective"
+                                                        meta rg-mode = "req-objective",
+                                                             variable-for-projectCode = "projectCode",
+                                                             variable-for-requirementContent = "requirementContentObj2",
+                                                             variable-for-requirementId = "requirementIdObj2",
+                                                             variable-for-objectiveText = "objectiveTextObj2",
+                                                             variable-for-output = "objectiveResult2"
+                                                        <- synthetic, projectCode, requirementContentObj2: ext=".txt", requirementIdObj2: ext=".txt", objectiveTextObj2: ext=".txt"
+                                                        -> objectiveResult2: type=objective-result, nullable, ext=".jsonl"
+                                                        timeout 300
+                                                    }
+
+                                                    mhdg-rg.store-objective-result-2 := internal mhdg-rg.store-objective-result {
+                                                        name "Store objective result"
+                                                        meta objectiveResult = "objectiveResult2",
+                                                             amendmentStatus = "amendmentStatus2"
+                                                        <- projectCode: ext=".txt", objectiveResult2: ext=".txt"
+                                                        -> cascadeResult2: type=cascade-result, nullable, ext=".json",
+                                                           amendmentStatus2: type=amendment-status, ext=".txt"
+                                                        timeout 60
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // === ACTIVE/OBSOLETE gate for level-1 ===
+
+                                    mh.nop-amendment-gate-2 := internal mh.nop {
+                                        parallel {
+                                            mh.nop-active-branch-2 := internal mh.nop {
+                                                when amendmentStatus2 == "ACTIVE" ? true : false
+                                            }
+
+                                            mh.nop-obsolete-branch-2 := internal mh.nop {
+                                                when amendmentStatus2 == "OBSOLETE" ? true : false
+                                                sequential {
+                                                    mhdg-rg.obsolete-requirement-2 := internal mhdg-rg.obsolete-requirement {
+                                                        name "Obsolete level-1 requirement after objective"
+                                                        meta requirementId = "requirementId1"
+                                                        <- requirementId1
+                                                        timeout 60
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // === OBSOLETE branch: obsolete the top-level requirement ===
+                    mh.nop-obsolete-branch := internal mh.nop {
+                        when amendmentStatus == "OBSOLETE" ? true : false
+                        sequential {
+                            mhdg-rg.obsolete-requirement := internal mhdg-rg.obsolete-requirement {
+                                name "Obsolete requirement after objective"
+                                meta requirementId = "requirementId0"
+                                <- requirementId0
+                                timeout 60
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

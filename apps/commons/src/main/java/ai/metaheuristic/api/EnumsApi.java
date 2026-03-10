@@ -35,7 +35,7 @@ public class EnumsApi {
 
     public enum BatchMappingKey {id, name }
 
-    public enum SourceCodeLang { yaml, python }
+    public enum SourceCodeLang { yaml, python, mhsc }
 
     public enum SourceCodeType { not_exist, common, experiment, batch }
 

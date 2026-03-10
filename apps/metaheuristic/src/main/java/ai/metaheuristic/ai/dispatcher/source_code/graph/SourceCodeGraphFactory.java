@@ -29,12 +29,15 @@ import java.util.function.Supplier;
 public class SourceCodeGraphFactory {
 
     private final static SourceCodeGraphLanguageYaml YAML_LANG = new SourceCodeGraphLanguageYaml();
+    private final static SourceCodeGraphLanguageMhsc MHSC_LANG = new SourceCodeGraphLanguageMhsc();
 
     public static SourceCodeData.SourceCodeGraph parse(EnumsApi.SourceCodeLang lang, String sourceCode, Supplier<String> contextIdSupplier) {
         //noinspection SwitchStatementWithTooFewBranches
         switch (lang) {
             case yaml:
                 return YAML_LANG.parse(sourceCode, contextIdSupplier);
+            case mhsc:
+                return MHSC_LANG.parse(sourceCode, contextIdSupplier);
             default:
                 throw new IllegalStateException("Unknown language dialect: " + lang);
         }
