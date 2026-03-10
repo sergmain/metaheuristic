@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -202,11 +203,12 @@ public class SourceCodeTxService {
     }
 
     @Transactional
-    public SourceCodeApiData.SourceCodeResult createSourceCode(String sourceCodeYamlAsStr, SourceCodeParamsYaml ppy, Long companyUniqueId) {
+    public SourceCodeApiData.SourceCodeResult createSourceCode(String sourceCodeYamlAsStr, SourceCodeParamsYaml ppy, EnumsApi.SourceCodeLang lang, Long companyUniqueId) {
+
         SourceCodeImpl sourceCode = new SourceCodeImpl();
         SourceCodeStoredParamsYaml scspy = new SourceCodeStoredParamsYaml();
         scspy.source = sourceCodeYamlAsStr;
-        scspy.lang = EnumsApi.SourceCodeLang.yaml;
+        scspy.lang = lang;
         scspy.internalParams.updatedOn = System.currentTimeMillis();
         sourceCode.updateParams(scspy);
 
@@ -228,48 +230,6 @@ public class SourceCodeTxService {
         return result;
     }
 
-/*    @Transactional
-    public SourceCodeApiData.SourceCodeResult updateSourceCode(Long sourceCodeId, String sourceCodeYamlAsStr, UserContext context) {
-        if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
-            return new SourceCodeApiData.SourceCodeResult("565.300 Can't update a sourceCode while 'replicated' mode of asset is active");
-        }
-        SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
-        if (sourceCode == null) {
-            String es = "565.320 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
-            return new SourceCodeApiData.SourceCodeResult( es,
-                    new SourceCodeApiData.SourceCodeValidationResult(EnumsApi.SourceCodeValidateStatus.SOURCE_CODE_NOT_FOUND_ERROR, es));
-        }
-        if (StringUtils.isBlank(sourceCodeYamlAsStr)) {
-            return new SourceCodeApiData.SourceCodeResult("565.340 sourceCode yaml is empty");
-        }
-
-        SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeYamlAsStr);
-
-        final String code = ppy.source.uid;
-        if (StringUtils.isBlank(code)) {
-            return new SourceCodeApiData.SourceCodeResult("565.360 code of sourceCode is empty");
-        }
-        SourceCode p = sourceCodeRepository.findByUidAndCompanyId(code, context.getCompanyId());
-        if (p!=null && !p.getId().equals(sourceCode.getId())) {
-            return new SourceCodeApiData.SourceCodeResult("565.380 sourceCode with such code already exists, code: " + code);
-        }
-        sourceCode.uid = code;
-
-        SourceCodeStoredParamsYaml scspy = new SourceCodeStoredParamsYaml();
-        scspy.source = sourceCodeYamlAsStr;
-        scspy.lang = EnumsApi.SourceCodeLang.yaml;
-        scspy.internalParams.updatedOn = System.currentTimeMillis();
-        sourceCode.updateParams(scspy);
-
-        sourceCode = sourceCodeCache.save(sourceCode);
-
-        SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
-
-        SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult(sourceCode, scspy, globals.dispatcher.asset.mode );
-        result.infoMessages = sourceCodeValidation.infoMessages;
-        result.errorMessages = sourceCodeValidation.errorMessages;
-        return result;
-    }*/
 
     @Transactional
     public OperationStatusRest archiveSourceCodeById(Long sourceCodeId, UserContext context) {

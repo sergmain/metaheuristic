@@ -29,6 +29,8 @@ import java.util.regex.Pattern;
 public class SourceCodeUtils {
 
     private static final Pattern VARIABLE_NAME_CHARS_PATTERN = Pattern.compile("^[A-Za-z0-9_-][A-Za-z0-9._-]*$");
+    // source "mh-factorial-recursion-1.17" (strict) {
+    private static final Pattern MHSC_PATTERN = Pattern.compile("^\\s*source\\s+\"[a-zA-Z][a-zA-Z0-9\\-\\.]*\"\\s+(\\(.*\\)\\s+)?\\{");
 
     public static EnumsApi.SourceCodeValidateStatus isVariableNameOk(String name) {
         Matcher m = VARIABLE_NAME_CHARS_PATTERN.matcher(name);
@@ -105,5 +107,10 @@ public class SourceCodeUtils {
         Map<String, Integer> map = parseLatch(latch);
         Integer count = map.get(code);
         return count != null && count > 0;
+    }
+
+    public static EnumsApi.SourceCodeLang determineLang(String sourceCodeAsStr) {
+        boolean mhsc = MHSC_PATTERN.matcher(sourceCodeAsStr).find();
+        return mhsc ?  EnumsApi.SourceCodeLang.mhsc : EnumsApi.SourceCodeLang.yaml;
     }
 }

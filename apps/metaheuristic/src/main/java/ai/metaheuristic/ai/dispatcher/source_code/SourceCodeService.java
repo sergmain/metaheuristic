@@ -19,16 +19,11 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
+import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
-import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.utils.ArtifactUtils;
 import ai.metaheuristic.ai.utils.EnvServiceUtils;
-import ai.metaheuristic.ai.utils.HttpUtils;
-import ai.metaheuristic.ai.utils.RestUtils;
-import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -40,7 +35,8 @@ import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
-import ai.metaheuristic.commons.utils.*;
+import ai.metaheuristic.commons.utils.ErrorUtils;
+import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
@@ -53,12 +49,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -68,15 +59,10 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
-
-import static ai.metaheuristic.commons.CommonConsts.YAML_EXT;
-import static ai.metaheuristic.commons.CommonConsts.YML_EXT;
 
 @SuppressWarnings("unused")
 @Slf4j
@@ -90,18 +76,18 @@ public class SourceCodeService {
     private final SourceCodeCache sourceCodeCache;
     private final SourceCodeRepository sourceCodeRepository;
 
-    public SourceCodeApiData.SourceCodeResult createSourceCode(String sourceCodeYamlAsStr, Long companyUniqueId) {
+    public SourceCodeApiData.SourceCodeResult createSourceCode(String sourceCodeAsStr, EnumsApi.SourceCodeLang lang, Long companyUniqueId) {
         try {
             if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
                 return new SourceCodeApiData.SourceCodeResult("560.030 Can't add a new sourceCode while 'replicated' mode of asset is active");
             }
-            if (StringUtils.isBlank(sourceCodeYamlAsStr)) {
+            if (StringUtils.isBlank(sourceCodeAsStr)) {
                 return new SourceCodeApiData.SourceCodeResult("560.060 sourceCode yaml is empty");
             }
 
             SourceCodeParamsYaml ppy;
             try {
-                ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeYamlAsStr);
+                ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeAsStr);
             }
             catch (WrongVersionOfParamsException e) {
                 String es = "560.090 An error parsing yaml: " + e.getMessage();
@@ -119,7 +105,7 @@ public class SourceCodeService {
             }
 
             try {
-                return sourceCodeTxService.createSourceCode(sourceCodeYamlAsStr, ppy, companyUniqueId);
+                return sourceCodeTxService.createSourceCode(sourceCodeAsStr, ppy, lang, companyUniqueId);
             } catch (DataIntegrityViolationException e) {
                 final String error = ErrorUtils.getAllMessages(e, 1);
                 final String es = "560.150 data integrity error: " + error;
@@ -144,42 +130,6 @@ public class SourceCodeService {
         }
         SourceCodeStoredParamsYaml storedParams = sourceCode.getSourceCodeStoredParamsYaml();
         return new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source, globals.dispatcher.asset.mode);
-    }
-
-    public SourceCodeData.Development getSourceCodeDevs(Long sourceCodeId, UserContext context) {
-        final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
-        if (sourceCode == null) {
-            String errorMessage = "560.240 sourceCode wasn't found, sourceCodeId: " + sourceCodeId;
-            return new SourceCodeData.Development(errorMessage);
-        }
-        SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
-        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
-
-        SourceCodeData.Development d = new SourceCodeData.Development();
-        d.sourceCodeUid = scpy.source.uid;
-        d.sourceCodeId = sourceCodeId;
-
-        AtomicLong contextId = new AtomicLong();
-        SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(
-                EnumsApi.SourceCodeLang.yaml, scspy.source, () -> Long.toString(contextId.incrementAndGet()));
-
-        for (ExecContextParamsYaml.Process process : sourceCodeGraph.processes) {
-            if (process.function.context== EnumsApi.FunctionExecContext.internal) {
-                continue;
-            }
-
-            SourceCodeData.SimpleProcess sp = new SourceCodeData.SimpleProcess();
-            d.processes.add(sp);
-            sp.code = process.processCode;
-            if (process.preFunctions!=null) {
-                process.preFunctions.stream().map(o->o.code).collect(Collectors.toCollection(()->sp.preFunctions));
-            }
-            sp.function = process.function.code;
-            if (process.postFunctions!=null) {
-                process.postFunctions.stream().map(o->o.code).collect(Collectors.toCollection(()->sp.postFunctions));
-            }
-        }
-        return d;
     }
 
     private SourceCodeApiData.@Nullable SourceCodeResult checkSourceCodeExist(SourceCodeParamsYaml ppy) {
@@ -212,9 +162,10 @@ public class SourceCodeService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "560.390 file without extension, bad filename: " + originFilename);
         }
-        if (!StringUtils.equalsAny(ext.toLowerCase(), YAML_EXT, YML_EXT)) {
+        EnumsApi.SourceCodeLang lang = EnumsApi.SourceCodeLang.getLangFromExt(ext);
+        if (lang==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "560.420 only '.yml' and '.yaml' files are supported, filename: " + originFilename);
+                "560.420 SourceCode with type "+ext+" isn't supported, filename: " + originFilename);
         }
 
         try {
@@ -235,7 +186,7 @@ public class SourceCodeService {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, sourceCodeResult.getErrorMessagesAsList(), sourceCodeResult.getInfoMessagesAsList());
             }
 
-            SourceCodeApiData.SourceCodeResult result = sourceCodeTxService.createSourceCode(sourceCodeYamlAsStr, ppy, context.getCompanyId());
+            SourceCodeApiData.SourceCodeResult result = sourceCodeTxService.createSourceCode(sourceCodeYamlAsStr, ppy, lang, context.getCompanyId());
 
             if (result.isErrorMessages()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.getErrorMessagesAsList(), result.getInfoMessagesAsList());
@@ -246,76 +197,6 @@ public class SourceCodeService {
             log.error("560.480 Error", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "560.510 can't load source codes, Error: " + e.getMessage());
-        }
-    }
-
-    public CleanerInfo generateDirsForDev(Long sourceCodeId, String processCode, Long companyId) {
-        CleanerInfo resource = new CleanerInfo();
-        try {
-            final SourceCodeImpl sourceCode = sourceCodeCache.findById(sourceCodeId);
-            if (sourceCode == null) {
-                log.info("560.540 sourceCode wasn't found, sourceCodeId: {}", sourceCodeId);
-                return resource;
-            }
-
-            SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
-            SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
-
-            AtomicLong contextId = new AtomicLong();
-            SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(
-                    EnumsApi.SourceCodeLang.yaml, scspy.source, () -> "" + contextId.incrementAndGet());
-
-            ExecContextParamsYaml.Process process = sourceCodeGraph.processes.stream().filter(o->o.processCode.equals(processCode)).findFirst().orElse(null);
-            if (process == null) {
-                log.warn("560.570 process wasn't found, processCode: {}", processCode);
-                return resource;
-            }
-
-            Path tempDir = DirUtils.createMhTempPath("generate-dirs-for-dev-");
-            if (tempDir==null) {
-                throw new RuntimeException("(tempDir==null)");
-            }
-            resource.toClean.add(tempDir);
-
-            final String processCodeDirName = ArtifactCommonUtils.normalizeCode(process.processCode);
-
-            Path outputDir = tempDir.resolve(processCodeDirName);
-            Files.createDirectory(outputDir);
-
-            Map<String, Long> globalIds = new HashMap<>();
-            AtomicLong globalId = new AtomicLong(1000);
-            createGlobalVariables(process, outputDir, globalIds, globalId);
-
-            Map<String, Long> localIds = new HashMap<>();
-            AtomicLong localId = new AtomicLong(2000);
-            createLocalVariables(process, outputDir, localIds, localId);
-
-            createSystemDir(outputDir);
-            TaskParamsYaml tpy = asTaskParamsYaml(scpy, process, globalIds, localIds);
-
-            if (createArtifactsDir(outputDir, tpy)) {
-                log.error("560.600 error creating artifact dir, processCode: {}", processCode);
-                return resource;
-            }
-
-            String filename = "process-"+processCodeDirName+".zip";
-            Path zipFile = tempDir.resolve(filename);
-
-            ZipUtils.createZip(outputDir, zipFile);
-
-            HttpHeaders httpHeaders = new HttpHeaders();
-            httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            HttpUtils.setContentDisposition(httpHeaders, filename);
-            resource.entity = new ResponseEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, Files.size(zipFile)), HttpStatus.OK);
-            return resource;
-        } catch (VariableDataNotFoundException e) {
-            log.error("560.630 Variable #{}, context: {}, {}", e.variableId, e.context, e.getMessage());
-            resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
-            return resource;
-        } catch (Throwable th) {
-            log.error("560.660 General error", th);
-            resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
-            return resource;
         }
     }
 

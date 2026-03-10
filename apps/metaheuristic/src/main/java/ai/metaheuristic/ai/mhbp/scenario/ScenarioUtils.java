@@ -132,7 +132,7 @@ public class ScenarioUtils {
         return suffix;
     }
 
-    public static SourceCodeParamsYaml to(String uid, ScenarioParams sp, Function<String, ApiScheme> apiSchemeResolverFunc) {
+    public static SourceCodeParamsYaml to(String uid, ScenarioParams sp, Function<String, @Nullable ApiScheme> apiSchemeResolverFunc) {
         List<ItemWithUuid> list = sp.steps.stream().map(o->new ItemWithUuid(o.uuid, o.parentUuid)).toList();
         CollectionUtils.TreeUtils<String> treeUtils = new CollectionUtils.TreeUtils<>();
         List<ItemWithUuid> tree = treeUtils.rebuildTree((List)list);
@@ -164,7 +164,7 @@ public class ScenarioUtils {
         }
     }
 
-    public static SourceCodeParamsYaml.Process getProcess(ScenarioParams sp, AtomicInteger processNumber, Function<String, ApiScheme> apiSchemeResolverFunc, String uuid) {
+    public static SourceCodeParamsYaml.Process getProcess(ScenarioParams sp, AtomicInteger processNumber, Function<String, @Nullable ApiScheme> apiSchemeResolverFunc, String uuid) {
         ScenarioParams.Step step = findStepByUuid(sp, uuid);
         if (step==null) {
             throw new IllegalStateException("376.040 (step==null), uuid: 4" + uuid);

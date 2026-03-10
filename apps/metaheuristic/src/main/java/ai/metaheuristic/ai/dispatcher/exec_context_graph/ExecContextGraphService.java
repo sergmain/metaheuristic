@@ -181,10 +181,9 @@ public class ExecContextGraphService {
         return writer.toString();
     }
 
-    @Nullable
-    private static <T> T readOnlyGraphNullable(
+    private static <T> @Nullable T readOnlyGraphNullable(
             ExecContextGraph execContextGraph,
-            Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, T> callable) {
+            Function<DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge>, @Nullable T> callable) {
         DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = prepareGraph(execContextGraph);
         return callable.apply(graph);
     }
@@ -625,7 +624,6 @@ public class ExecContextGraphService {
         });
     }
 
-    @SuppressWarnings("ReturnOfNull")
     public static ExecContextData.@Nullable TaskVertex findVertexByTaskId(ExecContextGraph execContextGraph, Long taskId) {
         return readOnlyGraphNullable(execContextGraph, (graph) -> {
             for (ExecContextData.TaskVertex v : graph.vertexSet()) {

@@ -33,6 +33,7 @@ import org.springframework.data.domain.Pageable;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -74,7 +75,7 @@ public class AuthService {
         return new AuthData.Auth(new AuthData.SimpleAuth(auth));
     }
 
-    public OperationStatusRest createAuth(String yaml, UserContext context) {
+    public OperationStatusRest createAuth(String yaml, UserContext context, Path path) {
         try {
             return authTxService.createAuth(yaml, context);
         } catch (CommonRollbackException e) {

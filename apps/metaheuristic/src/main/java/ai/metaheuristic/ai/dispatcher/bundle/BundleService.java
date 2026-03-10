@@ -17,9 +17,11 @@
 package ai.metaheuristic.ai.dispatcher.bundle;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.FunctionalInterfaces;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeUtils;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
 import ai.metaheuristic.ai.exceptions.VariableSavingException;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
@@ -35,6 +37,7 @@ import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.exceptions.BundleProcessingException;
 import ai.metaheuristic.commons.utils.BundleUtils;
 import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYaml;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYamlUtils;
@@ -53,7 +56,6 @@ import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -197,7 +199,7 @@ public class BundleService {
 
     private static void processCommonType(EnumsApi.BundleItemType type, BundleCfgYaml bundleCfgYaml,
                                           Path data, BundleData.UploadingStatus status, UserContext dispatcherContext,
-                                          BiFunction<String, UserContext, BaseDataClass> storeCommonTypeFunc) throws IOException {
+                                          FunctionalInterfaces.TripleFunction<String, UserContext, Path, BaseDataClass> storeCommonTypeFunc) throws IOException {
         for (BundleCfgYaml.BundleConfig bundleConfig : bundleCfgYaml.bundleConfig) {
             if (bundleConfig.type!= type) {
                 continue;
@@ -212,7 +214,7 @@ public class BundleService {
                 .forEach(f-> {
                     try {
                         String yaml = Files.readString(f);
-                        BaseDataClass codeResult = storeCommonTypeFunc.apply(yaml, dispatcherContext);
+                        BaseDataClass codeResult = storeCommonTypeFunc.apply(yaml, dispatcherContext, f);
                         status.addErrorMessages(codeResult.getErrorMessagesAsList());
                         status.addInfoMessages(codeResult.getInfoMessagesAsList());
                     } catch (IOException e) {
@@ -222,8 +224,13 @@ public class BundleService {
         }
     }
 
-    private SourceCodeApiData.SourceCodeResult storeSourceCode(String yaml, UserContext dispatcherContext) {
-        return sourceCodeService.createSourceCode(yaml, dispatcherContext.getCompanyId());
+    private SourceCodeApiData.SourceCodeResult storeSourceCode(String sourceCode, UserContext dispatcherContext, Path path) {
+        String ext = StrUtils.getExtension(path.getFileName().toString());
+        EnumsApi.SourceCodeLang lang = EnumsApi.SourceCodeLang.getLangFromExt(ext);
+        if (lang==null) {
+            lang = SourceCodeUtils.determineLang(sourceCode);
+        }
+        return sourceCodeService.createSourceCode(sourceCode, lang, dispatcherContext.getCompanyId());
     }
 
     private void processFunctions(BundleCfgYaml bundleCfgYaml, Path data, BundleData.UploadingStatus status) throws IOException {

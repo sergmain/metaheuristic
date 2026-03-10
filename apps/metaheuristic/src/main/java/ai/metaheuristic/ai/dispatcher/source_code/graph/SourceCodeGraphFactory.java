@@ -32,14 +32,10 @@ public class SourceCodeGraphFactory {
     private final static SourceCodeGraphLanguageMhsc MHSC_LANG = new SourceCodeGraphLanguageMhsc();
 
     public static SourceCodeData.SourceCodeGraph parse(EnumsApi.SourceCodeLang lang, String sourceCode, Supplier<String> contextIdSupplier) {
-        //noinspection SwitchStatementWithTooFewBranches
-        switch (lang) {
-            case yaml:
-                return YAML_LANG.parse(sourceCode, contextIdSupplier);
-            case mhsc:
-                return MHSC_LANG.parse(sourceCode, contextIdSupplier);
-            default:
-                throw new IllegalStateException("Unknown language dialect: " + lang);
-        }
+        return switch (lang) {
+            case yaml -> YAML_LANG.parse(sourceCode, contextIdSupplier);
+            case mhsc -> MHSC_LANG.parse(sourceCode, contextIdSupplier);
+            default -> throw new IllegalStateException("Unknown language dialect: " + lang);
+        };
     }
 }

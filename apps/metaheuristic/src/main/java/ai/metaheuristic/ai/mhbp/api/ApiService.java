@@ -34,6 +34,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -88,7 +89,7 @@ public class ApiService {
         return api;
     }
 
-    public OperationStatusRest createApi(String yaml, UserContext context) {
+    public OperationStatusRest createApi(String yaml, UserContext context, Path path) {
         try {
             return apiTxService.createApi(yaml, context);
         } catch (CommonRollbackException e) {

@@ -64,17 +64,18 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
         return visitor.getGraph();
     }
 
+
     public static String unquote(String s) {
         if (s.length() >= 2 && ((s.startsWith("\"") && s.endsWith("\"")) || (s.startsWith("'") && s.endsWith("'")))) {
             return s.substring(1, s.length() - 1)
-                    .replace("\\\"", "\"")
-                    .replace("\\'", "'")
-                    .replace("\\\\", "\\");
+                .replace("\\\"", "\"")
+                .replace("\\'", "'")
+                .replace("\\\\", "\\");
         }
         return s;
     }
 
-    /**
+/**
      * AST visitor that directly constructs SourceCodeData.SourceCodeGraph.
      */
     static class MhscVisitor extends MhSourceCodeBaseVisitor<Void> {
@@ -179,7 +180,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
             return null;
         }
 
-        /**
+/**
          * Process a processDecl and return the set of "last" vertices for chaining.
          */
         private Set<ExecContextData.ProcessVertex> processProcessDecl(

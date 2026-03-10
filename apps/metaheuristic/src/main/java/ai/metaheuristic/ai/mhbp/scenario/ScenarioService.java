@@ -342,7 +342,7 @@ public class ScenarioService {
         if (sc==null) {
             SourceCodeParamsYaml scpy = ScenarioUtils.to(uid, s.getScenarioParams(), this::apiSchemeResolver);
             String yaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(scpy);
-            SourceCodeApiData.SourceCodeResult result = sourceCodeTxService.createSourceCode(yaml, scpy, context.getCompanyId());
+            SourceCodeApiData.SourceCodeResult result = sourceCodeTxService.createSourceCode(yaml, scpy, EnumsApi.SourceCodeLang.yaml, context.getCompanyId());
             if (!result.isValid()) {
                 final String es = S.f("373.760 validation: %s, %s", result.validationResult.status, result.validationResult.error);
                 log.error(es);

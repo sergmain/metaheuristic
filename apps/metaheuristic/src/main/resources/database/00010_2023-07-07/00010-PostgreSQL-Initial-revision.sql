@@ -288,14 +288,15 @@ CREATE INDEX MH_FUNCTION_FUNCTION_TYPE_IDX
 
 CREATE TABLE MH_SOURCE_CODE
 (
-  ID            SERIAL PRIMARY KEY,
-  VERSION       NUMERIC(5, 0)  NOT NULL,
-  COMPANY_ID    NUMERIC(10, 0) NOT NULL,
-  UID           varchar(250)  NOT NULL,
-  CREATED_ON    bigint NOT NULL,
-  PARAMS        TEXT not null,
-  IS_VALID      BOOLEAN not null default false,
-  LATCH         varchar(50)
+    ID              SERIAL PRIMARY KEY,
+    VERSION         NUMERIC(5, 0)  NOT NULL,
+    COMPANY_ID      NUMERIC(10, 0) NOT NULL,
+    UID             varchar(250)  NOT NULL,
+    CREATED_ON      bigint NOT NULL,
+    LANG            varchar(10) NOT NULL,
+    PARAMS          TEXT not null,
+    IS_VALID        BOOLEAN not null default false,
+    LATCH           varchar(50)
 );
 
 CREATE INDEX MH_SOURCE_CODE_COMPANY_ID_IDX

@@ -202,13 +202,13 @@ public class TestSourceCodeGraphLanguageMhsc {
 
     @Test
     public void test_priority_negative() throws IOException {
-        String mhsc =
-                "source \"test\" {\n" +
-                "    my-proc := some-func {\n" +
-                "        priority -1\n" +
-                "        timeout 10\n" +
-                "    }\n" +
-                "}";
+        String mhsc = """
+            source "test" {
+                my-proc := some-func {
+                    priority -1
+                    timeout 10
+                }
+            }""";
         AtomicLong contextId = new AtomicLong();
         SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc, () -> "" + contextId.incrementAndGet());
         ExecContextParamsYaml.Process p = graph.processes.stream()
@@ -219,13 +219,13 @@ public class TestSourceCodeGraphLanguageMhsc {
 
     @Test
     public void test_priority_positive() throws IOException {
-        String mhsc =
-                "source \"test\" {\n" +
-                "    my-proc := some-func {\n" +
-                "        priority 5\n" +
-                "        timeout 10\n" +
-                "    }\n" +
-                "}";
+        String mhsc = """
+                source "test" {
+                    my-proc := some-func {
+                        priority 5
+                        timeout 10
+                    }
+                }""";
         AtomicLong contextId = new AtomicLong();
         SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc, () -> "" + contextId.incrementAndGet());
         ExecContextParamsYaml.Process p = graph.processes.stream()
@@ -236,12 +236,12 @@ public class TestSourceCodeGraphLanguageMhsc {
 
     @Test
     public void test_priority_zero() throws IOException {
-        String mhsc =
-                "source \"test\" {\n" +
-                "    my-proc := some-func {\n" +
-                "        priority 0\n" +
-                "    }\n" +
-                "}";
+        String mhsc = """
+                source "test" {
+                    my-proc := some-func {
+                        priority 0
+                    }
+                }""";
         AtomicLong contextId = new AtomicLong();
         SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc, () -> "" + contextId.incrementAndGet());
         ExecContextParamsYaml.Process p = graph.processes.stream()

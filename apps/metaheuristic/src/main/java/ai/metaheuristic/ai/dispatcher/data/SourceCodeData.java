@@ -126,36 +126,4 @@ public class SourceCodeData {
         public final ExecContextParamsYaml.VariableDeclaration variables = new ExecContextParamsYaml.VariableDeclaration();
         public final DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = new DirectedAcyclicGraph<>(DefaultEdge.class);
     }
-
-    public static class SimpleProcess {
-        public String code;
-        public final List<String> preFunctions = new ArrayList<>();
-        public String function;
-        public final List<String> postFunctions = new ArrayList<>();
-    }
-
-    @Data
-    @EqualsAndHashCode(callSuper = false)
-    @NoArgsConstructor
-    public static class Development extends BaseDataClass {
-        public String sourceCodeUid;
-        public long sourceCodeId;
-        public final List<SimpleProcess> processes = new ArrayList<>();
-
-        @JsonCreator
-        public Development(
-            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
-            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
-            this.errorMessages = errorMessages;
-            this.infoMessages = infoMessages;
-        }
-
-        public Development(List<String> errorMessage) {
-            this.errorMessages = errorMessage;
-        }
-
-        public Development(String errorMessage) {
-            this.errorMessages = Collections.singletonList(errorMessage);
-        }
-    }
 }

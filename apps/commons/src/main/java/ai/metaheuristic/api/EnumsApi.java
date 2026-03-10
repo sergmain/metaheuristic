@@ -35,7 +35,19 @@ public class EnumsApi {
 
     public enum BatchMappingKey {id, name }
 
-    public enum SourceCodeLang { yaml, python, mhsc }
+    public enum SourceCodeLang { yaml, python, mhsc;
+
+        public static @Nullable SourceCodeLang getLangFromExt(@Nullable String ext) {
+            if (ext==null) {
+                return null;
+            }
+            return switch(ext) {
+                case ".yaml", ".yml" -> yaml;
+                case ".mhsc" -> mhsc;
+                default -> null;
+            };
+        }
+    }
 
     public enum SourceCodeType { not_exist, common, experiment, batch }
 
