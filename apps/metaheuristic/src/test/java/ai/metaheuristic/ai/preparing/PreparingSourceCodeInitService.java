@@ -136,7 +136,7 @@ public class PreparingSourceCodeInitService {
         data.f4 = createFunction("function-04:1.1");
         data.f5 = createFunction("function-05:1.1");
 
-        SourceCodeApiData.SourceCodeResult scr = sourceCodeService.createSourceCode(params, data.company.uniqueId);
+        SourceCodeApiData.SourceCodeResult scr = sourceCodeService.createSourceCode(params, EnumsApi.SourceCodeLang.yaml, data.company.uniqueId);
         data.sourceCode = Objects.requireNonNull(sourceCodeCache.findById(scr.id));
 
         byte[] bytes = "A resource for input pool".getBytes();

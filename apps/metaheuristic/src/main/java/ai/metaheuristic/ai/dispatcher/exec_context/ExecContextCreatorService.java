@@ -212,10 +212,9 @@ public class ExecContextCreatorService {
                 throw new ExecContextTooManyInstancesException(sourceCode.uid, scpy.source.instances, count);
             }
         }
-        EnumsApi.SourceCodeLang lang = EnumsApi.SourceCodeLang.valueOf(sourceCode.lang);
         AtomicLong contextId = new AtomicLong();
         SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(
-            lang, scspy.source, () -> String.valueOf(contextId.incrementAndGet()));
+            scspy.lang, scspy.source, () -> String.valueOf(contextId.incrementAndGet()));
 
         if (ExecContextProcessGraphService.anyError(sourceCodeGraph)) {
             throw new CommonRollbackException("562.180 processGraph is broken", ERROR);

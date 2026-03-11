@@ -328,7 +328,6 @@ CREATE TABLE mh_source_code
     COMPANY_ID      NUMERIC(10, 0) NOT NULL,
     UID             varchar(250) NOT NULL,
     CREATED_ON      bigint NOT NULL,
-    LANG            varchar(10) NOT NULL,
     PARAMS          LONGTEXT not null,
     IS_VALID        BOOLEAN not null default false,
     LATCH           varchar(50)

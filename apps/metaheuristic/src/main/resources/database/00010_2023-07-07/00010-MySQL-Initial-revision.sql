@@ -315,7 +315,6 @@ CREATE TABLE mh_source_code
     COMPANY_ID      INT UNSIGNED    not null,
     UID             varchar(250) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
     CREATED_ON      bigint NOT NULL,
-    LANG            varchar(10) NOT NULL,
     PARAMS          TEXT not null,
     IS_VALID        BOOLEAN not null default false,
     LATCH           varchar(50)

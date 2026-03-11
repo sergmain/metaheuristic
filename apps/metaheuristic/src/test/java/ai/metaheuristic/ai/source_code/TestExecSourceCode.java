@@ -93,7 +93,7 @@ class TestExecSourceCode {
     @Autowired private CompanyTopLevelService companyTopLevelService;
     @Autowired private CompanyRepository companyRepository;
 
-    private @Nullable Company company = null;
+    private Company company = null;
 
     @BeforeEach
     public void init() {
@@ -121,13 +121,13 @@ class TestExecSourceCode {
         SourceCodeApiData.SourceCodeResult scr = null;
         SourceCodeApiData.SourceCodeResult scrSub = null;
         try {
-            scrSub = sourceCodeService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-correct-sub-source-code.yaml"), company.uniqueId);
+            scrSub = sourceCodeService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-correct-sub-source-code.yaml"), EnumsApi.SourceCodeLang.yaml, company.uniqueId);
             assertTrue(scrSub.isValid());
             assertFalse(scrSub.isErrorMessages());
             System.out.println(scrSub.getErrorMessagesAsStr());
             assertEquals(scrSub.validationResult.status, EnumsApi.SourceCodeValidateStatus.OK);
 
-            scr = sourceCodeService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-correct.yaml"), company.uniqueId);
+            scr = sourceCodeService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-correct.yaml"), EnumsApi.SourceCodeLang.yaml, company.uniqueId);
             assertTrue(scr.isValid());
             assertFalse(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());
@@ -142,7 +142,7 @@ class TestExecSourceCode {
     public void testRecursionExecError() throws IOException {
         SourceCodeApiData.SourceCodeResult scr = null;
         try {
-            scr = sourceCodeService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-1.yaml"), company.uniqueId);
+            scr = sourceCodeService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-1.yaml"), EnumsApi.SourceCodeLang.yaml, company.uniqueId);
             assertTrue(scr.isValid());
         } finally {
             finalize(scr);
@@ -153,7 +153,7 @@ class TestExecSourceCode {
     public void testMetaNotFoundError() throws IOException {
         SourceCodeApiData.SourceCodeResult scr = null;
         try {
-            scr = sourceCodeService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-2.yaml"), company.uniqueId);
+            scr = sourceCodeService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-2.yaml"), EnumsApi.SourceCodeLang.yaml, company.uniqueId);
             assertFalse(scr.isValid());
             assertTrue(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());
@@ -168,7 +168,7 @@ class TestExecSourceCode {
     public void testInputsCountMismatchError() throws IOException {
         SourceCodeApiData.SourceCodeResult scr = null;
         try {
-            scr = sourceCodeService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-3.yaml"), company.uniqueId);
+            scr = sourceCodeService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-3.yaml"), EnumsApi.SourceCodeLang.yaml, company.uniqueId);
             assertFalse(scr.isValid());
             assertTrue(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());
@@ -183,7 +183,7 @@ class TestExecSourceCode {
     public void testOutputsCountMismatchError() throws IOException {
         SourceCodeApiData.SourceCodeResult scr = null;
         try {
-            scr = sourceCodeService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-4.yaml"), company.uniqueId);
+            scr = sourceCodeService.createSourceCode(getParams("/source_code/yaml/for-testing-exec-source-code-4.yaml"), EnumsApi.SourceCodeLang.yaml, company.uniqueId);
             assertFalse(scr.isValid());
             assertTrue(scr.isErrorMessages());
             System.out.println(scr.getErrorMessagesAsStr());

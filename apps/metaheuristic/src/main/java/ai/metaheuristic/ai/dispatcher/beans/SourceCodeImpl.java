@@ -57,9 +57,6 @@ public class SourceCodeImpl implements Serializable, SourceCode {
     @Column(name="CREATED_ON")
     public long createdOn;
 
-    @Column(name="LANG")
-    public String lang;
-
     @Column(name = "IS_VALID")
     public boolean valid;
 
