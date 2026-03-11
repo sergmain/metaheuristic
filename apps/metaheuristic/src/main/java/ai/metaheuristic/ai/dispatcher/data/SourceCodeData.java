@@ -34,6 +34,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static ai.metaheuristic.api.EnumsApi.OperationStatus.OK;
 
@@ -132,6 +133,7 @@ public class SourceCodeData {
         public boolean clean = false;
         public int instances;
         public @Nullable AccessControl ac = null;
+        public List<Map<String, String>> metas = new ArrayList<>();
 
         public final List<ExecContextParamsYaml.Process> processes = new ArrayList<>();
 

@@ -62,6 +62,9 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         if (sourceCodeParams.source.ac != null) {
             scg.ac = new SourceCodeData.AccessControl(sourceCodeParams.source.ac.groups);
         }
+        if (sourceCodeParams.source.metas != null) {
+            scg.metas.addAll(sourceCodeParams.source.metas);
+        }
         if (sourceCodeParams.source.variables!=null) {
             scg.variables.globals = sourceCodeParams.source.variables.globals;
             sourceCodeParams.source.variables.inputs.stream().map(v -> getVariable(sourceCodeParams, v)).collect(Collectors.toCollection(() -> scg.variables.inputs));

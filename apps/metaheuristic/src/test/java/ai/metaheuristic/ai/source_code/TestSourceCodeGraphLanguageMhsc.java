@@ -818,6 +818,61 @@ public class TestSourceCodeGraphLanguageMhsc {
         assertNull(yamlGraph.ac);
     }
 
+    // ============ source-level metas tests ============
+
+    @Test
+    public void test_mhsc_source_metas_populated() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                metas {
+                    mh.result-file-extension = "-result.zip"
+                }
+                mh.nop := internal mh.nop {}
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        assertEquals(1, graph.metas.size());
+        assertEquals("-result.zip", graph.metas.get(0).get("mh.result-file-extension"));
+    }
+
+    @Test
+    public void test_mhsc_source_metas_multiple_entries() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                metas {
+                    key1 = "val1",
+                    key2 = "val2"
+                }
+                mh.nop := internal mh.nop {}
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        assertEquals(2, graph.metas.size());
+        assertEquals("val1", graph.metas.get(0).get("key1"));
+        assertEquals("val2", graph.metas.get(1).get("key2"));
+    }
+
+    @Test
+    public void test_mhsc_source_metas_empty_when_absent() {
+        String mhsc = "source \"test-uid\" (strict) { mh.nop := internal mh.nop {} }";
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        assertTrue(graph.metas.isEmpty());
+    }
+
+    @Test
+    public void test_yaml_source_metas_populated() throws IOException {
+        SourceCodeGraph graph = parseYaml("/source_code/yaml/edition-maker-5.0.26.yaml");
+        assertFalse(graph.metas.isEmpty(), "edition-maker should have source-level metas");
+        assertTrue(graph.metas.stream().anyMatch(m -> m.containsKey("mh.result-file-extension")),
+                "Should contain mh.result-file-extension meta");
+    }
+
+    @Test
+    public void test_yaml_source_metas_empty_when_absent() throws IOException {
+        SourceCodeGraph graph = parseYaml("/source_code/yaml/mhdg-rg-flat-short-1.0.0.yaml");
+        assertTrue(graph.metas.isEmpty());
+    }
+
     // ============ Helpers ============
 
     private static SourceCodeGraph parseYaml(String resourcePath) throws IOException {

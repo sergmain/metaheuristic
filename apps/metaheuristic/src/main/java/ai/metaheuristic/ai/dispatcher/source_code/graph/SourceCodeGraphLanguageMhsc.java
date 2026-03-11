@@ -136,8 +136,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                     if (elem.variablesBlock() != null) {
                         visitVariablesBlock(elem.variablesBlock());
                     } else if (elem.metasBlock() != null) {
-                        // Source-level metas: not directly mapped to SourceCodeGraph
-                        // (SourceCodeGraph doesn't have a metas field at top level)
+                        parseSourceMetas(elem.metasBlock());
                     } else if (elem.templateDecl() != null) {
                         visitTemplateDecl(elem.templateDecl());
                     } else if (elem.forLoop() != null) {
@@ -182,6 +181,21 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                 }
             }
             return null;
+        }
+
+        private void parseSourceMetas(MhSourceCodeParser.MetasBlockContext ctx) {
+            for (MhSourceCodeParser.MetaEntryContext me : ctx.metaEntry()) {
+                Map<String, String> entry = new LinkedHashMap<>();
+                String key = resolveIdRef(me.idRef(0));
+                String value;
+                if (me.STRING() != null) {
+                    value = unquote(me.STRING().getText());
+                } else {
+                    value = resolveIdRef(me.idRef(1));
+                }
+                entry.put(key, value);
+                scg.metas.add(entry);
+            }
         }
 
         @Override
