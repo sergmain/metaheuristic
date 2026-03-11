@@ -120,6 +120,7 @@ public class SourceCodeData {
 
     @Data
     public static class SourceCodeGraph {
+        public String uid;
         public boolean clean = false;
         public final List<ExecContextParamsYaml.Process> processes = new ArrayList<>();
 

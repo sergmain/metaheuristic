@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphLanguageMhsc;
+import ai.metaheuristic.ai.exceptions.SourceCodeGraphException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import org.apache.commons.io.IOUtils;
@@ -715,6 +716,48 @@ public class TestSourceCodeGraphLanguageMhsc {
         // Level 5 batch-splitter should contain only store-req-5 and set-reset-task-id-5
         assertTrue(graph.processes.stream().anyMatch(p -> p.processCode.equals("mhdg-rg.store-req-5")));
         assertTrue(graph.processes.stream().anyMatch(p -> p.processCode.equals("mhdg-rg.set-reset-task-id-5")));
+    }
+
+    // ============ uid field tests ============
+
+    @Test
+    public void test_mhsc_short_uid_populated() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-short-1.0.0.mhsc");
+        assertEquals("mhdg-rg-1.0.4", graph.uid, "uid should be extracted from source declaration");
+    }
+
+    @Test
+    public void test_yaml_short_uid_populated() throws IOException {
+        SourceCodeGraph graph = parseYaml("/source_code/yaml/mhdg-rg-flat-short-1.0.0.yaml");
+        assertEquals("mhdg-rg-1.0.4", graph.uid, "uid should be extracted from YAML source.uid");
+    }
+
+    @Test
+    public void test_factorial_main_uid() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mh-factorial-main-1.8.mhsc");
+        assertEquals("mh-factorial-main-1.8", graph.uid);
+    }
+
+    @Test
+    public void test_factorial_recursion_uid() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mh-factorial-recursion-1.17.mhsc");
+        assertEquals("mh-factorial-recursion-1.17", graph.uid);
+    }
+
+    @Test
+    public void test_mhsc_vs_yaml_uid_match() throws IOException {
+        SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-short-1.0.0.yaml");
+        SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/mhdg-rg-flat-short-1.0.0.mhsc");
+        assertEquals(yamlGraph.uid, mhscGraph.uid, "YAML and MHSC should produce the same uid");
+    }
+
+    @Test
+    public void test_mhsc_blank_uid_throws() {
+        String mhsc = "source \"\" (strict) { mh.nop := internal mh.nop {} }";
+        AtomicLong contextId = new AtomicLong();
+        assertThrows(SourceCodeGraphException.class,
+                () -> SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc, () -> "" + contextId.incrementAndGet()),
+                "Blank uid should throw SourceCodeGraphException");
     }
 
     // ============ Helpers ============

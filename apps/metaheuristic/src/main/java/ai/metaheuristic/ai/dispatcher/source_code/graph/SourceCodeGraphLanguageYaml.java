@@ -51,6 +51,10 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
         }
 
         SourceCodeData.SourceCodeGraph scg = new SourceCodeData.SourceCodeGraph();
+        scg.uid = sourceCodeParams.source.uid;
+        if (scg.uid == null || scg.uid.isBlank()) {
+            throw new SourceCodeGraphException("564.025 uid is required in source code definition");
+        }
         scg.clean = sourceCodeParams.source.clean;
         if (sourceCodeParams.source.variables!=null) {
             scg.variables.globals = sourceCodeParams.source.variables.globals;

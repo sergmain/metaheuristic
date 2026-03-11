@@ -103,6 +103,9 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
         }
 
         SourceCodeData.SourceCodeGraph getGraph() {
+            if (scg.uid == null || scg.uid.isBlank()) {
+                throw new SourceCodeGraphException("564.190 uid is required in source declaration");
+            }
             if (!finishPresent) {
                 addFinishProcess();
             }
@@ -111,6 +114,9 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
 
         @Override
         public Void visitSourceDecl(MhSourceCodeParser.SourceDeclContext ctx) {
+            // Extract uid from source declaration: source "uid" (options) { ... }
+            scg.uid = unquote(ctx.STRING().getText());
+
             // Process source options
             if (ctx.sourceOptions() != null) {
                 for (MhSourceCodeParser.SourceOptionContext opt : ctx.sourceOptions().sourceOption()) {
