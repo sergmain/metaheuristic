@@ -122,6 +122,10 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                 for (MhSourceCodeParser.SourceOptionContext opt : ctx.sourceOptions().sourceOption()) {
                     if (opt.getText().equals("clean")) {
                         scg.clean = true;
+                    } else if (opt.getText().startsWith("instances")) {
+                        scg.instances = Integer.parseInt(opt.INT().getText());
+                    } else if (opt.getText().startsWith("ac")) {
+                        scg.ac = new SourceCodeData.AccessControl(unquote(opt.STRING().getText()));
                     }
                 }
             }

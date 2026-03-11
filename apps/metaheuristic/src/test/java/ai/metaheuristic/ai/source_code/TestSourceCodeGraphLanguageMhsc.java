@@ -753,6 +753,71 @@ public class TestSourceCodeGraphLanguageMhsc {
                 "Blank uid should throw SourceCodeGraphException");
     }
 
+    // ============ instances field tests ============
+
+    @Test
+    public void test_mhsc_instances_from_source_option() {
+        String mhsc = "source \"test-uid\" (strict, instances = 3) { mh.nop := internal mh.nop {} }";
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        assertEquals(3, graph.instances);
+    }
+
+    @Test
+    public void test_mhsc_instances_default_zero() {
+        String mhsc = "source \"test-uid\" (strict) { mh.nop := internal mh.nop {} }";
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        assertEquals(0, graph.instances);
+    }
+
+    @Test
+    public void test_mhsc_em_stat_instances() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/em-stat-5.0.42-ric-411.mhsc");
+        assertEquals(1, graph.instances, "em-stat should have instances=1");
+    }
+
+    @Test
+    public void test_yaml_em_stat_instances() throws IOException {
+        SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/em-stat-5.0.42-ric-411.yaml");
+        assertEquals(1, yamlGraph.instances);
+    }
+
+    @Test
+    public void test_mhsc_vs_yaml_instances_match() throws IOException {
+        SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/em-stat-5.0.42-ric-411.yaml");
+        SourceCodeGraph mhscGraph = parseMhsc("/source_code/mhsc/em-stat-5.0.42-ric-411.mhsc");
+        assertEquals(yamlGraph.instances, mhscGraph.instances);
+    }
+
+    // ============ ac (access control) field tests ============
+
+    @Test
+    public void test_mhsc_ac_from_source_option() {
+        String mhsc = "source \"test-uid\" (strict, ac = \"ric411,test\") { mh.nop := internal mh.nop {} }";
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        assertNotNull(graph.ac);
+        assertEquals("ric411,test", graph.ac.groups);
+    }
+
+    @Test
+    public void test_mhsc_ac_default_null() {
+        String mhsc = "source \"test-uid\" (strict) { mh.nop := internal mh.nop {} }";
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        assertNull(graph.ac);
+    }
+
+    @Test
+    public void test_yaml_ac_populated() throws IOException {
+        SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/edition-maker-5.0.26.yaml");
+        assertNotNull(yamlGraph.ac);
+        assertFalse(yamlGraph.ac.groups.isEmpty());
+    }
+
+    @Test
+    public void test_yaml_ac_null_when_absent() throws IOException {
+        SourceCodeGraph yamlGraph = parseYaml("/source_code/yaml/mhdg-rg-flat-short-1.0.0.yaml");
+        assertNull(yamlGraph.ac);
+    }
+
     // ============ Helpers ============
 
     private static SourceCodeGraph parseYaml(String resourcePath) throws IOException {

@@ -21,6 +21,7 @@ sourceOption
     : 'strict'
     | 'clean'
     | 'instances' '=' INT
+    | 'ac' '=' STRING
     ;
 
 sourceBody

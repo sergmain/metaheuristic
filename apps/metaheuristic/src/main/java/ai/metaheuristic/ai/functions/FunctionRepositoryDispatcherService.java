@@ -207,8 +207,8 @@ public class FunctionRepositoryDispatcherService {
     @SuppressWarnings("MethodMayBeStatic")
     @Async
     @EventListener
-    public void activateFunctions(SourceCodeParamsYaml sc) {
-        Set<String> funcCodes = collectFunctionCodes(sc);
+    public void activateFunctions(SourceCodeData.SourceCodeGraph scg) {
+        Set<String> funcCodes = collectFunctionCodes(scg);
         registerCodes(funcCodes, false);
     }
 

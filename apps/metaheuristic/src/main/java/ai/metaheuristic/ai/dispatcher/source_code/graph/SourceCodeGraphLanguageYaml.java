@@ -56,6 +56,12 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
             throw new SourceCodeGraphException("564.025 uid is required in source code definition");
         }
         scg.clean = sourceCodeParams.source.clean;
+        if (sourceCodeParams.source.instances != null) {
+            scg.instances = sourceCodeParams.source.instances;
+        }
+        if (sourceCodeParams.source.ac != null) {
+            scg.ac = new SourceCodeData.AccessControl(sourceCodeParams.source.ac.groups);
+        }
         if (sourceCodeParams.source.variables!=null) {
             scg.variables.globals = sourceCodeParams.source.variables.globals;
             sourceCodeParams.source.variables.inputs.stream().map(v -> getVariable(sourceCodeParams, v)).collect(Collectors.toCollection(() -> scg.variables.inputs));
