@@ -26,13 +26,13 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.BatchData;
-import ai.metaheuristic.ai.dispatcher.data.SettingsData;
 import ai.metaheuristic.ai.dispatcher.event.DispatcherEventService;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskQueueCleanByExecContextIdEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.repositories.BatchRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
+import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
@@ -41,12 +41,12 @@ import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYaml;
 import ai.metaheuristic.ai.yaml.batch.BatchParamsYamlUtils;
+import ai.metaheuristic.api.data.SourceCodeGraph;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.account.UserContext;
-import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.S;
@@ -295,18 +295,17 @@ public class BatchTxService {
 
         return getVariable(batch, null, true,
                 BatchTxService::selectVariable,
-                (execContextId, scpy) -> batchHelperService.findUploadedFilenameForBatchId(execContextId, execContext.getExecContextParamsYaml(), "origin-file.zip"));
+                (execContextId, _) -> batchHelperService.findUploadedFilenameForBatchId(execContextId, execContext.getExecContextParamsYaml(), "origin-file.zip"));
     }
 
     @Nullable
-    private static String selectVariable(Long execContextId, SourceCodeParamsYaml scpy) {
-        if (scpy.source.variables==null || scpy.source.variables.inputs.size()!=1) {
-            final String es = "981.410 expected only one input variable in execContext but actual count: " +
-                (scpy.source.variables==null ? "null" : ""+scpy.source.variables.inputs.size());
+    private static String selectVariable(Long execContextId, SourceCodeGraph scg) {
+        if (scg.variables.inputs.size()!=1) {
+            final String es = "981.410 expected only one input variable in execContext but actual count: "+scg.variables.inputs.size();
             log.warn(es);
             return null;
         }
-        String variableName = scpy.source.variables.inputs.get(0).name;
+        String variableName = scg.variables.inputs.get(0).name;
         if (S.b(variableName)) {
             final String es = "981.420 input variable in execContext #" + execContextId + " is empty";
             log.warn(es);
@@ -316,8 +315,9 @@ public class BatchTxService {
     }
 
     public CleanerInfo getVariable(
-            Batch batch, @Nullable Long companyUniqueId, boolean includeDeleted,
-            BiFunction<Long, SourceCodeParamsYaml, String> variableSelector, BiFunction<Long, SourceCodeParamsYaml, String> outputFilenameFunction) {
+        Batch batch, @Nullable Long companyUniqueId, boolean includeDeleted,
+        BiFunction<Long, SourceCodeGraph, @Nullable String> variableSelector,
+        BiFunction<Long, SourceCodeGraph, @Nullable String> outputFilenameFunction) {
 
         CleanerInfo resource = new CleanerInfo();
         try {
@@ -337,8 +337,8 @@ public class BatchTxService {
                 return resource;
             }
             SourceCodeStoredParamsYaml scspy = sc.getSourceCodeStoredParamsYaml();
-            SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
-            String resultBatchVariable = variableSelector.apply(batch.execContextId, scpy);
+            SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
+            String resultBatchVariable = variableSelector.apply(batch.execContextId, scg);
 
             Variable variable = variableService.getVariableAsSimple(batch.execContextId, resultBatchVariable);
             if (variable==null) {
@@ -349,7 +349,7 @@ public class BatchTxService {
 
             String filename = variable.filename;
             if (S.b(filename)) {
-                filename = outputFilenameFunction.apply(batch.execContextId, scpy);
+                filename = outputFilenameFunction.apply(batch.execContextId, scg);
                 if (S.b(filename)) {
                     final String es = "981.500 Can't find filename for file";
                     log.warn(es);
@@ -387,8 +387,8 @@ public class BatchTxService {
     }
 
     private CleanerInfo getBatchProcessingResultInternal(Batch batch, Long companyUniqueId, boolean includeDeleted, String variableType) {
-        return getVariable(batch, companyUniqueId, includeDeleted, (execContextId, scpy)-> {
-            List<SourceCodeParamsYaml.Variable> vars = SourceCodeTxService.findVariableByType(scpy, variableType);
+        return getVariable(batch, companyUniqueId, includeDeleted, (execContextId, scg)-> {
+            List<ExecContextParamsYaml.Variable> vars = SourceCodeTxService.findVariableByType(scg, variableType);
             if (vars.isEmpty()) {
                 final String es = "981.540 variable with type '"+variableType+"' wasn't found";
                 log.warn(es);
@@ -400,13 +400,13 @@ public class BatchTxService {
                 return null;
             }
             return vars.get(0).name;
-        }, (execContextId, scpy) -> {
-            if (scpy.source.variables.inputs.size()!=1) {
-                final String es = "981.580 expected only one input variable in execContext but actual count: " + scpy.source.variables.inputs.size();
+        }, (execContextId, scg) -> {
+            if (scg.variables.inputs.size()!=1) {
+                final String es = "981.580 expected only one input variable in execContext but actual count: " + scg.variables.inputs.size();
                 log.warn(es);
                 return null;
             }
-            String variableName = scpy.source.variables.inputs.get(0).name;
+            String variableName = scg.variables.inputs.get(0).name;
             if (S.b(variableName)) {
                 final String es = "981.600 input variable in execContext #"+batch.execContextId+" is empty";
                 log.warn(es);
@@ -424,7 +424,7 @@ public class BatchTxService {
                 log.warn(es);
                 return null;
             }
-            String filename = StrUtils.getName(inputVariable.filename) + BatchUtils.getActualExtension(scpy, globals.dispatcher.defaultResultFileExtension);
+            String filename = StrUtils.getName(inputVariable.filename) + BatchUtils.getActualExtension(scg, globals.dispatcher.defaultResultFileExtension);
             return filename;
         });
     }

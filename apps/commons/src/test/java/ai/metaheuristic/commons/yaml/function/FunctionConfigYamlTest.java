@@ -20,15 +20,11 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.utils.MetaUtils;
-import ai.metaheuristic.commons.yaml.function.*;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 
-import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
@@ -181,43 +177,5 @@ public class FunctionConfigYamlTest {
         assertNotNull(sc1.system);
         assertNotNull(sc1.system.checksumMap);
         assertTrue(sc1.system.checksumMap.isEmpty());
-    }
-
-
-    // this test is checking that both classes
-    // have the same set of fields, except field version
-    @Disabled("Left this test as a reference for another tests")
-    @Test
-    public void test_1() {
-        Field[] fields = FunctionConfigYaml.FunctionConfig.class.getDeclaredFields();
-
-        Field[] fields1 = ai.metaheuristic.commons.yaml.function.FunctionConfigYaml.class.getDeclaredFields();
-
-        boolean ok = check(fields, fields1, "FunctionConfigYaml", Set.of());
-        ok &= check(fields1, fields, "FunctionConfigYaml.FunctionConfig", Set.of("version"));
-
-        assertTrue(ok);
-    }
-
-    private static boolean check(Field[] fields, Field[] fields1, String name, Set<String> set) {
-        boolean ok = true;
-        for (Field field : fields) {
-            boolean found = false;
-            final String fieldName = field.getName();
-            if (set.contains(fieldName)) {
-                continue;
-            }
-            for (Field field1 : fields1) {
-                if (field1.getName().equals(fieldName)) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                ok = false;
-                System.out.println("field '"+ fieldName +"' wasn't found in class "+ name);
-            }
-        }
-        return ok;
     }
 }

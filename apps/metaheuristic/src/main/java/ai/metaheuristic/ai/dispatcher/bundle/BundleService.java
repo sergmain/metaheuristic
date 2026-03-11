@@ -37,7 +37,6 @@ import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.exceptions.BundleProcessingException;
 import ai.metaheuristic.commons.utils.BundleUtils;
 import ai.metaheuristic.commons.utils.DirUtils;
-import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYaml;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYamlUtils;
@@ -225,8 +224,7 @@ public class BundleService {
     }
 
     private SourceCodeApiData.SourceCodeResult storeSourceCode(String sourceCode, UserContext dispatcherContext, Path path) {
-        String ext = StrUtils.getExtension(path.getFileName().toString());
-        EnumsApi.SourceCodeLang lang = EnumsApi.SourceCodeLang.getLangFromExt(ext);
+        EnumsApi.SourceCodeLang lang = EnumsApi.SourceCodeLang.getLangFromPath(path);
         if (lang==null) {
             lang = SourceCodeUtils.determineLang(sourceCode);
         }

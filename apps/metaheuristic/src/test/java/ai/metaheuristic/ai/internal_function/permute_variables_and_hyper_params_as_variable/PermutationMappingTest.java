@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.internal_function.permute_variables_and_hyper_params
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
-import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.commons.utils.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;

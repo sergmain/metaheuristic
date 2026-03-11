@@ -17,8 +17,7 @@
 package ai.metaheuristic.ai.exec_context_graph;
 
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
-import ai.metaheuristic.ai.utils.ContextUtils;
+import ai.metaheuristic.commons.utils.ContextUtils;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.jgrapht.traverse.BreadthFirstIterator;

@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.events.VariableUploadedEvent;
@@ -104,7 +103,7 @@ public class TaskWithInternalContextTopLevelService {
                 ExecContextParamsYaml.Variable execContextOutput = ecpy.variables.outputs.get(i);
 
                 List<VariableUtils.VariableHolder> holders = internalFunctionVariableService.discoverVariables(
-                        subExecContextId, Consts.TOP_LEVEL_CONTEXT_ID, execContextOutput.name);
+                        subExecContextId, CommonConsts.TOP_LEVEL_CONTEXT_ID, execContextOutput.name);
                 if (holders.size() > 1) {
                     throw new InternalFunctionException(source_code_is_broken,
                                     "992.110 Too many variables with the same name at top-level context, name: " + execContextOutput.name);

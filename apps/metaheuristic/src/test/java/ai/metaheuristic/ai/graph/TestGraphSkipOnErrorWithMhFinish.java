@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.graph;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
@@ -30,12 +29,11 @@ import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskApiData;
+import ai.metaheuristic.commons.CommonConsts;
 import ch.qos.logback.classic.LoggerContext;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.LoggerFactory;
@@ -46,7 +44,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -129,10 +126,10 @@ public class TestGraphSkipOnErrorWithMhFinish extends PreparingSourceCode {
 
     private void evaluateLinearDag() {
         // Build linear DAG: task1 -> task2 -> task3 -> task4(mh.finish)
-        final TaskApiData.TaskWithContext t1 = new TaskApiData.TaskWithContext(1L, Consts.TOP_LEVEL_CONTEXT_ID);
-        final TaskApiData.TaskWithContext t2 = new TaskApiData.TaskWithContext(2L, Consts.TOP_LEVEL_CONTEXT_ID);
-        final TaskApiData.TaskWithContext t3 = new TaskApiData.TaskWithContext(3L, Consts.TOP_LEVEL_CONTEXT_ID);
-        final TaskApiData.TaskWithContext t4 = new TaskApiData.TaskWithContext(4L, Consts.TOP_LEVEL_CONTEXT_ID);
+        final TaskApiData.TaskWithContext t1 = new TaskApiData.TaskWithContext(1L, CommonConsts.TOP_LEVEL_CONTEXT_ID);
+        final TaskApiData.TaskWithContext t2 = new TaskApiData.TaskWithContext(2L, CommonConsts.TOP_LEVEL_CONTEXT_ID);
+        final TaskApiData.TaskWithContext t3 = new TaskApiData.TaskWithContext(3L, CommonConsts.TOP_LEVEL_CONTEXT_ID);
+        final TaskApiData.TaskWithContext t4 = new TaskApiData.TaskWithContext(4L, CommonConsts.TOP_LEVEL_CONTEXT_ID);
 
         OperationStatusRest osr;
 
@@ -229,12 +226,12 @@ public class TestGraphSkipOnErrorWithMhFinish extends PreparingSourceCode {
     }
 
     private void evaluateBranchingDag() {
-        final TaskApiData.TaskWithContext t1 = new TaskApiData.TaskWithContext(1L, Consts.TOP_LEVEL_CONTEXT_ID);
+        final TaskApiData.TaskWithContext t1 = new TaskApiData.TaskWithContext(1L, CommonConsts.TOP_LEVEL_CONTEXT_ID);
         final TaskApiData.TaskWithContext t2a = new TaskApiData.TaskWithContext(21L, "1,2#1");
         final TaskApiData.TaskWithContext t2b = new TaskApiData.TaskWithContext(22L, "1,2#2");
         final TaskApiData.TaskWithContext t3a = new TaskApiData.TaskWithContext(31L, "1,2#1");
         final TaskApiData.TaskWithContext t3b = new TaskApiData.TaskWithContext(32L, "1,2#2");
-        final TaskApiData.TaskWithContext tFinish = new TaskApiData.TaskWithContext(99L, Consts.TOP_LEVEL_CONTEXT_ID);
+        final TaskApiData.TaskWithContext tFinish = new TaskApiData.TaskWithContext(99L, CommonConsts.TOP_LEVEL_CONTEXT_ID);
 
         OperationStatusRest osr;
 

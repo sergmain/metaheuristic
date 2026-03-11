@@ -17,8 +17,11 @@
 package ai.metaheuristic.api;
 
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.ToString;
 import org.jspecify.annotations.Nullable;
+
+import java.nio.file.Path;
 
 public class EnumsApi {
 
@@ -46,6 +49,12 @@ public class EnumsApi {
                 case ".mhsc" -> mhsc;
                 default -> null;
             };
+        }
+
+        public static @Nullable SourceCodeLang getLangFromPath(Path path) {
+            String ext = StrUtils.getExtension(path.getFileName().toString());
+            EnumsApi.SourceCodeLang lang = EnumsApi.SourceCodeLang.getLangFromExt(ext);
+            return lang;
         }
     }
 

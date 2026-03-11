@@ -16,9 +16,9 @@
 
 package ai.metaheuristic.ai.yaml.exec_context;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYamlV3;
+import ai.metaheuristic.commons.CommonConsts;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -43,10 +43,10 @@ public class TestExecContextParams {
         ExecContextParamsYamlV3 expy = new ExecContextParamsYamlV3();
 
         ExecContextParamsYamlV3.FunctionDefinitionV3 fd1 = new ExecContextParamsYamlV3.FunctionDefinitionV3("function#1");
-        ExecContextParamsYamlV3.ProcessV3 p1 = new ExecContextParamsYamlV3.ProcessV3("process #1", "process #1", Consts.TOP_LEVEL_CONTEXT_ID, fd1);
+        ExecContextParamsYamlV3.ProcessV3 p1 = new ExecContextParamsYamlV3.ProcessV3("process #1", "process #1", CommonConsts.TOP_LEVEL_CONTEXT_ID, fd1);
 
         ExecContextParamsYamlV3.FunctionDefinitionV3 fd2 = new ExecContextParamsYamlV3.FunctionDefinitionV3("function#2");
-        ExecContextParamsYamlV3.ProcessV3 p2 = new ExecContextParamsYamlV3.ProcessV3("process #2", "process #2", Consts.TOP_LEVEL_CONTEXT_ID, fd2);
+        ExecContextParamsYamlV3.ProcessV3 p2 = new ExecContextParamsYamlV3.ProcessV3("process #2", "process #2", CommonConsts.TOP_LEVEL_CONTEXT_ID, fd2);
 
         expy.processes.add(p1);
         expy.processes.add(p2);

@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.internal_functions.finish;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.event.events.FinishLongRunningExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
@@ -25,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -51,12 +51,12 @@ public class FinishFunction implements InternalFunction {
 
     @Override
     public String getCode() {
-        return Consts.MH_FINISH_FUNCTION;
+        return CommonConsts.MH_FINISH_FUNCTION;
     }
 
     @Override
     public String getName() {
-        return Consts.MH_FINISH_FUNCTION;
+        return CommonConsts.MH_FINISH_FUNCTION;
     }
 
     @Override
@@ -68,7 +68,7 @@ public class FinishFunction implements InternalFunction {
         try {
             variableTopLevelService.checkFinalOutputVariables(taskParamsYaml, simpleExecContext.execContextId);
 
-            log.info(S.f("054.010 change state of task #%s with internal function %s to 'OK'", taskId, Consts.MH_FINISH_FUNCTION));
+            log.info(S.f("054.010 change state of task #%s with internal function %s to 'OK'", taskId, CommonConsts.MH_FINISH_FUNCTION));
             ExecContextSyncService.getWithSyncVoid(simpleExecContext.execContextId,
                     () -> execContextFSM.toFinished(simpleExecContext.execContextId));
         } catch (Throwable e) {

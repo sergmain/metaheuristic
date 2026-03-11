@@ -26,7 +26,6 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegiste
 import ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
-import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.api.ApiUtils;
 import ai.metaheuristic.ai.mhbp.beans.Api;
@@ -46,7 +45,7 @@ import ai.metaheuristic.ai.mhbp.yaml.scenario.ScenarioParams;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.yaml.scheme.ApiScheme;
-import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -78,7 +77,7 @@ import static ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCall
 import static ai.metaheuristic.ai.dispatcher.internal_functions.api_call.ApiCallService.PROMPT;
 import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.findStepByUuid;
 import static ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils.getNameForVariable;
-import static ai.metaheuristic.ai.utils.CollectionUtils.TreeUtils;
+import static ai.metaheuristic.commons.utils.CollectionUtils.TreeUtils;
 
 /**
  * @author Sergio Lissner

@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.db;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
@@ -28,13 +27,12 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.preparing.PreparingConsts;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
+import ai.metaheuristic.commons.CommonConsts;
 import ch.qos.logback.classic.LoggerContext;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.LoggerFactory;
@@ -46,7 +44,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.file.Path;
 
@@ -110,14 +107,14 @@ public class TestDbCaseSensitivity extends PreparingSourceCode {
         assertNull(result.errorMessages, ""+result.errorMessages);
         setExecContextForTest(result.execContext);
 
-        Variable v = variableService.createUninitialized(TEST_VARIABLE, getExecContextForTest().id, Consts.TOP_LEVEL_CONTEXT_ID);
+        Variable v = variableService.createUninitialized(TEST_VARIABLE, getExecContextForTest().id, CommonConsts.TOP_LEVEL_CONTEXT_ID);
         assertNotNull(v);
 
         assertNotNull(variableRepository.findByNameAndTaskContextIdAndExecContextId(
-                TEST_VARIABLE, Consts.TOP_LEVEL_CONTEXT_ID, getExecContextForTest().id));
+                TEST_VARIABLE, CommonConsts.TOP_LEVEL_CONTEXT_ID, getExecContextForTest().id));
 
         assertNull(variableRepository.findByNameAndTaskContextIdAndExecContextId(
-                TEST_VARIABLE.toUpperCase(), Consts.TOP_LEVEL_CONTEXT_ID, getExecContextForTest().id));
+                TEST_VARIABLE.toUpperCase(), CommonConsts.TOP_LEVEL_CONTEXT_ID, getExecContextForTest().id));
 
         assertNotEquals(PreparingConsts.GLOBAL_TEST_VARIABLE, PreparingConsts.GLOBAL_TEST_VARIABLE.toUpperCase());
         assertNotNull(globalVariableRepository.findIdByName(PreparingConsts.GLOBAL_TEST_VARIABLE));

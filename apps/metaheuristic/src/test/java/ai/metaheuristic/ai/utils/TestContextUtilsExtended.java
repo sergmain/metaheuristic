@@ -47,108 +47,108 @@ public class TestContextUtilsExtended {
 
     @Test
     public void test_buildTaskContextId_simple() {
-        assertEquals("1,2#0", ContextUtils.buildTaskContextId("1,2", "0"));
+        assertEquals("1,2#0", ai.metaheuristic.commons.utils.ContextUtils.buildTaskContextId("1,2", "0"));
     }
 
     @Test
     public void test_buildTaskContextId_multipleInstances() {
-        assertEquals("1,2#1", ContextUtils.buildTaskContextId("1,2", "1"));
-        assertEquals("1,2#2", ContextUtils.buildTaskContextId("1,2", "2"));
-        assertEquals("1,2#100", ContextUtils.buildTaskContextId("1,2", "100"));
+        assertEquals("1,2#1", ai.metaheuristic.commons.utils.ContextUtils.buildTaskContextId("1,2", "1"));
+        assertEquals("1,2#2", ai.metaheuristic.commons.utils.ContextUtils.buildTaskContextId("1,2", "2"));
+        assertEquals("1,2#100", ai.metaheuristic.commons.utils.ContextUtils.buildTaskContextId("1,2", "100"));
     }
 
     @Test
     public void test_buildTaskContextId_withAncestors() {
-        assertEquals("1,2,5|1#0", ContextUtils.buildTaskContextId("1,2,5|1", "0"));
-        assertEquals("1,2,5,6|1|0#0", ContextUtils.buildTaskContextId("1,2,5,6|1|0", "0"));
+        assertEquals("1,2,5|1#0", ai.metaheuristic.commons.utils.ContextUtils.buildTaskContextId("1,2,5|1", "0"));
+        assertEquals("1,2,5,6|1|0#0", ai.metaheuristic.commons.utils.ContextUtils.buildTaskContextId("1,2,5,6|1|0", "0"));
     }
 
     // === getCurrTaskContextIdForSubProcesses ===
 
     @Test
     public void test_getCurrTaskContextIdForSubProcesses_topLevel() {
-        assertEquals("1,2", ContextUtils.getCurrTaskContextIdForSubProcesses("1", "1,2"));
+        assertEquals("1,2", ai.metaheuristic.commons.utils.ContextUtils.getCurrTaskContextIdForSubProcesses("1", "1,2"));
     }
 
     @Test
     public void test_getCurrTaskContextIdForSubProcesses_firstLevel() {
         // "1,2#1" -> path="1", no ancestors -> "1,2,5|1"
-        assertEquals("1,2,5|1", ContextUtils.getCurrTaskContextIdForSubProcesses("1,2#1", "1,2,5"));
+        assertEquals("1,2,5|1", ai.metaheuristic.commons.utils.ContextUtils.getCurrTaskContextIdForSubProcesses("1,2#1", "1,2,5"));
     }
 
     @Test
     public void test_getCurrTaskContextIdForSubProcesses_secondLevel() {
         // "1,2,5|1#0" -> path="0", ancestors="1" -> new ancestors="1|0"
-        assertEquals("1,2,5,6|1|0", ContextUtils.getCurrTaskContextIdForSubProcesses("1,2,5|1#0", "1,2,5,6"));
+        assertEquals("1,2,5,6|1|0", ai.metaheuristic.commons.utils.ContextUtils.getCurrTaskContextIdForSubProcesses("1,2,5|1#0", "1,2,5,6"));
     }
 
     @Test
     public void test_getCurrTaskContextIdForSubProcesses_thirdLevel() {
         // "1,2,5,6|1|0#2" -> path="2", ancestors="1|0" -> new ancestors="1|0|2"
-        assertEquals("1,2,5,6,7|1|0|2", ContextUtils.getCurrTaskContextIdForSubProcesses("1,2,5,6|1|0#2", "1,2,5,6,7"));
+        assertEquals("1,2,5,6,7|1|0|2", ai.metaheuristic.commons.utils.ContextUtils.getCurrTaskContextIdForSubProcesses("1,2,5,6|1|0#2", "1,2,5,6,7"));
     }
 
     @Test
     public void test_getCurrTaskContextIdForSubProcesses_noHash() {
-        assertEquals("1,2,3", ContextUtils.getCurrTaskContextIdForSubProcesses("1,2", "1,2,3"));
+        assertEquals("1,2,3", ai.metaheuristic.commons.utils.ContextUtils.getCurrTaskContextIdForSubProcesses("1,2", "1,2,3"));
     }
 
     // === getProcessContextId and getAncestorPath ===
 
     @Test
     public void test_getProcessContextId() {
-        assertEquals("1,2", ContextUtils.getProcessContextId("1,2"));
-        assertEquals("1,2,5", ContextUtils.getProcessContextId("1,2,5|1"));
-        assertEquals("1,2,5,6", ContextUtils.getProcessContextId("1,2,5,6|1|0"));
+        assertEquals("1,2", ai.metaheuristic.commons.utils.ContextUtils.getProcessContextId("1,2"));
+        assertEquals("1,2,5", ai.metaheuristic.commons.utils.ContextUtils.getProcessContextId("1,2,5|1"));
+        assertEquals("1,2,5,6", ai.metaheuristic.commons.utils.ContextUtils.getProcessContextId("1,2,5,6|1|0"));
     }
 
     @Test
     public void test_getAncestorPath() {
-        assertNull(ContextUtils.getAncestorPath("1,2"));
-        assertEquals("1", ContextUtils.getAncestorPath("1,2,5|1"));
-        assertEquals("1|0", ContextUtils.getAncestorPath("1,2,5,6|1|0"));
-        assertEquals("1|0|2", ContextUtils.getAncestorPath("1,2,5,6,7|1|0|2"));
+        assertNull(ai.metaheuristic.commons.utils.ContextUtils.getAncestorPath("1,2"));
+        assertEquals("1", ai.metaheuristic.commons.utils.ContextUtils.getAncestorPath("1,2,5|1"));
+        assertEquals("1|0", ai.metaheuristic.commons.utils.ContextUtils.getAncestorPath("1,2,5,6|1|0"));
+        assertEquals("1|0|2", ai.metaheuristic.commons.utils.ContextUtils.getAncestorPath("1,2,5,6,7|1|0|2"));
     }
 
     // === getLevel and getPath ===
 
     @Test
     public void test_getLevel() {
-        assertEquals("1,2", ContextUtils.getLevel("1,2#3"));
-        assertEquals("1,2,5|1", ContextUtils.getLevel("1,2,5|1#0"));
-        assertEquals("1,2,5,6|1|0", ContextUtils.getLevel("1,2,5,6|1|0#0"));
-        assertEquals("1", ContextUtils.getLevel("1"));
+        assertEquals("1,2", ai.metaheuristic.commons.utils.ContextUtils.getLevel("1,2#3"));
+        assertEquals("1,2,5|1", ai.metaheuristic.commons.utils.ContextUtils.getLevel("1,2,5|1#0"));
+        assertEquals("1,2,5,6|1|0", ai.metaheuristic.commons.utils.ContextUtils.getLevel("1,2,5,6|1|0#0"));
+        assertEquals("1", ai.metaheuristic.commons.utils.ContextUtils.getLevel("1"));
     }
 
     @Test
     public void test_getPath() {
-        assertEquals("3", ContextUtils.getPath("1,2#3"));
-        assertEquals("0", ContextUtils.getPath("1,2,5|1#0"));
-        assertNull(ContextUtils.getPath("1"));
+        assertEquals("3", ai.metaheuristic.commons.utils.ContextUtils.getPath("1,2#3"));
+        assertEquals("0", ai.metaheuristic.commons.utils.ContextUtils.getPath("1,2,5|1#0"));
+        assertNull(ai.metaheuristic.commons.utils.ContextUtils.getPath("1"));
     }
 
     // === deriveParentTaskContextId - root ===
 
     @Test
     public void test_deriveParent_root() {
-        assertNull(ContextUtils.deriveParentTaskContextId("1"));
+        assertNull(ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId("1"));
     }
 
     // === deriveParentTaskContextId - simple nested (no #) ===
 
     @Test
     public void test_deriveParent_simpleNested() {
-        assertEquals("1", ContextUtils.deriveParentTaskContextId("1,2"));
-        assertEquals("1,2", ContextUtils.deriveParentTaskContextId("1,2,3"));
-        assertEquals("1,2,3", ContextUtils.deriveParentTaskContextId("1,2,3,4"));
+        assertEquals("1", ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId("1,2"));
+        assertEquals("1,2", ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId("1,2,3"));
+        assertEquals("1,2,3", ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId("1,2,3,4"));
     }
 
     // === deriveParentTaskContextId - first-level fan-out (no |) ===
 
     @Test
     public void test_deriveParent_firstLevelFanOut() {
-        assertEquals("1", ContextUtils.deriveParentTaskContextId("1,2#1"));
-        assertEquals("1", ContextUtils.deriveParentTaskContextId("1,2#8"));
+        assertEquals("1", ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId("1,2#1"));
+        assertEquals("1", ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId("1,2#8"));
     }
 
     // === deriveParentTaskContextId - second-level (single ancestor) ===
@@ -156,11 +156,11 @@ public class TestContextUtilsExtended {
     @Test
     public void test_deriveParent_secondLevel() {
         // "1,2,5|1#0" -> parent = "1,2#1"
-        assertEquals("1,2#1", ContextUtils.deriveParentTaskContextId("1,2,5|1#0"));
-        assertEquals("1,2#1", ContextUtils.deriveParentTaskContextId("1,2,5|1#1"));
-        assertEquals("1,2#1", ContextUtils.deriveParentTaskContextId("1,2,5|1#2"));
-        assertEquals("1,2#2", ContextUtils.deriveParentTaskContextId("1,2,5|2#0"));
-        assertEquals("1,2#3", ContextUtils.deriveParentTaskContextId("1,2,3|3#0"));
+        assertEquals("1,2#1", ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId("1,2,5|1#0"));
+        assertEquals("1,2#1", ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId("1,2,5|1#1"));
+        assertEquals("1,2#1", ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId("1,2,5|1#2"));
+        assertEquals("1,2#2", ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId("1,2,5|2#0"));
+        assertEquals("1,2#3", ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId("1,2,3|3#0"));
     }
 
     // === deriveParentTaskContextId - third-level (two ancestors) ===
@@ -168,11 +168,11 @@ public class TestContextUtilsExtended {
     @Test
     public void test_deriveParent_thirdLevel() {
         // "1,2,5,6|1|0#0" -> parent = "1,2,5|1#0"
-        assertEquals("1,2,5|1#0", ContextUtils.deriveParentTaskContextId("1,2,5,6|1|0#0"));
+        assertEquals("1,2,5|1#0", ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId("1,2,5,6|1|0#0"));
         // "1,2,5,6|1|2#0" -> parent = "1,2,5|1#2"
-        assertEquals("1,2,5|1#2", ContextUtils.deriveParentTaskContextId("1,2,5,6|1|2#0"));
+        assertEquals("1,2,5|1#2", ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId("1,2,5,6|1|2#0"));
         // "1,2,5,6|2|0#0" -> parent = "1,2,5|2#0"
-        assertEquals("1,2,5|2#0", ContextUtils.deriveParentTaskContextId("1,2,5,6|2|0#0"));
+        assertEquals("1,2,5|2#0", ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId("1,2,5,6|2|0#0"));
     }
 
     // === deriveParentTaskContextId - fourth-level (three ancestors) ===
@@ -180,7 +180,7 @@ public class TestContextUtilsExtended {
     @Test
     public void test_deriveParent_fourthLevel() {
         // "1,2,5,6,7|1|0|2#0" -> parent = "1,2,5,6|1|0#2"
-        assertEquals("1,2,5,6|1|0#2", ContextUtils.deriveParentTaskContextId("1,2,5,6,7|1|0|2#0"));
+        assertEquals("1,2,5,6|1|0#2", ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId("1,2,5,6,7|1|0|2#0"));
     }
 
     // === Full chain walk: getCurrTaskContextIdForSubProcesses -> buildTaskContextId -> deriveParent roundtrip ===
@@ -189,34 +189,34 @@ public class TestContextUtilsExtended {
     public void test_fullRoundtrip_threeLevel() {
         // Level 0: top-level context "1"
         // Level 1: batch-splitter creates "1,2#1"
-        String level1ctx = ContextUtils.buildTaskContextId("1,2", "1");
+        String level1ctx = ai.metaheuristic.commons.utils.ContextUtils.buildTaskContextId("1,2", "1");
         assertEquals("1,2#1", level1ctx);
-        assertEquals("1", ContextUtils.deriveParentTaskContextId(level1ctx));
+        assertEquals("1", ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId(level1ctx));
 
         // Level 2: entering subprocess 1,2,5 from "1,2#1"
-        String level2base = ContextUtils.getCurrTaskContextIdForSubProcesses("1,2#1", "1,2,5");
+        String level2base = ai.metaheuristic.commons.utils.ContextUtils.getCurrTaskContextIdForSubProcesses("1,2#1", "1,2,5");
         assertEquals("1,2,5|1", level2base);
         // batch-splitter creates instance 0
-        String level2ctx = ContextUtils.buildTaskContextId(level2base, "0");
+        String level2ctx = ai.metaheuristic.commons.utils.ContextUtils.buildTaskContextId(level2base, "0");
         assertEquals("1,2,5|1#0", level2ctx);
-        assertEquals("1,2#1", ContextUtils.deriveParentTaskContextId(level2ctx));
+        assertEquals("1,2#1", ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId(level2ctx));
 
         // Level 3: entering subprocess 1,2,5,6 from "1,2,5|1#0"
-        String level3base = ContextUtils.getCurrTaskContextIdForSubProcesses("1,2,5|1#0", "1,2,5,6");
+        String level3base = ai.metaheuristic.commons.utils.ContextUtils.getCurrTaskContextIdForSubProcesses("1,2,5|1#0", "1,2,5,6");
         assertEquals("1,2,5,6|1|0", level3base);
-        String level3ctx = ContextUtils.buildTaskContextId(level3base, "0");
+        String level3ctx = ai.metaheuristic.commons.utils.ContextUtils.buildTaskContextId(level3base, "0");
         assertEquals("1,2,5,6|1|0#0", level3ctx);
-        assertEquals("1,2,5|1#0", ContextUtils.deriveParentTaskContextId(level3ctx));
+        assertEquals("1,2,5|1#0", ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId(level3ctx));
     }
 
     @Test
     public void test_fullRoundtrip_fourLevel() {
         // Continue from level 3: "1,2,5,6|1|0#2" enters subprocess 1,2,5,6,7
-        String level4base = ContextUtils.getCurrTaskContextIdForSubProcesses("1,2,5,6|1|0#2", "1,2,5,6,7");
+        String level4base = ai.metaheuristic.commons.utils.ContextUtils.getCurrTaskContextIdForSubProcesses("1,2,5,6|1|0#2", "1,2,5,6,7");
         assertEquals("1,2,5,6,7|1|0|2", level4base);
-        String level4ctx = ContextUtils.buildTaskContextId(level4base, "0");
+        String level4ctx = ai.metaheuristic.commons.utils.ContextUtils.buildTaskContextId(level4base, "0");
         assertEquals("1,2,5,6,7|1|0|2#0", level4ctx);
-        assertEquals("1,2,5,6|1|0#2", ContextUtils.deriveParentTaskContextId(level4ctx));
+        assertEquals("1,2,5,6|1|0#2", ai.metaheuristic.commons.utils.ContextUtils.deriveParentTaskContextId(level4ctx));
     }
 
     // === Variable scoping chain walk ===

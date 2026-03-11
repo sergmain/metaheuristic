@@ -22,8 +22,9 @@ import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevel
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.SourceCodeGraph;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.account.UserContext;
@@ -159,25 +160,27 @@ public class SourceCodeTxService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public static List<SourceCodeParamsYaml.Variable> findVariableByType(SourceCodeParamsYaml scpy, String type) {
-        List<SourceCodeParamsYaml.Variable> list = new ArrayList<>();
-        for (SourceCodeParamsYaml.Process process : scpy.source.processes) {
+    public static List<ExecContextParamsYaml.Variable> findVariableByType(SourceCodeGraph scg, String type) {
+        List<ExecContextParamsYaml.Variable> list = new ArrayList<>();
+        for (ExecContextParamsYaml.Process process : scg.processes) {
             findVariableByType(process, type, list);
         }
         return list;
     }
 
-    private static void findVariableByType(SourceCodeParamsYaml.Process process, String type, List<SourceCodeParamsYaml.Variable> list) {
-        for (SourceCodeParamsYaml.Variable output : process.outputs) {
+    private static void findVariableByType(ExecContextParamsYaml.Process process, String type, List<ExecContextParamsYaml.Variable> list) {
+        for (ExecContextParamsYaml.Variable output : process.outputs) {
             if (type.equals(output.type)) {
                 list.add(output);
             }
         }
+/*
         if (process.subProcesses!=null) {
             for (SourceCodeParamsYaml.Process p : process.subProcesses.processes) {
                 findVariableByType(p, type, list);
             }
         }
+*/
     }
 
     // TODO p3 2023-10-17 do we need Transaction for validating?

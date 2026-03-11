@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.variable;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -30,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.TaskCreatedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.VariableUploadedTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
 import ai.metaheuristic.ai.dispatcher.storage.GeneralBlobService;
 import ai.metaheuristic.commons.spi.GeneralBlobTxService;
@@ -191,7 +191,7 @@ public class VariableTxService {
         if (execContext==null) {
             log.warn("171.320 ExecContext #{} wasn't found", execContextId);
         }
-        createInitializedWithNull(inputVariable, execContextId, Consts.TOP_LEVEL_CONTEXT_ID );
+        createInitializedWithNull(inputVariable, execContextId, CommonConsts.TOP_LEVEL_CONTEXT_ID );
     }
 
     /**
@@ -262,9 +262,9 @@ public class VariableTxService {
     public void initOutputVariable(Long execContextId, ExecContextParamsYaml.Variable output) {
         TxUtils.checkTxExists();
 
-        Variable sv = findVariableInAllInternalContexts(output.name, Consts.TOP_LEVEL_CONTEXT_ID, execContextId);
+        Variable sv = findVariableInAllInternalContexts(output.name, CommonConsts.TOP_LEVEL_CONTEXT_ID, execContextId);
         if (sv == null) {
-            Variable v = createUninitialized(output.name, execContextId, Consts.TOP_LEVEL_CONTEXT_ID);
+            Variable v = createUninitialized(output.name, execContextId, CommonConsts.TOP_LEVEL_CONTEXT_ID);
         }
     }
 

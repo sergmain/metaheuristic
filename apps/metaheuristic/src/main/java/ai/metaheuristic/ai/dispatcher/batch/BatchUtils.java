@@ -18,11 +18,11 @@ package ai.metaheuristic.ai.dispatcher.batch;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
-import ai.metaheuristic.commons.CommonConsts;
-import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
+import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.api.ConstsApi;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -35,11 +35,12 @@ import org.apache.commons.lang3.StringUtils;
 public class BatchUtils {
 
     public static String getActualExtension(SourceCodeStoredParamsYaml scspy, String defaultResultFileExtension) {
-        return getActualExtension(SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source), defaultResultFileExtension);
+        SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
+        return getActualExtension(scg, defaultResultFileExtension);
     }
 
-    static String getActualExtension(SourceCodeParamsYaml scpy, String defaultResultFileExtension) {
-        final String ext = MetaUtils.getValue(scpy.source.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION);
+    static String getActualExtension(SourceCodeGraph scg, String defaultResultFileExtension) {
+        final String ext = MetaUtils.getValue(scg.metas, ConstsApi.META_MH_RESULT_FILE_EXTENSION);
 
         return S.b(ext)
                 ? (StringUtils.isNotBlank(defaultResultFileExtension) ? defaultResultFileExtension : CommonConsts.BIN_EXT)

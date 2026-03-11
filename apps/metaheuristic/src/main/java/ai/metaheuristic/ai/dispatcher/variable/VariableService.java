@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.variable;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
@@ -26,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import lombok.RequiredArgsConstructor;
@@ -88,7 +88,7 @@ public class VariableService {
             for (int i = 0; i < taskParamsYaml.task.outputs.size(); i++) {
                 ExecContextParamsYaml.Variable execContextOutput = ecpy.variables.outputs.get(i);
                 List<VariableUtils.VariableHolder> holders = internalFunctionVariableService.discoverVariables(
-                        subExecContextId, Consts.TOP_LEVEL_CONTEXT_ID, execContextOutput.name);
+                        subExecContextId, CommonConsts.TOP_LEVEL_CONTEXT_ID, execContextOutput.name);
                 if (holders.size() > 1) {
                     throw new InternalFunctionException(source_code_is_broken,
                             "992.340 Too many variables with the same name at top-level context, name: " + execContextOutput.name);

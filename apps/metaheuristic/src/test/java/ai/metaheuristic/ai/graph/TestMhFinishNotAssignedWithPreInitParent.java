@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.graph;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
@@ -30,6 +29,7 @@ import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskApiData;
+import ai.metaheuristic.commons.CommonConsts;
 import ch.qos.logback.classic.LoggerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
@@ -130,11 +130,11 @@ public class TestMhFinishNotAssignedWithPreInitParent extends PreparingSourceCod
     }
 
     private void evaluate_PRE_INIT() {
-        final TaskApiData.TaskWithContext t1 = new TaskApiData.TaskWithContext(1L, Consts.TOP_LEVEL_CONTEXT_ID);
-        final TaskApiData.TaskWithContext t2 = new TaskApiData.TaskWithContext(2L, Consts.TOP_LEVEL_CONTEXT_ID);
-        final TaskApiData.TaskWithContext t3 = new TaskApiData.TaskWithContext(3L, Consts.TOP_LEVEL_CONTEXT_ID);
-        final TaskApiData.TaskWithContext t4 = new TaskApiData.TaskWithContext(4L, Consts.TOP_LEVEL_CONTEXT_ID);
-        final TaskApiData.TaskWithContext tFinish = new TaskApiData.TaskWithContext(59L, Consts.TOP_LEVEL_CONTEXT_ID);
+        final TaskApiData.TaskWithContext t1 = new TaskApiData.TaskWithContext(1L, CommonConsts.TOP_LEVEL_CONTEXT_ID);
+        final TaskApiData.TaskWithContext t2 = new TaskApiData.TaskWithContext(2L, CommonConsts.TOP_LEVEL_CONTEXT_ID);
+        final TaskApiData.TaskWithContext t3 = new TaskApiData.TaskWithContext(3L, CommonConsts.TOP_LEVEL_CONTEXT_ID);
+        final TaskApiData.TaskWithContext t4 = new TaskApiData.TaskWithContext(4L, CommonConsts.TOP_LEVEL_CONTEXT_ID);
+        final TaskApiData.TaskWithContext tFinish = new TaskApiData.TaskWithContext(59L, CommonConsts.TOP_LEVEL_CONTEXT_ID);
 
         OperationStatusRest osr;
 
@@ -215,10 +215,10 @@ public class TestMhFinishNotAssignedWithPreInitParent extends PreparingSourceCod
     }
 
     private void evaluate_ERROR_WITH_RECOVERY() {
-        final TaskApiData.TaskWithContext t1 = new TaskApiData.TaskWithContext(1L, Consts.TOP_LEVEL_CONTEXT_ID);
-        final TaskApiData.TaskWithContext t2 = new TaskApiData.TaskWithContext(2L, Consts.TOP_LEVEL_CONTEXT_ID);
-        final TaskApiData.TaskWithContext t3 = new TaskApiData.TaskWithContext(3L, Consts.TOP_LEVEL_CONTEXT_ID);
-        final TaskApiData.TaskWithContext tFinish = new TaskApiData.TaskWithContext(59L, Consts.TOP_LEVEL_CONTEXT_ID);
+        final TaskApiData.TaskWithContext t1 = new TaskApiData.TaskWithContext(1L, CommonConsts.TOP_LEVEL_CONTEXT_ID);
+        final TaskApiData.TaskWithContext t2 = new TaskApiData.TaskWithContext(2L, CommonConsts.TOP_LEVEL_CONTEXT_ID);
+        final TaskApiData.TaskWithContext t3 = new TaskApiData.TaskWithContext(3L, CommonConsts.TOP_LEVEL_CONTEXT_ID);
+        final TaskApiData.TaskWithContext tFinish = new TaskApiData.TaskWithContext(59L, CommonConsts.TOP_LEVEL_CONTEXT_ID);
 
         OperationStatusRest osr;
 

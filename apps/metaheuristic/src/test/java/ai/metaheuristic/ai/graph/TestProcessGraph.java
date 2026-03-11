@@ -17,10 +17,11 @@
 package ai.metaheuristic.ai.graph;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
+import ai.metaheuristic.commons.graph.ExecContextProcessGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskProducingService;
-import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphLanguageYaml;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
+import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphLanguageYaml;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -51,20 +52,20 @@ public class TestProcessGraph {
         ExecContextParamsYaml ecpy = new ExecContextParamsYaml();
         ecpy.processesGraph = ConstsApi.EMPTY_GRAPH;
 
-        DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(ecpy);
+        DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(ecpy);
 
         Map<String, Long> ids = new HashMap<>();
         AtomicLong currId = new AtomicLong();
 
-        ExecContextData.ProcessVertex v1 = SourceCodeGraphLanguageYaml.createProcessVertex(ids, currId, "code-1", Consts.TOP_LEVEL_CONTEXT_ID);
+        ExecContextApiData.ProcessVertex v1 = SourceCodeGraphLanguageYaml.createProcessVertex(ids, currId, "code-1", CommonConsts.TOP_LEVEL_CONTEXT_ID);
         ExecContextProcessGraphService.addProcessVertexToGraph(processGraph, v1, List.of());
 
-        ExecContextData.ProcessVertex v2 = SourceCodeGraphLanguageYaml.createProcessVertex(ids, currId, "code-2", Consts.TOP_LEVEL_CONTEXT_ID);
+        ExecContextApiData.ProcessVertex v2 = SourceCodeGraphLanguageYaml.createProcessVertex(ids, currId, "code-2", CommonConsts.TOP_LEVEL_CONTEXT_ID);
         ExecContextProcessGraphService.addProcessVertexToGraph(processGraph, v2, List.of(v1));
 
         System.out.println(ExecContextProcessGraphService.asString(processGraph));
 
-        List<ExecContextData.ProcessVertex> list = ExecContextProcessGraphService.findTargets(processGraph, "code-1");
+        List<ExecContextApiData.ProcessVertex> list = ExecContextProcessGraphService.findTargets(processGraph, "code-1");
         assertNotNull(list);
         assertEquals(1, list.size());
         assertEquals("code-2", list.get(0).process);
@@ -102,9 +103,9 @@ public class TestProcessGraph {
             """;
     private static ExecContextParamsYaml initExecContextParamYaml() {
         ExecContextParamsYaml ecpy = new ExecContextParamsYaml();
-        init(Consts.MH_INLINE_AS_VARIABLE_FUNCTION, internal, Consts.TOP_LEVEL_CONTEXT_ID, ecpy);
-        init("assembly-raw-file", external, Consts.TOP_LEVEL_CONTEXT_ID, ecpy);
-        init("dataset-processing", external, Consts.TOP_LEVEL_CONTEXT_ID, ecpy);
+        init(Consts.MH_INLINE_AS_VARIABLE_FUNCTION, internal, CommonConsts.TOP_LEVEL_CONTEXT_ID, ecpy);
+        init("assembly-raw-file", external, CommonConsts.TOP_LEVEL_CONTEXT_ID, ecpy);
+        init("dataset-processing", external, CommonConsts.TOP_LEVEL_CONTEXT_ID, ecpy);
         init("feature-processing-1", external, "1,2", ecpy);
         init("permute-values-of-variables", external, "1", ecpy);
         init("mh.permute-variables", internal, "1,4", ecpy);
@@ -120,30 +121,30 @@ public class TestProcessGraph {
     public void test_findAncestors() {
         ExecContextParamsYaml ecpy = initExecContextParamYaml();
 
-        DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(processGraphAsStr);
-        ExecContextData.ProcessVertex v = ExecContextProcessGraphService.findVertex(processGraph, "feature-processing-1");
+        DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(processGraphAsStr);
+        ExecContextApiData.ProcessVertex v = ExecContextProcessGraphService.findVertex(processGraph, "feature-processing-1");
         assertNotNull(v);
         assertEquals(4, v.id);
         assertEquals("1,2", v.processContextId);
         assertNull(ExecContextTaskProducingService.checkForInternalFunctionAsParent(ecpy, processGraph, v));
 
-        ExecContextData.ProcessVertex v1 = ExecContextProcessGraphService.findVertex(processGraph, "dataset-processing");
+        ExecContextApiData.ProcessVertex v1 = ExecContextProcessGraphService.findVertex(processGraph, "dataset-processing");
         assertNotNull(v1);
         assertNull(ExecContextTaskProducingService.checkForInternalFunctionAsParent(ecpy, processGraph, v1));
 
-        ExecContextData.ProcessVertex v2 = ExecContextProcessGraphService.findVertex(processGraph, "permute-values-of-variables");
+        ExecContextApiData.ProcessVertex v2 = ExecContextProcessGraphService.findVertex(processGraph, "permute-values-of-variables");
         assertNotNull(v2);
         assertNull(ExecContextTaskProducingService.checkForInternalFunctionAsParent(ecpy, processGraph, v2));
 
-        ExecContextData.ProcessVertex v3 = ExecContextProcessGraphService.findVertex(processGraph, "mh.permute-variables");
+        ExecContextApiData.ProcessVertex v3 = ExecContextProcessGraphService.findVertex(processGraph, "mh.permute-variables");
         assertNotNull(v3);
         assertNull(ExecContextTaskProducingService.checkForInternalFunctionAsParent(ecpy, processGraph, v3));
 
-        ExecContextData.ProcessVertex v4 = ExecContextProcessGraphService.findVertex(processGraph, "fit-dataset");
+        ExecContextApiData.ProcessVertex v4 = ExecContextProcessGraphService.findVertex(processGraph, "fit-dataset");
         assertNotNull(v4);
         assertNotNull(ExecContextTaskProducingService.checkForInternalFunctionAsParent(ecpy, processGraph, v4));
 
-        ExecContextData.ProcessVertex v5 = ExecContextProcessGraphService.findVertex(processGraph, "predict-dataset");
+        ExecContextApiData.ProcessVertex v5 = ExecContextProcessGraphService.findVertex(processGraph, "predict-dataset");
         assertNotNull(v5);
         assertNotNull(ExecContextTaskProducingService.checkForInternalFunctionAsParent(ecpy, processGraph, v5));
 

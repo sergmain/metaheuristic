@@ -20,17 +20,17 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BundleData;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.GitData;
+import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BundleProcessingException;
+import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.commons.yaml.auth.ApiAuthUtils;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYaml;
 import ai.metaheuristic.commons.yaml.bundle_cfg.BundleCfgYamlUtils;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
-import ai.metaheuristic.commons.yaml.scheme.ApiSchemeUtils;
-import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.file.PathUtils;
@@ -47,6 +47,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.security.GeneralSecurityException;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -61,17 +62,33 @@ import static ai.metaheuristic.commons.CommonConsts.*;
 @SuppressWarnings({"unused", "SimplifyStreamApiCallChains"})
 @Slf4j
 public class BundleUtils {
-    public static final IOFileFilter YAML_SUFFIX_FILTER = FileFileFilter.INSTANCE.and(new SuffixFileFilter(YAML_EXT, YML_EXT));
+    public static final IOFileFilter YAML_SUFFIX_FILTER = FileFileFilter.INSTANCE.and(new SuffixFileFilter(YAML_EXT, YML_EXT, MHSC_EXT));
     public static IOFileFilter FUNCTION_YAML_FILTER = FileFileFilter.INSTANCE.and(new NameFileFilter(MH_FUNCTION_YAML));
 
     public static Path createBundle(BundleData.Cfg cfg, BundleCfgYaml bundleCfgYaml) throws IOException, GeneralSecurityException {
         log.info("\tworking dir: " + cfg.workingDir);
         processFunctions(cfg,bundleCfgYaml);
-        processCommonType(cfg, bundleCfgYaml, sourceCode, SourceCodeParamsYamlUtils.BASE_YAML_UTILS::to);
-        processCommonType(cfg, bundleCfgYaml, auth, ApiAuthUtils.UTILS::to);
-        processCommonType(cfg, bundleCfgYaml, api, ApiSchemeUtils.UTILS::to);
+        processCommonType(cfg, bundleCfgYaml, sourceCode, BundleUtils::apiSchemeUtilsValidator);
+        processCommonType(cfg, bundleCfgYaml, auth, BundleUtils::apiAuthUtilsValidator);
+        processCommonType(cfg, bundleCfgYaml, api, BundleUtils::apiAuthUtilsValidator);
 
         return createFinalZip(cfg, bundleCfgYaml);
+    }
+
+    public static void apiAuthUtilsValidator(String content, Path path) {
+        ApiAuthUtils.UTILS.to(content);
+    }
+
+    public static void apiSchemeUtilsValidator(String content, Path path) {
+        ApiAuthUtils.UTILS.to(content);
+    }
+
+    public static void sourceCodeValidator(String content, Path path) {
+        EnumsApi.SourceCodeLang lang = EnumsApi.SourceCodeLang.getLangFromPath(path);
+        if (lang==null) {
+            throw new BundleProcessingException("Can't deremine language from path: " + path);
+        }
+        SourceCodeGraph scg = SourceCodeGraphFactory.parse(lang, content);
     }
 
     @SneakyThrows
@@ -96,7 +113,7 @@ public class BundleUtils {
         System.out.println("\trepoDir dir: " + cfg.repoDir);
     }
 
-    private static void processCommonType(BundleData.Cfg cfg, BundleCfgYaml bundleCfg, EnumsApi.BundleItemType type, Consumer<String> yamlCheckerFunc) throws IOException {
+    private static void processCommonType(BundleData.Cfg cfg, BundleCfgYaml bundleCfg, EnumsApi.BundleItemType type, BiConsumer<String, Path> yamlCheckerFunc) throws IOException {
         for (BundleCfgYaml.BundleConfig bundleConfig : bundleCfg.bundleConfig) {
             if (bundleConfig.type!=type) {
                 continue;
@@ -124,7 +141,7 @@ public class BundleUtils {
 
                         // let's check that this yaml is actually one of required type
                         try {
-                            yamlCheckerFunc.accept(yaml);
+                            yamlCheckerFunc.accept(yaml, f);
                         } catch (Throwable th) {
                             throw new RuntimeException("Validation of content was failed. type: " + bundleConfig.type, th);
                         }

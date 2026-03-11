@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,12 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.exec_context;
+package ai.metaheuristic.commons.graph;
 
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+import ai.metaheuristic.api.data.SourceCodeGraph;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.S;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jgrapht.alg.util.Pair;
@@ -31,10 +31,7 @@ import org.jgrapht.nio.dot.DOTExporter;
 import org.jgrapht.nio.dot.DOTImporter;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 import org.jgrapht.util.SupplierUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
 import org.jspecify.annotations.Nullable;
-import org.springframework.stereotype.Service;
 
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -43,29 +40,24 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.SourceCodeGraph;
-
 /**
  * @author Serge
  * Date: 2/17/2020
  * Time: 1:15 AM
  */
-@Service
-@Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextProcessGraphService {
 
     private static final String PROCESS_NAME_ATTR = "process";
     private static final String PROCESS_CONTEXT_ID_NAME_ATTR = "process_context_id";
 
-    private static final DOTImporter<ExecContextData.ProcessVertex, DefaultEdge> DOT_IMPORTER = new DOTImporter<>();
+    private static final DOTImporter<ExecContextApiData.ProcessVertex, DefaultEdge> DOT_IMPORTER = new DOTImporter<>();
     static {
         // https://stackoverflow.com/questions/60461351/import-graph-with-1-4-0
         DOT_IMPORTER.addVertexAttributeConsumer((ExecContextProcessGraphService::getVertexAttributeConsumer));
     }
 
-    private static void getVertexAttributeConsumer(Pair<ExecContextData.ProcessVertex, String> vertex, Attribute attribute) {
+    private static void getVertexAttributeConsumer(Pair<ExecContextApiData.ProcessVertex, String> vertex, Attribute attribute) {
         switch (vertex.getSecond()) {
             case PROCESS_NAME_ATTR:
                 vertex.getFirst().process = attribute.getValue();
@@ -81,16 +73,16 @@ public class ExecContextProcessGraphService {
         }
     }
 
-    public static String asString(DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph) {
-        Function<ExecContextData.ProcessVertex, String> vertexIdProvider = v -> v.id.toString();
-        Function<ExecContextData.ProcessVertex, Map<String, Attribute>> vertexAttributeProvider = v -> {
+    public static String asString(DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph) {
+        Function<ExecContextApiData.ProcessVertex, String> vertexIdProvider = v -> v.id.toString();
+        Function<ExecContextApiData.ProcessVertex, Map<String, Attribute>> vertexAttributeProvider = v -> {
             Map<String, Attribute> m = new HashMap<>();
             m.put(PROCESS_NAME_ATTR, DefaultAttribute.createAttribute(v.process));
             m.put(PROCESS_CONTEXT_ID_NAME_ATTR, DefaultAttribute.createAttribute(v.processContextId));
             return m;
         };
 
-        DOTExporter<ExecContextData.ProcessVertex, DefaultEdge> exporter = new DOTExporter<>(vertexIdProvider);
+        DOTExporter<ExecContextApiData.ProcessVertex, DefaultEdge> exporter = new DOTExporter<>(vertexIdProvider);
         exporter.setVertexAttributeProvider(vertexAttributeProvider);
 
         StringWriter writer = new StringWriter();
@@ -99,16 +91,16 @@ public class ExecContextProcessGraphService {
         return result;
     }
 
-    public static DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> importProcessGraph(ExecContextParamsYaml wpy) {
+    public static DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> importProcessGraph(ExecContextParamsYaml wpy) {
         return importProcessGraph(wpy.processesGraph);
     }
 
     @SneakyThrows
-    public static DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> importProcessGraph(String processGraphAsStr) {
-        DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = new DirectedAcyclicGraph<>(
-                ExecContextData.ProcessVertex::new, SupplierUtil.DEFAULT_EDGE_SUPPLIER, false);
+    public static DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> importProcessGraph(String processGraphAsStr) {
+        DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph = new DirectedAcyclicGraph<>(
+                ExecContextApiData.ProcessVertex::new, SupplierUtil.DEFAULT_EDGE_SUPPLIER, false);
         AtomicLong id = new AtomicLong();
-        processGraph.setVertexSupplier(() -> new ExecContextData.ProcessVertex(id.incrementAndGet()));
+        processGraph.setVertexSupplier(() -> new ExecContextApiData.ProcessVertex(id.incrementAndGet()));
 
         try (final StringReader stringReader = new StringReader(processGraphAsStr)) {
             DOT_IMPORTER.importGraph(processGraph, stringReader);
@@ -117,10 +109,10 @@ public class ExecContextProcessGraphService {
     }
 
     public static void addProcessVertexToGraph(
-            DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, ExecContextData.ProcessVertex vertex, Collection<ExecContextData.ProcessVertex> parentProcesses) {
+        DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph, ExecContextApiData.ProcessVertex vertex, Collection<ExecContextApiData.ProcessVertex> parentProcesses) {
 
         //noinspection SimplifyStreamApiCallChains
-        List<ExecContextData.ProcessVertex> parentVertices = processGraph.vertexSet()
+        List<ExecContextApiData.ProcessVertex> parentVertices = processGraph.vertexSet()
                 .stream()
                 .filter(parentProcesses::contains)
                 .collect(Collectors.toList());
@@ -129,41 +121,41 @@ public class ExecContextProcessGraphService {
         parentVertices.forEach(parentV -> processGraph.addEdge(parentV, vertex) );
     }
 
-    public static Set<ExecContextData.ProcessVertex> findDescendants(SourceCodeGraph sourceCodeGraph, ExecContextData.ProcessVertex startVertex) {
+    public static Set<ExecContextApiData.ProcessVertex> findDescendants(SourceCodeGraph sourceCodeGraph, ExecContextApiData.ProcessVertex startVertex) {
         return sourceCodeGraph.processGraph.getDescendants(startVertex);
     }
 
-    public static Set<ExecContextData.ProcessVertex> findDirectAncestors(DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> graph, ExecContextData.ProcessVertex vertex) {
-        Set<ExecContextData.ProcessVertex> ancestors = graph.incomingEdgesOf(vertex).stream().map(graph::getEdgeSource).collect(Collectors.toSet());
+    public static Set<ExecContextApiData.ProcessVertex> findDirectAncestors(DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> graph, ExecContextApiData.ProcessVertex vertex) {
+        Set<ExecContextApiData.ProcessVertex> ancestors = graph.incomingEdgesOf(vertex).stream().map(graph::getEdgeSource).collect(Collectors.toSet());
         return ancestors;
     }
 
-    public static Set<ExecContextData.ProcessVertex> findAncestors(DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, ExecContextData.ProcessVertex startVertex) {
+    public static Set<ExecContextApiData.ProcessVertex> findAncestors(DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph, ExecContextApiData.ProcessVertex startVertex) {
         return processGraph.getAncestors(startVertex);
     }
 
     public static List<String> getTopologyOfProcesses(ExecContextParamsYaml execContextParamsYaml) {
-        DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
+        DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
 
-        TopologicalOrderIterator<ExecContextData.ProcessVertex, DefaultEdge> iterator = new TopologicalOrderIterator<>(processGraph);
+        TopologicalOrderIterator<ExecContextApiData.ProcessVertex, DefaultEdge> iterator = new TopologicalOrderIterator<>(processGraph);
 
         List<String> processes = new ArrayList<>();
         iterator.forEachRemaining(o->processes.add(o.process));
         return processes;
     }
 
-    public static List<ExecContextData.ProcessVertex> findLeafs(SourceCodeGraph sourceCodeGraph) {
-        List<ExecContextData.ProcessVertex> vertices = sourceCodeGraph.processGraph.vertexSet()
+    public static List<ExecContextApiData.ProcessVertex> findLeafs(SourceCodeGraph sourceCodeGraph) {
+        List<ExecContextApiData.ProcessVertex> vertices = sourceCodeGraph.processGraph.vertexSet()
                 .stream()
                 .filter(o -> sourceCodeGraph.processGraph.outDegreeOf(o)==0)
                 .collect(Collectors.toList());
         return vertices;
     }
 
-    public static List<ExecContextData.ProcessVertex> findSubProcesses(
-            DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, String startProcessCode) {
+    public static List<ExecContextApiData.ProcessVertex> findSubProcesses(
+        DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph, String startProcessCode) {
 
-        ExecContextData.ProcessVertex startVertex = findVertex(processGraph, startProcessCode);
+        ExecContextApiData.ProcessVertex startVertex = findVertex(processGraph, startProcessCode);
         if (startVertex==null) {
             return List.of();
         }
@@ -173,9 +165,9 @@ public class ExecContextProcessGraphService {
                 .filter(o->!o.processContextId.equals(startVertex.processContextId) && o.processContextId.startsWith(startVertex.processContextId))
                 .map(o->o.processContextId)
                 .collect(Collectors.toList());
-        TopologicalOrderIterator<ExecContextData.ProcessVertex, DefaultEdge> iterator = new TopologicalOrderIterator<>(processGraph);
+        TopologicalOrderIterator<ExecContextApiData.ProcessVertex, DefaultEdge> iterator = new TopologicalOrderIterator<>(processGraph);
 
-        List<ExecContextData.ProcessVertex> vertices = new ArrayList<>();
+        List<ExecContextApiData.ProcessVertex> vertices = new ArrayList<>();
         iterator.forEachRemaining(o->{
             if (ctxs.contains(o.processContextId)) {
                 vertices.add(o);
@@ -190,10 +182,10 @@ public class ExecContextProcessGraphService {
         return error;
     }
 
-    public static ExecContextData.@Nullable ProcessVertex findVertex(
-            DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, String process) {
+    public static ExecContextApiData.@Nullable ProcessVertex findVertex(
+        DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph, String process) {
 
-        ExecContextData.ProcessVertex vertex = processGraph.vertexSet()
+        ExecContextApiData.ProcessVertex vertex = processGraph.vertexSet()
                 .stream()
                 .filter(v->v.process.equals(process))
                 .findFirst()
@@ -202,14 +194,14 @@ public class ExecContextProcessGraphService {
         return vertex;
     }
 
-    public static List<ExecContextData.ProcessVertex> findTargets(
-            DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, String process) {
-        ExecContextData.ProcessVertex v = findVertex(processGraph, process);
+    public static List<ExecContextApiData.ProcessVertex> findTargets(
+        DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph, String process) {
+        ExecContextApiData.ProcessVertex v = findVertex(processGraph, process);
         if (v==null) {
             return List.of();
         }
 
-        List<ExecContextData.ProcessVertex> vertices = processGraph.outgoingEdgesOf(v)
+        List<ExecContextApiData.ProcessVertex> vertices = processGraph.outgoingEdgesOf(v)
                 .stream()
                 .map(processGraph::getEdgeTarget)
                 .collect(Collectors.toList());

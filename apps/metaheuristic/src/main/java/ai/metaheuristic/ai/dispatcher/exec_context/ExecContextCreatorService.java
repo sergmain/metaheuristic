@@ -30,21 +30,21 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepositor
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSelectorService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
-import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
+import ai.metaheuristic.commons.graph.ExecContextProcessGraphService;
+import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.exceptions.ExecContextTooManyInstancesException;
-import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
+import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
-import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
@@ -60,7 +60,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static ai.metaheuristic.api.EnumsApi.OperationStatus.ERROR;
 
@@ -142,7 +141,7 @@ public class ExecContextCreatorService {
         }
 
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
-        SourceCodeData.SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
+        SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
 //        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
         if (!scg.variables.inputs.isEmpty()) {
             throw new IllegalStateException("562.120 Tasks can't be created with execContext because SourceCode has input variable(s). Task must be created after initializing SourceCode input variables.");
@@ -205,7 +204,7 @@ public class ExecContextCreatorService {
         }
 
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
-        SourceCodeData.SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
+        SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
 
         if (scg.instances>0) {
             int count = execContextRepository.countInProgress(scg.uid);
@@ -225,7 +224,7 @@ public class ExecContextCreatorService {
     }
 
     private ExecContextImpl createExecContext(
-            SourceCodeImpl sourceCode, ExecContextApiData.UserExecContext context, SourceCodeData.SourceCodeGraph sourceCodeGraph,
+            SourceCodeImpl sourceCode, ExecContextApiData.UserExecContext context, SourceCodeGraph sourceCodeGraph,
             ExecContextData.@Nullable RootAndParent rootAndParent) {
 
         ExecContextImpl ec = new ExecContextImpl();
@@ -266,7 +265,7 @@ public class ExecContextCreatorService {
         return ec;
     }
 
-    private static ExecContextParamsYaml to(SourceCodeData.SourceCodeGraph sourceCodeGraph) {
+    private static ExecContextParamsYaml to(SourceCodeGraph sourceCodeGraph) {
         ExecContextParamsYaml params = new ExecContextParamsYaml();
         params.clean = sourceCodeGraph.clean;
         params.processes.addAll(sourceCodeGraph.processes);

@@ -17,13 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
-import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
@@ -31,8 +28,11 @@ import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
+import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.graph.ExecContextProcessGraphService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jgrapht.graph.DefaultEdge;
@@ -111,17 +111,17 @@ public class ExecContextTaskProducingService {
 
     private TaskData.ProduceTaskResult produceTasksForExecContext(ExecContextImpl execContext, ExecContextData.GraphAndStates graphAndStates) {
         final ExecContextParamsYaml execContextParamsYaml = execContext.getExecContextParamsYaml();
-        DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
+        DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(execContextParamsYaml);
 
         TaskData.ProduceTaskResult okResult = new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.OK, null);
         Map<String, List<Long>> parentProcesses = new HashMap<>();
-        for (ExecContextData.ProcessVertex processVertex : processGraph) {
+        for (ExecContextApiData.ProcessVertex processVertex : processGraph) {
             String processCode = processVertex.process;
             ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(processCode);
             if (p == null) {
                 // mh.finish can be omitted in sourceCode
-                if (processCode.equals(Consts.MH_FINISH_FUNCTION)) {
-                    p = new ExecContextParamsYaml.Process(Consts.MH_FINISH_FUNCTION, Consts.MH_FINISH_FUNCTION, Consts.TOP_LEVEL_CONTEXT_ID,
+                if (processCode.equals(CommonConsts.MH_FINISH_FUNCTION)) {
+                    p = new ExecContextParamsYaml.Process(CommonConsts.MH_FINISH_FUNCTION, CommonConsts.MH_FINISH_FUNCTION, CommonConsts.TOP_LEVEL_CONTEXT_ID,
                             Consts.MH_FINISH_FUNCTION_INSTANCE);
                 }
                 else {
@@ -162,12 +162,12 @@ public class ExecContextTaskProducingService {
 
     // the logic is following: because we goes through all processed, we have to filter out any processes whose ancestor is internal task
     // there is a trick - we have to stop scanning when we've reached the top-level process, i.e. internalContextId=="1"
-    public static ExecContextParamsYaml.@Nullable Process checkForInternalFunctionAsParent(ExecContextParamsYaml execContextParamsYaml, DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, ExecContextData.ProcessVertex currProcess) {
-        if (currProcess.processContextId.equals(Consts.TOP_LEVEL_CONTEXT_ID)) {
+    public static ExecContextParamsYaml.@Nullable Process checkForInternalFunctionAsParent(ExecContextParamsYaml execContextParamsYaml, DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph, ExecContextApiData.ProcessVertex currProcess) {
+        if (currProcess.processContextId.equals(CommonConsts.TOP_LEVEL_CONTEXT_ID)) {
             return null;
         }
 
-        ExecContextData.ProcessVertex directAncestor = currProcess;
+        ExecContextApiData.ProcessVertex directAncestor = currProcess;
         while ((directAncestor=getDirectAncestor(processGraph, directAncestor))!=null) {
             ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(directAncestor.process);
             if (p==null) {
@@ -183,11 +183,11 @@ public class ExecContextTaskProducingService {
     }
 
     @SuppressWarnings("SimplifyStreamApiCallChains")
-    private static ExecContextData.@Nullable ProcessVertex getDirectAncestor(DirectedAcyclicGraph<ExecContextData.ProcessVertex, DefaultEdge> processGraph, ExecContextData.ProcessVertex currProcess) {
-        if (currProcess.processContextId.equals(Consts.TOP_LEVEL_CONTEXT_ID)) {
+    private static ExecContextApiData.@Nullable ProcessVertex getDirectAncestor(DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph, ExecContextApiData.ProcessVertex currProcess) {
+        if (currProcess.processContextId.equals(CommonConsts.TOP_LEVEL_CONTEXT_ID)) {
             return null;
         }
-        List<ExecContextData.ProcessVertex> l = ExecContextProcessGraphService.findDirectAncestors(processGraph, currProcess).stream()
+        List<ExecContextApiData.ProcessVertex> l = ExecContextProcessGraphService.findDirectAncestors(processGraph, currProcess).stream()
                 .filter(o->currProcess.processContextId.startsWith(o.processContextId))
                 .collect(Collectors.toList());
 

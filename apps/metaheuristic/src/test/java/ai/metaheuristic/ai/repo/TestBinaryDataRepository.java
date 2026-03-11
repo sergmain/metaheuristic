@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.repo;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
@@ -24,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.CommonConsts;
 import ch.qos.logback.classic.LoggerContext;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterAll;
@@ -95,7 +95,7 @@ public class TestBinaryDataRepository {
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
         var1 = variableTxService.createInitializedTx(
-                        inputStream, bytes.length, "test-01", "test-file.bin", 10L, Consts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.binary);
+                        inputStream, bytes.length, "test-01", "test-file.bin", 10L, CommonConsts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.binary);
 
         Timestamp ts = var1.getUploadTs();
 

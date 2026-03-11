@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.some;
 
-import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.commons.utils.CollectionUtils;
 
 import java.util.List;
 

@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.graph;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
@@ -30,12 +29,11 @@ import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskApiData;
+import ai.metaheuristic.commons.CommonConsts;
 import ch.qos.logback.classic.LoggerContext;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.LoggerFactory;
@@ -47,7 +45,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.file.Path;
 import java.util.Date;
@@ -119,7 +116,7 @@ public class TestGraphWithErrorInTask extends PreparingSourceCode {
     }
 
     private void evaluate() {
-        final TaskApiData.TaskWithContext t1 = new TaskApiData.TaskWithContext(1L, Consts.TOP_LEVEL_CONTEXT_ID);
+        final TaskApiData.TaskWithContext t1 = new TaskApiData.TaskWithContext(1L, CommonConsts.TOP_LEVEL_CONTEXT_ID);
         OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(), List.of(t1));
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
@@ -158,7 +155,7 @@ public class TestGraphWithErrorInTask extends PreparingSourceCode {
                 List.of(1232L), List.of(t1233));
 
         // 999L is mh.finish task
-        final TaskApiData.TaskWithContext t999 = new TaskApiData.TaskWithContext(999L, Consts.TOP_LEVEL_CONTEXT_ID);
+        final TaskApiData.TaskWithContext t999 = new TaskApiData.TaskWithContext(999L, CommonConsts.TOP_LEVEL_CONTEXT_ID);
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(1L, 1213L, 1223L, 1233L), List.of(t999));
 

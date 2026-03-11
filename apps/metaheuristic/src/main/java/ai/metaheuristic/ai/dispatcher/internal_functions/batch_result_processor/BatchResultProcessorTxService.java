@@ -45,6 +45,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -167,7 +168,7 @@ public class BatchResultProcessorTxService {
         }
 
         // key is taskContextId
-        Map<String, ItemWithStatusWithMapping> prepared = groupByTaskContextId(vars, nameToVar, List.of(Consts.TOP_LEVEL_CONTEXT_ID),
+        Map<String, ItemWithStatusWithMapping> prepared = groupByTaskContextId(vars, nameToVar, List.of(CommonConsts.TOP_LEVEL_CONTEXT_ID),
                 outputTypes::contains, statusTypes::contains, mappingTypes::contains);
 
         Path resultDir = DirUtils.createMhTempPath("batch-result-processing-");

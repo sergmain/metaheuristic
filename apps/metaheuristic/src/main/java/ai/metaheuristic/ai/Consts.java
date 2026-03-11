@@ -19,6 +19,7 @@ package ai.metaheuristic.ai;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
@@ -133,7 +134,6 @@ public class Consts {
     public static final String MH_AGGREGATE_FUNCTION = "mh.aggregate";
     public static final String MH_EXPERIMENT_RESULT_PROCESSOR = "mh.experiment-result-processor";
     public static final String MH_EXPERIMENT_REDUCE_VARIABLES = "mh.experiment-reduce-variables";
-    public static final String MH_FINISH_FUNCTION = "mh.finish";
     public static final String MH_BATCH_RESULT_PROCESSOR_FUNCTION = "mh.batch-result-processor";
     public static final String MH_EXEC_SOURCE_CODE_FUNCTION = "mh.exec-source-code";
     public static final String MH_EVALUATION_FUNCTION = "mh.evaluation";
@@ -144,11 +144,9 @@ public class Consts {
     public static final String MH_ENHANCE_TEXT_FUNCTION = "mh.enhance-text";
     public static final String MH_ACCEPTANCE_TEST_FUNCTION = "mh.acceptance-test";
 
-    public static final ExecContextParamsYaml.FunctionDefinition MH_FINISH_FUNCTION_INSTANCE = new ExecContextParamsYaml.FunctionDefinition(MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
+    public static final ExecContextParamsYaml.FunctionDefinition MH_FINISH_FUNCTION_INSTANCE = new ExecContextParamsYaml.FunctionDefinition(CommonConsts.MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
 
     public static final String UNKNOWN_FILENAME_IN_BATCH = Consts.UNKNOWN_INFO;
-    public static final String TOP_LEVEL_CONTEXT_ID = "1";
-    public static final String SECOND_LEVEL_CONTEXT_ID = "1,2";
 
     // Processor's version for communicating with dispatcher
     public static final int PROCESSOR_COMM_VERSION = new ProcessorCommParamsYaml().version;

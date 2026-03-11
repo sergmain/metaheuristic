@@ -83,20 +83,6 @@ public class ExecContextData {
     }
 
     @Data
-    @EqualsAndHashCode(of = "id")
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ProcessVertex {
-        public Long id;
-        public String process;
-        public String processContextId;
-
-        public ProcessVertex(Long id) {
-            this.id = id;
-        }
-    }
-
-    @Data
     @RequiredArgsConstructor
     public static class ReconciliationStatus {
         public final Long execContextId;

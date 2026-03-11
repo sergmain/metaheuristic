@@ -14,9 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.utils;
+package ai.metaheuristic.commons.utils;
 
-import ai.metaheuristic.ai.dispatcher.data.TaskData;
+import ai.metaheuristic.api.data.task.TaskApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
@@ -26,8 +26,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.Consts.SECOND_LEVEL_CONTEXT_ID;
-import static ai.metaheuristic.ai.Consts.TOP_LEVEL_CONTEXT_ID;
+import static ai.metaheuristic.commons.CommonConsts.SECOND_LEVEL_CONTEXT_ID;
+import static ai.metaheuristic.commons.CommonConsts.TOP_LEVEL_CONTEXT_ID;
 
 /**
  * @author Serge
@@ -39,7 +39,12 @@ public class ContextUtils {
 
     public static final String CONTEXT_SEPARATOR = "#";
     public static final char CONTEXT_DIGIT_SEPARATOR = ',';
-    public static final String ANCESTOR_SEPARATOR = "|";
+//    public static final String ANCESTOR_SEPARATOR = "|";
+    public static final char ANCESTOR_SEPARATOR = '|';
+
+    public static String normalize(String contextId) {
+        return contextId.replace(ANCESTOR_SEPARATOR, '-');
+    }
 
     public static String buildTaskContextId(String processContextId, String subContext) {
         return processContextId + CONTEXT_SEPARATOR + subContext;
@@ -91,7 +96,8 @@ public class ContextUtils {
     @Nullable
     public static String getAncestorPath(String level) {
         int idx = level.indexOf(ANCESTOR_SEPARATOR);
-        return idx == -1 ? null : level.substring(idx + ANCESTOR_SEPARATOR.length());
+//        return idx == -1 ? null : level.substring(idx + ANCESTOR_SEPARATOR.length());
+        return idx == -1 ? null : level.substring(idx + 1);
     }
 
     /**
@@ -137,21 +143,21 @@ public class ContextUtils {
     }
 
 
-    public static TaskData.DetailedTaskContextId parse(String taskContextId) {
+    public static TaskApiData.DetailedTaskContextId parse(String taskContextId) {
         final String level = getLevel(taskContextId);
         final String path = getPath(taskContextId);
 
         if (TOP_LEVEL_CONTEXT_ID.equals(level)) {
-            return new TaskData.DetailedTaskContextId(TOP_LEVEL_CONTEXT_ID, null);
+            return new TaskApiData.DetailedTaskContextId(TOP_LEVEL_CONTEXT_ID, null);
         }
         if (SECOND_LEVEL_CONTEXT_ID.equals(level)) {
-            return new TaskData.DetailedTaskContextId(SECOND_LEVEL_CONTEXT_ID, path);
+            return new TaskApiData.DetailedTaskContextId(SECOND_LEVEL_CONTEXT_ID, path);
         }
 
-        return new TaskData.DetailedTaskContextId(level, path);
+        return new TaskApiData.DetailedTaskContextId(level, path);
     }
 
-    public static TaskData.DetailedTaskContextId getTopDetailed(String curr) {
+    public static TaskApiData.DetailedTaskContextId getTopDetailed(String curr) {
         int commas = StringUtils.countMatches(curr, ',');
         if (commas<2) {
             throw new IllegalStateException("(commas<2), "+ curr);
@@ -159,7 +165,7 @@ public class ContextUtils {
         final int endIndex = curr.lastIndexOf(',');
         final int endIndexBase = curr.lastIndexOf(',', endIndex);
 
-        return new TaskData.DetailedTaskContextId(curr.substring(0, endIndexBase), null);
+        return new TaskApiData.DetailedTaskContextId(curr.substring(0, endIndexBase), null);
     }
 
     /**
@@ -302,7 +308,10 @@ public class ContextUtils {
 
         // Multiple ancestor segments: "1,2,5,6|1|0#0" -> parent = "1,2,5|1#0"
         String parentAncestorPath = ancestorPath.substring(0, lastPipe);
-        String parentInstanceNumber = ancestorPath.substring(lastPipe + ANCESTOR_SEPARATOR.length());
+
+//        String parentInstanceNumber = ancestorPath.substring(lastPipe + ANCESTOR_SEPARATOR.length());
+        String parentInstanceNumber = ancestorPath.substring(lastPipe + 1);
+
         return parentProcessCtxId + ANCESTOR_SEPARATOR + parentAncestorPath + CONTEXT_SEPARATOR + parentInstanceNumber;
     }
 

@@ -21,6 +21,7 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -88,7 +89,7 @@ public class SourceCodeValidationUtils {
                         EnumsApi.SourceCodeValidateStatus.SUB_PROCESS_LOGIC_NOT_DEFINED,
                         "177.107 The process '" + code + "' has sub processes but logic isn't defined");
             }
-            boolean finish = process.function.code.equals(Consts.MH_FINISH_FUNCTION);
+            boolean finish = process.function.code.equals(CommonConsts.MH_FINISH_FUNCTION);
             if (!finish) {
                 for (SourceCodeParamsYaml.Variable variable : process.outputs) {
                     if (S.b(variable.name)) {
@@ -96,11 +97,13 @@ public class SourceCodeValidationUtils {
                                 EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLE_NOT_DEFINED_ERROR,
                                 "177.160 Output variable in process " + process.code + " must have a name");
                     }
+/*
                     if (variable.getSourcing() == null) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.SOURCING_OF_VARIABLE_NOT_DEFINED_ERROR,
                                 "177.180 Output variable " + variable.name + " in process " + process.code + " must have a defined sourcing");
                     }
+*/
                     EnumsApi.SourceCodeValidateStatus status = SourceCodeUtils.isVariableNameOk(variable.name);
                     if (status != OK) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
@@ -129,7 +132,7 @@ public class SourceCodeValidationUtils {
 
                 }
             }
-            if (process.code.equals(Consts.MH_FINISH_FUNCTION) && !process.function.code.equals(Consts.MH_FINISH_FUNCTION)) {
+            if (process.code.equals(CommonConsts.MH_FINISH_FUNCTION) && !process.function.code.equals(CommonConsts.MH_FINISH_FUNCTION)) {
                 // test that there isn't any mh.finish process which isn't actually for function mn.finish
                 return new SourceCodeApiData.SourceCodeValidationResult(
                         EnumsApi.SourceCodeValidateStatus.WRONG_CODE_OF_PROCESS_ERROR, "177.215 There is process with code mh.finish but function is " + process.function.code);

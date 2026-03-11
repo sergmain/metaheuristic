@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.processor;
 
-import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml;
 import org.jspecify.annotations.Nullable;

@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
 import ai.metaheuristic.ai.mhbp.scenario.ScenarioUtils;
-import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.commons.utils.*;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFunctionParamsYaml;
 import ai.metaheuristic.ai.yaml.metadata_aggregate_function.MetadataAggregateFunctionParamsYamlUtils;
@@ -35,10 +35,6 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
-import ai.metaheuristic.commons.utils.DirUtils;
-import ai.metaheuristic.commons.utils.MetaUtils;
-import ai.metaheuristic.commons.utils.StrUtils;
-import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -170,7 +166,8 @@ public class AggregateFunction implements InternalFunction {
             list.stream().map(o->o.taskContextId).collect(Collectors.toCollection(()->taskContextIds));
 
             for (String contextId : taskContextIds) {
-                Path taskContextDir = outputDir.resolve(contextId);
+                String normalizedContextId = ContextUtils.normalize(contextId);
+                Path taskContextDir = outputDir.resolve(normalizedContextId);
                 MetadataAggregateFunctionParamsYaml mafpy = new MetadataAggregateFunctionParamsYaml();
                 try {
                     Files.createDirectory(taskContextDir);

@@ -16,12 +16,12 @@
 
 package ai.metaheuristic.ai.source_code;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ch.qos.logback.classic.LoggerContext;
 import lombok.SneakyThrows;
@@ -100,7 +100,7 @@ public class TestPresenceOfMhFinishFunction extends FeatureMethods {
         TaskImpl task = taskRepository.findById((Long)list.get(0)[0]).orElse(null);
         assertNotNull(task);
         TaskParamsYaml taskParamsYaml = task.getTaskParamsYaml();
-        assertEquals(Consts.MH_FINISH_FUNCTION, taskParamsYaml.task.function.code);
+        assertEquals(CommonConsts.MH_FINISH_FUNCTION, taskParamsYaml.task.function.code);
     }
 }
 

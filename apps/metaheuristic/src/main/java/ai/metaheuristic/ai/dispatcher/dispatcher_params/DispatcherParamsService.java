@@ -19,15 +19,15 @@ package ai.metaheuristic.ai.dispatcher.dispatcher_params;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Dispatcher;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.events.DispatcherCacheCheckingEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.DispatcherParamsRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
-import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
+import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYamlUtils;
+import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -125,16 +125,16 @@ public class DispatcherParamsService {
     @Transactional
     public void registerSourceCode(SourceCodeImpl sourceCode) {
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
-//        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
 
-        SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
+        SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
 
 
         registerSpecific(sourceCode, sourceCodeGraph, Consts.MH_EXPERIMENT_RESULT_PROCESSOR, this::registerExperiment);
         registerSpecific(sourceCode, sourceCodeGraph, Consts.MH_BATCH_RESULT_PROCESSOR_FUNCTION, this::registerBatch);
     }
 
-    private static void registerSpecific(SourceCodeImpl sourceCode, SourceCodeData.SourceCodeGraph scg, String functionCode, Consumer<String> consumer) {
+    private static void registerSpecific(SourceCodeImpl sourceCode, SourceCodeGraph scg, String functionCode, Consumer<String> consumer) {
         ExecContextParamsYaml.Process p = findProcessForFunction(scg, functionCode);
         if (p==null) {
             return;
@@ -142,7 +142,7 @@ public class DispatcherParamsService {
         consumer.accept(sourceCode.uid);
     }
 
-    private static ExecContextParamsYaml.@Nullable Process findProcessForFunction(SourceCodeData.SourceCodeGraph scg, String functionCode) {
+    private static ExecContextParamsYaml.@Nullable Process findProcessForFunction(SourceCodeGraph scg, String functionCode) {
         for (ExecContextParamsYaml.Process process : scg.processes) {
             if (process.function.code.equals(functionCode)) {
                 return process;

@@ -108,4 +108,5 @@ public class TaskApiData {
         }
     }
 
+    public record DetailedTaskContextId(String level, @Nullable String path) {}
 }

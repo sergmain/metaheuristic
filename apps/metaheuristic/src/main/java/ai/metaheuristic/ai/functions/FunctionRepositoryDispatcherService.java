@@ -18,23 +18,21 @@ package ai.metaheuristic.ai.functions;
 
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.events.RegisterFunctionCodesForStartedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
+import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParams;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParamsUtils;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParams;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParamsUtils;
-import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
-import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -207,7 +205,7 @@ public class FunctionRepositoryDispatcherService {
     @SuppressWarnings("MethodMayBeStatic")
     @Async
     @EventListener
-    public void activateFunctions(SourceCodeData.SourceCodeGraph scg) {
+    public void activateFunctions(SourceCodeGraph scg) {
         Set<String> funcCodes = collectFunctionCodes(scg);
         registerCodes(funcCodes, false);
     }
@@ -257,13 +255,13 @@ public class FunctionRepositoryDispatcherService {
             return;
         }
         SourceCodeStoredParamsYaml scspy = sc.getSourceCodeStoredParamsYaml();
-        SourceCodeData.SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
+        SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
 //        final SourceCodeParamsYaml params = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
         Set<String> funcCodes = collectFunctionCodes(scg);
         registerCodes(funcCodes, false);
     }
 
-    private static Set<String> collectFunctionCodes(SourceCodeData.SourceCodeGraph scg) {
+    private static Set<String> collectFunctionCodes(SourceCodeGraph scg) {
         Set<String> codes = new HashSet<>();
         for (ExecContextParamsYaml.Process process : scg.processes) {
             collectFunctionCodesForProcess(codes, process);
@@ -305,7 +303,7 @@ public class FunctionRepositoryDispatcherService {
                 continue;
             }
             var scspy = sc.getSourceCodeStoredParamsYaml();
-            SourceCodeData.SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
+            SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
             funcCodes.addAll(collectFunctionCodes(scg));
         }
         registerCodes(funcCodes, true);

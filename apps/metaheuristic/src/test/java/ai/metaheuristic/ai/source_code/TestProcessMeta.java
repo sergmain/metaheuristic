@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.source_code;
 
-import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -41,7 +41,7 @@ public class TestProcessMeta {
             p.name = "experiment";
             p.code = "test-experiment-code-01";
             p.outputs.add(new SourceCodeParamsYaml.Variable("model"));
-            p.function = new SourceCodeParamsYaml.FunctionDefForSourceCode(Consts.MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
+            p.function = new SourceCodeParamsYaml.FunctionDefForSourceCode(CommonConsts.MH_FINISH_FUNCTION, EnumsApi.FunctionExecContext.internal);
 
             p.metas = List.of(
                     Map.of("assembled-raw", "assembled-raw"),

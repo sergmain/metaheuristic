@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.graph;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex;
@@ -32,12 +31,11 @@ import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskApiData;
+import ai.metaheuristic.commons.CommonConsts;
 import ch.qos.logback.classic.LoggerContext;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.LoggerFactory;
@@ -48,7 +46,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -113,7 +110,7 @@ public class TestGraph extends PreparingSourceCode {
                 ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().execContextGraphId, () ->
                         ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().execContextTaskStateId, () -> {
                             OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(),
-                                    List.of(new TaskApiData.TaskWithContext(1L, Consts.TOP_LEVEL_CONTEXT_ID)));
+                                    List.of(new TaskApiData.TaskWithContext(1L, CommonConsts.TOP_LEVEL_CONTEXT_ID)));
 
                             setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
 
@@ -129,7 +126,7 @@ public class TestGraph extends PreparingSourceCode {
                             setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
 
                             osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(1L, 2L, 3L),
-                                    List.of(new TaskApiData.TaskWithContext(4L, Consts.TOP_LEVEL_CONTEXT_ID)));
+                                    List.of(new TaskApiData.TaskWithContext(4L, CommonConsts.TOP_LEVEL_CONTEXT_ID)));
                             assertEquals(EnumsApi.OperationStatus.OK, osr.status, osr.getErrorMessagesAsStr());
                             setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
 
@@ -139,10 +136,10 @@ public class TestGraph extends PreparingSourceCode {
                             List<TaskVertex> leafs = testGraphService.findLeafs(getExecContextForTest());
 
                             assertEquals(1, leafs.size());
-                            assertTrue(leafs.contains(new TaskVertex(4L, Consts.TOP_LEVEL_CONTEXT_ID)));
+                            assertTrue(leafs.contains(new TaskVertex(4L, CommonConsts.TOP_LEVEL_CONTEXT_ID)));
 
                             txSupportForTestingService.updateTaskExecState(execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
-                                getExecContextForTest().execContextTaskStateId, 1L, EnumsApi.TaskExecState.ERROR, Consts.TOP_LEVEL_CONTEXT_ID);
+                                getExecContextForTest().execContextTaskStateId, 1L, EnumsApi.TaskExecState.ERROR, CommonConsts.TOP_LEVEL_CONTEXT_ID);
 
                             setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
                             checkState(1L, EnumsApi.TaskExecState.ERROR);
@@ -165,7 +162,7 @@ public class TestGraph extends PreparingSourceCode {
 
                             // reset all graph
                             txSupportForTestingService.updateTaskExecState(execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
-                                getExecContextForTest().execContextTaskStateId, 1L, EnumsApi.TaskExecState.NONE, Consts.TOP_LEVEL_CONTEXT_ID);
+                                getExecContextForTest().execContextTaskStateId, 1L, EnumsApi.TaskExecState.NONE, CommonConsts.TOP_LEVEL_CONTEXT_ID);
 
                             txSupportForTestingService.updateGraphWithResettingAllChildrenTasksWithTx(
                                 execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),

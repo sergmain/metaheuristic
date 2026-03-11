@@ -320,4 +320,18 @@ public class ExecContextApiData {
             return new UserExecContext(getAccountId(), getCompanyId());
         }
     }
+
+    @Data
+    @EqualsAndHashCode(of = "id")
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProcessVertex {
+        public Long id;
+        public String process;
+        public String processContextId;
+
+        public ProcessVertex(Long id) {
+            this.id = id;
+        }
+    }
 }

@@ -47,6 +47,7 @@ import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.dispatcher.Task;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -242,7 +243,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             TaskImpl tempTask = taskRepository.findById(taskId).orElse(null);
             assertNotNull(tempTask);
             TaskParamsYaml tpy = tempTask.getTaskParamsYaml();
-            assertTrue(List.of(Consts.MH_FINISH_FUNCTION, Consts.MH_PERMUTE_VARIABLES_FUNCTION, Consts.MH_AGGREGATE_FUNCTION,
+            assertTrue(List.of(CommonConsts.MH_FINISH_FUNCTION, Consts.MH_PERMUTE_VARIABLES_FUNCTION, Consts.MH_AGGREGATE_FUNCTION,
                     "test.fit.function:1.0", "test.predict.function:1.0")
                     .contains(tpy.task.function.code));
 
@@ -253,7 +254,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
                 case Consts.MH_AGGREGATE_FUNCTION:
                     aggregateTask.task = tempTask;
                     break;
-                case Consts.MH_FINISH_FUNCTION:
+                case CommonConsts.MH_FINISH_FUNCTION:
                     finishTask.task = tempTask;
                     break;
                 case "test.fit.function:1.0":

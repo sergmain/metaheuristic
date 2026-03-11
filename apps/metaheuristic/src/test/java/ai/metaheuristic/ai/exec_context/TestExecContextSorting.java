@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.utils.ContextUtils.CONTEXT_SEPARATOR;
+import static ai.metaheuristic.commons.utils.ContextUtils.CONTEXT_SEPARATOR;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 

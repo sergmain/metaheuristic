@@ -86,7 +86,7 @@ public class SourceCodeParamsYaml implements BaseParams {
     @AllArgsConstructor
     public static class Variable {
         public String name;
-        private EnumsApi.DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
+        private EnumsApi.@Nullable DataSourcing sourcing = EnumsApi.DataSourcing.dispatcher;
 
         @Nullable
         public GitInfo git;

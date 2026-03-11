@@ -46,8 +46,12 @@ public class CommonConsts {
     public static final String WS_PROTOCOL = "ws://";
     public static final String YAML_EXT = ".yaml";
     public static final String YML_EXT = ".yml";
+    public static final String MHSC_EXT = ".mhsc";
     public static final String ZIP_EXT = ".zip";
     public static final String XML_EXT = ".xml";
     public static final String RAR_EXT = ".rar";
     public static final String BIN_EXT = ".bin";
+    public static final String TOP_LEVEL_CONTEXT_ID = "1";
+    public static final String SECOND_LEVEL_CONTEXT_ID = "1,2";
+    public static final String MH_FINISH_FUNCTION = "mh.finish";
 }

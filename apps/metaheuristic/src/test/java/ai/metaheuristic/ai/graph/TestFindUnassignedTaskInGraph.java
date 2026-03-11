@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.graph;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
@@ -34,12 +33,11 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
+import ai.metaheuristic.commons.CommonConsts;
 import ch.qos.logback.classic.LoggerContext;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.LoggerFactory;
@@ -50,7 +48,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -119,7 +116,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
     private void evaluate() {
         OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
-                List.of(), List.of(new TaskApiData.TaskWithContext(1L, Consts.TOP_LEVEL_CONTEXT_ID)));
+                List.of(), List.of(new TaskApiData.TaskWithContext(1L, CommonConsts.TOP_LEVEL_CONTEXT_ID)));
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
@@ -143,7 +140,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
         // 999L is mh.finish task
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(1L, 21L, 22L, 311L, 312L, 313L, 321L, 322L, 323L),
-                List.of(new TaskApiData.TaskWithContext(999L, Consts.TOP_LEVEL_CONTEXT_ID)));
+                List.of(new TaskApiData.TaskWithContext(999L, CommonConsts.TOP_LEVEL_CONTEXT_ID)));
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
@@ -159,7 +156,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         Set<ExecContextData.TaskVertex> ancestors = testGraphService.findDirectAncestors(getExecContextForTest(), leafs.get(0));
 
         assertEquals(9, ancestors.size());
-        assertTrue(ancestors.contains(new ExecContextData.TaskVertex(1L, Consts.TOP_LEVEL_CONTEXT_ID)));
+        assertTrue(ancestors.contains(new ExecContextData.TaskVertex(1L, CommonConsts.TOP_LEVEL_CONTEXT_ID)));
         assertEquals(EnumsApi.TaskExecState.NONE, preparingSourceCodeService.findTaskState(getExecContextForTest(), 1L));
 
         assertTrue(ancestors.contains(new ExecContextData.TaskVertex(21L, "12#1")));
@@ -205,7 +202,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
         ExecContextOperationStatusWithTaskList status = txSupportForTestingService.updateTaskExecState(
             execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
-            getExecContextForTest().execContextTaskStateId,1L, EnumsApi.TaskExecState.OK, Consts.TOP_LEVEL_CONTEXT_ID);
+            getExecContextForTest().execContextTaskStateId,1L, EnumsApi.TaskExecState.OK, CommonConsts.TOP_LEVEL_CONTEXT_ID);
 
         // !!! TODO 2020-10-06 need to rewrite with using real Tasks
 

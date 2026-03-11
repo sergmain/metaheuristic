@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.task;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.CacheProcess;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -34,15 +33,14 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ch.qos.logback.classic.LoggerContext;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.LoggerFactory;
@@ -53,7 +51,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -123,7 +120,7 @@ public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
         step_0_0_produceTasks();
 
         TaskImpl task = taskRepository.findByExecContextIdReadOnly(getExecContextForTest().id).stream()
-                .filter(t->!t.getTaskParamsYaml().task.function.code.equals(Consts.MH_FINISH_FUNCTION))
+                .filter(t->!t.getTaskParamsYaml().task.function.code.equals(CommonConsts.MH_FINISH_FUNCTION))
                 .findFirst().orElseThrow();
 
         final Long taskId = Objects.requireNonNull(task.id);

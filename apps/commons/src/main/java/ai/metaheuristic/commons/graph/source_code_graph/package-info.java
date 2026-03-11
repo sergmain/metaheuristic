@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,26 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.exceptions;
+@NullMarked
+package ai.metaheuristic.commons.graph.source_code_graph;
 
-/**
- * @author Serge
- * Date: 2/17/2020
- * Time: 2:12 AM
- */
-public class SourceCodeGraphException extends RuntimeException{
-    public SourceCodeGraphException() {
-    }
-
-    public SourceCodeGraphException(String message) {
-        super(message);
-    }
-
-    public SourceCodeGraphException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public SourceCodeGraphException(Throwable cause) {
-        super(cause);
-    }
-}
+import org.jspecify.annotations.NullMarked;

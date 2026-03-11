@@ -19,15 +19,15 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
-import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
+import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.utils.ArtifactUtils;
 import ai.metaheuristic.ai.utils.EnvServiceUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
@@ -85,7 +85,7 @@ public class SourceCodeService {
                 return new SourceCodeApiData.SourceCodeResult("560.060 sourceCode yaml is empty");
             }
 
-            SourceCodeData.SourceCodeGraph sourceCodeGraph;
+            SourceCodeGraph sourceCodeGraph;
             try {
                 sourceCodeGraph = SourceCodeGraphFactory.parse(lang, sourceCodeAsStr);
             }
@@ -172,7 +172,7 @@ public class SourceCodeService {
             try (InputStream is = file.getInputStream()) {
                 sourceCodeAsStr = StreamUtils.copyToString(is, StandardCharsets.UTF_8);
             }
-            SourceCodeData.SourceCodeGraph sourceCodeGraph;
+            SourceCodeGraph sourceCodeGraph;
             try {
                 sourceCodeGraph = SourceCodeGraphFactory.parse(lang, sourceCodeAsStr);
             }

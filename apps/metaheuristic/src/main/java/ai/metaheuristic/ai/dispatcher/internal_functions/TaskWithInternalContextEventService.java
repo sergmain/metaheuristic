@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.internal_functions;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -48,6 +47,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
@@ -170,10 +170,10 @@ public class TaskWithInternalContextEventService {
             TaskParamsYaml taskParamsYaml = task.getTaskParamsYaml();
             ExecContextParamsYaml.Process p = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);
             if (p == null) {
-                if (Consts.MH_FINISH_FUNCTION.equals(taskParamsYaml.task.processCode)) {
+                if (CommonConsts.MH_FINISH_FUNCTION.equals(taskParamsYaml.task.processCode)) {
                     ExecContextParamsYaml.FunctionDefinition function =
-                            new ExecContextParamsYaml.FunctionDefinition(Consts.MH_FINISH_FUNCTION, "", EnumsApi.FunctionExecContext.internal, EnumsApi.FunctionRefType.code);
-                    p = new ExecContextParamsYaml.Process(Consts.MH_FINISH_FUNCTION, Consts.MH_FINISH_FUNCTION, Consts.TOP_LEVEL_CONTEXT_ID, function);
+                            new ExecContextParamsYaml.FunctionDefinition(CommonConsts.MH_FINISH_FUNCTION, "", EnumsApi.FunctionExecContext.internal, EnumsApi.FunctionRefType.code);
+                    p = new ExecContextParamsYaml.Process(CommonConsts.MH_FINISH_FUNCTION, CommonConsts.MH_FINISH_FUNCTION, CommonConsts.TOP_LEVEL_CONTEXT_ID, function);
                 }
                 else {
                     final String msg = "706.240 can't find process '" + taskParamsYaml.task.processCode + "' in execContext with Id #" + simpleExecContext.execContextId;

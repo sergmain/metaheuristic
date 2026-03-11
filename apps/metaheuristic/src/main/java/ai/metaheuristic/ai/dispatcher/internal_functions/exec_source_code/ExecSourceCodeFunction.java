@@ -227,7 +227,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
         if (tempFile!=null) {
             try (InputStream is = Files.newInputStream(tempFile)) {
                 variableTxService.createInitializedTx(
-                    is, Files.size(tempFile), inputVariable.name, "variable-" + input.name, execContextResultRest.execContext.id, Consts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.unknown);
+                    is, Files.size(tempFile), inputVariable.name, "variable-" + input.name, execContextResultRest.execContext.id, CommonConsts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.unknown);
             }
         }
     }

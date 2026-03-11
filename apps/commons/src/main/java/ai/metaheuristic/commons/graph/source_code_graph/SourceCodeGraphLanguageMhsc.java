@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,19 +14,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.source_code.graph;
+package ai.metaheuristic.commons.graph.source_code_graph;
 
-import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
+//import ai.metaheuristic.ai.Consts;
+//import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
+//import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService;
+//import ai.metaheuristic.ai.dispatcher.source_code.graph.mhsc.MhSourceCodeBaseVisitor;
+//import ai.metaheuristic.ai.dispatcher.source_code.graph.mhsc.MhSourceCodeLexer;
+//import ai.metaheuristic.ai.dispatcher.source_code.graph.mhsc.MhSourceCodeParser;
+//import ai.metaheuristic.ai.exceptions.SourceCodeGraphException;
+//import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.mhsc.MhSourceCodeBaseVisitor;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.mhsc.MhSourceCodeLexer;
 import ai.metaheuristic.ai.dispatcher.source_code.graph.mhsc.MhSourceCodeParser;
-import ai.metaheuristic.ai.exceptions.SourceCodeGraphException;
-import ai.metaheuristic.ai.utils.ContextUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.SourceCodeGraph;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.exceptions.SourceCodeGraphException;
+import ai.metaheuristic.commons.graph.ExecContextProcessGraphService;
+import ai.metaheuristic.commons.utils.ContextUtils;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.jspecify.annotations.Nullable;
@@ -34,6 +41,9 @@ import org.jspecify.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
+
+import static ai.metaheuristic.commons.CommonConsts.MH_FINISH_FUNCTION;
+import static ai.metaheuristic.commons.CommonConsts.TOP_LEVEL_CONTEXT_ID;
 
 /**
  * @author Serge
@@ -43,7 +53,7 @@ import java.util.function.Supplier;
 public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
 
     @Override
-    public SourceCodeData.SourceCodeGraph parse(String sourceCode, Supplier<String> contextIdSupplier) {
+    public SourceCodeGraph parse(String sourceCode, Supplier<String> contextIdSupplier) {
         MhSourceCodeLexer lexer = new MhSourceCodeLexer(CharStreams.fromString(sourceCode));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         MhSourceCodeParser parser = new MhSourceCodeParser(tokens);
@@ -81,7 +91,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
     static class MhscVisitor extends MhSourceCodeBaseVisitor<Void> {
 
         private final Supplier<String> contextIdSupplier;
-        private final SourceCodeData.SourceCodeGraph scg = new SourceCodeData.SourceCodeGraph();
+        private final SourceCodeGraph scg = new SourceCodeGraph();
         private final Set<String> processCodes = new HashSet<>();
         private final Map<String, Long> ids = new HashMap<>();
         private final AtomicLong currId = new AtomicLong();
@@ -93,7 +103,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
 
         // Track current context during tree walk
         private String currentInternalContextId;
-        private Set<ExecContextData.ProcessVertex> parentProcesses;
+        private Set<ExecContextApiData.ProcessVertex> parentProcesses;
         private boolean finishPresent = false;
 
         MhscVisitor(Supplier<String> contextIdSupplier) {
@@ -102,7 +112,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
             this.parentProcesses = new HashSet<>();
         }
 
-        SourceCodeData.SourceCodeGraph getGraph() {
+        SourceCodeGraph getGraph() {
             if (scg.uid == null || scg.uid.isBlank()) {
                 throw new SourceCodeGraphException("564.190 uid is required in source declaration");
             }
@@ -125,7 +135,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                     } else if (opt.getText().startsWith("instances")) {
                         scg.instances = Integer.parseInt(opt.INT().getText());
                     } else if (opt.getText().startsWith("ac")) {
-                        scg.ac = new SourceCodeData.AccessControl(unquote(opt.STRING().getText()));
+                        scg.ac = new SourceCodeGraph.AccessControl(unquote(opt.STRING().getText()));
                     }
                 }
             }
@@ -207,10 +217,10 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
 /**
          * Process a processDecl and return the set of "last" vertices for chaining.
          */
-        private Set<ExecContextData.ProcessVertex> processProcessDecl(
+        private Set<ExecContextApiData.ProcessVertex> processProcessDecl(
                 MhSourceCodeParser.ProcessDeclContext ctx,
                 String internalContextId,
-                Set<ExecContextData.ProcessVertex> parents) {
+                Set<ExecContextApiData.ProcessVertex> parents) {
 
             if (finishPresent) {
                 throw new SourceCodeGraphException("564.240 mh.finish isn't the last process");
@@ -315,10 +325,10 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
             process.logic = subProcessLogic;
             scg.processes.add(process);
 
-            ExecContextData.ProcessVertex vertex = createProcessVertex(processCode, internalContextId);
+            ExecContextApiData.ProcessVertex vertex = createProcessVertex(processCode, internalContextId);
             ExecContextProcessGraphService.addProcessVertexToGraph(scg.processGraph, vertex, parents);
 
-            if (Consts.MH_FINISH_FUNCTION.equals(process.function.code)) {
+            if (MH_FINISH_FUNCTION.equals(process.function.code)) {
                 finishPresent = true;
             }
 
@@ -327,22 +337,22 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                 return processSubProcessChildren(subProcessChildren, subProcessLogic, vertex, internalContextId);
             }
 
-            Set<ExecContextData.ProcessVertex> result = new HashSet<>();
+            Set<ExecContextApiData.ProcessVertex> result = new HashSet<>();
             result.add(vertex);
             return result;
         }
 
-        private Set<ExecContextData.ProcessVertex> processSubProcessChildren(
+        private Set<ExecContextApiData.ProcessVertex> processSubProcessChildren(
                 List<MhSourceCodeParser.ProcessOrControlContext> children,
                 EnumsApi.SourceCodeSubProcessLogic logic,
-                ExecContextData.ProcessVertex parentVertex,
+                ExecContextApiData.ProcessVertex parentVertex,
                 String parentInternalContextId) {
 
-            Set<ExecContextData.ProcessVertex> lastProcesses = new HashSet<>();
-            Set<ExecContextData.ProcessVertex> tempLastProcesses = new HashSet<>();
+            Set<ExecContextApiData.ProcessVertex> lastProcesses = new HashSet<>();
+            Set<ExecContextApiData.ProcessVertex> tempLastProcesses = new HashSet<>();
             tempLastProcesses.add(parentVertex);
             String subInternalContextId = null;
-            List<ExecContextData.ProcessVertex> andProcesses = new ArrayList<>();
+            List<ExecContextApiData.ProcessVertex> andProcesses = new ArrayList<>();
 
             if (logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
                 subInternalContextId = parentInternalContextId + ContextUtils.CONTEXT_DIGIT_SEPARATOR + contextIdSupplier.get();
@@ -358,7 +368,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                     throw new IllegalStateException("564.280 (subInternalContextId==null)");
                 }
 
-                Set<ExecContextData.ProcessVertex> tempParents;
+                Set<ExecContextApiData.ProcessVertex> tempParents;
                 if (logic == EnumsApi.SourceCodeSubProcessLogic.and || logic == EnumsApi.SourceCodeSubProcessLogic.or) {
                     tempParents = new HashSet<>();
                     tempParents.add(parentVertex);
@@ -393,16 +403,16 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
             return lastProcesses;
         }
 
-        private Set<ExecContextData.ProcessVertex> processForLoop(
+        private Set<ExecContextApiData.ProcessVertex> processForLoop(
                 MhSourceCodeParser.ForLoopContext ctx,
                 String internalContextId,
-                Set<ExecContextData.ProcessVertex> parents) {
+                Set<ExecContextApiData.ProcessVertex> parents) {
 
             String loopVar = ctx.ID().getText();
             int start = Integer.parseInt(ctx.INT(0).getText());
             int end = Integer.parseInt(ctx.INT(1).getText());
 
-            Set<ExecContextData.ProcessVertex> currentParents = parents;
+            Set<ExecContextApiData.ProcessVertex> currentParents = parents;
             for (int i = start; i <= end; i++) {
                 loopVariables.put(loopVar, i);
                 for (MhSourceCodeParser.ProcessOrControlContext poc : ctx.processOrControl()) {
@@ -419,10 +429,10 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
             return currentParents;
         }
 
-        private Set<ExecContextData.ProcessVertex> processTemplateCall(
+        private Set<ExecContextApiData.ProcessVertex> processTemplateCall(
                 MhSourceCodeParser.TemplateCallContext ctx,
                 String internalContextId,
-                Set<ExecContextData.ProcessVertex> parents) {
+                Set<ExecContextApiData.ProcessVertex> parents) {
 
             String templateName = ctx.ID().getText();
             MhSourceCodeParser.TemplateDeclContext tmpl = templates.get(templateName);
@@ -461,7 +471,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                 }
             }
 
-            Set<ExecContextData.ProcessVertex> currentParents = parents;
+            Set<ExecContextApiData.ProcessVertex> currentParents = parents;
             for (MhSourceCodeParser.ProcessOrControlContext poc : tmpl.processOrControl()) {
                 if (poc.processDecl() != null) {
                     currentParents = processProcessDecl(poc.processDecl(), internalContextId, currentParents);
@@ -586,7 +596,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
             }
         }
 
-        private ExecContextData.ProcessVertex createProcessVertex(String processCode, String internalContextId) {
+        private ExecContextApiData.ProcessVertex createProcessVertex(String processCode, String internalContextId) {
             return SourceCodeGraphLanguageYaml.createProcessVertex(ids, currId, processCode, internalContextId);
         }
 
@@ -599,14 +609,14 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
 
         private void addFinishProcess() {
             ExecContextParamsYaml.Process p = new ExecContextParamsYaml.Process();
-            p.processCode = Consts.MH_FINISH_FUNCTION;
-            p.processName = Consts.MH_FINISH_FUNCTION;
-            p.internalContextId = Consts.TOP_LEVEL_CONTEXT_ID;
+            p.processCode = MH_FINISH_FUNCTION;
+            p.processName = MH_FINISH_FUNCTION;
+            p.internalContextId = TOP_LEVEL_CONTEXT_ID;
             p.function = new ExecContextParamsYaml.FunctionDefinition(
-                    Consts.MH_FINISH_FUNCTION, null, EnumsApi.FunctionExecContext.internal, EnumsApi.FunctionRefType.code);
+                    MH_FINISH_FUNCTION, null, EnumsApi.FunctionExecContext.internal, EnumsApi.FunctionRefType.code);
             scg.processes.add(p);
 
-            ExecContextData.ProcessVertex finishVertex = createProcessVertex(Consts.MH_FINISH_FUNCTION, Consts.TOP_LEVEL_CONTEXT_ID);
+            ExecContextApiData.ProcessVertex finishVertex = createProcessVertex(MH_FINISH_FUNCTION, TOP_LEVEL_CONTEXT_ID);
             ExecContextProcessGraphService.addProcessVertexToGraph(scg.processGraph, finishVertex, parentProcesses);
         }
 

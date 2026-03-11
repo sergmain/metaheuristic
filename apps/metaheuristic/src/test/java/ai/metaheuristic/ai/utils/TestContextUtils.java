@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static ai.metaheuristic.ai.utils.ContextUtils.CONTEXT_SEPARATOR;
+import static ai.metaheuristic.commons.utils.ContextUtils.CONTEXT_SEPARATOR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -51,7 +51,7 @@ public class TestContextUtils {
             1,2,3,4,2#1
             1,2,3,4,2#2
             """;
-        List<String> ctxs = all.lines().sorted(ContextUtils::compareTaskContextIds).toList();
+        List<String> ctxs = all.lines().sorted(ai.metaheuristic.commons.utils.ContextUtils::compareTaskContextIds).toList();
 
         ctxs.forEach(System.out::println);
 
@@ -60,16 +60,16 @@ public class TestContextUtils {
 
     @Test
     public void testGetWithoutSubContext() {
-        assertEquals("123", ContextUtils.getLevel("123"));
-        assertEquals("123", ContextUtils.getLevel("123" + CONTEXT_SEPARATOR + "1"));
+        assertEquals("123", ai.metaheuristic.commons.utils.ContextUtils.getLevel("123"));
+        assertEquals("123", ai.metaheuristic.commons.utils.ContextUtils.getLevel("123" + CONTEXT_SEPARATOR + "1"));
     }
 
     @Test
     public void testGetSubContext() {
-        assertNull(ContextUtils.getPath(""));
-        assertNull(ContextUtils.getPath("123"));
-        assertEquals("1", ContextUtils.getPath("123" + CONTEXT_SEPARATOR + "1"));
-        assertEquals("2", ContextUtils.getPath("123" + CONTEXT_SEPARATOR + "2"));
+        assertNull(ai.metaheuristic.commons.utils.ContextUtils.getPath(""));
+        assertNull(ai.metaheuristic.commons.utils.ContextUtils.getPath("123"));
+        assertEquals("1", ai.metaheuristic.commons.utils.ContextUtils.getPath("123" + CONTEXT_SEPARATOR + "1"));
+        assertEquals("2", ai.metaheuristic.commons.utils.ContextUtils.getPath("123" + CONTEXT_SEPARATOR + "2"));
     }
 
     @Test
@@ -85,7 +85,7 @@ public class TestContextUtils {
     }
 
     private static void check(Collection<String> collection) {
-        List<String> list = ContextUtils.sortSetAsTaskContextId(collection);
+        List<String> list = ai.metaheuristic.commons.utils.ContextUtils.sortSetAsTaskContextId(collection);
 
         assertEquals("1,2,3,4,5#1", list.get(0), list.toString());
         assertEquals("1,2,3,4", list.get(1), list.toString());
@@ -97,7 +97,7 @@ public class TestContextUtils {
     @Test
     public void testContextIdComparator_1() {
         List<String> set = List.of("1,4#1", "1", "1,2", "1,3");
-        List<String> list = ContextUtils.sortSetAsTaskContextId(set);
+        List<String> list = ai.metaheuristic.commons.utils.ContextUtils.sortSetAsTaskContextId(set);
 
         assertEquals("1,4#1", list.get(0), list.toString());
         assertEquals("1,3", list.get(1), list.toString());
@@ -109,7 +109,7 @@ public class TestContextUtils {
     @Test
     public void testContextIdComparator_2() {
         List<String> set = List.of("1,4#1", "1", "1,2#2", "1,2#1");
-        List<String> list = ContextUtils.sortSetAsTaskContextId(set);
+        List<String> list = ai.metaheuristic.commons.utils.ContextUtils.sortSetAsTaskContextId(set);
 
         assertEquals("1,4#1", list.get(0), list.toString());
         assertEquals("1,2#2", list.get(1), list.toString());
@@ -122,9 +122,9 @@ public class TestContextUtils {
 
     @Test
     public void test_buildTaskContextId() {
-        assertEquals("1#1", ContextUtils.buildTaskContextId("1", "1"));
-        assertEquals("1,2#3", ContextUtils.buildTaskContextId("1,2", "3"));
-        assertEquals("1,2,3#0", ContextUtils.buildTaskContextId("1,2,3", "0"));
+        assertEquals("1#1", ai.metaheuristic.commons.utils.ContextUtils.buildTaskContextId("1", "1"));
+        assertEquals("1,2#3", ai.metaheuristic.commons.utils.ContextUtils.buildTaskContextId("1,2", "3"));
+        assertEquals("1,2,3#0", ai.metaheuristic.commons.utils.ContextUtils.buildTaskContextId("1,2,3", "0"));
     }
 
     // === P0: getCurrTaskContextIdForSubProcesses tests ===
@@ -133,7 +133,7 @@ public class TestContextUtils {
     public void test_getCurrTaskContextIdForSubProcesses_withPath() {
         // currTaskContextId = "1,2#1", processContextId = "3"
         // path = "1" => result = "3|1"
-        String result = ContextUtils.getCurrTaskContextIdForSubProcesses("1,2#1", "3");
+        String result = ai.metaheuristic.commons.utils.ContextUtils.getCurrTaskContextIdForSubProcesses("1,2#1", "3");
         assertEquals("3|1", result);
     }
 
@@ -141,14 +141,14 @@ public class TestContextUtils {
     public void test_getCurrTaskContextIdForSubProcesses_withoutPath() {
         // currTaskContextId = "1", no CONTEXT_SEPARATOR => path = null
         // result = just processContextId
-        String result = ContextUtils.getCurrTaskContextIdForSubProcesses("1", "3");
+        String result = ai.metaheuristic.commons.utils.ContextUtils.getCurrTaskContextIdForSubProcesses("1", "3");
         assertEquals("3", result);
     }
 
     @Test
     public void test_getCurrTaskContextIdForSubProcesses_deepPath() {
         // currTaskContextId = "1,2,3#5", path = "5"
-        String result = ContextUtils.getCurrTaskContextIdForSubProcesses("1,2,3#5", "4");
+        String result = ai.metaheuristic.commons.utils.ContextUtils.getCurrTaskContextIdForSubProcesses("1,2,3#5", "4");
         assertEquals("4|5", result);
     }
 

@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.TaskData;
-import ai.metaheuristic.ai.dispatcher.el.ElEvaluator;
 import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
@@ -29,7 +28,6 @@ import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskSta
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionVariableService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
-import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
@@ -110,7 +108,7 @@ public class TaskProducingService {
         ExecContextTaskStateSyncService.checkWriteLockPresent(simpleExecContext.execContextTaskStateId);
 
         ExecContextParamsYaml execContextParamsYaml = executionContextData.execContextParamsYaml;
-        List<ExecContextData.ProcessVertex> subProcesses = executionContextData.subProcesses;
+        List<ExecContextApiData.ProcessVertex> subProcesses = executionContextData.subProcesses;
         if (subProcesses.isEmpty()) {
             log.info("375.040 There isn't any subProcess");
             return;
@@ -127,7 +125,7 @@ public class TaskProducingService {
         String subProcessContextId = executionContextData.subProcesses.get(0).processContextId;
 
         TaskImpl t = null;
-        for (ExecContextData.ProcessVertex subProcess : subProcesses) {
+        for (ExecContextApiData.ProcessVertex subProcess : subProcesses) {
             final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(subProcess.process);
             if (p==null) {
                 throw new BreakFromLambdaException("375.080 Process '" + subProcess.process + "' wasn't found");

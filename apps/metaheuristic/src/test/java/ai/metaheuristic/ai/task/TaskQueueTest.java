@@ -16,10 +16,10 @@
 
 package ai.metaheuristic.ai.task;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -44,7 +44,7 @@ public class TaskQueueTest {
         task.execContextId = execContextId;
         task.id = taskId;
         TaskParamsYaml taskParamYaml = new TaskParamsYaml();
-        taskParamYaml.task.taskContextId = Consts.TOP_LEVEL_CONTEXT_ID;
+        taskParamYaml.task.taskContextId = CommonConsts.TOP_LEVEL_CONTEXT_ID;
 
         final TaskQueue.QueuedTask queuedTask = new TaskQueue.QueuedTask(
                 EnumsApi.FunctionExecContext.external, execContextId, taskId, task, taskParamYaml, null, priority);

@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,13 +14,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.source_code;
+package ai.metaheuristic.commons.graph.source_code_graph;
 
-import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
-import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
-import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphLanguageMhsc;
-import ai.metaheuristic.ai.exceptions.SourceCodeGraphException;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
+import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.exceptions.SourceCodeGraphException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import org.apache.commons.io.IOUtils;
@@ -31,10 +29,9 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
-import static ai.metaheuristic.ai.dispatcher.data.SourceCodeData.SourceCodeGraph;
-import static ai.metaheuristic.ai.dispatcher.exec_context.ExecContextProcessGraphService.*;
+import ai.metaheuristic.api.data.SourceCodeGraph;
+import static ai.metaheuristic.commons.graph.ExecContextProcessGraphService.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -51,7 +48,7 @@ public class TestSourceCodeGraphLanguageMhsc {
 
         assertNotNull(mhscGraph);
         // Should have mh.finish auto-added
-        ExecContextData.ProcessVertex finishVertex = findVertex(mhscGraph.processGraph, Consts.MH_FINISH_FUNCTION);
+        ExecContextApiData.ProcessVertex finishVertex = findVertex(mhscGraph.processGraph, CommonConsts.MH_FINISH_FUNCTION);
         assertNotNull(finishVertex, "mh.finish should be auto-added");
         assertEquals(1, findLeafs(mhscGraph).size(), "Should have exactly 1 leaf (mh.finish). Graph:\n" + asString(mhscGraph.processGraph));
     }
@@ -368,17 +365,17 @@ public class TestSourceCodeGraphLanguageMhsc {
     public void test_factorial_recursion_sequential_chain() throws IOException {
         SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mh-factorial-recursion-1.17.mhsc");
         // mh.evaluation1 -> mh.multiply_1.2 -> mh.exec-source-code -> mh.evaluation2
-        ExecContextData.ProcessVertex eval1 = findVertex(graph.processGraph, "mh.evaluation1");
+        ExecContextApiData.ProcessVertex eval1 = findVertex(graph.processGraph, "mh.evaluation1");
         assertNotNull(eval1);
-        List<ExecContextData.ProcessVertex> afterEval1 = findTargets(graph.processGraph, eval1.process);
+        List<ExecContextApiData.ProcessVertex> afterEval1 = findTargets(graph.processGraph, eval1.process);
         assertEquals(1, afterEval1.size());
         assertEquals("mh.multiply_1.2", afterEval1.get(0).process);
 
-        List<ExecContextData.ProcessVertex> afterMultiply = findTargets(graph.processGraph, "mh.multiply_1.2");
+        List<ExecContextApiData.ProcessVertex> afterMultiply = findTargets(graph.processGraph, "mh.multiply_1.2");
         assertEquals(1, afterMultiply.size());
         assertEquals("mh.exec-source-code", afterMultiply.get(0).process);
 
-        List<ExecContextData.ProcessVertex> afterExec = findTargets(graph.processGraph, "mh.exec-source-code");
+        List<ExecContextApiData.ProcessVertex> afterExec = findTargets(graph.processGraph, "mh.exec-source-code");
         assertEquals(1, afterExec.size());
         assertEquals("mh.evaluation2", afterExec.get(0).process);
     }
@@ -491,9 +488,9 @@ public class TestSourceCodeGraphLanguageMhsc {
     @Test
     public void test_tr_image_two_sequential_subprocesses() throws IOException {
         SourceCodeGraph graph = parseMhsc("/source_code/mhsc/source-code-tr-image-1.0.10-timeout-3-min-411.mhsc");
-        ExecContextData.ProcessVertex trafaret = findVertex(graph.processGraph, "trafaret");
+        ExecContextApiData.ProcessVertex trafaret = findVertex(graph.processGraph, "trafaret");
         assertNotNull(trafaret);
-        List<ExecContextData.ProcessVertex> afterTrafaret = findTargets(graph.processGraph, "trafaret");
+        List<ExecContextApiData.ProcessVertex> afterTrafaret = findTargets(graph.processGraph, "trafaret");
         assertEquals(1, afterTrafaret.size());
         assertEquals("image-converter", afterTrafaret.get(0).process);
     }
