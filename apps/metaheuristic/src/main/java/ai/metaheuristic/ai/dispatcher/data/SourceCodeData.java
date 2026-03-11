@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.data;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -119,9 +120,19 @@ public class SourceCodeData {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AccessControl {
+        public String groups;
+    }
+
+    @Data
     public static class SourceCodeGraph {
         public String uid;
         public boolean clean = false;
+        public int instances;
+        public @Nullable AccessControl ac = null;
+
         public final List<ExecContextParamsYaml.Process> processes = new ArrayList<>();
 
         public final ExecContextParamsYaml.VariableDeclaration variables = new ExecContextParamsYaml.VariableDeclaration();

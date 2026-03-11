@@ -47,8 +47,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     @Test
     public void test_mhsc_short_parses_without_error() throws IOException {
         String mhscSource = IOUtils.resourceToString("/source_code/mhsc/mhdg-rg-flat-short-1.0.0.mhsc", StandardCharsets.UTF_8);
-        AtomicLong contextId = new AtomicLong();
-        SourceCodeGraph mhscGraph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhscSource, () -> "" + contextId.incrementAndGet());
+        SourceCodeGraph mhscGraph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhscSource);
 
         assertNotNull(mhscGraph);
         // Should have mh.finish auto-added
@@ -210,8 +209,7 @@ public class TestSourceCodeGraphLanguageMhsc {
                     timeout 10
                 }
             }""";
-        AtomicLong contextId = new AtomicLong();
-        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc, () -> "" + contextId.incrementAndGet());
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
         ExecContextParamsYaml.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("my-proc"))
                 .findFirst().orElseThrow();
@@ -227,8 +225,7 @@ public class TestSourceCodeGraphLanguageMhsc {
                         timeout 10
                     }
                 }""";
-        AtomicLong contextId = new AtomicLong();
-        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc, () -> "" + contextId.incrementAndGet());
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
         ExecContextParamsYaml.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("my-proc"))
                 .findFirst().orElseThrow();
@@ -243,8 +240,7 @@ public class TestSourceCodeGraphLanguageMhsc {
                         priority 0
                     }
                 }""";
-        AtomicLong contextId = new AtomicLong();
-        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc, () -> "" + contextId.incrementAndGet());
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
         ExecContextParamsYaml.Process p = graph.processes.stream()
                 .filter(proc -> proc.processCode.equals("my-proc"))
                 .findFirst().orElseThrow();
@@ -256,8 +252,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     @Test
     public void test_factorial_main_parses() throws IOException {
         String mhsc = IOUtils.resourceToString("/source_code/mhsc/mh-factorial-main-1.8.mhsc", StandardCharsets.UTF_8);
-        AtomicLong contextId = new AtomicLong();
-        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc, () -> "" + contextId.incrementAndGet());
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
         assertNotNull(graph);
         assertEquals(1, findLeafs(graph).size(), "Graph:\n" + asString(graph.processGraph));
     }
@@ -265,8 +260,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     @Test
     public void test_factorial_recursion_parses() throws IOException {
         String mhsc = IOUtils.resourceToString("/source_code/mhsc/mh-factorial-recursion-1.17.mhsc", StandardCharsets.UTF_8);
-        AtomicLong contextId = new AtomicLong();
-        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc, () -> "" + contextId.incrementAndGet());
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
         assertNotNull(graph);
         assertEquals(1, findLeafs(graph).size(), "Graph:\n" + asString(graph.processGraph));
     }
@@ -754,23 +748,20 @@ public class TestSourceCodeGraphLanguageMhsc {
     @Test
     public void test_mhsc_blank_uid_throws() {
         String mhsc = "source \"\" (strict) { mh.nop := internal mh.nop {} }";
-        AtomicLong contextId = new AtomicLong();
         assertThrows(SourceCodeGraphException.class,
-                () -> SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc, () -> "" + contextId.incrementAndGet()),
+                () -> SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc),
                 "Blank uid should throw SourceCodeGraphException");
     }
 
     // ============ Helpers ============
 
-    private SourceCodeGraph parseYaml(String resourcePath) throws IOException {
+    private static SourceCodeGraph parseYaml(String resourcePath) throws IOException {
         String source = IOUtils.resourceToString(resourcePath, StandardCharsets.UTF_8);
-        AtomicLong contextId = new AtomicLong();
-        return SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, source, () -> "" + contextId.incrementAndGet());
+        return SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, source);
     }
 
-    private SourceCodeGraph parseMhsc(String resourcePath) throws IOException {
+    private static SourceCodeGraph parseMhsc(String resourcePath) throws IOException {
         String source = IOUtils.resourceToString(resourcePath, StandardCharsets.UTF_8);
-        AtomicLong contextId = new AtomicLong();
-        return SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, source, () -> "" + contextId.incrementAndGet());
+        return SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, source);
     }
 }

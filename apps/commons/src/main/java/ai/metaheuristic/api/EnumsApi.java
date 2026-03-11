@@ -231,7 +231,8 @@ public class EnumsApi {
         CACHING_ISNT_SUPPORTED_FOR_INTERNAL_FUNCTION_ERROR,
         SUB_PROCESS_LOGIC_NOT_DEFINED,
         META_NOT_FOUND_ERROR,
-        STRICT_NAMING_REQUIRED_ERROR
+        STRICT_NAMING_REQUIRED_ERROR,
+        GENERAL_ERROR
     }
 
     public enum TaskProducingStatus {

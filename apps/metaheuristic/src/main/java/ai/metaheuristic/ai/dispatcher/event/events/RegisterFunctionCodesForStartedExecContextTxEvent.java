@@ -24,8 +24,8 @@ import org.jspecify.annotations.Nullable;
  * Date: 11/16/2023
  * Time: 11:12 PM
  */
-public record RegisterFunctionCodesForStartedExecContextTxEvent(@Nullable SourceCodeParamsYaml sc, @Nullable Long execContextId) {
+public record RegisterFunctionCodesForStartedExecContextTxEvent(@Nullable Long execContextId) {
     public RegisterFunctionCodesForStartedExecContextEvent to() {
-        return new RegisterFunctionCodesForStartedExecContextEvent(sc, execContextId);
+        return new RegisterFunctionCodesForStartedExecContextEvent(execContextId);
     }
 }

@@ -19,13 +19,16 @@ package ai.metaheuristic.ai.dispatcher.dispatcher_params;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Dispatcher;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.events.DispatcherCacheCheckingEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.DispatcherParamsRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYaml;
 import ai.metaheuristic.ai.yaml.dispatcher.DispatcherParamsYamlUtils;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
@@ -122,31 +125,38 @@ public class DispatcherParamsService {
     @Transactional
     public void registerSourceCode(SourceCodeImpl sourceCode) {
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
-        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+//        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
 
-        registerSpecific(sourceCode, scpy, Consts.MH_EXPERIMENT_RESULT_PROCESSOR, this::registerExperiment);
-        registerSpecific(sourceCode, scpy, Consts.MH_BATCH_RESULT_PROCESSOR_FUNCTION, this::registerBatch);
+        SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
+
+
+        registerSpecific(sourceCode, sourceCodeGraph, Consts.MH_EXPERIMENT_RESULT_PROCESSOR, this::registerExperiment);
+        registerSpecific(sourceCode, sourceCodeGraph, Consts.MH_BATCH_RESULT_PROCESSOR_FUNCTION, this::registerBatch);
     }
 
-    private static void registerSpecific(SourceCodeImpl sourceCode, SourceCodeParamsYaml scpy, String functionCode, Consumer<String> consumer) {
-        SourceCodeParamsYaml.Process p = findProcessForFunction(scpy, functionCode);
+    private static void registerSpecific(SourceCodeImpl sourceCode, SourceCodeData.SourceCodeGraph scg, String functionCode, Consumer<String> consumer) {
+        ExecContextParamsYaml.Process p = findProcessForFunction(scg, functionCode);
         if (p==null) {
             return;
         }
         consumer.accept(sourceCode.uid);
     }
 
-    private static SourceCodeParamsYaml.@Nullable Process findProcessForFunction(SourceCodeParamsYaml scpy, String functionCode) {
-        for (SourceCodeParamsYaml.Process process : scpy.source.processes) {
-            SourceCodeParamsYaml.Process result = findProcessForFunction(process, functionCode);
-            if (result!=null) {
-                return result;
+    private static ExecContextParamsYaml.@Nullable Process findProcessForFunction(SourceCodeData.SourceCodeGraph scg, String functionCode) {
+        for (ExecContextParamsYaml.Process process : scg.processes) {
+            if (process.function.code.equals(functionCode)) {
+                return process;
             }
+//            ExecContextParamsYaml.Process result = findProcessForFunction(process, functionCode);
+//            if (result!=null) {
+//                return result;
+//            }
         }
         return null;
     }
 
-    private static SourceCodeParamsYaml.@Nullable Process findProcessForFunction(SourceCodeParamsYaml.Process process, String functionCode) {
+/*
+    private static ExecContextParamsYaml.@Nullable Process findProcessForFunction(ExecContextParamsYaml.Process process, String functionCode) {
         if (process.function.code.equals(functionCode)) {
             return process;
         }
@@ -160,6 +170,7 @@ public class DispatcherParamsService {
         }
         return null;
     }
+*/
 
     private void registerExperiment(String uid) {
         updateParams((dpy) -> {

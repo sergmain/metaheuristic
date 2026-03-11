@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
@@ -148,9 +149,11 @@ public class SourceCodeSelectorService {
                             return false;
                         }
                         SourceCodeStoredParamsYaml scspy = sc.getSourceCodeStoredParamsYaml();
+                        SourceCodeData.SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
                         SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
-                        if (ppy.source.ac!=null) {
-                            String[] arr = StringUtils.split(ppy.source.ac.groups, ',');
+
+                        if (scg.ac!=null) {
+                            String[] arr = StringUtils.split(scg.ac.groups, ',');
                             return Stream.of(arr).map(String::strip).anyMatch(groups::contains);
                         }
                         return false;

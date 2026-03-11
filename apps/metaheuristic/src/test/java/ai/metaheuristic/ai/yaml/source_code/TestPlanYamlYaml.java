@@ -69,6 +69,11 @@ public class TestPlanYamlYaml {
         // (source != null && !S.b(source.uid) && source.processes != null)
         String s = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(sourceCodeParamsYaml);
 
+
+        assertTrue(s.contains(sourceCodeYaml.uid));
+        assertTrue(s.contains("experiment"));
+        assertTrue(s.contains("func-code"));
+
         System.out.println(s);
     }
 }

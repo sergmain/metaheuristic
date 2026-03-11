@@ -18,8 +18,10 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
+import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
 import ai.metaheuristic.api.dispatcher.InternalFunction;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
@@ -102,10 +104,22 @@ public class SourceCodeValidationService {
         final Function<SourceCodeParamsYaml.Process, SourceCodeApiData.SourceCodeValidationResult> checkFunctionsFunc = (p) -> checkFunctions(sourceCode, p, checkedUids);
 
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
-        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
-        SourceCodeApiData.SourceCodeValidationResult anyErrors = SourceCodeValidationUtils.validateSourceCodeParamsYaml(checkFunctionsFunc, sourceCodeParamsYaml);
-        if (anyErrors!=null) {
-            return anyErrors;
+        if (scspy.lang== EnumsApi.SourceCodeLang.yaml) {
+            SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+            SourceCodeApiData.SourceCodeValidationResult anyErrors = SourceCodeValidationUtils.validateSourceCodeParamsYaml(checkFunctionsFunc, sourceCodeParamsYaml);
+            if (anyErrors != null) {
+                return anyErrors;
+            }
+        }
+        else {
+            try {
+                SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
+            }
+            catch(Throwable th) {
+                return new SourceCodeApiData.SourceCodeValidationResult(
+                    EnumsApi.SourceCodeValidateStatus.GENERAL_ERROR, "178.065 error while parsing SourceCode in MHSG format");
+
+            }
         }
         return ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
     }
@@ -212,9 +226,10 @@ public class SourceCodeValidationService {
                         );
                     }
                     SourceCodeStoredParamsYaml scspy = sc.getSourceCodeStoredParamsYaml();
-                    SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+//                    SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+                    SourceCodeData.SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
 
-                    int inputNumber = ppy.source.variables==null ? 0 : ppy.source.variables.inputs.size();
+                    int inputNumber = scg.variables.inputs.size();
                     if (process.inputs.size()!=inputNumber) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.INPUT_VARIABLES_COUNT_MISMATCH_ERROR,
@@ -222,7 +237,7 @@ public class SourceCodeValidationService {
                                         sourceCode.uid, process.inputs.size(), sc.uid, inputNumber)
                         );
                     }
-                    int outputNumber = ppy.source.variables==null ? 0 : ppy.source.variables.outputs.size();
+                    int outputNumber = scg.variables.outputs.size();
                     if (process.outputs.size()!=outputNumber) {
                         return new SourceCodeApiData.SourceCodeValidationResult(
                                 EnumsApi.SourceCodeValidateStatus.OUTPUT_VARIABLES_COUNT_MISMATCH_ERROR,

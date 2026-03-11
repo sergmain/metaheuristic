@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegiste
 import ai.metaheuristic.ai.dispatcher.internal_functions.aggregate.AggregateFunction;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeTxService;
+import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.mhbp.api.ApiService;
 import ai.metaheuristic.ai.mhbp.api.ApiUtils;
 import ai.metaheuristic.ai.mhbp.beans.Api;
@@ -342,7 +343,7 @@ public class ScenarioService {
         if (sc==null) {
             SourceCodeParamsYaml scpy = ScenarioUtils.to(uid, s.getScenarioParams(), this::apiSchemeResolver);
             String yaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(scpy);
-            SourceCodeApiData.SourceCodeResult result = sourceCodeTxService.createSourceCode(yaml, scpy, EnumsApi.SourceCodeLang.yaml, context.getCompanyId());
+            SourceCodeApiData.SourceCodeResult result = sourceCodeTxService.createSourceCode(yaml, uid, EnumsApi.SourceCodeLang.yaml, context.getCompanyId());
             if (!result.isValid()) {
                 final String es = S.f("373.760 validation: %s, %s", result.validationResult.status, result.validationResult.error);
                 log.error(es);

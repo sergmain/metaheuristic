@@ -142,8 +142,9 @@ public class ExecContextCreatorService {
         }
 
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
-        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
-        if (scpy.source.variables!=null && !scpy.source.variables.inputs.isEmpty()) {
+        SourceCodeData.SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
+//        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+        if (!scg.variables.inputs.isEmpty()) {
             throw new IllegalStateException("562.120 Tasks can't be created with execContext because SourceCode has input variable(s). Task must be created after initializing SourceCode input variables.");
         }
 
@@ -204,23 +205,20 @@ public class ExecContextCreatorService {
         }
 
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
-        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+        SourceCodeData.SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
 
-        if (scpy.source.instances!=null && scpy.source.instances>0) {
-            int count = execContextRepository.countInProgress(scpy.source.uid);
-            if (count>=scpy.source.instances) {
-                throw new ExecContextTooManyInstancesException(sourceCode.uid, scpy.source.instances, count);
+        if (scg.instances>0) {
+            int count = execContextRepository.countInProgress(scg.uid);
+            if (count>=scg.instances) {
+                throw new ExecContextTooManyInstancesException(sourceCode.uid, scg.instances, count);
             }
         }
-        AtomicLong contextId = new AtomicLong();
-        SourceCodeData.SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(
-            scspy.lang, scspy.source, () -> String.valueOf(contextId.incrementAndGet()));
 
-        if (ExecContextProcessGraphService.anyError(sourceCodeGraph)) {
+        if (ExecContextProcessGraphService.anyError(scg)) {
             throw new CommonRollbackException("562.180 processGraph is broken", ERROR);
         }
 
-        ExecContextImpl execContext = createExecContext(sourceCode, context, sourceCodeGraph, rootAndParent);
+        ExecContextImpl execContext = createExecContext(sourceCode, context, scg, rootAndParent);
         ExecContextCreationResult ecr = new ExecContextCreationResult();
         ecr.execContext = execContext;
         return ecr;

@@ -18,7 +18,11 @@ package ai.metaheuristic.ai.dispatcher.source_code.graph;
 
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.api.EnumsApi;
+import lombok.EqualsAndHashCode;
 
+import java.util.LinkedHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
 
 /**
@@ -31,11 +35,39 @@ public class SourceCodeGraphFactory {
     private final static SourceCodeGraphLanguageYaml YAML_LANG = new SourceCodeGraphLanguageYaml();
     private final static SourceCodeGraphLanguageMhsc MHSC_LANG = new SourceCodeGraphLanguageMhsc();
 
-    public static SourceCodeData.SourceCodeGraph parse(EnumsApi.SourceCodeLang lang, String sourceCode, Supplier<String> contextIdSupplier) {
-        return switch (lang) {
-            case yaml -> YAML_LANG.parse(sourceCode, contextIdSupplier);
-            case mhsc -> MHSC_LANG.parse(sourceCode, contextIdSupplier);
-            default -> throw new IllegalStateException("Unknown language dialect: " + lang);
-        };
+    private record SourceCodeKey(EnumsApi.SourceCodeLang lang, String sourceCode) {}
+
+    private final static LinkedHashMap<SourceCodeKey, SourceCodeData.SourceCodeGraph> CACHE = new LinkedHashMap<>();
+
+    private final static ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final static ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
+    private final static ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
+
+    public static SourceCodeData.SourceCodeGraph parse(EnumsApi.SourceCodeLang lang, String sourceCode) {
+        SourceCodeKey key = new SourceCodeKey(lang, sourceCode);
+        try {
+            readLock.lock();
+            SourceCodeData.SourceCodeGraph graph = CACHE.get(key);
+            if (graph!=null) {
+                return graph;
+            }
+        } finally {
+            readLock.unlock();
+        }
+
+        try {
+            writeLock.lock();
+            AtomicLong contextId = new AtomicLong();
+            Supplier<String> contextIdSupplier = () -> String.valueOf(contextId.incrementAndGet());
+            SourceCodeData.SourceCodeGraph graph = switch (lang) {
+                case yaml -> YAML_LANG.parse(sourceCode, contextIdSupplier);
+                case mhsc -> MHSC_LANG.parse(sourceCode, contextIdSupplier);
+                default -> throw new IllegalStateException("Unknown language dialect: " + lang);
+            };
+            CACHE.put(key, graph);
+            return graph;
+        } finally {
+            writeLock.unlock();
+        }
     }
 }

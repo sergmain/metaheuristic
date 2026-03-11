@@ -90,7 +90,8 @@ public class ExecContextFSM {
     @Transactional
     public OperationStatusRest changeExecContextStateWithTx(EnumsApi.ExecContextState execState, Long execContextId, Long companyUniqueId) {
         if (execState== EnumsApi.ExecContextState.STARTED) {
-            eventPublisherService.publishRegisterFunctionCodesForStartedExecContextTxEvent(new RegisterFunctionCodesForStartedExecContextTxEvent(null, execContextId));
+            eventPublisherService.publishRegisterFunctionCodesForStartedExecContextTxEvent(
+                new RegisterFunctionCodesForStartedExecContextTxEvent(execContextId));
         }
         return changeExecContextState(execState, execContextId, companyUniqueId);
     }

@@ -140,8 +140,8 @@ public abstract class PreparingSourceCode extends PreparingCore {
         assertTrue(globals.testing);
         assertNotSame(globals.dispatcher.asset.mode, EnumsApi.DispatcherAssetMode.replicated);
 
-        String params = getSourceCodeYamlAsString();
-        preparingSourceCodeData = preparingSourceCodeInitService.beforePreparingSourceCode(params);
+        String yamlAsString = getSourceCodeYamlAsString();
+        preparingSourceCodeData = preparingSourceCodeInitService.beforePreparingSourceCode(yamlAsString);
     }
 
     @AfterEach

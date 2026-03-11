@@ -24,10 +24,10 @@ import org.jspecify.annotations.Nullable;
  * Date: 11/16/2023
  * Time: 11:13 PM
  */
-public record RegisterFunctionCodesForStartedExecContextEvent(@Nullable SourceCodeParamsYaml sc, @Nullable Long execContextId) {
+public record RegisterFunctionCodesForStartedExecContextEvent(@Nullable Long execContextId) {
     public RegisterFunctionCodesForStartedExecContextEvent {
-        if (sc == null && execContextId == null) {
-            throw new IllegalStateException("(sc==null && execContextId==null)");
+        if (execContextId == null) {
+            throw new IllegalStateException("execContextId==null)");
         }
     }
 }

@@ -91,13 +91,13 @@ public class PreparingSourceCodeInitService {
     static Random r = new Random();
 
     @SneakyThrows
-    public PreparingData.PreparingSourceCodeData beforePreparingSourceCode(String params) {
+    public PreparingData.PreparingSourceCodeData beforePreparingSourceCode(String yamlAsString) {
         assertTrue(globals.testing);
         assertNotSame(globals.dispatcher.asset.mode, EnumsApi.DispatcherAssetMode.replicated);
 
         PreparingData.PreparingSourceCodeData data = new PreparingData.PreparingSourceCodeData();
 
-        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(params);
+        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(yamlAsString);
         sourceCodeParamsYaml.checkIntegrity();
 
         preparingSourceCodeService.cleanUp(sourceCodeParamsYaml.source.uid);
@@ -136,7 +136,7 @@ public class PreparingSourceCodeInitService {
         data.f4 = createFunction("function-04:1.1");
         data.f5 = createFunction("function-05:1.1");
 
-        SourceCodeApiData.SourceCodeResult scr = sourceCodeService.createSourceCode(params, EnumsApi.SourceCodeLang.yaml, data.company.uniqueId);
+        SourceCodeApiData.SourceCodeResult scr = sourceCodeService.createSourceCode(yamlAsString, EnumsApi.SourceCodeLang.yaml, data.company.uniqueId);
         data.sourceCode = Objects.requireNonNull(sourceCodeCache.findById(scr.id));
 
         byte[] bytes = "A resource for input pool".getBytes();

@@ -18,16 +18,19 @@ package ai.metaheuristic.ai.functions;
 
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.event.events.RegisterFunctionCodesForStartedExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParams;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryRequestParamsUtils;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParams;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParamsUtils;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
@@ -249,55 +252,42 @@ public class FunctionRepositoryDispatcherService {
     @Async
     @EventListener
     public void registerFunctionCodesForStartedExecContext(RegisterFunctionCodesForStartedExecContextEvent event) {
-        final SourceCodeParamsYaml params;
-        if (event.sc()!=null) {
-            params = event.sc();
+        final SourceCodeImpl sc = sourceCodeRepository.findByIdExecContextId(event.execContextId());
+        if (sc==null) {
+            return;
         }
-        else {
-            final SourceCodeImpl sc = sourceCodeRepository.findByIdExecContextId(event.execContextId());
-            if (sc==null) {
-                return;
-            }
-            SourceCodeStoredParamsYaml scspy = sc.getSourceCodeStoredParamsYaml();
-            params = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
-        }
-        Set<String> funcCodes = collectFunctionCodes(params);
+        SourceCodeStoredParamsYaml scspy = sc.getSourceCodeStoredParamsYaml();
+        SourceCodeData.SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
+//        final SourceCodeParamsYaml params = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
+        Set<String> funcCodes = collectFunctionCodes(scg);
         registerCodes(funcCodes, false);
     }
 
-    private static Set<String> collectFunctionCodes(SourceCodeParamsYaml sc) {
+    private static Set<String> collectFunctionCodes(SourceCodeData.SourceCodeGraph scg) {
         Set<String> codes = new HashSet<>();
-        if (sc.source.processes!=null) {
-            for (SourceCodeParamsYaml.Process process : sc.source.processes) {
-                collectFunctionCodesForProcess(codes, process);
-            }
+        for (ExecContextParamsYaml.Process process : scg.processes) {
+            collectFunctionCodesForProcess(codes, process);
         }
         return codes;
     }
 
     @SuppressWarnings("ConstantValue")
-    public static void collectFunctionCodesForProcess(Set<String> codes, SourceCodeParamsYaml.Process process) {
+    public static void collectFunctionCodesForProcess(Set<String> codes, ExecContextParamsYaml.Process process) {
         if (process.function !=null && process.function.context==EnumsApi.FunctionExecContext.external) {
             codes.add(process.function.code);
         }
         if (process.preFunctions !=null) {
-            for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.preFunctions) {
+            for (ExecContextParamsYaml.FunctionDefinition snDef : process.preFunctions) {
                 if (snDef.context==EnumsApi.FunctionExecContext.external) {
                     codes.add(snDef.code);
                 }
             }
         }
         if (process.postFunctions !=null) {
-            for (SourceCodeParamsYaml.FunctionDefForSourceCode snDef : process.postFunctions) {
+            for (ExecContextParamsYaml.FunctionDefinition snDef : process.postFunctions) {
                 if (snDef.context==EnumsApi.FunctionExecContext.external) {
                     codes.add(snDef.code);
                 }
-            }
-        }
-
-        if (process.subProcesses!=null && process.subProcesses.processes!=null) {
-            for (SourceCodeParamsYaml.Process subProcess : process.subProcesses.processes) {
-                collectFunctionCodesForProcess(codes, subProcess);
             }
         }
     }
@@ -315,8 +305,8 @@ public class FunctionRepositoryDispatcherService {
                 continue;
             }
             var scspy = sc.getSourceCodeStoredParamsYaml();
-            SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
-            funcCodes.addAll(collectFunctionCodes(scpy));
+            SourceCodeData.SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
+            funcCodes.addAll(collectFunctionCodes(scg));
         }
         registerCodes(funcCodes, true);
     }

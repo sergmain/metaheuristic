@@ -19,7 +19,9 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.dispatcher.source_code.graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.utils.ArtifactUtils;
 import ai.metaheuristic.ai.utils.EnvServiceUtils;
@@ -37,7 +39,6 @@ import ai.metaheuristic.commons.exceptions.WrongVersionOfParamsException;
 import ai.metaheuristic.commons.utils.ErrorUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYaml;
-import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
@@ -84,9 +85,9 @@ public class SourceCodeService {
                 return new SourceCodeApiData.SourceCodeResult("560.060 sourceCode yaml is empty");
             }
 
-            SourceCodeParamsYaml ppy;
+            SourceCodeData.SourceCodeGraph sourceCodeGraph;
             try {
-                ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeAsStr);
+                sourceCodeGraph = SourceCodeGraphFactory.parse(lang, sourceCodeAsStr);
             }
             catch (WrongVersionOfParamsException e) {
                 String es = "560.090 An error parsing yaml: " + e.getMessage();
@@ -98,13 +99,13 @@ public class SourceCodeService {
                 return new SourceCodeApiData.SourceCodeResult(es);
             }
 
-            final SourceCodeApiData.SourceCodeResult sourceCodeResult = checkSourceCodeExist(ppy);
+            final SourceCodeApiData.SourceCodeResult sourceCodeResult = checkSourceCodeExist(sourceCodeGraph.uid);
             if (sourceCodeResult != null) {
                 return sourceCodeResult;
             }
 
             try {
-                return sourceCodeTxService.createSourceCode(sourceCodeAsStr, ppy, lang, companyUniqueId);
+                return sourceCodeTxService.createSourceCode(sourceCodeAsStr, sourceCodeGraph.uid, lang, companyUniqueId);
             } catch (DataIntegrityViolationException e) {
                 final String error = ErrorUtils.getAllMessages(e, 1);
                 final String es = "560.150 data integrity error: " + error;
@@ -131,15 +132,14 @@ public class SourceCodeService {
         return new SourceCodeApiData.SourceCodeResult(sourceCode, storedParams.lang, storedParams.source, globals.dispatcher.asset.mode);
     }
 
-    private SourceCodeApiData.@Nullable SourceCodeResult checkSourceCodeExist(SourceCodeParamsYaml ppy) {
-        final String code = ppy.source.uid;
-        if (StringUtils.isBlank(code)) {
-            return new SourceCodeApiData.SourceCodeResult("560.270 the code of sourceCode is empty");
+    private SourceCodeApiData.@Nullable SourceCodeResult checkSourceCodeExist(final String uid) {
+        if (StringUtils.isBlank(uid)) {
+            return new SourceCodeApiData.SourceCodeResult("560.270 the uid of sourceCode is empty");
         }
-        SourceCode f = sourceCodeRepository.findByUid(code);
+        SourceCode f = sourceCodeRepository.findByUid(uid);
         if (f!=null) {
             final SourceCodeApiData.SourceCodeResult result = new SourceCodeApiData.SourceCodeResult();
-            result.addInfoMessage("560.300 the sourceCode with code " + code + " already exists");
+            result.addInfoMessage("560.300 the sourceCode with uid " + uid + " already exists");
             return result;
         }
         return null;
@@ -168,24 +168,26 @@ public class SourceCodeService {
         }
 
         try {
-            String sourceCodeYamlAsStr;
+            String sourceCodeAsStr;
             try (InputStream is = file.getInputStream()) {
-                sourceCodeYamlAsStr = StreamUtils.copyToString(is, StandardCharsets.UTF_8);
+                sourceCodeAsStr = StreamUtils.copyToString(is, StandardCharsets.UTF_8);
             }
-            SourceCodeParamsYaml ppy;
+            SourceCodeData.SourceCodeGraph sourceCodeGraph;
             try {
-                ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeYamlAsStr);
-            } catch (WrongVersionOfParamsException e) {
+                sourceCodeGraph = SourceCodeGraphFactory.parse(lang, sourceCodeAsStr);
+            }
+            catch (WrongVersionOfParamsException e) {
                 String es = "560.450 An error parsing yaml: " + e.getMessage();
                 log.error(es, e);
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
             }
-            final SourceCodeApiData.SourceCodeResult sourceCodeResult = checkSourceCodeExist(ppy);
+            final SourceCodeApiData.SourceCodeResult sourceCodeResult = checkSourceCodeExist(sourceCodeGraph.uid);
             if (sourceCodeResult != null) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, sourceCodeResult.getErrorMessagesAsList(), sourceCodeResult.getInfoMessagesAsList());
             }
 
-            SourceCodeApiData.SourceCodeResult result = sourceCodeTxService.createSourceCode(sourceCodeYamlAsStr, ppy, lang, context.getCompanyId());
+            SourceCodeApiData.SourceCodeResult result = sourceCodeTxService.createSourceCode(
+                sourceCodeAsStr, sourceCodeGraph.uid, lang, context.getCompanyId());
 
             if (result.isErrorMessages()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.getErrorMessagesAsList(), result.getInfoMessagesAsList());

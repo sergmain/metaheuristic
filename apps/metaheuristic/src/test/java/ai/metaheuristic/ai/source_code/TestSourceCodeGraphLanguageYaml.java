@@ -47,8 +47,7 @@ public class TestSourceCodeGraphLanguageYaml {
     @Test
     public void test_01() throws IOException {
         String sourceCode = IOUtils.resourceToString("/source_code/yaml/source-code-for-preprocessing-and-classification-v1.yaml", StandardCharsets.UTF_8);
-        AtomicLong contextId = new AtomicLong();
-        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode, () -> "" + contextId.incrementAndGet());
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode);
 
         assertNotNull(graph);
         assertTrue(graph.clean);
@@ -95,15 +94,13 @@ public class TestSourceCodeGraphLanguageYaml {
     @Test
     public void test_02_empty_graph_v1() throws IOException {
         String sourceCode = IOUtils.resourceToString("/source_code/yaml/for_testing_graph/empty-graph-v1.yaml", StandardCharsets.UTF_8);
-        AtomicLong contextId = new AtomicLong();
-        assertThrows(SourceCodeGraphException.class, ()-> SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode, () -> "" + contextId.incrementAndGet()));
+        assertThrows(SourceCodeGraphException.class, ()-> SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode));
     }
 
     @Test
     public void test_03_one_process() throws IOException {
         String sourceCode = IOUtils.resourceToString("/source_code/yaml/for_testing_graph/one-process-graph-v2.yaml", StandardCharsets.UTF_8);
-        AtomicLong contextId = new AtomicLong();
-        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode, () -> "" + contextId.incrementAndGet());
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode);
 
         assertNotNull(graph);
         // check for mh.finish
@@ -125,8 +122,7 @@ public class TestSourceCodeGraphLanguageYaml {
     @Test
     public void test_04_sub_processes_logic_and() throws IOException {
         String sourceCode = IOUtils.resourceToString("/source_code/yaml/for_testing_graph/sub-process-logic-and.yaml", StandardCharsets.UTF_8);
-        AtomicLong contextId = new AtomicLong();
-        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode, () -> "" + contextId.incrementAndGet());
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode);
 
         assertNotNull(graph);
         // check for mh.finish
@@ -154,8 +150,7 @@ public class TestSourceCodeGraphLanguageYaml {
     @Test
     public void test_05_sub_processes_logic_sequence() throws IOException {
         String sourceCode = IOUtils.resourceToString("/source_code/yaml/for_testing_graph/sub-process-logic-sequence.yaml", StandardCharsets.UTF_8);
-        AtomicLong contextId = new AtomicLong();
-        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode, () -> "" + contextId.incrementAndGet());
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode);
 
         assertNotNull(graph);
         // check for mh.finish
@@ -182,8 +177,7 @@ public class TestSourceCodeGraphLanguageYaml {
     @Test
     public void test_06_sub_processes_two_levels_logic_sequence() throws IOException {
         String sourceCode = IOUtils.resourceToString("/source_code/yaml/for_testing_graph/sub-process-two-levels-logic-sequence.yaml", StandardCharsets.UTF_8);
-        AtomicLong contextId = new AtomicLong();
-        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode, () -> "" + contextId.incrementAndGet());
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, sourceCode);
 
         assertNotNull(graph);
         // check for mh.finish

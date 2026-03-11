@@ -202,7 +202,7 @@ public class SourceCodeTxService {
     }
 
     @Transactional
-    public SourceCodeApiData.SourceCodeResult createSourceCode(String sourceCodeYamlAsStr, SourceCodeParamsYaml ppy, EnumsApi.SourceCodeLang lang, Long companyUniqueId) {
+    public SourceCodeApiData.SourceCodeResult createSourceCode(String sourceCodeYamlAsStr, String uid, EnumsApi.SourceCodeLang lang, Long companyUniqueId) {
 
         SourceCodeImpl sourceCode = new SourceCodeImpl();
         SourceCodeStoredParamsYaml scspy = new SourceCodeStoredParamsYaml();
@@ -213,7 +213,7 @@ public class SourceCodeTxService {
 
         sourceCode.companyId = companyUniqueId;
         sourceCode.createdOn = System.currentTimeMillis();
-        sourceCode.uid = ppy.source.uid;
+        sourceCode.uid = uid;
         sourceCode = sourceCodeCache.save(sourceCode);
 
         SourceCodeApiData.SourceCodeValidation sourceCodeValidation = sourceCodeValidationService.validate(sourceCode);
