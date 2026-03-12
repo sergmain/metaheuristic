@@ -17,10 +17,17 @@
 package ai.metaheuristic.ai.variable;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ch.qos.logback.classic.LoggerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
@@ -34,10 +41,12 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -52,12 +61,12 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 @Slf4j
+@Transactional
 public class TestFindVariableInAllInternalContexts {
 
-    private static final Long EXEC_CONTEXT_ID = 99999L;
     private static final AtomicInteger counter = new AtomicInteger(0);
 
     @org.junit.jupiter.api.io.TempDir
@@ -83,6 +92,10 @@ public class TestFindVariableInAllInternalContexts {
     }
 
     @Autowired private VariableTxService variableTxService;
+    @Autowired private VariableRepository variableRepository;
+    @Autowired private ExecContextRepository execContextRepository;
+    @Autowired private ExecContextVariableStateRepository execContextVariableStateRepository;
+    @Autowired private ExecContextCache execContextCache;
     @Autowired private TxSupportForTestingService txSupportForTestingService;
 
     private String currentVarName;
@@ -92,15 +105,56 @@ public class TestFindVariableInAllInternalContexts {
         currentVarName = "test-var-find-" + counter.incrementAndGet();
     }
 
-    @AfterEach
-    public void after() {
-        txSupportForTestingService.deleteVariableByName(currentVarName);
-    }
-
-    private Variable createVariable(String taskContextId) {
+    /**
+     * Creates a Variable in DB and returns it.
+     */
+    private Variable createVariable(String taskContextId, Long execContextId) {
         byte[] data = "ACTIVE".getBytes(StandardCharsets.UTF_8);
         ByteArrayInputStream is = new ByteArrayInputStream(data);
-        return variableTxService.createInitializedTx(is, data.length, currentVarName, null, EXEC_CONTEXT_ID, taskContextId, EnumsApi.VariableType.text);
+        return variableTxService.createInitializedTx(is, data.length, currentVarName, null, execContextId, taskContextId, EnumsApi.VariableType.text);
+    }
+
+    /**
+     * Creates an ExecContextVariableState with VariableState entries, then creates
+     * an ExecContext pointing to it. Returns the execContextId.
+     */
+    private Long setupExecContext(List<ExecContextApiData.VariableState> variableStates) {
+        // Create and save ExecContextVariableState
+        ExecContextVariableState ecvs = new ExecContextVariableState();
+        ecvs.createdOn = System.currentTimeMillis();
+        ExecContextApiData.ExecContextVariableStates info = new ExecContextApiData.ExecContextVariableStates();
+        info.states.addAll(variableStates);
+        ecvs.updateParams(info);
+        ecvs = execContextVariableStateRepository.save(ecvs);
+
+        // Create and save ExecContext
+        ExecContextImpl ec = new ExecContextImpl();
+        ec.sourceCodeId = 1L;
+        ec.companyId = 1L;
+        ec.accountId = 1L;
+        ec.createdOn = System.currentTimeMillis();
+        ec.state = EnumsApi.ExecContextState.STARTED.code;
+        ec.execContextVariableStateId = ecvs.id;
+        ec.execContextGraphId = 0L;
+        ec.execContextTaskStateId = 0L;
+        ec.setParams("version: 1\nprocesses: []\nvariables:\n  inline: {}\n  inputs: []\n  outputs: []\n");
+        ec = execContextCache.save(ec);
+
+        // Update the ecvs to link back
+        ecvs.execContextId = ec.id;
+        execContextVariableStateRepository.save(ecvs);
+
+        return ec.id;
+    }
+
+    /**
+     * Helper to create a VariableState entry with the variable as an output.
+     */
+    private ExecContextApiData.VariableState makeVariableState(String taskContextId, Long variableId, String variableName) {
+        ExecContextApiData.VariableInfo vi = new ExecContextApiData.VariableInfo(variableId, variableName, EnumsApi.VariableContext.local, ".txt");
+        return new ExecContextApiData.VariableState(
+                1L, 0L, 0L, taskContextId, "test-process", "test-function",
+                null, List.of(vi));
     }
 
     /**
@@ -109,10 +163,18 @@ public class TestFindVariableInAllInternalContexts {
      */
     @Test
     public void test_findVariable_atParentContext_simple() {
-        Variable created = createVariable("1,2");
-        assertNotNull(created);
+        Long execContextId = setupExecContext(List.of());
+        Variable created = createVariable("1,2", execContextId);
 
-        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", EXEC_CONTEXT_ID);
+        // Update ExecContextVariableState with the variable info
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
+        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        info.states.add(makeVariableState("1,2", created.id, currentVarName));
+        ecvs.updateParams(info);
+        execContextVariableStateRepository.save(ecvs);
+
+        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", execContextId);
         assertNotNull(found, "Variable at '1,2' should be found when searching from '1,2,5'");
         assertEquals(created.id, found.id);
     }
@@ -123,10 +185,17 @@ public class TestFindVariableInAllInternalContexts {
      */
     @Test
     public void test_findVariable_atGrandparentContext() {
-        Variable created = createVariable("1");
-        assertNotNull(created);
+        Long execContextId = setupExecContext(List.of());
+        Variable created = createVariable("1", execContextId);
 
-        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", EXEC_CONTEXT_ID);
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
+        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        info.states.add(makeVariableState("1", created.id, currentVarName));
+        ecvs.updateParams(info);
+        execContextVariableStateRepository.save(ecvs);
+
+        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", execContextId);
         assertNotNull(found, "Variable at '1' should be found when searching from '1,2,5'");
         assertEquals(created.id, found.id);
     }
@@ -136,38 +205,47 @@ public class TestFindVariableInAllInternalContexts {
      */
     @Test
     public void test_findVariable_atSameContext() {
-        Variable created = createVariable("1,2,5");
-        assertNotNull(created);
+        Long execContextId = setupExecContext(List.of());
+        Variable created = createVariable("1,2,5", execContextId);
 
-        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", EXEC_CONTEXT_ID);
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
+        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        info.states.add(makeVariableState("1,2,5", created.id, currentVarName));
+        ecvs.updateParams(info);
+        execContextVariableStateRepository.save(ecvs);
+
+        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", execContextId);
         assertNotNull(found, "Variable at '1,2,5' should be found when searching from '1,2,5'");
         assertEquals(created.id, found.id);
     }
 
     /**
      * BUG REPRODUCTION: variable at "1,2#1" should be reachable from "1,2,5"
-     * but the current walk goes "1,2,5" -> "1,2" -> "1" -> null
-     * and never checks "1,2#1".
      *
      * This is the exact scenario from the production bug:
      * - Variable amendmentStatus is created at taskContextId="1,2#1"
      * - Task at taskContextId="1,2,5" tries to find it as input
-     * - findVariableInAllInternalContexts returns null
+     * - The parent-context walk from "1,2,5" goes: "1,2,5" -> "1,2" -> "1" -> null
+     * - At "1,2", the method should also find variables at "1,2#1" (same processContextId)
      */
     @Test
     public void test_findVariable_atHashContext_fromSibling_BUG() {
-        Variable created = createVariable("1,2#1");
-        assertNotNull(created);
+        Long execContextId = setupExecContext(List.of());
+        Variable created = createVariable("1,2#1", execContextId);
 
-        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", EXEC_CONTEXT_ID);
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
+        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        info.states.add(makeVariableState("1,2#1", created.id, currentVarName));
+        ecvs.updateParams(info);
+        execContextVariableStateRepository.save(ecvs);
 
-        // This assertion documents the BUG: we expect the variable to be found,
-        // but the current implementation returns null because the walk from "1,2,5"
-        // goes to "1,2" (no #), not "1,2#1".
+        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", execContextId);
         assertNotNull(found,
-                "BUG: Variable at '1,2#1' should be found when searching from '1,2,5', " +
-                "but deriveParentTaskContextId('1,2,5') returns '1,2' not '1,2#1'. " +
-                "The walk path is: 1,2,5 -> 1,2 -> 1 -> null. It never visits 1,2#1.");
+                "Variable at '1,2#1' should be found when searching from '1,2,5'. " +
+                "Both share processContextId '1,2'.");
+        assertEquals(created.id, found.id);
     }
 
     /**
@@ -176,24 +254,38 @@ public class TestFindVariableInAllInternalContexts {
      */
     @Test
     public void test_findVariable_atHashContext_exact() {
-        Variable created = createVariable("1,2#1");
-        assertNotNull(created);
+        Long execContextId = setupExecContext(List.of());
+        Variable created = createVariable("1,2#1", execContextId);
 
-        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2#1", EXEC_CONTEXT_ID);
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
+        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        info.states.add(makeVariableState("1,2#1", created.id, currentVarName));
+        ecvs.updateParams(info);
+        execContextVariableStateRepository.save(ecvs);
+
+        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2#1", execContextId);
         assertNotNull(found, "Variable at '1,2#1' should be found when searching from '1,2#1'");
         assertEquals(created.id, found.id);
     }
 
     /**
-     * From "1,2#1", the parent walk should go to "1" (strip last comma-component from "1,2").
+     * From "1,2#1", the parent walk should go to "1".
      * A variable at "1" should be found.
      */
     @Test
     public void test_findVariable_walkFromHashContext_toRoot() {
-        Variable created = createVariable("1");
-        assertNotNull(created);
+        Long execContextId = setupExecContext(List.of());
+        Variable created = createVariable("1", execContextId);
 
-        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2#1", EXEC_CONTEXT_ID);
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
+        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        info.states.add(makeVariableState("1", created.id, currentVarName));
+        ecvs.updateParams(info);
+        execContextVariableStateRepository.save(ecvs);
+
+        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2#1", execContextId);
         assertNotNull(found, "Variable at '1' should be found when searching from '1,2#1'");
         assertEquals(created.id, found.id);
     }
@@ -203,11 +295,17 @@ public class TestFindVariableInAllInternalContexts {
      */
     @Test
     public void test_findVariable_atUnrelatedContext_notFound() {
-        Variable created = createVariable("1,3");
-        assertNotNull(created);
+        Long execContextId = setupExecContext(List.of());
+        Variable created = createVariable("1,3", execContextId);
 
-        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", EXEC_CONTEXT_ID);
-        // Walk from "1,2,5" -> "1,2" -> "1" -> null. Never visits "1,3".
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
+        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        info.states.add(makeVariableState("1,3", created.id, currentVarName));
+        ecvs.updateParams(info);
+        execContextVariableStateRepository.save(ecvs);
+
+        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", execContextId);
         assertNull(found, "Variable at '1,3' should NOT be found when searching from '1,2,5'");
     }
 }

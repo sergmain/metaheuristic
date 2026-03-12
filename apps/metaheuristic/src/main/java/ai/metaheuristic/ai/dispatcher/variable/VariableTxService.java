@@ -18,8 +18,11 @@ package ai.metaheuristic.ai.dispatcher.variable;
 
 import ai.metaheuristic.ai.dispatcher.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
+import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
@@ -92,6 +95,7 @@ public class VariableTxService {
     private final GeneralBlobService generalBlobService;
     private final GeneralBlobTxService generalBlobTxService;
     private final DispatcherBlobStorage dispatcherBlobStorage;
+    private final ExecContextVariableStateRepository execContextVariableStateRepository;
 
     private Variable createInitialized(
             InputStream is, long size, String variable, @Nullable String filename,
@@ -460,20 +464,62 @@ public class VariableTxService {
 
     @Nullable
     public Variable findVariableInAllInternalContexts(String variable, String taskContextId, Long execContextId) {
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext == null) {
+            return null;
+        }
+        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(execContext.execContextVariableStateId).orElse(null);
+        if (ecvs == null) {
+            return null;
+        }
+        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+
         String currTaskContextId = taskContextId;
-        while( !S.b(currTaskContextId)) {
-            Variable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, currTaskContextId, execContextId);
-            if (v!=null) {
-                return v;
-            }
-            // Also check for variables at any instance of this context level (e.g., "1,2#1", "1,2#2", etc.)
-            // This handles the case where a variable was produced in a specific instance like "1,2#1"
-            // and needs to be visible to a sibling subprocess like "1,2,5"
-            List<Variable> vars = variableRepository.findByNameAndTaskContextIdLikeAndExecContextId(variable, currTaskContextId + "#%", execContextId);
-            if (!vars.isEmpty()) {
-                return vars.get(0);
+        while (!S.b(currTaskContextId)) {
+            String currLevel = ContextUtils.getLevel(currTaskContextId);
+            String currProcessCtxId = ContextUtils.getProcessContextId(currLevel);
+
+            Long variableId = findVariableIdInStates(info, variable, currTaskContextId, currProcessCtxId);
+            if (variableId != null) {
+                return variableRepository.findByIdAsSimple(variableId);
             }
             currTaskContextId = VariableUtils.getParentContext(currTaskContextId);
+        }
+        return null;
+    }
+
+    @Nullable
+    private static Long findVariableIdInStates(ExecContextApiData.ExecContextVariableStates info, String variable, String exactTaskContextId, String processCtxId) {
+        for (ExecContextApiData.VariableState state : info.states) {
+            String stateLevel = ContextUtils.getLevel(state.taskContextId);
+            String stateProcessCtxId = ContextUtils.getProcessContextId(stateLevel);
+
+            // exact match on taskContextId, or match on processContextId (covers #-suffixed instances like "1,2#1" when searching for "1,2")
+            if (!state.taskContextId.equals(exactTaskContextId) && !stateProcessCtxId.equals(processCtxId)) {
+                continue;
+            }
+
+            Long id = findVariableIdInList(state.outputs, variable);
+            if (id != null) {
+                return id;
+            }
+            id = findVariableIdInList(state.inputs, variable);
+            if (id != null) {
+                return id;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private static Long findVariableIdInList(@Nullable List<ExecContextApiData.VariableInfo> variables, String name) {
+        if (variables == null) {
+            return null;
+        }
+        for (ExecContextApiData.VariableInfo vi : variables) {
+            if (vi.name.equals(name)) {
+                return vi.id;
+            }
         }
         return null;
     }
