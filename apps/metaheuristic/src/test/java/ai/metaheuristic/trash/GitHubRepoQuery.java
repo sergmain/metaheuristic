@@ -31,7 +31,6 @@ import java.net.http.HttpResponse;
  * Date: 2/22/2024
  * Time: 6:44 PM
  */
-@Execution(ExecutionMode.CONCURRENT)
 public class GitHubRepoQuery {
 
     public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {

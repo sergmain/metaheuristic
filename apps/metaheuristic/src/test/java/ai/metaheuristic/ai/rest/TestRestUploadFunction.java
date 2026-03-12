@@ -23,6 +23,7 @@ import ai.metaheuristic.api.data.BundleData;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
+import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -71,12 +72,12 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 @Import({SpringSecurityWebAuxTestConfig.class})
 public class TestRestUploadFunction {
 
-    private static final String FUNCTION_CODE = "get-length-of-file-by-ref-for-test:1.0";
+    private static final String FUNCTION_CODE = "get-length-of-file-by-ref_1.0";
 
     private MockMvc mockMvc;
 
@@ -124,7 +125,7 @@ public class TestRestUploadFunction {
 
         assertNull(functionRepository.findByCode(FUNCTION_CODE));
 
-        byte[] bytes = IOUtils.resourceToByteArray("/bin/functions/functions-param-as-file.zip");
+        byte[] bytes = IOUtils.resourceToByteArray("/bin/functions/bundle-2026-03-11.zip");
 
         // https://stackoverflow.com/questions/28236310/upload-file-using-spring-mvc-and-mockmvc
         MockMultipartFile functionFile = new MockMultipartFile(
@@ -134,19 +135,8 @@ public class TestRestUploadFunction {
         MvcResult result = mockMvc.perform(MockMvcRequestBuilders.multipart("/rest/v1/dispatcher/bundle/bundle-upload-from-file")
                 .file(functionFile)
                 .characterEncoding("UTF-8"))
-                .andExpect(status().isOk())
-                .andExpect(cookie().doesNotExist(Consts.WEB_CONTAINER_SESSIONID_NAME)).andReturn();
-
-        String content = result.getResponse().getContentAsString(StandardCharsets.UTF_8);
-        assertFalse(content.contains("infoMessagesAsList"));
-        assertFalse(content.contains("errorMessagesAsList"));
-        assertFalse(content.contains("errorMessagesAsStr"));
-
-        BundleData.UploadingStatus rest = JsonUtils.getMapper().readValue(content, BundleData.UploadingStatus.class);
-        // :[971.030 Batch can't be created in company #1]
-        assertNotNull(rest.getErrorMessages());
-        assertEquals(1, rest.getErrorMessages().size());
-        assertTrue(rest.getErrorMessages().get(0).startsWith("971.030"));
+            .andExpect(status().isForbidden())
+            .andReturn();
     }
 
     @Test
@@ -155,7 +145,7 @@ public class TestRestUploadFunction {
 
         assertNull(functionRepository.findByCode(FUNCTION_CODE));
 
-        byte[] bytes = IOUtils.resourceToByteArray("/bin/functions/bundle-2023-11-16.zip");
+        byte[] bytes = IOUtils.resourceToByteArray("/bin/functions/bundle-2026-03-11.zip");
 
         // https://stackoverflow.com/questions/28236310/upload-file-using-spring-mvc-and-mockmvc
         MockMultipartFile functionFile = new MockMultipartFile(
@@ -187,7 +177,7 @@ public class TestRestUploadFunction {
 
         assertNull(functionRepository.findByCode(FUNCTION_CODE));
 
-        byte[] bytes = IOUtils.resourceToByteArray("/bin/functions/functions-param-as-file.zip");
+        byte[] bytes = IOUtils.resourceToByteArray("/bin/functions/bundle-2026-03-11.zip");
 
         // https://stackoverflow.com/questions/28236310/upload-file-using-spring-mvc-and-mockmvc
         MockMultipartFile functionFile = new MockMultipartFile(
@@ -206,12 +196,12 @@ public class TestRestUploadFunction {
         assertFalse(content.contains("errorMessagesAsStr"));
 
 
-        OperationStatusRest rest = JsonUtils.getMapper().readValue(content, OperationStatusRest.class);
-        // :[971.030 Batch can't be created in company #1]
-        assertNull(rest.getErrorMessages());
-        assertEquals(EnumsApi.OperationStatus.OK, rest.status);
+        BundleData.UploadingStatus rest = JsonUtils.getMapper().readValue(content, BundleData.UploadingStatus.class);
+
+        assertTrue(CollectionUtils.isEmpty(rest.getErrorMessages()));
 
         final Function f = functionRepository.findByCode(FUNCTION_CODE);
+
         assertNotNull(f);
     }
 }

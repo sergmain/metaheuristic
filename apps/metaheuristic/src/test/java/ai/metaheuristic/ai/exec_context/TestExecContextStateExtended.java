@@ -368,9 +368,9 @@ class TestExecContextStateExtended {
                 new ExecContextApiData.VariableState(11L, 1111L, 1001L, "1,2#2", "check", "check-fn", null, null),
                 new ExecContextApiData.VariableState(12L, 1111L, 1001L, "1,2#3", "check", "check-fn", null, null),
                 // nested children of fan-out (path propagated)
-                new ExecContextApiData.VariableState(20L, 1111L, 1001L, "1,2,3,1#0", "evaluate", "eval-fn", null, null),
-                new ExecContextApiData.VariableState(21L, 1111L, 1001L, "1,2,3,2#0", "evaluate", "eval-fn", null, null),
-                new ExecContextApiData.VariableState(22L, 1111L, 1001L, "1,2,3,3#0", "evaluate", "eval-fn", null, null),
+                new ExecContextApiData.VariableState(20L, 1111L, 1001L, "1,2,3|1#0", "evaluate", "eval-fn", null, null),
+                new ExecContextApiData.VariableState(21L, 1111L, 1001L, "1,2,3|2#0", "evaluate", "eval-fn", null, null),
+                new ExecContextApiData.VariableState(22L, 1111L, 1001L, "1,2,3|3#0", "evaluate", "eval-fn", null, null),
                 new ExecContextApiData.VariableState(99L, 1111L, 1001L, "1", "mh.finish", "mh.finish", null, null)
         );
 
@@ -379,9 +379,9 @@ class TestExecContextStateExtended {
                 10L, new TaskApiData.TaskState(10L, TaskExecState.OK.value, 0L, false, "1,2#1", "check"),
                 11L, new TaskApiData.TaskState(11L, TaskExecState.OK.value, 0L, false, "1,2#2", "check"),
                 12L, new TaskApiData.TaskState(12L, TaskExecState.OK.value, 0L, false, "1,2#3", "check"),
-                20L, new TaskApiData.TaskState(20L, TaskExecState.ERROR.value, 0L, false, "1,2,3,1#0", "evaluate"),
-                21L, new TaskApiData.TaskState(21L, TaskExecState.ERROR.value, 0L, false, "1,2,3,2#0", "evaluate"),
-                22L, new TaskApiData.TaskState(22L, TaskExecState.ERROR.value, 0L, false, "1,2,3,3#0", "evaluate"),
+                20L, new TaskApiData.TaskState(20L, TaskExecState.ERROR.value, 0L, false, "1,2,3|1#0", "evaluate"),
+                21L, new TaskApiData.TaskState(21L, TaskExecState.ERROR.value, 0L, false, "1,2,3|2#0", "evaluate"),
+                22L, new TaskApiData.TaskState(22L, TaskExecState.ERROR.value, 0L, false, "1,2,3|3#0", "evaluate"),
                 99L, new TaskApiData.TaskState(99L, TaskExecState.NONE.value, 0L, false, "1", "mh.finish")
         );
 
@@ -407,11 +407,11 @@ class TestExecContextStateExtended {
         //     "1,2,3,3#0" (child of 1,2#3)
         assertEquals("1", result.lines[0].context);
         assertEquals("1,2#1", result.lines[1].context);
-        assertEquals("1,2,3,1#0", result.lines[2].context);
+        assertEquals("1,2,3|1#0", result.lines[2].context);
         assertEquals("1,2#2", result.lines[3].context);
-        assertEquals("1,2,3,2#0", result.lines[4].context);
+        assertEquals("1,2,3|2#0", result.lines[4].context);
         assertEquals("1,2#3", result.lines[5].context);
-        assertEquals("1,2,3,3#0", result.lines[6].context);
+        assertEquals("1,2,3|3#0", result.lines[6].context);
 
         // Verify task placement: "1,2,3,1#0" is the child of "1,2#1"
         assertFalse(result.lines[2].cells[2].empty);

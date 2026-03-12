@@ -21,6 +21,7 @@ import org.apache.hc.client5.http.fluent.Executor;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.fluent.Response;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -32,8 +33,8 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
  * Date: 10/28/2023
  * Time: 9:59 PM
  */
-
-@Disabled("These tests are for manual testing")
+@DisplayName("These tests are for manual testing")
+@Disabled()
 public class StatusRestControllerTest {
 
     @Test

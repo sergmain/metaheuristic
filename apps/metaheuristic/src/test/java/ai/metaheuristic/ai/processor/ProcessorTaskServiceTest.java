@@ -19,17 +19,20 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.yaml.processor_task.ProcessorCoreTask;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Sergio Lissner
  * Date: 6/26/2023
  * Time: 8:27 PM
  */
-public class ProcessorTaskServiceTest {
+@Execution(CONCURRENT)
+class ProcessorTaskServiceTest {
 
     @Test
     public void test_actualSave(@TempDir Path temp) {

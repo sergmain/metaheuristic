@@ -18,18 +18,21 @@ package ai.metaheuristic.ai.dispatcher.keep_alive;
 
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import static ai.metaheuristic.ai.dispatcher.keep_alive.KeepAliveService.coreMetadataDifferent;
 import static ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml.Core;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Sergio Lissner
  * Date: 10/29/2023
  * Time: 9:26 PM
  */
-public class KeepAliveServiceStaticTest {
+@Execution(CONCURRENT)
+class KeepAliveServiceStaticTest {
 
     @Test
     public void test_coreMetadataDifferent() {

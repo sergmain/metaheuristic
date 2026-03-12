@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Time: 4:57 PM
  */
 @Execution(ExecutionMode.CONCURRENT)
-public class TestSourceCodeParamsYamlParsing {
+public class SourceCodeParamsYamlUtilsTest {
 
     @Test
     public void testParsingForBatch() throws IOException {

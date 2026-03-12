@@ -23,19 +23,22 @@ import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 12/29/2020
  * Time: 12:59 AM
  */
-public class TestMetadataParamsYaml {
+@Execution(CONCURRENT)
+class TestMetadataParamsYaml {
 
     @Test
     public void testVersion1() throws IOException {

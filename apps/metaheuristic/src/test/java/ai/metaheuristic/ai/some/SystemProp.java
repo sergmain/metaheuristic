@@ -18,15 +18,20 @@ package ai.metaheuristic.ai.some;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.concurrent.TimeUnit;
+
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Sergio Lissner
  * Date: 8/19/2023
  * Time: 3:14 PM
  */
-public class SystemProp {
+@Execution(CONCURRENT)
+class SystemProp {
+
     @Test
     public void test_() {
         System.out.println( TimeUnit.HOURS.toMillis(1));

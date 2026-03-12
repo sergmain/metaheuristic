@@ -36,7 +36,6 @@ import java.util.List;
  * Date: 1/27/2026
  * Time: 8:53 PM
  */
-@Execution(ExecutionMode.CONCURRENT)
 public class IssueWithJackson {
 
 

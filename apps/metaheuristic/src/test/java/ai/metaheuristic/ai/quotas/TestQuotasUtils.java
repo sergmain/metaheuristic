@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.QuotasData;
 import ai.metaheuristic.ai.dispatcher.quotas.QuotasUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.List;
 
@@ -28,6 +29,7 @@ import static ai.metaheuristic.ai.data.DispatcherData.TaskQuotas;
 import static ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml.Quota;
 import static ai.metaheuristic.ai.yaml.processor_status.ProcessorStatusYaml.Quotas;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 
 /**
@@ -36,7 +38,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * Time: 1:56 AM
  */
 @SuppressWarnings("SimplifiableAssertion")
-public class TestQuotasUtils {
+@Execution(CONCURRENT)
+class TestQuotasUtils {
 
     private static Quotas get(boolean disabled) {
         return get(disabled, 0, 0, List.of());
