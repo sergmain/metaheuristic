@@ -308,4 +308,59 @@ public class TestFindVariableInAllInternalContexts {
         Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", execContextId);
         assertNull(found, "Variable at '1,3' should NOT be found when searching from '1,2,5'");
     }
+
+    /**
+     * Top-level input variable (like "projectCode") exists in DB at context "1"
+     * but has NO VariableState entry in ExecContextVariableState.
+     * The DB fallback must find it.
+     */
+    @Test
+    public void test_findVariable_topLevelInput_notInVariableState() {
+        // Setup ExecContext with EMPTY VariableState list — no tasks registered yet
+        Long execContextId = setupExecContext(List.of());
+
+        // Create the variable in DB at top-level context "1" — simulates
+        // how projectCode is created during execContext initialization
+        Variable created = createVariable("1", execContextId);
+
+        // Search from context "1" — should find via DB fallback
+        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1", execContextId);
+        assertNotNull(found,
+                "Top-level variable at '1' with no VariableState entry should be found via DB fallback");
+        assertEquals(created.id, found.id);
+    }
+
+    /**
+     * Top-level input variable exists in DB at context "1" with no VariableState entry.
+     * Searching from a deeper context "1,2#1" should also find it via the walk + DB fallback.
+     */
+    @Test
+    public void test_findVariable_topLevelInput_notInVariableState_fromDeepContext() {
+        Long execContextId = setupExecContext(List.of());
+        Variable created = createVariable("1", execContextId);
+
+        // Search from "1,2#1" — walk goes "1,2#1" -> "1" -> null
+        // At "1", the in-memory lookup finds nothing, but DB fallback should find it
+        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2#1", execContextId);
+        assertNotNull(found,
+                "Top-level variable at '1' should be found from '1,2#1' via DB fallback");
+        assertEquals(created.id, found.id);
+    }
+
+    /**
+     * Variable exists in DB at context "1" with no VariableState entry.
+     * Searching from "1,2,5" should find it at the "1" step of the walk via DB fallback.
+     * This reproduces the "projectCode not found" production bug.
+     */
+    @Test
+    public void test_findVariable_topLevelInput_notInVariableState_fromSiblingContext() {
+        Long execContextId = setupExecContext(List.of());
+        Variable created = createVariable("1", execContextId);
+
+        // Search from "1,2,5" — walk: "1,2,5" -> "1,2" -> "1" -> null
+        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", execContextId);
+        assertNotNull(found,
+                "Top-level variable at '1' should be found from '1,2,5' via DB fallback at walk step '1'");
+        assertEquals(created.id, found.id);
+    }
 }
