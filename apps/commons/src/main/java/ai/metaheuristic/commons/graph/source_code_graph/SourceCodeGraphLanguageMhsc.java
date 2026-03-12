@@ -627,9 +627,20 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
             for (MhSourceCodeParser.IdPartContext part : ctx.idPart()) {
                 if (part.getChildCount() == 1 && (part.ID() != null || part.keyword() != null)) {
                     // Simple ID or keyword-as-identifier
-                    sb.append(part.getText());
+                    // Check if it's a standalone loop variable (single-part idRef used as an argument)
+                    String text = part.getText();
+                    if (ctx.idPart().size() == 1 && part.ID() != null) {
+                        Integer value = loopVariables.get(text);
+                        if (value != null) {
+                            sb.append(value);
+                            continue;
+                        }
+                    }
+                    sb.append(text);
                 } else {
                     // Parameterized: {L}, {L+1}, {L-1}
+                    // Note: Due to the lexer treating L-1 or L+1 as a single ID token inside {},
+                    // we may need to manually parse the offset from the ID text.
                     TerminalNode idNode = part.ID();
                     if (idNode != null) {
                         String varName = idNode.getText();
@@ -647,8 +658,29 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                                 sb.append(value);
                             }
                         } else {
-                            // Unresolved parameter — keep literal text
-                            sb.append(part.getText());
+                            // Try parsing ID as varName+offset or varName-offset
+                            // (lexer may tokenize L-1 as single ID "L-1")
+                            boolean resolved = false;
+                            for (String op : new String[]{"+", "-"}) {
+                                int opIdx = varName.lastIndexOf(op);
+                                if (opIdx > 0) {
+                                    String candidateVar = varName.substring(0, opIdx);
+                                    String candidateOffset = varName.substring(opIdx + 1);
+                                    Integer varValue = loopVariables.get(candidateVar);
+                                    if (varValue != null) {
+                                        try {
+                                            int offset = Integer.parseInt(candidateOffset);
+                                            sb.append(op.equals("+") ? varValue + offset : varValue - offset);
+                                            resolved = true;
+                                            break;
+                                        } catch (NumberFormatException ignored) {}
+                                    }
+                                }
+                            }
+                            if (!resolved) {
+                                // Unresolved parameter — keep literal text
+                                sb.append(part.getText());
+                            }
                         }
                     }
                 }
