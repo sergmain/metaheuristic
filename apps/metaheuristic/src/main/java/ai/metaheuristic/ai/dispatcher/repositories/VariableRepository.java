@@ -69,6 +69,9 @@ public interface VariableRepository extends CrudRepository<Variable, Long> {
     @Query(value="select v from Variable v where v.name=:name and v.taskContextId=:taskContextId and v.execContextId=:execContextId")
     Variable findByNameAndTaskContextIdAndExecContextId(String name, String taskContextId, Long execContextId);
 
+    @Query(value="select v from Variable v where v.name=:name and v.taskContextId like :taskContextIdPrefix and v.execContextId=:execContextId")
+    List<Variable> findByNameAndTaskContextIdLikeAndExecContextId(String name, String taskContextIdPrefix, Long execContextId);
+
     @Nullable
     @Query(value="select v.id, v.filename from Variable v where v.name=:name and v.taskContextId=:taskContextId and v.execContextId=:execContextId")
     List<Object[]> findAsObject(String name, String taskContextId, Long execContextId);

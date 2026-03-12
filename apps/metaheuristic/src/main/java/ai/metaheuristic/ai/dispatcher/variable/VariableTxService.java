@@ -466,6 +466,13 @@ public class VariableTxService {
             if (v!=null) {
                 return v;
             }
+            // Also check for variables at any instance of this context level (e.g., "1,2#1", "1,2#2", etc.)
+            // This handles the case where a variable was produced in a specific instance like "1,2#1"
+            // and needs to be visible to a sibling subprocess like "1,2,5"
+            List<Variable> vars = variableRepository.findByNameAndTaskContextIdLikeAndExecContextId(variable, currTaskContextId + "#%", execContextId);
+            if (!vars.isEmpty()) {
+                return vars.get(0);
+            }
             currTaskContextId = VariableUtils.getParentContext(currTaskContextId);
         }
         return null;
