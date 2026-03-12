@@ -29,11 +29,19 @@ sourceBody
     ;
 
 sourceElement
-    : variablesBlock
+    : defDecl
+    | variablesBlock
     | metasBlock
     | processDecl
     | templateDecl
     | forLoop
+    ;
+
+// --- Source-level constant definitions ---
+// def func_version = "1.0.4"
+// Referenced via ${func_version} in idRef positions
+defDecl
+    : 'def' ID '=' (STRING | ID)
     ;
 
 // --- Variables block ---
@@ -273,6 +281,7 @@ idRef
 idPart
     : ID
     | keyword                             // allow keywords as identifiers in idRef context
+    | DEF_REF                             // ${name} constant substitution
     | '{' ID '}'                          // simple param substitution
     | '{' ID '+' INT '}'                  // param + offset
     | '{' ID '-' INT '}'                  // param - offset
@@ -287,6 +296,7 @@ keyword
     | 'internal' | 'type' | 'ext' | 'nullable' | 'array' | 'parentContext' | 'sourcing'
     | 'on' | 'off' | 'omitInline' | 'cacheMeta'
     | 'normal' | 'always'
+    | 'def'
     ;
 
 // =====================================================================
@@ -300,6 +310,9 @@ INT     : [0-9]+ ;
 STRING  : '"' (~["\\\r\n] | '\\' .)* '"'
         | '\'' (~['\\\r\n] | '\\' .)* '\''
         ;
+
+// ${name} — reference to a def constant, resolved by visitor
+DEF_REF : '$' '{' [a-zA-Z_] [a-zA-Z0-9_]* '}' ;
 
 // Allows dots, hyphens for function codes like mhdg-rg.call-cc
 // Colons are NOT in ID — they are handled as separators in idPart for version suffixes

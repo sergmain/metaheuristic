@@ -87,6 +87,9 @@ public class TestMhscParserRules {
     private ParseResult<MhSourceCodeParser.VariablesBlockContext> parseVariablesBlock(String input) {
         List<String> e = new ArrayList<>(); return new ParseResult<>(makeParser(input, e).variablesBlock(), e);
     }
+    private ParseResult<MhSourceCodeParser.DefDeclContext> parseDefDecl(String input) {
+        List<String> e = new ArrayList<>(); return new ParseResult<>(makeParser(input, e).defDecl(), e);
+    }
     private ParseResult<MhSourceCodeParser.CompilationUnitContext> parseCompilationUnit(String input) {
         List<String> e = new ArrayList<>(); return new ParseResult<>(makeParser(input, e).compilationUnit(), e);
     }
@@ -279,7 +282,6 @@ public class TestMhscParserRules {
         var r = parseMetaDecl("meta key = someValue");
         r.assertNoErrors();
         assertEquals(1, r.tree.metaEntry().size());
-        // idRef(0) = key, idRef(1) = someValue
         assertEquals(2, r.tree.metaEntry(0).idRef().size());
     }
 
@@ -612,11 +614,6 @@ public class TestMhscParserRules {
                 "    }\n" +
                 "    @myTmpl(someArg)\n" +
                 "}");
-        // Template call at source level is not valid — only inside subProcessBlock
-        // So this should fail. Let me check grammar...
-        // sourceElement allows: variablesBlock | metasBlock | processDecl | templateDecl | forLoop
-        // templateCall is NOT in sourceElement. It's in processOrControl.
-        // This test should have errors.
         r.assertHasErrors();
     }
 
@@ -658,6 +655,94 @@ public class TestMhscParserRules {
                 "source \"test-1.0\" {\n" +
                 "    /* block comment */\n" +
                 "    proc1 := internal mh.nop { timeout 10 } // inline comment\n" +
+                "}");
+        r.assertNoErrors();
+    }
+
+    // ===================== defDecl =====================
+
+    @Test public void test_defDecl_string_value() {
+        var r = parseDefDecl("def call_cc_ver = \"1.0.4\"");
+        r.assertNoErrors();
+        assertEquals("call_cc_ver", r.tree.ID(0).getText());
+        assertNotNull(r.tree.STRING());
+        assertEquals("\"1.0.4\"", r.tree.STRING().getText());
+    }
+
+    @Test public void test_defDecl_id_value() {
+        var r = parseDefDecl("def my_alias = someIdentifier");
+        r.assertNoErrors();
+    }
+
+    @Test public void test_defDecl_missing_value() {
+        var r = parseDefDecl("def myvar =");
+        r.assertHasErrors();
+    }
+
+    @Test public void test_defDecl_missing_equals() {
+        var r = parseDefDecl("def myvar \"1.0\"");
+        r.assertHasErrors();
+    }
+
+    // ===================== idRef with DEF_REF =====================
+
+    @Test public void test_idRef_with_def_ref() {
+        var r = parseIdRef("mhdg-rg.call-cc-${call_cc_ver}");
+        r.assertNoErrors();
+        assertEquals(2, r.tree.idPart().size());
+        assertNotNull(r.tree.idPart(1).DEF_REF());
+        assertEquals("${call_cc_ver}", r.tree.idPart(1).DEF_REF().getText());
+    }
+
+    @Test public void test_idRef_def_ref_only() {
+        var r = parseIdRef("${full_func_code}");
+        r.assertNoErrors();
+        assertEquals(1, r.tree.idPart().size());
+        assertNotNull(r.tree.idPart(0).DEF_REF());
+    }
+
+    @Test public void test_idRef_def_ref_with_suffix() {
+        var r = parseIdRef("${prefix}some-suffix");
+        r.assertNoErrors();
+        assertEquals(2, r.tree.idPart().size());
+        assertNotNull(r.tree.idPart(0).DEF_REF());
+        assertEquals("some-suffix", r.tree.idPart(1).getText());
+    }
+
+    // ===================== compilationUnit with def =====================
+
+    @Test public void test_compilationUnit_with_def_and_usage() {
+        var r = parseCompilationUnit(
+                "source \"test-1.0\" (strict) {\n" +
+                "    def call_cc_ver = \"1.0.4\"\n" +
+                "    variables {\n" +
+                "        <- projectCode\n" +
+                "    }\n" +
+                "    top_level_task := mhdg-rg.call-cc-${call_cc_ver} {\n" +
+                "        <- projectCode\n" +
+                "        timeout 60\n" +
+                "    }\n" +
+                "}");
+        r.assertNoErrors();
+    }
+
+    @Test public void test_compilationUnit_multiple_defs() {
+        var r = parseCompilationUnit(
+                "source \"test-1.0\" (strict) {\n" +
+                "    def call_cc_ver = \"1.0.4\"\n" +
+                "    def read_project_ver = \"1.0.7\"\n" +
+                "    proc1 := mhdg-rg.call-cc-${call_cc_ver} { timeout 60 }\n" +
+                "    proc2 := mhdg-rg.read-project-${read_project_ver} { timeout 60 }\n" +
+                "}");
+        r.assertNoErrors();
+    }
+
+    @Test public void test_compilationUnit_def_after_process_still_parses() {
+        var r = parseCompilationUnit(
+                "source \"test-1.0\" {\n" +
+                "    proc1 := internal mh.nop { timeout 10 }\n" +
+                "    def late_def = \"value\"\n" +
+                "    proc2 := internal mh.nop { timeout 10 }\n" +
                 "}");
         r.assertNoErrors();
     }
