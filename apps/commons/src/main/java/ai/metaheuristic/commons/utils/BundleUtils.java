@@ -68,7 +68,7 @@ public class BundleUtils {
     public static Path createBundle(BundleData.Cfg cfg, BundleCfgYaml bundleCfgYaml) throws IOException, GeneralSecurityException {
         log.info("\tworking dir: " + cfg.workingDir);
         processFunctions(cfg,bundleCfgYaml);
-        processCommonType(cfg, bundleCfgYaml, sourceCode, BundleUtils::apiSchemeUtilsValidator);
+        processCommonType(cfg, bundleCfgYaml, sourceCode, BundleUtils::sourceCodeValidator);
         processCommonType(cfg, bundleCfgYaml, auth, BundleUtils::apiAuthUtilsValidator);
         processCommonType(cfg, bundleCfgYaml, api, BundleUtils::apiAuthUtilsValidator);
 
@@ -79,14 +79,10 @@ public class BundleUtils {
         ApiAuthUtils.UTILS.to(content);
     }
 
-    public static void apiSchemeUtilsValidator(String content, Path path) {
-        ApiAuthUtils.UTILS.to(content);
-    }
-
     public static void sourceCodeValidator(String content, Path path) {
         EnumsApi.SourceCodeLang lang = EnumsApi.SourceCodeLang.getLangFromPath(path);
         if (lang==null) {
-            throw new BundleProcessingException("Can't deremine language from path: " + path);
+            throw new BundleProcessingException("Can't determine language from path: " + path);
         }
         SourceCodeGraph scg = SourceCodeGraphFactory.parse(lang, content);
     }
