@@ -98,6 +98,8 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
 
         // Template storage
         private final Map<String, MhSourceCodeParser.TemplateDeclContext> templates = new HashMap<>();
+        // def constants: def name = "value"
+        private final Map<String, String> defConstants = new HashMap<>();
         // For-loop variable bindings during expansion
         private final Map<String, Integer> loopVariables = new HashMap<>();
 
@@ -145,6 +147,8 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                 for (MhSourceCodeParser.SourceElementContext elem : ctx.sourceBody().sourceElement()) {
                     if (elem.variablesBlock() != null) {
                         visitVariablesBlock(elem.variablesBlock());
+                    } else if (elem.defDecl() != null) {
+                        processDefDecl(elem.defDecl());
                     } else if (elem.metasBlock() != null) {
                         parseSourceMetas(elem.metasBlock());
                     } else if (elem.templateDecl() != null) {
@@ -212,6 +216,18 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
         public Void visitTemplateDecl(MhSourceCodeParser.TemplateDeclContext ctx) {
             templates.put(ctx.ID().getText(), ctx);
             return null;
+        }
+
+        private void processDefDecl(MhSourceCodeParser.DefDeclContext ctx) {
+            String name = ctx.ID(0).getText();
+            String value;
+            if (ctx.STRING() != null) {
+                value = unquote(ctx.STRING().getText());
+            } else {
+                // ID value (second ID token)
+                value = ctx.ID(1).getText();
+            }
+            defConstants.put(name, value);
         }
 
 /**
@@ -637,6 +653,15 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                         }
                     }
                     sb.append(text);
+                } else if (part.DEF_REF() != null) {
+                    // ${name} — resolve from defConstants
+                    String raw = part.DEF_REF().getText(); // "${name}"
+                    String defName = raw.substring(2, raw.length() - 1); // strip ${ and }
+                    String defValue = defConstants.get(defName);
+                    if (defValue == null) {
+                        throw new SourceCodeGraphException("564.390 Undefined def constant: " + defName);
+                    }
+                    sb.append(defValue);
                 } else {
                     // Parameterized: {L}, {L+1}, {L-1}
                     // Note: Due to the lexer treating L-1 or L+1 as a single ID token inside {},

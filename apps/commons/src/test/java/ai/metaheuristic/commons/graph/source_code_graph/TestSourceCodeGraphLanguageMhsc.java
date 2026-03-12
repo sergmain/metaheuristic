@@ -1018,6 +1018,84 @@ public class TestSourceCodeGraphLanguageMhsc {
         assertEquals("reqId1", p1.metas.get(0).get("varName"));
     }
 
+    // ============ def constant substitution in visitor ============
+
+    @Test
+    public void test_def_substitution_in_function_code() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                def call_cc_ver = "1.0.4"
+                my_proc := mhdg-rg.call-cc-${call_cc_ver} {
+                    timeout 60
+                }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("my_proc"))
+                .findFirst().orElseThrow();
+        assertEquals("mhdg-rg.call-cc-1.0.4", p.function.code,
+                "def constant should be substituted in function code");
+    }
+
+    @Test
+    public void test_def_substitution_multiple_defs() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                def call_cc_ver = "1.0.4"
+                def read_ver = "2.0.1"
+                proc1 := mhdg-rg.call-cc-${call_cc_ver} { timeout 60 }
+                proc2 := mhdg-rg.read-${read_ver} { timeout 60 }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        ExecContextParamsYaml.Process p1 = graph.processes.stream()
+                .filter(p -> p.processCode.equals("proc1")).findFirst().orElseThrow();
+        ExecContextParamsYaml.Process p2 = graph.processes.stream()
+                .filter(p -> p.processCode.equals("proc2")).findFirst().orElseThrow();
+        assertEquals("mhdg-rg.call-cc-1.0.4", p1.function.code);
+        assertEquals("mhdg-rg.read-2.0.1", p2.function.code);
+    }
+
+    @Test
+    public void test_def_substitution_reused_multiple_times() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                def ver = "1.0.6"
+                proc1 := mhdg-rg.call-cc-${ver} { timeout 60 }
+                proc2 := mhdg-rg.call-cc-${ver} {
+                    timeout 60
+                    sequential {
+                        inner := mhdg-rg.call-cc-${ver} { timeout 30 }
+                    }
+                }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        ExecContextParamsYaml.Process p1 = graph.processes.stream()
+                .filter(p -> p.processCode.equals("proc1")).findFirst().orElseThrow();
+        ExecContextParamsYaml.Process p2 = graph.processes.stream()
+                .filter(p -> p.processCode.equals("proc2")).findFirst().orElseThrow();
+        ExecContextParamsYaml.Process inner = graph.processes.stream()
+                .filter(p -> p.processCode.equals("inner")).findFirst().orElseThrow();
+        assertEquals("mhdg-rg.call-cc-1.0.6", p1.function.code);
+        assertEquals("mhdg-rg.call-cc-1.0.6", p2.function.code);
+        assertEquals("mhdg-rg.call-cc-1.0.6", inner.function.code);
+    }
+
+    @Test
+    public void test_def_undefined_ref_kept_literal() {
+        // If a ${name} references an undefined def, the visitor should throw or keep literal
+        String mhsc = """
+            source "test-uid" (strict) {
+                proc1 := mhdg-rg.call-cc-${undefined_var} { timeout 60 }
+            }
+            """;
+        assertThrows(SourceCodeGraphException.class,
+                () -> SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc),
+                "Undefined def reference should throw");
+    }
+
     // ============ Helpers ============
 
     private static SourceCodeGraph parseYaml(String resourcePath) throws IOException {
