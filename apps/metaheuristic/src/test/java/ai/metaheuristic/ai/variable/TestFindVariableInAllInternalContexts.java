@@ -363,4 +363,51 @@ public class TestFindVariableInAllInternalContexts {
                 "Top-level variable at '1' should be found from '1,2,5' via DB fallback at walk step '1'");
         assertEquals(created.id, found.id);
     }
+
+    /**
+     * ExecContextVariableState is async — it may be empty when the lookup happens.
+     * Variable at "1,2#1" exists in DB, but ExecContextVariableState has no entries yet.
+     * Searching from "1,2,5" must still find it via full DB fallback with LIKE query
+     * for #-suffixed siblings.
+     */
+    @Test
+    public void test_findVariable_atHashContext_emptyVariableState_fullDbFallback() {
+        // Empty VariableState — simulates async delay
+        Long execContextId = setupExecContext(List.of());
+        Variable created = createVariable("1,2#1", execContextId);
+
+        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", execContextId);
+        assertNotNull(found,
+                "Variable at '1,2#1' should be found from '1,2,5' even when ExecContextVariableState is empty, " +
+                "via full DB fallback with LIKE query for #-suffixed siblings");
+        assertEquals(created.id, found.id);
+    }
+
+    /**
+     * ExecContextVariableState is async — partially populated.
+     * Variable at "1,2#1" exists in DB but is NOT in the VariableState entries.
+     * Other unrelated VariableState entries exist. Must still find via DB fallback.
+     */
+    @Test
+    public void test_findVariable_atHashContext_partialVariableState_dbFallback() {
+        Long execContextId = setupExecContext(List.of());
+        Variable created = createVariable("1,2#1", execContextId);
+
+        // Add an unrelated VariableState entry — simulates partial async update
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
+        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        ExecContextApiData.VariableInfo unrelatedVi = new ExecContextApiData.VariableInfo(999L, "otherVar", EnumsApi.VariableContext.local, ".txt");
+        info.states.add(new ExecContextApiData.VariableState(
+                1L, 0L, 0L, "1", "some-process", "some-function",
+                null, List.of(unrelatedVi)));
+        ecvs.updateParams(info);
+        execContextVariableStateRepository.save(ecvs);
+
+        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5", execContextId);
+        assertNotNull(found,
+                "Variable at '1,2#1' should be found from '1,2,5' via DB fallback " +
+                "when VariableState doesn't contain the relevant entry");
+        assertEquals(created.id, found.id);
+    }
 }

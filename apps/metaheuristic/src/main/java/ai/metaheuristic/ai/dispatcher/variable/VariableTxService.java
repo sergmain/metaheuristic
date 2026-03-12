@@ -470,7 +470,7 @@ public class VariableTxService {
         }
         ExecContextVariableState ecvs = execContextVariableStateRepository.findById(execContext.execContextVariableStateId).orElse(null);
         if (ecvs == null) {
-            return null;
+            return findVariableInAllInternalContextsViaDb(variable, taskContextId, execContextId);
         }
         ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
 
@@ -483,15 +483,27 @@ public class VariableTxService {
             if (variableId != null) {
                 return variableRepository.findByIdAsSimple(variableId);
             }
+            currTaskContextId = VariableUtils.getParentContext(currTaskContextId);
+        }
 
-            // Fallback: query the Variable table directly for this context.
-            // This covers variables that may not be registered in ExecContextVariableState
-            // (e.g., top-level input variables created outside of normal task creation flow).
+        // ExecContextVariableState is populated asynchronously and may not have the data yet.
+        // Fall back to full DB walk which also handles #-suffixed sibling contexts.
+        return findVariableInAllInternalContextsViaDb(variable, taskContextId, execContextId);
+    }
+
+    @Nullable
+    private Variable findVariableInAllInternalContextsViaDb(String variable, String taskContextId, Long execContextId) {
+        String currTaskContextId = taskContextId;
+        while (!S.b(currTaskContextId)) {
             Variable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, currTaskContextId, execContextId);
             if (v != null) {
                 return v;
             }
-
+            // Check for variables at any instance of this context level (e.g., "1,2#1", "1,2#2")
+            List<Variable> vars = variableRepository.findByNameAndTaskContextIdLikeAndExecContextId(variable, currTaskContextId + "#%", execContextId);
+            if (!vars.isEmpty()) {
+                return vars.get(0);
+            }
             currTaskContextId = VariableUtils.getParentContext(currTaskContextId);
         }
         return null;
