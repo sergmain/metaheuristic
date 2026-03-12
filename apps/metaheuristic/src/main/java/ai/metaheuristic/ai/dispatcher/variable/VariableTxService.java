@@ -483,6 +483,15 @@ public class VariableTxService {
             if (variableId != null) {
                 return variableRepository.findByIdAsSimple(variableId);
             }
+
+            // Fallback: query the Variable table directly for this context.
+            // This covers variables that may not be registered in ExecContextVariableState
+            // (e.g., top-level input variables created outside of normal task creation flow).
+            Variable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variable, currTaskContextId, execContextId);
+            if (v != null) {
+                return v;
+            }
+
             currTaskContextId = VariableUtils.getParentContext(currTaskContextId);
         }
         return null;
