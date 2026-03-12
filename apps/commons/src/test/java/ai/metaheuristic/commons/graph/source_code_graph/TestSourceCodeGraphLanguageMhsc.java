@@ -870,6 +870,154 @@ public class TestSourceCodeGraphLanguageMhsc {
         assertTrue(graph.metas.isEmpty());
     }
 
+    // ============ parameterized identifiers in process codes ============
+
+    @Test
+    public void test_for_loop_parameterized_process_code() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                for L in 0 .. 2 {
+                    step-{L} := internal mh.nop {}
+                }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        assertTrue(graph.processes.stream().anyMatch(p -> p.processCode.equals("step-0")));
+        assertTrue(graph.processes.stream().anyMatch(p -> p.processCode.equals("step-1")));
+        assertTrue(graph.processes.stream().anyMatch(p -> p.processCode.equals("step-2")));
+    }
+
+    @Test
+    public void test_for_loop_parameterized_process_code_plus_offset() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                for L in 0 .. 1 {
+                    step-{L+1} := internal mh.nop {}
+                }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        assertTrue(graph.processes.stream().anyMatch(p -> p.processCode.equals("step-1")));
+        assertTrue(graph.processes.stream().anyMatch(p -> p.processCode.equals("step-2")));
+        assertFalse(graph.processes.stream().anyMatch(p -> p.processCode.equals("step-0")));
+    }
+
+    @Test
+    public void test_for_loop_parameterized_process_code_minus_offset() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                for L in 2 .. 3 {
+                    step.prev{L-1} := internal mh.nop {}
+                }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        assertTrue(graph.processes.stream().anyMatch(p -> p.processCode.equals("step.prev1")));
+        assertTrue(graph.processes.stream().anyMatch(p -> p.processCode.equals("step.prev2")));
+    }
+
+    @Test
+    public void test_template_simple_no_parameterized_ids() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                template myStep(level) {
+                    mh.nop := internal mh.nop {}
+                }
+                for L in 0 .. 0 {
+                    @myStep(L)
+                }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        assertTrue(graph.processes.stream().anyMatch(p -> p.processCode.equals("mh.nop")));
+    }
+
+    @Test
+    public void test_template_parameterized_single_iteration() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                template myStep(level) {
+                    process-{level} := internal mh.nop {}
+                }
+                for L in 0 .. 0 {
+                    @myStep(L)
+                }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        assertTrue(graph.processes.stream().anyMatch(p -> p.processCode.equals("process-0")),
+                "process-0 should exist. Got: " + graph.processes.stream().map(p -> p.processCode).toList());
+    }
+
+    @Test
+    public void test_template_parameterized_process_code() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                template myStep(level) {
+                    process-{level} := internal mh.nop {
+                        -> output{level}: ext=".txt"
+                    }
+                }
+                for L in 0 .. 2 {
+                    @myStep(L)
+                }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        assertTrue(graph.processes.stream().anyMatch(p -> p.processCode.equals("process-0")));
+        assertTrue(graph.processes.stream().anyMatch(p -> p.processCode.equals("process-1")));
+        assertTrue(graph.processes.stream().anyMatch(p -> p.processCode.equals("process-2")));
+        // Also verify output variable names are resolved
+        ExecContextParamsYaml.Process p1 = graph.processes.stream()
+                .filter(p -> p.processCode.equals("process-1")).findFirst().orElseThrow();
+        assertEquals("output1", p1.outputs.get(0).name);
+    }
+
+    @Test
+    public void test_for_loop_parameterized_input_output_names() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                for L in 0 .. 1 {
+                    store-{L} := internal mh.nop {
+                        <- input{L}
+                        -> result{L+1}: ext=".txt"
+                    }
+                }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        ExecContextParamsYaml.Process p0 = graph.processes.stream()
+                .filter(p -> p.processCode.equals("store-0")).findFirst().orElseThrow();
+        assertEquals("input0", p0.inputs.get(0).name);
+        assertEquals("result1", p0.outputs.get(0).name);
+
+        ExecContextParamsYaml.Process p1 = graph.processes.stream()
+                .filter(p -> p.processCode.equals("store-1")).findFirst().orElseThrow();
+        assertEquals("input1", p1.inputs.get(0).name);
+        assertEquals("result2", p1.outputs.get(0).name);
+    }
+
+    @Test
+    public void test_for_loop_parameterized_meta_values() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                for L in 0 .. 1 {
+                    eval-{L} := internal mh.nop {
+                        meta varName = reqId{L}
+                    }
+                }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        ExecContextParamsYaml.Process p0 = graph.processes.stream()
+                .filter(p -> p.processCode.equals("eval-0")).findFirst().orElseThrow();
+        assertEquals("reqId0", p0.metas.get(0).get("varName"));
+
+        ExecContextParamsYaml.Process p1 = graph.processes.stream()
+                .filter(p -> p.processCode.equals("eval-1")).findFirst().orElseThrow();
+        assertEquals("reqId1", p1.metas.get(0).get("varName"));
+    }
+
     // ============ Helpers ============
 
     private static SourceCodeGraph parseYaml(String resourcePath) throws IOException {
