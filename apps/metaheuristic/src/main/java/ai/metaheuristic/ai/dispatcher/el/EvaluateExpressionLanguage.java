@@ -333,6 +333,12 @@ public class EvaluateExpressionLanguage {
                         Boolean secondValue = getValueBoolean(ctx, secondObject);
                         return firstValue.compareTo(secondValue);
                     }
+                    // Detect if either operand is a String — use string comparison
+                    if (isStringComparison(firstObject, secondObject)) {
+                        String firstValue = getValueString(ctx, firstObject);
+                        String secondValue = getValueString(ctx, secondObject);
+                        return firstValue.compareTo(secondValue);
+                    }
                     Integer firstValue = getValueInteger(ctx, firstObject);
                     Integer secondValue = getValueInteger(ctx, secondObject);
                     final int compare = firstValue.compareTo(secondValue);
