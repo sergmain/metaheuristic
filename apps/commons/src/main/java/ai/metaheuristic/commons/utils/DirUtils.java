@@ -38,6 +38,18 @@ public class DirUtils {
 
     @Nullable
     public static Path getParent(Path main, Path ending) {
+        if (!SystemUtils.IS_OS_WINDOWS) {
+            String mainStr = main.toString();
+            if (mainStr.contains("\\")) {
+                log.warn("017.110 Backslash path separators detected on non-Windows OS, path is broken: main='{}'", mainStr);
+                return null;
+            }
+            String endingStr = ending.toString();
+            if (endingStr.contains("\\")) {
+                log.warn("017.120 Backslash path separators detected on non-Windows OS, path is broken: ending='{}'", endingStr);
+                return null;
+            }
+        }
         if (!main.endsWith(ending)) {
             return null;
         }

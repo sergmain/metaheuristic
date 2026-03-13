@@ -36,10 +36,14 @@ public class DirUtilsTest {
 
     @Test
     public void test_getParent_55() {
-        if (!SystemUtils.IS_OS_WINDOWS && ("\\aaa\\bbbb\\ccc".contains("\\") || "bbbb\\ccc".contains("\\"))) {
-            throw new IllegalStateException("564.500 Backslash path separators are only valid on Windows");
+        // On non-Windows OS, backslash paths should be detected as broken by DirUtils.getParent() and return null
+        if (!SystemUtils.IS_OS_WINDOWS) {
+            assertNull(DirUtils.getParent(Path.of("\\aaa\\bbbb\\ccc"), Path.of("bbbb\\ccc")));
+            assertNull(DirUtils.getParent(Path.of("\\aaa\\bbbb\\ccc"), Path.of("bbbb/ccc")));
+            assertNull(DirUtils.getParent(Path.of("/aaa/bbbb/ccc"), Path.of("bbbb\\ccc")));
+        } else {
+            assertEquals(Path.of("\\aaa"), DirUtils.getParent(Path.of("\\aaa\\bbbb\\ccc"), Path.of("bbbb\\ccc")));
         }
-        assertEquals(Path.of("\\aaa"), DirUtils.getParent(Path.of("\\aaa\\bbbb\\ccc"), Path.of("bbbb\\ccc")));
         assertEquals(Path.of("/aaa"), DirUtils.getParent(Path.of("/aaa/bbbb/ccc"), Path.of("bbbb/ccc")));
         assertNull(DirUtils.getParent(Path.of("/aaa/bbbb/ccc/ddd"), Path.of("bbbb/ccc")));
     }
