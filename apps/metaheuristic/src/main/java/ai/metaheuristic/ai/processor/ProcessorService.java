@@ -237,8 +237,8 @@ public class ProcessorService {
         try {
             taskParamYaml.task.inputs.forEach(input -> {
                 VariableProvider resourceProvider = resourceProviderFactory.getVariableProvider(input.sourcing);
-                if (task.empty.isEmpty(input.id.toString())) {
-                    // variable was initialized and is empty so we don't need to download it again
+                if (input.empty || task.empty.isEmpty(input.id.toString())) {
+                    // variable is nullified/empty — no data to download
                     return;
                 }
 
