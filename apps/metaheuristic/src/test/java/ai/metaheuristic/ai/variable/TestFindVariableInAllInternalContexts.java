@@ -410,4 +410,27 @@ public class TestFindVariableInAllInternalContexts {
                 "when VariableState doesn't contain the relevant entry");
         assertEquals(created.id, found.id);
     }
+
+    @Test
+    public void test_findVariable_() {
+        Long execContextId = setupExecContext(List.of());
+        Variable created = createVariable("1,2,5,6,7|0#1", execContextId);
+
+        // Add an unrelated VariableState entry — simulates partial async update
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
+        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        ExecContextApiData.VariableInfo unrelatedVi = new ExecContextApiData.VariableInfo(999L, "otherVar", EnumsApi.VariableContext.local, ".txt");
+        info.states.add(new ExecContextApiData.VariableState(
+                1L, 0L, 0L, "1", "some-process", "some-function",
+                null, List.of(unrelatedVi)));
+        ecvs.updateParams(info);
+        execContextVariableStateRepository.save(ecvs);
+
+        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5,6,7,10", execContextId);
+        assertNotNull(found,
+                "Variable at '1,2,5,6,7|0#1' should be found from '1,2,5,6,7,10' via DB fallback " +
+                "when VariableState doesn't contain the relevant entry");
+        assertEquals(created.id, found.id);
+    }
 }
