@@ -64,6 +64,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -145,10 +146,18 @@ public class ExecContextTxService {
         // Filter out orphan tasks that were removed from the graph (e.g. after task reset)
         // but not yet cleaned up from DB by the Scheduler
         ExecContextGraph execContextGraph = execContextGraphRepository.findById(ec.execContextGraphId).orElse(null);
+        List<long[]> taskEdges = null;
         if (execContextGraph != null) {
-            Set<Long> graphTaskIds = ExecContextGraphService.importExecContextGraph(execContextGraph.getExecContextGraphParamsYaml())
-                    .vertexSet().stream().map(v -> v.taskId).collect(Collectors.toSet());
+            var taskGraph = ExecContextGraphService.importExecContextGraph(execContextGraph.getExecContextGraphParamsYaml());
+            Set<Long> graphTaskIds = taskGraph.vertexSet().stream().map(v -> v.taskId).collect(Collectors.toSet());
             taskStates.keySet().retainAll(graphTaskIds);
+
+            taskEdges = new ArrayList<>();
+            for (var edge : taskGraph.edgeSet()) {
+                var source = taskGraph.getEdgeSource(edge);
+                var target = taskGraph.getEdgeTarget(edge);
+                taskEdges.add(new long[]{source.taskId, target.taskId});
+            }
         }
 
         log.info("705.225 execContextId={}, variableStates.size={}, taskStates.size={}", execContextId, variableStates.size(), taskStates.size());
@@ -163,6 +172,7 @@ public class ExecContextTxService {
         if (!ecpy.columnNames.isEmpty()) {
             rawResult.columnNames = ecpy.columnNames;
         }
+        rawResult.taskEdges = taskEdges;
         return rawResult;
     }
 

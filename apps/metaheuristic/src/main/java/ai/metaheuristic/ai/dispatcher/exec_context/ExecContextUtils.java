@@ -216,6 +216,7 @@ public class ExecContextUtils {
             }
         }
         // shortName truncation moved to UI side
+        r.taskEdges = raw.taskEdges;
         return r;
     }
 

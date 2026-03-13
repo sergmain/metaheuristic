@@ -250,6 +250,10 @@ public class ExecContextApiData {
         @Nullable
         public TaskStateInfos taskStateInfos;
 
+        @JsonInclude(value= JsonInclude.Include.NON_EMPTY)
+        @Nullable
+        public List<long[]> taskEdges;
+
         public ExecContextStateResult(String error) {
             addErrorMessage(error);
         }
@@ -283,10 +287,13 @@ public class ExecContextApiData {
         @Nullable
         public Map<Integer, String> columnNames;
 
+        @Nullable
+        public List<long[]> taskEdges;
+
         public RawExecContextStateResult(Long sourceCodeId, List<VariableState> variableStates, List<String> processCodes,
                                          EnumsApi.SourceCodeType sourceCodeType, String sourceCodeUid,
                                          boolean sourceCodeValid, Map<Long, TaskApiData.TaskState> taskStates) {
-            this(sourceCodeId, variableStates, processCodes, sourceCodeType, sourceCodeUid, sourceCodeValid, taskStates, null);
+            this(sourceCodeId, variableStates, processCodes, sourceCodeType, sourceCodeUid, sourceCodeValid, taskStates, null, null);
         }
 
         public RawExecContextStateResult(String error) {
