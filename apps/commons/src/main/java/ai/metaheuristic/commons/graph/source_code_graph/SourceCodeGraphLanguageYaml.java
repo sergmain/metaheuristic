@@ -139,7 +139,12 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
         Set<ExecContextApiData.ProcessVertex> lastProcesses = new HashSet<>();
         // tasks for sub-processes of internal function will be produced at runtime phase
-        if (subProcesses !=null && subProcesses.processes != null && !subProcesses.processes.isEmpty()) {
+        if (subProcesses ==null || subProcesses.processes == null || subProcesses.processes.isEmpty()) {
+            // Leaf process — the process itself is the "last" vertex for chaining
+            lastProcesses.add(parentProcess);
+            return lastProcesses;
+        }
+        {
             Set<ExecContextApiData.ProcessVertex> prevProcesses = new HashSet<>();
             String subInternalContextId = null;
             if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
@@ -189,8 +194,6 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                     throw new NotImplementedException("564.120 not yet");
                 }
             }
-            lastProcesses.addAll(andProcesses);
-            lastProcesses.addAll(prevProcesses);
             if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and || subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.or) {
                 lastProcesses.addAll(allAndLastProcesses);
             }
@@ -198,7 +201,6 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                 lastProcesses.addAll(tempLastProcesses);
             }
         }
-        lastProcesses.add(parentProcess);
         return lastProcesses;
     }
 

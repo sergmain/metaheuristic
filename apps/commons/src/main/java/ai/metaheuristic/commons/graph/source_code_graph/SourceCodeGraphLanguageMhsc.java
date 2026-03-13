@@ -416,11 +416,9 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
             if (logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
                 lastProcesses.addAll(tempLastProcesses);
             }
-            if (logic == EnumsApi.SourceCodeSubProcessLogic.and || logic == EnumsApi.SourceCodeSubProcessLogic.or) {
+            else if (logic == EnumsApi.SourceCodeSubProcessLogic.and || logic == EnumsApi.SourceCodeSubProcessLogic.or) {
                 lastProcesses.addAll(allAndLastProcesses);
             }
-            lastProcesses.addAll(andProcesses);
-            lastProcesses.add(parentVertex);
 
             return lastProcesses;
         }
