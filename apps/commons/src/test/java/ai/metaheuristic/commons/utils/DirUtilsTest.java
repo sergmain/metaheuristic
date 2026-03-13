@@ -17,6 +17,7 @@
 package ai.metaheuristic.commons.utils;
 
 import ai.metaheuristic.commons.CommonConsts;
+import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -35,6 +36,9 @@ public class DirUtilsTest {
 
     @Test
     public void test_getParent_55() {
+        if (!SystemUtils.IS_OS_WINDOWS && ("\\aaa\\bbbb\\ccc".contains("\\") || "bbbb\\ccc".contains("\\"))) {
+            throw new IllegalStateException("564.500 Backslash path separators are only valid on Windows");
+        }
         assertEquals(Path.of("\\aaa"), DirUtils.getParent(Path.of("\\aaa\\bbbb\\ccc"), Path.of("bbbb\\ccc")));
         assertEquals(Path.of("/aaa"), DirUtils.getParent(Path.of("/aaa/bbbb/ccc"), Path.of("bbbb/ccc")));
         assertNull(DirUtils.getParent(Path.of("/aaa/bbbb/ccc/ddd"), Path.of("bbbb/ccc")));
