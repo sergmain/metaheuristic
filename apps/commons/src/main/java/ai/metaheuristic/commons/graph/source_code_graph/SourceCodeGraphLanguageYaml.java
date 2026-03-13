@@ -146,6 +146,8 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                 subInternalContextId = currentInternalContextId + ContextUtils.CONTEXT_DIGIT_SEPARATOR + contextIdSupplier.get();
             }
             List<ExecContextApiData.ProcessVertex> andProcesses = new ArrayList<>();
+            // Accumulate recursive leaves from ALL 'and' children, not just the last one
+            Set<ExecContextApiData.ProcessVertex> allAndLastProcesses = new HashSet<>();
             Set<ExecContextApiData.ProcessVertex> tempLastProcesses = CollectionUtils.asSet(parentProcess);
             for (SourceCodeParamsYaml.Process subP : subProcesses.processes) {
                 checkProcessCode(processCodes, subP);
@@ -181,6 +183,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                 }
                 else if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and) {
                     andProcesses.add(subV);
+                    allAndLastProcesses.addAll(tempLastProcesses);
                 }
                 else {
                     throw new NotImplementedException("564.120 not yet");
@@ -188,7 +191,12 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
             }
             lastProcesses.addAll(andProcesses);
             lastProcesses.addAll(prevProcesses);
-            lastProcesses.addAll(tempLastProcesses);
+            if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and || subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.or) {
+                lastProcesses.addAll(allAndLastProcesses);
+            }
+            else {
+                lastProcesses.addAll(tempLastProcesses);
+            }
         }
         lastProcesses.add(parentProcess);
         return lastProcesses;

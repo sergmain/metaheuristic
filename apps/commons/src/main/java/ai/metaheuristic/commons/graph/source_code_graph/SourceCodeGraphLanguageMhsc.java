@@ -369,6 +369,8 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
             tempLastProcesses.add(parentVertex);
             String subInternalContextId = null;
             List<ExecContextApiData.ProcessVertex> andProcesses = new ArrayList<>();
+            // Accumulate recursive leaves from ALL 'and' children, not just the last one
+            Set<ExecContextApiData.ProcessVertex> allAndLastProcesses = new HashSet<>();
 
             if (logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
                 subInternalContextId = parentInternalContextId + ContextUtils.CONTEXT_DIGIT_SEPARATOR + contextIdSupplier.get();
@@ -398,6 +400,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                         // For 'and', collect all direct child vertices
                         // The last vertex from processProcessDecl is the process vertex itself
                         andProcesses.addAll(tempLastProcesses);
+                        allAndLastProcesses.addAll(tempLastProcesses);
                     }
                 } else if (poc.forLoop() != null) {
                     tempLastProcesses = processForLoop(poc.forLoop(), subInternalContextId, tempParents);
@@ -412,6 +415,9 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
 
             if (logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
                 lastProcesses.addAll(tempLastProcesses);
+            }
+            if (logic == EnumsApi.SourceCodeSubProcessLogic.and || logic == EnumsApi.SourceCodeSubProcessLogic.or) {
+                lastProcesses.addAll(allAndLastProcesses);
             }
             lastProcesses.addAll(andProcesses);
             lastProcesses.add(parentVertex);
