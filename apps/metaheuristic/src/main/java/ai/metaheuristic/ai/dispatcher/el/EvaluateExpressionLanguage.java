@@ -27,9 +27,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.commons.CommonConsts;
-import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.DirUtils;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.core.ResolvableType;
@@ -45,6 +43,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.system_error;
 
@@ -59,6 +58,7 @@ public class EvaluateExpressionLanguage {
     // https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#expressions
 
     public record MhContext(String taskContextId, Long execContextId) { }
+    private record Ctx(Function<Long, String> varFunc, Function<Long, String> globalFunc){}
 
     public static class MhEvalContext implements EvaluationContext {
         public final String taskContextId;
@@ -69,6 +69,8 @@ public class EvaluateExpressionLanguage {
         public final VariableTxService variableTxService;
         public final VariableRepository variableRepository;
         public final Consumer<Variable> setAsNullFunction;
+
+        private final Ctx ctx;
 
         public MhEvalContext(String taskContextId, Long taskId, Long execContextId, InternalFunctionVariableService internalFunctionVariableService,
                              GlobalVariableTxService globalVariableService, VariableTxService variableTxService,
@@ -83,6 +85,8 @@ public class EvaluateExpressionLanguage {
             this.variableTxService = variableTxService;
             this.variableRepository = variableRepository;
             this.setAsNullFunction = setAsNullFunction;
+
+            ctx = new Ctx(variableTxService::getVariableDataAsString, globalVariableService::getVariableDataAsString);
         }
 
         @Override
@@ -93,9 +97,8 @@ public class EvaluateExpressionLanguage {
         @Override
         public List<PropertyAccessor> getPropertyAccessors() {
             PropertyAccessor pa = new PropertyAccessor() {
-                @Nullable
                 @Override
-                public Class<?>[] getSpecificTargetClasses() {
+                public Class<?>@Nullable [] getSpecificTargetClasses() {
                     return null;
                 }
 
@@ -187,7 +190,7 @@ public class EvaluateExpressionLanguage {
                         log.error(es, th);
                         throw new InternalFunctionException(system_error, es);
                     }
-                    int i=0;
+                    int _=0;
                 }
             };
             return List.of(pa);
@@ -279,30 +282,36 @@ public class EvaluateExpressionLanguage {
                 @Nullable
                 @Override
                 public Object convertValue(@Nullable Object value, @Nullable TypeDescriptor sourceType, TypeDescriptor targetType) {
-                    if (sourceType==null || value==null) {
-                        return null;
-                    }
-                    if (sourceType.getObjectType().equals(targetType.getObjectType())) {
-                        return value;
-                    }
-
-                    if (targetType.getObjectType().equals(Boolean.class)) {
-                        if (sourceType.getObjectType().equals(VariableUtils.VariableHolder.class)) {
-                            return getValueBoolean(value);
-                        }
-                    }
-                    if (targetType.getObjectType().equals(Integer.class)) {
-                        if (sourceType.getObjectType().equals(VariableUtils.VariableHolder.class)) {
-                            return getValueInteger(value);
-                        }
-                    }
-                    throw new NotImplementedException("509.200 Not yet, srcType: "+sourceType.getObjectType().getSimpleName()+", trgType: " + targetType.getObjectType().getSimpleName());
+                    return getObject(ctx, value, sourceType, targetType);
                 }
             };
         }
 
+        @Nullable
+        private static Object getObject(Ctx ctx, @Nullable Object value, @Nullable TypeDescriptor sourceType, TypeDescriptor targetType) {
+            if (sourceType ==null || value ==null) {
+                return null;
+            }
+            if (sourceType.getObjectType().equals(targetType.getObjectType())) {
+                return value;
+            }
+
+            if (targetType.getObjectType().equals(Boolean.class)) {
+                if (sourceType.getObjectType().equals(VariableUtils.VariableHolder.class)) {
+                    return getValueBoolean(ctx, value);
+                }
+            }
+            if (targetType.getObjectType().equals(Integer.class)) {
+                if (sourceType.getObjectType().equals(VariableUtils.VariableHolder.class)) {
+                    return getValueInteger(ctx, value);
+                }
+            }
+            throw new NotImplementedException("509.200 Not yet, srcType: "+ sourceType.getObjectType().getSimpleName()+", trgType: " + targetType.getObjectType().getSimpleName());
+        }
+
         @Override
         public TypeComparator getTypeComparator() {
+
             return new TypeComparator() {
                 @Override
                 public boolean canCompare(@Nullable Object firstObject, @Nullable Object secondObject) {
@@ -311,27 +320,31 @@ public class EvaluateExpressionLanguage {
 
                 @Override
                 public int compare(@Nullable Object firstObject, @Nullable Object secondObject) throws EvaluationException {
-                    if (firstObject==null || secondObject==null) {
+                    return extracted(ctx, firstObject, secondObject);
+                }
+
+                private static int extracted(Ctx ctx, @Nullable Object firstObject, @Nullable Object secondObject) {
+                    if (firstObject ==null || secondObject ==null) {
                         throw new EvaluationException("509.220 (firstObject==null || secondObject==null)");
                     }
                     // Detect if either operand is Boolean — use boolean comparison
-                    if (isBooleanComparison(firstObject, secondObject)) {
-                        Boolean firstValue = getValueBoolean(firstObject);
-                        Boolean secondValue = getValueBoolean(secondObject);
+                    if (isBooleanComparison(ctx, firstObject, secondObject)) {
+                        Boolean firstValue = getValueBoolean(ctx, firstObject);
+                        Boolean secondValue = getValueBoolean(ctx, secondObject);
                         return firstValue.compareTo(secondValue);
                     }
-                    Integer firstValue = getValueInteger(firstObject);
-                    Integer secondValue = getValueInteger(secondObject);
+                    Integer firstValue = getValueInteger(ctx, firstObject);
+                    Integer secondValue = getValueInteger(ctx, secondObject);
                     final int compare = firstValue.compareTo(secondValue);
                     return compare;
                 }
 
-                private boolean isBooleanComparison(Object first, Object second) {
+                private static boolean isBooleanComparison(Ctx ctx, Object first, Object second) {
                     return first instanceof Boolean || second instanceof Boolean
-                            || isBooleanVariableHolder(first) || isBooleanVariableHolder(second);
+                            || isBooleanVariableHolder(ctx, first) || isBooleanVariableHolder(ctx, second);
                 }
 
-                private boolean isBooleanVariableHolder(Object obj) {
+                private static boolean isBooleanVariableHolder(Ctx ctx, Object obj) {
                     if (!(obj instanceof VariableUtils.VariableHolder vh)) {
                         return false;
                     }
@@ -339,10 +352,11 @@ public class EvaluateExpressionLanguage {
                         return false;
                     }
                     String strValue;
+
                     if (vh.variable != null) {
-                        strValue = variableTxService.getVariableDataAsString(vh.variable.id);
+                        strValue = ctx.varFunc.apply(vh.variable.id);
                     } else if (vh.globalVariable != null) {
-                        strValue = globalVariableService.getVariableDataAsString(vh.globalVariable.id);
+                        strValue = ctx.globalFunc.apply(vh.globalVariable.id);
                     } else {
                         return false;
                     }
@@ -366,8 +380,8 @@ public class EvaluateExpressionLanguage {
                             new InternalFunctionData.InternalFunctionProcessingResult(system_error,
                                 "509.240 (leftOperand==null || rightOperand==null)"));
                     }
-                    Integer leftValue = getValueInteger(leftOperand);
-                    Integer rightValue = getValueInteger(rightOperand);
+                    Integer leftValue = getValueInteger(ctx,leftOperand);
+                    Integer rightValue = getValueInteger(ctx, rightOperand);
                     try {
                         return switch (operation) {
                             case ADD -> leftValue + rightValue;
@@ -388,7 +402,7 @@ public class EvaluateExpressionLanguage {
             return ool;
         }
 
-        private Integer getValueInteger(Object operand) {
+        private static Integer getValueInteger(Ctx ctx, Object operand) {
             if (operand instanceof Integer) {
                 return (Integer)operand;
             }
@@ -396,11 +410,11 @@ public class EvaluateExpressionLanguage {
                 throw new EvaluationException("509.280 not supported type: " + operand.getClass());
             }
 
-            String strValue = getAsString(variableHolder);
+            String strValue = getAsString(ctx, variableHolder);
             return Integer.valueOf(strValue);
         }
 
-        private Boolean getValueBoolean(Object operand) {
+        private static Boolean getValueBoolean(Ctx ctx, Object operand) {
             if (operand instanceof Boolean) {
                 return (Boolean)operand;
             }
@@ -408,20 +422,20 @@ public class EvaluateExpressionLanguage {
                 throw new EvaluationException("509.300 not supported type: " + operand.getClass());
             }
 
-            String strValue = getAsString(variableHolder);
+            String strValue = getAsString(ctx, variableHolder);
             return Boolean.parseBoolean(strValue);
         }
 
-        private String getAsString(VariableUtils.VariableHolder variableHolder) {
+        private static String getAsString(Ctx ctx, VariableUtils.VariableHolder variableHolder) {
             if (variableHolder.notInited()) {
                 throw new EvaluationException("509.320 (variableHolder.notInited())");
             }
             String strValue;
             if (variableHolder.variable!=null) {
-                strValue = variableTxService.getVariableDataAsString(variableHolder.variable.id);
+                strValue = ctx.varFunc.apply(variableHolder.variable.id);
             }
             else if (variableHolder.globalVariable!=null) {
-                strValue = globalVariableService.getVariableDataAsString(variableHolder.globalVariable.id);
+                strValue = ctx.globalFunc.apply(variableHolder.globalVariable.id);
             }
             else {
                 throw new IllegalStateException("509.340 both are null");
