@@ -256,7 +256,6 @@ public class FunctionRepositoryDispatcherService {
         }
         SourceCodeStoredParamsYaml scspy = sc.getSourceCodeStoredParamsYaml();
         SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
-//        final SourceCodeParamsYaml params = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
         Set<String> funcCodes = collectFunctionCodes(scg);
         registerCodes(funcCodes, false);
     }

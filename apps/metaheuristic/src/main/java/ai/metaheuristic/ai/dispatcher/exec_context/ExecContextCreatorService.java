@@ -142,7 +142,6 @@ public class ExecContextCreatorService {
 
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
         SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
-//        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
         if (!scg.variables.inputs.isEmpty()) {
             throw new IllegalStateException("562.120 Tasks can't be created with execContext because SourceCode has input variable(s). Task must be created after initializing SourceCode input variables.");
         }

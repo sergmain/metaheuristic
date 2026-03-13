@@ -226,7 +226,6 @@ public class SourceCodeValidationService {
                         );
                     }
                     SourceCodeStoredParamsYaml scspy = sc.getSourceCodeStoredParamsYaml();
-//                    SourceCodeParamsYaml ppy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
                     SourceCodeGraph scg = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
 
                     int inputNumber = scg.variables.inputs.size();

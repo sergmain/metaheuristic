@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.internal_functions;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
-import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
@@ -50,6 +50,11 @@ public class InternalFunctionVariableService {
     private final VariableTxService variableService;
     private final GlobalVariableRepository globalVariableRepository;
     private final GlobalVariableTxService globalVariableService;
+    private final ExecContextRepository execContextRepository;
+    private final ExecContextVariableStateRepository execContextVariableStateRepository;
+    private final ExecContextTaskStateRepository execContextTaskStateRepository;
+    private final ExecContextGraphRepository execContextGraphRepository;
+    private final VariableRepository variableRepository;
 
     public void storeToFile(VariableUtils.VariableHolder holder, Path file) {
         if (holder.variable!=null) {
@@ -84,7 +89,7 @@ public class InternalFunctionVariableService {
                     if (throwsException) {
                         throw new InternalFunctionException(
                                 new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.variable_not_found,
-                                        "Variable '" + name + "' not found in local and global contexts, internal context " + taskContextId));
+                                        "996.040 Variable '" + name + "' not found in local and global contexts, internal context " + taskContextId));
                     }
                 }
             }
@@ -96,7 +101,7 @@ public class InternalFunctionVariableService {
         List<VariableUtils.VariableHolder> holders = discoverVariables(execContextId, taskContextId, inputVariableName);
         if (holders.size()>1) {
             throw new InternalFunctionException(
-                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "995.040 Too many variables"));
+                    new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.system_error, "996.080 Too many variables"));
         }
 
         VariableUtils.VariableHolder variableHolder = holders.get(0);
@@ -108,7 +113,7 @@ public class InternalFunctionVariableService {
             s = globalVariableService.getVariableDataAsString(variableHolder.globalVariable.id);
         }
         else {
-            throw new IllegalStateException("variableHolder.variabl==null && variableHolder.globalVariable==null");
+            throw new IllegalStateException("996.120 variableHolder.variabl==null && variableHolder.globalVariable==null");
         }
         return s;
     }

@@ -125,10 +125,7 @@ public class DispatcherParamsService {
     @Transactional
     public void registerSourceCode(SourceCodeImpl sourceCode) {
         SourceCodeStoredParamsYaml scspy = sourceCode.getSourceCodeStoredParamsYaml();
-        SourceCodeParamsYaml scpy = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(scspy.source);
-
         SourceCodeGraph sourceCodeGraph = SourceCodeGraphFactory.parse(scspy.lang, scspy.source);
-
 
         registerSpecific(sourceCode, sourceCodeGraph, Consts.MH_EXPERIMENT_RESULT_PROCESSOR, this::registerExperiment);
         registerSpecific(sourceCode, sourceCodeGraph, Consts.MH_BATCH_RESULT_PROCESSOR_FUNCTION, this::registerBatch);
