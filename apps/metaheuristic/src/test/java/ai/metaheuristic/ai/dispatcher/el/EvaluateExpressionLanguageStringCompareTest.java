@@ -17,15 +17,12 @@
 package ai.metaheuristic.ai.dispatcher.el;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.TypeComparator;
-import org.springframework.expression.TypedValue;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.lang.Nullable;
 
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -78,7 +75,7 @@ class EvaluateExpressionLanguageStringCompareTest {
                 return first.compareTo(second);
             }
 
-            private String extractString(Object obj) {
+            private static String extractString(Object obj) {
                 if (obj instanceof String s) return s;
                 if (obj instanceof StringWrapper sw) return sw.value();
                 throw new IllegalArgumentException("Unsupported type: " + obj.getClass());

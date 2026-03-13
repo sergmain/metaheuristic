@@ -334,7 +334,7 @@ public class EvaluateExpressionLanguage {
                         return firstValue.compareTo(secondValue);
                     }
                     // Detect if either operand is a String — use string comparison
-                    if (isStringComparison(firstObject, secondObject)) {
+                    if (isStringComparison(ctx, firstObject, secondObject)) {
                         String firstValue = getValueString(ctx, firstObject);
                         String secondValue = getValueString(ctx, secondObject);
                         return firstValue.compareTo(secondValue);
@@ -348,6 +348,11 @@ public class EvaluateExpressionLanguage {
                 private static boolean isBooleanComparison(Ctx ctx, Object first, Object second) {
                     return first instanceof Boolean || second instanceof Boolean
                             || isBooleanVariableHolder(ctx, first) || isBooleanVariableHolder(ctx, second);
+                }
+
+                private static boolean isStringComparison(Ctx ctx, Object first, Object second) {
+                    return first instanceof String || second instanceof String
+                            || isStringVariableHolder(ctx, first) || isStringVariableHolder(ctx, second);
                 }
 
                 private static boolean isBooleanVariableHolder(Ctx ctx, Object obj) {
@@ -367,6 +372,25 @@ public class EvaluateExpressionLanguage {
                         return false;
                     }
                     return "true".equalsIgnoreCase(strValue) || "false".equalsIgnoreCase(strValue);
+                }
+
+                private static boolean isStringVariableHolder(Ctx ctx, Object obj) {
+                    if (!(obj instanceof VariableUtils.VariableHolder vh)) {
+                        return false;
+                    }
+                    if (vh.notInited()) {
+                        return false;
+                    }
+                    String strValue;
+
+                    if (vh.variable != null) {
+                        strValue = ctx.varFunc.apply(vh.variable.id);
+                    } else if (vh.globalVariable != null) {
+                        strValue = ctx.globalFunc.apply(vh.globalVariable.id);
+                    } else {
+                        return false;
+                    }
+                    return strValue!=null;
                 }
             };
         }
@@ -430,6 +454,18 @@ public class EvaluateExpressionLanguage {
 
             String strValue = getAsString(ctx, variableHolder);
             return Boolean.parseBoolean(strValue);
+        }
+
+        private static String getValueString(Ctx ctx, Object operand) {
+            if (operand instanceof String) {
+                return (String)operand;
+            }
+            if (!(operand instanceof VariableUtils.VariableHolder variableHolder)) {
+                throw new EvaluationException("509.320 not supported type: " + operand.getClass());
+            }
+
+            String strValue = getAsString(ctx, variableHolder);
+            return strValue;
         }
 
         private static String getAsString(Ctx ctx, VariableUtils.VariableHolder variableHolder) {
