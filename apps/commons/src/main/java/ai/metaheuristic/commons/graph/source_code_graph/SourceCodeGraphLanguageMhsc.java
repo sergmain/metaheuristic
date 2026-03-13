@@ -397,10 +397,18 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                 if (poc.processDecl() != null) {
                     tempLastProcesses = processProcessDecl(poc.processDecl(), subInternalContextId, tempParents);
                     if (logic == EnumsApi.SourceCodeSubProcessLogic.and) {
-                        // For 'and', collect all direct child vertices
-                        // The last vertex from processProcessDecl is the process vertex itself
-                        andProcesses.addAll(tempLastProcesses);
-                        allAndLastProcesses.addAll(tempLastProcesses);
+                        // For 'and', collect recursive leaves from each branch.
+                        // Exclude the direct child vertex itself (it has parentVertex as graph parent
+                        // and has outgoing edges, i.e., it's not a leaf). Leaf branches (no subprocesses)
+                        // are their own leaves and must be included.
+                        for (ExecContextApiData.ProcessVertex v : tempLastProcesses) {
+                            boolean isDirectChildOfParent = scg.processGraph.incomingEdgesOf(v).stream()
+                                    .anyMatch(e -> scg.processGraph.getEdgeSource(e).equals(parentVertex));
+                            boolean hasChildren = scg.processGraph.outDegreeOf(v) > 0;
+                            if (!(isDirectChildOfParent && hasChildren)) {
+                                allAndLastProcesses.add(v);
+                            }
+                        }
                     }
                 } else if (poc.forLoop() != null) {
                     tempLastProcesses = processForLoop(poc.forLoop(), subInternalContextId, tempParents);
@@ -416,9 +424,10 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
             if (logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
                 lastProcesses.addAll(tempLastProcesses);
             }
-            else if (logic == EnumsApi.SourceCodeSubProcessLogic.and || logic == EnumsApi.SourceCodeSubProcessLogic.or) {
+            if (logic == EnumsApi.SourceCodeSubProcessLogic.and || logic == EnumsApi.SourceCodeSubProcessLogic.or) {
                 lastProcesses.addAll(allAndLastProcesses);
             }
+            lastProcesses.add(parentVertex);
 
             return lastProcesses;
         }

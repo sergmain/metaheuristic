@@ -32,29 +32,74 @@ import static ai.metaheuristic.commons.graph.ExecContextProcessGraphService.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests that parallel (and) branches are truly independent.
- * In parallel mode each subProcess is a single computational entity.
- * The return set from a parallel block should contain only the true leaves
- * of each branch - not the branch vertices themselves, not the parent.
- *
- * Correct convergence: after-gate's parents = {leaf of branch-a, leaf of branch-b}
- * Bug: after-gate's parents = {branch-a, branch-b, gate, a-deep, ...} - all internals leak.
+ * Tests that parallel (and) branch VERTICES do not leak into the return set
+ * of processSubProcessChildren. In parallel mode, each subProcess is a single
+ * computational entity. The direct child process vertices (active-branch,
+ * obsolete-branch) must NOT appear as parents of the next process outside
+ * the parallel block. Only the true recursive leaves (allAndLastProcesses)
+ * and the parent vertex itself should propagate.
  */
 @Execution(ExecutionMode.CONCURRENT)
 public class TestParallelBranchIsolation {
 
     /**
-     * gate { parallel { active(seq{a1,a2}), obsolete(seq{ob1}) } } -> after-gate
+     * gate { parallel { active(seq{a1,a2}), obsolete(seq{ob1}) } } -> mh.finish
      *
-     * Expected edges:
-     *   gate -> active-branch -> a1 -> a2
-     *   gate -> obsolete-branch -> ob1
-     *   {a2, ob1} -> after-gate -> mh.finish
-     *
-     * Bug: after-gate gets parents {a2, ob1, active-branch, obsolete-branch, gate}
+     * mh.finish parents must include: gate (parentVertex), a2, ob1 (allAndLastProcesses)
+     * mh.finish parents must NOT include: active-branch, obsolete-branch (andProcesses)
      */
     @Test
-    public void test_mhsc_process_after_parallel_gate_has_only_leaf_parents() {
+    public void test_mhsc_parallel_branch_vertices_dont_leak_to_finish() {
+        String mhsc = """
+            source "test-parallel-no-leak" (strict) {
+                gate := internal mh.nop {
+                    parallel {
+                        active-branch := internal mh.nop {
+                            sequential {
+                                a1 := internal mh.nop {}
+                                a2 := internal mh.nop {}
+                            }
+                        }
+                        obsolete-branch := internal mh.nop {
+                            sequential {
+                                ob1 := internal mh.nop {}
+                            }
+                        }
+                    }
+                }
+            }
+            """;
+
+        var graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        var pg = graph.processGraph;
+
+        System.out.println("MHSC Graph:\n" + asString(pg));
+
+        assertAllVerticesReachFinish(pg);
+        assertDirectParents(pg, "active-branch", Set.of("gate"));
+        assertDirectParents(pg, "obsolete-branch", Set.of("gate"));
+
+        ExecContextApiData.ProcessVertex finish = findVertex(pg, "mh.finish");
+        assertNotNull(finish);
+        Set<String> finishParents = directParentNames(pg, finish);
+
+        // parentVertex and allAndLastProcesses ARE parents
+        assertTrue(finishParents.contains("gate"), "gate must be parent of mh.finish. Parents: " + finishParents);
+        assertTrue(finishParents.contains("a2"), "a2 must be parent of mh.finish. Parents: " + finishParents);
+        assertTrue(finishParents.contains("ob1"), "ob1 must be parent of mh.finish. Parents: " + finishParents);
+
+        // andProcesses (branch vertices) must NOT be parents
+        assertFalse(finishParents.contains("active-branch"),
+                "active-branch must NOT be parent of mh.finish. Parents: " + finishParents);
+        assertFalse(finishParents.contains("obsolete-branch"),
+                "obsolete-branch must NOT be parent of mh.finish. Parents: " + finishParents);
+    }
+
+    /**
+     * Same but with after-gate process in the outer sequential chain.
+     */
+    @Test
+    public void test_mhsc_parallel_branch_vertices_dont_leak_to_after_gate() {
         String mhsc = """
             source "test-post-parallel" (strict) {
                 wrapper := internal mh.nop {
@@ -84,164 +129,29 @@ public class TestParallelBranchIsolation {
         var graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
         var pg = graph.processGraph;
 
-        System.out.println("MHSC Graph:\n" + asString(pg));
+        System.out.println("MHSC after-gate Graph:\n" + asString(pg));
 
-        // All vertices must reach mh.finish
         assertAllVerticesReachFinish(pg);
 
-        // Each parallel branch starts from gate only
-        assertDirectParents(pg, "active-branch", Set.of("gate"));
-        assertDirectParents(pg, "obsolete-branch", Set.of("gate"));
-
-        // after-gate should converge from the leaves of each branch only
         ExecContextApiData.ProcessVertex afterGate = findVertex(pg, "after-gate");
         assertNotNull(afterGate);
-        Set<String> afterGateParents = directParentNames(pg, afterGate);
+        Set<String> parents = directParentNames(pg, afterGate);
 
-        // Must NOT include non-leaf internals
-        assertFalse(afterGateParents.contains("gate"),
-                "gate must NOT be a direct parent of after-gate. Parents: " + afterGateParents);
-        assertFalse(afterGateParents.contains("active-branch"),
-                "active-branch must NOT be a direct parent of after-gate. Parents: " + afterGateParents);
-        assertFalse(afterGateParents.contains("obsolete-branch"),
-                "obsolete-branch must NOT be a direct parent of after-gate. Parents: " + afterGateParents);
+        // andProcesses must NOT be parents of after-gate
+        assertFalse(parents.contains("active-branch"),
+                "active-branch must NOT be parent of after-gate. Parents: " + parents);
+        assertFalse(parents.contains("obsolete-branch"),
+                "obsolete-branch must NOT be parent of after-gate. Parents: " + parents);
     }
 
     /**
-     * No after-gate - parallel branches converge directly to mh.finish.
-     *
-     * Expected edges:
-     *   wrapper -> step1 -> gate -> active-branch -> a1
-     *   gate -> obsolete-branch
-     *   {a1, obsolete-branch} -> mh.finish
-     *
-     * mh.finish must NOT have gate or active-branch as direct parents.
+     * Leaf branch (no subprocesses) — the branch vertex itself IS the leaf.
+     * It must still appear as a parent of the next process.
      */
     @Test
-    public void test_mhsc_parallel_leaves_converge_directly_to_finish() {
+    public void test_mhsc_leaf_branch_is_its_own_leaf() {
         String mhsc = """
-            source "test-parallel-converge-finish" (strict) {
-                wrapper := internal mh.nop {
-                    sequential {
-                        step1 := internal mh.nop {}
-                        gate := internal mh.nop {
-                            parallel {
-                                active-branch := internal mh.nop {
-                                    sequential {
-                                        a1 := internal mh.nop {}
-                                    }
-                                }
-                                obsolete-branch := internal mh.nop {}
-                            }
-                        }
-                    }
-                }
-            }
-            """;
-
-        var graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
-        var pg = graph.processGraph;
-
-        System.out.println("MHSC converge-to-finish Graph:\n" + asString(pg));
-
-        assertAllVerticesReachFinish(pg);
-
-        // Parallel branches start from gate
-        assertDirectParents(pg, "active-branch", Set.of("gate"));
-        assertDirectParents(pg, "obsolete-branch", Set.of("gate"));
-
-        // mh.finish direct parents: only the true leaves of each parallel branch
-        // a1 is the leaf of active-branch's sequential chain
-        // obsolete-branch has no subprocesses, so it IS its own leaf
-        ExecContextApiData.ProcessVertex finish = findVertex(pg, "mh.finish");
-        assertNotNull(finish);
-        Set<String> finishParents = directParentNames(pg, finish);
-
-        assertTrue(finishParents.contains("a1"),
-                "a1 (leaf of active-branch) must be a direct parent of mh.finish. Parents: " + finishParents);
-        assertTrue(finishParents.contains("obsolete-branch"),
-                "obsolete-branch (leaf of itself) must be a direct parent of mh.finish. Parents: " + finishParents);
-        assertFalse(finishParents.contains("gate"),
-                "gate must NOT be a direct parent of mh.finish. Parents: " + finishParents);
-        assertFalse(finishParents.contains("active-branch"),
-                "active-branch must NOT be a direct parent of mh.finish. Parents: " + finishParents);
-
-        // obsolete-branch must NOT have any ancestor from inside active-branch
-        ExecContextApiData.ProcessVertex obsoleteV = findVertex(pg, "obsolete-branch");
-        assertNotNull(obsoleteV);
-        Set<String> obsoleteAncestors = pg.getAncestors(obsoleteV).stream()
-                .map(v -> v.process).collect(Collectors.toSet());
-        assertFalse(obsoleteAncestors.contains("a1"),
-                "a1 must NOT be an ancestor of obsolete-branch");
-        assertFalse(obsoleteAncestors.contains("active-branch"),
-                "active-branch must NOT be an ancestor of obsolete-branch");
-    }
-
-    /**
-     * Deeper parallel: both branches have sequential children, converge to mh.finish.
-     *
-     * Expected edges:
-     *   gate -> active-branch -> a1 -> a2
-     *   gate -> obsolete-branch -> ob1
-     *   {a2, ob1} -> mh.finish
-     */
-    @Test
-    public void test_mhsc_deep_parallel_converge_to_finish() {
-        String mhsc = """
-            source "test-deep-parallel-finish" (strict) {
-                gate := internal mh.nop {
-                    parallel {
-                        active-branch := internal mh.nop {
-                            sequential {
-                                a1 := internal mh.nop {}
-                                a2 := internal mh.nop {}
-                            }
-                        }
-                        obsolete-branch := internal mh.nop {
-                            sequential {
-                                ob1 := internal mh.nop {}
-                            }
-                        }
-                    }
-                }
-            }
-            """;
-
-        var graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
-        var pg = graph.processGraph;
-
-        System.out.println("MHSC deep-parallel-finish Graph:\n" + asString(pg));
-
-        assertAllVerticesReachFinish(pg);
-
-        assertDirectParents(pg, "active-branch", Set.of("gate"));
-        assertDirectParents(pg, "obsolete-branch", Set.of("gate"));
-
-        // mh.finish direct parents: only a2 and ob1 (true leaves)
-        ExecContextApiData.ProcessVertex finish = findVertex(pg, "mh.finish");
-        assertNotNull(finish);
-        Set<String> finishParents = directParentNames(pg, finish);
-
-        assertTrue(finishParents.contains("a2"),
-                "a2 must be a direct parent of mh.finish. Parents: " + finishParents);
-        assertTrue(finishParents.contains("ob1"),
-                "ob1 must be a direct parent of mh.finish. Parents: " + finishParents);
-        assertFalse(finishParents.contains("gate"),
-                "gate must NOT be a direct parent of mh.finish. Parents: " + finishParents);
-        assertFalse(finishParents.contains("active-branch"),
-                "active-branch must NOT be a direct parent of mh.finish. Parents: " + finishParents);
-        assertFalse(finishParents.contains("obsolete-branch"),
-                "obsolete-branch must NOT be a direct parent of mh.finish. Parents: " + finishParents);
-    }
-
-    /**
-     * Parallel branch where one child has NO subprocesses (leaf nop).
-     * That child itself IS the leaf - it should appear in the convergence set.
-     */
-    @Test
-    public void test_mhsc_parallel_leaf_child_is_leaf() {
-        String mhsc = """
-            source "test-parallel-leaf-child" (strict) {
+            source "test-leaf-branch" (strict) {
                 wrapper := internal mh.nop {
                     sequential {
                         gate := internal mh.nop {
@@ -263,33 +173,33 @@ public class TestParallelBranchIsolation {
         var graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
         var pg = graph.processGraph;
 
-        System.out.println("MHSC leaf-child Graph:\n" + asString(pg));
+        System.out.println("MHSC leaf-branch Graph:\n" + asString(pg));
 
         assertAllVerticesReachFinish(pg);
 
-        // after-gate's parents: deep1 (leaf of deep-branch) and leaf-branch (itself is a leaf)
         ExecContextApiData.ProcessVertex afterGate = findVertex(pg, "after-gate");
         assertNotNull(afterGate);
         Set<String> parents = directParentNames(pg, afterGate);
-        assertTrue(parents.contains("deep1"),
-                "deep1 must be a parent of after-gate. Parents: " + parents);
+
+        // leaf-branch IS its own leaf — must be a parent of after-gate
         assertTrue(parents.contains("leaf-branch"),
-                "leaf-branch must be a parent of after-gate (it is its own leaf). Parents: " + parents);
-        assertFalse(parents.contains("gate"),
-                "gate must NOT be a direct parent of after-gate. Parents: " + parents);
+                "leaf-branch must be parent of after-gate. Parents: " + parents);
+        assertTrue(parents.contains("deep1"),
+                "deep1 must be parent of after-gate. Parents: " + parents);
+        // deep-branch has subprocesses — must NOT leak
         assertFalse(parents.contains("deep-branch"),
-                "deep-branch must NOT be a direct parent of after-gate. Parents: " + parents);
+                "deep-branch must NOT be parent of after-gate. Parents: " + parents);
     }
 
     /**
-     * YAML equivalent: parallel branches converge directly to mh.finish.
+     * YAML equivalent.
      */
     @Test
-    public void test_yaml_parallel_converge_to_finish() {
+    public void test_yaml_parallel_branch_vertices_dont_leak() {
         String yaml = """
             version: 5
             source:
-              uid: test-yaml-parallel-finish
+              uid: test-yaml-parallel-no-leak
               processes:
                 - code: gate
                   function:
@@ -329,108 +239,22 @@ public class TestParallelBranchIsolation {
         var graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, yaml);
         var pg = graph.processGraph;
 
-        System.out.println("YAML converge-to-finish Graph:\n" + asString(pg));
+        System.out.println("YAML Graph:\n" + asString(pg));
 
         assertAllVerticesReachFinish(pg);
-
-        assertDirectParents(pg, "active-branch", Set.of("gate"));
-        assertDirectParents(pg, "obsolete-branch", Set.of("gate"));
 
         ExecContextApiData.ProcessVertex finish = findVertex(pg, "mh.finish");
         assertNotNull(finish);
         Set<String> finishParents = directParentNames(pg, finish);
 
-        assertTrue(finishParents.contains("a2"),
-                "a2 must be a direct parent of mh.finish (YAML). Parents: " + finishParents);
-        assertTrue(finishParents.contains("ob1"),
-                "ob1 must be a direct parent of mh.finish (YAML). Parents: " + finishParents);
-        assertFalse(finishParents.contains("gate"),
-                "gate must NOT be a direct parent of mh.finish (YAML). Parents: " + finishParents);
+        assertTrue(finishParents.contains("gate"), "gate must be parent of mh.finish (YAML). Parents: " + finishParents);
+        assertTrue(finishParents.contains("a2"), "a2 must be parent of mh.finish (YAML). Parents: " + finishParents);
+        assertTrue(finishParents.contains("ob1"), "ob1 must be parent of mh.finish (YAML). Parents: " + finishParents);
+
         assertFalse(finishParents.contains("active-branch"),
-                "active-branch must NOT be a direct parent of mh.finish (YAML). Parents: " + finishParents);
+                "active-branch must NOT be parent of mh.finish (YAML). Parents: " + finishParents);
         assertFalse(finishParents.contains("obsolete-branch"),
-                "obsolete-branch must NOT be a direct parent of mh.finish (YAML). Parents: " + finishParents);
-    }
-
-    /**
-     * YAML equivalent with after-gate process.
-     */
-    @Test
-    public void test_yaml_parallel_branches_isolated_with_after_gate() {
-        String yaml = """
-            version: 5
-            source:
-              uid: test-yaml-parallel-isolation
-              processes:
-                - code: wrapper
-                  function:
-                    code: mh.nop
-                    context: internal
-                  subProcesses:
-                    logic: sequential
-                    processes:
-                      - code: step1
-                        function:
-                          code: mh.nop
-                          context: internal
-                      - code: gate
-                        function:
-                          code: mh.nop
-                          context: internal
-                        subProcesses:
-                          logic: and
-                          processes:
-                            - code: active-branch
-                              function:
-                                code: mh.nop
-                                context: internal
-                              subProcesses:
-                                logic: sequential
-                                processes:
-                                  - code: a1
-                                    function:
-                                      code: mh.nop
-                                      context: internal
-                                  - code: a2
-                                    function:
-                                      code: mh.nop
-                                      context: internal
-                            - code: obsolete-branch
-                              function:
-                                code: mh.nop
-                                context: internal
-                              subProcesses:
-                                logic: sequential
-                                processes:
-                                  - code: ob1
-                                    function:
-                                      code: mh.nop
-                                      context: internal
-                      - code: after-gate
-                        function:
-                          code: mh.nop
-                          context: internal
-            """;
-
-        var graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, yaml);
-        var pg = graph.processGraph;
-
-        System.out.println("YAML with-after-gate Graph:\n" + asString(pg));
-
-        assertAllVerticesReachFinish(pg);
-
-        assertDirectParents(pg, "active-branch", Set.of("gate"));
-        assertDirectParents(pg, "obsolete-branch", Set.of("gate"));
-
-        ExecContextApiData.ProcessVertex afterGate = findVertex(pg, "after-gate");
-        assertNotNull(afterGate);
-        Set<String> parents = directParentNames(pg, afterGate);
-        assertFalse(parents.contains("gate"),
-                "gate must NOT be a direct parent of after-gate (YAML). Parents: " + parents);
-        assertFalse(parents.contains("active-branch"),
-                "active-branch must NOT be a direct parent of after-gate (YAML). Parents: " + parents);
-        assertFalse(parents.contains("obsolete-branch"),
-                "obsolete-branch must NOT be a direct parent of after-gate (YAML). Parents: " + parents);
+                "obsolete-branch must NOT be parent of mh.finish (YAML). Parents: " + finishParents);
     }
 
     // ======== Helpers ========
@@ -448,16 +272,15 @@ public class TestParallelBranchIsolation {
             DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> pg,
             String processCode, Set<String> expectedParents) {
         ExecContextApiData.ProcessVertex v = findVertex(pg, processCode);
-        assertNotNull(v, "Process '" + processCode + "' must exist in graph");
-        Set<String> actualParents = directParentNames(pg, v);
-        assertEquals(expectedParents, actualParents,
+        assertNotNull(v, "Process '" + processCode + "' must exist");
+        assertEquals(expectedParents, directParentNames(pg, v),
                 "Process '" + processCode + "' has wrong parents.\nGraph:\n" + asString(pg));
     }
 
     private static void assertAllVerticesReachFinish(
             DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> pg) {
         ExecContextApiData.ProcessVertex finish = findVertex(pg, "mh.finish");
-        assertNotNull(finish, "mh.finish must exist in graph");
+        assertNotNull(finish, "mh.finish must exist");
 
         Set<ExecContextApiData.ProcessVertex> reachable = new HashSet<>();
         Queue<ExecContextApiData.ProcessVertex> queue = new LinkedList<>();

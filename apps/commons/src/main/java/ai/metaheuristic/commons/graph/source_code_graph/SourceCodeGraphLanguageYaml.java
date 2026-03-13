@@ -139,12 +139,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
 
         Set<ExecContextApiData.ProcessVertex> lastProcesses = new HashSet<>();
         // tasks for sub-processes of internal function will be produced at runtime phase
-        if (subProcesses ==null || subProcesses.processes == null || subProcesses.processes.isEmpty()) {
-            // Leaf process — the process itself is the "last" vertex for chaining
-            lastProcesses.add(parentProcess);
-            return lastProcesses;
-        }
-        {
+        if (subProcesses !=null && subProcesses.processes != null && !subProcesses.processes.isEmpty()) {
             Set<ExecContextApiData.ProcessVertex> prevProcesses = new HashSet<>();
             String subInternalContextId = null;
             if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.sequential) {
@@ -187,13 +182,22 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                     prevProcesses = CollectionUtils.asSet(subV);
                 }
                 else if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and) {
-                    andProcesses.add(subV);
-                    allAndLastProcesses.addAll(tempLastProcesses);
+                    // Collect recursive leaves, excluding the direct child vertex if it has subprocesses.
+                    // Leaf branches (no subprocesses) are their own leaves and must be included.
+                    for (ExecContextApiData.ProcessVertex v : tempLastProcesses) {
+                        boolean isDirectChildOfParent = scg.processGraph.incomingEdgesOf(v).stream()
+                                .anyMatch(e -> scg.processGraph.getEdgeSource(e).equals(parentProcess));
+                        boolean hasChildren = scg.processGraph.outDegreeOf(v) > 0;
+                        if (!(isDirectChildOfParent && hasChildren)) {
+                            allAndLastProcesses.add(v);
+                        }
+                    }
                 }
                 else {
                     throw new NotImplementedException("564.120 not yet");
                 }
             }
+            lastProcesses.addAll(prevProcesses);
             if (subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.and || subProcesses.logic == EnumsApi.SourceCodeSubProcessLogic.or) {
                 lastProcesses.addAll(allAndLastProcesses);
             }
@@ -201,6 +205,7 @@ public class SourceCodeGraphLanguageYaml implements SourceCodeGraphLanguage {
                 lastProcesses.addAll(tempLastProcesses);
             }
         }
+        lastProcesses.add(parentProcess);
         return lastProcesses;
     }
 

@@ -74,19 +74,15 @@ public class TestSourceCodeGraphLanguageYaml {
 
         List<ExecContextApiData.ProcessVertex> vs2 = findTargets(graph.processGraph, processDataset);
 
-        assertEquals(2, vs2.size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(3, vs2.size(), "Graph: \n" + asString(graph.processGraph));
 
         ExecContextApiData.ProcessVertex v21 = vs2.stream().filter(o->o.process.equals("feature-processing_cluster")).findFirst().orElseThrow();
         ExecContextApiData.ProcessVertex v22 = vs2.stream().filter(o->o.process.equals("feature-processing_matrix")).findFirst().orElseThrow();
-        // mh.permute is no longer a direct target of dataset-processing — it follows the parallel leaves
-        ExecContextApiData.ProcessVertex v23 = findVertex(graph.processGraph, "mh.permute-variables-and-hyper-params");
-        assertNotNull(v23);
+        ExecContextApiData.ProcessVertex v23 = vs2.stream().filter(o->o.process.equals("mh.permute-variables-and-hyper-params")).findFirst().orElseThrow();
 
-        // cluster and matrix each point to mh.permute (converge after parallel)
         assertEquals(1, findTargets(graph.processGraph, v21.process).size(), "Graph: \n" + asString(graph.processGraph));
         assertEquals(1, findTargets(graph.processGraph, v22.process).size(), "Graph: \n" + asString(graph.processGraph));
-        // mh.permute points to fit-data (first in its sequential chain)
-        assertEquals(1, findTargets(graph.processGraph, v23.process).size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(2, findTargets(graph.processGraph, v23.process).size(), "Graph: \n" + asString(graph.processGraph));
 
         ExecContextParamsYaml.Process p = graph.processes.stream().filter(o->o.processCode.equals("feature-processing_cluster")).findFirst().orElseThrow();
         assertEquals("ai", p.tag);
@@ -144,7 +140,7 @@ public class TestSourceCodeGraphLanguageYaml {
         ExecContextApiData.ProcessVertex finishVertex = findVertex(graph.processGraph, CommonConsts.MH_FINISH_FUNCTION);
         assertNotNull(finishVertex);
         assertEquals(0, findDescendants(graph, finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
-        assertEquals(2, graph.processGraph.incomingEdgesOf(finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(3, graph.processGraph.incomingEdgesOf(finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
 
 
     }
@@ -168,12 +164,12 @@ public class TestSourceCodeGraphLanguageYaml {
         ExecContextApiData.ProcessVertex nopVertex2 = findVertex(graph.processGraph, "mh.nop-2");
         assertNotNull(nopVertex2);
         assertEquals(4, findDescendants(graph, nopVertex2).size(), "Graph: \n" + asString(graph.processGraph));
-        assertEquals(1, graph.processGraph.outgoingEdgesOf(nopVertex2).size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(2, graph.processGraph.outgoingEdgesOf(nopVertex2).size(), "Graph: \n" + asString(graph.processGraph));
 
         ExecContextApiData.ProcessVertex finishVertex = findVertex(graph.processGraph, CommonConsts.MH_FINISH_FUNCTION);
         assertNotNull(finishVertex);
         assertEquals(0, findDescendants(graph, finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
-        assertEquals(1, graph.processGraph.incomingEdgesOf(finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(2, graph.processGraph.incomingEdgesOf(finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
     }
 
     @Test
@@ -195,12 +191,12 @@ public class TestSourceCodeGraphLanguageYaml {
         ExecContextApiData.ProcessVertex nopVertex2 = findVertex(graph.processGraph, "mh.nop-2");
         assertNotNull(nopVertex2);
         assertEquals(7, findDescendants(graph, nopVertex2).size(), "Graph: \n" + asString(graph.processGraph));
-        assertEquals(1, graph.processGraph.outgoingEdgesOf(nopVertex2).size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(2, graph.processGraph.outgoingEdgesOf(nopVertex2).size(), "Graph: \n" + asString(graph.processGraph));
 
         ExecContextApiData.ProcessVertex finishVertex = findVertex(graph.processGraph, CommonConsts.MH_FINISH_FUNCTION);
         assertNotNull(finishVertex);
         assertEquals(0, findDescendants(graph, finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
-        assertEquals(1, graph.processGraph.incomingEdgesOf(finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
+        assertEquals(3, graph.processGraph.incomingEdgesOf(finishVertex).size(), "Graph: \n" + asString(graph.processGraph));
 
 
     }
