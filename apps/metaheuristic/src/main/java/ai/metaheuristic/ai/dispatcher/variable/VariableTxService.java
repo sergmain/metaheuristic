@@ -463,15 +463,26 @@ public class VariableTxService {
         return v;
     }
 
+    // found_ec - found in ExecContextVariableService
+    public enum SearchResultType {found_db, found_ec, not_found}
+    public record VariableSearch(@Nullable Variable variable, SearchResultType resultType) {}
+    public static VariableSearch VARIABLE_OT_FOUND = new VariableSearch(null,SearchResultType.not_found);
+
     @Nullable
     public Variable findVariableInAllInternalContexts(String variable, String taskContextId, Long execContextId) {
+        VariableSearch variableSearch = findVariableInAllInternalContextsAsVariableSearch(variable,  taskContextId, execContextId);
+        return variableSearch.variable;
+    }
+
+    public VariableSearch findVariableInAllInternalContextsAsVariableSearch(String variable, String taskContextId, Long execContextId) {
         ExecContextImpl execContext = execContextCache.findById(execContextId);
         if (execContext == null) {
-            return null;
+            return VARIABLE_OT_FOUND;
         }
         ExecContextVariableState ecvs = execContextVariableStateRepository.findById(execContext.execContextVariableStateId).orElse(null);
         if (ecvs == null) {
-            return findVariableInAllInternalContextsViaDb(variable, taskContextId, execContextId);
+            Variable v = findVariableInAllInternalContextsViaDb(variable, taskContextId, execContextId);
+            return v==null ? VARIABLE_OT_FOUND : new VariableSearch(v,SearchResultType.found_db);
         }
         ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
 
@@ -482,14 +493,16 @@ public class VariableTxService {
 
             Long variableId = findVariableIdInStates(info, variable, currTaskContextId, currProcessCtxId);
             if (variableId != null) {
-                return variableRepository.findByIdAsSimple(variableId);
+                Variable v = variableRepository.findByIdAsSimple(variableId);
+                return v==null ? VARIABLE_OT_FOUND : new VariableSearch(v,SearchResultType.found_ec);
             }
             currTaskContextId = VariableUtils.getParentContext(currTaskContextId);
         }
 
         // ExecContextVariableState is populated asynchronously and may not have the data yet.
         // Fall back to full DB walk which also handles #-suffixed sibling contexts.
-        return findVariableInAllInternalContextsViaDb(variable, taskContextId, execContextId);
+        Variable v = findVariableInAllInternalContextsViaDb(variable, taskContextId, execContextId);
+        return v==null ? VARIABLE_OT_FOUND : new VariableSearch(v,SearchResultType.found_db);
     }
 
     @Nullable
