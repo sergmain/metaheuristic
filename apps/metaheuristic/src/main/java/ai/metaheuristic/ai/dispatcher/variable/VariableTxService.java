@@ -505,6 +505,11 @@ public class VariableTxService {
             if (!vars.isEmpty()) {
                 return vars.get(0);
             }
+            // Check for variables with ancestor path (e.g., "1,2,5,6,7|0#1" when searching from "1,2,5,6,7")
+            vars = variableRepository.findByNameAndTaskContextIdLikeAndExecContextId(variable, currTaskContextId + "|%", execContextId);
+            if (!vars.isEmpty()) {
+                return vars.get(0);
+            }
             currTaskContextId = VariableUtils.getParentContext(currTaskContextId);
         }
         return null;
