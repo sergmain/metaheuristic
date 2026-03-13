@@ -433,4 +433,32 @@ public class TestFindVariableInAllInternalContexts {
                 "when VariableState doesn't contain the relevant entry");
         assertEquals(created.id, found.id);
     }
+
+    /**
+     * Variable at "1,2,5,6,7|0#1" IS registered in ExecContextVariableState.
+     * Searching from "1,2,5,6,7,10" should find it via the in-memory path
+     * because processContextId("1,2,5,6,7|0#1") == "1,2,5,6,7" matches
+     * processContextId of the walk step "1,2,5,6,7".
+     *
+     * Reproduces the amendmentStatus2 production bug scenario.
+     */
+    @Test
+    public void test_findVariable_pipeAncestor_viaVariableState() {
+        Long execContextId = setupExecContext(List.of());
+        Variable created = createVariable("1,2,5,6,7|0#1", execContextId);
+
+        // Register the variable in ExecContextVariableState at the correct taskContextId
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
+        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        info.states.add(makeVariableState("1,2,5,6,7|0#1", created.id, currentVarName));
+        ecvs.updateParams(info);
+        execContextVariableStateRepository.save(ecvs);
+
+        Variable found = variableTxService.findVariableInAllInternalContexts(currentVarName, "1,2,5,6,7,10", execContextId);
+        assertNotNull(found,
+                "Variable at '1,2,5,6,7|0#1' should be found from '1,2,5,6,7,10' via in-memory ExecContextVariableState. " +
+                "processContextId '1,2,5,6,7' matches for both.");
+        assertEquals(created.id, found.id);
+    }
 }
