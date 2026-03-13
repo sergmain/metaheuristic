@@ -156,10 +156,21 @@ public class TaskProducingService {
             }
             List<TaskApiData.TaskWithContext> currTaskIds = List.of(new TaskApiData.TaskWithContext(t.getId(), actualProcessContextId));
             execContextGraphService.addNewTasksToGraph(graphAndStates, parentTaskIds, currTaskIds, targetState);
-            parentTaskIds = List.of(t.getId());
+            if (process.logic == EnumsApi.SourceCodeSubProcessLogic.and) {
+                // Parallel: each subprocess branches from the original parent, collect ALL for downstream linking
+                lastIds.add(t.id);
+                // parentTaskIds stays as original [parentTaskId] — do NOT update
+            }
+            else {
+                // Sequential: chain each subprocess to the previous one
+                parentTaskIds = List.of(t.getId());
+            }
             subProcessContextId = subProcess.processContextId;
         }
-        lastIds.add(t.id);
+        if (process.logic != EnumsApi.SourceCodeSubProcessLogic.and) {
+            // Sequential: only the last task connects downstream
+            lastIds.add(t.id);
+        }
     }
 
     @Nullable
