@@ -20,12 +20,17 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
+import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
 import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.commons.utils.ContextUtils;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +59,7 @@ public class SubProcessesTxService {
     private final InternalFunctionService internalFunctionService;
     private final TaskProducingService taskProducingService;
     private final ExecContextGraphService execContextGraphService;
+    private final TaskRepository taskRepository;
 
     @Transactional
     public Void processSubProcesses(ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml) {
@@ -131,6 +137,21 @@ public class SubProcessesTxService {
                         graphAndStates.states().getExecContextTaskStateParamsYaml();
                 for (ExecContextData.TaskVertex removed : removedVertices) {
                     stateParams.states.remove(removed.taskId);
+
+                    // Mark task as SKIPPED in DB so async internal function processing won't pick it up
+                    TaskSyncService.getWithSyncVoid(removed.taskId, () -> {
+                        TaskImpl task = taskRepository.findById(removed.taskId).orElse(null);
+                        if (task != null) {
+                            task.setExecState(EnumsApi.TaskExecState.SKIPPED.value);
+                            task.setCompleted(1);
+                            task.setCompletedOn(System.currentTimeMillis());
+                            taskRepository.save(task);
+                            log.info("995.115 Set Task #{} execState to SKIPPED (removed from DAG)", removed.taskId);
+                        }
+                    });
+
+                    // Deregister from task queue
+                    TaskProviderTopLevelService.deregisterTask(simpleExecContext.execContextId, removed.taskId);
                 }
                 graphAndStates.states().updateParams(stateParams);
             }

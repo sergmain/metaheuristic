@@ -158,6 +158,18 @@ public class TaskResetTxService {
                     deletedTaskIds.add(v.taskId);
                     deletedCtxIds.add(v.taskContextId);
                     TaskProviderTopLevelService.deregisterTask(execContextId, v.taskId);
+
+                    // Mark task as SKIPPED in DB so async internal function processing won't pick it up
+                    TaskSyncService.getWithSyncVoid(v.taskId, () -> {
+                        TaskImpl deletedTask = taskRepository.findById(v.taskId).orElse(null);
+                        if (deletedTask != null) {
+                            deletedTask.setExecState(EnumsApi.TaskExecState.SKIPPED.value);
+                            deletedTask.setCompleted(1);
+                            deletedTask.setCompletedOn(System.currentTimeMillis());
+                            taskRepository.save(deletedTask);
+                            log.info("801.213 Set Task #{} execState to SKIPPED (removed from DAG during reset)", v.taskId);
+                        }
+                    });
                 });
                 log.info("801.212 Deleted {} sub-process tasks from graph, contexts: {}", forDeletion.size(), deletedCtxIds);
             }
