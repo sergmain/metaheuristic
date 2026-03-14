@@ -390,7 +390,21 @@ public class EvaluateExpressionLanguage {
                     } else {
                         return false;
                     }
-                    return strValue!=null;
+                    if (strValue == null) {
+                        return false;
+                    }
+                    // Exclude values that are parseable as boolean or integer — those are not "string" comparisons
+                    if ("true".equalsIgnoreCase(strValue) || "false".equalsIgnoreCase(strValue)) {
+                        return false;
+                    }
+                    try {
+                        Integer.parseInt(strValue);
+                        return false;
+                    }
+                    catch (NumberFormatException e) {
+                        // not a number — this is a genuine string value
+                    }
+                    return true;
                 }
             };
         }
@@ -459,6 +473,9 @@ public class EvaluateExpressionLanguage {
         private static String getValueString(Ctx ctx, Object operand) {
             if (operand instanceof String) {
                 return (String)operand;
+            }
+            if (operand instanceof Integer i) {
+                return i.toString();
             }
             if (!(operand instanceof VariableUtils.VariableHolder variableHolder)) {
                 throw new EvaluationException("509.320 not supported type: " + operand.getClass());
