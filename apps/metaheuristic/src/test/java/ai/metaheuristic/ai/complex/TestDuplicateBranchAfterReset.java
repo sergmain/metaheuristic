@@ -70,6 +70,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -252,6 +253,23 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
         // Task count should be the same after reset — no tasks should have been removed yet
         assertEquals(taskCountAfterPhase1, taskCountAfterReset,
                 "Task count in DAG should remain the same after reset (only states changed, not graph structure)");
+
+        // Verify: any tasks in DB but NOT in the DAG must have execState=SKIPPED.
+        // This guards against the bug where a task deleted from the DAG during reset
+        // retains a non-SKIPPED state, allowing async internal function processing to pick it up.
+        {
+            List<TaskImpl> dbTasksAfterReset = taskRepositoryForTest.findByExecContextIdAsList(getExecContextForTest().id);
+            Set<Long> graphTaskIdsAfterReset = phase2Vertices.stream()
+                    .map(v -> v.taskId).collect(java.util.stream.Collectors.toSet());
+            for (TaskImpl dbTask : dbTasksAfterReset) {
+                if (!graphTaskIdsAfterReset.contains(dbTask.id)) {
+                    assertEquals(EnumsApi.TaskExecState.SKIPPED.value, dbTask.execState,
+                            "Task#" + dbTask.id + " was removed from DAG during reset but execState is " +
+                            EnumsApi.TaskExecState.from(dbTask.execState) + " instead of SKIPPED");
+                    System.out.println("  VERIFIED: Task#" + dbTask.id + " removed from DAG has execState=SKIPPED");
+                }
+            }
+        }
 
         // === Phase 3: Re-execute — this triggers the bug ===
         System.out.println("=== Phase 3: Re-executing after reset ===");
