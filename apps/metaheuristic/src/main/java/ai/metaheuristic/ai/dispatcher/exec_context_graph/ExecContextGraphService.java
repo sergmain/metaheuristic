@@ -799,7 +799,8 @@ public class ExecContextGraphService {
      *         to the subprocess subtree (e.g. mh.finish)
      */
     public Set<ExecContextData.TaskVertex> removeOldSubProcessChildren(
-            ExecContextGraph execContextGraph, Set<ExecContextData.TaskVertex> oldChildren, String parentTaskContextId) {
+            ExecContextGraph execContextGraph, Set<ExecContextData.TaskVertex> oldChildren, String parentTaskContextId,
+            Set<ExecContextData.TaskVertex> removedVertices) {
         TxUtils.checkTxExists();
         Set<ExecContextData.TaskVertex> downstreamVertices = new java.util.LinkedHashSet<>();
         changeGraph(execContextGraph, graph -> {
@@ -821,6 +822,7 @@ public class ExecContextGraphService {
                 graph.removeVertex(vertexToRemove);
                 log.info("995.120 Removed old subProcess task #{} (ctx: {}) from graph", vertexToRemove.taskId, vertexToRemove.taskContextId);
             }
+            removedVertices.addAll(toRemove);
         });
         return downstreamVertices;
     }

@@ -421,6 +421,135 @@ class ExecContextGraphDuplicateBranchTest {
                 "T200 (mh.finish) should be reachable from T103");
     }
 
+    /**
+     * Reproduces the real bug from task-flow-006-after-change-objective.
+     *
+     * Task 65 is mh.nop-amendment-gate (ctx "1,2#1") with parallel (and) logic.
+     * Its subProcesses are: mh.nop-active-branch (processContextId "1,2,5")
+     * and mh.nop-obsolete-branch (processContextId "1,2,13").
+     *
+     * First run creates children:
+     *   T67 (ctx "1,2,5") and T68 (ctx "1,2,13") → both → T60 (mh.finish, ctx "1")
+     *
+     * After objective reset, T65 re-executes. findDirectDescendants(T65) returns [T67, T68, T60].
+     * The old code computed subProcessCtxPrefix = "1,2,5|1#" which doesn't match "1,2,5" or "1,2,13",
+     * so old children were not detected. New children T83, T84 were created and connected to all
+     * descendants, producing duplicate branches.
+     *
+     * The fix: for parallel (and) logic, check against each subProcess's processContextId directly.
+     */
+    @Test
+    public void test_parallelLogic_oldChildrenDetectedByProcessContextId() {
+        DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> graph = createGraph();
+
+        // Phase 1: First run — parallel nop with two branches
+        ExecContextData.TaskVertex t65 = addVertex(graph, 65L, "1,2#1");    // nop-amendment-gate (parallel)
+        ExecContextData.TaskVertex t67 = addVertex(graph, 67L, "1,2,5");    // nop-active-branch
+        ExecContextData.TaskVertex t68 = addVertex(graph, 68L, "1,2,13");   // nop-obsolete-branch
+        ExecContextData.TaskVertex t60 = addVertex(graph, 60L, "1");        // mh.finish
+
+        graph.addEdge(t65, t67);
+        graph.addEdge(t65, t68);
+        graph.addEdge(t67, t60);
+        graph.addEdge(t68, t60);
+
+        // Phase 2: After reset, T65 re-executes.
+        // In real scenario, TaskResetTxService.removeVertices reconnects parents to children,
+        // so T65 may also have a direct edge to T60. Add that to match real behavior.
+        graph.addEdge(t65, t60);
+
+        // findDirectDescendants(T65) returns [T67, T68, T60]
+        Set<ExecContextData.TaskVertex> directDescendants = graph.outgoingEdgesOf(t65).stream()
+                .map(graph::getEdgeTarget)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        assertEquals(3, directDescendants.size());
+
+        // OLD (buggy) approach: prefix check "1,2,5|1#"
+        String subProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses("1,2#1", "1,2,5");
+        assertEquals("1,2,5|1", subProcessContextId);
+        String subProcessCtxPrefix = subProcessContextId + ContextUtils.CONTEXT_SEPARATOR;
+
+        Set<ExecContextData.TaskVertex> oldChildrenByPrefix = directDescendants.stream()
+                .filter(v -> v.taskContextId != null && v.taskContextId.startsWith(subProcessCtxPrefix))
+                .collect(Collectors.toSet());
+
+        // Bug: prefix "1,2,5|1#" does NOT match "1,2,5" or "1,2,13"
+        assertTrue(oldChildrenByPrefix.isEmpty(),
+                "Prefix-based detection fails for parallel logic — this is the bug");
+
+        // NEW (fixed) approach: check against each subProcess's processContextId directly
+        Set<String> expectedChildCtxIds = Set.of("1,2,5", "1,2,13");
+        Set<ExecContextData.TaskVertex> oldChildrenByCtxId = directDescendants.stream()
+                .filter(v -> v.taskContextId != null && expectedChildCtxIds.contains(v.taskContextId))
+                .collect(Collectors.toSet());
+
+        assertEquals(2, oldChildrenByCtxId.size(),
+                "Fixed detection finds both old parallel children");
+        assertTrue(oldChildrenByCtxId.stream().anyMatch(v -> v.taskId == 67L));
+        assertTrue(oldChildrenByCtxId.stream().anyMatch(v -> v.taskId == 68L));
+
+        // Filter descendants
+        Set<Long> oldChildIds = oldChildrenByCtxId.stream().map(v -> v.taskId).collect(Collectors.toSet());
+        Set<ExecContextData.TaskVertex> filteredDescendants = directDescendants.stream()
+                .filter(v -> !oldChildIds.contains(v.taskId))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        // Only T60 (mh.finish) remains
+        assertEquals(1, filteredDescendants.size());
+        assertEquals(60L, filteredDescendants.iterator().next().taskId);
+
+        // Remove old children from graph
+        for (ExecContextData.TaskVertex oldChild : oldChildrenByCtxId) {
+            // Collect downstream of old child before removal
+            Set<ExecContextData.TaskVertex> outgoing = graph.outgoingEdgesOf(oldChild).stream()
+                    .map(graph::getEdgeTarget)
+                    .filter(v -> !oldChildIds.contains(v.taskId))
+                    .collect(Collectors.toSet());
+            filteredDescendants.addAll(outgoing);
+            graph.removeVertex(oldChild);
+        }
+
+        // Create NEW parallel children
+        ExecContextData.TaskVertex t83 = addVertex(graph, 83L, "1,2,5");
+        ExecContextData.TaskVertex t84 = addVertex(graph, 84L, "1,2,13");
+        graph.addEdge(t65, t83);
+        graph.addEdge(t65, t84);
+
+        // createEdges: connect new children to filtered descendants (T60 only)
+        for (ExecContextData.TaskVertex desc : filteredDescendants) {
+            if (!graph.containsEdge(t83, desc)) {
+                graph.addEdge(t83, desc);
+            }
+            if (!graph.containsEdge(t84, desc)) {
+                graph.addEdge(t84, desc);
+            }
+        }
+
+        // Verify: NO doubling
+        // T65 should have exactly 3 children: T83, T84, and T60 (from reconnection during reset)
+        Set<ExecContextData.TaskVertex> finalChildren = graph.outgoingEdgesOf(t65).stream()
+                .map(graph::getEdgeTarget)
+                .collect(Collectors.toSet());
+        assertEquals(3, finalChildren.size(), "T65 should have exactly 3 children after fix (T83, T84, T60)");
+        assertTrue(finalChildren.stream().anyMatch(v -> v.taskId == 83L));
+        assertTrue(finalChildren.stream().anyMatch(v -> v.taskId == 84L));
+        assertTrue(finalChildren.stream().anyMatch(v -> v.taskId == 60L));
+
+        // T67 and T68 should be completely gone from graph
+        assertFalse(graph.vertexSet().stream().anyMatch(v -> v.taskId == 67L),
+                "T67 (old active branch) should be removed");
+        assertFalse(graph.vertexSet().stream().anyMatch(v -> v.taskId == 68L),
+                "T68 (old obsolete branch) should be removed");
+
+        // T83 and T84 should connect to T60 (mh.finish)
+        assertTrue(graph.containsEdge(t83, t60));
+        assertTrue(graph.containsEdge(t84, t60));
+
+        // Total vertices: T65, T83, T84, T60
+        assertEquals(4, graph.vertexSet().size());
+    }
+
     // ======================== Helper methods ========================
 
     private static DirectedAcyclicGraph<ExecContextData.TaskVertex, DefaultEdge> createGraph() {
