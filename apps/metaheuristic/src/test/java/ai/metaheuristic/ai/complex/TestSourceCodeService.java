@@ -107,8 +107,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class TestSourceCodeService extends PreparingSourceCode {
 
-//    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir = Objects.requireNonNull(DirUtils.createMhTempPath("test-"));
+    @org.junit.jupiter.api.io.TempDir
+    static Path tempDir;
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {

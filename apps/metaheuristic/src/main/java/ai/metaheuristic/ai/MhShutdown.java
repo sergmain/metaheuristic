@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@NullMarked
-package ai.metaheuristic.ai.complex_1;
+package ai.metaheuristic.ai;
 
-import org.jspecify.annotations.NullMarked;
+/**
+ * @author Sergio Lissner
+ * Date: 3/15/2026
+ * Time: 10:24 AM
+ */
+public class MhShutdown {
+
+    public static void cleanUp() {
+
+    }
+}
