@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService
 import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataTxService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskResetTxService;
@@ -72,6 +73,7 @@ public class TxSupportForTestingService {
     private final ExecContextCache execContextCache;
     private final TaskResetTxService taskResetTxService;
     private final ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache sourceCodeCache;
+    private final ExecContextVariableStateRepository execContextVariableStateRepository;
 
     @Transactional(rollbackFor = CommonRollbackException.class)
     public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, ExecContextApiData.UserExecContext context) {
@@ -266,5 +268,76 @@ public class TxSupportForTestingService {
         taskResetTxService.resetTaskAndExecContext(execContextId, taskId);
     }
 
+    @Transactional
+    public Long createExecContextForVariableStateTest() {
+        if (!globals.testing) {
+            throw new IllegalStateException("Only for testing");
+        }
+        ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState ecvs = new ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState();
+        ecvs.createdOn = System.currentTimeMillis();
+        ai.metaheuristic.api.data.exec_context.ExecContextApiData.ExecContextVariableStates info =
+                new ai.metaheuristic.api.data.exec_context.ExecContextApiData.ExecContextVariableStates();
+        ecvs.updateParams(info);
+        ecvs = execContextVariableStateRepository.save(ecvs);
+
+        ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl ec = new ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl();
+        ec.sourceCodeId = 1L;
+        ec.companyId = 1L;
+        ec.accountId = 1L;
+        ec.createdOn = System.currentTimeMillis();
+        ec.state = ai.metaheuristic.api.EnumsApi.ExecContextState.STARTED.code;
+        ec.execContextVariableStateId = ecvs.id;
+        ec.execContextGraphId = 0L;
+        ec.execContextTaskStateId = 0L;
+        ec.setParams("version: 1\nprocesses: []\nvariables:\n  inline: {}\n  inputs: []\n  outputs: []\n");
+        ec = execContextCache.save(ec);
+
+        ecvs.execContextId = ec.id;
+        execContextVariableStateRepository.save(ecvs);
+
+        return ec.id;
+    }
+
+    @Transactional
+    public void deleteExecContextForVariableStateTest(Long execContextId) {
+        if (!globals.testing) {
+            throw new IllegalStateException("Only for testing");
+        }
+        ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl ec = execContextCache.findById(execContextId);
+        if (ec != null) {
+            variableRepository.deleteByExecContextId(execContextId);
+            if (ec.execContextVariableStateId != null) {
+                execContextVariableStateRepository.deleteById(ec.execContextVariableStateId);
+            }
+            execContextCache.deleteById(execContextId);
+        }
+    }
+
+    @Transactional
+    public ai.metaheuristic.ai.dispatcher.beans.Variable createInitializedVariable(String name, Long execContextId, String taskContextId) {
+        if (!globals.testing) {
+            throw new IllegalStateException("Only for testing");
+        }
+        byte[] data = "test-data".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        return variableTxService.createInitializedTx(
+                new java.io.ByteArrayInputStream(data), data.length, name, null,
+                execContextId, taskContextId, ai.metaheuristic.api.EnumsApi.VariableType.text);
+    }
+
+    @Transactional
+    public ai.metaheuristic.ai.dispatcher.beans.Variable findVariableInAllInternalContexts(String name, String taskContextId, Long execContextId) {
+        if (!globals.testing) {
+            throw new IllegalStateException("Only for testing");
+        }
+        return variableTxService.findVariableInAllInternalContexts(name, taskContextId, execContextId);
+    }
+
+    @Transactional
+    public void deleteVariable(Long variableId) {
+        if (!globals.testing) {
+            throw new IllegalStateException("Only for testing");
+        }
+        variableRepository.deleteById(variableId);
+    }
 
 }

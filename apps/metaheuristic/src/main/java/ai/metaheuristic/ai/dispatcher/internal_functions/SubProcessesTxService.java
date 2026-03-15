@@ -19,7 +19,10 @@ package ai.metaheuristic.ai.dispatcher.internal_functions;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateService;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
@@ -29,6 +32,7 @@ import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.InternalFunctionException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.commons.utils.ContextUtils;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
@@ -60,6 +64,8 @@ public class SubProcessesTxService {
     private final TaskProducingService taskProducingService;
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
+    private final ExecContextVariableStateService execContextVariableStateService;
+    private final ExecContextCache execContextCache;
 
     @Transactional
     public Void processSubProcesses(ExecContextApiData.SimpleExecContext simpleExecContext, Long taskId, TaskParamsYaml taskParamsYaml) {
@@ -154,6 +160,15 @@ public class SubProcessesTxService {
                     TaskProviderTopLevelService.deregisterTask(simpleExecContext.execContextId, removed.taskId);
                 }
                 graphAndStates.states().updateParams(stateParams);
+
+                // Remove stale entries from ExecContextVariableState so findVariableInAllInternalContexts
+                // won't find variables from removed (orphan) tasks
+                Set<Long> removedTaskIds = removedVertices.stream().map(v -> v.taskId).collect(Collectors.toSet());
+                ExecContextImpl ec = execContextCache.findById(simpleExecContext.execContextId);
+                if (ec != null && ec.execContextVariableStateId != null) {
+                    ExecContextVariableStateSyncService.getWithSyncNullableForCreation(ec.execContextVariableStateId,
+                            () -> { execContextVariableStateService.removeTaskStates(ec.execContextVariableStateId, removedTaskIds); return null; });
+                }
             }
 
             taskProducingService.createTasksForSubProcesses(

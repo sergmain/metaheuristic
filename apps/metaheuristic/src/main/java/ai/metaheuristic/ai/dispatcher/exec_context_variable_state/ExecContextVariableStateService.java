@@ -160,6 +160,17 @@ public class ExecContextVariableStateService {
     }
 
     @Transactional
+    public void removeTaskStates(Long execContextVariableStateId, Set<Long> taskIds) {
+        if (taskIds.isEmpty()) {
+            return;
+        }
+        register(execContextVariableStateId, (ecpy)-> {
+            ecpy.states.removeIf(state -> taskIds.contains(state.taskId));
+            log.info("212.140 Removed entries for tasks {} from ExecContextVariableState #{}", taskIds, execContextVariableStateId);
+        });
+    }
+
+    @Transactional
     public void deleteOrphanVariableStates(List<Long> ids) {
         execContextVariableStateRepository.deleteAllByIdIn(ids);
     }

@@ -28,6 +28,8 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingServi
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateService;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionRegisterService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
@@ -71,6 +73,7 @@ public class TaskResetTxService {
     private final InternalFunctionRegisterService internalFunctionRegisterService;
     private final TaskFinishingTxService taskFinishingTxService;
     private final VariableRepository variableRepository;
+    private final ExecContextVariableStateService execContextVariableStateService;
 
     @Transactional
     public void resetTaskAndExecContextTx(Long execContextId, Long taskId) {
@@ -215,6 +218,13 @@ public class TaskResetTxService {
         }
         execContextTaskState.updateParams(stateParams);
         execContextTaskStateRepository.save(execContextTaskState);
+
+        // Remove stale entries from ExecContextVariableState for deleted tasks
+        // so findVariableInAllInternalContexts won't find variables from removed (orphan) tasks
+        if (!deletedTaskIds.isEmpty() && ec.execContextVariableStateId != null) {
+            ExecContextVariableStateSyncService.getWithSyncNullableForCreation(ec.execContextVariableStateId,
+                    () -> { execContextVariableStateService.removeTaskStates(ec.execContextVariableStateId, deletedTaskIds); return null; });
+        }
 
         // Trigger task assignment so the scheduler picks up the reset tasks
         eventPublisherService.handleFindUnassignedTasksAndRegisterInQueueEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
