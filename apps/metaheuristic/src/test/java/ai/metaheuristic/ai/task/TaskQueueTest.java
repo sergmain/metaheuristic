@@ -361,4 +361,72 @@ public class TaskQueueTest {
 //    public void test_3_1() {
 //
 //    }
+
+    /**
+     * Test: TaskQueue.resetAll() — graceful shutdown reset of the entire task queue.
+     *
+     * Context: During MH shutdown (MhShutdown.cleanUp()), we need to reset the TaskQueue
+     * so that all task groups are cleared and the queue is left in a clean empty state.
+     * This prevents stale task references from persisting in memory during shutdown.
+     *
+     * What we verify:
+     * 1. Start with a populated queue: multiple task groups across different execContextIds,
+     *    different priorities, some groups locked, some tasks assigned — simulating a realistic
+     *    mid-operation state of the dispatcher.
+     * 2. After resetAll(), the queue reports as empty (isQueueEmpty returns true).
+     * 3. After resetAll(), groupCount is 0 — all task group structures are removed, not just reset.
+     * 4. After resetAll(), no previously-registered tasks are found (alreadyRegistered returns false).
+     * 5. The iterator over the reset queue has no elements.
+     * 6. The queue is fully functional after reset — new tasks can be added and operated on normally.
+     *
+     * This ensures that resetAll() is a complete, non-partial cleanup suitable for shutdown,
+     * and that it doesn't leave the queue in a broken state that would cause errors if
+     * any code path still references it post-shutdown.
+     */
+    @Test
+    public void test_resetAll() {
+        final TaskQueue taskQueue = new TaskQueue(1, 5);
+
+        // Populate with tasks from two different execContextIds and different priorities
+        TaskQueue.QueuedTask task_1_1 = createTask(1L, 101L, 0);
+        TaskQueue.QueuedTask task_1_2 = createTask(1L, 102L, 0);
+        TaskQueue.QueuedTask task_1_3 = createTask(1L, 103L, 0);
+        TaskQueue.QueuedTask task_2_1 = createTask(2L, 201L, 0);
+        TaskQueue.QueuedTask task_2_2 = createTask(2L, 202L, 1); // different priority
+
+        taskQueue.addNewTask(task_1_1);
+        taskQueue.addNewTask(task_1_2);
+        taskQueue.addNewTask(task_1_3);
+        taskQueue.addNewTask(task_2_1);
+        taskQueue.addNewTask(task_2_2);
+
+        // Lock and assign some tasks to simulate mid-operation state
+        taskQueue.lock(1L);
+        taskQueue.lock(2L);
+        taskQueue.startTaskProcessing(1L, 101L);
+
+        // Verify we have a populated, active queue
+        assertTrue(taskQueue.groupCount() > 0, "Queue should have task groups before reset");
+        assertTrue(taskQueue.alreadyRegistered(101L), "Task 101 should be registered");
+        assertTrue(taskQueue.alreadyRegistered(201L), "Task 201 should be registered");
+
+        // Perform the graceful reset
+        taskQueue.resetAll();
+
+        // Verify complete cleanup
+        assertTrue(taskQueue.isQueueEmpty(), "Queue should be empty after resetAll");
+        assertEquals(0, taskQueue.groupCount(), "Group count should be 0 after resetAll");
+        assertFalse(taskQueue.alreadyRegistered(101L), "Task 101 should not be registered after resetAll");
+        assertFalse(taskQueue.alreadyRegistered(201L), "Task 201 should not be registered after resetAll");
+
+        // Iterator should have nothing
+        TaskQueue.GroupIterator iter = taskQueue.getIterator();
+        assertFalse(iter.hasNext(), "Iterator should be empty after resetAll");
+
+        // Queue should be usable after reset — add new tasks and verify they work
+        TaskQueue.QueuedTask task_3_1 = createTask(3L, 301L, 0);
+        taskQueue.addNewTask(task_3_1);
+        assertEquals(1, taskQueue.groupCount(), "Should be able to add tasks after resetAll");
+        assertTrue(taskQueue.alreadyRegistered(301L), "Newly added task should be registered");
+    }
 }

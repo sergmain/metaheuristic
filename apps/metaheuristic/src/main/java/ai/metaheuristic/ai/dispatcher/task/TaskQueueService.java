@@ -129,4 +129,8 @@ public class TaskQueueService {
         taskQueue.shrink();
     }
 
+    public static void resetQueue() {
+        getWithSyncVoid(taskQueue::resetAll);
+    }
+
 }

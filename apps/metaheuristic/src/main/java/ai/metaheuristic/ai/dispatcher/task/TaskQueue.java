@@ -607,6 +607,13 @@ public class TaskQueue {
         }
     }
 
+    public void resetAll() {
+        for (TaskGroup taskGroup : taskGroups) {
+            taskGroup.reset();
+        }
+        taskGroups.clear();
+    }
+
     public boolean alreadyRegistered(Long taskId) {
         return alreadyRegisteredAsTask(taskId)!=null;
     }

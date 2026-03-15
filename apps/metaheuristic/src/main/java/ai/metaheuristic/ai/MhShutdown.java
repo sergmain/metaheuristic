@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai;
 
+import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
+
 /**
  * @author Sergio Lissner
  * Date: 3/15/2026
@@ -24,6 +26,6 @@ package ai.metaheuristic.ai;
 public class MhShutdown {
 
     public static void cleanUp() {
-
+        TaskQueueService.resetQueue();
     }
 }
