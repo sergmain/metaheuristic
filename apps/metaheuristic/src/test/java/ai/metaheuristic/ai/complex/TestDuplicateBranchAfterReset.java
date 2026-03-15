@@ -45,6 +45,7 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ch.qos.logback.classic.LoggerContext;
@@ -97,8 +98,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
+    //    @org.junit.jupiter.api.io.TempDir
+    static Path tempDir = Objects.requireNonNull(DirUtils.createMhTempPath("test-"));
 
     @BeforeAll
     static void setSystemProperties() {
@@ -107,7 +108,7 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
-        String dbUrl = "jdbc:h2:file:" + tempDir.resolve("db-h2/mh").toAbsolutePath() + ";DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=0";
+        String dbUrl = "jdbc:h2:mem:" + tempDir.resolve("db-h2/mh").toAbsolutePath() + ";DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=0";
         registry.add("spring.datasource.url", () -> dbUrl);
         registry.add("mh.home", () -> tempDir.toAbsolutePath().toString());
         registry.add("spring.profiles.active", () -> "dispatcher,h2,test");

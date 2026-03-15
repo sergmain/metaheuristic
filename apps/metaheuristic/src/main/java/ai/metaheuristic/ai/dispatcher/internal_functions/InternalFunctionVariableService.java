@@ -77,6 +77,7 @@ public class InternalFunctionVariableService {
         List<VariableUtils.VariableHolder> holders = new ArrayList<>();
         for (String name : names) {
             Variable v = variableService.findVariableInAllInternalContexts(name, taskContextId, execContextId);
+            v = variableService.findVariableInAllInternalContexts(name, taskContextId, execContextId);
             if (v!=null) {
                 holders.add(new VariableUtils.VariableHolder(v));
             }

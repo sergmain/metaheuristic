@@ -22,17 +22,20 @@ import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYamlUti
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Sergio Lissner
  * Date: 11/18/2023
  * Time: 2:13 PM
  */
+@Execution(CONCURRENT)
 public class ValidateGraphStructureTest {
 
 

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.el;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 
@@ -28,11 +29,13 @@ import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 3/2/2026
  */
+@Execution(CONCURRENT)
 class ElEvaluatorTest {
 
     /**

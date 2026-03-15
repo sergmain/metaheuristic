@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.el;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.TypeComparator;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -26,6 +27,7 @@ import org.springframework.lang.Nullable;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * Tests for string comparison support in EvaluateExpressionLanguage.
@@ -41,6 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Serge
  * Date: 3/12/2026
  */
+@Execution(CONCURRENT)
 class EvaluateExpressionLanguageStringCompareTest {
 
     /**

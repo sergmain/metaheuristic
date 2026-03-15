@@ -20,6 +20,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,12 +29,14 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Sergio Lissner
  * Date: 3/4/2026
  * Time: 5:00 PM
  */
+@Execution(CONCURRENT)
 public class VariableUtilsInitOutputTest {
 
     private final AtomicLong variableIdSeq = new AtomicLong(100);

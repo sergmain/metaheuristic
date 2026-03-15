@@ -21,17 +21,20 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Sergio Lissner
  * Date: 5/26/2023
  * Time: 1:22 PM
  */
+@Execution(CONCURRENT)
 public class TaskProviderUtilsTest {
 
     @Test

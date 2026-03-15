@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,12 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.el;
+@NullMarked
+package ai.metaheuristic.ai.dispatcher.variable;
 
-/**
- * @author Serge
- * Date: 4/20/2022
- * Time: 5:43 PM
- */
-public class TestBooleanConditions {
-}
+import org.jspecify.annotations.NullMarked;

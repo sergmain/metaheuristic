@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.complex;
+package ai.metaheuristic.ai.complex_1;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.MhComplexTestConfig;
@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.preparing.PreparingData;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
@@ -40,9 +41,9 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.ai.yaml.function_exec.FunctionExecUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
+import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import ch.qos.logback.classic.LoggerContext;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
@@ -50,7 +51,6 @@ import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -62,6 +62,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -70,10 +71,10 @@ import static org.junit.jupiter.api.Assertions.*;
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
+public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
+    //    @org.junit.jupiter.api.io.TempDir
+    static Path tempDir = Objects.requireNonNull(DirUtils.createMhTempPath("test-"));
 
     @BeforeAll
     static void setSystemProperties() {
@@ -82,7 +83,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
-        String dbUrl = "jdbc:h2:file:" + tempDir.resolve("db-h2/mh").toAbsolutePath() + ";DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=0";
+        String dbUrl = "jdbc:h2:mem:" + tempDir.resolve("db-h2/mh").toAbsolutePath() + ";DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=0";
         registry.add("spring.datasource.url", () -> dbUrl);
         registry.add("mh.home", () -> tempDir.toAbsolutePath().toString());
         registry.add("spring.profiles.active", () -> "dispatcher,h2,test");
@@ -143,16 +144,18 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
 
         System.out.println("start findTaskForRegisteringInQueueAndWait() #1");
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
-        step_AssembledRaw(processorIdAndCoreIds, true, EnumsApi.TaskExecState.NONE);
-        Thread.sleep(5_000);
-        step_AssembledRaw(processorIdAndCoreIds, true, EnumsApi.TaskExecState.ERROR);
-        Thread.sleep(5_000);
 
-        System.out.println("start findTaskForRegisteringInQueue() #2");
-        preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
+        System.out.println("start step_AssembledRaw()");
+        step_AssembledRaw(processorIdAndCoreIds, true);
+        Thread.sleep(5_000);
+        step_AssembledRaw(processorIdAndCoreIds, false);
 
+        System.out.println("start findTaskForRegisteringInQueueAndWait() #2");
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
+        System.out.println("start step_DatasetProcessing()");
         step_DatasetProcessing(processorIdAndCoreIds);
 
+        finalAssertions(4);
     }
 
     private void finishTask(TaskImpl task32) {
@@ -160,9 +163,10 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
 
         processScheduledTasks();
 
+        assertNotNull(getExecContextForTest().execContextTaskStateId);
+
         ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId,
             () -> execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(getExecContextForTest().id, getExecContextForTest().execContextTaskStateId));
-
         processScheduledTasks();
     }
 
@@ -172,12 +176,30 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
     }
 
     private void step_DatasetProcessing(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
-        System.out.println("start step_DatasetProcessing()");
         DispatcherCommParamsYaml.AssignedTask simpleTask20 =
                 taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
-
         // function code is function-02:1.1
-        assertNull(simpleTask20);
+        assertNotNull(simpleTask20);
+        assertNotNull(simpleTask20.getTaskId());
+        TaskImpl task3 = taskRepository.findById(simpleTask20.getTaskId()).orElse(null);
+        assertNotNull(task3);
+
+        DispatcherCommParamsYaml.AssignedTask simpleTask21 =
+                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
+        assertNotNull(simpleTask21);
+        assertEquals(simpleTask20.getTaskId(), simpleTask21.getTaskId());
+
+        TaskParamsYaml taskParamsYaml = TaskParamsYamlUtils.UTILS.to(simpleTask20.params);
+        assertNotNull(taskParamsYaml.task.processCode);
+        assertNotNull(taskParamsYaml.task.inputs);
+        assertNotNull(taskParamsYaml.task.outputs);
+        assertEquals(1, taskParamsYaml.task.inputs.size());
+        assertEquals(1, taskParamsYaml.task.outputs.size());
+
+        storeOutputVariable(simpleTask20.taskId, "dataset-processing-output", "dataset-processing-output-result", taskParamsYaml.task.processCode);
+        storeExecResult(simpleTask20);
+
+        finishTask(task3);
     }
 
     private void storeOutputVariable(Long taskId, String variableName, String variableData, String processCode) {
@@ -192,7 +214,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
         assertNotNull(variable);
 
         byte[] bytes = variableData.getBytes();
-        variableService.updateWithTx(taskId, new ByteArrayInputStream(bytes), bytes.length, variable.id);
+        VariableSyncService.getWithSyncVoidForCreation(variable.id, ()->variableService.updateWithTx(taskId, new ByteArrayInputStream(bytes), bytes.length, variable.id));
 
 
 
@@ -203,9 +225,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
 
     }
 
-    private void step_AssembledRaw(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds, boolean error, EnumsApi.TaskExecState expectedState) {
-        System.out.println("start step_AssembledRaw()");
-
+    private void step_AssembledRaw(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds, boolean error) {
         DispatcherCommParamsYaml.AssignedTask simpleTask =
                 taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         // function code is function-01:1.1
@@ -266,7 +286,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
 
             TaskImpl task2 = taskRepository.findById(simpleTask.taskId).orElse(null);
             assertNotNull(task2);
-            assertEquals(expectedState.value, task2.execState);
+            assertEquals(EnumsApi.TaskExecState.NONE.value, task2.execState);
         }
         else {
             storeOutputVariable(simpleTask.taskId, "assembled-raw-output", "assembled-raw-output-result", taskParamsYaml.task.processCode);

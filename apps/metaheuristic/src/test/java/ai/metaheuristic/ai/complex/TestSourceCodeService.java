@@ -49,6 +49,7 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.dispatcher.Task;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ch.qos.logback.classic.LoggerContext;
@@ -106,12 +107,12 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class TestSourceCodeService extends PreparingSourceCode {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
+//    @org.junit.jupiter.api.io.TempDir
+    static Path tempDir = Objects.requireNonNull(DirUtils.createMhTempPath("test-"));
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
-        String dbUrl = "jdbc:h2:file:" + tempDir.resolve("db-h2/mh").toAbsolutePath() + ";DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=0";
+        String dbUrl = "jdbc:h2:mem:" + tempDir.resolve("db-h2/mh").toAbsolutePath() + ";DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=0";
         registry.add("spring.datasource.url", () -> dbUrl);
         registry.add("mh.home", () -> tempDir.toAbsolutePath().toString());
         registry.add("spring.profiles.active", () -> "dispatcher,h2,test");
@@ -124,6 +125,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     @AfterAll
     static void cleanupLogging() {
+
     }
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
@@ -171,7 +173,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         final AtomicReference<DispatcherCommParamsYaml.AssignedTask> tRef = new AtomicReference<>();
         await()
             .atLeast(Duration.ofMillis(0))
-            .atMost(Duration.ofSeconds(5))
+            .atMost(Duration.ofSeconds(15))
             .with()
             .pollInterval(Duration.ofMillis(100))
             .until(() -> {

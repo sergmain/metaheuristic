@@ -19,6 +19,8 @@ package ai.metaheuristic.ai.dispatcher.el;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.expression.*;
@@ -46,6 +48,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Serge
  * Date: 3/14/2026
  */
+@Execution(ExecutionMode.CONCURRENT)
 class EvaluateExpressionLanguageNumericCompareTest {
 
     /**

@@ -19,14 +19,18 @@ package ai.metaheuristic.ai.dispatcher;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeController;
 import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 10/24/2021
  * Time: 7:31 PM
  */
+@Execution(CONCURRENT)
 public class TestNamesOfClasses {
 
     @Test

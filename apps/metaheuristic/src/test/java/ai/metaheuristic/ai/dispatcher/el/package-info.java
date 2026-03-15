@@ -15,6 +15,6 @@
  */
 
 @NullMarked
-package ai.metaheuristic.ai.el;
+package ai.metaheuristic.ai.dispatcher.el;
 
 import org.jspecify.annotations.NullMarked;
