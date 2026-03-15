@@ -98,8 +98,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
 
-    //    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir = Objects.requireNonNull(DirUtils.createMhTempPath("test-"));
+    @org.junit.jupiter.api.io.TempDir
+    static Path tempDir;
 
     @BeforeAll
     static void setSystemProperties() {

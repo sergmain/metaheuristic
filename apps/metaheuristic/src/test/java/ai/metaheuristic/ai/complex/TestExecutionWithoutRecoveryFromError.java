@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.complex_1;
+package ai.metaheuristic.ai.complex;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.MhComplexTestConfig;
@@ -75,8 +75,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
 
-    //    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir = Objects.requireNonNull(DirUtils.createMhTempPath("test-"));
+    @org.junit.jupiter.api.io.TempDir
+    static Path tempDir;
 
     @BeforeAll
     static void setSystemProperties() {
