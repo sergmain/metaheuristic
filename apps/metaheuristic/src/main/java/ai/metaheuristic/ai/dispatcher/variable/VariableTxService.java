@@ -773,7 +773,10 @@ public class VariableTxService {
                 taskParamsYaml.task.outputs,
                 taskParamsYaml.task.taskContextId,
                 (name, contextId) -> {
-                    Variable sv = findVariableInAllInternalContexts(name, contextId, execContextId);
+                    // For output variables, only look for exact context match — not parent/sibling walk.
+                    // Each task creates its own output variables. The findVariable check here is only
+                    // for idempotency (re-init of the same task), not for finding outputs from other tasks.
+                    Variable sv = variableRepository.findByNameAndTaskContextIdAndExecContextId(name, contextId, execContextId);
                     return sv != null ? sv.id : null;
                 },
                 (name, contextId) -> createUninitialized(name, execContextId, contextId).id

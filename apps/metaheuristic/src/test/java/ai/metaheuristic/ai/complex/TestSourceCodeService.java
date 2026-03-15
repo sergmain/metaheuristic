@@ -413,6 +413,9 @@ public class TestSourceCodeService extends PreparingSourceCode {
         assertNotNull(taskParamsYaml.task.inputs);
         assertNotNull(taskParamsYaml.task.outputs);
 
+        System.out.println("step_FitAndPredict: Task#" + task32.getId() + " process=" + taskParamsYaml.task.processCode
+                + " ctx=" + taskParamsYaml.task.taskContextId + " state=" + EnumsApi.TaskExecState.from(task32.getExecState()));
+
         boolean fitTask = "fit-dataset".equals(taskParamsYaml.task.processCode);
 
         assertEquals(fitTask ? 6 : 3, taskParamsYaml.task.inputs.size());

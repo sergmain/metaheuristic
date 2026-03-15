@@ -58,7 +58,7 @@ public class TaskVariableInitService {
         try {
             TaskSyncService.getWithSyncVoid(event.taskId, ()-> taskVariableInitTxService.intiVariables(event));
         } catch (CommonRollbackException e) {
-            //;
+            //
         }
     }
 

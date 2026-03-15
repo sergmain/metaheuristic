@@ -131,7 +131,7 @@ public class TxSupportForTestingService {
         }
         Variable v = variableRepository.findByNameAndTaskContextIdAndExecContextId(variableName, taskContextId, execContextId);
         if (v==null || v.inited) {
-            throw new IllegalStateException("(v==null || v.inited)");
+            throw new IllegalStateException("(v==null || v.inited), variableName: " + variableName + ", taskContextId: " + taskContextId + ", execContextId: " + execContextId + ", v==null: " + (v==null) + (v!=null ? ", v.inited: " + v.inited + ", v.id: " + v.id : ""));
         }
         byte[] bytes = variableData.getBytes();
         Variable finalV = v;
