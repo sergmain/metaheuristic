@@ -38,6 +38,7 @@ import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,6 +76,13 @@ public class KeepAliveService {
     public void init() {
         this.checkProcessorIdEventPool = new MultiTenantedQueue<>(100, Duration.ZERO, true, "CheckProcessorIdEvent-",
                 this::checkProcessorIdSynced);
+    }
+
+    @PreDestroy
+    public void onDestroy() {
+        if (checkProcessorIdEventPool != null) {
+            checkProcessorIdEventPool.shutdown();
+        }
     }
 
     private void initDispatcherInfo(KeepAliveResponseParamYaml keepAliveResponse) {

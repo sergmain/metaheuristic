@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.task;
 import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesEvent;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -43,6 +44,11 @@ public class TaskVariableInitService {
 
     private final MultiTenantedQueue<Long, InitVariablesEvent> threadedPool =
             new MultiTenantedQueue<>(10, Duration.ZERO, true, "InitVariablesEvent-", this::intiVariables);
+
+    @PreDestroy
+    public void onDestroy() {
+        threadedPool.shutdown();
+    }
 
     @Async
     @EventListener

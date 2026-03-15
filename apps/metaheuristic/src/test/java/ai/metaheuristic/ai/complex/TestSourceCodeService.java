@@ -111,7 +111,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
-        String dbUrl = "jdbc:h2:file:" + tempDir.resolve("db-h2/mh").toAbsolutePath() + ";DB_CLOSE_ON_EXIT=FALSE";
+        String dbUrl = "jdbc:h2:file:" + tempDir.resolve("db-h2/mh").toAbsolutePath() + ";DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=0";
         registry.add("spring.datasource.url", () -> dbUrl);
         registry.add("mh.home", () -> tempDir.toAbsolutePath().toString());
         registry.add("spring.profiles.active", () -> "dispatcher,h2,test");
@@ -124,8 +124,6 @@ public class TestSourceCodeService extends PreparingSourceCode {
 
     @AfterAll
     static void cleanupLogging() {
-        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.stop();
     }
 
     @Autowired private TxSupportForTestingService txSupportForTestingService;
