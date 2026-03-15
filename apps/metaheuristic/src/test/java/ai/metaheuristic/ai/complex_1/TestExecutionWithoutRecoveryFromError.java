@@ -61,8 +61,11 @@ import org.springframework.test.context.DynamicPropertySource;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = MhComplexTestConfig.class)
@@ -171,6 +174,20 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
         execContextVariableStateTopLevelService.processFlushing();
     }
 
+    private DispatcherCommParamsYaml.AssignedTask awaitTask(Long coreId) {
+        final AtomicReference<DispatcherCommParamsYaml.AssignedTask> ref = new AtomicReference<>();
+        await().atMost(Duration.ofSeconds(30))
+                .pollInterval(Duration.ofMillis(500))
+                .until(() -> {
+                    processScheduledTasks();
+                    preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
+                    final DispatcherCommParamsYaml.AssignedTask task = taskProviderTopLevelService.findTask(coreId, false);
+                    ref.set(task);
+                    return task != null;
+                });
+        return ref.get();
+    }
+
     private void step_DatasetProcessing(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
         System.out.println("start step_DatasetProcessing()");
         DispatcherCommParamsYaml.AssignedTask simpleTask20 =
@@ -206,8 +223,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
     private void step_AssembledRaw(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds, boolean error, EnumsApi.TaskExecState expectedState) {
         System.out.println("start step_AssembledRaw()");
 
-        DispatcherCommParamsYaml.AssignedTask simpleTask =
-                taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
+        DispatcherCommParamsYaml.AssignedTask simpleTask = awaitTask(processorIdAndCoreIds.coreId1);
         // function code is function-01:1.1
         assertNotNull(simpleTask);
         assertNotNull(simpleTask.getTaskId());
