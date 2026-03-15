@@ -135,6 +135,7 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
     @Autowired private ExecContextGraphService execContextGraphService;
     @Autowired private ExecContextCache execContextCache;
     @Autowired private TaskResetTxService taskResetTxService;
+    @Autowired private TaskVariableInitTxService taskVariableInitTxService;
 
     @Override
     @SneakyThrows
@@ -273,6 +274,25 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
 
         // === Phase 3: Re-execute — this triggers the bug ===
         System.out.println("=== Phase 3: Re-executing after reset ===");
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        assertEquals(EnumsApi.ExecContextState.STARTED.code, getExecContextForTest().getState(),
+                "ExecContext should be STARTED after reset");
+
+        // After reset, the root task is INIT but needs variable initialization to transition
+        // to NONE (ready for assignment). In production this happens via async InitVariablesTxEvent.
+        // In the test we must trigger it explicitly.
+        {
+            TaskImpl rootTask = taskRepository.findById(resetTaskId).orElse(null);
+            assertNotNull(rootTask);
+            assertEquals(EnumsApi.TaskExecState.INIT.value, rootTask.execState,
+                    "Root task should be INIT after reset");
+            TaskSyncService.getWithSyncVoid(resetTaskId,
+                    () -> taskVariableInitTxService.intiVariables(new ai.metaheuristic.ai.dispatcher.event.events.InitVariablesEvent(resetTaskId)));
+        }
+
+        processScheduledTasks();
+        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
+        processScheduledTasks();
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         // Re-execute check-objectives with hasObjectives=false again
