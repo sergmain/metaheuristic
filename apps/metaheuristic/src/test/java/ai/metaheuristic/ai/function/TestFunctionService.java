@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.function;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.MhComplexTestConfig;
+import ai.metaheuristic.ai.MhShutdown;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataTxService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
@@ -77,11 +78,13 @@ class TestFunctionService {
 
     @BeforeAll
     static void setSystemProperties() {
+        ai.metaheuristic.ai.MhShutdown.cleanUp();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
     static void cleanupLogging() {
+        MhShutdown.cleanUp();
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.stop();
     }

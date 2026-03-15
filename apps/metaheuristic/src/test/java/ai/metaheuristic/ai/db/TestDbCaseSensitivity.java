@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.db;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
+import ai.metaheuristic.ai.MhShutdown;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
@@ -76,11 +77,13 @@ public class TestDbCaseSensitivity extends PreparingSourceCode {
 
     @BeforeAll
     static void setSystemProperties() {
+        ai.metaheuristic.ai.MhShutdown.cleanUp();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
     static void cleanupLogging() {
+        MhShutdown.cleanUp();
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.stop();
     }

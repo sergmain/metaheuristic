@@ -49,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @TestPropertySource(locations="classpath:test-dispatcher-profile.properties")
 @AutoConfigureCache
 public class TestDispatcherProfile {
@@ -67,13 +67,13 @@ public class TestDispatcherProfile {
 
     @BeforeAll
     static void setSystemProperties() {
+        ai.metaheuristic.ai.MhShutdown.cleanUp();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
     static void cleanupLogging() {
-        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.stop();
+        ai.metaheuristic.ai.MhShutdown.cleanUp();
     }
 
     @Autowired private Globals globals;

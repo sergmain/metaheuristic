@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.binary_data;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
+import ai.metaheuristic.ai.MhShutdown;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.internal_functions.batch_result_processor.BatchResultProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -60,6 +61,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Time: 3:14 PM
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
+@ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
@@ -83,13 +85,13 @@ public class TestBinaryDataSaveAndLoad {
 
     @BeforeAll
     static void setSystemProperties() {
+        ai.metaheuristic.ai.MhShutdown.cleanUp();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
     static void cleanupLogging() {
-        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.stop();
+        MhShutdown.cleanUp();
     }
 
     @Autowired private VariableTxService variableService;

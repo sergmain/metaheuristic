@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionCache;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataTxService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.LogDataRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskResetTxService;
@@ -74,6 +75,23 @@ public class TxSupportForTestingService {
     private final TaskResetTxService taskResetTxService;
     private final ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache sourceCodeCache;
     private final ExecContextVariableStateRepository execContextVariableStateRepository;
+    private final LogDataRepository logDataRepository;
+
+    @Transactional
+    public LogData saveLog(LogData logData) {
+        if (!globals.testing) {
+            throw new IllegalStateException("Only for testing");
+        }
+        return logDataRepository.save(logData);
+    }
+
+    @Transactional
+    public void deleteLog(Long id) {
+        if (!globals.testing) {
+            throw new IllegalStateException("Only for testing");
+        }
+        logDataRepository.deleteById(id);
+    }
 
     @Transactional(rollbackFor = CommonRollbackException.class)
     public ExecContextCreatorService.ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, ExecContextApiData.UserExecContext context) {

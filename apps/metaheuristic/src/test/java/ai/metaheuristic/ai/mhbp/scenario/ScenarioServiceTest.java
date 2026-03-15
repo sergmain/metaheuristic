@@ -40,30 +40,4 @@ public class ScenarioServiceTest {
     @Autowired
     private SourceCodeValidationService sourceCodeValidationService;
 
-
-/*
-    @Test
-    public void test_checkConsistencyOfSourceCode() throws IOException {
-
-        String yaml = IOUtils.resourceToString("/mhbp/scenario/scenario-fruits.yaml", StandardCharsets.UTF_8);
-        Scenario scenario = new Scenario();
-        scenario.id = 1L;
-        scenario.version=1;
-        scenario.scenarioGroupId = 5L;
-        scenario.name = "Fruit production";
-        scenario.setParams(yaml);
-
-
-        SourceCodeParamsYaml scpy = ScenarioUtils.to("uid", scenario.getScenarioParams());
-        String yamlSc = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(scpy);
-        SourceCodeApiData.SourceCodeResult result = sourceCodeService.createSourceCode(yaml, scpy, 1L);
-
-        SourceCodeImpl sc = new SourceCodeImpl();
-        sc.updateParams(scpy);
-
-
-        var result = sourceCodeValidationService.checkConsistencyOfSourceCode();
-    }
-*/
-
 }

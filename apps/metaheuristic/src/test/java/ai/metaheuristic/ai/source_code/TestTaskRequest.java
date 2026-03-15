@@ -83,13 +83,13 @@ public class TestTaskRequest extends FeatureMethods {
 
     @BeforeAll
     static void setSystemProperties() {
+        ai.metaheuristic.ai.MhShutdown.cleanUp();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
     static void cleanupLogging() {
-        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.stop();
+        ai.metaheuristic.ai.MhShutdown.cleanUp();
     }
 
     @Autowired private TaskFinishingTopLevelService taskFinishingTopLevelService;

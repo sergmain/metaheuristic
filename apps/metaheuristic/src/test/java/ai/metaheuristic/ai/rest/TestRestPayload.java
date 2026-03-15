@@ -75,13 +75,13 @@ public class TestRestPayload {
 
     @BeforeAll
     static void setSystemProperties() {
+        ai.metaheuristic.ai.MhShutdown.cleanUp();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
     static void cleanupLogging() {
-        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.stop();
+        ai.metaheuristic.ai.MhShutdown.cleanUp();
     }
 
     @Autowired private WebApplicationContext webApplicationContext;
