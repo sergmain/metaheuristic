@@ -102,7 +102,7 @@ public class ProcessorTaskService {
     private void init(Path processorPath) {
         final LinkedList<CompletableFuture<Void>> list = new LinkedList<>();
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataParams.getAllEnabledRefsForCores()) {
+            for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.getProcessorEnv().metadataParams().getAllEnabledRefsForCores()) {
 
                 Path processorDir = processorPath.resolve(core.coreCode);
                 Path processorTaskDir = processorDir.resolve(Consts.TASK_DIR);
@@ -372,7 +372,7 @@ public class ProcessorTaskService {
             ProcessorSyncHolder.writeLock.lock();
             log.info("markAsFinished({}, #{}, {})", core.dispatcherUrl.url, taskId, functionExec);
 
-            processorEnvironment.metadataParams.removeQuota(core.dispatcherUrl.url, taskId);
+            processorEnvironment.getProcessorEnv().metadataParams().removeQuota(core.dispatcherUrl.url, taskId);
             ProcessorCoreTask task = findByIdForCore(core, taskId);
             if (task == null) {
                 log.error("713.400 ProcessorCoreTask wasn't found for Id #" + taskId);
@@ -510,7 +510,7 @@ public class ProcessorTaskService {
     public void createTask(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, DispatcherCommParamsYaml.AssignedTask assignedTask) {
         try {
             ProcessorSyncHolder.writeLock.lock();
-            processorEnvironment.metadataParams.registerTaskQuota(core.dispatcherUrl.url, assignedTask.taskId, assignedTask.tag, assignedTask.quota);
+            processorEnvironment.getProcessorEnv().metadataParams().registerTaskQuota(core.dispatcherUrl.url, assignedTask.taskId, assignedTask.tag, assignedTask.quota);
 
             log.info("713.500 Prepare new task #{} on core #{}", assignedTask.taskId, core.coreId);
             Map<Long, ProcessorCoreTask> mapForDispatcherUrl = getTasksForProcessorCore(core);
@@ -542,7 +542,7 @@ public class ProcessorTaskService {
             }
             Path coreTaskDir = coreDir.resolve(Consts.TASK_DIR);
 
-            Path dispatcherDir = coreTaskDir.resolve(processorEnvironment.metadataParams.processorStateByDispatcherUrl(core).dispatcherCode);
+            Path dispatcherDir = coreTaskDir.resolve(processorEnvironment.getProcessorEnv().metadataParams().processorStateByDispatcherUrl(core).dispatcherCode);
             String path = DirUtils.getPoweredPath(assignedTask.taskId);
             Path taskDir = dispatcherDir.resolve(path);
             try {
@@ -675,7 +675,7 @@ public class ProcessorTaskService {
     }
 
     public void delete(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, final Long taskId) {
-        MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.metadataParams.processorStateByDispatcherUrl(core);
+        MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.getProcessorEnv().metadataParams().processorStateByDispatcherUrl(core);
 
         final Path processorDir = processorPath.resolve(core.coreCode);
         final Path processorTaskDir = processorDir.resolve(Consts.TASK_DIR);
@@ -684,7 +684,7 @@ public class ProcessorTaskService {
 
         try {
             ProcessorSyncHolder.writeLock.lock();
-            processorEnvironment.metadataParams.removeQuota(core.dispatcherUrl.url, taskId);
+            processorEnvironment.getProcessorEnv().metadataParams().removeQuota(core.dispatcherUrl.url, taskId);
             try {
                 if (Files.exists(taskDir)) {
                     deleteDir(taskDir, "delete dir in ProcessorTaskService.delete()");

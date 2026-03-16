@@ -140,13 +140,13 @@ public class TaskProcessor {
 
             processorTaskService.setLaunchOn(core, task.taskId);
 
-            final MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.metadataParams.processorStateByDispatcherUrl(core);
+            final MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.getProcessorEnv().metadataParams().processorStateByDispatcherUrl(core);
             if (processorState.processorId==null || S.b(processorState.sessionId)) {
                 log.warn("100.010 processor {} with dispatcher {} isn't ready", core.coreCode, dispatcherUrl.url);
                 continue;
             }
 
-            DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher = processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+            DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher = processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService().lookupExtendedMap.get(dispatcherUrl);
             if (dispatcher==null) {
                 final String es = "100.020 Broken task #"+task.taskId+". dispatcher wasn't found for url " + dispatcherUrl;
                 processorTaskService.markAsFinishedWithError(core, task.taskId, es);
@@ -241,7 +241,7 @@ public class TaskProcessor {
                 }
             }
 
-            String status = EnvServiceUtils.prepareEnvironment(artifactDir, new EnvServiceUtils.EnvYamlShort(processorEnvironment.envParams.getEnvParamsYaml()));
+            String status = EnvServiceUtils.prepareEnvironment(artifactDir, new EnvServiceUtils.EnvYamlShort(processorEnvironment.getProcessorEnv().envParams().getEnvParamsYaml()));
             if (status!=null) {
                 processorTaskService.markAsFinishedWithError(core, task.taskId, status);
             }
@@ -456,7 +456,7 @@ public class TaskProcessor {
         List<String> cmd;
         Interpreter interpreter=null;
         if (StringUtils.isNotBlank(functionPrepareResult.function.env)) {
-            final String exec = processorEnvironment.envParams.getEnvParamsYaml().getEnvs().stream().filter(o -> o.code.equals(functionPrepareResult.function.env)).findFirst().map(o -> o.exec).orElse(null);
+            final String exec = processorEnvironment.getProcessorEnv().envParams().getEnvParamsYaml().getEnvs().stream().filter(o -> o.code.equals(functionPrepareResult.function.env)).findFirst().map(o -> o.exec).orElse(null);
             interpreter = new Interpreter(exec);
             if (interpreter.list == null) {
                 String es = "100.290 Can't process the task, the interpreter wasn't found for env: " + functionPrepareResult.function.env;

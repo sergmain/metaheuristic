@@ -72,7 +72,7 @@ public class GetDispatcherContextInfoService extends AbstractTaskQueue<GetDispat
         GetDispatcherContextInfoTask task;
         while ((task = poll()) != null) {
 
-            final DispatcherLookupParamsYaml.AssetManager assetManager = processorEnvironment.dispatcherLookupExtendedService.getAssetManager(task.assetManagerUrl);
+            final DispatcherLookupParamsYaml.AssetManager assetManager = processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService().getAssetManager(task.assetManagerUrl);
             if (assetManager==null) {
                 log.error("806.020 assetManager server wasn't found for url {}", task.assetManagerUrl.url);
                 continue;

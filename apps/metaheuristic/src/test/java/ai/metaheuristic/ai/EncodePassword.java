@@ -66,6 +66,8 @@ public class EncodePassword {
     @AfterAll
     static void cleanupLogging() {
         ai.metaheuristic.ai.MhShutdown.cleanUp();
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext.stop();
     }
 
     @Autowired private PasswordEncoder passwordEncoder;

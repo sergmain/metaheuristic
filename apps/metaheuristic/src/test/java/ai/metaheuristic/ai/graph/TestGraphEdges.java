@@ -88,6 +88,8 @@ public class TestGraphEdges extends PreparingSourceCode {
     @AfterAll
     static void cleanupLogging() {
         ai.metaheuristic.ai.MhShutdown.cleanUp();
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext.stop();
     }
 
     @Autowired private ExecContextCache execContextCache;

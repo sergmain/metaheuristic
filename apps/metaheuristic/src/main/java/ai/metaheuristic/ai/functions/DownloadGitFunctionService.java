@@ -122,7 +122,7 @@ public class DownloadGitFunctionService {
             return;
         }
 
-        final DispatcherLookupParamsYaml.AssetManager assetManager = processorEnvironment.dispatcherLookupExtendedService.getAssetManager(assetManagerUrl);
+        final DispatcherLookupParamsYaml.AssetManager assetManager = processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService().getAssetManager(assetManagerUrl);
         if (assetManager==null) {
             log.error("817.080 assetManager server wasn't found for url {}", assetManagerUrl.url);
             return;

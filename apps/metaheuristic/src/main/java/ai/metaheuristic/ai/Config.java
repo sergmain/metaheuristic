@@ -205,7 +205,7 @@ public class Config {
                 globals.state.shutdownInProgress = true;
                 log.error("\nUnknown profile(s) was encountered in property spring.profiles.active.\nNeed to be fixed.\n" +
                         "Allowed profiles are: " + SpringHelpersUtils.POSSIBLE_PROFILES);
-                System.exit(SpringApplication.exit(appCtx, () -> -500));
+                System.exit(SpringApplication.exit(appCtx, () -> -501));
             }
         }
 

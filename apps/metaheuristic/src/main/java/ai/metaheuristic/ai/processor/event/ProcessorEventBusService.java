@@ -61,7 +61,7 @@ public class ProcessorEventBusService {
 
     @PostConstruct
     public void post() {
-        this.activeDispatchers = new ActiveDispatchers(processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap, "RoundRobin for KeepAlive", Enums.DispatcherSelectionStrategy.alphabet);
+        this.activeDispatchers = new ActiveDispatchers(processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService().lookupExtendedMap, "RoundRobin for KeepAlive", Enums.DispatcherSelectionStrategy.alphabet);
         for (Map.Entry<ProcessorAndCoreData.DispatcherUrl, AtomicBoolean> entry : activeDispatchers.getActiveDispatchers().entrySet()) {
             // TODO p5 2023-10-30 do we need to switch to a virtual threads?
             // TODO p0 2023-11-16 yes, it needs to be switched to virtual threads
@@ -108,7 +108,7 @@ public class ProcessorEventBusService {
                 Thread t = new Thread(() -> {
                     log.info("Call processorKeepAliveRequestor, url: {}", dispatcher.url);
                     try {
-                        dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).processorKeepAliveRequestor.proceedWithRequest();
+                        dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).processorKeepAliveRequestor().proceedWithRequest();
                     } catch (Throwable th) {
                         log.error("047.120 ProcessorEventBusService.keepAlive()", th);
                     }
@@ -145,7 +145,7 @@ public class ProcessorEventBusService {
                 Thread t = new Thread(() -> {
                     // log.info("Call interactWithFunctionRepository, url: {}", dispatcher.url);
                     try {
-                        dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).functionRepositoryRequestor.requestFunctionRepository();
+                        dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).functionRepositoryRequestor().requestFunctionRepository();
                     } catch (Throwable th) {
                         log.error("047.270 ProcessorEventBusService.interactWithFunctionRepository()", th);
                     }

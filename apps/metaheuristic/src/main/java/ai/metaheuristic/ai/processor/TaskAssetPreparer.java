@@ -105,7 +105,7 @@ public class TaskAssetPreparer {
             return;
         }
 
-        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataParams.getAllEnabledRefsForCores()) {
+        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.getProcessorEnv().metadataParams().getAllEnabledRefsForCores()) {
 
             processorTaskService.findAllForCore(core).forEach(task -> {
                 ProcessorAndCoreData.DispatcherUrl dispatcherUrl = new ProcessorAndCoreData.DispatcherUrl(task.dispatcherUrl);
@@ -163,9 +163,9 @@ public class TaskAssetPreparer {
         }
 
         final DispatcherLookupExtended dispatcher =
-                processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
+                processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService().lookupExtendedMap.get(core.dispatcherUrl);
 
-        final MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.metadataParams.processorStateByDispatcherUrl(core);
+        final MetadataParamsYaml.ProcessorSession processorState = processorEnvironment.getProcessorEnv().metadataParams().processorStateByDispatcherUrl(core);
         if (processorState.processorId==null || S.b(processorState.sessionId)) {
             log.warn("951.270 processor {} with dispatcher {} isn't ready", core.coreCode, core.dispatcherUrl.url);
             return null;
@@ -231,7 +231,7 @@ public class TaskAssetPreparer {
 
     private boolean checkFunctionPreparednessWithGit(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core, TaskParamsYaml.FunctionConfig functionConfig, ProcessorAndCoreData.AssetManagerUrl assetManagerUrl, Long taskId, ShortFunctionConfig shortFunctionConfig) {
         final DownloadStatus functionDownloadStatuses = FunctionRepositoryProcessorService.getFunctionDownloadStatus(assetManagerUrl, functionConfig.code);
-        final DispatcherLookupExtended dispatcher = processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
+        final DispatcherLookupExtended dispatcher = processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService().lookupExtendedMap.get(core.dispatcherUrl);
 
         if (functionDownloadStatuses==null) {
             downloadGitFunctionService.addTask(new DownloadGitFunctionTask(functionConfig.code, shortFunctionConfig, assetManagerUrl, dispatcher.dispatcherLookup.signatureRequired, NORMAL));
@@ -271,7 +271,7 @@ public class TaskAssetPreparer {
             return false;
         }
         final DispatcherLookupExtended dispatcher =
-                processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
+                processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService().lookupExtendedMap.get(core.dispatcherUrl);
 
         final EnumsApi.FunctionState functionState = functionDownloadStatus.state;
         if (functionState == EnumsApi.FunctionState.none) {

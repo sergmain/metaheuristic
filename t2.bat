@@ -1,0 +1,1 @@
+mvn test -pl apps\metaheuristic -Dtest="ai.metaheuristic.ai.**" > mh-tests.txt

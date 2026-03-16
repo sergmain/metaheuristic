@@ -435,12 +435,15 @@ public class MetadataParams {
             Files.writeString(metadataFile, data, StandardCharsets.UTF_8);
             String check = Files.readString(metadataFile, StandardCharsets.UTF_8);
             if (!check.equals(data)) {
-                log.error("815.440 Metadata was persisted with an error, content is different, size - expected: {}, actual: {}, Processor will be closed", data.length(), check.length());
-                throw new TerminateApplicationException();
+                String es = S.f("815.440 Metadata was persisted with an error, content is different, size - expected: %d, actual: %d, " +
+                    "Processor will be closed", data.length(), check.length());
+                log.error(es);
+                throw new TerminateApplicationException(es);
             }
         } catch (Throwable th) {
-            log.error("815.460 Fatal error, Processor will be closed", th);
-            throw new TerminateApplicationException();
+            String es = "815.460 Fatal error, Processor will be closed";
+            log.error(es, th);
+            throw new TerminateApplicationException(es);
         }
     }
 

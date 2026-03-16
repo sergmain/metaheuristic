@@ -77,7 +77,7 @@ public class ProcessorKeepAliveRequestor {
 
         this.restTemplate = new RestTemplate(REQUEST_FACTORY);
         this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
-        this.dispatcher = this.processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+        this.dispatcher = this.processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService().lookupExtendedMap.get(dispatcherUrl);
         if (this.dispatcher == null) {
             throw new IllegalStateException("776.010 Can't find dispatcher config for url " + dispatcherUrl);
         }
@@ -97,7 +97,7 @@ public class ProcessorKeepAliveRequestor {
             karpy.processor.status = processorService.produceReportProcessorStatus(dispatcher.schedule);
 
 
-            final MetadataParamsYaml.ProcessorSession processorSession = processorEnvironment.metadataParams.getProcessorSession(dispatcherUrl);
+            final MetadataParamsYaml.ProcessorSession processorSession = processorEnvironment.getProcessorEnv().metadataParams().getProcessorSession(dispatcherUrl);
             final Long processorId = processorSession.processorId;
             final String sessionId = processorSession.sessionId;
 
@@ -108,18 +108,18 @@ public class ProcessorKeepAliveRequestor {
                 karpy.processor.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorId, sessionId);
             }
 
-            Set<ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef> cores = processorEnvironment.metadataParams.getAllCoresForDispatcherUrl(dispatcherUrl);
+            Set<ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef> cores = processorEnvironment.getProcessorEnv().metadataParams().getAllCoresForDispatcherUrl(dispatcherUrl);
             for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : cores) {
                 String coreDir = globals.processorPath.resolve(core.coreCode).toString();
                 Long coreId = core.coreId;
                 String coreCode = core.coreCode;
-                String tags = processorEnvironment.envParams.getTags(core.coreCode);
+                String tags = processorEnvironment.getProcessorEnv().envParams().getTags(core.coreCode);
 
                 karpy.cores.add(new KeepAliveRequestParamYaml.Core(coreDir, coreId, coreCode, tags));
             }
 
             final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
-                    processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+                    processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService().lookupExtendedMap.get(dispatcherUrl);
 
             final String url = dispatcherRestUrl + '/' + R.nextInt(100_000, 1_000_000);
             String yaml = ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(karpy);

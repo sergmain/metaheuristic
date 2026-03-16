@@ -75,7 +75,7 @@ public class FunctionRepositoryProcessorService {
         List<String> codesReady = new ArrayList<>();
         // failed download of function won't be reported. so dispatcher just won't assign task to this processor
         if (CollectionUtils.isNotEmpty(responseParams.functions)) {
-            final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher = processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+            final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher = processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService().lookupExtendedMap.get(dispatcherUrl);
             final ProcessorAndCoreData.AssetManagerUrl assetManagerUrl = new ProcessorAndCoreData.AssetManagerUrl(dispatcher.dispatcherLookup.assetManagerUrl);
 
             for (FunctionRepositoryResponseParams.ShortFunctionConfig shortFunctionConfig : responseParams.functions) {

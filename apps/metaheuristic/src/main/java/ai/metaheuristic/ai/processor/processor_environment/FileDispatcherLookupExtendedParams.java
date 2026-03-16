@@ -140,7 +140,7 @@ public class FileDispatcherLookupExtendedParams extends DispatcherLookupExtended
                 SCHEMES,
                 "the config file dispatcher.yaml",
                 (es)-> {
-                    throw new TerminateApplicationException();
+                    throw new TerminateApplicationException(es);
                 },
                 SEE_MORE_INFO
         );

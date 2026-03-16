@@ -26,6 +26,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.type.AnnotationMetadata;
@@ -53,6 +54,7 @@ import java.util.List;
 @AutoConfiguration(before = HibernateJpaAutoConfiguration.class)
 @ConditionalOnClass(SpringLiquibase.class)
 @Import(MhLiquibaseAutoConfiguration.LiquibaseChangelogRegistrar.class)
+@Profile("dispatcher")
 public class MhLiquibaseAutoConfiguration {
 
     @Slf4j

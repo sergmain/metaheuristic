@@ -58,15 +58,17 @@ public class EnvParams {
         final Path envYamlFile = processorPath.resolve(Consts.ENV_YAML_FILE_NAME);
         if (Files.notExists(envYamlFile)) {
             if (envYamlProvider==null) {
-                log.warn("747.020 Processor's env.yaml config file doesn't exist: {}", envYamlFile.toAbsolutePath());
-                throw new TerminateApplicationException("747.012 Processor isn't configured, env.yaml is empty or doesn't exist");
+                String es = S.f("748.020 Processor's env.yaml config file doesn't exist: %s", envYamlFile.toAbsolutePath());
+                log.error(es);
+                throw new TerminateApplicationException(es);
             }
             try (InputStream is = envYamlProvider.provide()) {
                 Files.copy(is, envYamlFile);
             } catch (IOException e) {
-                log.error("747.035 Error", e);
-                throw new TerminateApplicationException("747.040 Error while creating env.yaml with " + envYamlProvider.getClass().getName() +
-                                                " provider and target path as " + envYamlFile.toAbsolutePath(), e);
+                String es = "748.040 Error while creating env.yaml with " + envYamlProvider.getClass().getName() + " provider " +
+                    "and target path as " + envYamlFile.toAbsolutePath()+". Error: " + e.getMessage();
+                log.error(es, e);
+                throw new TerminateApplicationException(es);
             }
         }
 
@@ -74,14 +76,15 @@ public class EnvParams {
         try {
             env = Files.readString(envYamlFile, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            log.error("747.045 Error", e);
-            throw new TerminateApplicationException("747.050 Error while reading file: " + envYamlFile.toAbsolutePath(), e);
+            log.error("748.045 Error", e);
+            throw new TerminateApplicationException("748.050 Error while reading file: " + envYamlFile.toAbsolutePath(), e);
         }
 
         envYaml = EnvParamsYamlUtils.BASE_YAML_UTILS.to(env);
         if (envYaml==null) {
-            log.error("747.060 env.yaml wasn't found or empty. path: {}/env.yaml", processorPath);
-            throw new TerminateApplicationException("747.062 Processor isn't configured, env.yaml is empty or doesn't exist");
+            String es = S.f("748.060 env.yaml wasn't found or empty. path: %s/env.yaml", processorPath );
+            log.error(es, processorPath);
+            throw new TerminateApplicationException(es);
         }
 
         verifyProcessCmd(taskConsoleOutputMaxLines, verify);

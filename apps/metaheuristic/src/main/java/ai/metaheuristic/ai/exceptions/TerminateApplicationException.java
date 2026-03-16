@@ -22,8 +22,8 @@ package ai.metaheuristic.ai.exceptions;
  * Time: 11:12 PM
  */
 public class TerminateApplicationException extends RuntimeException {
-    public TerminateApplicationException() {
-    }
+//    public TerminateApplicationException() {
+//    }
 
     public TerminateApplicationException(String message) {
         super(message);

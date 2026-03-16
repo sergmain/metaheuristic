@@ -73,7 +73,7 @@ public class FunctionRepositoryRequestor {
         this.functionRepositoryProcessorService = functionRepositoryProcessorService;
         this.restTemplate = new RestTemplate(REQUEST_FACTORY);
         this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
-        this.dispatcher = this.processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+        this.dispatcher = this.processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService().lookupExtendedMap.get(dispatcherUrl);
         if (this.dispatcher == null) {
             throw new IllegalStateException("778.030 Can't find dispatcher config for url " + dispatcherUrl);
         }
@@ -91,7 +91,7 @@ public class FunctionRepositoryRequestor {
 
         try {
             FunctionRepositoryRequestParams frrp = new FunctionRepositoryRequestParams();
-            MetadataParamsYaml.ProcessorSession processorSession = processorEnvironment.metadataParams.getProcessorSession(dispatcherUrl);
+            MetadataParamsYaml.ProcessorSession processorSession = processorEnvironment.getProcessorEnv().metadataParams().getProcessorSession(dispatcherUrl);
             if (processorSession!=null) {
                 frrp.processorId = processorSession.processorId;
             }

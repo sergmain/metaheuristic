@@ -81,6 +81,8 @@ public class TestEvaluationVariables extends TestBaseEvaluation {
     @AfterAll
     static void cleanupLogging() {
         ai.metaheuristic.ai.MhShutdown.cleanUp();
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext.stop();
     }
 
     @SneakyThrows

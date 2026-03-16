@@ -360,7 +360,7 @@ public class Schedulers {
 
         @PostConstruct
         public void post() {
-            this.activeDispatchers = new ActiveDispatchers(processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap, "ActiveDispatchers for scheduler", Enums.DispatcherSelectionStrategy.priority);
+            this.activeDispatchers = new ActiveDispatchers(processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService().lookupExtendedMap, "ActiveDispatchers for scheduler", Enums.DispatcherSelectionStrategy.priority);
         }
 
         @Override
@@ -384,7 +384,7 @@ public class Schedulers {
                 log.info("Run dispatcherRequestor.proceedWithRequest() for url {}", dispatcher);
                 try {
                     // call /rest/v1/srv-v2/
-                    dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).dispatcherRequestor.proceedWithRequest();
+                    dispatcherRequestorHolderService.dispatcherRequestorMap.get(dispatcher).dispatcherRequestor().proceedWithRequest();
                 } catch (Throwable th) {
                     log.error("ProcessorSchedulers.dispatcherRequester()", th);
                 }

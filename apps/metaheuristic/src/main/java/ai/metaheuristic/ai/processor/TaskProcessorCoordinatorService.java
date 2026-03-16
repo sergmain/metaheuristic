@@ -55,7 +55,7 @@ public class TaskProcessorCoordinatorService {
         }
         log.info("415.020 Start processing task by cores. taskProcessors.size(): {}", taskProcessors.size());
 
-        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.metadataParams.getAllEnabledRefsForCores()) {
+        for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.getProcessorEnv().metadataParams().getAllEnabledRefsForCores()) {
             invokeTaskProcessingOnCore(core);
         }
     }

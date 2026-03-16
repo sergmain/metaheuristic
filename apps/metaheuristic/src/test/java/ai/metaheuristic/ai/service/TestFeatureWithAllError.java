@@ -72,6 +72,8 @@ public class TestFeatureWithAllError extends FeatureMethods {
     @AfterAll
     static void cleanupLogging() {
         ai.metaheuristic.ai.MhShutdown.cleanUp();
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext.stop();
     }
 
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;

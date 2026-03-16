@@ -107,6 +107,8 @@ public class TestRegisterProcessor {
     @AfterAll
     static void cleanupLogging() {
         ai.metaheuristic.ai.MhShutdown.cleanUp();
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext.stop();
     }
 
     @Autowired private WebApplicationContext webApplicationContext;

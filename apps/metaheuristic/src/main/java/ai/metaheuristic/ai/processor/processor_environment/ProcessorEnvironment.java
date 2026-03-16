@@ -41,54 +41,71 @@ import java.nio.file.Path;
 @Service
 @Slf4j
 @Profile("processor")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ProcessorEnvironment {
 
     private final Globals globals;
     private final AdditionalCustomUserDetails additionalCustomUserDetails;
     private final ApplicationContext appCtx;
 
-    public final EnvParams envParams = new EnvParams();
-    public DispatcherLookupExtendedParams dispatcherLookupExtendedService;
-    public MetadataParams metadataParams;
+    public record ProcessorEnv(EnvParams envParams, DispatcherLookupExtendedParams dispatcherLookupExtendedService, MetadataParams metadataParams) {}
 
-    @Autowired
-    public ProcessorEnvironment(Globals globals, ApplicationContext appCtx, AdditionalCustomUserDetails additionalCustomUserDetails) {
-        this.globals = globals;
-        this.appCtx = appCtx;
-        this.additionalCustomUserDetails = additionalCustomUserDetails;
+    private @Nullable ProcessorEnv processorEnv = null;
+
+    public synchronized ProcessorEnv getProcessorEnv() {
+        if(processorEnv==null) {
+            processorEnv = initProcessorEnv();
+        }
+        return processorEnv;
+    }
+
+    public ProcessorEnv initProcessorEnv() {
 
         if (!globals.processor.enabled) {
-            return;
+            throw new IllegalStateException("(!globals.processor.enabled)");
         }
 
         try {
             final Path defaultDispatcherYamlFile = globals.processor.defaultDispatcherYamlFile;
-            final Path defaultEnvYamlFile = globals.processor.defaultEnvYamlFile;
             final int taskConsoleOutputMaxLines = globals.processor.taskConsoleOutputMaxLines;
 
-            if (defaultEnvYamlFile!=null && Files.notExists(defaultEnvYamlFile)) {
-                log.warn("747.030 Processor's default yaml.yaml file doesn't exist: {}", defaultEnvYamlFile.toAbsolutePath());
-                throw new TerminateApplicationException("747.060 Processor isn't configured, env.yaml is empty or doesn't exist");
-            }
             EnvYamlProvider envYamlProvider = null;
             if (globals.standalone.active) {
                 envYamlProvider = new StandaloneEnvYamlProvider();
             }
-            else if (defaultEnvYamlFile!=null) {
+            else {
+                final Path defaultEnvYamlFile = globals.processor.defaultEnvYamlFile;
+                if (defaultEnvYamlFile==null || Files.notExists(defaultEnvYamlFile)) {
+                    log.warn("747.030 Processor's default yaml.yaml file doesn't exist: {}", defaultEnvYamlFile);
+                    throw new TerminateApplicationException("747.060 Processor isn't configured, env.yaml is empty or doesn't exist");
+                }
                 envYamlProvider = new FileEnvYamlProvider(defaultEnvYamlFile);
             }
-            init(envYamlProvider, defaultDispatcherYamlFile, taskConsoleOutputMaxLines);
+            ProcessorEnv env = init(envYamlProvider, defaultDispatcherYamlFile, taskConsoleOutputMaxLines);
+            return env;
         }
         catch (TerminateApplicationException e) {
+            log.error("747.060 Metaheuristic was terminated. Message {}", e.getMessage());
+            if (globals.testing) {
+                throw new TerminateApplicationException(e.getMessage());
+            }
             System.exit(SpringApplication.exit(appCtx, () -> -500));
         }
+        throw new IllegalStateException();
     }
 
-    public void init(@Nullable EnvYamlProvider envYamlProvider, @Nullable Path defaultDispatcherYamlFile, int taskConsoleOutputMaxLines) {
+    public ProcessorEnv init(@Nullable EnvYamlProvider envYamlProvider, @Nullable Path defaultDispatcherYamlFile, int taskConsoleOutputMaxLines) {
+        final EnvParams envParams = new EnvParams();
+        DispatcherLookupExtendedParams dispatcherLookupExtendedService;
+        MetadataParams metadataParams;
+
+
         envParams.init(globals.processorPath, envYamlProvider, taskConsoleOutputMaxLines, !globals.standalone.active);
         dispatcherLookupExtendedService = globals.standalone.active
                 ? new StandaloneDispatcherLookupExtendedParams(additionalCustomUserDetails.restUserPassword)
                 : new FileDispatcherLookupExtendedParams(globals.processorPath, defaultDispatcherYamlFile);
         metadataParams = new MetadataParams(globals.processorPath, envParams, dispatcherLookupExtendedService);
+
+        return new  ProcessorEnv(envParams, dispatcherLookupExtendedService, metadataParams);
     }
 }

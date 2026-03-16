@@ -48,7 +48,7 @@ public class ProcessorCommandProcessor {
 
     // this method is synced outside
     public void processDispatcherCommParamsYaml(ProcessorCommParamsYaml pcpy, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
-        ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = processorEnvironment.metadataParams.getRef(dispatcherUrl);
+        ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = processorEnvironment.getProcessorEnv().metadataParams().getRef(dispatcherUrl);
         if(ref==null) {
             log.warn("ref is null for processorId: {}, dispatcherUrl: {}",
                     pcpy.request.processorCommContext!=null ? pcpy.request.processorCommContext.processorId : "<null>", dispatcherUrl);
@@ -95,7 +95,7 @@ public class ProcessorCommandProcessor {
         if (coreRequest.assignedTask==null) {
             return;
         }
-        ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataParams.getCoreRef(coreRequest.code, ref.dispatcherUrl);
+        ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.getProcessorEnv().metadataParams().getCoreRef(coreRequest.code, ref.dispatcherUrl);
         if (core==null) {
             return;
         }
@@ -109,7 +109,7 @@ public class ProcessorCommandProcessor {
             return;
         }
         log.info("storeProcessorId() new processor Id: {}", response.assignedProcessorId);
-        processorEnvironment.metadataParams.setProcessorIdAndSessionId(dispatcherUrl, response.assignedProcessorId.assignedProcessorId, response.assignedProcessorId.assignedSessionId);
+        processorEnvironment.getProcessorEnv().metadataParams().setProcessorIdAndSessionId(dispatcherUrl, response.assignedProcessorId.assignedProcessorId, response.assignedProcessorId.assignedSessionId);
     }
 
     // processing at processor side
@@ -118,7 +118,7 @@ public class ProcessorCommandProcessor {
             return;
         }
         Long newProcessorId = Long.parseLong(response.reAssignedProcessorId.reAssignedProcessorId);
-        final MetadataParamsYaml.ProcessorSession processorSession = processorEnvironment.metadataParams.getProcessorSession(dispatcherUrl);
+        final MetadataParamsYaml.ProcessorSession processorSession = processorEnvironment.getProcessorEnv().metadataParams().getProcessorSession(dispatcherUrl);
         final Long currProcessorId = processorSession.processorId;
         final String currSessionId = processorSession.sessionId;
         if (currProcessorId!=null && currSessionId!=null &&
@@ -134,7 +134,7 @@ public class ProcessorCommandProcessor {
                 currProcessorId, currSessionId,
                 response.reAssignedProcessorId.getReAssignedProcessorId(), response.reAssignedProcessorId.sessionId
         );
-        processorEnvironment.metadataParams.setProcessorIdAndSessionId(dispatcherUrl, response.reAssignedProcessorId.getReAssignedProcessorId(), response.reAssignedProcessorId.sessionId);
+        processorEnvironment.getProcessorEnv().metadataParams().setProcessorIdAndSessionId(dispatcherUrl, response.reAssignedProcessorId.getReAssignedProcessorId(), response.reAssignedProcessorId.sessionId);
     }
 
 }

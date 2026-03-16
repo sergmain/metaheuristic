@@ -54,7 +54,7 @@ public class ProcessorKeepAliveProcessor {
 //        registerFunctions(dispatcherUrl, responseParamYaml.functions);
 
         final KeepAliveResponseParamYaml.DispatcherResponse response = responseParamYaml.response;
-        ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = processorEnvironment.metadataParams.getRef(dispatcherUrl);
+        ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref = processorEnvironment.getProcessorEnv().metadataParams().getRef(dispatcherUrl);
 
         if(ref==null) {
             log.warn("ref is null for processorId: {}, dispatcherUrl: {}", response.processorCode, dispatcherUrl);
@@ -73,7 +73,7 @@ public class ProcessorKeepAliveProcessor {
             return;
         }
         DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
-                processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
+                processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService().lookupExtendedMap.get(dispatcherUrl);
 
         if (dispatcher==null) {
             return;
@@ -95,13 +95,13 @@ public class ProcessorKeepAliveProcessor {
             return;
         }
         log.info("storeProcessorId() new processor Id: {}", response.assignedProcessorId);
-        processorEnvironment.metadataParams.setProcessorIdAndSessionId(
+        processorEnvironment.getProcessorEnv().metadataParams().setProcessorIdAndSessionId(
                 dispatcherUrl, response.assignedProcessorId.assignedProcessorId.toString(), response.assignedProcessorId.assignedSessionId);
     }
 
     private void storeProcessorCoreId(ProcessorData.ProcessorCodeAndIdAndDispatcherUrlRef ref, List<KeepAliveResponseParamYaml.CoreInfo> coreInfos) {
         for (KeepAliveResponseParamYaml.CoreInfo coreInfo : coreInfos) {
-            processorEnvironment.metadataParams.setCoreId(ref.dispatcherUrl, coreInfo.code, coreInfo.coreId);
+            processorEnvironment.getProcessorEnv().metadataParams().setCoreId(ref.dispatcherUrl, coreInfo.code, coreInfo.coreId);
         }
     }
 
@@ -111,7 +111,7 @@ public class ProcessorKeepAliveProcessor {
             return;
         }
         Long newProcessorId = Long.parseLong(response.reAssignedProcessorId.reAssignedProcessorId);
-        final MetadataParamsYaml.ProcessorSession processorSession = processorEnvironment.metadataParams.getProcessorSession(dispatcherUrl);
+        final MetadataParamsYaml.ProcessorSession processorSession = processorEnvironment.getProcessorEnv().metadataParams().getProcessorSession(dispatcherUrl);
         final Long currProcessorId = processorSession.processorId;
         final String currSessionId = processorSession.sessionId;
         if (currProcessorId!=null && currSessionId!=null &&
@@ -127,7 +127,7 @@ public class ProcessorKeepAliveProcessor {
                 currProcessorId, currSessionId,
                 response.reAssignedProcessorId.getReAssignedProcessorId(), response.reAssignedProcessorId.sessionId
         );
-        processorEnvironment.metadataParams.setProcessorIdAndSessionId(
+        processorEnvironment.getProcessorEnv().metadataParams().setProcessorIdAndSessionId(
                 dispatcherUrl, response.reAssignedProcessorId.getReAssignedProcessorId(), response.reAssignedProcessorId.sessionId);
     }
 

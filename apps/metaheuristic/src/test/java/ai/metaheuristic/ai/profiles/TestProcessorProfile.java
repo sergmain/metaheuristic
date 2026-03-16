@@ -23,9 +23,7 @@ import ai.metaheuristic.api.ConstsApi;
 import ch.qos.logback.classic.LoggerContext;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.LoggerFactory;
@@ -37,14 +35,13 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = MhComplexTestConfig.class)
-@ActiveProfiles({"processor", "test"})
+@ActiveProfiles({"processor", "test", "standalone"})
 @Execution(ExecutionMode.SAME_THREAD)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
@@ -57,7 +54,7 @@ public class TestProcessorProfile {
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
         registry.add("mh.home", () -> tempDir.toAbsolutePath().toString());
-        registry.add("spring.profiles.active", () -> "processor,test");
+        registry.add("spring.profiles.active", () -> "processor,test,standalone");
     }
 
     @BeforeAll
@@ -69,6 +66,8 @@ public class TestProcessorProfile {
     @AfterAll
     static void cleanupLogging() {
         ai.metaheuristic.ai.MhShutdown.cleanUp();
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext.stop();
     }
 
     @Autowired private Globals globals;

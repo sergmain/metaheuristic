@@ -23,12 +23,9 @@ import ai.metaheuristic.ai.functions.FunctionRepositoryRequestor;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import jakarta.annotation.PreDestroy;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -42,17 +39,14 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
  * Time: 10:40 AM
  */
 @Service
-@EnableScheduling
+//@EnableScheduling
 @Slf4j
 @Profile("processor")
 public class DispatcherRequestorHolderService {
 
-    @Data
-    @RequiredArgsConstructor
-    public static class Requesters {
-        public final DispatcherRequestor dispatcherRequestor;
-        public final ProcessorKeepAliveRequestor processorKeepAliveRequestor;
-        public final FunctionRepositoryRequestor functionRepositoryRequestor;
+    public record Requesters(DispatcherRequestor dispatcherRequestor,
+                             ProcessorKeepAliveRequestor processorKeepAliveRequestor,
+                             FunctionRepositoryRequestor functionRepositoryRequestor) {
     }
     public final Map<DispatcherUrl, Requesters> dispatcherRequestorMap = new HashMap<>();
 
@@ -68,11 +62,11 @@ public class DispatcherRequestorHolderService {
         FunctionRepositoryProcessorService functionRepositoryProcessorService
     ) {
 
-        for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedParams.DispatcherLookupExtended> entry : processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.entrySet()) {
+        for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedParams.DispatcherLookupExtended> entry : processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService().lookupExtendedMap.entrySet()) {
             final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher = entry.getValue();
             final DispatcherRequestor requestor = new DispatcherRequestor(dispatcher.getDispatcherUrl(), globals,
-                processorTaskService, processorService, processorEnvironment.metadataParams, currentExecState,
-                processorEnvironment.dispatcherLookupExtendedService, processorCommandProcessor,
+                processorTaskService, processorService, processorEnvironment.getProcessorEnv().metadataParams(), currentExecState,
+                processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService(), processorCommandProcessor,
                 globals.activeProfilesSet.contains(Consts.WEBSOCKET_PROFILE)
             );
 

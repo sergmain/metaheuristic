@@ -78,6 +78,8 @@ public class SourceCodeValidationService_cache_internal_function_error_Test exte
     @AfterAll
     static void cleanupLogging() {
         ai.metaheuristic.ai.MhShutdown.cleanUp();
+        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext.stop();
     }
 
     @Autowired private SourceCodeValidationService sourceCodeValidationService;

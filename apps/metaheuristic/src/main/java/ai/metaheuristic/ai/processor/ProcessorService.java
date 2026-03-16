@@ -81,7 +81,7 @@ public class ProcessorService {
         // TODO 2020-11-14 or it's about using TimeZoned value?
 
         KeepAliveRequestParamYaml.ProcessorStatus status = new KeepAliveRequestParamYaml.ProcessorStatus(
-                to(processorEnvironment.envParams.getEnvParamsYaml()),
+                to(processorEnvironment.getProcessorEnv().envParams().getEnvParamsYaml()),
                 gitSourcingService.gitStatusInfo,
                 schedule.asString,
                 "[unknown]", "[unknown]",
@@ -130,7 +130,7 @@ public class ProcessorService {
         for (Long taskId : ids) {
             List<String> coreCodes = processorTaskService.findCoreCodesWithTaskId(taskId);
             for (String coreCode : coreCodes) {
-                ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataParams.getCoreRef(coreCode, ref.dispatcherUrl);
+                ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.getProcessorEnv().metadataParams().getCoreRef(coreCode, ref.dispatcherUrl);
                 if (core==null) {
                     continue;
 
@@ -164,7 +164,7 @@ public class ProcessorService {
                     output.taskId, coreCodes.size());
             }
             for (String coreCode : coreCodes) {
-                ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.metadataParams.getCoreRef(coreCode, ref.dispatcherUrl);
+                ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core = processorEnvironment.getProcessorEnv().metadataParams().getCoreRef(coreCode, ref.dispatcherUrl);
                 if (core==null) {
                     continue;
                 }
@@ -219,7 +219,7 @@ public class ProcessorService {
         }
 
         final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher =
-                processorEnvironment.dispatcherLookupExtendedService.lookupExtendedMap.get(core.dispatcherUrl);
+                processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService().lookupExtendedMap.get(core.dispatcherUrl);
 
         UploadVariableTask uploadResourceTask = new UploadVariableTask(taskId, assetFile.file, outputVariable.id, core, dispatcher.dispatcherLookup);
         uploadResourceActor.add(uploadResourceTask);

@@ -64,7 +64,7 @@ public class GitSourcingService {
 
         Path functionDir = assetFile.file;
 
-        String mirror = processorEnvironment.envParams.getEnvParamsYaml().mirrors.get(functionConfig.git.repo);
+        String mirror = processorEnvironment.getProcessorEnv().envParams().getEnvParamsYaml().mirrors.get(functionConfig.git.repo);
         String gitUrl = mirror!=null ? mirror : functionConfig.git.repo;
         GitData.GitContext gitContext = new GitData.GitContext(60L, globals.mhbp.max.consoleOutputLines);
 
