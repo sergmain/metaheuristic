@@ -42,7 +42,7 @@ public final class FunctionalInterfaces {
 
     @FunctionalInterface
     public interface QuadrupleFunction<R, P, T, U, W> {
-        R apply(P p, T t, U u, W w);
+        W apply(R r, P p, T t, U u);
     }
 
     @FunctionalInterface
@@ -52,7 +52,7 @@ public final class FunctionalInterfaces {
 
     @FunctionalInterface
     public interface QuinaryFunction<R, P, T, U, W, L> {
-        R apply(P p, T t, U u, W w, L l);
+        L apply(R r, P p, T t, U u, W w);
     }
 
     @FunctionalInterface
@@ -62,13 +62,6 @@ public final class FunctionalInterfaces {
 
     @FunctionalInterface
     public interface HexagonalFunction<R, P, T, U, W, L, O> {
-        R apply(P p, T t, U u, W w, L l, O o);
+        O apply(R r, P p, T t, U u, W w, L l);
     }
-
-    @FunctionalInterface
-    public interface ExtractPictDataFunc<R, P, T, U, W, L> {
-        @Nullable
-        R apply(P p, T t, U u, W w, L l);
-    }
-
 }
