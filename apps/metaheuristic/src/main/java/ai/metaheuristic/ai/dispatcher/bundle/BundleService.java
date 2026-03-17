@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.bundle;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.FunctionalInterfaces;
+import ai.metaheuristic.commons.FunctionalInterfaces;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;

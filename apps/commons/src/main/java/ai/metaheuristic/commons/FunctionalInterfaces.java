@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai;
+package ai.metaheuristic.commons;
 
 import org.jspecify.annotations.Nullable;
 
@@ -26,9 +26,10 @@ import org.jspecify.annotations.Nullable;
 public final class FunctionalInterfaces {
 
     @FunctionalInterface
-    public interface BiFunction<P, T, U, R> {
-        R accept(P p, T t, U u);
+    public interface TripleConsumer<P, T, U> {
+        void accept(P p, T t, U u);
     }
+
     @FunctionalInterface
     public interface TripleFunction<P, T, U, W> {
         W apply(P p, T t, U u);
