@@ -32,6 +32,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 @Slf4j
 public class DirUtils {
@@ -141,13 +142,15 @@ public class DirUtils {
         }
     }
 
+    private static final Random R = new Random();
+
     @Nullable
     public static Path createTempPath(Path trgDir, String prefix) {
         Date date = new Date();
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
         String prefixDate = format.format(date);
         for (int i = 0; i < 5; i++) {
-            Path newTempDir = trgDir.resolve( prefix + prefixDate + "-" + System.nanoTime());
+            Path newTempDir = trgDir.resolve( prefix + prefixDate + "-" + System.nanoTime()+ "-"+ R.nextInt(100, 1000));
             if (Files.exists(newTempDir)) {
                 continue;
             }
