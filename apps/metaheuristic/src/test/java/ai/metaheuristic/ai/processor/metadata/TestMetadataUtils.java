@@ -19,19 +19,22 @@ package ai.metaheuristic.ai.processor.metadata;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 5/1/2022
  * Time: 9:17 PM
  */
-public class TestMetadataUtils {
+@Execution(CONCURRENT)
+class TestMetadataUtils {
 
     @Test
     public void testFixProcessorCodes_1() {

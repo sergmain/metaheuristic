@@ -104,12 +104,14 @@ public class TestBinaryDataSaveAndLoad {
 
     @BeforeEach
     public void before() {
+        ai.metaheuristic.ai.MhShutdown.cleanUp();
         txSupportForTestingService.deleteVariableByName(TEST_VARIABLE);
     }
 
     @AfterEach
     public void after() {
         txSupportForTestingService.deleteVariableByName(TEST_VARIABLE);
+        ai.metaheuristic.ai.MhShutdown.cleanUp();
     }
 
     @Test

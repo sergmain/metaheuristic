@@ -20,24 +20,27 @@ import ai.metaheuristic.ai.functions.FunctionRepositoryData;
 import ai.metaheuristic.ai.functions.communication.FunctionRepositoryResponseParams;
 import ai.metaheuristic.ai.processor.actors.AbstractTaskQueue;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import static ai.metaheuristic.ai.functions.FunctionEnums.DownloadPriority.NORMAL;
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.AssetManagerUrl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 1/2/2021
  * Time: 1:37 AM
  */
-public class TestDownloadQueue {
+@Execution(CONCURRENT)
+class TestDownloadQueue {
 
     private static class TestQueue extends AbstractTaskQueue<FunctionRepositoryData.DownloadFunctionTask> {
 
     }
 
     @Test
-    public void test() {
+    void test() {
         TestQueue testQueue = new TestQueue();
 
         // value of shortFunctionConfig doesn't matter

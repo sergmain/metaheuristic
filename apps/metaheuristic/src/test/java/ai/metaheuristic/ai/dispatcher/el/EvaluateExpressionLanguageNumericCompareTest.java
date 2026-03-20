@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.el;
 
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -25,15 +26,13 @@ import org.springframework.core.ResolvableType;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.expression.*;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests that reproduce the bug where numeric variable comparisons with arithmetic
@@ -268,10 +267,10 @@ class EvaluateExpressionLanguageNumericCompareTest {
         return true;
     }
 
-    private static Integer getValueInteger(Ctx ctx, Object operand) {
+    private static Integer getValueInteger(Ctx ctx, @Nullable Object operand) {
         if (operand instanceof Integer) return (Integer) operand;
         if (!(operand instanceof VariableUtils.VariableHolder variableHolder)) {
-            throw new EvaluationException("not supported type: " + operand.getClass());
+            throw new EvaluationException("not supported type: " + (operand!=null ? operand.getClass() : "operand is null"));
         }
         String strValue = getAsString(ctx, variableHolder);
         return Integer.valueOf(strValue);

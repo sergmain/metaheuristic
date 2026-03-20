@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.el;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -42,7 +43,7 @@ class ElEvaluatorTest {
      * Creates a SpEL-backed evaluator that resolves expressions against a simple variable map,
      * simulating MH variable lookup for testing purposes.
      */
-    private static Function<String, Object> spelEvaluator(Map<String, Object> vars) {
+    private static Function<String, @Nullable Object> spelEvaluator(Map<String, Object> vars) {
         SpelExpressionParser parser = new SpelExpressionParser();
         return expression -> {
             StandardEvaluationContext ctx = new StandardEvaluationContext();

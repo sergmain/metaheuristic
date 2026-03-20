@@ -60,7 +60,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 @Slf4j
 public class TestRequestProcessorId {
@@ -97,6 +97,7 @@ public class TestRequestProcessorId {
 
     @BeforeEach
     public void before() {
+        MhShutdown.cleanUp();
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
 
         String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");
@@ -123,6 +124,7 @@ public class TestRequestProcessorId {
                 th.printStackTrace();
             }
         }
+        MhShutdown.cleanUp();
     }
 
     @Test

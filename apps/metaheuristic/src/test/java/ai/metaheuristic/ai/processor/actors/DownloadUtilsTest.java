@@ -18,20 +18,22 @@ package ai.metaheuristic.ai.processor.actors;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Sergio Lissner
  * Date: 10/19/2023
  * Time: 9:37 PM
  */
+@Execution(CONCURRENT)
 public class DownloadUtilsTest {
-
 
     @Test
     public void test_combineParts(@TempDir Path temp) throws IOException {

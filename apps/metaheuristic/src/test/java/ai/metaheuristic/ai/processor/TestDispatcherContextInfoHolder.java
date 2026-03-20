@@ -17,16 +17,19 @@
 package ai.metaheuristic.ai.processor;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 1/2/2021
  * Time: 9:57 AM
  */
-public class TestDispatcherContextInfoHolder {
+@Execution(CONCURRENT)
+class TestDispatcherContextInfoHolder {
 
     @Test
     public void test() {

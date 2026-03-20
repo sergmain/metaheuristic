@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.sec;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
+import ai.metaheuristic.ai.MhShutdown;
 import ch.qos.logback.classic.LoggerContext;
 import lombok.Data;
 import org.junit.jupiter.api.AfterAll;
@@ -60,7 +61,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Import({SpringSecurityWebAuxTestConfig.class})
 @AutoConfigureCache
 public class TestAccessForAllEndPoints {
@@ -95,6 +96,7 @@ public class TestAccessForAllEndPoints {
 
     @BeforeEach
     public void setup() {
+        MhShutdown.cleanUp();
         this.mockMvc = webAppContextSetup(webApplicationContext)
                 .apply(springSecurity())
                 .build();

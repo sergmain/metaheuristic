@@ -18,16 +18,19 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.api.EnumsApi;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 3/6/2022
  * Time: 11:28 PM
  */
-public class TestCurrentExecState {
+@Execution(CONCURRENT)
+class TestCurrentExecState {
 
     @Test
     public void test() {

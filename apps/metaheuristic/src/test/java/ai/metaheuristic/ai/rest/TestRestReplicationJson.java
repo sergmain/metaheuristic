@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.rest;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
+import ai.metaheuristic.ai.MhShutdown;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationSourceService;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
@@ -98,6 +99,7 @@ public class TestRestReplicationJson {
 
     @BeforeEach
     public void setup() {
+        MhShutdown.cleanUp();
         this.mockMvc = webAppContextSetup(webApplicationContext)
                 .apply(springSecurity())
                 .build();

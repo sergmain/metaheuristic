@@ -87,7 +87,7 @@ public class PermutationMappingTest {
 
         assertEquals(p1.permutedVariableName, r1.permutedVariableName);
         assertTrue(CollectionUtils.isEquals(p1.inlines.keySet(), r1.inlines.keySet()));
-        assertEquals(1, p1.inlines.keySet().size());
+        assertEquals(1, p1.inlines.size());
         assertEquals("inline1", new ArrayList<>(p1.inlines.keySet()).get(0));
         assertTrue(CollectionUtils.isMapEquals(p1.inlines.get("inline1"), r1.inlines.get("inline1")));
 

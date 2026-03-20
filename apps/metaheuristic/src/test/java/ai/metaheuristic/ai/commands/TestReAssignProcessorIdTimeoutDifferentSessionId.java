@@ -106,6 +106,7 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId {
 
     @BeforeEach
     public void before() {
+        MhShutdown.cleanUp();
 
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
 

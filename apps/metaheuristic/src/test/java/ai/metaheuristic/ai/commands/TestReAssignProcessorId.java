@@ -96,6 +96,7 @@ public class TestReAssignProcessorId {
 
     @BeforeEach
     public void before() {
+        ai.metaheuristic.ai.MhShutdown.cleanUp();
         ProcessorCommParamsYaml processorComm = new ProcessorCommParamsYaml();
 
         String dispatcherResponse = serverService.processRequest(ProcessorCommParamsYamlUtils.BASE_YAML_UTILS.toString(processorComm), "127.0.0.1");

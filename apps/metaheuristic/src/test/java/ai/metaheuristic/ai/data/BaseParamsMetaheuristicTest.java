@@ -80,7 +80,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Execution(ExecutionMode.CONCURRENT)
 public class BaseParamsMetaheuristicTest {
 
-    private static final List<Pair<BaseYamlUtils<? extends BaseParams>, Class>> cls = List.of(
+    private static final List<Pair<BaseYamlUtils<? extends BaseParams>, Class<?>>> cls = List.of(
             Pair.of(BatchParamsYamlUtils.BASE_YAML_UTILS, BatchParamsYaml.class),
             Pair.of(CompanyParamsYamlUtils.BASE_YAML_UTILS, CompanyParamsYaml.class),
             Pair.of(CoreStatusYamlUtils.BASE_YAML_UTILS, CoreStatusYaml.class),
@@ -106,15 +106,15 @@ public class BaseParamsMetaheuristicTest {
 
     @Test
     public void test_1() throws Exception {
-        for (Pair<BaseYamlUtils<? extends BaseParams>, Class> cl : cls) {
+        for (Pair<BaseYamlUtils<? extends BaseParams>, Class<?>> cl : cls) {
             BaseYamlUtils<? extends BaseParams> utils = cl.getLeft();
-            Class entityCl = cl.getRight();
+            Class<?> entityCl = cl.getRight();
 
             int lastVersion = utils.getDefault().getVersion();
 
-            final Constructor constructor = getConstructor(entityCl);
+            final Constructor<?> constructor = getConstructor(entityCl);
             Object entity = constructor.newInstance();
-            assertTrue( entity instanceof BaseParams);
+            assertInstanceOf(BaseParams.class, entity);
             assertEquals(lastVersion, ((BaseParams) entity).getVersion(), entity.getClass().getName());
 
 
@@ -123,18 +123,18 @@ public class BaseParamsMetaheuristicTest {
                 assertNotNull(forVersion);
                 assertEquals(i, forVersion.getVersion());
 
-                Class vClass = Class.forName(entityCl.getName()+'V'+i);
-                final Constructor enConstructor = getConstructor(vClass);
+                Class<?> vClass = Class.forName(entityCl.getName()+'V'+i);
+                final Constructor<?> enConstructor = getConstructor(vClass);
                 Object entityObj = enConstructor.newInstance();
-                assertTrue( entityObj instanceof BaseParams);
+                assertInstanceOf(BaseParams.class, entityObj);
                 assertEquals(i, ((BaseParams) entityObj).getVersion(), entityObj.getClass().getName());
             }
         }
     }
 
-    private static Constructor getConstructor(Class entityCl) {
-        Constructor[] entityConstructors = entityCl.getConstructors();
-        final Constructor constructor = Arrays.stream(entityConstructors).filter(o -> o.getParameterTypes().length == 0).findFirst().orElseThrow();
+    private static Constructor<?> getConstructor(Class<?> entityCl) {
+        Constructor<?>[] entityConstructors = entityCl.getConstructors();
+        final Constructor<?> constructor = Arrays.stream(entityConstructors).filter(o -> o.getParameterTypes().length == 0).findFirst().orElseThrow();
         return constructor;
     }
 

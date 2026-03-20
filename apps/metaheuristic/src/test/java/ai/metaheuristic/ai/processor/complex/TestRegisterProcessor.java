@@ -116,6 +116,7 @@ public class TestRegisterProcessor {
 
     @BeforeEach
     public void setup() {
+        ai.metaheuristic.ai.MhShutdown.cleanUp();
         this.mockMvc = webAppContextSetup(webApplicationContext)
                 .apply(springSecurity())
                 .build();

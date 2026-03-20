@@ -19,17 +19,20 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 8/3/2019
  * Time: 12:02 AM
  */
-public class TestProcessorTimeout {
+@Execution(CONCURRENT)
+class TestProcessorTimeout {
 
     @Test
     public void test() {

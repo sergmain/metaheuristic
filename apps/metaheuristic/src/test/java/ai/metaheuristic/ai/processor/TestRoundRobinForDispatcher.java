@@ -21,13 +21,16 @@ import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.ai.processor.dispatcher_selection.RoundRobinDispatcherSelection;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.LinkedHashMap;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
-public class TestRoundRobinForDispatcher {
+@Execution(CONCURRENT)
+class TestRoundRobinForDispatcher {
 
     @Test
     public void test() {

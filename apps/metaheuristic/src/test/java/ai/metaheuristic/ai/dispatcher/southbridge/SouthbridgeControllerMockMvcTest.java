@@ -84,7 +84,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureMockMvc
 @Import({SpringSecurityWebAuxTestConfig.class, SouthbridgeControllerMockMvcTest.BigFileUploadingTestController.class})
 @AutoConfigureCache
@@ -152,6 +152,7 @@ public class SouthbridgeControllerMockMvcTest {
 
     @BeforeEach
     public void setup() {
+        MhShutdown.cleanUp();
         this.mockMvc = webAppContextSetup(webApplicationContext)
             .apply(springSecurity())
             .build();

@@ -98,6 +98,7 @@ public class KeepAliveServiceTest {
 
     @BeforeEach
     public void beforeEach() {
+        MhShutdown.cleanUp();
         ProcessorStatusYaml.Env envYaml = new ProcessorStatusYaml.Env();
         envYaml.quotas.disabled = true;
 

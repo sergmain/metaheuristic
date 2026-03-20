@@ -14,14 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.batch;
+@NullMarked
+package ai.metaheuristic.ai.processor.download;
 
-/**
- * @author Serge
- * Date: 11/19/2019
- * Time: 7:27 PM
- */
-public class TestBatchConfigYamlFile {
-
-
-}
+import org.jspecify.annotations.NullMarked;

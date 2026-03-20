@@ -24,19 +24,22 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import org.junit.jupiter.api.Test;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Serge
  * Date: 12/2/2020
  * Time: 5:07 AM
  */
-public class TestStaticProcessorTransactionService {
+@Execution(CONCURRENT)
+class TestStaticProcessorTransactionService {
 
     private static ProcessorStatusYaml.Env createProcessorStatusYamlEnvYaml(Map<String, String> mirrors, Map<String, String> envs, List<ProcessorStatusYaml.DiskStorage> disk) {
         return createProcessorStatusYamlEnvYaml(mirrors, envs, disk, null);

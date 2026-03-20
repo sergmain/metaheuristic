@@ -20,13 +20,16 @@ import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYamlUtils;
 import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
-public class TestMetadataYaml {
+@Execution(CONCURRENT)
+class TestMetadataYaml {
 
     @Test
     public void testParsingFile() throws IOException {
