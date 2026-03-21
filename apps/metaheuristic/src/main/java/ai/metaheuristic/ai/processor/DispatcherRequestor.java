@@ -122,7 +122,7 @@ public class DispatcherRequestor {
         }
     }
 
-    private static String getDispatcherWsUrl(DispatcherUrl dispatcherUrl) {
+    static String getDispatcherWsUrl(DispatcherUrl dispatcherUrl) {
         final String url = dispatcherUrl.url + Consts.WS_DISPATCHER_URL;
         if (url.startsWith(HTTPS)) {
             return WSS_PROTOCOL + url.substring(HTTPS.length());
