@@ -80,25 +80,9 @@ public class Config {
     @Profile("dispatcher & websocket")
     public ServletServerContainerFactoryBean createWebSocketContainer() {
         ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
-        container.setMaxTextMessageBufferSize(1024);
-        container.setMaxBinaryMessageBufferSize(1024);
+        container.setMaxTextMessageBufferSize(8192);
+        container.setMaxBinaryMessageBufferSize(8192);
         return container;
-    }
-
-    @Bean
-    @Profile("websocket")
-    public TaskExecutor taskExecutor() {
-        final SimpleAsyncTaskExecutor simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor(AsyncExecutionAspectSupport.DEFAULT_TASK_EXECUTOR_BEAN_NAME);
-        simpleAsyncTaskExecutor.setVirtualThreads(true);
-        return simpleAsyncTaskExecutor;
-    }
-
-    @Bean
-    @Profile("websocket")
-    public TaskExecutor taskScheduler() {
-        final SimpleAsyncTaskExecutor simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor(DEFAULT_TASK_SCHEDULER_BEAN_NAME);
-        simpleAsyncTaskExecutor.setVirtualThreads(true);
-        return simpleAsyncTaskExecutor;
     }
 
     @Configuration
@@ -108,7 +92,7 @@ public class Config {
 
         @Override
         public void registerStompEndpoints(StompEndpointRegistry registry) {
-            registry.addEndpoint("/ws/dispatcher");
+            registry.addEndpoint("/ws/dispatcher").setAllowedOriginPatterns("*");
         }
 
         @Override
@@ -119,7 +103,7 @@ public class Config {
 
         @Override
         public void configureWebSocketTransport(WebSocketTransportRegistration registry) {
-            registry.setMessageSizeLimit(1024);
+            registry.setMessageSizeLimit(8192);
 //            registry.setTimeToFirstMessage(30000);
         }
     }

@@ -124,17 +124,15 @@ public class DispatcherRequestor {
 
     private static String getDispatcherWsUrl(DispatcherUrl dispatcherUrl) {
         final String url = dispatcherUrl.url + Consts.WS_DISPATCHER_URL;
-        String wsUrl;
-        if (url.startsWith(HTTP)) {
-            wsUrl = url.substring(HTTP.length());
+        if (url.startsWith(HTTPS)) {
+            return WSS_PROTOCOL + url.substring(HTTPS.length());
         }
-        else if (url.startsWith(HTTPS)) {
-            wsUrl = url.substring(HTTPS.length());
+        else if (url.startsWith(HTTP)) {
+            return WS_PROTOCOL + url.substring(HTTP.length());
         }
         else {
             throw new IllegalStateException("Unknown protocol in url: " + url);
         }
-        return WS_PROTOCOL + wsUrl;
     }
 
     public void destroy() {
