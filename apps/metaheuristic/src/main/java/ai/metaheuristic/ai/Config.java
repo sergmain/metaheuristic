@@ -87,17 +87,17 @@ public class Config {
 
     @Bean
     @Profile("websocket")
-    public TaskExecutor taskExecutor() {
+    public TaskExecutor taskExecutor(@Value("${spring.threads.virtual.enabled:false}") boolean virtualThreads) {
         final SimpleAsyncTaskExecutor simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor(AsyncExecutionAspectSupport.DEFAULT_TASK_EXECUTOR_BEAN_NAME);
-        simpleAsyncTaskExecutor.setVirtualThreads(true);
+        simpleAsyncTaskExecutor.setVirtualThreads(virtualThreads);
         return simpleAsyncTaskExecutor;
     }
 
     @Bean
     @Profile("websocket")
-    public TaskExecutor taskScheduler() {
+    public TaskExecutor taskScheduler(@Value("${spring.threads.virtual.enabled:false}") boolean virtualThreads) {
         final SimpleAsyncTaskExecutor simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor(DEFAULT_TASK_SCHEDULER_BEAN_NAME);
-        simpleAsyncTaskExecutor.setVirtualThreads(true);
+        simpleAsyncTaskExecutor.setVirtualThreads(virtualThreads);
         return simpleAsyncTaskExecutor;
     }
 
