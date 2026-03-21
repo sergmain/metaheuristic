@@ -85,6 +85,22 @@ public class Config {
         return container;
     }
 
+    @Bean
+    @Profile("websocket")
+    public TaskExecutor taskExecutor() {
+        final SimpleAsyncTaskExecutor simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor(AsyncExecutionAspectSupport.DEFAULT_TASK_EXECUTOR_BEAN_NAME);
+        simpleAsyncTaskExecutor.setVirtualThreads(true);
+        return simpleAsyncTaskExecutor;
+    }
+
+    @Bean
+    @Profile("websocket")
+    public TaskExecutor taskScheduler() {
+        final SimpleAsyncTaskExecutor simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor(DEFAULT_TASK_SCHEDULER_BEAN_NAME);
+        simpleAsyncTaskExecutor.setVirtualThreads(true);
+        return simpleAsyncTaskExecutor;
+    }
+
     @Configuration
     @EnableWebSocketMessageBroker
     @Profile("dispatcher & websocket")
