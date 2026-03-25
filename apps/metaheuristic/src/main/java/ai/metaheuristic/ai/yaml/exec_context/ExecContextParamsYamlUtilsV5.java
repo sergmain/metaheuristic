@@ -97,7 +97,7 @@ public class ExecContextParamsYamlUtilsV5
     }
 
     private static ExecContextParamsYaml.Variable toVariable(ExecContextParamsYamlV5.VariableV5 v) {
-        return new ExecContextParamsYaml.Variable(v.name, v.context, v.sourcing, v.git, v.disk, v.parentContext, v.type, v.getNullable(), v.ext);
+        return new ExecContextParamsYaml.Variable(v.name, v.context, v.sourcing, v.git, v.disk, v.parentContext, v.type, v.getNullable(), v.ext, null);
     }
 
     private static ExecContextParamsYaml.FunctionDefinition toFunction(ExecContextParamsYamlV5.FunctionDefinitionV5 f1) {

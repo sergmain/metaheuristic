@@ -1096,6 +1096,87 @@ public class TestSourceCodeGraphLanguageMhsc {
                 "Undefined def reference should throw");
     }
 
+    // ============ mutable modifier on output variables ============
+
+    @Test
+    public void test_mutable_modifier_on_output_variable() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                my_proc := internal mh.nop {
+                    -> count: mutable, ext=".txt"
+                    timeout 60
+                }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("my_proc"))
+                .findFirst().orElseThrow();
+        assertEquals(1, p.outputs.size());
+        ExecContextParamsYaml.Variable output = p.outputs.getFirst();
+        assertEquals("count", output.name);
+        assertEquals(true, output.mutable);
+        assertEquals(".txt", output.ext);
+    }
+
+    @Test
+    public void test_no_mutable_modifier_defaults_to_null() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                my_proc := internal mh.nop {
+                    -> count: ext=".txt"
+                    timeout 60
+                }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("my_proc"))
+                .findFirst().orElseThrow();
+        ExecContextParamsYaml.Variable output = p.outputs.getFirst();
+        assertEquals("count", output.name);
+        assertNull(output.mutable);
+    }
+
+    @Test
+    public void test_mutable_with_other_modifiers() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                my_proc := internal mh.nop {
+                    -> result: type=requirement, mutable, nullable, ext=".json"
+                    timeout 60
+                }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("my_proc"))
+                .findFirst().orElseThrow();
+        ExecContextParamsYaml.Variable output = p.outputs.getFirst();
+        assertEquals("result", output.name);
+        assertEquals(true, output.mutable);
+        assertEquals(true, output.getNullable());
+        assertEquals("requirement", output.type);
+        assertEquals(".json", output.ext);
+    }
+
+    @Test
+    public void test_mutable_on_source_level_output() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                variables {
+                    -> outputVar: mutable, ext=".txt"
+                }
+                my_proc := internal mh.nop { timeout 60 }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        assertEquals(1, graph.variables.outputs.size());
+        ExecContextParamsYaml.Variable output = graph.variables.outputs.getFirst();
+        assertEquals("outputVar", output.name);
+        assertEquals(true, output.mutable);
+    }
+
     // ============ Helpers ============
 
     private static SourceCodeGraph parseYaml(String resourcePath) throws IOException {

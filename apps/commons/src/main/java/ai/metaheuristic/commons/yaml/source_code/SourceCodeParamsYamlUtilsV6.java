@@ -114,7 +114,7 @@ public class SourceCodeParamsYamlUtilsV6
     }
 
     private static void toVariable(List<SourceCodeParamsYamlV6.VariableV6> src, List<SourceCodeParamsYaml.Variable> trg) {
-        src.stream().map(v -> new SourceCodeParamsYaml.Variable(v.name, v.getSourcing(), v.git, v.disk, v.parentContext, v.array, v.type, v.getNullable(), v.ext)).forEach(trg::add);
+        src.stream().map(v -> new SourceCodeParamsYaml.Variable(v.name, v.getSourcing(), v.git, v.disk, v.parentContext, v.array, v.type, v.getNullable(), v.ext, v.mutable)).forEach(trg::add);
     }
 
     @Override

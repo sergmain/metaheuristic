@@ -589,7 +589,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
         private ExecContextParamsYaml.Variable varDefToVariable(MhSourceCodeParser.VarDefContext ctx) {
             String name = resolveIdRef(ctx.idRef());
             ExecContextParamsYaml.Variable var = new ExecContextParamsYaml.Variable(name, EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher,
-                    null, null, null, null, null, null);
+                    null, null, null, null, null, null, null);
             applyVarModifiers(ctx, var);
             return var;
         }
@@ -597,7 +597,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
         private ExecContextParamsYaml.Variable varDefToExecVariable(MhSourceCodeParser.VarDefContext ctx) {
             String name = resolveIdRef(ctx.idRef());
             ExecContextParamsYaml.Variable var = new ExecContextParamsYaml.Variable(name, EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher,
-                    null, null, null, null, null, null);
+                    null, null, null, null, null, null, null);
             applyVarModifiers(ctx, var);
             // Handle '?' shorthand for nullable
             if (ctx.getText().endsWith("?")) {
@@ -620,6 +620,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                         }
                         case "parentContext" -> var.parentContext = true;
                         case "sourcing" -> var.setSourcing(EnumsApi.DataSourcing.valueOf(mod.ID().getText()));
+                        case "mutable" -> var.mutable = true;
                     }
                 }
             }

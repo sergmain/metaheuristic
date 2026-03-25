@@ -129,6 +129,22 @@ public class VariableUtils {
                                 variable.context, taskContextId));
             }
 
+            // Check immutability: walk up parent contexts to see if a variable with the same name
+            // already exists in an outer context. If it does and variable is not mutable, reject.
+            if (!Boolean.TRUE.equals(variable.mutable)) {
+                String parentCtxId = VariableUtils.getParentContext(contextId);
+                while (!S.b(parentCtxId)) {
+                    Long existingInParent = findVariable.find(variable.name, parentCtxId);
+                    if (existingInParent != null) {
+                        throw new IllegalStateException(
+                                S.f("171.863 Variable '%s' already exists in outer context '%s' and cannot be " +
+                                        "redeclared in context '%s'. Variables are immutable by default.",
+                                        variable.name, parentCtxId, contextId));
+                    }
+                    parentCtxId = VariableUtils.getParentContext(parentCtxId);
+                }
+            }
+
             Long variableId = findVariable.find(variable.name, contextId);
             if (variableId == null) {
                 variableId = createVariable.create(variable.name, contextId);

@@ -98,6 +98,10 @@ public class SourceCodeParamsYamlV6 implements BaseParams {
         @Nullable
         public String ext;
 
+        // if true, this variable can be reassigned in sub-contexts
+        @Nullable
+        public Boolean mutable;
+
         public void setSourcing(EnumsApi.DataSourcing sourcing) {
             this.sourcing = sourcing;
         }
