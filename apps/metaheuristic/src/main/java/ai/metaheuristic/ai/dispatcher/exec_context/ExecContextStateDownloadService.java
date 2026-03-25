@@ -91,10 +91,10 @@ public class ExecContextStateDownloadService {
             writeEntityParams(execContext.execContextVariableStateId, "exec-context-variable-state.yaml",
                     filesDir, resource, execContextVariableStateRepository);
 
-            // 4) Process DAG (ExecContext.params)
-            String processParams = execContext.getParams();
-            if (processParams != null) {
-                Files.writeString(filesDir.resolve("exec-context-process-dag.yaml"), processParams);
+            // 4) Process DAG (only processesGraph from ExecContext.params)
+            String processesGraph = execContext.getExecContextParamsYaml().processesGraph;
+            if (processesGraph != null) {
+                Files.writeString(filesDir.resolve("exec-context-process-dag.yaml"), processesGraph);
             }
 
             Path zipFile = tempDir.resolve("exec-context-states-" + execContextId + ".zip");
