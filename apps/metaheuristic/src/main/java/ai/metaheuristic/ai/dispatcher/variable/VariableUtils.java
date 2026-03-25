@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.variable;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.variable_global.SimpleGlobalVariable;
+import ai.metaheuristic.ai.exceptions.VariableImmutabilityException;
 import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.commons.yaml.data_storage.DataStorageParamsUtils;
@@ -136,10 +137,11 @@ public class VariableUtils {
                 while (!S.b(parentCtxId)) {
                     Long existingInParent = findVariable.find(variable.name, parentCtxId);
                     if (existingInParent != null) {
-                        throw new IllegalStateException(
+                        throw new VariableImmutabilityException(
                                 S.f("171.863 Variable '%s' already exists in outer context '%s' and cannot be " +
                                         "redeclared in context '%s'. Variables are immutable by default.",
-                                        variable.name, parentCtxId, contextId));
+                                        variable.name, parentCtxId, contextId),
+                                variable.name, parentCtxId, contextId);
                     }
                     parentCtxId = VariableUtils.getParentContext(parentCtxId);
                 }

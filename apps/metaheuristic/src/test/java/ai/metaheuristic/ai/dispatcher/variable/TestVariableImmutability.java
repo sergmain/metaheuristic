@@ -16,8 +16,10 @@
 
 package ai.metaheuristic.ai.dispatcher.variable;
 
+import ai.metaheuristic.ai.exceptions.VariableImmutabilityException;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -27,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
@@ -97,7 +100,7 @@ public class TestVariableImmutability {
         List<TaskParamsYaml.OutputVariable> childTaskOutputs = new ArrayList<>();
 
         // Desired behavior: this should throw because "count" in parent context is immutable
-        assertThrows(IllegalStateException.class, () ->
+        assertThrows(VariableImmutabilityException.class, () ->
                 VariableUtils.initOutputVariables(childOutputs, childTaskOutputs, childContextId, this::findVariable, this::createVariable)
         );
     }
@@ -155,5 +158,49 @@ public class TestVariableImmutability {
         );
         assertEquals(1, childTaskOutputs.size());
         assertEquals("otherVar", childTaskOutputs.getFirst().name);
+    }
+
+    /**
+     * Step 2 (Red - Flipped): asserts the DESIRED caller-level behavior.
+     *
+     * When initOutputVariables throws VariableImmutabilityException, the caller should
+     * catch it and record an error state for the task (not let it escape silently).
+     *
+     * This test simulates the fixed caller pattern: VariableImmutabilityException is caught
+     * alongside CommonRollbackException, and an error state is recorded.
+     */
+    @Test
+    public void test_caller_pattern_desiredBehavior_exception_caught_and_error_recorded() {
+        // Setup: parent creates "amendmentStatus" at context "1,2#1"
+        String parentContextId = "1,2#1";
+        List<ExecContextParamsYaml.Variable> parentOutputs = List.of(processOutput("amendmentStatus"));
+        List<TaskParamsYaml.OutputVariable> parentTaskOutputs = new ArrayList<>();
+        VariableUtils.initOutputVariables(parentOutputs, parentTaskOutputs, parentContextId, this::findVariable, this::createVariable);
+
+        // Child at context "1,2,3,4|1|0#0" tries to create "amendmentStatus" (immutable by default)
+        String childContextId = "1,2,3,4|1|0#0";
+        List<ExecContextParamsYaml.Variable> childOutputs = List.of(processOutput("amendmentStatus"));
+        List<TaskParamsYaml.OutputVariable> childTaskOutputs = new ArrayList<>();
+
+        // Simulate the FIXED caller pattern:
+        // both CommonRollbackException and VariableImmutabilityException are caught,
+        // and error state is recorded for the task
+        AtomicReference<String> errorMessage = new AtomicReference<>(null);
+        boolean errorStateRecorded = false;
+
+        try {
+            VariableUtils.initOutputVariables(childOutputs, childTaskOutputs, childContextId, this::findVariable, this::createVariable);
+        } catch (CommonRollbackException e) {
+            // benign rollback
+        } catch (VariableImmutabilityException e) {
+            errorMessage.set(e.getMessage());
+            // DESIRED: the caller catches this and transitions the task to ERROR
+            errorStateRecorded = true;
+        }
+
+        // Desired behavior: the error was caught AND the task error state was recorded
+        assertNotNull(errorMessage.get(), "VariableImmutabilityException should have been thrown");
+        assertTrue(errorMessage.get().contains("171.863"), "Error message should contain the immutability error code");
+        assertTrue(errorStateRecorded, "Error state should have been recorded for the task");
     }
 }

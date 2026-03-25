@@ -108,6 +108,11 @@ public class TaskFinishingTxService {
         finishWithError(taskId, console, EnumsApi.TaskExecState.ERROR_WITH_RECOVERY);
     }
 
+    @Transactional
+    public void finishWithErrorWithTx(Long taskId, String console, EnumsApi.TaskExecState targetState) {
+        finishWithError(taskId, console, targetState);
+    }
+
     public void finishWithError(Long taskId, @Nullable String console, EnumsApi.TaskExecState targetState) {
         TxUtils.checkTxExists();
 

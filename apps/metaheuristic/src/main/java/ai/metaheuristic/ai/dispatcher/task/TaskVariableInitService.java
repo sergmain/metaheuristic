@@ -17,8 +17,10 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesEvent;
+import ai.metaheuristic.ai.exceptions.VariableImmutabilityException;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
+import ai.metaheuristic.api.EnumsApi;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +43,7 @@ import java.time.Duration;
 public class TaskVariableInitService {
 
     private final TaskVariableInitTxService taskVariableInitTxService;
+    private final TaskFinishingTxService taskFinishingTxService;
 
     private final MultiTenantedQueue<Long, InitVariablesEvent> threadedPool =
             new MultiTenantedQueue<>(10, Duration.ZERO, true, "InitVariablesEvent-", this::intiVariables);
@@ -65,6 +68,14 @@ public class TaskVariableInitService {
             TaskSyncService.getWithSyncVoid(event.taskId, ()-> taskVariableInitTxService.intiVariables(event));
         } catch (CommonRollbackException e) {
             //
+        } catch (VariableImmutabilityException e) {
+            log.error("179.300 Variable immutability violation for task #{}: {}", event.taskId, e.getMessage());
+            try {
+                TaskSyncService.getWithSyncVoid(event.taskId,
+                        () -> taskFinishingTxService.finishWithErrorWithTx(event.taskId, e.getMessage(), EnumsApi.TaskExecState.ERROR));
+            } catch (Throwable th) {
+                log.error("179.310 Failed to set task #{} to ERROR state after immutability violation", event.taskId, th);
+            }
         }
     }
 
