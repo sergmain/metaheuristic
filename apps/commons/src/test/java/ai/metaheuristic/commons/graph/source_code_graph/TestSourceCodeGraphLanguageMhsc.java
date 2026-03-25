@@ -28,7 +28,10 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import ai.metaheuristic.api.data.SourceCodeGraph;
 import static ai.metaheuristic.commons.graph.ExecContextProcessGraphService.*;
@@ -1094,6 +1097,44 @@ public class TestSourceCodeGraphLanguageMhsc {
         assertThrows(SourceCodeGraphException.class,
                 () -> SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc),
                 "Undefined def reference should throw");
+    }
+
+    // ============ template parameter resolution in meta values ============
+
+    @Test
+    public void test_template_param_resolved_in_meta_string() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                template myTemplate(L) {
+                    proc-{L} := internal mh.nop {
+                        meta reqId = "requirementId{L}"
+                        <- requirementId{L}
+                        -> out{L}: ext=".txt"
+                        timeout 60
+                    }
+                }
+                mh.nop-wrapper := internal mh.nop {
+                    sequential {
+                        @myTemplate(0)
+                    }
+                }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("proc-0"))
+                .findFirst().orElseThrow();
+        // Meta value should have {L} resolved to 0
+        String reqIdMeta = p.metas.stream()
+                .filter(m -> m.containsKey("reqId"))
+                .map(m -> m.get("reqId"))
+                .findFirst().orElseThrow();
+        assertEquals("requirementId0", reqIdMeta,
+                "Template parameter {L} should be resolved in meta string values");
+        // Input should also be resolved
+        assertEquals("requirementId0", p.inputs.getFirst().name);
+        // Output should also be resolved
+        assertEquals("out0", p.outputs.getFirst().name);
     }
 
     // ============ mutable modifier on output variables ============
