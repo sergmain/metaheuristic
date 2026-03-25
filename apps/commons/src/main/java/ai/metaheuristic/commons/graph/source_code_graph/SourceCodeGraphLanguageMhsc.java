@@ -203,7 +203,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                 String key = resolveIdRef(me.idRef(0));
                 String value;
                 if (me.STRING() != null) {
-                    value = unquote(me.STRING().getText());
+                    value = resolveStringTemplateParams(unquote(me.STRING().getText()));
                 } else {
                     value = resolveIdRef(me.idRef(1));
                 }
@@ -555,7 +555,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                 String key = resolveIdRef(me.idRef(0));
                 String value;
                 if (me.STRING() != null) {
-                    value = unquote(me.STRING().getText());
+                    value = resolveStringTemplateParams(unquote(me.STRING().getText()));
                 } else {
                     // idRef value
                     value = resolveIdRef(me.idRef(1));
@@ -648,6 +648,66 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
 
             ExecContextApiData.ProcessVertex finishVertex = createProcessVertex(MH_FINISH_FUNCTION, TOP_LEVEL_CONTEXT_ID);
             ExecContextProcessGraphService.addProcessVertexToGraph(scg.processGraph, finishVertex, parentProcesses);
+        }
+
+
+        /**
+         * Resolve template parameters ({L}, {L+1}, {L-1}) inside a string literal.
+         * This mirrors the logic from resolveIdRef's parameterized branch,
+         * but operates on arbitrary string content rather than parsed idPart tokens.
+         */
+        private String resolveStringTemplateParams(String input) {
+            if (loopVariables.isEmpty()) {
+                return input;
+            }
+            StringBuilder sb = new StringBuilder();
+            int i = 0;
+            while (i < input.length()) {
+                if (input.charAt(i) == '{') {
+                    int closeBrace = input.indexOf('}', i + 1);
+                    if (closeBrace > i) {
+                        String inside = input.substring(i + 1, closeBrace);
+                        String resolved = resolveParamExpression(inside);
+                        if (resolved != null) {
+                            sb.append(resolved);
+                            i = closeBrace + 1;
+                            continue;
+                        }
+                    }
+                }
+                sb.append(input.charAt(i));
+                i++;
+            }
+            return sb.toString();
+        }
+
+        /**
+         * Try to resolve a parameter expression like "L", "L+1", "L-1".
+         * Returns the resolved string value, or null if the expression doesn't match any loop variable.
+         */
+        private @Nullable String resolveParamExpression(String expr) {
+            // Try direct variable: {L}
+            Integer value = loopVariables.get(expr);
+            if (value != null) {
+                return String.valueOf(value);
+            }
+            // Try varName+offset or varName-offset
+            for (String op : new String[]{"+", "-"}) {
+                int opIdx = expr.lastIndexOf(op);
+                if (opIdx > 0) {
+                    String candidateVar = expr.substring(0, opIdx);
+                    String candidateOffset = expr.substring(opIdx + 1);
+                    Integer varValue = loopVariables.get(candidateVar);
+                    if (varValue != null) {
+                        try {
+                            int offset = Integer.parseInt(candidateOffset);
+                            int result = op.equals("+") ? varValue + offset : varValue - offset;
+                            return String.valueOf(result);
+                        } catch (NumberFormatException ignored) {}
+                    }
+                }
+            }
+            return null;
         }
 
         // ================= idRef resolution =================

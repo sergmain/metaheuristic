@@ -1177,6 +1177,97 @@ public class TestSourceCodeGraphLanguageMhsc {
         assertEquals(true, output.mutable);
     }
 
+
+    // ============ Characterization test: STRING meta values with template params ============
+
+    @Test
+    public void test_string_meta_value_with_template_param_characterization() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                template myTmpl(L) {
+                    my-proc-{L} := internal mh.nop {
+                        meta reqId = "requirementId{L}",
+                             parentId = "parentId{L}"
+                        <- requirementId{L}
+                        -> out{L}: ext=".txt"
+                        timeout 60
+                    }
+                }
+                wrapper := internal mh.nop {
+                    sequential {
+                        @myTmpl(3)
+                    }
+                }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("my-proc-3"))
+                .findFirst().orElseThrow();
+
+        // Input variable name should have {L} resolved to 3
+        assertEquals("requirementId3", p.inputs.getFirst().name);
+        // Output variable name should have {L} resolved to 3
+        assertEquals("out3", p.outputs.getFirst().name);
+
+        // CORRECT behavior: STRING meta values should resolve {L} to the template argument
+        String reqIdMetaValue = p.metas.stream()
+                .filter(m -> m.containsKey("reqId"))
+                .map(m -> m.get("reqId"))
+                .findFirst().orElseThrow();
+        assertEquals("requirementId3", reqIdMetaValue);
+
+        String parentIdMetaValue = p.metas.stream()
+                .filter(m -> m.containsKey("parentId"))
+                .map(m -> m.get("parentId"))
+                .findFirst().orElseThrow();
+        assertEquals("parentId3", parentIdMetaValue);
+    }
+
+
+    @Test
+    public void test_string_meta_value_with_template_param_offset() {
+        String mhsc = """
+            source "test-uid" (strict) {
+                template objectives(L) {
+                    check-{L+1} := internal mh.nop {
+                        meta requirementId = "requirementId{L}",
+                             hasObjectives = "hasObjectives{L+1}",
+                             prevReq = "req{L-1}"
+                        timeout 60
+                    }
+                }
+                wrapper := internal mh.nop {
+                    sequential {
+                        @objectives(3)
+                    }
+                }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("check-4"))
+                .findFirst().orElseThrow();
+
+        String reqIdMeta = p.metas.stream()
+                .filter(m -> m.containsKey("requirementId"))
+                .map(m -> m.get("requirementId"))
+                .findFirst().orElseThrow();
+        assertEquals("requirementId3", reqIdMeta);
+
+        String hasObjMeta = p.metas.stream()
+                .filter(m -> m.containsKey("hasObjectives"))
+                .map(m -> m.get("hasObjectives"))
+                .findFirst().orElseThrow();
+        assertEquals("hasObjectives4", hasObjMeta);
+
+        String prevReqMeta = p.metas.stream()
+                .filter(m -> m.containsKey("prevReq"))
+                .map(m -> m.get("prevReq"))
+                .findFirst().orElseThrow();
+        assertEquals("req2", prevReqMeta);
+    }
+
     // ============ Helpers ============
 
     private static SourceCodeGraph parseYaml(String resourcePath) throws IOException {
