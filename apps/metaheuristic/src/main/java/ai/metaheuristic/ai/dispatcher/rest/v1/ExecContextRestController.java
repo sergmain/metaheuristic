@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTxService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStateDownloadService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -66,6 +67,7 @@ public class ExecContextRestController {
     private final ExecContextTxService execContextTxService;
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final UserContextService userContextService;
+    private final ExecContextStateDownloadService execContextStateDownloadService;
 
     @Data
     @NoArgsConstructor
@@ -188,6 +190,20 @@ public class ExecContextRestController {
         } catch (CommonErrorWithDataException e) {
             return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
         }
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR')")
+    @GetMapping(value= "/exec-context/{execContextId}/download-states", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public HttpEntity<AbstractResource> downloadExecContextStates(
+            HttpServletRequest request, @PathVariable("execContextId") Long execContextId,
+            Authentication authentication) {
+        UserContext context = userContextService.getContext(authentication);
+        CleanerInfo resource = execContextStateDownloadService.downloadExecContextStates(execContextId);
+        if (resource.entity == null) {
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.GONE);
+        }
+        request.setAttribute(Consts.RESOURCES_TO_CLEAN, resource.toClean);
+        return resource.entity;
     }
 
 }
