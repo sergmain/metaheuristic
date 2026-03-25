@@ -67,6 +67,7 @@ import static org.springframework.scheduling.config.TaskSchedulerRouter.DEFAULT_
  * Date: 08.06.2017
  * Time: 17:21
  */
+@SuppressWarnings("MethodMayBeStatic")
 @EnableCaching
 @EnableAsync
 @Configuration

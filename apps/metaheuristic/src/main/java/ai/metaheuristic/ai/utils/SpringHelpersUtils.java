@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.utils;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -24,7 +23,8 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.Arrays;
 import java.util.List;
 
-import static ai.metaheuristic.ai.Consts.*;
+import static ai.metaheuristic.ai.Consts.STANDALONE_PROFILE;
+import static ai.metaheuristic.ai.Consts.WEBSOCKET_PROFILE;
 
 /**
  * @author Sergio Lissner
