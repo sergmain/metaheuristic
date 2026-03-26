@@ -92,16 +92,19 @@ public class SubProcessesTxService {
         // to the real downstream tasks.
         //
         // For sequential logic, all children share the same subProcess context prefix (e.g. "1,2,5|1#").
-        // For parallel (and) logic, each child gets the raw processContextId (e.g. "1,2,5", "1,2,13"),
-        // so we must check against each subProcess's expected taskContextId.
+        // For parallel (and) logic, each branch gets a derived context via
+        // getCurrTaskContextIdForSubProcesses(parentTaskCtx, branchProcessContextId) + "#branchIdx",
+        // so we compute per-branch prefixes and match against them.
         Set<ExecContextData.TaskVertex> oldChildren;
         if (executionContextData.process.logic == ai.metaheuristic.api.EnumsApi.SourceCodeSubProcessLogic.and) {
-            // Parallel: each subProcess child gets processContextId directly as taskContextId
-            Set<String> expectedChildCtxIds = executionContextData.subProcesses.stream()
-                    .map(sp -> sp.processContextId)
+            // Parallel: each branch gets getCurrTaskContextIdForSubProcesses(parent, branch) + #idx
+            Set<String> expectedPrefixes = executionContextData.subProcesses.stream()
+                    .map(sp -> ContextUtils.getCurrTaskContextIdForSubProcesses(
+                            taskParamsYaml.task.taskContextId, sp.processContextId) + ContextUtils.CONTEXT_SEPARATOR)
                     .collect(Collectors.toSet());
             oldChildren = executionContextData.descendants.stream()
-                    .filter(v -> v.taskContextId != null && expectedChildCtxIds.contains(v.taskContextId))
+                    .filter(v -> v.taskContextId != null &&
+                            expectedPrefixes.stream().anyMatch(prefix -> v.taskContextId.startsWith(prefix)))
                     .collect(Collectors.toSet());
         }
         else {

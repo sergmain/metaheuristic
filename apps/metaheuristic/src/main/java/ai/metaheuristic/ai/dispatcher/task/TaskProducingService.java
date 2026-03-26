@@ -38,6 +38,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -124,6 +125,13 @@ public class TaskProducingService {
         List<Long> parentTaskIds = List.of(parentTaskId);
         String subProcessContextId = executionContextData.subProcesses.get(0).processContextId;
 
+        // For "and" logic: derive the parent's taskContextId from currTaskContextId
+        // so each parallel branch gets a unique context encoding the parent's instance.
+        // deriveParentTaskContextId reverses the buildTaskContextId+getCurrTaskContextIdForSubProcesses
+        // that the caller applied.
+        final String parentTaskContextId = ContextUtils.deriveParentTaskContextId(currTaskContextId);
+        int andBranchIndex = 0;
+
         TaskImpl t = null;
         for (ExecContextApiData.ProcessVertex subProcess : subProcesses) {
             final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(subProcess.process);
@@ -132,7 +140,11 @@ public class TaskProducingService {
             }
 
             String actualProcessContextId = switch (process.logic) {
-                case and -> subProcess.processContextId;
+                case and -> {
+                    String andSubProcessContextId = ContextUtils.getCurrTaskContextIdForSubProcesses(
+                            parentTaskContextId, subProcess.processContextId);
+                    yield ContextUtils.buildTaskContextId(andSubProcessContextId, Integer.toString(andBranchIndex++));
+                }
                 case sequential -> {
                     // all subProcesses must have the same processContextId
                     if (!subProcessContextId.equals(subProcess.processContextId)) {
