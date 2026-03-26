@@ -1,0 +1,17 @@
+version: 6
+source:
+  uid: test-source-code-without-type
+  processes:
+    - code: process-1
+      name: process-1
+      function:
+        code: function-01:1.1
+      inputs:
+        - name: input-var
+      outputs:
+        - name: output-var
+    - code: mh.finish
+      name: mh.finish
+      function:
+        code: mh.finish
+        context: internal

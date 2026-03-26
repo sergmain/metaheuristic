@@ -105,7 +105,7 @@ public class SourceCodeService {
             }
 
             try {
-                return sourceCodeTxService.createSourceCode(sourceCodeAsStr, sourceCodeGraph.uid, lang, companyUniqueId);
+                return sourceCodeTxService.createSourceCode(sourceCodeAsStr, sourceCodeGraph.uid, lang, companyUniqueId, sourceCodeGraph.type);
             } catch (DataIntegrityViolationException e) {
                 final String error = ErrorUtils.getAllMessages(e, 1);
                 final String es = "560.150 data integrity error: " + error;
@@ -187,7 +187,7 @@ public class SourceCodeService {
             }
 
             SourceCodeApiData.SourceCodeResult result = sourceCodeTxService.createSourceCode(
-                sourceCodeAsStr, sourceCodeGraph.uid, lang, context.getCompanyId());
+                sourceCodeAsStr, sourceCodeGraph.uid, lang, context.getCompanyId(), sourceCodeGraph.type);
 
             if (result.isErrorMessages()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.getErrorMessagesAsList(), result.getInfoMessagesAsList());

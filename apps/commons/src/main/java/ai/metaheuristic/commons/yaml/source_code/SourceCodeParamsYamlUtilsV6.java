@@ -75,6 +75,7 @@ public class SourceCodeParamsYamlUtilsV6
             p.source.ac = new SourceCodeParamsYaml.AccessControl(v6.source.ac.groups);
         }
         p.source.strictNaming = v6.source.strictNaming;
+        p.source.type = v6.source.type;
         p.checkIntegrity();
         return p;
     }

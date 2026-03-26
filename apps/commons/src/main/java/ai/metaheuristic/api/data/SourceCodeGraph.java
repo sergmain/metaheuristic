@@ -49,6 +49,7 @@ public class SourceCodeGraph {
     public boolean clean = false;
     public int instances;
     public @Nullable AccessControl ac = null;
+    public @Nullable String type = null;
     public List<Map<String, String>> metas = new ArrayList<>();
 
     public final List<ExecContextParamsYaml.Process> processes = new ArrayList<>();

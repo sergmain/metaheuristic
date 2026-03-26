@@ -138,6 +138,8 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                         scg.instances = Integer.parseInt(opt.INT().getText());
                     } else if (opt.getText().startsWith("ac")) {
                         scg.ac = new SourceCodeGraph.AccessControl(unquote(opt.STRING().getText()));
+                    } else if (opt.getText().startsWith("type")) {
+                        scg.type = unquote(opt.STRING().getText());
                     }
                 }
             }

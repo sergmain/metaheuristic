@@ -205,12 +205,13 @@ public class SourceCodeTxService {
     }
 
     @Transactional
-    public SourceCodeApiData.SourceCodeResult createSourceCode(String sourceCodeYamlAsStr, String uid, EnumsApi.SourceCodeLang lang, Long companyUniqueId) {
+    public SourceCodeApiData.SourceCodeResult createSourceCode(String sourceCodeYamlAsStr, String uid, EnumsApi.SourceCodeLang lang, Long companyUniqueId, @Nullable String type) {
 
         SourceCodeImpl sourceCode = new SourceCodeImpl();
         SourceCodeStoredParamsYaml scspy = new SourceCodeStoredParamsYaml();
         scspy.source = sourceCodeYamlAsStr;
         scspy.lang = lang;
+        scspy.type = type;
         scspy.internalParams.updatedOn = System.currentTimeMillis();
         sourceCode.updateParams(scspy);
 

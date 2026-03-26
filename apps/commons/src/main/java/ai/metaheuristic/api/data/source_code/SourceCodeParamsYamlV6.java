@@ -228,6 +228,8 @@ public class SourceCodeParamsYamlV6 implements BaseParams {
         public @Nullable AccessControlV6 ac;
         @Nullable
         public Boolean strictNaming;
+        @Nullable
+        public String type;
     }
 
     public SourceCodeV6 source = new SourceCodeV6();

@@ -240,6 +240,8 @@ public class SourceCodeParamsYaml implements BaseParams {
         public AccessControl ac;
         @Nullable
         public Boolean strictNaming;
+        @Nullable
+        public String type;
     }
 
     public SourceCode source = new SourceCode();

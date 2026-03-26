@@ -1,0 +1,6 @@
+source "test-source-code-with-type" (type = "batch-processing") {
+    process-1 := function-01 {
+        <- input-var
+        -> output-var
+    }
+}
