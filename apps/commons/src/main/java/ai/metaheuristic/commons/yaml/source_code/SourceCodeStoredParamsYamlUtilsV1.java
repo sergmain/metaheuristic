@@ -51,6 +51,7 @@ public class SourceCodeStoredParamsYamlUtilsV1
         p.internalParams.init(v1.internalParams.archived, v1.internalParams.published, v1.internalParams.updatedOn, null);
         p.source = v1.source;
         p.lang = v1.lang;
+        p.type = v1.type;
         p.checkIntegrity();
         return p;
     }
