@@ -437,6 +437,50 @@ public class TestFindVariableInAllInternalContexts {
     }
 
     /**
+     * CT (Characterization Test) — documents current BUGGY behavior.
+     *
+     * Bug: two sibling batch instances at "1,2,5,6,7|1|0|0#1" and "1,2,5,6,7|1|0|0#2"
+     * both have a variable "requirementId1". When searching from "1,2,5,6,7|1|0|0#2",
+     * the lookup should return the variable from #2. But due to the processContextId-only
+     * match in findVariableIdInStates, it returns whichever comes first in the states list —
+     * which is the variable from #1 (wrong branch).
+     *
+     * Step 1 (Green): assert the buggy behavior (returns #1's variable from #2's context).
+     */
+    @Test
+    public void test_CT_crossBranchVariableLeak_viaVariableState() {
+        Long execContextId = setupExecContext(List.of());
+
+        // Create two variables with the same name in two sibling # instances
+        Variable varBranch1 = createVariable("1,2,5,6,7|1|0|0#1", execContextId);
+        currentVarName = currentVarName; // same name for both — re-use
+        // Need to create second variable with same name at different context
+        byte[] data2 = "DRONE-3".getBytes(StandardCharsets.UTF_8);
+        ByteArrayInputStream is2 = new ByteArrayInputStream(data2);
+        Variable varBranch2 = variableTxService.createInitializedTx(
+                is2, data2.length, currentVarName, null, execContextId,
+                "1,2,5,6,7|1|0|0#2", EnumsApi.VariableType.text);
+
+        // Register BOTH in ExecContextVariableState — #1 first, #2 second
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
+        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        info.states.add(makeVariableState("1,2,5,6,7|1|0|0#1", varBranch1.id, currentVarName));
+        info.states.add(makeVariableState("1,2,5,6,7|1|0|0#2", varBranch2.id, currentVarName));
+        ecvs.updateParams(info);
+        execContextVariableStateRepository.save(ecvs);
+
+        // Search from #2's context — should get varBranch2, but due to bug gets varBranch1
+        Variable found = variableTxService.findVariableInAllInternalContexts(
+                currentVarName, "1,2,5,6,7|1|0|0#2", execContextId);
+
+        assertNotNull(found);
+        // CORRECT: should return varBranch2 (from #2), not varBranch1 (from #1)
+        assertEquals(varBranch2.id, found.id,
+                "Lookup from #2 should return #2's own variable, not #1's");
+    }
+
+    /**
      * Variable at "1,2,5,6,7|0#1" IS registered in ExecContextVariableState.
      * Searching from "1,2,5,6,7,10" should find it via the in-memory path
      * because processContextId("1,2,5,6,7|0#1") == "1,2,5,6,7" matches

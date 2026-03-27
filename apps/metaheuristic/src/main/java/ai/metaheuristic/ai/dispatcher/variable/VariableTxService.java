@@ -530,12 +530,35 @@ public class VariableTxService {
 
     @Nullable
     private static Long findVariableIdInStates(ExecContextApiData.ExecContextVariableStates info, String variable, String exactTaskContextId, String processCtxId) {
+        String searchPath = ContextUtils.getPath(exactTaskContextId);
+
         for (ExecContextApiData.VariableState state : info.states) {
+            // exact match on taskContextId — always valid
+            if (state.taskContextId.equals(exactTaskContextId)) {
+                Long id = findVariableIdInList(state.outputs, variable);
+                if (id != null) {
+                    return id;
+                }
+                id = findVariableIdInList(state.inputs, variable);
+                if (id != null) {
+                    return id;
+                }
+                continue;
+            }
+
+            // processContextId match — only when searching from a context WITHOUT #-suffix.
+            // When searching from a #-suffixed context (e.g., "1,2,5,6,7|1|0|0#2"),
+            // only exact match is valid at the current walk step. The processCtxId fallback
+            // would incorrectly match sibling instances (e.g., "1,2,5,6,7|1|0|0#1")
+            // because they share the same processCtxId "1,2,5,6,7".
+            if (searchPath != null) {
+                continue;
+            }
+
             String stateLevel = ContextUtils.getLevel(state.taskContextId);
             String stateProcessCtxId = ContextUtils.getProcessContextId(stateLevel);
 
-            // exact match on taskContextId, or match on processContextId (covers #-suffixed instances like "1,2#1" when searching for "1,2")
-            if (!state.taskContextId.equals(exactTaskContextId) && !stateProcessCtxId.equals(processCtxId)) {
+            if (!stateProcessCtxId.equals(processCtxId)) {
                 continue;
             }
 
