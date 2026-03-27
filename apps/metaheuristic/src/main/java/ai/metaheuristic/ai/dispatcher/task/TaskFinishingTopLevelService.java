@@ -125,7 +125,7 @@ public class TaskFinishingTopLevelService {
 
         if (task.resultReceived!=0 && allUploaded) {
 
-            ExecContextImpl execContext = execContextCache.findById(task.execContextId);
+            ExecContextImpl execContext = execContextCache.findById(task.execContextId, true);
             if (execContext==null) {
                 eventPublisher.publishEvent( new DeregisterTasksByExecContextIdEvent(task.execContextId) );
                 return;

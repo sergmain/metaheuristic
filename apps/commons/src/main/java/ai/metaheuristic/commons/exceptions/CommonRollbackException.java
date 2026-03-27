@@ -50,4 +50,8 @@ public class CommonRollbackException extends RuntimeException {
     public static CommonRollbackException asOk() {
         return new CommonRollbackException("ok", OK);
     }
+
+    public String getErrorMessage() {
+        return String.join(". ", messages);
+    }
 }

@@ -475,7 +475,7 @@ public class VariableTxService {
     }
 
     public VariableSearch findVariableInAllInternalContextsAsVariableSearch(String variable, String taskContextId, Long execContextId) {
-        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        ExecContextImpl execContext = execContextCache.findById(execContextId, true);
         if (execContext == null) {
             return VARIABLE_OT_FOUND;
         }

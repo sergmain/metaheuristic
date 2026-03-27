@@ -90,6 +90,7 @@ public class ExecContextCache {
             final ExecContextImpl execContext = execContextRepository.findByIdNullable(id);
             return execContext;
         }
+        TxUtils.checkTxExists();
         return execContextRepository.findById(id).orElse(null);
     }
 }

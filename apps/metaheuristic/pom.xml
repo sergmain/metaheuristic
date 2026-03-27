@@ -230,26 +230,11 @@
             <scope>compile</scope>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.mockito/mockito-core -->
-<!--
+        <!-- Source: https://mvnrepository.com/artifact/org.ehcache/ehcache -->
         <dependency>
-            &lt;!&ndash;License	MIT&ndash;&gt;
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
-        </dependency>
--->
-
-        <dependency>
-            <groupId>org.hibernate.orm</groupId>
-            <artifactId>hibernate-ehcache</artifactId>
-            <version>6.0.0.Alpha7</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.sf.ehcache</groupId>
-                    <artifactId>ehcache</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.ehcache</groupId>
+            <artifactId>ehcache</artifactId>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.hibernate.orm</groupId>
