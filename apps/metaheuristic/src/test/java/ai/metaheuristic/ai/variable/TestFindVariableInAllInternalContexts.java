@@ -455,7 +455,7 @@ public class TestFindVariableInAllInternalContexts {
         Variable varBranch1 = createVariable("1,2,5,6,7|1|0|0#1", execContextId);
         currentVarName = currentVarName; // same name for both — re-use
         // Need to create second variable with same name at different context
-        byte[] data2 = "DRONE-3".getBytes(StandardCharsets.UTF_8);
+        byte[] data2 = "VALUE-FROM-BRANCH-2".getBytes(StandardCharsets.UTF_8);
         ByteArrayInputStream is2 = new ByteArrayInputStream(data2);
         Variable varBranch2 = variableTxService.createInitializedTx(
                 is2, data2.length, currentVarName, null, execContextId,
@@ -506,5 +506,197 @@ public class TestFindVariableInAllInternalContexts {
                 "Variable at '1,2,5,6,7|0#1' should be found from '1,2,5,6,7,10' via in-memory ExecContextVariableState. " +
                 "processContextId '1,2,5,6,7' matches for both.");
         assertEquals(created.id, found.id);
+    }
+
+    // =====================================================================================
+    // Context propagation and variable scoping — comprehensive test suite
+    //
+    // Context propagation rules (ContextUtils.getCurrTaskContextIdForSubProcesses):
+    //   parent "1"            + subprocess "1,2"     → "1,2"           (no ancestor path)
+    //   parent "1,2#1"        + subprocess "1,2,5"   → "1,2,5|1"      (ancestor = instance#)
+    //   parent "1,2,5|1#0"   + subprocess "1,2,5,6" → "1,2,5,6|1|0"  (chain ancestors)
+    //   parent "1,2,5,6|1|0#2" + subprocess "1,2,5,6,7" → "1,2,5,6,7|1|0|2"
+    //
+    // Parent walk (ContextUtils.deriveParentTaskContextId):
+    //   "1,2,5,6,7|1|0|0#2" → "1,2,5,6|1|0#0" → "1,2,5|1#0" → "1,2#1" → "1" → null
+    //
+    // Variable scoping: a variable is visible from context Y if it's on Y's parent walk chain.
+    // Variables in sibling branches (#0 vs #1 at the same level) are NOT visible to each other.
+    // =====================================================================================
+
+    /**
+     * Helper: creates a variable and registers it in ExecContextVariableState.
+     */
+    private Variable createAndRegisterVariable(String taskContextId, Long execContextId) {
+        Variable v = createVariable(taskContextId, execContextId);
+
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextVariableState ecvs = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElseThrow();
+        ExecContextApiData.ExecContextVariableStates info = ecvs.getExecContextVariableStateInfo();
+        info.states.add(makeVariableState(taskContextId, v.id, currentVarName));
+        ecvs.updateParams(info);
+        execContextVariableStateRepository.save(ecvs);
+
+        return v;
+    }
+
+    /**
+     * Left sibling NOT visible.
+     *
+     * Variable at "1,2#0" should NOT be found from a child of "1,2#1".
+     * Context "1,2,5|1#0" walks: → "1,2#1" → "1" → null.
+     * It never visits "1,2#0".
+     */
+    @Test
+    public void test_leftSibling_notVisible_fromDifferentBranchChild() {
+        Long execContextId = setupExecContext(List.of());
+        Variable varAtBranch0 = createAndRegisterVariable("1,2#0", execContextId);
+
+        // Search from a context under branch #1
+        Variable found = variableTxService.findVariableInAllInternalContexts(
+                currentVarName, "1,2,5|1#0", execContextId);
+
+        assertNull(found,
+                "Variable at '1,2#0' should NOT be visible from '1,2,5|1#0'. " +
+                "The walk goes 1,2,5|1#0 → 1,2#1 → 1 → null, never touching 1,2#0.");
+    }
+
+    /**
+     * Ancestor chain visibility — deep nesting.
+     *
+     * Variable at "1,2#1" should be found from deeply nested "1,2,5,6,7|1|0|0#2".
+     * Walk: "1,2,5,6,7|1|0|0#2" → "1,2,5,6|1|0#0" → "1,2,5|1#0" → "1,2#1" (found)
+     */
+    @Test
+    public void test_ancestorChain_deepNesting_found() {
+        Long execContextId = setupExecContext(List.of());
+        Variable created = createAndRegisterVariable("1,2#1", execContextId);
+
+        Variable found = variableTxService.findVariableInAllInternalContexts(
+                currentVarName, "1,2,5,6,7|1|0|0#2", execContextId);
+
+        assertNotNull(found,
+                "Variable at '1,2#1' should be found from '1,2,5,6,7|1|0|0#2'. " +
+                "Walk reaches '1,2#1' at depth 3.");
+        assertEquals(created.id, found.id);
+    }
+
+    /**
+     * Top-level variable visible from deeply nested context.
+     *
+     * Variable at "1" should be found from "1,2,5,6,7|1|0|0#2".
+     * Walk: ... → "1,2#1" → "1" (found)
+     */
+    @Test
+    public void test_topLevel_visibleFromDeepNesting() {
+        Long execContextId = setupExecContext(List.of());
+        Variable created = createAndRegisterVariable("1", execContextId);
+
+        Variable found = variableTxService.findVariableInAllInternalContexts(
+                currentVarName, "1,2,5,6,7|1|0|0#2", execContextId);
+
+        assertNotNull(found,
+                "Variable at '1' should be found from '1,2,5,6,7|1|0|0#2'. " +
+                "Walk eventually reaches '1'.");
+        assertEquals(created.id, found.id);
+    }
+
+    /**
+     * Cross-branch at intermediate level — different ancestor path.
+     *
+     * Variable at "1,2,5|1#0" should NOT be found from a context under "1,2,5|1#1".
+     * Context "1,2,5,6|1|1#0" walks: → "1,2,5|1#1" → "1,2#1" → "1" → null.
+     * It never visits "1,2,5|1#0".
+     *
+     * This tests that sibling batch instances at intermediate nesting levels
+     * are properly isolated.
+     */
+    @Test
+    public void test_crossBranch_intermediateLevel_notVisible() {
+        Long execContextId = setupExecContext(List.of());
+        Variable varAtInstance0 = createAndRegisterVariable("1,2,5|1#0", execContextId);
+
+        // Search from a context under instance #1 at the same intermediate level
+        Variable found = variableTxService.findVariableInAllInternalContexts(
+                currentVarName, "1,2,5,6|1|1#0", execContextId);
+
+        assertNull(found,
+                "Variable at '1,2,5|1#0' should NOT be visible from '1,2,5,6|1|1#0'. " +
+                "Walk goes 1,2,5,6|1|1#0 → 1,2,5|1#1 → 1,2#1 → 1 → null. " +
+                "Never visits 1,2,5|1#0 (sibling instance).");
+    }
+
+    /**
+     * Same processContextId but different ancestor path — completely separate DAG branches.
+     *
+     * Variable at "1,2,5,6,7|1|0|0#1" should NOT be found from "1,2,5,6,7|2|0|0#1".
+     * These share processContextId "1,2,5,6,7" but differ in ancestor paths (1|0|0 vs 2|0|0),
+     * meaning they descend from different top-level batch instances (#1 vs #2).
+     *
+     * Walk from "1,2,5,6,7|2|0|0#1": → "1,2,5,6|2|0#0" → "1,2,5|2#0" → "1,2#2" → "1" → null.
+     * Never touches ancestor path "1|0|0".
+     */
+    @Test
+    public void test_sameProcessCtxId_differentAncestorPath_notVisible() {
+        Long execContextId = setupExecContext(List.of());
+        Variable varFromBranch1 = createAndRegisterVariable("1,2,5,6,7|1|0|0#1", execContextId);
+
+        // Search from a context with same processCtxId but different ancestor chain
+        Variable found = variableTxService.findVariableInAllInternalContexts(
+                currentVarName, "1,2,5,6,7|2|0|0#1", execContextId);
+
+        assertNull(found,
+                "Variable at '1,2,5,6,7|1|0|0#1' should NOT be visible from '1,2,5,6,7|2|0|0#1'. " +
+                "Same processContextId '1,2,5,6,7' but different ancestor paths (1|0|0 vs 2|0|0).");
+    }
+
+    /**
+     * Correct branch's variable found among multiple sibling branches.
+     *
+     * Three batch instances at first level: #0, #1, #2.
+     * Each has a variable with the same name at contexts "1,2#0", "1,2#1", "1,2#2".
+     * Search from a deep child of #1 should find only #1's variable.
+     *
+     * Walk from "1,2,5|1#0": → "1,2#1" (found — exact match for #1's variable)
+     */
+    @Test
+    public void test_correctBranch_amongThreeSiblings() {
+        Long execContextId = setupExecContext(List.of());
+
+        Variable var0 = createAndRegisterVariable("1,2#0", execContextId);
+
+        currentVarName = currentVarName; // reuse same name
+        byte[] data1 = "branch-1".getBytes(StandardCharsets.UTF_8);
+        Variable var1 = variableTxService.createInitializedTx(
+                new ByteArrayInputStream(data1), data1.length, currentVarName, null,
+                execContextId, "1,2#1", EnumsApi.VariableType.text);
+        // Register var1 in states
+        ExecContextImpl ec1 = execContextCache.findById(execContextId);
+        ExecContextVariableState ecvs1 = execContextVariableStateRepository.findById(ec1.execContextVariableStateId).orElseThrow();
+        ExecContextApiData.ExecContextVariableStates info1 = ecvs1.getExecContextVariableStateInfo();
+        info1.states.add(makeVariableState("1,2#1", var1.id, currentVarName));
+        ecvs1.updateParams(info1);
+        execContextVariableStateRepository.save(ecvs1);
+
+        byte[] data2 = "branch-2".getBytes(StandardCharsets.UTF_8);
+        Variable var2 = variableTxService.createInitializedTx(
+                new ByteArrayInputStream(data2), data2.length, currentVarName, null,
+                execContextId, "1,2#2", EnumsApi.VariableType.text);
+        ExecContextImpl ec2 = execContextCache.findById(execContextId);
+        ExecContextVariableState ecvs2 = execContextVariableStateRepository.findById(ec2.execContextVariableStateId).orElseThrow();
+        ExecContextApiData.ExecContextVariableStates info2 = ecvs2.getExecContextVariableStateInfo();
+        info2.states.add(makeVariableState("1,2#2", var2.id, currentVarName));
+        ecvs2.updateParams(info2);
+        execContextVariableStateRepository.save(ecvs2);
+
+        // Search from deep child of branch #1
+        Variable found = variableTxService.findVariableInAllInternalContexts(
+                currentVarName, "1,2,5|1#0", execContextId);
+
+        assertNotNull(found,
+                "Should find a variable when searching from '1,2,5|1#0'");
+        assertEquals(var1.id, found.id,
+                "Should find branch #1's variable, not #0 or #2. " +
+                "Walk from 1,2,5|1#0 → 1,2#1 (exact match for #1).");
     }
 }
