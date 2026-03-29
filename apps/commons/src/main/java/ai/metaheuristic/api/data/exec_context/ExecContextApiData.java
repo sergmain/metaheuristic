@@ -180,7 +180,7 @@ public class ExecContextApiData {
         public String process;
         public String functionCode;
         @Nullable
-        public String tags;
+        public String[] tags;
 
         public ColumnHeader(String process, String functionCode) {
             this(process, functionCode, null);

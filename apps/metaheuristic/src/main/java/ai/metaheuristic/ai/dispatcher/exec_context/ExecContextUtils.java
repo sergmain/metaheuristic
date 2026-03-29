@@ -142,7 +142,7 @@ public class ExecContextUtils {
                 if (h != null && h.process != null) {
                     String tag = raw.processTags.get(h.process);
                     if (tag != null) {
-                        h.tags = tag;
+                        h.tags = tag.split(",");
                     }
                 }
             }
