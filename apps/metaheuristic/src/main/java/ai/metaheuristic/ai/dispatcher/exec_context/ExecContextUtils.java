@@ -136,6 +136,18 @@ public class ExecContextUtils {
             }
         }
 
+        // Apply process tags to column headers
+        if (raw.processTags != null) {
+            for (ExecContextApiData.ColumnHeader h : r.header) {
+                if (h != null && h.process != null) {
+                    String tag = raw.processTags.get(h.process);
+                    if (tag != null) {
+                        h.tags = tag;
+                    }
+                }
+            }
+        }
+
         r.lines = new ExecContextApiData.LineWithState[contexts.size()];
 
         //noinspection SimplifyStreamApiCallChains

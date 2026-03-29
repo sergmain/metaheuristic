@@ -179,6 +179,12 @@ public class ExecContextApiData {
     public static class ColumnHeader {
         public String process;
         public String functionCode;
+        @Nullable
+        public String tags;
+
+        public ColumnHeader(String process, String functionCode) {
+            this(process, functionCode, null);
+        }
     }
 
     @Data
@@ -254,6 +260,9 @@ public class ExecContextApiData {
         @Nullable
         public List<long[]> taskEdges;
 
+        @Nullable
+        public Map<String, String> processTags;
+
         public ExecContextStateResult(String error) {
             addErrorMessage(error);
         }
@@ -290,10 +299,13 @@ public class ExecContextApiData {
         @Nullable
         public List<long[]> taskEdges;
 
+        @Nullable
+        public Map<String, String> processTags;
+
         public RawExecContextStateResult(Long sourceCodeId, List<VariableState> variableStates, List<String> processCodes,
                                          EnumsApi.SourceCodeType sourceCodeType, String sourceCodeUid,
                                          boolean sourceCodeValid, Map<Long, TaskApiData.TaskState> taskStates) {
-            this(sourceCodeId, variableStates, processCodes, sourceCodeType, sourceCodeUid, sourceCodeValid, taskStates, null, null);
+            this(sourceCodeId, variableStates, processCodes, sourceCodeType, sourceCodeUid, sourceCodeValid, taskStates, null, null, null);
         }
 
         public RawExecContextStateResult(String error) {

@@ -65,6 +65,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -173,6 +174,18 @@ public class ExecContextTxService {
             rawResult.columnNames = ecpy.columnNames;
         }
         rawResult.taskEdges = taskEdges;
+
+        // Populate process tags from ExecContextParamsYaml
+        Map<String, String> processTags = new HashMap<>();
+        for (ExecContextParamsYaml.Process p : ecpy.processes) {
+            if (p.tag != null && !p.tag.isEmpty()) {
+                processTags.put(p.processCode, p.tag);
+            }
+        }
+        if (!processTags.isEmpty()) {
+            rawResult.processTags = processTags;
+        }
+
         return rawResult;
     }
 
