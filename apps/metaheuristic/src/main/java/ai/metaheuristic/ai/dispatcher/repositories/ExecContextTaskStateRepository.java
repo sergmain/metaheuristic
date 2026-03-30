@@ -25,6 +25,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -49,4 +50,8 @@ public interface ExecContextTaskStateRepository extends CrudRepository<ExecConte
     @Query(value="select w.id from ExecContextTaskState w")
     @Transactional(readOnly = true, propagation = Propagation.NOT_SUPPORTED)
     List<Long> findAllIds();
+
+    @Query(value="select w.version from ExecContextTaskState w where w.id=:id")
+    @Nullable
+    Integer findVersionById(Long id);
 }

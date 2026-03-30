@@ -152,9 +152,9 @@ public class ExecContextRestController {
 
     @GetMapping("/exec-context-state/{sourceCodeId}/{execContextId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR')")
-    public ExecContextApiData.ExecContextStateResult execContextsState(@PathVariable Long sourceCodeId, @PathVariable Long execContextId, Authentication authentication) {
+    public ExecContextApiData.ExecContextStateResult execContextsState(@PathVariable Long sourceCodeId, @PathVariable Long execContextId, @RequestParam(required = false) @Nullable String versions, Authentication authentication) {
         UserContext context = userContextService.getContext(authentication);
-        ExecContextApiData.ExecContextStateResult execContextState = execContextTopLevelService.getExecContextState(sourceCodeId, execContextId, authentication);
+        ExecContextApiData.ExecContextStateResult execContextState = execContextTopLevelService.getExecContextState(sourceCodeId, execContextId, versions, authentication);
         return execContextState;
     }
 

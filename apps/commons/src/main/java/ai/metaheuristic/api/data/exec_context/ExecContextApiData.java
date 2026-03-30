@@ -263,6 +263,13 @@ public class ExecContextApiData {
         @Nullable
         public Map<String, String> processTags;
 
+        // version-based caching: composite version of ExecContext + ExecContextGraph + ExecContextTaskState + ExecContextVariableState
+        @Nullable
+        public String versions;
+
+        // when true, all other fields are empty — the state hasn't changed since the last poll
+        public boolean theSame;
+
         public ExecContextStateResult(String error) {
             addErrorMessage(error);
         }

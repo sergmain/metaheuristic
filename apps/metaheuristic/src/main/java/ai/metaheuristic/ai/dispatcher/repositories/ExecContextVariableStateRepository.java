@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.repositories;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;

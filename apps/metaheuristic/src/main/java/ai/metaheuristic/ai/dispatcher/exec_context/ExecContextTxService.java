@@ -18,10 +18,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
-import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.dispatcher_params.DispatcherParamsTopLevelService;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.DeleteExecContextInListTxEvent;
@@ -53,22 +50,21 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.PageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.*;
-import org.jspecify.annotations.Nullable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.EnumsApi.OperationStatus;
@@ -126,17 +122,33 @@ public class ExecContextTxService {
         return result;
     }
 
-    public ExecContextApiData.RawExecContextStateResult getRawExecContextState(Long sourceCodeId, Long execContextId) {
+    public @Nullable String getCompositeVersions(ExecContextImpl ec) {
+        Integer ecV = ec.version;
+        ExecContextGraph execContextGraph = execContextGraphRepository.findById(ec.execContextGraphId).orElse(null);
+        if (execContextGraph==null) {
+            return null;
+        }
+        Integer gV = execContextGraph.version;
+        ExecContextTaskState execContextTaskState = execContextTaskStateRepository.findById(ec.execContextTaskStateId).orElse(null);
+        if (execContextTaskState==null) {
+            return null;
+        }
+        Integer tsV = execContextTaskState.version;
+        ExecContextVariableState execContextVariableState = execContextVariableStateRepository.findById(ec.execContextVariableStateId).orElse(null);
+        if (execContextVariableState==null) {
+            return null;
+        }
+        Integer vsV = execContextVariableState.version;
+        return ecV + "," + gV + "," + tsV + "," + vsV;
+    }
+
+    public ExecContextApiData.RawExecContextStateResult getRawExecContextState(Long sourceCodeId, ExecContextImpl ec) {
         TxUtils.checkTxNotExists();
+        Long execContextId = ec.id;
 
         ExecContextApiData.ExecContextsResult result = new ExecContextApiData.ExecContextsResult(sourceCodeId, globals.dispatcher.asset.mode);
         initInfoAboutSourceCode(sourceCodeId, result);
 
-        ExecContextImpl ec = execContextCache.findById(execContextId, true);
-        if (ec == null) {
-            ExecContextApiData.RawExecContextStateResult resultWithError = new ExecContextApiData.RawExecContextStateResult("705.220 Can't find execContext for Id " + execContextId);
-            return resultWithError;
-        }
         List<ExecContextApiData.VariableState> variableStates = execContextUtilsServices.getExecContextVariableStates(ec.execContextVariableStateId);
 
         ExecContextParamsYaml ecpy = ec.getExecContextParamsYaml();

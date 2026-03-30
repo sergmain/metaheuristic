@@ -83,17 +83,34 @@ public class ExecContextTopLevelService {
         };
     }
 
-    public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, Authentication authentication) {
-        ExecContextApiData.RawExecContextStateResult raw = execContextTxService.getRawExecContextState(sourceCodeId, execContextId);
+    public ExecContextApiData.ExecContextStateResult getExecContextState(Long sourceCodeId, Long execContextId, @Nullable String versions, Authentication authentication) {
+        // version-based caching: check if state has changed since the last poll
+        ExecContextImpl ec = execContextCache.findById(execContextId, true);
+        if (ec==null) {
+            ExecContextApiData.RawExecContextStateResult resultWithError = new ExecContextApiData.RawExecContextStateResult("705.220 Can't find execContext for Id " + execContextId);
+            return new ExecContextApiData.ExecContextStateResult(resultWithError.getErrorMessagesAsList());
+        }
+
+        String currentVersions = execContextTxService.getCompositeVersions(ec);
+        if (versions != null && versions.equals(currentVersions)) {
+            ExecContextApiData.ExecContextStateResult theSameResult = new ExecContextApiData.ExecContextStateResult();
+            theSameResult.theSame = true;
+            theSameResult.versions = currentVersions;
+            return theSameResult;
+        }
+
+        ExecContextApiData.RawExecContextStateResult raw = execContextTxService.getRawExecContextState(sourceCodeId, ec);
         if (raw.isErrorMessages()) {
             return new ExecContextApiData.ExecContextStateResult(raw.getErrorMessagesAsList());
         }
         boolean managerRole = authentication.getAuthorities().stream().anyMatch(o -> isManagerRole(o.getAuthority()));
         ExecContextApiData.ExecContextStateResult r = ExecContextUtils.getExecContextStateResult(execContextId, raw, managerRole);
 
+        // populate versions for the next poll
+        r.versions = currentVersions;
+
         // we'll calculate an info only for rootExecContext
-        ExecContextImpl ec = execContextCache.findById(execContextId, true);
-        if (ec!=null && ec.rootExecContextId==null) {
+        if (ec.rootExecContextId==null) {
             r.taskStateInfos = getTaskStateInfos(execContextId);
         }
         return r;

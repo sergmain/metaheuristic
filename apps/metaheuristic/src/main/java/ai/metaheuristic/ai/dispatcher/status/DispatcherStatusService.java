@@ -102,7 +102,7 @@ public class DispatcherStatusService {
             %s
             """, ecg.id, ecgParams.graph.indent(2)));
 
-        ExecContextApiData.ExecContextStateResult execContextState = execContextTopLevelService.getExecContextState(sc.id, ec.id, authentication);
+        ExecContextApiData.ExecContextStateResult execContextState = execContextTopLevelService.getExecContextState(sc.id, ec.id, null, authentication);
         if (execContextState.taskStateInfos!=null) {
             s.append("Task count by TaskState\n");
             for (ExecContextApiData.TaskStateInfo taskInfo : execContextState.taskStateInfos.taskInfos) {
