@@ -44,7 +44,7 @@ public class PackageBundle implements CommandLineRunner {
         try {
             PackageBundleUtils.packageBundle(args);
         } catch (BundleProcessingException e) {
-            System.out.println(e.message);
+            System.out.println("Error: " + e.message);
             System.exit(SpringApplication.exit(appCtx, () -> -2));
         }
     }

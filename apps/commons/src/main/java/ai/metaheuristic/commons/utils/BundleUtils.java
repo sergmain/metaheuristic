@@ -140,10 +140,10 @@ public class BundleUtils {
                         try {
                             yamlCheckerFunc.accept(yaml, f);
                         } catch (Throwable th) {
-                            String es = "Validation of content was failed. type: " + bundleConfig.type;
+                            String es = "Validation of content was failed. type: " + bundleConfig.type + ", file: " + f + ", error: " + th.getMessage();
                             log.error(es);
                             System.out.println(ExceptionUtils.getStackTrace(th));
-                            throw new RuntimeException(es, th);
+                            throw new BundleProcessingException(es);
                         }
 
 //                        Path file = tempPath.resolve(p.getFileName().toString());

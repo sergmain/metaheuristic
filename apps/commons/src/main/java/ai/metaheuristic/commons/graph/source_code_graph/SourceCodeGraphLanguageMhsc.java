@@ -242,11 +242,12 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                 String internalContextId,
                 Set<ExecContextApiData.ProcessVertex> parents) {
 
+            String processCode = resolveIdRef(ctx.idRef());
+
             if (finishPresent) {
-                throw new SourceCodeGraphException("564.240 mh.finish isn't the last process");
+                throw new SourceCodeGraphException("564.240 Process '"+processCode+"' is declared after mh.finish. mh.finish must be the last process in the source code, move it after all other processes or remove it to let it be auto-generated");
             }
 
-            String processCode = resolveIdRef(ctx.idRef());
             checkProcessCode(processCode);
 
             ExecContextParamsYaml.Process process = new ExecContextParamsYaml.Process();
