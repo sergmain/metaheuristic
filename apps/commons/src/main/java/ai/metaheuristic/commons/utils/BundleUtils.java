@@ -38,6 +38,7 @@ import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.NameFileFilter;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -139,7 +140,10 @@ public class BundleUtils {
                         try {
                             yamlCheckerFunc.accept(yaml, f);
                         } catch (Throwable th) {
-                            throw new RuntimeException("Validation of content was failed. type: " + bundleConfig.type, th);
+                            String es = "Validation of content was failed. type: " + bundleConfig.type;
+                            log.error(es);
+                            System.out.println(ExceptionUtils.getStackTrace(th));
+                            throw new RuntimeException(es, th);
                         }
 
 //                        Path file = tempPath.resolve(p.getFileName().toString());
