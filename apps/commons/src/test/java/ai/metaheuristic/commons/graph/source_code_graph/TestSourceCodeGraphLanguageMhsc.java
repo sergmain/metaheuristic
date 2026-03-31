@@ -1309,6 +1309,42 @@ public class TestSourceCodeGraphLanguageMhsc {
         assertEquals("req2", prevReqMeta);
     }
 
+    // ============ CT: nested parallel branch leaf topology order ============
+
+    /**
+     * CT for process ordering bug in mhdg-rg-test-1.0.0.mhsc:
+     * mhdg-rg.obsolete-requirement-2 and mhdg-rg.obsolete-requirement-1 must
+     * connect to mhdg-rg.clear-cache in the process DAG, otherwise
+     * TopologicalOrderIterator can place clear-cache before obsolete-requirement
+     * in the column header.
+     */
+    @Test
+    public void test_mhdg_rg_test_obsolete_req_connects_to_clear_cache() throws IOException {
+        SourceCodeGraph graph = parseMhsc("/source_code/mhsc/mhdg-rg-test-1.0.0.mhsc");
+
+        String dagStr = asString(graph.processGraph);
+
+        ExecContextApiData.ProcessVertex obsoleteReq2 = findVertex(graph.processGraph, "mhdg-rg.obsolete-requirement-2");
+        ExecContextApiData.ProcessVertex obsoleteReq1 = findVertex(graph.processGraph, "mhdg-rg.obsolete-requirement-1");
+        ExecContextApiData.ProcessVertex clearCache = findVertex(graph.processGraph, "mhdg-rg.clear-cache");
+        ExecContextApiData.ProcessVertex mhFinish = findVertex(graph.processGraph, "mh.finish");
+        assertNotNull(obsoleteReq2, "mhdg-rg.obsolete-requirement-2 must exist. DAG:\n" + dagStr);
+        assertNotNull(obsoleteReq1, "mhdg-rg.obsolete-requirement-1 must exist. DAG:\n" + dagStr);
+        assertNotNull(clearCache, "mhdg-rg.clear-cache must exist. DAG:\n" + dagStr);
+        assertNotNull(mhFinish, "mh.finish must exist. DAG:\n" + dagStr);
+
+        boolean req2ToClearCache = graph.processGraph.getDescendants(obsoleteReq2).contains(clearCache);
+        boolean req1ToClearCache = graph.processGraph.getDescendants(obsoleteReq1).contains(clearCache);
+
+        System.out.println("DAG:\n" + dagStr);
+        System.out.println("obsolete-req-2 -> clear-cache: " + req2ToClearCache);
+        System.out.println("obsolete-req-1 -> clear-cache: " + req1ToClearCache);
+
+        // DESIRED: both must connect to clear-cache
+        assertTrue(req2ToClearCache, "mhdg-rg.obsolete-requirement-2 must connect to mhdg-rg.clear-cache. DAG:\n" + dagStr);
+        assertTrue(req1ToClearCache, "mhdg-rg.obsolete-requirement-1 must connect to mhdg-rg.clear-cache. DAG:\n" + dagStr);
+    }
+
     // ============ Helpers ============
 
     private static SourceCodeGraph parseYaml(String resourcePath) throws IOException {
