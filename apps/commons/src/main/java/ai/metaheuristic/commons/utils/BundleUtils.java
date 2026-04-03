@@ -146,7 +146,6 @@ public class BundleUtils {
                             throw new BundleProcessingException(es);
                         }
 
-//                        Path file = tempPath.resolve(p.getFileName().toString());
                         Files.writeString(file, yaml);
 
                     } catch (IOException e) {

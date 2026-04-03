@@ -117,7 +117,8 @@ public class ArtifactCleanerAtDispatcher {
         // do not change the order of calling
         deleteOrphanAndObsoletedBatches();
         deleteOrphanTasks();
-        deleteOrphanVariables();
+        // mechanic behind how to decide that Variable is orphan needs to be re-written
+//        deleteOrphanVariables();
         deleteOrphanCacheData();
         deleteObsoleteEvents();
         deleteObsoleteFunctionData();
