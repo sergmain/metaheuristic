@@ -669,13 +669,25 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
          * but operates on arbitrary string content rather than parsed idPart tokens.
          */
         private String resolveStringTemplateParams(String input) {
-            if (loopVariables.isEmpty()) {
+            if (loopVariables.isEmpty() && defConstants.isEmpty()) {
                 return input;
             }
             StringBuilder sb = new StringBuilder();
             int i = 0;
             while (i < input.length()) {
-                if (input.charAt(i) == '{') {
+                if (input.charAt(i) == '$' && i + 1 < input.length() && input.charAt(i + 1) == '{') {
+                    // ${name} — def constant reference
+                    int closeBrace = input.indexOf('}', i + 2);
+                    if (closeBrace > i) {
+                        String defName = input.substring(i + 2, closeBrace);
+                        String defValue = defConstants.get(defName);
+                        if (defValue != null) {
+                            sb.append(defValue);
+                            i = closeBrace + 1;
+                            continue;
+                        }
+                    }
+                } else if (input.charAt(i) == '{') {
                     int closeBrace = input.indexOf('}', i + 1);
                     if (closeBrace > i) {
                         String inside = input.substring(i + 1, closeBrace);

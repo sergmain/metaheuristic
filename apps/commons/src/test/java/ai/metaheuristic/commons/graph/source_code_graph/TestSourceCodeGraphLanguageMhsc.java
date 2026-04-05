@@ -1345,6 +1345,35 @@ public class TestSourceCodeGraphLanguageMhsc {
         assertTrue(req1ToClearCache, "mhdg-rg.obsolete-requirement-1 must connect to mhdg-rg.clear-cache. DAG:\n" + dagStr);
     }
 
+    // ============ Characterization test: def constant resolution in meta STRING values ============
+
+    @Test
+    public void test_def_constant_in_meta_string_value_characterization() {
+        // Characterization: documents CURRENT behavior where ${name} inside a meta STRING
+        // is NOT resolved to the def constant value.
+        // The SpEL expression "synthetic = ${synthetic_var}" should become "synthetic = true"
+        // but currently the ${synthetic_var} passes through unresolved.
+        String mhsc = """
+            source "test-uid" (strict) {
+                def synthetic_var = "true"
+                my_proc := internal mh.evaluation {
+                    -> synthetic: ext=".txt"
+                    meta expression = "synthetic = ${synthetic_var}"
+                }
+            }
+            """;
+        SourceCodeGraph graph = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, mhsc);
+        ExecContextParamsYaml.Process p = graph.processes.stream()
+                .filter(proc -> proc.processCode.equals("my_proc"))
+                .findFirst().orElseThrow();
+        Map<String, String> exprMeta = p.metas.stream()
+                .filter(m -> m.containsKey("expression")).findFirst().orElseThrow();
+
+        // DESIRED behavior: def constant SHOULD be resolved in meta STRING values
+        assertEquals("synthetic = true", exprMeta.get("expression"),
+                "def constant ${synthetic_var} should be resolved in meta STRING value");
+    }
+
     // ============ Helpers ============
 
     private static SourceCodeGraph parseYaml(String resourcePath) throws IOException {
