@@ -35,6 +35,7 @@ import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.account.UserContext;
 import ai.metaheuristic.commons.exceptions.BundleProcessingException;
+import ai.metaheuristic.commons.graph.source_code_graph.MhscIncludeResolver;
 import ai.metaheuristic.commons.utils.BundleUtils;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
@@ -228,7 +229,16 @@ public class BundleService {
         if (lang==null) {
             lang = SourceCodeUtils.determineLang(sourceCode);
         }
-        return sourceCodeService.createSourceCode(sourceCode, lang, dispatcherContext.getCompanyId());
+        String resolved = sourceCode;
+        if (lang == EnumsApi.SourceCodeLang.mhsc && MhscIncludeResolver.hasIncludes(sourceCode)) {
+            Path sourceDir = path.getParent();
+            try {
+                resolved = MhscIncludeResolver.resolve(sourceCode, sourceDir);
+            } catch (IOException e) {
+                return new SourceCodeApiData.SourceCodeResult("971.400 Error resolving includes in " + path + ": " + e.getMessage());
+            }
+        }
+        return sourceCodeService.createSourceCode(resolved, lang, dispatcherContext.getCompanyId());
     }
 
     private void processFunctions(BundleCfgYaml bundleCfgYaml, Path data, BundleData.UploadingStatus status) throws IOException {

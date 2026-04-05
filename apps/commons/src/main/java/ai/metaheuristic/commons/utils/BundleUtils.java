@@ -24,6 +24,7 @@ import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BundleProcessingException;
+import ai.metaheuristic.commons.graph.source_code_graph.MhscIncludeResolver;
 import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.commons.yaml.auth.ApiAuthUtils;
@@ -85,7 +86,16 @@ public class BundleUtils {
         if (lang==null) {
             throw new BundleProcessingException("Can't determine language from path: " + path);
         }
-        SourceCodeGraph scg = SourceCodeGraphFactory.parse(lang, content);
+        String resolved = content;
+        if (lang == EnumsApi.SourceCodeLang.mhsc && MhscIncludeResolver.hasIncludes(content)) {
+            Path sourceDir = path.getParent();
+            try {
+                resolved = MhscIncludeResolver.resolve(content, sourceDir);
+            } catch (IOException e) {
+                throw new BundleProcessingException("Error resolving includes in " + path + ": " + e.getMessage());
+            }
+        }
+        SourceCodeGraph scg = SourceCodeGraphFactory.parse(lang, resolved);
     }
 
     @SneakyThrows
@@ -128,6 +138,13 @@ public class BundleUtils {
                         }
 
                         String yaml = Files.readString(f);
+
+                        // Resolve includes for .mhsc files
+                        if (type == sourceCode && f.toString().endsWith(MHSC_EXT)) {
+                            if (MhscIncludeResolver.hasIncludes(yaml)) {
+                                yaml = MhscIncludeResolver.resolve(yaml, f.getParent());
+                            }
+                        }
 
                         System.out.println("\t\tprocess path " + f);
                         Path file = cfg.workingDir.resolve(bundleConfig.path).resolve(p.relativize(f));

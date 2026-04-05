@@ -48,6 +48,7 @@ public class CommonConsts {
     public static final String YAML_EXT = ".yaml";
     public static final String YML_EXT = ".yml";
     public static final String MHSC_EXT = ".mhsc";
+    public static final String MHSCP_EXT = ".mhscp";
     public static final String ZIP_EXT = ".zip";
     public static final String XML_EXT = ".xml";
     public static final String RAR_EXT = ".rar";
