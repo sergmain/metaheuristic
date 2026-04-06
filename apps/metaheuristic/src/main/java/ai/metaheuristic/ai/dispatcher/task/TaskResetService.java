@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
+import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +43,8 @@ public class TaskResetService {
     private final TaskResetTxService taskResetTxService;
 
     public void resetTaskAndExecContext(Long execContextId, Long taskId) {
+        TxUtils.checkTxNotExists();
+
         ExecContextImpl ec = execContextCache.findById(execContextId, true);
         if (ec == null) {
             return;
