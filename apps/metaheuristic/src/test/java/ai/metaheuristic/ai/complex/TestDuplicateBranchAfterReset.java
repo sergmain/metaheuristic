@@ -138,6 +138,7 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
     @Autowired private ExecContextCache execContextCache;
     @Autowired private TaskResetTxService taskResetTxService;
     @Autowired private TaskVariableInitTxService taskVariableInitTxService;
+    @Autowired private TaskResetService taskResetService;
 
     @Override
     @SneakyThrows
@@ -236,11 +237,14 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
         // === Phase 2: Reset all tasks to PRE_INIT (simulating storeObjectiveAndResetTask flow) ===
         System.out.println("=== Phase 2: Resetting all tasks to PRE_INIT ===");
 
+        taskResetService.resetTaskAndExecContext(getExecContextForTest().id, resetTaskId);
+/*
         ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, ()->
             ExecContextGraphSyncService.getWithSyncVoid(getExecContextForTest().execContextGraphId, ()->
                 ExecContextTaskStateSyncService.getWithSyncVoid(getExecContextForTest().execContextTaskStateId, ()->
                         taskResetTxService.resetTaskAndExecContextTx(getExecContextForTest().id, resetTaskId)
                 )));
+*/
 
 
         setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
