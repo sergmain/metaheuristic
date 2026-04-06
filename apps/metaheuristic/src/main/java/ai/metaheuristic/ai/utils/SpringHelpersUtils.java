@@ -43,6 +43,7 @@ public class SpringHelpersUtils {
         "disk-storage",
         "test", "disable-check-frontend",
         WEBSOCKET_PROFILE,
+        "mcp",
 
             // db's profiles
         "mysql", "postgresql", "h2", "hsqldb", "derby", "generic", "custom"
