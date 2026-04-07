@@ -20,6 +20,7 @@ import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.ConnectTimeoutException;
 import org.apache.hc.client5.http.fluent.Request;
+import org.apache.hc.core5.http.NoHttpResponseException;
 import org.springframework.http.*;
 import org.jspecify.annotations.Nullable;
 import org.springframework.web.client.*;
@@ -93,44 +94,33 @@ public class RestUtils {
             }
         } catch (ResourceAccessException e) {
             Throwable cause = e.getCause();
-            if (cause instanceof SocketException) {
-                log.error("775.090 Connection error: url: {}, err: {}", url, cause.getMessage());
-            }
-            else if (cause instanceof UnknownHostException) {
-                log.error("775.093 Host unreachable, url: {}, error: {}", serverRestUrl, cause.getMessage());
-            }
-            else if (cause instanceof ConnectTimeoutException) {
-                log.warn("775.095 Connection timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
-            }
-            else if (cause instanceof SocketTimeoutException) {
-                log.warn("775.097 Socket timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
-            }
-            else if (cause instanceof SSLPeerUnverifiedException) {
-                log.error("775.098 SSL certificate mismatched, url: {}, error: {}", serverRestUrl, cause.getMessage());
-            }
-            else if (cause instanceof SSLException) {
-                log.error("775.098 SSL error, url: {}, error: {}", serverRestUrl, cause.getMessage());
-            }
-            else {
-                log.error("775.100 Error, url: " + url, e);
+            switch (cause) {
+                case SocketException _ -> log.error("775.090 Connection error: url: {}, err: {}", url, cause.getMessage());
+                case UnknownHostException _ -> log.error("775.095 Host unreachable, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                case ConnectTimeoutException _ -> log.warn("775.100 Connection timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                case SocketTimeoutException _ -> log.warn("775.105 Socket timeout, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                case SSLPeerUnverifiedException _ -> log.error("775.110 SSL certificate mismatched, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                case SSLException _ -> log.error("775.115 SSL error, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                case NoHttpResponseException _ -> log.error("775.120 Failed to respond, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                case null, default -> log.error("775.125 Error, url: " + url, e);
             }
             return null;
         } catch (RestClientException e) {
             if (e instanceof HttpStatusCodeException httpStatusCodeException && httpStatusCodeException.getStatusCode().value()>=500 && httpStatusCodeException.getStatusCode().value()<600 ) {
                 int errorCode = httpStatusCodeException.getStatusCode().value();
                 if (errorCode==503) {
-                    log.warn("775.110 Error accessing url: {}, error: 503 Service Unavailable", url);
+                    log.warn("775.130 Error accessing url: {}, error: 503 Service Unavailable", url);
                 }
                 else if (errorCode==502) {
-                    log.warn("775.112 Error accessing url: {}, error: 502 Bad Gateway", url);
+                    log.warn("775.135 Error accessing url: {}, error: 502 Bad Gateway", url);
                 }
                 else {
-                    log.error("775.117 Error accessing url: {}, error: {}", url, e.getMessage());
+                    log.error("775.140 Error accessing url: {}, error: {}", url, e.getMessage());
                 }
             }
             else {
-                log.error("775.120 Error accessing url: {}", url);
-                log.error("775.125 Stacktrace", e);
+                log.error("775.145 Error accessing url: {}", url);
+                log.error("775.150 Stacktrace", e);
             }
             return null;
         }
