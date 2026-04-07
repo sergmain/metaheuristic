@@ -16,11 +16,11 @@
 
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
-import ai.metaheuristic.ai.mcp.MhMcpToolService;
+import ai.metaheuristic.ai.mcp.MhMcpServerConfig;
+import ai.metaheuristic.ai.mcp.MhMcpToolDefinitions;
+import io.modelcontextprotocol.server.McpServerFeatures;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.tool.ToolCallback;
-import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -33,11 +33,10 @@ import java.util.List;
 /**
  * Health/info endpoint for the Metaheuristic MCP Server.
  *
- * NOTE: this is NOT the MCP protocol endpoint itself — that one is provided by Spring AI's
- * auto-configured Streamable HTTP transport at /rest/v1/mcp (configured in
- * application-mcp.properties). This controller exposes a sibling /rest/v1/mcp-info GET
- * endpoint so humans (and curl) can quickly check that the MCP server is running and
- * see which tools are registered.
+ * NOTE: this is NOT the MCP protocol endpoint itself — that one is provided by
+ * MhMcpServerConfig at /rest/v1/mcp via the WebMvcStreamableServerTransportProvider.
+ * This controller exposes a sibling /rest/v1/mcp-info GET endpoint so humans (and curl)
+ * can quickly check that the MCP server is running and see which tools are registered.
  *
  * Activated only when both 'dispatcher' AND 'mcp' Spring profiles are active.
  *
@@ -52,8 +51,7 @@ import java.util.List;
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class McpRestController {
 
-    private final ToolCallbackProvider mhMcpToolCallbackProvider;
-    private final MhMcpToolService mhMcpToolService;
+    private final MhMcpToolDefinitions toolDefinitions;
 
     public record ToolDescriptor(String name, String description) {}
 
@@ -61,24 +59,20 @@ public class McpRestController {
             String serverName,
             String endpoint,
             int toolCount,
-            List<ToolDescriptor> tools,
-            String toolServiceClass
+            List<ToolDescriptor> tools
     ) {}
 
     @GetMapping
     public McpInfoDto info() {
-        ToolCallback[] callbacks = mhMcpToolCallbackProvider.getToolCallbacks();
-        List<ToolDescriptor> tools = List.of(callbacks).stream()
-                .map(cb -> new ToolDescriptor(
-                        cb.getToolDefinition().name(),
-                        cb.getToolDefinition().description()))
+        List<McpServerFeatures.SyncToolSpecification> specs = toolDefinitions.getAllToolSpecifications();
+        List<ToolDescriptor> tools = specs.stream()
+                .map(s -> new ToolDescriptor(s.tool().name(), s.tool().description()))
                 .toList();
         return new McpInfoDto(
                 "metaheuristic-mcp-server",
-                "/rest/v1/mcp",
-                callbacks.length,
-                tools,
-                mhMcpToolService.getClass().getName()
+                MhMcpServerConfig.MCP_ENDPOINT,
+                specs.size(),
+                tools
         );
     }
 }

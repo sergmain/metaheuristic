@@ -16,25 +16,60 @@
 
 package ai.metaheuristic.ai.mcp;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
+import io.modelcontextprotocol.server.McpServer;
+import io.modelcontextprotocol.server.McpSyncServer;
+import io.modelcontextprotocol.server.transport.WebMvcStreamableServerTransportProvider;
+import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.ai.tool.method.MethodToolCallbackProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.web.servlet.function.RouterFunction;
+import org.springframework.web.servlet.function.ServerResponse;
 
 /**
- * Spring Boot configuration for the Metaheuristic MCP Server.
+ * Spring Boot configuration for the Metaheuristic MCP Server over HTTP
+ * (Streamable HTTP transport, MCP spec 2025-03-26).
+ *
+ * Exposes the MCP server as a regular HTTP endpoint on the already-running
+ * Spring Boot dispatcher application — no separate process, no STDIO.
+ *
+ * Endpoint: /rest/v1/mcp
  *
  * Activated only when both 'dispatcher' AND 'mcp' Spring profiles are active.
  *
- * The Spring AI MCP server starter (spring-ai-starter-mcp-server-webmvc) auto-configures
- * the Streamable HTTP endpoint based on application-mcp.properties. This configuration
- * class only contributes the explicit ToolCallbackProvider — required because Spring AI
- * 1.1.x annotation scanning misses @McpTool methods on AOP-proxied beans
- * (see https://github.com/spring-projects/spring-ai/issues/4882). MH services are
- * routinely wrapped by @Transactional / cache proxies, so we register the provider
- * by hand from the start to avoid the trap.
+ * === Purpose ===
+ *
+ * Debug / tracing access to MH internal state for external MCP clients
+ * (Claude Desktop, Claude Code, MCP Inspector). Read-mostly tools for
+ * Variables, Tasks, ExecContexts, ExecContextGraphs and ExecContextTaskStates,
+ * plus start/stop/reset operations.
+ *
+ * === Claude Desktop / Claude Code configuration ===
+ *
+ * Claude Code (.mcp.json):
+ * {
+ *   "mcpServers": {
+ *     "metaheuristic": {
+ *       "type": "http",
+ *       "url": "http://localhost:PORT/rest/v1/mcp"
+ *     }
+ *   }
+ * }
+ *
+ * Claude Desktop (claude_desktop_config.json), via mcp-remote bridge:
+ * {
+ *   "mcpServers": {
+ *     "metaheuristic": {
+ *       "command": "npx",
+ *       "args": ["-y", "mcp-remote", "http://localhost:PORT/rest/v1/mcp"]
+ *     }
+ *   }
+ * }
  *
  * @author Serge
  * Date: 4/6/2026
@@ -44,16 +79,40 @@ import org.springframework.context.annotation.Profile;
 @Slf4j
 public class MhMcpServerConfig {
 
-    /**
-     * Explicitly register all @McpTool-annotated methods from MhMcpToolService.
-     * Bypasses the annotation scanner that misses AOP-wrapped beans.
-     */
+    public static final String MCP_ENDPOINT = "/rest/v1/mcp";
+
+    private McpSyncServer mcpSyncServer;
+
     @Bean
-    public ToolCallbackProvider mhMcpToolCallbackProvider(MhMcpToolService mhMcpToolService) {
-        log.info("260.500 Registering Metaheuristic MCP tool callbacks for {}",
-                mhMcpToolService.getClass().getName());
-        return MethodToolCallbackProvider.builder()
-                .toolObjects(mhMcpToolService)
+    public RouterFunction<ServerResponse> mhMcpRouterFunction(
+            @Autowired MhMcpToolDefinitions toolDefinitions,
+            @Autowired ObjectMapper objectMapper) {
+
+        WebMvcStreamableServerTransportProvider transportProvider = WebMvcStreamableServerTransportProvider.builder()
+                .jsonMapper(new JacksonMcpJsonMapper(objectMapper))
+                .mcpEndpoint(MCP_ENDPOINT)
                 .build();
+
+        mcpSyncServer = McpServer.sync(transportProvider)
+                .serverInfo("metaheuristic-mcp-server", "1.0.0")
+                .capabilities(ServerCapabilities.builder()
+                        .tools(true)
+                        .logging()
+                        .build())
+                .tools(toolDefinitions.getAllToolSpecifications())
+                .build();
+
+        log.info("260.500 Metaheuristic MCP Server created with {} tools on {}",
+                toolDefinitions.getAllToolSpecifications().size(), MCP_ENDPOINT);
+
+        return transportProvider.getRouterFunction();
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        if (mcpSyncServer != null) {
+            mcpSyncServer.close();
+            log.info("260.520 Metaheuristic MCP Server shut down");
+        }
     }
 }
