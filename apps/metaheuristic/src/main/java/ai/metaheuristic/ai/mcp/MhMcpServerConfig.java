@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.mcp;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.modelcontextprotocol.json.jackson.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpSyncServer;
 import io.modelcontextprotocol.server.transport.WebMvcStreamableServerTransportProvider;
@@ -89,7 +88,7 @@ public class MhMcpServerConfig {
             @Autowired ObjectMapper objectMapper) {
 
         WebMvcStreamableServerTransportProvider transportProvider = WebMvcStreamableServerTransportProvider.builder()
-                .jsonMapper(new JacksonMcpJsonMapper(objectMapper))
+                .jsonMapper(new io.modelcontextprotocol.json.jackson2.JacksonMcpJsonMapper(objectMapper))
                 .mcpEndpoint(MCP_ENDPOINT)
                 .build();
 
