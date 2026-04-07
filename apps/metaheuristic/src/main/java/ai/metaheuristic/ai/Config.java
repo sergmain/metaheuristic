@@ -273,7 +273,7 @@ public class Config {
     }
 
     @Configuration
-    @ComponentScan(value={"ai.metaheuristic.ai.dispatcher", "ai.metaheuristic.ai.processor", "ai.metaheuristic.ai.mhbp"},
+    @ComponentScan(value={"ai.metaheuristic.ai.dispatcher", "ai.metaheuristic.ai.processor", "ai.metaheuristic.ai.mhbp", "ai.metaheuristic.ai.mcp"},
     excludeFilters = {
             @ComponentScan.Filter(type= FilterType.REGEX, pattern=
                     "ai\\.metaheuristic\\.(ai\\.yaml|ai\\.utils|ai\\.exceptions|ai\\.data|ai\\.dispatcher\\.(beans|data|event\\.events|repositories)|ai\\.mhbp\\.(repositories|data|yaml|events|beans)|api|commons|ww2003)\\..*"),
