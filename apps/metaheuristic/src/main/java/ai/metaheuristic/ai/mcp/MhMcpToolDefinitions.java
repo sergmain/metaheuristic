@@ -19,12 +19,14 @@ package ai.metaheuristic.ai.mcp;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskResetService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
@@ -60,17 +62,18 @@ import java.util.Optional;
  *
  * Activated only when both 'dispatcher' AND 'mcp' Spring profiles are active.
  *
- * 9 tools total — read-mostly access to MH internals plus a few control operations:
+ * 10 tools total — read-mostly access to MH internals plus a few control operations:
  *
- *   mh_get_variable_info           — metadata for an internal Variable by id
- *   mh_get_variable_content        — content of an internal Variable, truncated to N bytes
- *   mh_start_exec_context          — transition an ExecContext to STARTED
- *   mh_stop_exec_context           — transition an ExecContext to STOPPED
- *   mh_get_task_info               — Task info by id
- *   mh_reset_task                  — reset a Task (delegates to TaskResetService)
- *   mh_get_exec_context_info       — ExecContext info by id
- *   mh_get_exec_context_graph      — ExecContextGraph by id (raw params YAML, static Process DAG)
- *   mh_get_exec_context_task_state — ExecContextTaskState by id (raw params YAML, dynamic Task DAG)
+ *   mh_get_variable_info               — metadata for an internal Variable by id
+ *   mh_get_variable_content            — content of an internal Variable, truncated to N bytes
+ *   mh_start_exec_context              — transition an ExecContext to STARTED
+ *   mh_stop_exec_context               — transition an ExecContext to STOPPED
+ *   mh_get_task_info                   — Task info by id
+ *   mh_reset_task                      — reset a Task (delegates to TaskResetService)
+ *   mh_get_exec_context_info           — ExecContext info by id
+ *   mh_get_exec_context_graph          — ExecContextGraph by id (raw params YAML, static Process DAG)
+ *   mh_get_exec_context_task_state     — ExecContextTaskState by id (raw params YAML, dynamic Task DAG)
+ *   mh_get_exec_context_variable_state — ExecContextVariableState by id (raw params YAML, dynamic Variable state)
  *
  * @author Serge
  * Date: 4/6/2026
@@ -91,6 +94,7 @@ public class MhMcpToolDefinitions {
     private final ExecContextTopLevelService execContextTopLevelService;
     private final ExecContextGraphRepository execContextGraphRepository;
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
+    private final ExecContextVariableStateRepository execContextVariableStateRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
@@ -163,6 +167,13 @@ public class MhMcpToolDefinitions {
             @Nullable String params
     ) {}
 
+    public record ExecContextVariableStateDto(
+            Long id,
+            @Nullable Long execContextId,
+            @Nullable Long createdOn,
+            @Nullable String params
+    ) {}
+
     public record OperationResultDto(
             boolean ok,
             String message
@@ -180,7 +191,8 @@ public class MhMcpToolDefinitions {
                 resetTaskTool(),
                 getExecContextInfoTool(),
                 getExecContextGraphTool(),
-                getExecContextTaskStateTool()
+                getExecContextTaskStateTool(),
+                getExecContextVariableStateTool()
         );
     }
 
@@ -486,6 +498,35 @@ public class MhMcpToolDefinitions {
                     }
                     ExecContextTaskState s = opt.get();
                     return toCallToolResult(new ExecContextTaskStateDto(s.id, s.execContextId, s.createdOn, s.getParams()));
+                })
+                .build();
+    }
+
+    // ==================== Tool 9: get exec context variable state ====================
+
+    private McpServerFeatures.SyncToolSpecification getExecContextVariableStateTool() {
+        Map<String, Object> props = new HashMap<>();
+        props.put("execContextVariableStateId", Map.of("type", "integer", "description", "Numeric id of the ExecContextVariableState"));
+
+        return McpServerFeatures.SyncToolSpecification.builder()
+                .tool(Tool.builder()
+                        .name("mh_get_exec_context_variable_state")
+                        .title("Get ExecContext Variable State")
+                        .description("Get an ExecContextVariableState by its id (NOT by execContextId \u2014 use "
+                                + "mh_get_exec_context_info first to find the execContextVariableStateId). Returns the raw "
+                                + "params YAML representing the dynamic Variable state (per-variable inited/nullified "
+                                + "status, blob ids, task context ids).")
+                        .inputSchema(new McpSchema.JsonSchema("object", props, List.of("execContextVariableStateId"), false, null, null))
+                        .build())
+                .callHandler((exchange, request) -> {
+                    Long execContextVariableStateId = getRequiredLong(request.arguments(), "execContextVariableStateId");
+                    log.info("260.230 MCP getExecContextVariableState({})", execContextVariableStateId);
+                    Optional<ExecContextVariableState> opt = execContextVariableStateRepository.findById(execContextVariableStateId);
+                    if (opt.isEmpty()) {
+                        return errorResult("ExecContextVariableState #" + execContextVariableStateId + " not found");
+                    }
+                    ExecContextVariableState v = opt.get();
+                    return toCallToolResult(new ExecContextVariableStateDto(v.id, v.execContextId, v.createdOn, v.getParams()));
                 })
                 .build();
     }
