@@ -131,6 +131,10 @@ public class VariableTxService {
 
     private void update(InputStream is, long size, Variable data) {
         TxUtils.checkTxExists();
+        if (data.inited) {
+            throw new IllegalStateException("171.100 Variable can't be mutated, Variable: " + data);
+        }
+
         VariableSyncService.checkWriteLockPresent(data.id);
 
         if (size==0) {
