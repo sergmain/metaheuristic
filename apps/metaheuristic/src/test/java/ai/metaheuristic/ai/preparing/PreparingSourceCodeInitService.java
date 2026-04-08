@@ -202,7 +202,7 @@ public class PreparingSourceCodeInitService {
         deleteFunction(data.getF4());
         deleteFunction(data.getF5());
         if (data.getExecContextForTest() != null) {
-            if (execContextCache.findById(data.getExecContextForTest().getId()) != null) {
+            if (execContextCache.findById(data.getExecContextForTest().getId(), true) != null) {
                 try {
                     execContextRepository.deleteById(data.getExecContextForTest().getId());
                 } catch (Throwable th) {

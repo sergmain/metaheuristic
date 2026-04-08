@@ -328,7 +328,7 @@ public class PreparingSourceCodeService {
             assertEquals(EnumsApi.ExecContextState.NONE.code, preparingSourceCodeData.getExecContextForTest().getState());
 
 
-            preparingSourceCodeData.setExecContextForTest(Objects.requireNonNull(execContextCache.findById(preparingSourceCodeData.getExecContextForTest().id)));
+            preparingSourceCodeData.setExecContextForTest(Objects.requireNonNull(execContextCache.findById(preparingSourceCodeData.getExecContextForTest().id, true)));
             assertNotNull(preparingSourceCodeData.getExecContextForTest());
 
             assertEquals(EnumsApi.ExecContextState.NONE.code, preparingSourceCodeData.getExecContextForTest().getState());
@@ -339,7 +339,7 @@ public class PreparingSourceCodeService {
         });
 
         final ExecContextImpl byId = execContextCache.findById(preparingSourceCodeData.getExecContextForTest().id, true);
-        final ExecContextImpl byId1 = execContextCache.findById(preparingSourceCodeData.getExecContextForTest().id);
+//        final ExecContextImpl byId1 = execContextCache.findById(preparingSourceCodeData.getExecContextForTest().id, true);
         preparingSourceCodeData.setExecContextForTest(Objects.requireNonNull(byId));
         assertEquals(EnumsApi.ExecContextState.STARTED.code, preparingSourceCodeData.getExecContextForTest().getState());
         execContextStatusService.resetStatus();

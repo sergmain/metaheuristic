@@ -216,7 +216,7 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
 
         // After Phase 1, the ExecContext should be FINISHED (condition was false, nop-objectives SKIPPED,
         // no evaluate-objective created, mh.finish completes)
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         List<ExecContextData.TaskVertex> phase1Vertices = execContextGraphService.findAll(getExecContextForTest().execContextGraphId);
         int taskCountAfterPhase1 = phase1Vertices.size();
@@ -231,7 +231,7 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
         // The ExecContext should be FINISHED or at least all tasks should be in a finished state
         // (OK or SKIPPED)
         preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
         System.out.println("ExecContext state after Phase 1: " + EnumsApi.ExecContextState.toState(getExecContextForTest().getState()));
 
         // === Phase 2: Reset all tasks to PRE_INIT (simulating storeObjectiveAndResetTask flow) ===
@@ -247,7 +247,7 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
 */
 
 
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
         List<ExecContextData.TaskVertex> phase2Vertices = execContextGraphService.findAll(getExecContextForTest().execContextGraphId);
         int taskCountAfterReset = phase2Vertices.size();
         System.out.println("Task count after reset: " + taskCountAfterReset);
@@ -280,7 +280,7 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
 
         // === Phase 3: Re-execute — this triggers the bug ===
         System.out.println("=== Phase 3: Re-executing after reset ===");
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
         assertEquals(EnumsApi.ExecContextState.STARTED.code, getExecContextForTest().getState(),
                 "ExecContext should be STARTED after reset");
 
@@ -311,7 +311,7 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
         Thread.sleep(2_000);
 
         // === Verify the bug: leftover tasks in the DAG ===
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
         List<ExecContextData.TaskVertex> phase3Vertices = execContextGraphService.findAll(getExecContextForTest().execContextGraphId);
         int taskCountAfterPhase3 = phase3Vertices.size();
         System.out.println("Task count after Phase 3 (re-execution): " + taskCountAfterPhase3);

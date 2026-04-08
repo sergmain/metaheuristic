@@ -160,7 +160,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
             System.out.println("start txSupportForTestingService.toStarted()");
             txSupportForTestingService.toStarted(getExecContextForTest().id);
-            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().getId())));
+            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().getId(), true)));
 
             SimpleGlobalVariable gv = globalVariableRepository.findIdByName("global-test-variable");
             assertNotNull(gv);
@@ -174,7 +174,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
         assertEquals(EnumsApi.ExecContextState.STARTED, execContextStatusService.getExecContextStatuses().statuses.get(getExecContextForTest().id));
 
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
         assertEquals(EnumsApi.ExecContextState.STARTED, EnumsApi.ExecContextState.toState(getExecContextForTest().getState()));
     }
 
@@ -227,7 +227,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
     public void verifyGraphIntegrity() {
         List<TaskImpl> tasks = taskRepositoryForTest.findByExecContextIdAsList(getExecContextForTest().id);
 
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(this.getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(this.getExecContextForTest().id, true)));
         List<ExecContextData.TaskVertex> taskVertices = execContextGraphService.findAll(getExecContextForTest().execContextGraphId);
         assertEquals(tasks.size(), taskVertices.size());
 
