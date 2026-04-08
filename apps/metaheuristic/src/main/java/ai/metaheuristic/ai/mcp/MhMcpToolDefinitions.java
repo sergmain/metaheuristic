@@ -418,8 +418,13 @@ public class MhMcpToolDefinitions {
                 .tool(Tool.builder()
                         .name("mh_get_exec_context_info")
                         .title("Get ExecContext Info")
-                        .description("Get info about an ExecContext by id: state, sourceCodeId, companyId, accountId, "
-                                + "graph/task-state/variable-state ids, root id, and validity flag.")
+                        .description("Get ExecContext info by id. This is the polling endpoint for execution "
+                                + "completion: call repeatedly (every 3–5 seconds) after mhdg_rg_execute_project "
+                                + "until stateName is a terminal state — FINISHED (successful completion), ERROR, "
+                                + "STOPPED, or DOESNT_EXIST. Any other stateName (STARTED, NONE, ...) means the "
+                                + "run is still in progress and you must keep polling. Returns: state (numeric), "
+                                + "stateName, sourceCodeId, companyId, accountId, graph/task-state/variable-state ids, "
+                                + "root id, createdOn/completedOn timestamps, and validity flag.")
                         .inputSchema(new McpSchema.JsonSchema("object", props, List.of("execContextId"), false, null, null))
                         .build())
                 .callHandler((exchange, request) -> {
