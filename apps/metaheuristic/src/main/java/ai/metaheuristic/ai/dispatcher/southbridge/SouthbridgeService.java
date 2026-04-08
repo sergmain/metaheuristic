@@ -121,43 +121,67 @@ public class SouthbridgeService {
     // return a requested data to a processor
     // data can be Function or Variable
     public CleanerInfo deliverData(@Nullable Long taskId, final EnumsApi.DataType binaryType, final String dataId, @Nullable final String chunkSize, final int chunkNum) {
-
-        AssetFile assetFile;
-        BiConsumer<String, Path> dataSaver;
         switch (binaryType) {
             case function:
-                assetFile = AssetUtils.prepareFunctionAssetFile(globals.dispatcherResourcesPath, dataId, null);
-                if (assetFile.isError) {
-                    String es = "444.100 Function with id " + dataId + " is broken";
-                    log.error(es);
-                    throw new FunctionDataNotFoundException(dataId, es);
-                }
-                dataSaver = functionDataService::storeToFile;
-                break;
+                return deliverFunction(dataId, chunkSize, chunkNum);
             case variable:
-                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempPath, "" + EnumsApi.DataType.variable + '-' + dataId, null, binaryType);
-                if (assetFile.isError) {
-                    String es = "444.120 Resource with id " + dataId + " is broken";
-                    log.error(es);
-                    throw new VariableDataNotFoundException(Long.parseLong(dataId), EnumsApi.VariableContext.local, es);
-                }
-                dataSaver = (variableId, trgFile) -> variableService.storeToFileWithTx(Long.parseLong(variableId), trgFile);
-                if (taskId!=null) {
-                    eventPublisher.publishEvent(new TaskCommunicationEvent(taskId));
-                }
-                break;
+                return deliverVariable(taskId, dataId, chunkSize, chunkNum);
             case global_variable:
-                assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempPath, "" + EnumsApi.DataType.global_variable + '-' + dataId, null, binaryType);
-                if (assetFile.isError) {
-                    String es = "444.140 Global variable with id " + dataId + " is broken";
-                    log.error(es);
-                    throw new VariableDataNotFoundException(Long.parseLong(dataId), EnumsApi.VariableContext.local, es);
-                }
-                dataSaver = (variableId, trgFile) -> globalVariableService.storeToFileWithTx(Long.parseLong(variableId), trgFile);
-                break;
+                return deliverGlobalVariable(dataId, chunkSize, chunkNum);
             default:
                 throw new IllegalStateException("444.160 Unknown type of data: " + binaryType);
         }
+    }
+
+    // Delivers a Function asset. Path computed from dispatcherResourcesPath.
+    private CleanerInfo deliverFunction(final String dataId, @Nullable final String chunkSize, final int chunkNum) {
+        AssetFile assetFile = AssetUtils.prepareFunctionAssetFile(globals.dispatcherResourcesPath, dataId, null);
+        if (assetFile.isError) {
+            String es = "444.100 Function with id " + dataId + " is broken";
+            log.error(es);
+            throw new FunctionDataNotFoundException(dataId, es);
+        }
+        BiConsumer<String, Path> dataSaver = functionDataService::storeToFile;
+        return streamAssetFile(EnumsApi.DataType.function, assetFile, dataId, dataSaver, chunkSize, chunkNum);
+    }
+
+    // Delivers a local Variable asset. Path computed from dispatcherTempPath.
+    // Extracted so it can be exercised directly in characterization tests without
+    // wiring the full dispatcher context.
+    CleanerInfo deliverVariable(@Nullable Long taskId, final String dataId, @Nullable final String chunkSize, final int chunkNum) {
+        AssetFile assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempPath, "" + EnumsApi.DataType.variable + '-' + dataId, null, EnumsApi.DataType.variable);
+        if (assetFile.isError) {
+            String es = "444.120 Resource with id " + dataId + " is broken";
+            log.error(es);
+            throw new VariableDataNotFoundException(Long.parseLong(dataId), EnumsApi.VariableContext.local, es);
+        }
+        BiConsumer<String, Path> dataSaver = (variableId, trgFile) -> variableService.storeToFileWithTx(Long.parseLong(variableId), trgFile);
+        if (taskId!=null) {
+            eventPublisher.publishEvent(new TaskCommunicationEvent(taskId));
+        }
+        return streamAssetFile(EnumsApi.DataType.variable, assetFile, dataId, dataSaver, chunkSize, chunkNum);
+    }
+
+    // Delivers a Global Variable asset. Path computed from dispatcherTempPath.
+    private CleanerInfo deliverGlobalVariable(final String dataId, @Nullable final String chunkSize, final int chunkNum) {
+        AssetFile assetFile = AssetUtils.prepareFileForVariable(globals.dispatcherTempPath, "" + EnumsApi.DataType.global_variable + '-' + dataId, null, EnumsApi.DataType.global_variable);
+        if (assetFile.isError) {
+            String es = "444.140 Global variable with id " + dataId + " is broken";
+            log.error(es);
+            throw new VariableDataNotFoundException(Long.parseLong(dataId), EnumsApi.VariableContext.local, es);
+        }
+        BiConsumer<String, Path> dataSaver = (variableId, trgFile) -> globalVariableService.storeToFileWithTx(Long.parseLong(variableId), trgFile);
+        return streamAssetFile(EnumsApi.DataType.global_variable, assetFile, dataId, dataSaver, chunkSize, chunkNum);
+    }
+
+    // Shared streaming path. If the asset file hasn't been populated yet, the dataSaver is
+    // invoked under a per-dataId sync. Then the file is streamed (optionally in chunks).
+    // This is the method that currently contains the stale-disk-cache bug: if the asset
+    // file already exists, it is used as-is without consulting the DB — even if the
+    // underlying variable blob has been updated since.
+    private CleanerInfo streamAssetFile(
+            final EnumsApi.DataType binaryType, AssetFile assetFile, final String dataId,
+            BiConsumer<String, Path> dataSaver, @Nullable final String chunkSize, final int chunkNum) {
 
         CleanerInfo resource = new CleanerInfo();
 

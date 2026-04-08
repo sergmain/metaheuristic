@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.SetTaskExecStateInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
+import ai.metaheuristic.ai.dispatcher.southbridge.AssetFileService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskFinishingTxService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
@@ -58,6 +59,7 @@ public class ExecContextTaskResettingService {
 
     private final ExecContextCache execContextCache;
     private final VariableTxService variableTxService;
+    private final AssetFileService assetFileService;
     private final TaskRepository taskRepository;
     private final TaskTxService taskTxService;
     private final EventPublisherService eventPublisherService;
@@ -163,7 +165,9 @@ public class ExecContextTaskResettingService {
             if (output.context== EnumsApi.VariableContext.global) {
                 throw new IllegalStateException("155.200 (output.context== EnumsApi.VariableContext.global)");
             }
-            VariableSyncService.getWithSyncVoidForCreation(output.id, ()-> variableTxService.resetVariable(execContext.id, output.id));
+            // Route through AssetFileService so the on-disk Southbridge cache file is invalidated
+            // alongside the DB-side reset. See AssetFileService javadoc for ordering rationale.
+            VariableSyncService.getWithSyncVoidForCreation(output.id, ()-> assetFileService.resetVariable(execContext.id, output.id));
         }
 
         // logic behind this event doesn't do anything to other Tasks in DAG
