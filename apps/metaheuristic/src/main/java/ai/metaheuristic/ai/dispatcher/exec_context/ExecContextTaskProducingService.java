@@ -138,7 +138,9 @@ public class ExecContextTaskProducingService {
             if (internalFuncProcess!=null) {
                 continue;
             }
-            okResult.anyExternalFunction = true;
+            if (p.function.context == EnumsApi.FunctionExecContext.external) {
+                okResult.anyExternalFunction = true;
+            }
 
             List<Long> parentTaskIds = new ArrayList<>();
             processGraph.incomingEdgesOf(processVertex).stream()
