@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.southbridge;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -74,6 +75,8 @@ public class AssetFileService {
      * Order: filesystem delete first, then DB reset. See class javadoc for rationale.
      */
     public void resetVariable(Long execContextId, Long variableId) {
+        TxUtils.checkTxExists();
+
         deleteAssetFile(variableId);
         variableTxService.resetVariable(execContextId, variableId);
     }

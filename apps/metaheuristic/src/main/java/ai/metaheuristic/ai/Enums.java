@@ -74,7 +74,8 @@ public final class Enums {
         not_supported_anymore,
         data_not_found,
 
-        general_error
+        general_error,
+        general_business_error
     }
 
     public enum AssetType { company, account, function, source}
