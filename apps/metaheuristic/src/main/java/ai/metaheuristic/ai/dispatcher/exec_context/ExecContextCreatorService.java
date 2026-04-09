@@ -170,7 +170,6 @@ public class ExecContextCreatorService {
 
     private void produceTasksForExecContextInternal(SourceCodeImpl sourceCode, ExecContextCreationResult creationResult) {
         TxUtils.checkTxExists();
-        eventPublisher.publishEvent(new NewWebsocketTxEvent(Enums.WebsocketEventType.task));
         ExecContextSyncService.getWithSyncVoidForCreation(creationResult.execContext.id, () ->
                 ExecContextGraphSyncService.getWithSyncVoidForCreation(creationResult.execContext.execContextGraphId, ()->
                         ExecContextTaskStateSyncService.getWithSyncVoidForCreation(creationResult.execContext.execContextTaskStateId,
@@ -182,6 +181,9 @@ public class ExecContextCreatorService {
                                 }
                                 if (result.taskProducingStatus != EnumsApi.TaskProducingStatus.OK) {
                                     creationResult.addErrorMessage("562.150 Error while producing new tasks " + result.taskProducingStatus);
+                                }
+                                if (result.anyExternalFunction) {
+                                    eventPublisher.publishEvent(new NewWebsocketTxEvent(Enums.WebsocketEventType.task));
                                 }
                             })));
     }

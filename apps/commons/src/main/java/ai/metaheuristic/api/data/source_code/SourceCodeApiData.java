@@ -49,7 +49,8 @@ public class SourceCodeApiData {
         public SourceCodeApiData.SourceCodeValidationResult sourceCodeValidationResult = new SourceCodeValidationResult(
                 EnumsApi.SourceCodeValidateStatus.NOT_VALIDATED_YET_ERROR, "Not validated yet");
         public EnumsApi.TaskProducingStatus taskProducingStatus = EnumsApi.TaskProducingStatus.NOT_PRODUCING_YET_ERROR;
-        public List<Task> tasks = new ArrayList<>();
+//        public List<Task> tasks = new ArrayList<>();
+        public boolean anyExternalFunction = false;
 
         public TaskProducingResultComplex(EnumsApi.TaskProducingStatus taskProducingStatus) {
             this.taskProducingStatus = taskProducingStatus;
