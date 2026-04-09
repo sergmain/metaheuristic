@@ -220,7 +220,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
         step_CommonProcessing(processorIdAndCoreIds, "feature-output-2");
 
         // Step 4: mh.permute-values-of-variables (internal) runs async
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
         preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
 
         // Wait until unfinished tasks settle to 4:
@@ -231,7 +231,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             .with()
             .pollInterval(Duration.ofMillis(200))
             .until(() -> {
-                setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+                setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
                 preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
                 return getUnfinishedTaskVertices(getExecContextForTest()).size() == 4;
             });
@@ -297,7 +297,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             });
 
         ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, () -> {
-            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
             TaskImpl tempTask = taskRepository.findById(permuteTask.task.id).orElse(null);
             assertNotNull(tempTask);
@@ -353,7 +353,7 @@ public class TestSourceCodeService extends PreparingSourceCode {
             ()->execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(getExecContextForTest().id, getExecContextForTest().execContextTaskStateId));
 
         ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, () -> {
-            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
             verifyGraphIntegrity();
         });
 
