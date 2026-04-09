@@ -104,6 +104,7 @@ public class ExecContextTaskProducingService {
 
         result.sourceCodeValidationResult = ConstsApi.SOURCE_CODE_VALIDATION_RESULT_OK;
         result.taskProducingStatus = produceTaskResult.status;
+        result.anyExternalFunction = produceTaskResult.anyExternalFunction;
 
         log.info("701.190 SourceCodeService.produceTasks('{}') was processed for {} ms.", sourceCode.uid, System.currentTimeMillis() - mills);
         return result;
@@ -137,6 +138,7 @@ public class ExecContextTaskProducingService {
             if (internalFuncProcess!=null) {
                 continue;
             }
+            okResult.anyExternalFunction = true;
 
             List<Long> parentTaskIds = new ArrayList<>();
             processGraph.incomingEdgesOf(processVertex).stream()

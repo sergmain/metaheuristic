@@ -39,6 +39,7 @@ public class TaskData {
         public EnumsApi.TaskProducingStatus status;
         public @Nullable String error;
         public Long taskId;
+        public boolean anyExternalFunction = false;
 
         public ProduceTaskResult(EnumsApi.TaskProducingStatus status, @Nullable String error) {
             this.status = status;
