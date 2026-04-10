@@ -126,27 +126,27 @@ public class TestProcessGraph {
         assertNotNull(v);
         assertEquals(4, v.id);
         assertEquals("1,2", v.processContextId);
-        assertNull(ExecContextTaskProducingService.checkForInternalFunctionAsParent(ecpy, processGraph, v));
+        assertNull(ExecContextTaskProducingService.findEnclosingInternalFunctionContainer(ecpy, processGraph, v));
 
         ExecContextApiData.ProcessVertex v1 = ExecContextProcessGraphService.findVertex(processGraph, "dataset-processing");
         assertNotNull(v1);
-        assertNull(ExecContextTaskProducingService.checkForInternalFunctionAsParent(ecpy, processGraph, v1));
+        assertNull(ExecContextTaskProducingService.findEnclosingInternalFunctionContainer(ecpy, processGraph, v1));
 
         ExecContextApiData.ProcessVertex v2 = ExecContextProcessGraphService.findVertex(processGraph, "permute-values-of-variables");
         assertNotNull(v2);
-        assertNull(ExecContextTaskProducingService.checkForInternalFunctionAsParent(ecpy, processGraph, v2));
+        assertNull(ExecContextTaskProducingService.findEnclosingInternalFunctionContainer(ecpy, processGraph, v2));
 
         ExecContextApiData.ProcessVertex v3 = ExecContextProcessGraphService.findVertex(processGraph, "mh.permute-variables");
         assertNotNull(v3);
-        assertNull(ExecContextTaskProducingService.checkForInternalFunctionAsParent(ecpy, processGraph, v3));
+        assertNull(ExecContextTaskProducingService.findEnclosingInternalFunctionContainer(ecpy, processGraph, v3));
 
         ExecContextApiData.ProcessVertex v4 = ExecContextProcessGraphService.findVertex(processGraph, "fit-dataset");
         assertNotNull(v4);
-        assertNotNull(ExecContextTaskProducingService.checkForInternalFunctionAsParent(ecpy, processGraph, v4));
+        assertNotNull(ExecContextTaskProducingService.findEnclosingInternalFunctionContainer(ecpy, processGraph, v4));
 
         ExecContextApiData.ProcessVertex v5 = ExecContextProcessGraphService.findVertex(processGraph, "predict-dataset");
         assertNotNull(v5);
-        assertNotNull(ExecContextTaskProducingService.checkForInternalFunctionAsParent(ecpy, processGraph, v5));
+        assertNotNull(ExecContextTaskProducingService.findEnclosingInternalFunctionContainer(ecpy, processGraph, v5));
 
     }
 

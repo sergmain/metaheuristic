@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Verifies that {@link ExecContextTaskProducingService#checkForInternalFunctionAsParent}
+ * Verifies that {@link ExecContextTaskProducingService#findEnclosingInternalFunctionContainer}
  * combined with the narrowed flag-setting condition
  * ({@code if (p.function.context == external) anyExternalFunction = true})
  * correctly classifies ExecContexts as needing (or not needing) a processor wakeup.
@@ -197,7 +197,7 @@ public class AnyExternalFunctionFlagTest {
         boolean anyExternalFunction = false;
         for (ExecContextApiData.ProcessVertex v : scg.processGraph) {
             ExecContextParamsYaml.Process ancestor =
-                    ExecContextTaskProducingService.checkForInternalFunctionAsParent(ecpy, scg.processGraph, v);
+                    ExecContextTaskProducingService.findEnclosingInternalFunctionContainer(ecpy, scg.processGraph, v);
             if (ancestor != null) {
                 continue;
             }

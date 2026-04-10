@@ -133,7 +133,7 @@ public class ExecContextTaskProducingService {
                 return new TaskData.ProduceTaskResult(EnumsApi.TaskProducingStatus.INTERNAL_FUNCTION_DECLARED_AS_EXTERNAL_ERROR,
                         "701.220 Process '"+processCode+"' must be internal");
             }
-            ExecContextParamsYaml.Process internalFuncProcess = checkForInternalFunctionAsParent(execContextParamsYaml, processGraph, processVertex);
+            ExecContextParamsYaml.Process internalFuncProcess = findEnclosingInternalFunctionContainer(execContextParamsYaml, processGraph, processVertex);
             // internal functions will be processed in another thread
             if (internalFuncProcess!=null) {
                 continue;
@@ -166,7 +166,7 @@ public class ExecContextTaskProducingService {
 
     // the logic is following: because we goes through all processed, we have to filter out any processes whose ancestor is internal task
     // there is a trick - we have to stop scanning when we've reached the top-level process, i.e. internalContextId=="1"
-    public static ExecContextParamsYaml.@Nullable Process checkForInternalFunctionAsParent(ExecContextParamsYaml execContextParamsYaml, DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph, ExecContextApiData.ProcessVertex currProcess) {
+    public static ExecContextParamsYaml.@Nullable Process findEnclosingInternalFunctionContainer(ExecContextParamsYaml execContextParamsYaml, DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph, ExecContextApiData.ProcessVertex currProcess) {
         if (currProcess.processContextId.equals(CommonConsts.TOP_LEVEL_CONTEXT_ID)) {
             return null;
         }
