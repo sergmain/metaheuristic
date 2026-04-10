@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.context.UserContextService;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
@@ -108,7 +109,7 @@ public class ExecContextRestController {
         UserContext context = userContextService.getContext(authentication);
         ExecContextCreatorService.ExecContextCreationResult execContextResult =
             execContextCreatorTopLevelService.createExecContextAndStart(uid,
-                new ExecContextApiData.UserExecContext(context.getAccountId(), context.getCompanyId()));
+                new ExecContextApiData.UserExecContext(context.getAccountId(), context.getCompanyId()), new ExecContextData.ExecContextCreationInfo("by /uid-exec-context-add-commit"));
         return new SimpleExecContextAddingResult(execContextResult.execContext.getId());
     }
 
@@ -120,7 +121,8 @@ public class ExecContextRestController {
     public SourceCodeApiData.ExecContextResult execContextAddCommit(Long sourceCodeId, @SuppressWarnings("unused") @Nullable String variable, Authentication authentication) {
         UserContext context = userContextService.getContext(authentication);
         ExecContextApiData.UserExecContext context1 = new ExecContextApiData.UserExecContext(context.getAccountId(), context.getCompanyId());
-        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context1, true, null);
+        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(
+            sourceCodeId, context1, true, null, new ExecContextData.ExecContextCreationInfo("by /exec-context-add-commit"));
 
         SourceCodeApiData.ExecContextResult result = new SourceCodeApiData.ExecContextResult(
             execContextResult.sourceCode, execContextResult.execContext, execContextResult.getInfoMessages(), execContextResult.getErrorMessages());
@@ -212,49 +214,10 @@ public class ExecContextRestController {
         return resource.entity;
     }
 
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ExecContextDescItem {
-        public Long id;
-        @Nullable
-        public String desc;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ExecContextDescsResult {
-        public List<ExecContextDescItem> items;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ExecContextDescsRequest {
-        public List<Long> ids;
-    }
-
     @PostMapping("/exec-context-descs")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
-    public ExecContextDescsResult execContextDescs(@RequestBody ExecContextDescsRequest request) {
-        List<ExecContextDescItem> items = new ArrayList<>();
-        if (request!=null && request.ids!=null && !request.ids.isEmpty()) {
-            List<Object[]> rows = execContextRepository.findIdAndParamsByIdIn(request.ids);
-            for (Object[] row : rows) {
-                Long id = (Long) row[0];
-                String params = (String) row[1];
-                String desc = null;
-                try {
-                    ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(params);
-                    desc = ecpy.desc;
-                } catch (Throwable th) {
-                    // swallow — bad params shouldn't break the whole batch
-                }
-                items.add(new ExecContextDescItem(id, desc));
-            }
-        }
-        return new ExecContextDescsResult(items);
+    public ExecContextData.ExecContextDescsResult execContextDescs(@RequestBody ExecContextData.@Nullable ExecContextDescsRequest request) {
+        ExecContextData.ExecContextDescsResult result = execContextTopLevelService.execContextDescs(request);
+        return result;
     }
 }

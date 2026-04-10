@@ -119,7 +119,8 @@ public class ExecContextCreatorService {
 
     @Transactional(rollbackFor = {CommonRollbackException.class, ExecContextTooManyInstancesException.class} )
     public ExecContextCreationResult createExecContextAndStart(
-            Long sourceCodeId, ExecContextApiData.UserExecContext context, boolean isProduceTasks, ExecContextData.@Nullable RootAndParent rootAndParent) {
+            Long sourceCodeId, ExecContextApiData.UserExecContext context, boolean isProduceTasks,
+            ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo) {
 
         SourceCodeSyncService.checkWriteLockPresent(sourceCodeId);
 
@@ -134,7 +135,7 @@ public class ExecContextCreatorService {
             throw new CommonRollbackException(
                 "562.080 Error creating execContext: sourceCode wasn't found for Id: " + sourceCodeId+", companyId: " + context.companyId(), ERROR);
         }
-        final ExecContextCreationResult creationResult = createExecContext(sourceCode, context, rootAndParent);
+        final ExecContextCreationResult creationResult = createExecContext(sourceCode, context, rootAndParent, execContextCreationInfo);
 
         if (!isProduceTasks) {
             return creationResult;
@@ -194,7 +195,8 @@ public class ExecContextCreatorService {
      * @param context user's context - accountId+companyId. companyId can be different from sourceCode.companyId
      * @return ExecContextCreationResult
      */
-    public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, ExecContextApiData.UserExecContext context, ExecContextData.@Nullable RootAndParent rootAndParent) {
+    public ExecContextCreationResult createExecContext(SourceCodeImpl sourceCode, ExecContextApiData.UserExecContext context,
+                                                       ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo) {
         TxUtils.checkTxExists();
         SourceCodeSyncService.checkWriteLockPresent(sourceCode.id);
 
@@ -218,7 +220,7 @@ public class ExecContextCreatorService {
             throw new CommonRollbackException("562.180 processGraph is broken", ERROR);
         }
 
-        ExecContextImpl execContext = createExecContext(sourceCode, context, scg, rootAndParent);
+        ExecContextImpl execContext = createExecContext(sourceCode, context, scg, rootAndParent, execContextCreationInfo);
         ExecContextCreationResult ecr = new ExecContextCreationResult();
         ecr.execContext = execContext;
         return ecr;
@@ -226,7 +228,7 @@ public class ExecContextCreatorService {
 
     private ExecContextImpl createExecContext(
             SourceCodeImpl sourceCode, ExecContextApiData.UserExecContext context, SourceCodeGraph sourceCodeGraph,
-            ExecContextData.@Nullable RootAndParent rootAndParent) {
+            ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo) {
 
         ExecContextImpl ec = new ExecContextImpl();
         ec.companyId = context.companyId();
@@ -235,13 +237,15 @@ public class ExecContextCreatorService {
         ec.setCreatedOn(System.currentTimeMillis());
         ec.setState(EnumsApi.ExecContextState.NONE.code);
         ec.setCompletedOn(null);
-        ExecContextParamsYaml expy = to(sourceCodeGraph);
-        expy.sourceCodeUid = sourceCode.uid;
+        ExecContextParamsYaml ecpy = to(sourceCodeGraph);
+        ecpy.sourceCodeUid = sourceCode.uid;
         if (rootAndParent!=null) {
-            expy.execContextGraph = new ExecContextParamsYaml.ExecContextGraph(rootAndParent.rootExecContextId, rootAndParent.parentExecContextId);
+            ecpy.execContextGraph = new ExecContextParamsYaml.ExecContextGraph(rootAndParent.rootExecContextId, rootAndParent.parentExecContextId);
             ec.rootExecContextId = rootAndParent.rootExecContextId;
         }
-        ec.updateParams(expy);
+        copyToParams(execContextCreationInfo, ecpy);
+
+        ec.updateParams(ecpy);
         ec.setValid(true);
 
         ExecContextTaskState execContextTaskState = new ExecContextTaskState();
@@ -264,6 +268,13 @@ public class ExecContextCreatorService {
 
         ec = execContextCache.save(ec);
         return ec;
+    }
+
+    private static void copyToParams(ExecContextData.@Nullable ExecContextCreationInfo info, ExecContextParamsYaml ecpy) {
+        if (info == null) {
+            return;
+        }
+        ecpy.desc = info.desc();
     }
 
     private static ExecContextParamsYaml to(SourceCodeGraph sourceCodeGraph) {

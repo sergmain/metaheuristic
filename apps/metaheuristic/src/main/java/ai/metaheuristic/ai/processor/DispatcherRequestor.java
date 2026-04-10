@@ -104,7 +104,7 @@ public class DispatcherRequestor {
         this.restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
         this.dispatcher = dispatcherLookupExtendedService.lookupExtendedMap.get(dispatcherUrl);
         if (dispatcher == null) {
-            throw new IllegalStateException("775.030 Can't find dispatcher config for url " + dispatcherUrl);
+            throw new IllegalStateException("777.030 Can't find dispatcher config for url " + dispatcherUrl);
         }
         dispatcherRestUrl = dispatcherUrl.url + REST_V1_URL + Consts.SERVER_REST_URL_V2;
         dispatcherWsUrl = getDispatcherWsUrl(dispatcherUrl);
@@ -131,7 +131,7 @@ public class DispatcherRequestor {
             return WS_PROTOCOL + url.substring(HTTP.length());
         }
         else {
-            throw new IllegalStateException("Unknown protocol in url: " + url);
+            throw new IllegalStateException("777.040 Unknown protocol in url: " + url);
         }
     }
 
@@ -163,12 +163,12 @@ public class DispatcherRequestor {
     }
 
     private void handleRequestDispatcherForNewTaskEvent(RequestDispatcherForNewTaskEvent event) {
-        log.info("77.060 new event "+event.params.type+" from dispatcher via WS, " + dispatcherWsUrl);
+        log.info("777.060 new event '"+event.params.type+"' from dispatcher via WS, " + dispatcherWsUrl);
         if (event.params.type== Enums.WebsocketEventType.task) {
             requestNewTaskImmediately();
         }
         if (event.params.type== Enums.WebsocketEventType.function) {
-            throw new IllegalStateException("77.090 Not implemented yet");
+            throw new IllegalStateException("777.090 Not implemented yet");
         }
     }
 
@@ -179,7 +179,7 @@ public class DispatcherRequestor {
     }
 
     private void processDispatcherCommParamsYaml(ProcessorCommParamsYaml scpy, DispatcherUrl dispatcherUrl, DispatcherCommParamsYaml dispatcherYaml) {
-        log.debug("775.120 DispatcherCommParamsYaml:\n{}", dispatcherYaml);
+        log.debug("777.120 DispatcherCommParamsYaml:\n{}", dispatcherYaml);
         withSync(() -> {
             processorCommandProcessor.processDispatcherCommParamsYaml(scpy, dispatcherUrl, dispatcherYaml);
         });
@@ -194,14 +194,14 @@ public class DispatcherRequestor {
             return;
         }
         if (dispatcher.dispatcherLookup.disabled) {
-            log.warn("775.150 dispatcher {} is disabled", dispatcherUrl.url);
+            log.warn("777.150 dispatcher {} is disabled", dispatcherUrl.url);
             return;
         }
 
         try {
             final ProcessorCommParamsYaml pcpy = prepareProcessorCommParamsYaml(taskRequest);
             if (!newRequest(pcpy)) {
-                log.info("775.180 no new requests to {}", dispatcherUrl.url );
+                log.info("777.180 no new requests to {}", dispatcherUrl.url );
                 return;
             }
 
@@ -213,13 +213,13 @@ public class DispatcherRequestor {
             final String result = RestUtils.makeRequest(restTemplate, url, yaml, dispatcher.authHeader, dispatcherRestUrl);
 
             if (result == null) {
-                log.warn("775.210 Dispatcher returned null as a result");
+                log.warn("777.210 Dispatcher returned null as a result");
                 return;
             }
             DispatcherCommParamsYaml dispatcherYaml = DispatcherCommParamsYamlUtils.BASE_YAML_UTILS.to(result);
 
             if (!dispatcherYaml.success) {
-                log.error("775.240 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
+                log.error("777.240 Something wrong at the dispatcher {}. Check the dispatcher's logs for more info.", dispatcherUrl );
                 return;
             }
             processDispatcherCommParamsYaml(pcpy, dispatcherUrl, dispatcherYaml);
@@ -228,7 +228,7 @@ public class DispatcherRequestor {
             //
         }
         catch (Throwable e) {
-            log.error("775.270 Error in fixedDelay(), url: {}, error: {}", dispatcherRestUrl, e.getMessage());
+            log.error("777.270 Error in fixedDelay(), url: {}, error: {}", dispatcherRestUrl, e.getMessage());
         }
     }
 

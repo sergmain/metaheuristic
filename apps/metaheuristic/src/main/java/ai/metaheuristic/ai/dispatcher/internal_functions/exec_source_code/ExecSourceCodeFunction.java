@@ -136,7 +136,7 @@ public class ExecSourceCodeFunction implements InternalFunction {
 
         ExecContextApiData.UserExecContext context = new ExecContextApiData.UserExecContext(simpleExecContext.accountId, simpleExecContext.companyId);
         ExecContextCreatorService.ExecContextCreationResult execContextResultRest =
-                execContextCreatorTopLevelService.createExecContextAndStart(subSc.id, context, false, rootAndParent);
+                execContextCreatorTopLevelService.createExecContextAndStart(subSc.id, context, false, rootAndParent, new ExecContextData.ExecContextCreationInfo("by mh.exec-source-code"));
 
         if (execContextResultRest.isErrorMessages()) {
             throw new InternalFunctionException(exec_context_creation_error,

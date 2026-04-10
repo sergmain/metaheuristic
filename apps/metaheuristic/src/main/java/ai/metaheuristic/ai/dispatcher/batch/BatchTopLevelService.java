@@ -320,7 +320,7 @@ public class BatchTopLevelService {
             ExecContextApiData.UserExecContext context = new ExecContextApiData.UserExecContext(userContext.getAccountId(), userContext.getCompanyId());;
 
             // we must postpone a creation of tasks until input variable for SourceCode/ExecContext will be initialized
-            ExecContextCreatorService.ExecContextCreationResult creationResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context, false, null);
+            ExecContextCreatorService.ExecContextCreationResult creationResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context, false, null, null);
             if (creationResult.isErrorMessages()) {
                 return new BatchData.UploadingStatus("981.180 Error creating execContext: " + creationResult.getErrorMessagesAsStr());
             }

@@ -34,6 +34,7 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.account.UserContext;
@@ -65,6 +66,7 @@ import java.util.List;
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ExecContextTopLevelService {
 
+    public static final String ERROR = "<Error>";
     private final ExecContextTxService execContextTxService;
     private final ExecContextRepository execContextRepository;
     private final ExecContextFSM execContextFSM;
@@ -348,5 +350,28 @@ public class ExecContextTopLevelService {
             return new ExecContextApiData.ExecContextSimpleStateResult(es);
         }
         return new ExecContextApiData.ExecContextSimpleStateResult(execContextId, EnumsApi.ExecContextState.fromCode(execContext.state));
+    }
+
+    public ExecContextData.ExecContextDescsResult execContextDescs(ExecContextData.@Nullable ExecContextDescsRequest request) {
+        List<ExecContextData.ExecContextDescItem> items = new ArrayList<>();
+        if (request!=null && request.ids!=null) {
+            for (Long id : request.ids) {
+                String desc;
+                try {
+                    ExecContextImpl ec =  execContextCache.findById(id, true);
+                    if (ec==null) {
+                        desc = ERROR;
+                    }
+                    else {
+                        ExecContextParamsYaml ecpy = ec.getExecContextParamsYaml();
+                        desc = S.b(ecpy.desc) ? "<Empty>" :  ecpy.desc;
+                    }
+                } catch (Throwable th) {
+                    desc = ERROR;
+                }
+                items.add(new ExecContextData.ExecContextDescItem(id, desc));
+            }
+        }
+        return new ExecContextData.ExecContextDescsResult(items);
     }
 }

@@ -46,7 +46,9 @@ public class ExecContextCreatorTopLevelService {
     private final SourceCodeSelectorService sourceCodeSelectorService;
     private final ExecContextCreatorService execContextCreatorService;
 
-    public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(String sourceCodeUid, ExecContextApiData.UserExecContext context) {
+    public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(
+        String sourceCodeUid, ExecContextApiData.UserExecContext context, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo) {
+
         SourceCodeData.SourceCodesForCompany sourceCodesForCompany = sourceCodeSelectorService.getSourceCodeByUid(sourceCodeUid, context.companyId());
         if (sourceCodesForCompany.isErrorMessages()) {
             return new ExecContextCreatorService.ExecContextCreationResult("563.020 Error creating execContext: "+sourceCodesForCompany.getErrorMessagesAsStr()+ ", " +
@@ -57,16 +59,17 @@ public class ExecContextCreatorTopLevelService {
             return new ExecContextCreatorService.ExecContextCreationResult("563.040 Error creating execContext: " +
                     "sourceCode wasn't found for UID: " + sourceCodeUid+", companyId: " + context.companyId());
         }
-        return createExecContextAndStart(sourceCode.id, context, true, null);
+        return createExecContextAndStart(sourceCode.id, context, true, null, execContextCreationInfo);
     }
 
     public ExecContextCreatorService.ExecContextCreationResult createExecContextAndStart(
-            Long sourceCodeId, ExecContextApiData.UserExecContext context, boolean isProduceTasks, ExecContextData.@Nullable RootAndParent rootAndParent) {
+            Long sourceCodeId, ExecContextApiData.UserExecContext context, boolean isProduceTasks,
+            ExecContextData.@Nullable RootAndParent rootAndParent, ExecContextData.@Nullable ExecContextCreationInfo  execContextCreationInfo) {
         final ExecContextCreatorService.ExecContextCreationResult withSyncForCreation = SourceCodeSyncService.getWithSyncForCreation(sourceCodeId,
             () -> {
                 try {
                     ExecContextCreatorService.ExecContextCreationResult result = execContextCreatorService.createExecContextAndStart(
-                        sourceCodeId, context, isProduceTasks, rootAndParent);
+                        sourceCodeId, context, isProduceTasks, rootAndParent, execContextCreationInfo);
                     return result;
                 } catch (CommonRollbackException e) {
                     return new ExecContextCreatorService.ExecContextCreationResult(e.messages);

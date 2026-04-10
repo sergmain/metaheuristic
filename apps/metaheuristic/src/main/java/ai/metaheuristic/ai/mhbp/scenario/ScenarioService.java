@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.mhbp.scenario;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
@@ -189,7 +190,8 @@ public class ScenarioService {
         Long sourceCodeId = Objects.requireNonNull(preparedScenario.sourceCode).id;
 
         ExecContextApiData.UserExecContext context1 = new ExecContextApiData.UserExecContext(context.getAccountId(), context.getCompanyId());
-        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(sourceCodeId, context1, true, null);
+        ExecContextCreatorService.ExecContextCreationResult execContextResult = execContextCreatorTopLevelService.createExecContextAndStart(
+            sourceCodeId, context1, true, null, new ExecContextData.ExecContextCreationInfo("by runScenario()"));
 
         return new OperationStatusWithSourceCodeId(OperationStatusRest.OPERATION_STATUS_OK, sourceCodeId);
     }

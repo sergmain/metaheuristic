@@ -223,7 +223,7 @@ public class Config {
 
     @Bean
     @Profile("dispatcher")
-    public MyBeanPostProcessor myBeanPostProcessor() {
+    public static MyBeanPostProcessor myBeanPostProcessor() {
         return new MyBeanPostProcessor();
     }
 

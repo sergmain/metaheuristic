@@ -24,6 +24,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -35,6 +36,33 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @Slf4j
 public class ExecContextData {
+
+    public record ExecContextCreationInfo(String desc){}
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExecContextDescItem {
+        public Long id;
+        @Nullable
+        public String desc;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExecContextDescsResult {
+        public List<ExecContextDescItem> items;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExecContextDescsRequest {
+        public @Nullable List<Long> ids;
+    }
+
+
 
     public record GraphAndStates(ExecContextGraph graph, ExecContextTaskState states) {}
 
