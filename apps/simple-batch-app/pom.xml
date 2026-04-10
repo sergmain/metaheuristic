@@ -54,7 +54,7 @@
         <dependency>
             <groupId>ai.metaheuristic</groupId>
             <artifactId>mh-commons</artifactId>
-            <version>7.1.19</version>
+            <version>7.1.20</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
