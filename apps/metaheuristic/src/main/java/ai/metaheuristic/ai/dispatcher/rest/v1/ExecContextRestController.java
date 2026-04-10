@@ -23,6 +23,11 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelSer
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTxService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStateDownloadService;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import java.util.List;
+import java.util.ArrayList;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -68,6 +73,7 @@ public class ExecContextRestController {
     private final ExecContextCreatorTopLevelService execContextCreatorTopLevelService;
     private final UserContextService userContextService;
     private final ExecContextStateDownloadService execContextStateDownloadService;
+    private final ExecContextRepository execContextRepository;
 
     @Data
     @NoArgsConstructor
@@ -206,4 +212,49 @@ public class ExecContextRestController {
         return resource.entity;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExecContextDescItem {
+        public Long id;
+        @Nullable
+        public String desc;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExecContextDescsResult {
+        public List<ExecContextDescItem> items;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExecContextDescsRequest {
+        public List<Long> ids;
+    }
+
+    @PostMapping("/exec-context-descs")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
+    public ExecContextDescsResult execContextDescs(@RequestBody ExecContextDescsRequest request) {
+        List<ExecContextDescItem> items = new ArrayList<>();
+        if (request!=null && request.ids!=null && !request.ids.isEmpty()) {
+            List<Object[]> rows = execContextRepository.findIdAndParamsByIdIn(request.ids);
+            for (Object[] row : rows) {
+                Long id = (Long) row[0];
+                String params = (String) row[1];
+                String desc = null;
+                try {
+                    ExecContextParamsYaml ecpy = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(params);
+                    desc = ecpy.desc;
+                } catch (Throwable th) {
+                    // swallow — bad params shouldn't break the whole batch
+                }
+                items.add(new ExecContextDescItem(id, desc));
+            }
+        }
+        return new ExecContextDescsResult(items);
+    }
 }

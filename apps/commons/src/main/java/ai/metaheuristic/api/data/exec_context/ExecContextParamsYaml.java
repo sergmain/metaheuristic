@@ -211,6 +211,10 @@ public class ExecContextParamsYaml implements BaseParams {
 
     public boolean clean;
     public String sourceCodeUid;
+
+    @Nullable
+    public String desc;
+
     public final List<Process> processes = new ArrayList<>();
     public final VariableDeclaration variables = new VariableDeclaration();
 

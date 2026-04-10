@@ -201,6 +201,10 @@ public class ExecContextParamsYamlV5 implements BaseParams {
 
     public boolean clean;
     public String sourceCodeUid;
+
+    @Nullable
+    public String desc;
+
     public final List<ProcessV5> processes = new ArrayList<>();
     public final VariableDeclarationV5 variables = new VariableDeclarationV5();
 

@@ -45,6 +45,10 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
     @Query(value="select e.id from ExecContextImpl e where e.id=:execContextId")
     Long findIdById(Long execContextId);
 
+    @Transactional(readOnly = true)
+    @Query(value="select e.id, e.params from ExecContextImpl e where e.id in :ids")
+    List<Object[]> findIdAndParamsByIdIn(List<Long> ids);
+
     @Override
     @Modifying
     @Query(value="delete from ExecContextImpl t where t.id=:id")
