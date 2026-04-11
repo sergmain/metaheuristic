@@ -88,10 +88,14 @@ public class QueueWithThread<T> {
     public void add(T event) {
         writeLock.lock();
         try {
-            if (checkForDouble) {
-                if (events.contains(event)) {
-                    return;
-                }
+            // checkForDouble semantics: one queued head is enough to re-trigger
+            // work for this tenant id; while any event is already queued for
+            // this tenant, additional puts are redundant and dropped.
+            // (Prior impl used events.contains(event), which relies on
+            // T#equals -- almost never correct since event instances differ
+            // even when they represent the same logical request.)
+            if (checkForDouble && !events.isEmpty()) {
+                return;
             }
             events.add(event);
         } finally {

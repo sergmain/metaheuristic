@@ -25,6 +25,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -76,28 +77,42 @@ public class MultiTenantedQueueTest {
 
             Event event3 = new Event(1L, 5L, 22L);
 
+            // Coalescing: tenant 5 already has event2 queued, so event3 is dropped.
             queue.putToQueueInternal(event3);
 
             assertEquals(2, queue.queue.size());
-            assertEquals(2, queue.queue.get(5L).size());
+            assertEquals(1, queue.queue.get(5L).size());
 
+            // Re-putting the same instance is likewise dropped.
             queue.putToQueueInternal(event3);
 
             assertEquals(2, queue.queue.size());
-            assertEquals(2, queue.queue.get(5L).size());
+            assertEquals(1, queue.queue.get(5L).size());
 
             System.out.println("process queue");
 
             queue.processPoolOfExecutors(5L);
-            Thread.sleep(100);
+
+            // Wait until the processor thread has picked up the head and is
+            // executing process() (which busy-waits on `id`).
+            await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(50))
+                .until(() -> {
+                    QueueWithThread<Event> t = queue.queue.get(5L);
+                    return t != null && t.thread != null && t.isEmpty();
+                });
 
             QueueWithThread<Event> twe5 = queue.queue.get(5L);
             assertNotNull(twe5);
             assertNotNull(twe5.thread);
-            assertEquals(1, twe5.size());
+            assertEquals(0, twe5.size());
 
             queue.processPoolOfExecutors(10L);
-            Thread.sleep(100);
+
+            await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(50))
+                .until(() -> {
+                    QueueWithThread<Event> t = queue.queue.get(10L);
+                    return t != null && t.thread != null && t.isEmpty();
+                });
 
             QueueWithThread<Event> twe10 = queue.queue.get(10L);
             assertNotNull(twe10);
@@ -108,27 +123,23 @@ public class MultiTenantedQueueTest {
             assertTrue(queue.queue.containsKey(5L));
             assertTrue(queue.queue.containsKey(10L));
 
+            // Release the tenant-5 processor thread so it exits process() and then
+            // finds the queue empty and clears its thread reference.
             System.out.println("terminate the current thread, execContextId: 5L");
             id = 5L;
-            Thread.sleep(1000);
 
-            queue.processPoolOfExecutors(5L);
-            Thread.sleep(100);
+            await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(50))
+                .until(() -> {
+                    QueueWithThread<Event> t = queue.queue.get(5L);
+                    return t != null && t.thread == null && t.isEmpty();
+                });
 
-            twe5 = queue.queue.get(5L);
-            assertNotNull(twe5);
-            assertTrue(twe5.isEmpty());
-            assertNotNull(twe5.thread);
-
-            System.out.println("terminate the current thread, execContextId: 5L");
-            id = 5L;
-            Thread.sleep(1000);
             twe5 = queue.queue.get(5L);
             assertNotNull(twe5);
             assertNull(twe5.thread);
             assertTrue(twe5.isEmpty());
 
-
+            // Tenant 10 thread still in flight (its process() is still waiting).
             twe10 = queue.queue.get(10L);
             assertNotNull(twe10);
             assertNotNull(twe10.thread);
@@ -136,10 +147,12 @@ public class MultiTenantedQueueTest {
 
             System.out.println("terminate the current thread, execContextId: 10L");
             id = 10L;
-            Thread.sleep(1000);
 
-            queue.processPoolOfExecutors(5L);
-
+            await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(50))
+                .until(() -> {
+                    QueueWithThread<Event> t = queue.queue.get(10L);
+                    return t != null && t.thread == null && t.isEmpty();
+                });
 
             System.out.println("Final check that everything has been completed");
 
@@ -152,7 +165,6 @@ public class MultiTenantedQueueTest {
             assertNotNull(twe10);
             assertNull(twe10.thread);
             assertTrue(twe10.isEmpty());
-
 
             assertEquals(2, queue.queue.size());
 
