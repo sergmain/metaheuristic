@@ -25,13 +25,7 @@ import ai.metaheuristic.commons.utils.threads.EventWithId;
  * Date: 2/21/2024
  * Time: 2:03 PM
  */
-public class RequestDispatcherForNewTaskEvent implements EventWithId<Enums.WebsocketEventType> {
-
-    public final WebsocketEventParams params;
-
-    public RequestDispatcherForNewTaskEvent(WebsocketEventParams params) {
-        this.params = params;
-    }
+public record RequestDispatcherForNewTaskEvent(WebsocketEventParams params, long messageId) implements EventWithId<Enums.WebsocketEventType> {
 
     @Override
     public Enums.WebsocketEventType getId() {

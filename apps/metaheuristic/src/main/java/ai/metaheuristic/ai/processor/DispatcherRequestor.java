@@ -157,17 +157,19 @@ public class DispatcherRequestor {
         }
     }
 
+    private long messageId = 1;
+
     private void consumeDispatcherEvent(String event) {
         WebsocketEventParams params = WebsocketEventParamsUtils.BASE_UTILS.to(event);
-        MULTI_TENANTED_QUEUE.putToQueue(new RequestDispatcherForNewTaskEvent(params));
+        MULTI_TENANTED_QUEUE.putToQueue(new RequestDispatcherForNewTaskEvent(params, messageId++));
     }
 
     private void handleRequestDispatcherForNewTaskEvent(RequestDispatcherForNewTaskEvent event) {
-        log.info("777.060 new event '"+event.params.type+"' from dispatcher via WS, " + dispatcherWsUrl);
-        if (event.params.type== Enums.WebsocketEventType.task) {
+        log.info("777.060 new event '{}', msgId: {},  from dispatcher via WS, {}", event.params().type, event.messageId(), dispatcherWsUrl);
+        if (event.params().type== Enums.WebsocketEventType.task) {
             requestNewTaskImmediately();
         }
-        if (event.params.type== Enums.WebsocketEventType.function) {
+        if (event.params().type== Enums.WebsocketEventType.function) {
             throw new IllegalStateException("777.090 Not implemented yet");
         }
     }
