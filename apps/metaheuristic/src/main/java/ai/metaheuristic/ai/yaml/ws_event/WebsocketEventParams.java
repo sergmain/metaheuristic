@@ -22,9 +22,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Sergio Lissner
@@ -32,7 +30,6 @@ import java.util.Map;
  * Time: 3:46 PM
  */
 @Data
-@NoArgsConstructor
 public class WebsocketEventParams implements BaseParams {
 
     public final int version=1;
@@ -42,4 +39,8 @@ public class WebsocketEventParams implements BaseParams {
     @Nullable
     public List<String> functions;
 
+    public long eventId;
+
+    public WebsocketEventParams() {
+    }
 }

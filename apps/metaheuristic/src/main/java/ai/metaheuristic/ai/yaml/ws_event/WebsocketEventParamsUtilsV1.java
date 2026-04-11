@@ -21,7 +21,6 @@ import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 
-import org.jspecify.annotations.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -37,29 +36,27 @@ public class WebsocketEventParamsUtilsV1
         return 1;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(WebsocketEventParamsV1.class);
     }
 
-    @NonNull
     @Override
-    public WebsocketEventParams upgradeTo(@NonNull WebsocketEventParamsV1 src) {
+    public WebsocketEventParams upgradeTo(WebsocketEventParamsV1 src) {
         src.checkIntegrity();
         WebsocketEventParams trg = new WebsocketEventParams();
         if (src.functions!=null) {
             trg.functions = src.functions;
         }
         trg.type = src.type;
+        trg.eventId = src.eventId;
 
         trg.checkIntegrity();
         return trg;
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
@@ -74,13 +71,12 @@ public class WebsocketEventParamsUtilsV1
     }
 
     @Override
-    public String toString(@NonNull WebsocketEventParamsV1 yaml) {
+    public String toString(WebsocketEventParamsV1 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public WebsocketEventParamsV1 to(@NonNull String s) {
+    public WebsocketEventParamsV1 to(String s) {
         if (S.b(s)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

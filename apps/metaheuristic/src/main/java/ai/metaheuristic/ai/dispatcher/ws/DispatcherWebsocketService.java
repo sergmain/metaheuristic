@@ -42,8 +42,11 @@ public class DispatcherWebsocketService {
 
     private final SimpMessagingTemplate template;
 
+    private long eventId = 0;
+
     public void sendEvent(Enums.WebsocketEventType type) {
         WebsocketEventParams params = new WebsocketEventParams();
+        params.eventId = eventId++;
         params.type = type;
         if (type== Enums.WebsocketEventType.function) {
             throw new IllegalStateException("Not implemented yet");

@@ -165,7 +165,7 @@ public class DispatcherRequestor {
     }
 
     private void handleRequestDispatcherForNewTaskEvent(RequestDispatcherForNewTaskEvent event) {
-        log.info("777.060 new event '{}', msgId: {},  from dispatcher via WS, {}", event.params().type, event.messageId(), dispatcherWsUrl);
+        log.info("777.060 new event {}:{}, msgId: {},  from dispatcher via WS, {}", event.params().type, event.params().eventId, event.messageId(), dispatcherWsUrl);
         if (event.params().type== Enums.WebsocketEventType.task) {
             requestNewTaskImmediately();
         }
