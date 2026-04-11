@@ -281,7 +281,7 @@ public class PreparingSourceCodeService {
             .atMost(Duration.ofSeconds(10))
             .with()
             .pollInterval(Duration.ofMillis(100))
-            .until(() -> taskWithInternalContextEventService.MULTI_TENANTED_QUEUE.isEmpty(execContextId));
+            .until(() -> taskWithInternalContextEventService.MULTI_TENANTED_QUEUE.size(execContextId)==0);
     }
 
     @SneakyThrows

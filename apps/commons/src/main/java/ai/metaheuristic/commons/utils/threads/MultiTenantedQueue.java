@@ -206,17 +206,17 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
     }
 
     public boolean isNotEmpty(T id) {
-        return !isEmpty(id);
+        return size(id)!=0;
     }
 
-    public boolean isEmpty(T id) {
+    public int size(T id) {
         queueReadLock.lock();
         try {
             final QueueWithThread<P> twe = queue.get(id);
             if (twe == null) {
-                return true;
+                return 0;
             }
-            return twe.isEmpty();
+            return twe.size();
         } finally {
             queueReadLock.unlock();
         }

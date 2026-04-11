@@ -58,7 +58,7 @@ import static ai.metaheuristic.commons.CommonConsts.*;
  * Time: 16:25
  */
 
-@SuppressWarnings("FieldCanBeLocal")
+@SuppressWarnings({"FieldCanBeLocal", "SimplifyStreamApiCallChains"})
 @Slf4j
 public class DispatcherRequestor {
 
@@ -165,7 +165,11 @@ public class DispatcherRequestor {
     }
 
     private void handleRequestDispatcherForNewTaskEvent(RequestDispatcherForNewTaskEvent event) {
-        log.info("777.060 new event {}:{}, msgId: {},  from dispatcher via WS, {}", event.params().type, event.params().eventId, event.messageId(), dispatcherWsUrl);
+        if (log.isInfoEnabled()) {
+            int queueSize = MULTI_TENANTED_QUEUE.size(event.params().type);
+            log.info("777.060 event {}:{}, msgId: {}, queue size: {}, from dispatcher via WS, {}",
+                event.params().type, event.params().eventId, event.messageId(), queueSize, dispatcherWsUrl);
+        }
         if (event.params().type== Enums.WebsocketEventType.task) {
             requestNewTaskImmediately();
         }
