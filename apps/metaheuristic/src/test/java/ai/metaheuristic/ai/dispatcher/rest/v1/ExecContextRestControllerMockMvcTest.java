@@ -10,9 +10,9 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.MhShutdown;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
-import ai.metaheuristic.ai.yaml.exec_context.ExecContextParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,9 +33,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.nio.file.Path;
-import java.util.List;
 
-import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -71,8 +71,10 @@ public class ExecContextRestControllerMockMvcTest {
     @Autowired
     private WebApplicationContext webApplicationContext;
 
+    // prod code now routes through ExecContextTopLevelService.execContextDescs,
+    // which calls execContextCache.findById(id, true) per id — so mock the cache.
     @MockitoBean
-    private ExecContextRepository execContextRepository;
+    private ExecContextCache execContextCache;
 
     private MockMvc mockMvc;
 
@@ -84,24 +86,23 @@ public class ExecContextRestControllerMockMvcTest {
             .build();
     }
 
-    private static String buildParamsWithDesc(String desc) {
+    private static ExecContextImpl buildExecContextWithDesc(String desc) {
+        ExecContextImpl ec = new ExecContextImpl();
         ExecContextParamsYaml p = new ExecContextParamsYaml();
         p.sourceCodeUid = "test-src";
         p.desc = desc;
-        return ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(p);
+        ec.updateParams(p);
+        return ec;
     }
 
     @Test
     @WithUserDetails("data_rest")
     public void test_execContextDescs() throws Exception {
-        String paramsYaml1 = buildParamsWithDesc("first desc");
-        String paramsYaml2 = buildParamsWithDesc("second desc");
+        ExecContextImpl ec101 = buildExecContextWithDesc("first desc");
+        ExecContextImpl ec102 = buildExecContextWithDesc("second desc");
 
-        when(execContextRepository.findIdAndParamsByIdIn(anyList()))
-            .thenReturn(List.of(
-                new Object[]{101L, paramsYaml1},
-                new Object[]{102L, paramsYaml2}
-            ));
+        when(execContextCache.findById(eq(101L), anyBoolean())).thenReturn(ec101);
+        when(execContextCache.findById(eq(102L), anyBoolean())).thenReturn(ec102);
 
         String body = "{\"ids\":[101,102]}";
 
