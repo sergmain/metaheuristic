@@ -166,14 +166,14 @@ public class DispatcherRequestor {
 
     private void handleRequestDispatcherForNewTaskEvent(RequestDispatcherForNewTaskEvent event) {
         if (log.isInfoEnabled()) {
-            int queueSize = MULTI_TENANTED_QUEUE.size(event.params().type);
+            int queueSize = MULTI_TENANTED_QUEUE.size(event.params.type);
             log.info("777.060 event {}:{}, msgId: {}, queue size: {}, from dispatcher via WS, {}",
-                event.params().type, event.params().eventId, event.messageId(), queueSize, dispatcherWsUrl);
+                event.params.type, event.params.eventId, event.messageId, queueSize, dispatcherWsUrl);
         }
-        if (event.params().type== Enums.WebsocketEventType.task) {
+        if (event.params.type== Enums.WebsocketEventType.task) {
             requestNewTaskImmediately();
         }
-        if (event.params().type== Enums.WebsocketEventType.function) {
+        if (event.params.type== Enums.WebsocketEventType.function) {
             throw new IllegalStateException("777.090 Not implemented yet");
         }
     }

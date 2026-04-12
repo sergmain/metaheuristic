@@ -25,10 +25,36 @@ import ai.metaheuristic.commons.utils.threads.EventWithId;
  * Date: 2/21/2024
  * Time: 2:03 PM
  */
-public record RequestDispatcherForNewTaskEvent(WebsocketEventParams params, long messageId) implements EventWithId<Enums.WebsocketEventType> {
+public class RequestDispatcherForNewTaskEvent implements EventWithId<Enums.WebsocketEventType> {
+
+    public final WebsocketEventParams params;
+    public final long messageId;
+
+    public RequestDispatcherForNewTaskEvent(WebsocketEventParams params, long messageId) {
+        this.params = params;
+        this.messageId = messageId;
+    }
 
     @Override
     public Enums.WebsocketEventType getId() {
         return params.type;
+    }
+
+    // Dedup key is the logical event type, NOT messageId. MultiTenantedQueue
+    // with checkForDouble=true uses .equals() to coalesce duplicates inside a
+    // per-tenant queue. The dispatcher may publish many distinct messageIds
+    // (101, 102, 103, ...) for the same logical "there is a task" event; we
+    // want all but one of them dropped while a task is already queued for
+    // this WebsocketEventType.
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof RequestDispatcherForNewTaskEvent that)) return false;
+        return this.params.type == that.params.type;
+    }
+
+    @Override
+    public int hashCode() {
+        return params.type.hashCode();
     }
 }
