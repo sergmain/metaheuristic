@@ -85,6 +85,9 @@ public class ExecContextImpl implements Serializable, ExecContext {
     @Column(name = "ROOT_EXEC_CONTEXT_ID")
     public Long rootExecContextId;
 
+    @Column(name = "LATCH")
+    public String latch;
+
     @Column(name = "PARAMS")
     private String params;
 

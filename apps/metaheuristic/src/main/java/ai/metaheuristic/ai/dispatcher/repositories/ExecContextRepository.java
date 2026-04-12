@@ -66,6 +66,10 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
     @Transactional(readOnly = true)
     List<Long> findAllIds();
 
+    @Query(value="select e from ExecContextImpl e where e.latch is not null and e.latch <> ''")
+    @Transactional(readOnly = true)
+    List<ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl> findAllWithNonEmptyLatch();
+
     @Query(value="select w.id from ExecContextImpl w where w.rootExecContextId=:rootExecContextId")
     @Transactional(readOnly = true)
     List<Long> findAllRelatedExecContextIds(Long rootExecContextId);

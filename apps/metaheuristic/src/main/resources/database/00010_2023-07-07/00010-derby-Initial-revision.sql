@@ -360,6 +360,7 @@ CREATE TABLE mh_exec_context
     CTX_TASK_STATE_ID       bigint NOT NULL,
     CTX_VARIABLE_STATE_ID   bigint NOT NULL,
     ROOT_EXEC_CONTEXT_ID    bigint,
+    LATCH                   varchar(50)
 );
 
 CREATE INDEX mh_exec_context_state_idx
