@@ -127,6 +127,7 @@ public class ExecContextTaskAssigningTopLevelService {
     }
 
     private long mills = 0L;
+    private long unclaimedRenotifyMills = 0L;
     @SuppressWarnings("SizeReplaceableByIsEmpty")
     private UnassignedTasksStat findUnassignedTasksAndRegisterInQueueInternal(Long execContextId) {
         TxUtils.checkTxNotExists();
@@ -161,6 +162,7 @@ public class ExecContextTaskAssigningTopLevelService {
         }
 
         List<ExecContextData.TaskVertex> filteredVertices = new ArrayList<>();
+        boolean hasUnclaimedAssignable = false;
         for (ExecContextData.TaskVertex vertex : vertices) {
             final TaskQueue.AllocatedTask allocatedTask = TaskQueueService.alreadyRegisteredAsTaskWithSync(vertex.taskId);
             if (allocatedTask==null) {
@@ -170,7 +172,21 @@ public class ExecContextTaskAssigningTopLevelService {
                 if (allocatedTask.state == EnumsApi.TaskExecState.CHECK_CACHE) {
                     taskCheckCachingService.putToQueue(new RegisterTaskForCheckCachingEvent(execContextId, allocatedTask.queuedTask.taskId));
                 }
+                // task is in queue, state NONE, not assigned to any processor yet =>
+                // it is assignable but no processor has claimed it. A prior WS notification
+                // may have been dropped / raced with processor polling. Re-notify below.
+                else if (allocatedTask.state == EnumsApi.TaskExecState.NONE && !allocatedTask.assigned) {
+                    hasUnclaimedAssignable = true;
+                }
             }
+        }
+
+        // rate-limited safety re-notify: if assignable tasks sit unclaimed, re-wake processors
+        long newRenotify = ai.metaheuristic.ai.dispatcher.task.TaskProviderUtils.decideRenotifyMills(
+                hasUnclaimedAssignable, System.currentTimeMillis(), unclaimedRenotifyMills, 5_000L);
+        if (newRenotify != unclaimedRenotifyMills) {
+            unclaimedRenotifyMills = newRenotify;
+            eventPublisher.publishEvent(new ai.metaheuristic.ai.dispatcher.event.events.NewWebsocketEvent(ai.metaheuristic.ai.Enums.WebsocketEventType.task));
         }
 
         if (stat.found>0 && filteredVertices.isEmpty() && log.isInfoEnabled()) {

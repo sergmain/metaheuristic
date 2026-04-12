@@ -40,6 +40,27 @@ import java.util.function.Function;
 @Slf4j
 public class TaskProviderUtils {
 
+    /**
+     * Decide whether to re-notify processors about unclaimed assignable tasks.
+     * Rate-limited: returns the updated timestamp (&gt; last) if a notification should fire now,
+     * otherwise returns last unchanged. Pure; no side effects.
+     *
+     * @param hasUnclaimedAssignable true if at least one task is in queue with state=NONE and !assigned
+     * @param now                    current time millis
+     * @param last                   previous renotify timestamp millis
+     * @param minIntervalMillis      minimum interval between renotifications
+     * @return new "last renotify" timestamp; if != {@code last}, caller should fire the event
+     */
+    public static long decideRenotifyMills(boolean hasUnclaimedAssignable, long now, long last, long minIntervalMillis) {
+        if (!hasUnclaimedAssignable) {
+            return last;
+        }
+        if (now - last > minIntervalMillis) {
+            return now;
+        }
+        return last;
+    }
+
     @Nullable
     public static String initEmptiness(
             Long coreId, int taskParamsVersion, String taskParams, Long taskId, Long execContextId,
