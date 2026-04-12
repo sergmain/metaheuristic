@@ -154,7 +154,7 @@ public class ExecContextTaskAssigningTopLevelService {
                 () -> execContextGraphService.findAllForAssigning(execContext.execContextGraphId, execContext.execContextTaskStateId, true));
 
         stat.found = vertices.size();
-        log.debug("703.140 found {} tasks for registering, execContextId: #{}", vertices.size(), execContextId);
+        log.info("703.140 found {} tasks for registering, execContextId: #{}", vertices.size(), execContextId);
 
         if (vertices.isEmpty()) {
             execContextTaskResettingTopLevelService.handleResetTasksWithErrorEvent(new ResetTasksWithErrorEvent(execContextId));
@@ -272,7 +272,7 @@ public class ExecContextTaskAssigningTopLevelService {
                             break;
                         case internal:
                             // all tasks with internal function will be processed in a different thread after registering in TaskQueue
-                            log.debug("703.620 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
+                            log.info("703.620 start processing an internal function {} for task #{}", taskParamYaml.task.function.code, task.id);
                             if (TaskProviderTopLevelService.registerInternalTask(execContextId, taskId, taskParamYaml)) {
                                 stat.allocated++;
                             }
@@ -287,7 +287,12 @@ public class ExecContextTaskAssigningTopLevelService {
             }
         }
         TaskProviderTopLevelService.lock(execContextId);
-        log.debug("703.670 allocated {} of new tasks in execContext #{}", stat.allocated, execContextId);
+        if (log.isInfoEnabled()) {
+            log.info("703.670 allocated {} of new tasks in execContext #{}", stat.allocated, execContextId);
+            for (String notAllocatedReason : stat.notAllocatedReasons) {
+                log.info("703.675 execContext #{}, notAllocatedReasons {}", execContextId, notAllocatedReason);
+            }
+        }
 
         return stat;
     }

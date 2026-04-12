@@ -267,7 +267,7 @@ public class Schedulers {
 
         boolean needToInitializeReadiness = true;
 
-        @Scheduled(initialDelay = 1_000, fixedDelay = 15_000)
+        @Scheduled(initialDelay = 1_000, fixedDelay = 14_000)
         public void registerInternalTasks() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
@@ -280,7 +280,7 @@ public class Schedulers {
             if (globals.dispatcher.asset.mode==EnumsApi.DispatcherAssetMode.source) {
                 return;
             }
-            log.warn("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue(), scheduler tick fired");
+            log.info("DispatcherSchedulers.registerInternalTasks(), scheduler tick fired");
             ArtifactCleanerAtDispatcher.setBusy();
             try {
                 eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueEvent());
@@ -298,7 +298,7 @@ public class Schedulers {
             DeadLockDetector.findDeadLocks();
         }
 
-        @Scheduled(initialDelay = 10_000, fixedDelay = 10_000 )
+        @Scheduled(initialDelay = 11_000, fixedDelay = 11_000 )
         public void processFlushing() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
@@ -306,7 +306,7 @@ public class Schedulers {
             execContextVariableStateTopLevelService.processFlushing();
         }
 
-        @Scheduled(initialDelay = 15_000, fixedDelay = 10_000 )
+        @Scheduled(initialDelay = 15_000, fixedDelay = 9_000 )
         public void execContextStatusUpdate() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
@@ -328,7 +328,7 @@ public class Schedulers {
             }
         }
 
-        @Scheduled(initialDelay = 25_000, fixedDelay = 15_000 )
+        @Scheduled(initialDelay = 25_000, fixedDelay = 17_000 )
         public void updateStateForLongRunning() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
@@ -336,7 +336,7 @@ public class Schedulers {
             longRunningTopLevelService.updateStateForLongRunning();
         }
 
-        @Scheduled(initialDelay = 15_000, fixedDelay = 15_000 )
+        @Scheduled(initialDelay = 15_000, fixedDelay = 13_000 )
         public void collectActiveFunctionCodes() {
             if (globals.testing || !globals.dispatcher.enabled) {
                 return;
