@@ -63,6 +63,7 @@ public class FunctionRepositoryDispatcherService {
     private final SourceCodeRepository sourceCodeRepository;
     private final ExecContextRepository execContextRepository;
     private final FunctionRepository functionRepository;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     public static class Processors {
         public long mills = System.currentTimeMillis();
@@ -113,7 +114,13 @@ public class FunctionRepositoryDispatcherService {
         FunctionRepositoryRequestParams p = FunctionRepositoryRequestParamsUtils.UTILS.to(data);
         FunctionRepositoryResponseParams r = new FunctionRepositoryResponseParams();
         r.success = true;
-        registerReadyFunctionCodesOnProcessor(p);
+        boolean newlyReady = registerReadyFunctionCodesOnProcessor(p);
+        if (newlyReady) {
+            // a processor just became ready for a function it wasn't ready for before;
+            // re-notify processors so tasks waiting on that function get picked up
+            eventPublisher.publishEvent(new ai.metaheuristic.ai.dispatcher.event.events.NewWebsocketEvent(ai.metaheuristic.ai.Enums.WebsocketEventType.task));
+            eventPublisher.publishEvent(new ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueEvent());
+        }
 
         final Set<String> activeFunctionCodes = getActiveFunctionCode(p.processorId);
         if (CollectionUtils.isNotEmpty(activeFunctionCodes)) {
@@ -147,21 +154,26 @@ public class FunctionRepositoryDispatcherService {
         return new FunctionRepositoryResponseParams.ShortFunctionConfig(functionCode, params.function.sourcing, params.function.git);
     }
 
-    private static void registerReadyFunctionCodesOnProcessor(FunctionRepositoryRequestParams p) {
+    private static boolean registerReadyFunctionCodesOnProcessor(FunctionRepositoryRequestParams p) {
         if (p.processorId==null || CollectionUtils.isEmpty(p.functionCodes)) {
-            return;
+            return false;
         }
+        boolean anyNew = false;
         writeLock.lock();
         try {
             for (String functionCode : p.functionCodes) {
                 if (!activeFunctions.contains(functionCode)) {
                     continue;
                 }
-                functionReadiness.computeIfAbsent(functionCode, (o)-> new Processors()).ids.add(p.processorId);
+                boolean added = functionReadiness.computeIfAbsent(functionCode, (o)-> new Processors()).ids.add(p.processorId);
+                if (added) {
+                    anyNew = true;
+                }
             }
         } finally {
             writeLock.unlock();
         }
+        return anyNew;
     }
 
     public static void registerReadyFunctionCodesOnProcessor(String functionCode, Long processorId, boolean force) {
