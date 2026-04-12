@@ -95,21 +95,21 @@ public class TaskWithInternalContextEventService {
     private final ExecContextVariableStateTopLevelService execContextVariableStateTopLevelService;
     private final InternalFunctionProcessor internalFunctionProcessor;
 
-    public final MultiTenantedQueue<Long, TaskWithInternalContextEvent> MULTI_TENANTED_QUEUE =
+    public final MultiTenantedQueue<Long, TaskWithInternalContextEvent> TASK_WITH_INTERNAL_CTX_MTQ =
         new MultiTenantedQueue<>(100, Duration.ofSeconds(0), true, null, this::process);
 
     @SuppressWarnings("MethodMayBeStatic")
     @PreDestroy
     public void onExit() {
-        MULTI_TENANTED_QUEUE.clearQueue();
+        TASK_WITH_INTERNAL_CTX_MTQ.clearQueue();
     }
 
     public void clearQueue() {
-        MULTI_TENANTED_QUEUE.clearQueue();
+        TASK_WITH_INTERNAL_CTX_MTQ.clearQueue();
     }
 
     public void putToQueue(final TaskWithInternalContextEvent event) {
-        MULTI_TENANTED_QUEUE.putToQueue(event);
+        TASK_WITH_INTERNAL_CTX_MTQ.putToQueue(event);
     }
 
     private void process(final TaskWithInternalContextEvent event) {

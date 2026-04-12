@@ -57,16 +57,17 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
     // because all tasks in MultiTenantedQueue are executed in one-threaded way
     // i.e. one active task per <T> type
 
-    // if maxCapacity==-1 then max size is unbound
-    // maxCapacity - is about a size of queue when all tasks processed and it's a time to shrink a queue
-    // because this implementation is based on virtual thread there isn't upper limit of number of tasks in queue
-    public MultiTenantedQueue(int maxCapacity, Duration postProcessingDelay, boolean checkForDouble, @Nullable String namePrefix, Consumer<P> processFunc) {
-        this.maxCapacity = maxCapacity;
+    // if softMaxCapacity==-1 then max size is unbound
+    // softMaxCapacity - is about a size of queue when all tasks processed and it's a time to shrink a queue
+    //  because this implementation is based on virtual thread there isn't upper limit of number of tasks in queue
+    // softMaxCapacity - is a soft limit for triggering removing in removeEldestEntry(), it isn't hard limit
+    public MultiTenantedQueue(int softMaxCapacity, Duration postProcessingDelay, boolean checkForDouble, @Nullable String namePrefix, Consumer<P> processFunc) {
+        this.maxCapacity = softMaxCapacity;
         this.checkForDouble = checkForDouble;
         this.namePrefix = S.b(namePrefix) ? "v-tread-" : namePrefix;
         this.processFunc = processFunc;
 
-        if (maxCapacity == -1) {
+        if (softMaxCapacity == -1) {
             queue = new LinkedHashMap<>() {
                 protected boolean removeEldestEntry(Map.Entry<T, QueueWithThread<P>> entry) {
                     return entry.getValue().canBeRemoved();
@@ -74,9 +75,9 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
             };
         }
         else {
-            queue = new LinkedHashMap<>(maxCapacity) {
+            queue = new LinkedHashMap<>(softMaxCapacity) {
                 protected boolean removeEldestEntry(Map.Entry<T, QueueWithThread<P>> entry) {
-                    return this.size() > maxCapacity && entry.getValue().canBeRemoved();
+                    return this.size() > softMaxCapacity && entry.getValue().canBeRemoved();
                 }
             };
         }

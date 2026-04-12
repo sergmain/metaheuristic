@@ -83,24 +83,26 @@ public class ExecContextTaskAssigningTopLevelService {
         }
     }
 
-    private final MultiTenantedQueue<Long, FindUnassignedTasksAndRegisterInQueueEvent> MULTI_TENANTED_QUEUE =
+    private final MultiTenantedQueue<Long, FindUnassignedTasksAndRegisterInQueueEvent> EXEC_CONTEXT_TASK_ASSIGNING_MTQ =
         new MultiTenantedQueue<>(2, ConstsApi.SECONDS_1, true, null, this::findUnassignedTasksAndRegisterInQueue);
 
     @PreDestroy
     public void onExit() {
-        MULTI_TENANTED_QUEUE.clearQueue();
+        EXEC_CONTEXT_TASK_ASSIGNING_MTQ.clearQueue();
     }
 
     public void putToQueue(final FindUnassignedTasksAndRegisterInQueueEvent event) {
-        MULTI_TENANTED_QUEUE.putToQueue(event);
+        EXEC_CONTEXT_TASK_ASSIGNING_MTQ.putToQueue(event);
     }
 
     @Async
     @EventListener
     public void handleEvaluateProviderEvent(FindUnassignedTasksAndRegisterInQueueEvent event) {
         if (globals.state.awaitingForProcessor) {
+            log.warn("703.010 globals.state.awaitingForProcessor is false");
             return;
         }
+        log.warn("703.015 event accepted, putting to queue");
         putToQueue(event);
     }
 
@@ -108,6 +110,7 @@ public class ExecContextTaskAssigningTopLevelService {
         List<Long> execContextIds = execContextRepository.findAllStartedIds();
         execContextIds.sort(Comparator.naturalOrder());
         UnassignedTasksStat statTotal = new UnassignedTasksStat();
+        log.warn("703.020 allocator scan running for {} execContexts.", execContextIds);
         for (Long execContextId : execContextIds) {
             UnassignedTasksStat stat = findUnassignedTasksAndRegisterInQueueInternal(execContextId);
             statTotal.add(stat);

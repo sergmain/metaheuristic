@@ -81,7 +81,7 @@ public class DispatcherRequestor {
     private static final Random R = new Random();
     private Enums.RequestToDispatcherType defaultTaskRequest = Enums.RequestToDispatcherType.both;
 
-    private final MultiTenantedQueue<Enums.WebsocketEventType, RequestDispatcherForNewTaskEvent> MULTI_TENANTED_QUEUE =
+    private final MultiTenantedQueue<Enums.WebsocketEventType, RequestDispatcherForNewTaskEvent> DISPATCHER_REQUESTOR_MTQ =
         new MultiTenantedQueue<>(2, ConstsApi.SECONDS_1, true, null, this::handleRequestDispatcherForNewTaskEvent);
 
     public DispatcherRequestor(
@@ -139,7 +139,7 @@ public class DispatcherRequestor {
         if (wsInfra!=null) {
             wsInfra.destroy();
         }
-        MULTI_TENANTED_QUEUE.shutdown();
+        DISPATCHER_REQUESTOR_MTQ.shutdown();
     }
 
     private long lastRequestForMissingResources = 0;
@@ -161,12 +161,12 @@ public class DispatcherRequestor {
 
     private void consumeDispatcherEvent(String event) {
         WebsocketEventParams params = WebsocketEventParamsUtils.BASE_UTILS.to(event);
-        MULTI_TENANTED_QUEUE.putToQueue(new RequestDispatcherForNewTaskEvent(params, messageId++));
+        DISPATCHER_REQUESTOR_MTQ.putToQueue(new RequestDispatcherForNewTaskEvent(params, messageId++));
     }
 
     private void handleRequestDispatcherForNewTaskEvent(RequestDispatcherForNewTaskEvent event) {
         if (log.isInfoEnabled()) {
-            int queueSize = MULTI_TENANTED_QUEUE.size(event.params.type);
+            int queueSize = DISPATCHER_REQUESTOR_MTQ.size(event.params.type);
             log.info("777.060 event {}:{}, msgId: {}, queue size: {}, from dispatcher via WS, {}",
                 event.params.type, event.params.eventId, event.messageId, queueSize, dispatcherWsUrl);
         }

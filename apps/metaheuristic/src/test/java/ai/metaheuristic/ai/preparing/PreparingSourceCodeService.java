@@ -263,7 +263,7 @@ public class PreparingSourceCodeService {
 
     @SneakyThrows
     public void findRegisterInternalTaskInQueue(Long execContextId) {
-        taskWithInternalContextEventService.MULTI_TENANTED_QUEUE.registerProcessSuspender(() -> true);
+        taskWithInternalContextEventService.TASK_WITH_INTERNAL_CTX_MTQ.registerProcessSuspender(() -> true);
         execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
 
         await()
@@ -271,17 +271,17 @@ public class PreparingSourceCodeService {
             .atMost(Duration.ofSeconds(10))
             .with()
             .pollInterval(Duration.ofMillis(500))
-            .until(() -> taskWithInternalContextEventService.MULTI_TENANTED_QUEUE.isNotEmpty(execContextId));
+            .until(() -> taskWithInternalContextEventService.TASK_WITH_INTERNAL_CTX_MTQ.isNotEmpty(execContextId));
 
-        taskWithInternalContextEventService.MULTI_TENANTED_QUEUE.deRegisterProcessSuspender();
-        taskWithInternalContextEventService.MULTI_TENANTED_QUEUE.processPoolOfExecutors(execContextId);
+        taskWithInternalContextEventService.TASK_WITH_INTERNAL_CTX_MTQ.deRegisterProcessSuspender();
+        taskWithInternalContextEventService.TASK_WITH_INTERNAL_CTX_MTQ.processPoolOfExecutors(execContextId);
 
         await()
             .atLeast(Duration.ofMillis(0))
             .atMost(Duration.ofSeconds(10))
             .with()
             .pollInterval(Duration.ofMillis(100))
-            .until(() -> taskWithInternalContextEventService.MULTI_TENANTED_QUEUE.size(execContextId)==0);
+            .until(() -> taskWithInternalContextEventService.TASK_WITH_INTERNAL_CTX_MTQ.size(execContextId)==0);
     }
 
     @SneakyThrows

@@ -280,7 +280,7 @@ public class Schedulers {
             if (globals.dispatcher.asset.mode==EnumsApi.DispatcherAssetMode.source) {
                 return;
             }
-            log.info("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue()");
+            log.warn("Invoking execContextTopLevelService.findUnassignedTasksAndRegisterInQueue(), scheduler tick fired");
             ArtifactCleanerAtDispatcher.setBusy();
             try {
                 eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueEvent());
