@@ -44,7 +44,7 @@ import java.util.Map;
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class ExecContextLatchService {
+public class ExecContextLatchTxService {
 
     private final ExecContextCache execContextCache;
 
