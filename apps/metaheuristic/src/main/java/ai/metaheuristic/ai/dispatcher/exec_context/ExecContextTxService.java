@@ -42,10 +42,10 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.exec_context.ExecContextsListItem;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
-import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.account.UserContext;
+import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.commons.graph.ExecContextProcessGraphService;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.PageUtils;
@@ -68,7 +68,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.api.EnumsApi.OperationStatus;
+import static ai.metaheuristic.api.EnumsApi.OperationStatus.ERROR;
 
 @Service
 @Profile("dispatcher")
@@ -83,7 +83,6 @@ public class ExecContextTxService {
     private final ExecContextCache execContextCache;
     private final DispatcherParamsTopLevelService dispatcherParamsTopLevelService;
     private final TaskTxService taskTxService;
-    private final TaskRepository taskRepository;
     private final VariableRepository variableRepository;
     private final VariableTxService variableService;
     private final EventPublisherService eventPublisherService;
@@ -278,27 +277,16 @@ public class ExecContextTxService {
 
     @Transactional
     public OperationStatusRest deleteExecContextById(Long execContextId, UserContext context) {
-        OperationStatusRest status = checkExecContext(execContextId, context);
-        if (status != null) {
-            return status;
+        ExecContextImpl ec = execContextCache.findById(execContextId, true);
+        if (ec==null) {
+            throw new CommonRollbackException("705.280 ExecContext wasn't found, execContextId: " + execContextId, ERROR);
         }
-        ExecContextImpl execContext = execContextCache.findById(execContextId, true);
-        if (execContext != null && !SourceCodeUtils.isDeleteAllowed(execContext.latch)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "705.285 Can't delete execContext #" + execContextId + ", active latches exist: " + execContext.latch);
+        if (!SourceCodeUtils.isDeleteAllowed(ec.latch)) {
+            throw new CommonRollbackException("705.285 Can't delete execContext #" + execContextId + ", active latches exist: " + ec.latch, ERROR);
         }
         deleteExecContext(execContextId, context.getCompanyId());
 
         return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
-    @Nullable
-    private OperationStatusRest checkExecContext(Long execContextId, UserContext context) {
-        ExecContext wb = execContextCache.findById(execContextId, true);
-        if (wb==null) {
-            return new OperationStatusRest(OperationStatus.ERROR, "705.280 ExecContext wasn't found, execContextId: " + execContextId );
-        }
-        return null;
     }
 
 

@@ -38,6 +38,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.account.UserContext;
+import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
@@ -289,7 +290,17 @@ public class ExecContextTopLevelService {
     }
 
     public OperationStatusRest deleteExecContextById(Long execContextId, UserContext context) {
-        return ExecContextSyncService.getWithSync(execContextId, ()-> execContextTxService.deleteExecContextById(execContextId, context));
+        try {
+            return ExecContextSyncService.getWithSync(execContextId, ()-> execContextTxService.deleteExecContextById(execContextId, context));
+        } catch (CommonRollbackException e) {
+            return new OperationStatusRest(e);
+        }
+        catch (Throwable th) {
+            String es = "210.320 Error adding new execContext: " + th.getMessage();
+            log.error(es, th);
+            final OperationStatusRest r = new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+            return r;
+        }
     }
 
     public ExecContextApiData.TaskExecInfo getTaskExecInfo(Long sourceCodeId, Long execContextId, Long taskId) {

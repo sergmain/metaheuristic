@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Repository
@@ -60,7 +61,7 @@ public interface ExecContextRepository extends CrudRepository<ExecContextImpl, L
 
     @Query(value="select w.state from ExecContextImpl w where w.id=:execContextId")
     @Transactional(readOnly = true)
-    int findState(Long execContextId);
+    Optional<Integer> findState(Long execContextId);
 
     @Query(value="select w.id from ExecContextImpl w")
     @Transactional(readOnly = true)

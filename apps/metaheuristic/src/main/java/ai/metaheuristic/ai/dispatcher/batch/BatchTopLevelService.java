@@ -338,8 +338,7 @@ public class BatchTopLevelService {
             uploadingStatus = ExecContextSyncService.getWithSync(creationResult.execContext.id, ()->
                     ExecContextGraphSyncService.getWithSync(creationResult.execContext.execContextGraphId, ()->
                             ExecContextTaskStateSyncService.getWithSync(creationResult.execContext.execContextTaskStateId, ()->
-                                    batchTxService.createBatchForFile(
-                                            sc, creationResult.execContext.id, userContext))));
+                                    batchTxService.createBatchForFile(sc, creationResult.execContext.id, userContext))));
 
             verifyGraph = execContextGraphService.verifyGraph(creationResult.execContext.execContextGraphId);
             if (!verifyGraph) {

@@ -105,7 +105,7 @@ public class SqlQueryTest extends PreparingSourceCode {
         ec = execContextCache.findById(getExecContextForTest().id);
 
         System.out.println("### call via state only");
-        int state = execContextRepository.findState(getExecContextForTest().id);
+        var state = execContextRepository.findState(getExecContextForTest().id);
 
         // =====================
 

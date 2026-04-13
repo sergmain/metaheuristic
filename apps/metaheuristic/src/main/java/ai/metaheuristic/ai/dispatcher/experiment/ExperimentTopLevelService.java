@@ -22,10 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.event.events.DispatcherCacheRemoveSourceCodeEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.ProcessDeletedExecContextEvent;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.exec_context.*;
 import ai.metaheuristic.ai.dispatcher.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.api.EnumsApi;
@@ -36,6 +33,7 @@ import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.dispatcher.ExecContext;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.account.UserContext;
+import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.commons.utils.PageUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
@@ -190,12 +188,22 @@ public class ExperimentTopLevelService {
             return status;
         }
         return  new OperationStatusRest(EnumsApi.OperationStatus.OK,
-                "State of experiment '"+experimentCode+"' was successfully changed to " + execState, "");
+                "285.160 State of experiment '"+experimentCode+"' was successfully changed to " + execState, "");
     }
 
 
     public OperationStatusRest experimentDeleteCommit(Long id, UserContext context) {
-        return experimentService.deleteExperiment(id, context);
+        try {
+            return experimentService.deleteExperiment(id, context);
+        } catch (CommonRollbackException e) {
+            return new OperationStatusRest(e);
+        }
+        catch (Throwable th) {
+            String es = "285.200 Error deleting experiment: " + th.getMessage();
+            log.error(es, th);
+            final OperationStatusRest r = new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+            return r;
+        }
     }
 
     public OperationStatusRest experimentCloneCommit(Long id, ExecContextApiData.UserExecContext context) {

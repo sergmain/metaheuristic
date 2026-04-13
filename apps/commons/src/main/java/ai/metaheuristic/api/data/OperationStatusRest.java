@@ -17,6 +17,7 @@ package ai.metaheuristic.api.data;
 
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
@@ -42,6 +43,14 @@ public class OperationStatusRest extends BaseDataClass {
     public OperationStatusRest(EnumsApi.OperationStatus status, List<String> errorMessages) {
         this.status = status;
         this.errorMessages = errorMessages;
+    }
+
+    public OperationStatusRest(CommonRollbackException exception) {
+        if (exception.status == EnumsApi.OperationStatus.ERROR && exception.messages.isEmpty()) {
+            throw new IllegalStateException("(exception.status == EnumsApi.OperationStatus.ERROR && exception.messages.isEmpty())");
+        }
+        this.status = exception.status;
+        this.errorMessages = exception.messages;
     }
 
     @JsonCreator

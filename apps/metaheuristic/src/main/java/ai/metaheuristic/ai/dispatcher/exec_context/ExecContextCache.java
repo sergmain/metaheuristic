@@ -44,6 +44,7 @@ public class ExecContextCache {
     public ExecContextImpl save(ExecContextImpl execContext) {
         TxUtils.checkTxExists();
         // execContext.id is null for a newly created bean
+        //noinspection ConstantValue
         if (execContext.id!=null) {
             ExecContextSyncService.checkWriteLockPresent(execContext.id);
         }
