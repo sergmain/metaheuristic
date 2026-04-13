@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.TaskQueueCleanByExecContextId
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeUtils;
 import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.VariableDataNotFoundException;
@@ -280,6 +281,11 @@ public class ExecContextTxService {
         OperationStatusRest status = checkExecContext(execContextId, context);
         if (status != null) {
             return status;
+        }
+        ExecContextImpl execContext = execContextCache.findById(execContextId, true);
+        if (execContext != null && !SourceCodeUtils.isDeleteAllowed(execContext.latch)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "705.285 Can't delete execContext #" + execContextId + ", active latches exist: " + execContext.latch);
         }
         deleteExecContext(execContextId, context.getCompanyId());
 
