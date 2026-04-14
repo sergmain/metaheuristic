@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
+import ai.metaheuristic.ai.spi.MhSpi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
@@ -86,13 +87,13 @@ public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
 
     @BeforeAll
     static void setSystemProperties() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
     static void cleanupLogging() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.stop();
     }

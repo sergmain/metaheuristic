@@ -18,35 +18,22 @@ package ai.metaheuristic.ai.internal_function.evaluation;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTxService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
-import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
-import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
-import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
-import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
-import ai.metaheuristic.ai.preparing.PreparingSourceCode;
-import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
+import ai.metaheuristic.ai.spi.MhSpi;
 import ch.qos.logback.classic.LoggerContext;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -74,13 +61,13 @@ public class TestEvaluationVariables extends TestBaseEvaluation {
 
     @BeforeAll
     static void setSystemProperties() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
     static void cleanupLogging() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.stop();
     }

@@ -9,10 +9,10 @@
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
-import ai.metaheuristic.ai.MhShutdown;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
+import ai.metaheuristic.ai.spi.MhSpi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,7 +64,7 @@ public class ExecContextRestControllerMockMvcTest {
 
     @org.junit.jupiter.api.BeforeAll
     static void setSystemProperties() {
-        MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
@@ -80,7 +80,7 @@ public class ExecContextRestControllerMockMvcTest {
 
     @BeforeEach
     public void setup() {
-        MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         this.mockMvc = webAppContextSetup(webApplicationContext)
             .apply(springSecurity())
             .build();

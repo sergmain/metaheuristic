@@ -81,11 +81,21 @@ public class FunctionRepositoryRequestor {
         this.dispatcherRestUrl = dispatcherUrl.url + CommonConsts.REST_V1_URL + Consts.FUNCTION_REPOSITORY_REST_URL;
     }
 
+    private boolean shutdown = false;
+
+    public void shutdown() {
+        shutdown = true;
+    }
+
+    public boolean isShutdown() {
+        return shutdown;
+    }
+
     public void requestFunctionRepository() {
         if (globals.testing) {
             return;
         }
-        if (!globals.processor.enabled) {
+        if (!globals.processor.enabled || isShutdown()) {
             return;
         }
 

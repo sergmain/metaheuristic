@@ -20,12 +20,11 @@ import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
 import ai.metaheuristic.ai.preparing.PreparingExperiment;
+import ai.metaheuristic.ai.spi.MhSpi;
 import ch.qos.logback.classic.LoggerContext;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.LoggerFactory;
@@ -37,7 +36,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -65,13 +63,13 @@ public class TestCountOfTasks extends PreparingExperiment {
 
     @BeforeAll
     static void setSystemProperties() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
     static void cleanupLogging() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.stop();
     }

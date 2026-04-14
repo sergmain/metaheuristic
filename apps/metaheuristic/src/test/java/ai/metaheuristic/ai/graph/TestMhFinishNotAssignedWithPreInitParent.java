@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.graph;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
-import ai.metaheuristic.ai.MhShutdown;
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.exec_context.*;
@@ -27,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskSta
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
+import ai.metaheuristic.ai.spi.MhSpi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskApiData;
@@ -94,13 +94,13 @@ public class TestMhFinishNotAssignedWithPreInitParent extends PreparingSourceCod
 
     @BeforeAll
     static void setSystemProperties() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
     static void cleanupLogging() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.stop();
     }
@@ -112,7 +112,7 @@ public class TestMhFinishNotAssignedWithPreInitParent extends PreparingSourceCod
 
     @BeforeEach
     public void setup() {
-        MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
     }
 
     @Override

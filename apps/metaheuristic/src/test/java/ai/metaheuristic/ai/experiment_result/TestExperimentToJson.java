@@ -18,15 +18,14 @@ package ai.metaheuristic.ai.experiment_result;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.MhComplexTestConfig;
-import ai.metaheuristic.ai.MhShutdown;
 import ai.metaheuristic.ai.dispatcher.experiment_result.ExperimentResultService;
 import ai.metaheuristic.ai.preparing.PreparingExperiment;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
+import ai.metaheuristic.ai.spi.MhSpi;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsJsonUtils;
 import ai.metaheuristic.ai.yaml.experiment_result.ExperimentResultParamsYamlWithCache;
 import ch.qos.logback.classic.LoggerContext;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.LoggerFactory;
@@ -38,7 +37,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.file.Path;
 
@@ -67,13 +65,13 @@ public class TestExperimentToJson extends PreparingExperiment {
 
     @BeforeAll
     static void setSystemProperties() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
     static void cleanupLogging() {
-        MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.stop();
     }

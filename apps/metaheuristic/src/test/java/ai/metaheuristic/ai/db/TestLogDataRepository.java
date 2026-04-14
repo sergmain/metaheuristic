@@ -18,16 +18,14 @@ package ai.metaheuristic.ai.db;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.MhComplexTestConfig;
-import ai.metaheuristic.ai.MhShutdown;
 import ai.metaheuristic.ai.dispatcher.beans.LogData;
 import ai.metaheuristic.ai.dispatcher.repositories.LogDataRepository;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
-import ch.qos.logback.classic.LoggerContext;
+import ai.metaheuristic.ai.spi.MhSpi;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -63,13 +61,13 @@ public class TestLogDataRepository {
 
     @BeforeAll
     static void setSystemProperties() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
     static void cleanupLogging() {
-        MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
     }
 
     @Autowired private LogDataRepository logDataRepository;

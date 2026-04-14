@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
 import ai.metaheuristic.ai.dispatcher.repositories.GlobalVariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
+import ai.metaheuristic.ai.spi.MhSpi;
 import ai.metaheuristic.commons.spi.DispatcherBlobStorage;
 import ai.metaheuristic.commons.spi.GeneralBlobTxService;
 import ch.qos.logback.classic.LoggerContext;
@@ -68,13 +69,13 @@ class TestGlobalBinaryDataRepository {
 
     @BeforeAll
     static void setSystemProperties() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
     static void cleanupLogging() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.stop();
     }

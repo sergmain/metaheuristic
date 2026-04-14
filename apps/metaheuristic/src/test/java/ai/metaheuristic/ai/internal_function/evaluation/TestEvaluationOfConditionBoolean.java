@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.internal_function.evaluation;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.spi.MhSpi;
 import ai.metaheuristic.api.EnumsApi;
 import ch.qos.logback.classic.LoggerContext;
 import lombok.SneakyThrows;
@@ -67,13 +68,13 @@ public class TestEvaluationOfConditionBoolean extends TestBaseEvaluation {
 
     @BeforeAll
     static void setSystemProperties() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
     static void cleanupLogging() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.stop();
     }

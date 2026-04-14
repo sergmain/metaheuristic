@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
+import ai.metaheuristic.ai.spi.MhSpi;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ch.qos.logback.classic.LoggerContext;
@@ -73,13 +74,13 @@ public class TestSingleInternalFunction extends FeatureMethods {
 
     @BeforeAll
     static void setSystemProperties() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
     static void cleanupLogging() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.stop();
     }

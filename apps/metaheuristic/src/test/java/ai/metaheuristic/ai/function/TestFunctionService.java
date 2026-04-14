@@ -18,12 +18,12 @@ package ai.metaheuristic.ai.function;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.MhComplexTestConfig;
-import ai.metaheuristic.ai.MhShutdown;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.function.FunctionDataTxService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.dispatcher.function.FunctionTxService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxTestingTopLevelService;
+import ai.metaheuristic.ai.spi.MhSpi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
@@ -78,13 +78,13 @@ class TestFunctionService {
 
     @BeforeAll
     static void setSystemProperties() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
     static void cleanupLogging() {
-        MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.stop();
     }

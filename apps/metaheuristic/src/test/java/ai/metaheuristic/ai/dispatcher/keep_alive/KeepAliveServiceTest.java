@@ -18,12 +18,12 @@ package ai.metaheuristic.ai.dispatcher.keep_alive;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
-import ai.metaheuristic.ai.MhShutdown;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
 import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.data.ProcessorData;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
 import ai.metaheuristic.ai.dispatcher.repositories.ProcessorCoreRepository;
+import ai.metaheuristic.ai.spi.MhSpi;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
@@ -78,13 +78,13 @@ public class KeepAliveServiceTest {
 
     @BeforeAll
     static void setSystemProperties() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
     static void cleanupLogging() {
-        MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.stop();
     }
@@ -98,7 +98,7 @@ public class KeepAliveServiceTest {
 
     @BeforeEach
     public void beforeEach() {
-        MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         ProcessorStatusYaml.Env envYaml = new ProcessorStatusYaml.Env();
         envYaml.quotas.disabled = true;
 

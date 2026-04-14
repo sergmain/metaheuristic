@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
+import ai.metaheuristic.ai.shutdown.ShutdownInterface;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveRequestParamYaml;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
@@ -48,7 +49,7 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 
 @SuppressWarnings("DuplicatedCode")
 @Slf4j
-public class ProcessorKeepAliveRequestor {
+public class ProcessorKeepAliveRequestor implements ShutdownInterface {
 
     private final DispatcherUrl dispatcherUrl;
     private final Globals globals;
@@ -84,11 +85,21 @@ public class ProcessorKeepAliveRequestor {
         this.dispatcherRestUrl = dispatcherUrl.url + CommonConsts.REST_V1_URL + Consts.KEEP_ALIVE_REST_URL;
     }
 
+    private boolean shutdown = false;
+
+    public void shutdown() {
+        shutdown = true;
+    }
+
+    public boolean isShutdown() {
+        return shutdown;
+    }
+
     public void proceedWithRequest() {
         if (globals.testing) {
             return;
         }
-        if (!globals.processor.enabled) {
+        if (!globals.processor.enabled || isShutdown()) {
             return;
         }
 

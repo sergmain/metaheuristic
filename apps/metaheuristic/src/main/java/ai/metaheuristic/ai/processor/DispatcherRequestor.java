@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.processor.event.RequestDispatcherForNewTaskEvent;
 import ai.metaheuristic.ai.processor.processor_environment.MetadataParams;
 import ai.metaheuristic.ai.processor.utils.DispatcherUtils;
 import ai.metaheuristic.ai.processor.ws.ProcessorWebsocketService;
+import ai.metaheuristic.ai.shutdown.ShutdownInterface;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYaml;
 import ai.metaheuristic.ai.yaml.communication.dispatcher.DispatcherCommParamsYamlUtils;
@@ -60,7 +61,7 @@ import static ai.metaheuristic.commons.CommonConsts.*;
 
 @SuppressWarnings({"FieldCanBeLocal", "SimplifyStreamApiCallChains"})
 @Slf4j
-public class DispatcherRequestor {
+public class DispatcherRequestor implements ShutdownInterface {
 
     private final DispatcherUrl dispatcherUrl;
     private final Globals globals;
@@ -135,7 +136,15 @@ public class DispatcherRequestor {
         }
     }
 
-    public void destroy() {
+    private boolean shutdown = false;
+
+    @Override
+    public boolean isShutdown() {
+        return shutdown;
+    }
+
+    public void shutdown() {
+        shutdown = true;
         if (wsInfra!=null) {
             wsInfra.destroy();
         }
@@ -165,6 +174,9 @@ public class DispatcherRequestor {
     }
 
     private void handleRequestDispatcherForNewTaskEvent(RequestDispatcherForNewTaskEvent event) {
+        if (isShutdown()) {
+            return;
+        }
         if (log.isInfoEnabled()) {
             int queueSize = DISPATCHER_REQUESTOR_MTQ.size(event.params.type);
             log.info("777.060 event {}:{}, msgId: {}, queue size: {}, from dispatcher via WS, {}",

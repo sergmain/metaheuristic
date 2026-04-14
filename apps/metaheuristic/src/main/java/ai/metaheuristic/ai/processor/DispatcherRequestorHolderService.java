@@ -64,7 +64,7 @@ public class DispatcherRequestorHolderService {
 
         for (Map.Entry<DispatcherUrl, DispatcherLookupExtendedParams.DispatcherLookupExtended> entry : processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService().lookupExtendedMap.entrySet()) {
             final DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher = entry.getValue();
-            final DispatcherRequestor requestor = new DispatcherRequestor(dispatcher.getDispatcherUrl(), globals,
+            final DispatcherRequestor dispatcherRequestor = new DispatcherRequestor(dispatcher.getDispatcherUrl(), globals,
                 processorTaskService, processorService, processorEnvironment.getProcessorEnv().metadataParams(), currentExecState,
                 processorEnvironment.getProcessorEnv().dispatcherLookupExtendedService(), processorCommandProcessor,
                 globals.activeProfilesSet.contains(Consts.WEBSOCKET_PROFILE)
@@ -75,13 +75,17 @@ public class DispatcherRequestorHolderService {
 
             final FunctionRepositoryRequestor functionRepositoryRequestor = new FunctionRepositoryRequestor(dispatcher.dispatcherUrl, globals, processorEnvironment, functionRepositoryProcessorService);
 
-            dispatcherRequestorMap.put(dispatcher.dispatcherUrl, new Requesters(requestor, keepAliveRequestor, functionRepositoryRequestor));
+            dispatcherRequestorMap.put(dispatcher.dispatcherUrl, new Requesters(dispatcherRequestor, keepAliveRequestor, functionRepositoryRequestor));
         }
     }
 
     @PreDestroy
     public void preDestroy() {
-        dispatcherRequestorMap.forEach((k,v) -> v.dispatcherRequestor.destroy());
+        dispatcherRequestorMap.forEach((k,v) -> {
+            v.processorKeepAliveRequestor.shutdown();
+            v.functionRepositoryRequestor.shutdown();
+            v.dispatcherRequestor.shutdown();
+        });
     }
 
 }

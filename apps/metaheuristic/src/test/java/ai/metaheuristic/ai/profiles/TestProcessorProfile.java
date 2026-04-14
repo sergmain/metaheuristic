@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.profiles;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.MhComplexTestConfig;
+import ai.metaheuristic.ai.spi.MhSpi;
 import ai.metaheuristic.api.ConstsApi;
 import ch.qos.logback.classic.LoggerContext;
 import org.junit.jupiter.api.AfterAll;
@@ -59,13 +60,13 @@ public class TestProcessorProfile {
 
     @BeforeAll
     static void setSystemProperties() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @AfterAll
     static void cleanupLogging() {
-        ai.metaheuristic.ai.MhShutdown.cleanUp();
+        MhSpi.cleanUpOnShutdown();
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.stop();
     }

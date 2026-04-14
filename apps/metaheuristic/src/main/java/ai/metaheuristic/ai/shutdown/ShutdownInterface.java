@@ -14,18 +14,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai;
+package ai.metaheuristic.ai.shutdown;
 
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
 
 /**
  * @author Sergio Lissner
- * Date: 3/15/2026
- * Time: 10:24 AM
+ * Date: 4/14/2026
+ * Time: 3:28 PM
  */
-public class MhShutdown {
+public interface ShutdownInterface {
 
-    public static void cleanUp() {
-        TaskQueueService.resetQueue();
-    }
+    boolean isShutdown();
+
+    void shutdown();
 }
