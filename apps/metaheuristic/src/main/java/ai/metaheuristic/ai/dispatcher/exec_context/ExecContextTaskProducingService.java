@@ -77,6 +77,7 @@ public class ExecContextTaskProducingService {
         if (result.sourceCodeValidationResult.status != EnumsApi.SourceCodeValidateStatus.OK) {
             log.error("701.120 Can't produce tasks, error: {}", result.sourceCodeValidationResult);
             execContext.setState(EnumsApi.ExecContextState.STOPPED.code);
+            publishExecContextStoppedSignal(execContext);
             return result;
         }
         mills = System.currentTimeMillis();
@@ -206,4 +207,22 @@ public class ExecContextTaskProducingService {
     }
 
 
+    private void publishExecContextStoppedSignal(ExecContextImpl execContext) {
+        java.util.Map<String, Object> info = new java.util.LinkedHashMap<>();
+        info.put("state", EnumsApi.ExecContextState.STOPPED.code);
+        info.put("stateName", EnumsApi.ExecContextState.STOPPED.name());
+        info.put("sourceCodeId", execContext.sourceCodeId);
+        try {
+            String uid = execContext.getExecContextParamsYaml().sourceCodeUid;
+            if (uid != null) {
+                info.put("sourceCodeUid", uid);
+            }
+        } catch (RuntimeException ignore) {
+            // params YAML may not be parseable in all paths; sourceCodeUid is optional
+        }
+        info.put("startedAt", execContext.createdOn);
+        eventPublisher.publishEvent(new ai.metaheuristic.ai.dispatcher.signal_bus.events.ExecContextStateSignalTxEvent(
+            execContext.id, EnumsApi.ExecContextState.STOPPED.code,
+            new ai.metaheuristic.ai.dispatcher.signal_bus.ScopeRef(execContext.companyId), info));
+    }
 }

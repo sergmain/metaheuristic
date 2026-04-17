@@ -22,6 +22,8 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.event.EventPublisherService;
 import ai.metaheuristic.ai.dispatcher.event.events.CheckTaskCanBeFinishedTxEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.RegisterFunctionCodesForStartedExecContextTxEvent;
+import ai.metaheuristic.ai.dispatcher.signal_bus.ScopeRef;
+import ai.metaheuristic.ai.dispatcher.signal_bus.events.ExecContextStateSignalTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYaml;
@@ -30,6 +32,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +55,7 @@ public class ExecContextFSM {
     private final TaskRepository taskRepository;
     private final ExecContextReconciliationTxService execContextReconciliationTxService;
     private final EventPublisherService eventPublisherService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Transactional
     public void toFinished(Long execContextId) {
@@ -84,6 +88,7 @@ public class ExecContextFSM {
         if (execContext.state!=state.code) {
             execContext.setState(state.code);
             execContextCache.save(execContext);
+            publishExecContextStateSignal(execContext, state);
         }
     }
 
@@ -106,6 +111,7 @@ public class ExecContextFSM {
         if (execContext.state != execState.code) {
             execContext.setState(execState.code);
             execContextCache.save(execContext);
+            publishExecContextStateSignal(execContext, execState);
         }
 
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -116,10 +122,32 @@ public class ExecContextFSM {
             execContext.setCompletedOn(System.currentTimeMillis());
             execContext.setState(state.code);
             execContextCache.save(execContext);
+            publishExecContextStateSignal(execContext, state);
         } else if (execContext.state!= EnumsApi.ExecContextState.FINISHED.code && execContext.completedOn != null) {
             log.error("303.080 Integrity failed, current state: {}, new state: {}, but execContext.completedOn!=null",
                     execContext.state, state.code);
         }
+    }
+
+    private void publishExecContextStateSignal(ExecContextImpl execContext, EnumsApi.ExecContextState state) {
+        java.util.Map<String, Object> info = new java.util.LinkedHashMap<>();
+        info.put("state", state.code);
+        info.put("stateName", state.name());
+        info.put("sourceCodeId", execContext.sourceCodeId);
+        try {
+            String uid = execContext.getExecContextParamsYaml().sourceCodeUid;
+            if (uid != null) {
+                info.put("sourceCodeUid", uid);
+            }
+        } catch (RuntimeException ignore) {
+            // params YAML may not be parseable in all paths; sourceCodeUid is optional
+        }
+        info.put("startedAt", execContext.createdOn);
+        if (execContext.completedOn != null) {
+            info.put("completedAt", execContext.completedOn);
+        }
+        applicationEventPublisher.publishEvent(new ExecContextStateSignalTxEvent(
+            execContext.id, state.code, new ScopeRef(execContext.companyId), info));
     }
 
     @Transactional
