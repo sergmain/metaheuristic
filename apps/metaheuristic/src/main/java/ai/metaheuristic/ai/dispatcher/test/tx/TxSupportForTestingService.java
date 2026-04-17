@@ -115,6 +115,14 @@ public class TxSupportForTestingService {
     }
 
     @Transactional
+    public ai.metaheuristic.ai.dispatcher.beans.Batch batchCacheSave(ai.metaheuristic.ai.dispatcher.beans.Batch batch) {
+        if (!globals.testing) {
+            throw new IllegalStateException("Only for testing");
+        }
+        return batchCache.save(batch);
+    }
+
+    @Transactional
     public void execContextCacheDeleteById(Long execContextId) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
