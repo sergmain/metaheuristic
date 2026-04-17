@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskSta
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.long_running.LongRunningTopLevelService;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationService;
+import ai.metaheuristic.ai.dispatcher.signal_bus.SignalBusSweeper;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingService;
 import ai.metaheuristic.ai.dispatcher.thread.DeadLockDetector;
 import ai.metaheuristic.ai.functions.FunctionRepositoryDispatcherService;
@@ -597,4 +598,28 @@ public class Schedulers {
         }
     }
 
+
+    @Configuration
+    @EnableScheduling
+    @RequiredArgsConstructor(onConstructor_={@Autowired})
+    @Slf4j @SuppressWarnings("DuplicatedCode")
+    @Profile("dispatcher")
+    public static class SignalBusSweeperSchedulingConfig implements SchedulingConfigurer {
+        private final Globals globals;
+        private final SignalBusSweeper signalBusSweeper;
+
+        @Override
+        public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+            taskRegistrar.setScheduler(Executors.newSingleThreadScheduledExecutor());
+            taskRegistrar.addTriggerTask(this::sweep,
+                context -> getInstant(context, globals.dispatcher.timeout.getSignalBusSweep()));
+        }
+
+        public void sweep() {
+            if (globals.testing || !globals.dispatcher.enabled) {
+                return;
+            }
+            signalBusSweeper.sweep();
+        }
+    }
 }
