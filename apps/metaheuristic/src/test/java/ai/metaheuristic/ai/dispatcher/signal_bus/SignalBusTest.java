@@ -43,21 +43,13 @@ class SignalBusTest {
 
     private static SignalBus newBatchAndExecContextBus() {
         TopicBuilder batchTopic = (k, id, info) -> "batch." + id + ".state";
-        TopicBuilder ecTopic = (k, id, info) ->
-            "execContext." + info.get("infoBank")
-            + "." + stripVersionForTest((String) info.get("sourceCodeUid"))
-            + ".state";
+        TopicBuilder ecTopic = (k, id, info) -> "execContext." + id + ".state";
         SignalKindRegistry registry = new SignalKindRegistry(
             Map.of(SignalKind.BATCH, batchTopic,
                    SignalKind.EXEC_CONTEXT, ecTopic),
             Map.of(SignalKind.BATCH, CoalescePolicy.NONE,
                    SignalKind.EXEC_CONTEXT, CoalescePolicy.NONE));
         return new SignalBus(registry);
-    }
-
-    private static String stripVersionForTest(String uid) {
-        // tiny inline strip until Step 11 lands TopicUtils.stripVersion
-        return uid.replaceFirst("-\\d+\\.\\d+\\.\\d+$", "");
     }
 
     private static SignalBus newDocumentExportBus(java.time.Clock clock) {
@@ -163,42 +155,42 @@ class SignalBusTest {
 
     @Test
     void query_topicGlob_filtersByPattern() {
-        // arrange
+        // arrange — MH's EXEC_CONTEXT topic is execContext.<id>.state
         SignalBus bus = newBatchAndExecContextBus();
         ScopeRef scope = new ScopeRef(100L);
 
         bus.put(SignalKind.EXEC_CONTEXT, "100", scope,
-            Map.of("infoBank", "DRONE", "sourceCodeUid", "mhdg-rg-flat-1.0.0"), false);
+            Map.of("sourceCodeUid", "mhdg-rg-flat-1.0.0"), false);
         bus.put(SignalKind.EXEC_CONTEXT, "101", scope,
-            Map.of("infoBank", "DRONE", "sourceCodeUid", "cv-redundancy-1.0.0"), false);
+            Map.of("sourceCodeUid", "cv-redundancy-1.0.0"), false);
 
         // act
         var all = bus.query(scope, 0L, Set.of(SignalKind.EXEC_CONTEXT), List.of());
-        var cvOnly = bus.query(scope, 0L, Set.of(SignalKind.EXEC_CONTEXT),
-            List.of(new GlobPattern("execContext.DRONE.cv-*.state")));
+        var oneOnly = bus.query(scope, 0L, Set.of(SignalKind.EXEC_CONTEXT),
+            List.of(new GlobPattern("execContext.101.state")));
 
         // assert
         assertThat(all.signals()).hasSize(2);
-        assertThat(cvOnly.signals()).hasSize(1);
-        assertThat(cvOnly.signals().get(0).signalId()).isEqualTo("101");
+        assertThat(oneOnly.signals()).hasSize(1);
+        assertThat(oneOnly.signals().get(0).signalId()).isEqualTo("101");
     }
 
     @Test
     void query_topicGlob_appliedAfterScope_excludesOtherCompanyMatchingGlob() {
-        // arrange: a different company's signal would match the glob,
-        // but is excluded by scope.
+        // arrange: a different company's signal matches the glob (wildcard id),
+        // but scope filter excludes it.
         SignalBus bus = newBatchAndExecContextBus();
         ScopeRef mine = new ScopeRef(100L);
         ScopeRef other = new ScopeRef(200L);
 
         bus.put(SignalKind.EXEC_CONTEXT, "100", mine,
-            Map.of("infoBank", "DRONE", "sourceCodeUid", "cv-redundancy-1.0.0"), false);
+            Map.of("sourceCodeUid", "cv-redundancy-1.0.0"), false);
         bus.put(SignalKind.EXEC_CONTEXT, "200", other,
-            Map.of("infoBank", "DRONE", "sourceCodeUid", "cv-redundancy-1.0.0"), false);
+            Map.of("sourceCodeUid", "cv-redundancy-1.0.0"), false);
 
-        // act
+        // act — wildcard id glob would match both but scope filter restricts to mine
         var result = bus.query(mine, 0L, Set.of(SignalKind.EXEC_CONTEXT),
-            List.of(new GlobPattern("execContext.DRONE.cv-*.state")));
+            List.of(new GlobPattern("execContext.*.state")));
 
         // assert
         assertThat(result.signals())

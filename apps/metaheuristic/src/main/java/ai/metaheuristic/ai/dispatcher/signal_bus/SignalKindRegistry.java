@@ -57,11 +57,7 @@ public class SignalKindRegistry {
      */
     public static SignalKindRegistry v1Default() {
         TopicBuilder batchTopic = (k, id, info) -> "batch." + id + ".state";
-        TopicBuilder execContextTopic = (k, id, info) -> "execContext."
-            + info.get("infoBank")
-            + "."
-            + TopicUtils.stripVersion((String) info.get("sourceCodeUid"))
-            + ".state";
+        TopicBuilder execContextTopic = (k, id, info) -> "execContext." + id + ".state";
         TopicBuilder documentExportTopic = (k, id, info) ->
             "document.export." + info.get("projectId") + ".progress";
         TopicBuilder systemNoticeTopic = (k, id, info) -> "system.notice";

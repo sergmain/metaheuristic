@@ -137,17 +137,18 @@ public class SignalBusRestControllerTest {
     @Test
     @WithUserDetails("data_rest")
     public void get_topicGlobFilter() throws Exception {
-        // arrange — two EXEC_CONTEXT signals with different sourceCodeUid prefixes
+        // arrange — two EXEC_CONTEXT signals with different ids;
+        // MH's default topic is execContext.<id>.state
         ScopeRef scope = new ScopeRef(DATA_REST_COMPANY_ID);
         signalBus.put(SignalKind.EXEC_CONTEXT, "ec-glob-1", scope,
-            Map.of("infoBank", "DRONE", "sourceCodeUid", "mhdg-rg-flat-1.0.0"), false);
+            Map.of("sourceCodeUid", "mhdg-rg-flat-1.0.0"), false);
         signalBus.put(SignalKind.EXEC_CONTEXT, "ec-glob-2", scope,
-            Map.of("infoBank", "DRONE", "sourceCodeUid", "cv-redundancy-1.0.0"), false);
+            Map.of("sourceCodeUid", "cv-redundancy-1.0.0"), false);
 
         mockMvc.perform(get("/rest/v1/dispatcher/signals")
                 .param("afterRev", "0")
                 .param("kinds", "EXEC_CONTEXT")
-                .param("topics", "execContext.DRONE.cv-*.state"))
+                .param("topics", "execContext.ec-glob-2.state"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.signals[?(@.signalId == 'ec-glob-2')]").exists())
             .andExpect(jsonPath("$.signals[?(@.signalId == 'ec-glob-1')]").doesNotExist());

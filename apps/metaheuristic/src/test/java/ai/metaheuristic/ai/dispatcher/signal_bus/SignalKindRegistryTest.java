@@ -41,18 +41,22 @@ class SignalKindRegistryTest {
 
     @Test
     void topicBuilder_execContext_matchesCatalogue() {
+        // MH's default topic is domain-agnostic: execContext.<execContextId>.state
         String topic = registry.topicBuilderFor(SignalKind.EXEC_CONTEXT)
             .build(SignalKind.EXEC_CONTEXT, "100",
-                Map.of("infoBank", "DRONE", "sourceCodeUid", "mhdg-rg-flat-1.0.0"));
-        assertThat(topic).isEqualTo("execContext.DRONE.mhdg-rg-flat.state");
+                Map.of("sourceCodeId", 42L, "sourceCodeUid", "mhdg-rg-flat-1.0.0"));
+        assertThat(topic).isEqualTo("execContext.100.state");
     }
 
     @Test
-    void topicBuilder_execContext_cvWorkflow_matchesCatalogue() {
+    void topicBuilder_execContext_independentOfSourceCodeUid() {
+        // No matter what's in info, the topic is keyed only by the signalId
+        // (which is the execContextId). Workflow-family discrimination is
+        // a plugin concern, not MH's.
         String topic = registry.topicBuilderFor(SignalKind.EXEC_CONTEXT)
             .build(SignalKind.EXEC_CONTEXT, "101",
-                Map.of("infoBank", "DRONE", "sourceCodeUid", "cv-redundancy-1.0.0"));
-        assertThat(topic).isEqualTo("execContext.DRONE.cv-redundancy.state");
+                Map.of("sourceCodeUid", "cv-redundancy-1.0.0"));
+        assertThat(topic).isEqualTo("execContext.101.state");
     }
 
     @Test
