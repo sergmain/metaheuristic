@@ -248,6 +248,24 @@ public class TxSupportForTestingService {
         execContextCache.save(execContext);
     }
 
+    /**
+     * Only for testing
+     */
+    @Transactional
+    public void toFinished(Long execContextId) {
+        if (!globals.testing) {
+            throw new IllegalStateException("Only for testing");
+        }
+        ExecContextSyncService.checkWriteLockPresent(execContextId);
+        TxUtils.checkTxExists();
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            return;
+        }
+        execContext.setState(EnumsApi.ExecContextState.FINISHED.code);
+        execContextCache.save(execContext);
+    }
+
     @Transactional
     public OperationStatusRest addTasksToGraphWithTx(Long execContextId, List<Long> parentTaskIds, List<TaskApiData.TaskWithContext> taskIds) {
         if (!globals.testing) {

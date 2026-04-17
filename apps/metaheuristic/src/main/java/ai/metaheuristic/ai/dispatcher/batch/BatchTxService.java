@@ -58,6 +58,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import ai.metaheuristic.ai.dispatcher.signal_bus.ScopeRef;
+import ai.metaheuristic.ai.dispatcher.signal_bus.events.BatchStateSignalTxEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
@@ -109,6 +111,12 @@ public class BatchTxService {
         b.execState = Enums.BatchExecState.Processing.code;
         batchCache.save(b);
         dispatcherEventService.publishBatchEvent(EnumsApi.DispatcherEventType.BATCH_PROCESSING_STARTED, null, null, null, b.id, null, null );
+        eventPublisher.publishEvent(new BatchStateSignalTxEvent(
+            b.id, b.execState, new ScopeRef(b.companyId),
+            java.util.Map.of(
+                "state", b.execState,
+                "stateName", Enums.BatchExecState.Processing.name(),
+                "companyId", b.companyId)));
     }
 
     @Transactional
@@ -137,6 +145,12 @@ public class BatchTxService {
             b.execState = Enums.BatchExecState.Finished.code;
             batchCache.save(b);
             dispatcherEventService.publishEventBatchFinished(batchId);
+            eventPublisher.publishEvent(new BatchStateSignalTxEvent(
+                b.id, b.execState, new ScopeRef(b.companyId),
+                java.util.Map.of(
+                    "state", b.execState,
+                    "stateName", Enums.BatchExecState.Finished.name(),
+                    "companyId", b.companyId)));
         }
     }
 
@@ -162,6 +176,12 @@ public class BatchTxService {
 
         Batch b = createBatch(sourceCode, execContextId, dispatcherContext);
         BatchUtils.changeStateToPreparing(b);
+        eventPublisher.publishEvent(new BatchStateSignalTxEvent(
+            b.id, b.execState, new ScopeRef(b.companyId),
+            java.util.Map.of(
+                "state", b.execState,
+                "stateName", Enums.BatchExecState.Preparing.name(),
+                "companyId", b.companyId)));
 
         SourceCodeApiData.TaskProducingResultComplex result = execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContext);
 
@@ -194,6 +214,12 @@ public class BatchTxService {
         dispatcherEventService.publishBatchEvent(
                 EnumsApi.DispatcherEventType.BATCH_CREATED, dispatcherContext.getCompanyId(),
                 sourceCode.uid, null, b.id, execContextId, dispatcherContext );
+        eventPublisher.publishEvent(new BatchStateSignalTxEvent(
+            b.id, b.execState, new ScopeRef(b.companyId),
+            java.util.Map.of(
+                "state", b.execState,
+                "stateName", Enums.BatchExecState.Stored.name(),
+                "companyId", b.companyId)));
         return b;
     }
 
