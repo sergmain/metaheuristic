@@ -81,25 +81,6 @@ public class BatchRestController {
         return batchTopLevelService.getBatches(pageable, dispatcherContext, false, filterBatches);
     }
 
-    /**
-     * @deprecated since Signal Bus cutover (Plan 07). Use
-     * {@code GET /rest/v1/dispatcher/signals} with {@code kinds=BATCH} instead.
-     * Scheduled for removal in a future release once external-consumer
-     * inventory confirms no other clients depend on this endpoint.
-     */
-    @Deprecated(since = "7.1.21", forRemoval = true)
-    @GetMapping("/batch-exec-statuses")
-    @PreAuthorize("isAuthenticated()")
-    public BatchData.ExecStatuses batchExecStatuses(Authentication authentication) {
-        UserContext context = userContextService.getContext(authentication);
-        if (!(context instanceof DispatcherContext dispatcherContext)) {
-            BatchData.ExecStatuses result = new BatchData.ExecStatuses(List.of());
-            result.addErrorMessage("220.140 (!(context instanceof DispatcherContext dispatcherContext))");
-            return result;
-        }
-        return batchTopLevelService.getBatchExecStatuses(dispatcherContext);
-    }
-
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
     @PostMapping("/batches-part")
     public BatchData.BatchesResult batchesPart(

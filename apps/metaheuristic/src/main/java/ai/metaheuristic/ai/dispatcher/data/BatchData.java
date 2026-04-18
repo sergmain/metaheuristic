@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.dispatcher.batch.data.BatchExecStatus;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
@@ -76,21 +75,6 @@ public final class BatchData {
 
         public UploadingStatus(List<String> errorMessages) {
             addErrorMessages(errorMessages);
-        }
-    }
-
-    @Data
-    @EqualsAndHashCode(callSuper = false)
-    @AllArgsConstructor
-    public static class ExecStatuses extends BaseDataClass {
-        public List<BatchExecStatus> statuses;
-
-        @JsonCreator
-        public ExecStatuses(
-            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
-            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
-            this.errorMessages = errorMessages;
-            this.infoMessages = infoMessages;
         }
     }
 

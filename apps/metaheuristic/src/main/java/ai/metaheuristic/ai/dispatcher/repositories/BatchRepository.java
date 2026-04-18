@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.repositories;
 
-import ai.metaheuristic.ai.dispatcher.batch.data.BatchExecStatus;
 import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -82,11 +81,6 @@ public interface BatchRepository extends CrudRepository<Batch, Long> {
 //    @Transactional(readOnly = true)
     @Query("select b.id from Batch b where b.companyId=:companyUniqueId and b.deleted=false and b.accountId=:accountId order by b.createdOn desc")
     Page<Long> findAllForAccountExcludeDeletedByOrderByCreatedOnDesc(Pageable pageable, Long companyUniqueId, Long accountId);
-
-//    @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.batch.data.BatchExecStatus(b.id, b.execState) " +
-            "from Batch b where b.companyId=:companyUniqueId")
-    List<BatchExecStatus> getBatchExecStatuses(Long companyUniqueId);
 
 //    @Transactional(readOnly = true)
     @Query(value="select b.id from Batch b where b.execState=3")
