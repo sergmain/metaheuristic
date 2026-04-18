@@ -35,9 +35,15 @@ import java.util.Objects;
 @Data
 public abstract class BaseDataClass {
 
+    /**
+     * !!! To include fields from this BaseDataClass class, constructor must be annotated with @JsonCreator
+     */
     @JsonInclude(value= JsonInclude.Include.NON_NULL, content= JsonInclude.Include.NON_EMPTY)
     public @Nullable List<String> errorMessages;
 
+    /**
+     * !!! To include fields from this BaseDataClass class, constructor must be annotated with @JsonCreator
+     */
     @JsonInclude(value= JsonInclude.Include.NON_NULL, content= JsonInclude.Include.NON_EMPTY)
     public @Nullable List<String> infoMessages;
 

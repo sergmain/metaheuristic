@@ -108,6 +108,9 @@ public class ExecContextTaskAssigningTopLevelService {
 
     private void findUnassignedTasksAndRegisterInQueue(FindUnassignedTasksAndRegisterInQueueEvent event) {
         List<Long> execContextIds = execContextRepository.findAllStartedIds();
+        if (execContextIds.isEmpty()) {
+            return;
+        }
         execContextIds.sort(Comparator.naturalOrder());
         UnassignedTasksStat statTotal = new UnassignedTasksStat();
         log.warn("703.020 allocator scan running for {} execContexts.", execContextIds);

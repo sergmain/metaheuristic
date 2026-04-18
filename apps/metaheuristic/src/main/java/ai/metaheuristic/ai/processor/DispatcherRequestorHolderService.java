@@ -26,6 +26,8 @@ import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -79,11 +81,12 @@ public class DispatcherRequestorHolderService {
         }
     }
 
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     @PreDestroy
     public void preDestroy() {
         dispatcherRequestorMap.forEach((k,v) -> {
-            v.processorKeepAliveRequestor.shutdown();
             v.functionRepositoryRequestor.shutdown();
+            v.processorKeepAliveRequestor.shutdown();
             v.dispatcherRequestor.shutdown();
         });
     }
