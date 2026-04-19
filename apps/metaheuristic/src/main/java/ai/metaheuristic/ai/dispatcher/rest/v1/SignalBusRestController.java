@@ -60,6 +60,10 @@ public class SignalBusRestController {
 
     private static final int HARD_CAP = 2000;
 
+    // DEBUG: per-process poll counter, increments on every arriving GET.
+    private static final java.util.concurrent.atomic.AtomicLong __pollN =
+        new java.util.concurrent.atomic.AtomicLong(0);
+
     private final SignalBus signalBus;
     private final UserContextService userContextService;
 
@@ -72,10 +76,17 @@ public class SignalBusRestController {
             @RequestParam(defaultValue = "500") int max,
             Authentication authentication) {
 
+        long n = __pollN.incrementAndGet();
+        long t0 = System.nanoTime();
+        log.warn("SIG-DBG poll#{} ENTER afterRev={} kinds={} topics={} max={} principal={}",
+            n, afterRev, kinds, topics, max,
+            authentication != null ? authentication.getName() : "<null>");
+
         UserContext ctx = userContextService.getContext(authentication);
         if (!(ctx instanceof DispatcherContext dctx)) {
             SignalPollResponse err = new SignalPollResponse();
             err.addErrorMessage("SIG.100 (!(context instanceof DispatcherContext dispatcherContext))");
+            log.warn("SIG-DBG poll#{} EXIT SIG.100 bad principal, dtMs={}", n, (System.nanoTime() - t0) / 1_000_000);
             return err;
         }
 
@@ -93,6 +104,9 @@ public class SignalBusRestController {
         if (!parsed.warnings.isEmpty()) {
             parsed.warnings.forEach(response::addInfoMessage);
         }
+        log.warn("SIG-DBG poll#{} EXIT companyId={} serverRev={} signals={} truncated={} warnings={} dtMs={}",
+            n, dctx.getCompanyId(), qr.serverRev(), capped.size(), truncated,
+            parsed.warnings.size(), (System.nanoTime() - t0) / 1_000_000);
         return response;
     }
 
