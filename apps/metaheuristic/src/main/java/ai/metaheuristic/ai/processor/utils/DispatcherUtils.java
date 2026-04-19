@@ -27,6 +27,8 @@ import org.apache.hc.core5.util.TimeValue;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
+import static ai.metaheuristic.ai.Consts.DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS;
+
 /**
  * @author Serge
  * Date: 11/21/2020
@@ -46,9 +48,9 @@ public class DispatcherUtils {
             .create()
             .setDefaultSocketConfig(socketConfig)
             .setDefaultConnectionConfig(ConnectionConfig.custom()
-                .setConnectTimeout(Timeout.ofSeconds(5))
-                .setSocketTimeout(Timeout.ofSeconds(5))
-                .setValidateAfterInactivity(TimeValue.ofSeconds(10))
+                .setConnectTimeout(Timeout.of(DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS))
+                .setSocketTimeout(Timeout.of(DURATION_DISPATCHER_SOCKET_TIMEOUT_SECONDS))
+                .setValidateAfterInactivity(TimeValue.ofSeconds(11))
                 .setTimeToLive(TimeValue.ofHours(1))
                 .build())
             .build();
@@ -56,11 +58,9 @@ public class DispatcherUtils {
         final HttpClient httpClient = HttpClientBuilder.create()
                 .setConnectionManager(manager)
                 .useSystemProperties()
-//                .setDefaultRequestConfig(custom().setConnectTimeout(Timeout.ofSeconds(5)).build())
                 .build();
 
         final HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
-        requestFactory.setConnectTimeout((int) Consts.DISPATCHER_SOCKET_TIMEOUT_MILLISECONDS);
 
         return requestFactory;
     }

@@ -49,6 +49,7 @@ import static ai.metaheuristic.ai.Enums.InternalFunctionProcessing.*;
  * Date: 6/27/2021
  * Time: 11:20 AM
  */
+@SuppressWarnings("deprecation")
 @Service
 @Slf4j
 @Profile("dispatcher")
@@ -98,11 +99,9 @@ public class StringAsVariableFunction implements InternalFunction {
                 keyName = inlineAsVar.key;
             }
             else {
-                //noinspection deprecation
                 if (inlineAsVar.group!=null) {
                     log.warn("513.335 ai.metaheuristic.ai.dispatcher.data.StringVariableData.StringAsVar.group is deprecated, use key instead");
                 }
-                //noinspection deprecation
                 keyName = inlineAsVar.group;
             }
             if (keyName==null) {
@@ -141,8 +140,7 @@ public class StringAsVariableFunction implements InternalFunction {
             VariableSyncService.getWithSyncVoid(outputVariable.id, ()-> variableTxService.storeStringInVariable(simpleExecContext.execContextId, taskId, outputVariable, value));
         }
 
-        //noinspection unused
-        int i=0;
+        int _=0;
     }
 
 }

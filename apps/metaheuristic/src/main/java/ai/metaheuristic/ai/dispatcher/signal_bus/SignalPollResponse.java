@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.dispatcher.signal_bus;
 
 import ai.metaheuristic.api.data.BaseDataClass;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -46,8 +48,16 @@ import java.util.List;
 public class SignalPollResponse extends BaseDataClass {
     public long serverRev;
     public @Nullable Instant polledAt;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public @Nullable List<SignalEntry> signals;
+    @JsonIgnore
     public boolean truncated;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public @Nullable Boolean getTruncated() {
+        return truncated ? Boolean.TRUE : null;
+    }
 
     @JsonCreator
     public SignalPollResponse(
