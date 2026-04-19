@@ -107,6 +107,10 @@ public class ExecContextTaskAssigningTopLevelService {
     }
 
     private void findUnassignedTasksAndRegisterInQueue(FindUnassignedTasksAndRegisterInQueueEvent event) {
+//        System.gc();
+        System.out.printf("total memory: %d, free memory: %d, max memory: %s\n",
+            Runtime.getRuntime().totalMemory(), Runtime.getRuntime().freeMemory(), Runtime.getRuntime().maxMemory());
+
         List<Long> execContextIds = execContextRepository.findAllStartedIds();
         if (execContextIds.isEmpty()) {
             return;

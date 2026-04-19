@@ -133,7 +133,6 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
             final String uri = task.dispatcher.url + "/rest/v1/payload/resource/"+type+'/'+task.taskId+'/'+
                     UUID.randomUUID().toString().substring(0, 8) + '-' +task.core.processorId + '-' + task.taskId + '-' + URLEncoder.encode(task.variableId, StandardCharsets.UTF_8);
 
-//            File parentDir = assetFile.file.toFile().getParentFile();
             Path parentDir = assetFile.file.getParent();
             if (parentDir==null) {
                 es = "810.020 Can't get parent dir for asset file " + assetFile.file.toAbsolutePath();
@@ -142,21 +141,9 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 return;
             }
             Path tempFile = Files.createTempFile(parentDir, "resource-", ".temp");
-/*
-            File tempFile;
-            try {
-                tempFile = File.createTempFile("resource-", ".temp", parentDir);
-            } catch (IOException e) {
-                es = "810.025 Error creating temp file in parent dir: " + parentDir.getAbsolutePath();
-                log.error(es, e);
-                processorTaskService.markAsFinishedWithError(task.core, task.taskId, es);
-                return;
-            }
-*/
 
             String mask = assetFile.file.getFileName().toString() + ".%s.tmp";
             // TODO 2023-06-26 re-write with nio
-//            File dir = assetFile.file.toFile().getParentFile();
             Path dir = parentDir;
             Enums.VariableState resourceState = Enums.VariableState.none;
             int idx = 0;
@@ -176,7 +163,6 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
 
                     Response response = HttpClientExecutor.getExecutor(
                             task.core.dispatcherUrl.url, task.dispatcher.restUsername, task.dispatcher.restPassword).execute(request);
-//                    File partFile = new File(dir, String.format(mask, idx));
                     Path partFile = dir.resolve(String.format(mask, idx));
                     final HttpResponse httpResponse = response.returnResponse();
                     if (!(httpResponse instanceof ClassicHttpResponse classicHttpResponse)) {
