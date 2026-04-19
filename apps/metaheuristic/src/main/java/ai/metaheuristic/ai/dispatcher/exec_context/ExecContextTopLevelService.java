@@ -109,6 +109,10 @@ public class ExecContextTopLevelService {
         boolean managerRole = authentication.getAuthorities().stream().anyMatch(o -> isManagerRole(o.getAuthority()));
         ExecContextApiData.ExecContextStateResult r = ExecContextUtils.getExecContextStateResult(execContextId, raw, managerRole);
 
+        // populate ExecContext's own state name so the UI has an initial value
+        // before any signal-bus EXEC_CONTEXT signal arrives (or if the last signal has been evicted)
+        r.execState = EnumsApi.ExecContextState.toState(ec.state).name();
+
         // populate versions for the next poll
         r.versions = currentVersions;
 

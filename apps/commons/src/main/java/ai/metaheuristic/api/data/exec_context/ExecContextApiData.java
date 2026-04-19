@@ -250,6 +250,11 @@ public class ExecContextApiData {
         public String sourceCodeUid;
         public boolean sourceCodeValid;
         public Long execContextId;
+        // Name of EnumsApi.ExecContextState for this ExecContext (e.g. "STARTED", "FINISHED").
+        // Populated on non-theSame responses so the UI has an initial value before any
+        // signal-bus EXEC_CONTEXT signal arrives (or if the last signal has been evicted).
+        @Nullable
+        public String execState;
         public EnumsApi.SourceCodeType sourceCodeType;
         public ColumnHeader[] header;
         public LineWithState[] lines;
