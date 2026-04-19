@@ -112,11 +112,6 @@ public class BatchTopLevelService {
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
     public static final Function<ZipEntry, ZipUtils.ValidationResult> VALIDATE_ZIP_ENTRY_SIZE_FUNCTION = BatchTopLevelService::isZipEntitySizeOk;
 
-    public BatchData.ExecStatuses getBatchExecStatuses(DispatcherContext context) {
-        BatchData.ExecStatuses execStatuses = new BatchData.ExecStatuses(batchRepository.getBatchExecStatuses(context.getCompanyId()));
-        return execStatuses;
-    }
-
     public void deleteOrphanOrObsoletedBatches(Set<Long> batchIds) {
         for (Long batchId : batchIds) {
             try {

@@ -81,18 +81,6 @@ public class BatchRestController {
         return batchTopLevelService.getBatches(pageable, dispatcherContext, false, filterBatches);
     }
 
-    @GetMapping("/batch-exec-statuses")
-    @PreAuthorize("isAuthenticated()")
-    public BatchData.ExecStatuses batchExecStatuses(Authentication authentication) {
-        UserContext context = userContextService.getContext(authentication);
-        if (!(context instanceof DispatcherContext dispatcherContext)) {
-            BatchData.ExecStatuses result = new BatchData.ExecStatuses(List.of());
-            result.addErrorMessage("220.140 (!(context instanceof DispatcherContext dispatcherContext))");
-            return result;
-        }
-        return batchTopLevelService.getBatchExecStatuses(dispatcherContext);
-    }
-
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
     @PostMapping("/batches-part")
     public BatchData.BatchesResult batchesPart(

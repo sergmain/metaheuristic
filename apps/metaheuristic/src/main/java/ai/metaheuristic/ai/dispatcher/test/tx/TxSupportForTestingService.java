@@ -115,6 +115,14 @@ public class TxSupportForTestingService {
     }
 
     @Transactional
+    public ai.metaheuristic.ai.dispatcher.beans.Batch batchCacheSave(ai.metaheuristic.ai.dispatcher.beans.Batch batch) {
+        if (!globals.testing) {
+            throw new IllegalStateException("Only for testing");
+        }
+        return batchCache.save(batch);
+    }
+
+    @Transactional
     public void execContextCacheDeleteById(Long execContextId) {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
@@ -237,6 +245,24 @@ public class TxSupportForTestingService {
             return;
         }
         execContext.setState(EnumsApi.ExecContextState.STARTED.code);
+        execContextCache.save(execContext);
+    }
+
+    /**
+     * Only for testing
+     */
+    @Transactional
+    public void toFinished(Long execContextId) {
+        if (!globals.testing) {
+            throw new IllegalStateException("Only for testing");
+        }
+        ExecContextSyncService.checkWriteLockPresent(execContextId);
+        TxUtils.checkTxExists();
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            return;
+        }
+        execContext.setState(EnumsApi.ExecContextState.FINISHED.code);
         execContextCache.save(execContext);
     }
 

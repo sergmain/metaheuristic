@@ -209,6 +209,21 @@ public class Globals {
         public Duration updateBatchStatuses = Duration.ofSeconds(5);
 
         /**
+         * Signal Bus — how often the TTL sweeper runs.
+         * See docs/mh/signal-bus-01-architecture.md §7.3.
+         */
+        @DurationUnit(ChronoUnit.SECONDS)
+        public Duration signalBusSweep = ConstsApi.SECONDS_60;
+
+        /**
+         * Signal Bus — TTL for entries in the snapshot.
+         * An entry whose createdAt is older than this is swept.
+         * createdAt resets on every overwrite, so a live source stays alive indefinitely.
+         */
+        @DurationUnit(ChronoUnit.HOURS)
+        public Duration signalBusTtl = Duration.ofHours(24);
+
+        /**
          * period of time after which a virtually deleted batch will be deleted from db
          */
         @DurationUnit(ChronoUnit.DAYS)
@@ -244,6 +259,24 @@ public class Globals {
 
         public void setBatchDeletion(Duration batchDeletion) {
             this.batchDeletion = batchDeletion;
+        }
+
+        public Duration getSignalBusSweep() {
+            return signalBusSweep.toSeconds() >= 5 && signalBusSweep.toSeconds() <= 600 ? signalBusSweep : ConstsApi.SECONDS_60;
+        }
+
+        public Duration getSignalBusTtl() {
+            // clamp between 1 hour and 7 days — below 1h starves the UI, above 7d bloats memory
+            long h = signalBusTtl.toHours();
+            return h >= 1 && h <= 24*7 ? signalBusTtl : Duration.ofHours(24);
+        }
+
+        public void setSignalBusSweep(Duration signalBusSweep) {
+            this.signalBusSweep = signalBusSweep;
+        }
+
+        public void setSignalBusTtl(Duration signalBusTtl) {
+            this.signalBusTtl = signalBusTtl;
         }
     }
 

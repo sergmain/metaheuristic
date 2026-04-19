@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,24 +14,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.dispatcher.batch.data;
+package ai.metaheuristic.ai.dispatcher.signal_bus.events;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import ai.metaheuristic.ai.dispatcher.signal_bus.ScopeRef;
+
+import java.util.Map;
 
 /**
- * !! this class is the top-level class
- * !! because it's using in spring's repository implementation
- *
- * @author Serge
- * Date: 12/10/2019
- * Time: 3:56 PM
+ * Document export progress events are NON-transactional — export has no
+ * tx boundary around its progress ticks. No *TxEvent pair.
+ * signalId synthesized by the producer: "export:<projectId>:<exportId>".
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class BatchExecStatus {
-    public Long id;
-    public int state;
-}
+public record DocumentExportSignalEvent(
+    String signalId,
+    ScopeRef scope,
+    Map<String, Object> info
+) {}
