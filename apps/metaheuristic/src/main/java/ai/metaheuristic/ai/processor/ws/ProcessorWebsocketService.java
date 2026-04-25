@@ -145,7 +145,7 @@ public class ProcessorWebsocketService {
             log.debug("start processing CompletableFuture, " + url);
             inProcess.set(true);
             try {
-                CompletableFuture<StompSession> future = stompClient.connectAsync(url, sessionHandler);
+                CompletableFuture<@Nullable StompSession> future = stompClient.connectAsync(url, sessionHandler);
 
                 log.debug("\twaiting for completion, " + url);
                 StompSession session = future.get();

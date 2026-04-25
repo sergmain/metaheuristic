@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
+import ai.metaheuristic.ai.shutdown.ShutdownService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -70,6 +71,7 @@ public class ExecContextTaskAssigningTopLevelService {
     private final ExecContextRepository execContextRepository;
     private final ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ShutdownService shutdownService;
 
     public static class UnassignedTasksStat {
         public int found;

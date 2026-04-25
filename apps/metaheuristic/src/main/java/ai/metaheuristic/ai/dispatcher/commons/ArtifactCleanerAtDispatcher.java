@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.*;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTransactionalService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
+import ai.metaheuristic.ai.shutdown.ShutdownInterface;
 import ai.metaheuristic.commons.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.TxUtils;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +52,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Profile("dispatcher")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class ArtifactCleanerAtDispatcher {
+public class ArtifactCleanerAtDispatcher implements ShutdownInterface {
 
     private final Globals globals;
     private final ExecContextTopLevelService execContextTopLevelService;
@@ -82,6 +83,21 @@ public class ArtifactCleanerAtDispatcher {
     private static final AtomicInteger busy = new AtomicInteger(0);
     private static long mills = 0L;
 
+    private boolean shutdown = false;
+
+    public void shutdown() {
+        shutdown = true;
+    }
+
+//    public boolean isShutdown() {
+//        return shutdown;
+//    }
+
+
+    public boolean isShutdown() {
+        return shutdown || isBusy();
+    }
+
     private static boolean isBusy() {
         final boolean b = busy.get() > 0;
         if (b) {
@@ -110,7 +126,7 @@ public class ArtifactCleanerAtDispatcher {
 
         deleteOrphanExecContexts();
 
-        if (isBusy()) {
+        if (isShutdown() || isShutdown()) {
             return;
         }
 
@@ -144,7 +160,7 @@ public class ArtifactCleanerAtDispatcher {
             while (!(ids = processorCoreRepository.findIdsByProcessorId(Consts.PAGE_REQUEST_100_REC, processorId)).isEmpty()) {
                 List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 10);
                 for (List<Long> page : pages) {
-                    if (isBusy()) {
+                    if (isShutdown()) {
                         return;
                     }
                     if (page.isEmpty()) {
@@ -168,7 +184,7 @@ public class ArtifactCleanerAtDispatcher {
         List<String> functionCodes = functionRepository.findAllFunctionCodes();
         for (String functionCode : functionCodesInData) {
             if (!functionCodes.contains(functionCode)) {
-                if (isBusy()) {
+                if (isShutdown()) {
                     return;
                 }
                 try {
@@ -197,7 +213,7 @@ public class ArtifactCleanerAtDispatcher {
         List<Long> periodsForDelete = dispatcherEventRepository.getPeriodIdsBefore(period);
         List<List<Long>> pages = CollectionUtils.parseAsPages(periodsForDelete, 20);
         for (List<Long> page : pages) {
-            if (isBusy()) {
+            if (isShutdown()) {
                 return;
             }
             if (page.isEmpty()) {
@@ -220,7 +236,7 @@ public class ArtifactCleanerAtDispatcher {
         Set<Long> forDeletion = new HashSet<>();
         List<Object[]> batches = batchRepository.findAllIdAndCreatedOnAndDeleted();
         for (Object[] obj : batches) {
-            if (isBusy()) {
+            if (isShutdown()) {
                 return;
             }
             long batchId = ((Number)obj[0]).longValue();
@@ -257,15 +273,15 @@ public class ArtifactCleanerAtDispatcher {
         // this operation isn't complex so don't need to use isBusy()
         markTasksAsFinishedForFinishedExecContext();
 
-        if (isBusy()) {
+        if (isShutdown()) {
             return;
         }
         deleteOrphanExecContextGraph(execContextIds);
-        if (isBusy()) {
+        if (isShutdown()) {
             return;
         }
         deleteOrphanExecContextTaskState(execContextIds);
-        if (isBusy()) {
+        if (isShutdown()) {
             return;
         }
         deleteOrphanExecContextVariableState(execContextIds);
@@ -384,7 +400,7 @@ public class ArtifactCleanerAtDispatcher {
                 .filter(o->!execContextIds.contains(o)).collect(Collectors.toList());
 
         for (Long execContextId : orphanExecContextIds) {
-            if (isBusy()) {
+            if (isShutdown()) {
                 return;
             }
             if (execContextCache.findById(execContextId, true)!=null) {
@@ -406,7 +422,7 @@ public class ArtifactCleanerAtDispatcher {
             while (!(ids = taskRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
                 List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 10);
                 for (List<Long> page : pages) {
-                    if (page.isEmpty() || isBusy()) {
+                    if (page.isEmpty() || isShutdown()) {
                         return;
                     }
                     log.info("Found orphan task, execContextId: #{}, tasks #{}", execContextId, page);
@@ -440,7 +456,7 @@ public class ArtifactCleanerAtDispatcher {
             while (!(ids = variableRepository.findAllByExecContextId(Consts.PAGE_REQUEST_100_REC, execContextId)).isEmpty()) {
                 List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 10);
                 for (List<Long> page : pages) {
-                    if (isBusy()) {
+                    if (isShutdown()) {
                         return;
                     }
                     if (page.isEmpty()) {
@@ -473,7 +489,7 @@ public class ArtifactCleanerAtDispatcher {
             while (!(ids = cacheProcessRepository.findByFunctionCode(Consts.PAGE_REQUEST_100_REC, funcCode)).isEmpty()) {
                 List<List<Long>> pages = CollectionUtils.parseAsPages(ids, 10);
                 for (List<Long> page : pages) {
-                    if (isBusy()) {
+                    if (isShutdown()) {
                         return;
                     }
                     if (page.isEmpty()) {

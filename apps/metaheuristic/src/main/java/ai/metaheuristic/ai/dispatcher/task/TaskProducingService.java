@@ -38,6 +38,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -80,10 +81,10 @@ public class TaskProducingService {
         // for external Functions internalContextId==process.internalContextId
         TaskImpl t = createTaskHelper(execContextId, execContextParamsYaml, process, process.internalContextId,
                 execContextParamsYaml.variables.inline, parentTaskIds, taskExecState);
-        if (t == null) {
-            return new TaskData.ProduceTaskResult(
-                    EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR, "375.020 Unknown reason of error while task creation");
-        }
+//        if (t == null) {
+//            return new TaskData.ProduceTaskResult(
+//                    EnumsApi.TaskProducingStatus.TASK_PRODUCING_ERROR, "375.020 Unknown reason of error while task creation");
+//        }
 
         result.taskId = t.getId();
         List<TaskApiData.TaskWithContext> taskWithContexts = List.of(new TaskApiData.TaskWithContext( t.getId(), process.internalContextId));
@@ -157,10 +158,10 @@ public class TaskProducingService {
             };
 
             t = createTaskHelper(simpleExecContext.execContextId, execContextParamsYaml, p, actualProcessContextId, inlines, List.of(parentTaskId), EnumsApi.TaskExecState.PRE_INIT);
+//            if (t==null) {
+//                throw new BreakFromLambdaException("375.120 Creation of task failed");
+//            }
 
-            if (t==null) {
-                throw new BreakFromLambdaException("375.120 Creation of task failed");
-            }
             final EnumsApi.TaskExecState targetState = EnumsApi.TaskExecState.from(t.execState);
             if (targetState.value!=t.execState) {
                 log.info("(targetState.value!=t.execState)");
@@ -185,10 +186,12 @@ public class TaskProducingService {
         }
     }
 
-    @Nullable
+//    @Nullable
     private TaskImpl createTaskHelper(
         Long execContextId, ExecContextParamsYaml execContextParamsYaml, ExecContextParamsYaml.Process process,
         String taskContextId, @Nullable Map<String, Map<String, String>> inlines, List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState) {
+
+        TxUtils.checkTxExists();
 
         TaskParamsYaml taskParams = new TaskParamsYaml();
         taskParams.task.execContextId = execContextId;
@@ -198,18 +201,6 @@ public class TaskProducingService {
         taskParams.task.inline = inlines;
 
         taskParams.task.metas.addAll(process.metas);
-/*
-        // TODO p0 2026-03-01 add SpEL evaluation of Metas here
-        if (!process.metas.isEmpty()) {
-            var evaluator = ElEvaluator.createMhEvaluator(
-                    execContextId, 0L, taskContextId,
-                    internalFunctionVariableService, globalVariableService, variableTxService,
-                    variableRepository,
-                    (v) -> VariableSyncService.getWithSyncVoidForCreation(v.id,
-                            () -> variableTxService.setVariableAsNull(0L, v.id)));
-            taskParams.task.metas.addAll(ElEvaluator.resolveMetas(process.metas, evaluator));
-        }
-*/
 
         if (taskParams.task.context== EnumsApi.FunctionExecContext.internal) {
             taskParams.task.function = new TaskParamsYaml.FunctionConfig(
@@ -220,16 +211,20 @@ public class TaskProducingService {
         else {
             TaskParamsYaml.FunctionConfig fConfig = functionTopLevelService.getFunctionConfig(process.function);
             if (fConfig == null) {
-                log.error("375.140 Function '{}' wasn't found", process.function.code);
-                return null;
+//                log.error("375.140 Function '{}' wasn't found", process.function.code);
+//                return null;
+                String es = S.f("375.140 Function '%s' wasn't found", process.function.code);
+                throw new CommonRollbackException(es, EnumsApi.OperationStatus.ERROR);
             }
             taskParams.task.function = fConfig;
             if (process.getPreFunctions()!=null) {
                 for (ExecContextParamsYaml.FunctionDefinition preFunction : process.getPreFunctions()) {
                     TaskParamsYaml.FunctionConfig functionConfig = functionTopLevelService.getFunctionConfig(preFunction);
                     if (functionConfig==null) {
-                        log.error("375.145 Pre-function '{}' wasn't found", preFunction.code);
-                        continue;
+//                        log.error("375.145 Pre-function '{}' wasn't found", preFunction.code);
+//                        continue;
+                        String es = S.f("375.145 Pre-function '%s' wasn't found", preFunction.code);
+                        throw new CommonRollbackException(es, EnumsApi.OperationStatus.ERROR);
                     }
                     taskParams.task.preFunctions.add(functionConfig);
                 }
@@ -238,8 +233,10 @@ public class TaskProducingService {
                 for (ExecContextParamsYaml.FunctionDefinition postFunction : process.getPostFunctions()) {
                     TaskParamsYaml.FunctionConfig functionConfig = functionTopLevelService.getFunctionConfig(postFunction);
                     if (functionConfig==null) {
-                        log.error("375.150 Post-function '{}' wasn't found", postFunction.code);
-                        continue;
+//                        log.error("375.150 Post-function '{}' wasn't found", postFunction.code);
+//                        continue;
+                        String es = S.f("375.150 Post-function '%s' wasn't found", postFunction.code);
+                        throw new CommonRollbackException(es, EnumsApi.OperationStatus.ERROR);
                     }
                     taskParams.task.postFunctions.add(functionConfig);
                 }

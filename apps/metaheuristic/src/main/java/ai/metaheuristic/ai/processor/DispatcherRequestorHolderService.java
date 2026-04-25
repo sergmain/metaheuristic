@@ -21,13 +21,11 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.functions.FunctionRepositoryProcessorService;
 import ai.metaheuristic.ai.functions.FunctionRepositoryRequestor;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
+import ai.metaheuristic.ai.shutdown.ShutdownInterface;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
-import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -44,7 +42,21 @@ import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 //@EnableScheduling
 @Slf4j
 @Profile("processor")
-public class DispatcherRequestorHolderService {
+public class DispatcherRequestorHolderService implements ShutdownInterface {
+
+    private boolean shutdown = false;
+
+    public void shutdown() {
+            dispatcherRequestorMap.forEach((k,v) -> {
+                v.functionRepositoryRequestor.shutdown();
+                v.processorKeepAliveRequestor.shutdown();
+                v.dispatcherRequestor.shutdown();
+        });
+    }
+
+    public boolean isShutdown() {
+        return shutdown;
+    }
 
     public record Requesters(DispatcherRequestor dispatcherRequestor,
                              ProcessorKeepAliveRequestor processorKeepAliveRequestor,
@@ -79,16 +91,6 @@ public class DispatcherRequestorHolderService {
 
             dispatcherRequestorMap.put(dispatcher.dispatcherUrl, new Requesters(dispatcherRequestor, keepAliveRequestor, functionRepositoryRequestor));
         }
-    }
-
-    @Order(Ordered.HIGHEST_PRECEDENCE)
-    @PreDestroy
-    public void preDestroy() {
-        dispatcherRequestorMap.forEach((k,v) -> {
-            v.functionRepositoryRequestor.shutdown();
-            v.processorKeepAliveRequestor.shutdown();
-            v.dispatcherRequestor.shutdown();
-        });
     }
 
 }

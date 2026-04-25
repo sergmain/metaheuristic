@@ -156,8 +156,8 @@ public class BatchLineSplitterTxService {
             } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                 throw e;
             } catch (Throwable th) {
-                String es = S.f("994.360 An error in createTasksForSubProcesses(), name: %s, execContextId: %s, taskCtxId: %s, error: %s",
-                        variableName, simpleExecContext.execContextId, currTaskContextId, th.getMessage());
+                String es = S.f("994.360 An error in createTasksForSubProcesses(), execContextId: %s, taskCtxId: %s, error: %s",
+                        simpleExecContext.execContextId, currTaskContextId, th.getMessage());
                 log.error(es, th);
                 throw new BatchResourceProcessingException(es);
             }
