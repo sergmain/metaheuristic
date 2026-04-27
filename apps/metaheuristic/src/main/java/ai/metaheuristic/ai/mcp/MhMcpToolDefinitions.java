@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
@@ -27,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskResetService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
@@ -48,6 +50,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +65,7 @@ import java.util.Optional;
  *
  * Activated only when both 'dispatcher' AND 'mcp' Spring profiles are active.
  *
- * 10 tools total — read-mostly access to MH internals plus a few control operations:
+ * 11 tools total — read-mostly access to MH internals plus a few control operations:
  *
  *   mh_get_variable_info               — metadata for an internal Variable by id
  *   mh_get_variable_content            — content of an internal Variable, truncated to N bytes
@@ -74,6 +77,7 @@ import java.util.Optional;
  *   mh_get_exec_context_graph          — ExecContextGraph by id (raw params YAML, static Process DAG)
  *   mh_get_exec_context_task_state     — ExecContextTaskState by id (raw params YAML, dynamic Task DAG)
  *   mh_get_exec_context_variable_state — ExecContextVariableState by id (raw params YAML, dynamic Variable state)
+ *   mh_list_source_codes               — list all SourceCodes with general info (id, uid, companyId, latch, valid)
  *
  * @author Serge
  * Date: 4/6/2026
@@ -95,6 +99,7 @@ public class MhMcpToolDefinitions {
     private final ExecContextGraphRepository execContextGraphRepository;
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final ExecContextVariableStateRepository execContextVariableStateRepository;
+    private final SourceCodeRepository sourceCodeRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
@@ -179,6 +184,14 @@ public class MhMcpToolDefinitions {
             String message
     ) {}
 
+    public record SourceCodeListItemDto(
+            Long id,
+            String uid,
+            @Nullable Long companyId,
+            @Nullable String latch,
+            boolean valid
+    ) {}
+
     // ==================== Build all tool specifications ====================
 
     public List<McpServerFeatures.SyncToolSpecification> getAllToolSpecifications() {
@@ -192,7 +205,8 @@ public class MhMcpToolDefinitions {
                 getExecContextInfoTool(),
                 getExecContextGraphTool(),
                 getExecContextTaskStateTool(),
-                getExecContextVariableStateTool()
+                getExecContextVariableStateTool(),
+                listSourceCodesTool()
         );
     }
 
@@ -532,6 +546,32 @@ public class MhMcpToolDefinitions {
                     }
                     ExecContextVariableState v = opt.get();
                     return toCallToolResult(new ExecContextVariableStateDto(v.id, v.execContextId, v.createdOn, v.getParams()));
+                })
+                .build();
+    }
+
+    // ==================== Tool 10: list source codes ====================
+
+    private McpServerFeatures.SyncToolSpecification listSourceCodesTool() {
+        Map<String, Object> props = new HashMap<>();
+
+        return McpServerFeatures.SyncToolSpecification.builder()
+                .tool(Tool.builder()
+                        .name("mh_list_source_codes")
+                        .title("List SourceCodes")
+                        .description("List all SourceCodes in the database with general info: id, uid, "
+                                + "companyId, latch, and valid flag. Returns all rows across all companies "
+                                + "(no companyId filter). Use this to discover available SourceCodes and their "
+                                + "uids before calling tools that require a sourceCodeUidPrefix.")
+                        .inputSchema(new McpSchema.JsonSchema("object", props, List.of(), false, null, null))
+                        .build())
+                .callHandler((exchange, request) -> {
+                    log.info("260.250 MCP listSourceCodes()");
+                    List<SourceCodeListItemDto> items = new ArrayList<>();
+                    for (SourceCodeImpl sc : sourceCodeRepository.findAll()) {
+                        items.add(new SourceCodeListItemDto(sc.id, sc.uid, sc.companyId, sc.latch, sc.valid));
+                    }
+                    return toCallToolResult(items);
                 })
                 .build();
     }
