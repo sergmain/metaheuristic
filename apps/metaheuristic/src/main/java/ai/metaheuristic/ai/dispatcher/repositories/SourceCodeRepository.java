@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.repositories;
 
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
@@ -93,6 +94,10 @@ public interface SourceCodeRepository extends CrudRepository<SourceCodeImpl, Lon
     @Transactional(readOnly = true)
     @Query(value="select p from SourceCodeImpl p")
     Stream<SourceCodeImpl> findAllAsStream();
+
+    @Transactional(readOnly = true)
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.data.SourceCodeData$SourceCodeListItem(p.id, p.uid, p.companyId, p.latch, p.valid) from SourceCodeImpl p order by p.id desc")
+    List<SourceCodeData.SourceCodeListItem> findAllAsListItems();
 }
 
 

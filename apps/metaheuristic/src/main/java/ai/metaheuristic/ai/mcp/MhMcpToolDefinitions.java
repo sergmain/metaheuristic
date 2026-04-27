@@ -20,9 +20,9 @@ import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
-import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository;
@@ -182,14 +182,6 @@ public class MhMcpToolDefinitions {
     public record OperationResultDto(
             boolean ok,
             String message
-    ) {}
-
-    public record SourceCodeListItemDto(
-            Long id,
-            String uid,
-            @Nullable Long companyId,
-            @Nullable String latch,
-            boolean valid
     ) {}
 
     // ==================== Build all tool specifications ====================
@@ -567,10 +559,7 @@ public class MhMcpToolDefinitions {
                         .build())
                 .callHandler((exchange, request) -> {
                     log.info("260.250 MCP listSourceCodes()");
-                    List<SourceCodeListItemDto> items = new ArrayList<>();
-                    for (SourceCodeImpl sc : sourceCodeRepository.findAll()) {
-                        items.add(new SourceCodeListItemDto(sc.id, sc.uid, sc.companyId, sc.latch, sc.valid));
-                    }
+                    List<SourceCodeData.SourceCodeListItem> items = sourceCodeRepository.findAllAsListItems();
                     return toCallToolResult(items);
                 })
                 .build();

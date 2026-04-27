@@ -114,4 +114,6 @@ public class SourceCodeData {
         }
     }
 
+    public record SourceCodeListItem(Long id, String uid, @Nullable Long companyId, @Nullable String latch, boolean valid) {}
+
 }
