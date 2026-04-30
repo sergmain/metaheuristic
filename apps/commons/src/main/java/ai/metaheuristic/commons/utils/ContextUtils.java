@@ -318,4 +318,38 @@ public class ContextUtils {
     public static Set<String> filterTaskContexts(String taskContextId, List<String> allTaskContextIds) {
         return allTaskContextIds.stream().filter(ctxId-> compareTaskContextIds(taskContextId, ctxId)>=0).collect(Collectors.toSet());
     }
+
+    /**
+     * Returns the next available sibling taskContextId at the given level.
+     *
+     * Mirrors the convention used by mh.batch-line-splitter / mh.batch-splitter, which
+     * emit sub-branches starting at #1 (currTaskNumber.incrementAndGet() before first use).
+     *
+     * - If no existing entries match the given level, returns "<level>#1".
+     * - Otherwise returns "<level>#<max(N) + 1>" where N is the numeric path of each
+     *   matching existing entry.
+     * - Entries at other levels, or entries without a '#' path segment, are ignored.
+     *
+     * Use case: injecting a new sibling task into an existing finished ExecContext
+     * (e.g. manual requirement creation) using the same taskContextId scheme that the
+     * splitter uses for batched sub-processes.
+     *
+     * Examples:
+     *   nextSiblingTaskContextId("1,2", []) -> "1,2#1"
+     *   nextSiblingTaskContextId("1,2", ["1,2#0", "1,2#1"]) -> "1,2#2"
+     *   nextSiblingTaskContextId("1,2", ["1,2#0", "1,2#3"]) -> "1,2#4"
+     *   nextSiblingTaskContextId("1,2,5,6,7|1|0|0",
+     *                            ["1,2,5,6,7|1|0|0#1","1,2,5,6,7|1|0|0#2"])
+     *       -> "1,2,5,6,7|1|0|0#3"
+     */
+    public static String nextSiblingTaskContextId(String level, Collection<String> existingTaskContextIds) {
+        int next = existingTaskContextIds.stream()
+                .filter(tcid -> level.equals(getLevel(tcid)))
+                .map(ContextUtils::getPath)
+                .filter(java.util.Objects::nonNull)
+                .mapToInt(Integer::parseInt)
+                .max()
+                .orElse(0) + 1;
+        return buildTaskContextId(level, Integer.toString(next));
+    }
 }

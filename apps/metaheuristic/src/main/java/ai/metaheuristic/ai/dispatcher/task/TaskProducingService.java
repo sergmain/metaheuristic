@@ -68,18 +68,39 @@ public class TaskProducingService {
     private final VariableTxService variableTxService;
     private final VariableRepository variableRepository;
 
+
     public TaskData.ProduceTaskResult produceTaskForProcess(
             ExecContextParamsYaml.Process process,
             ExecContextParamsYaml execContextParamsYaml, Long execContextId, ExecContextData.GraphAndStates graphAndStates,
             List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState) {
+        // Default: taskContextId is the Process's static internalContextId.
+        return produceTaskForProcess(process, execContextParamsYaml, execContextId, graphAndStates,
+                parentTaskIds, taskExecState, p -> p.internalContextId);
+    }
+
+    /**
+     * Variant accepting a custom taskContextId resolver. Allows callers (e.g. manual
+     * requirement injection into a finished ExecContext) to mint a task at a sibling
+     * taskContextId computed via {@link ContextUtils#nextSiblingTaskContextId(String, java.util.Collection)}
+     * rather than the Process's static internalContextId.
+     *
+     * The primary overload above delegates here with resolver = p -> p.internalContextId.
+     */
+    public TaskData.ProduceTaskResult produceTaskForProcess(
+            ExecContextParamsYaml.Process process,
+            ExecContextParamsYaml execContextParamsYaml, Long execContextId, ExecContextData.GraphAndStates graphAndStates,
+            List<Long> parentTaskIds, EnumsApi.TaskExecState taskExecState,
+            java.util.function.Function<ExecContextParamsYaml.Process, String> taskContextIdResolver) {
         TxUtils.checkTxExists();
         ExecContextGraphSyncService.checkWriteLockPresent(graphAndStates.graph().id);
         ExecContextTaskStateSyncService.checkWriteLockPresent(graphAndStates.states().id);
 
         TaskData.ProduceTaskResult result = new TaskData.ProduceTaskResult();
 
+        final String taskContextId = taskContextIdResolver.apply(process);
+
         // for external Functions internalContextId==process.internalContextId
-        TaskImpl t = createTaskHelper(execContextId, execContextParamsYaml, process, process.internalContextId,
+        TaskImpl t = createTaskHelper(execContextId, execContextParamsYaml, process, taskContextId,
                 execContextParamsYaml.variables.inline, parentTaskIds, taskExecState);
 //        if (t == null) {
 //            return new TaskData.ProduceTaskResult(
@@ -87,7 +108,7 @@ public class TaskProducingService {
 //        }
 
         result.taskId = t.getId();
-        List<TaskApiData.TaskWithContext> taskWithContexts = List.of(new TaskApiData.TaskWithContext( t.getId(), process.internalContextId));
+        List<TaskApiData.TaskWithContext> taskWithContexts = List.of(new TaskApiData.TaskWithContext( t.getId(), taskContextId));
         final EnumsApi.TaskExecState targetState = EnumsApi.TaskExecState.from(t.execState);
         if (targetState.value!=t.execState) {
             log.info("(targetState.value!=t.execState)");

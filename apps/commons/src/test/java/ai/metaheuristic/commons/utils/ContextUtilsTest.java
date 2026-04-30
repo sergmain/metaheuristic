@@ -89,4 +89,48 @@ class ContextUtilsTest {
 
         assertTrue(result.contains("1,2,5,6|1|0#0"));
     }
+
+    @Test
+    void test_nextSiblingTaskContextId_emptyAtLevel() {
+        // No existing entries at level "1,2" -> first sibling is "#1" (matches splitter convention)
+        String result = nextSiblingTaskContextId("1,2", List.of());
+        assertEquals("1,2#1", result);
+    }
+
+    @Test
+    void test_nextSiblingTaskContextId_consecutiveAtLevel() {
+        String result = nextSiblingTaskContextId("1,2", List.of("1,2#0", "1,2#1"));
+        assertEquals("1,2#2", result);
+    }
+
+    @Test
+    void test_nextSiblingTaskContextId_gapsInSequence() {
+        // max+1 semantics, not first-gap
+        String result = nextSiblingTaskContextId("1,2", List.of("1,2#0", "1,2#3"));
+        assertEquals("1,2#4", result);
+    }
+
+    @Test
+    void test_nextSiblingTaskContextId_otherLevelsIgnored() {
+        // Entries at other levels must not influence the count for "1,2"
+        String result = nextSiblingTaskContextId("1,2",
+                List.of("1,2#0", "1,2,5|1#0", "1,2,5|1#1", "1,2,5,6|1|0#0"));
+        assertEquals("1,2#1", result);
+    }
+
+    @Test
+    void test_nextSiblingTaskContextId_layerOneWithAncestors() {
+        // Level with '|' segments (sub-branch under "1,2#1")
+        String level = "1,2,5,6,7|1|0|0";
+        String result = nextSiblingTaskContextId(level,
+                List.of(level + "#1", level + "#2"));
+        assertEquals(level + "#3", result);
+    }
+
+    @Test
+    void test_nextSiblingTaskContextId_entriesWithoutPathIgnored() {
+        // Entries with no '#' segment (no path) must be skipped
+        String result = nextSiblingTaskContextId("1,2", List.of("1,2", "1,2#1"));
+        assertEquals("1,2#2", result);
+    }
 }
