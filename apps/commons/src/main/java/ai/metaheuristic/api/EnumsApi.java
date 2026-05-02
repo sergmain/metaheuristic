@@ -295,7 +295,8 @@ public class EnumsApi {
         STARTED(3),         // started
         STOPPED(4),         // stopped
         FINISHED(5),        // finished
-        DOESNT_EXIST(6);    // doesn't exist. this state is needed at processor side to reconcile list of tasks
+        DOESNT_EXIST(6),    // doesn't exist. this state is needed at processor side to reconcile list of tasks
+        CLONING(7);         // ExecContext is mid-clone (rows being copied / refs being rewritten); flips to FINISHED on completion
 
         public final int code;
 
@@ -316,6 +317,7 @@ public class EnumsApi {
                 case 4 -> STOPPED;
                 case 5 -> FINISHED;
                 case 6 -> DOESNT_EXIST;
+                case 7 -> CLONING;
                 default -> UNKNOWN;
             };
         }
@@ -345,7 +347,7 @@ public class EnumsApi {
         }
 
         public static boolean isFinishedState(ExecContextState state) {
-            return state==FINISHED || state==ERROR;
+            return state==FINISHED || state==ERROR || state==CLONING;
         }
     }
 
