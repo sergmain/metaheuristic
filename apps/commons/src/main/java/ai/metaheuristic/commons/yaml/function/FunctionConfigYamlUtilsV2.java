@@ -40,30 +40,34 @@ public class FunctionConfigYamlUtilsV2
         return 2;
     }
 
-    @NonNull
     @Override
     public Yaml getYaml() {
         return YamlUtils.init(FunctionConfigYamlV2.class);
     }
 
-    @NonNull
     @Override
-    public FunctionConfigYaml upgradeTo(@NonNull FunctionConfigYamlV2 src) {
+    public FunctionConfigYaml upgradeTo(FunctionConfigYamlV2 src) {
         src.checkIntegrity();
         FunctionConfigYaml trg = new FunctionConfigYaml();
         trg.function = to(src.function);
+        // trg was just created so system isn't null
+        //noinspection DataFlowIssue
         toSystem(src.system, trg.system);
 
         trg.checkIntegrity();
         return trg;
     }
 
-    private static FunctionConfigYaml.FunctionConfig  to(FunctionConfigYamlV2.FunctionConfigV2 src) {
+    static FunctionConfigYaml.FunctionConfig to(FunctionConfigYamlV2.FunctionConfigV2 src) {
         FunctionConfigYaml.FunctionConfig trg = new FunctionConfigYaml.FunctionConfig ();
         BeanUtils.copyProperties(src, trg);
 
         if (src.metas!=null) {
             trg.metas = new ArrayList<>(src.metas);
+        }
+
+        if (src.api!=null) {
+            trg.api = new FunctionConfigYaml.Api(src.api.keyCode);
         }
 
         return trg;
@@ -74,9 +78,8 @@ public class FunctionConfigYamlUtilsV2
         trg.archive = src.archive;
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
@@ -91,13 +94,12 @@ public class FunctionConfigYamlUtilsV2
     }
 
     @Override
-    public String toString(@NonNull FunctionConfigYamlV2 yaml) {
+    public String toString(FunctionConfigYamlV2 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public FunctionConfigYamlV2 to(@NonNull String yaml) {
+    public FunctionConfigYamlV2 to(String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }

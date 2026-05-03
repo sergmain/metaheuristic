@@ -43,3 +43,7 @@ aa?
 hs_err_pid*.log
 replay_pid*.log
 derby.log
+mh-tests.txt
+t1.bat
+t2.bat
+t3.bat

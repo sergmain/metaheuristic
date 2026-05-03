@@ -59,6 +59,13 @@ public class FunctionConfigYamlV2 implements BaseParams {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ApiV2 {
+        public String keyCode;
+    }
+
+    @Data
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
@@ -90,8 +97,9 @@ public class FunctionConfigYamlV2 implements BaseParams {
 
         public String src = CommonConsts.DEFAULT_FUNCTION_SRC_DIR;
 
-        @Nullable
-        public String assetDir;
+        public @Nullable String assetDir;
+
+        public FunctionConfigYamlV2.@Nullable ApiV2 api = null;
     }
 
 

@@ -36,7 +36,7 @@ import java.util.function.Supplier;
 @Slf4j
 public class MultiTenantedQueue<T, P extends EventWithId<T>> {
 
-    public final int maxCapacity;
+    public final int softMaxCapacity;
     public final long postProcessingDelay;
     public final boolean checkForDouble;
     public final String namePrefix;
@@ -62,7 +62,7 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
     //  because this implementation is based on virtual thread there isn't upper limit of number of tasks in queue
     // softMaxCapacity - is a soft limit for triggering removing in removeEldestEntry(), it isn't hard limit
     public MultiTenantedQueue(int softMaxCapacity, Duration postProcessingDelay, boolean checkForDouble, @Nullable String namePrefix, Consumer<P> processFunc) {
-        this.maxCapacity = softMaxCapacity;
+        this.softMaxCapacity = softMaxCapacity;
         this.checkForDouble = checkForDouble;
         this.namePrefix = S.b(namePrefix) ? "v-tread-" : namePrefix;
         this.processFunc = processFunc;

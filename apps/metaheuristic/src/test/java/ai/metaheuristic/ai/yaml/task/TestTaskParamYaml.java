@@ -107,7 +107,7 @@ public class TestTaskParamYaml {
                     null,
                     List.of(),
                     CommonConsts.DEFAULT_FUNCTION_SRC_DIR,
-                    null
+                    null, null
                 ),
                 null)
             )

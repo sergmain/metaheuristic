@@ -45,8 +45,6 @@ public interface AccountRepository extends CrudRepository<Account, Long> {
     @Query(value="delete from Account t where t.id=:id")
     void deleteById(Long id);
 
-    // TODO p3 2023-08-17 Transaction is 'read-only' but method is 'ForUpdate'
-    @Transactional(readOnly = true)
     @Nullable
     @Query(value="select a from Account a where a.id=:id")
     Account findByIdForUpdate(Long id);

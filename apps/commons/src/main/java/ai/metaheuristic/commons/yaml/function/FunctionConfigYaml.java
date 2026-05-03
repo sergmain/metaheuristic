@@ -103,6 +103,13 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Api {
+        public String keyCode;
+    }
+
+    @Data
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
@@ -138,8 +145,9 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
 
         public String src = CommonConsts.DEFAULT_FUNCTION_SRC_DIR;
 
-        @Nullable
-        public String assetDir;
+        public @Nullable String assetDir;
+
+        public FunctionConfigYaml.@Nullable Api api = null;
     }
 
     public FunctionConfig function = new FunctionConfig();
