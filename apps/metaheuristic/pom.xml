@@ -313,6 +313,13 @@
             <artifactId>lucene-analysis-common</artifactId>
             <version>10.4.0</version>
         </dependency>
+
+        <!-- KeePass vault for storing API keys, see VaultService -->
+        <dependency>
+            <groupId>org.linguafranca.pwdb</groupId>
+            <artifactId>KeePassJava2-jackson</artifactId>
+            <version>2.2.4</version>
+        </dependency>
     </dependencies>
 
     <build>
