@@ -22,12 +22,12 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.13</version>
+         <version>3.5.14</version>
         <relativePath/>
     </parent>
     <groupId>ai.metaheuristic</groupId>
     <artifactId>mh-commons</artifactId>
-    <version>7.1.21</version>
+    <version>7.1.22</version>
 
     <packaging>jar</packaging>
 
