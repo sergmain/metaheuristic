@@ -68,9 +68,13 @@ public class MultiTenantedQueue<T, P extends EventWithId<T>> {
         this.processFunc = processFunc;
 
         if (softMaxCapacity == -1) {
+            // Unbounded: never evict via removeEldestEntry. The previous implementation
+            // returned canBeRemoved() unconditionally, which evicted a freshly-inserted
+            // (empty, thread==null) entry created by computeIfAbsent right before .add(event)
+            // could land on it, silently losing the very first event for any new id.
             queue = new LinkedHashMap<>() {
                 protected boolean removeEldestEntry(Map.Entry<T, QueueWithThread<P>> entry) {
-                    return entry.getValue().canBeRemoved();
+                    return false;
                 }
             };
         }

@@ -166,6 +166,29 @@ public class MultiTenantedQueueTest {
         }
     }
 
+    /**
+     * Characterization test for the case softMaxCapacity == -1.
+     * Asserts the CORRECT behavior: when the queue is unbounded (softMaxCapacity == -1),
+     * the very first event for a fresh id MUST be retained; the entry must not be evicted
+     * by removeEldestEntry between computeIfAbsent's put and the subsequent .add(event).
+     */
+    @Test
+    public void test_softMaxCapacityMinusOne_firstEventIsRetained() {
+        MultiTenantedQueue<Long, Event> queue = new MultiTenantedQueue<>(-1, Duration.ZERO, true, null, MultiTenantedQueueTest::process);
+        try {
+            Event event1 = new Event(1L, 10L, 20L);
+            queue.putToQueueInternal(event1);
+
+            assertEquals(1, queue.queue.size());
+            QueueWithThread<Event> twe = queue.queue.get(10L);
+            assertNotNull(twe);
+            assertEquals(1, twe.size());
+            assertEquals(event1, twe.get(0));
+        } finally {
+            queue.clearQueue();
+        }
+    }
+
     @Nullable
     private static Long id = null;
     private static boolean flag= true;
