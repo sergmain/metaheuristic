@@ -58,7 +58,7 @@ import java.util.function.Consumer;
  */
 @Slf4j
 @Service
-@Profile({"dispatcher & disk-storage"})
+@Profile({"dispatcher & external-storage & disk-storage"})
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class DiskBlobStorageService implements DispatcherBlobStorage {
 

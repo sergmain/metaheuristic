@@ -40,6 +40,7 @@ public class SpringHelpersUtils {
         "processor",
         "quickstart",
         STANDALONE_PROFILE, // standalone это профиль для запуска в режиме приложения на базе electron
+        "external-storage",
         "disk-storage",
         "test", "disable-check-frontend",
         WEBSOCKET_PROFILE,
