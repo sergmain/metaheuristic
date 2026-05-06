@@ -20,6 +20,8 @@ import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.exceptions.BundleProcessingException;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.File;
 import java.util.Map;
@@ -31,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Serge
  * Date: 4/2026
  */
+@Execution(ExecutionMode.CONCURRENT)
 class MhscIncludeResolverTest {
 
     private static Function<String, String> mapResolver(Map<String, String> parts) {

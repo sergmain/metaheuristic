@@ -17,6 +17,8 @@
 package ai.metaheuristic.commons.utils;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -26,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * Date: 10/20/2023
  * Time: 12:32 AM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class ArtifactCommonUtilsTest {
 
     @Test

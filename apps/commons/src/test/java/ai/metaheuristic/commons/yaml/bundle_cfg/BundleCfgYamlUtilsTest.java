@@ -18,6 +18,8 @@ package ai.metaheuristic.commons.yaml.bundle_cfg;
 
 import ai.metaheuristic.api.EnumsApi;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.nio.file.Path;
 
@@ -28,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * Date: 10/14/2023
  * Time: 4:40 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class BundleCfgYamlUtilsTest {
 
     @Test

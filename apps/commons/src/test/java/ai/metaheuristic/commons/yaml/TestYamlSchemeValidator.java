@@ -17,6 +17,8 @@
 package ai.metaheuristic.commons.yaml;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.List;
 
@@ -29,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
  * Date: 9/9/2020
  * Time: 5:02 AM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestYamlSchemeValidator {
 
     private static final String SEE_MORE_INFO = "https://docs.metaheuristic.ai";

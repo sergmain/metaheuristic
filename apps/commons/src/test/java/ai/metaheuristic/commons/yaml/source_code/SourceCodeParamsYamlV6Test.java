@@ -21,12 +21,15 @@ import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV5;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYamlV6;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for SourceCodeParamsYaml version 6 and upgrade from V5 to V6.
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class SourceCodeParamsYamlV6Test {
 
     @Test

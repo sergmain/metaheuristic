@@ -17,6 +17,8 @@
 package ai.metaheuristic.commons.utils;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.List;
 import java.util.Map;
@@ -28,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 3/3/2022
  * Time: 7:01 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestMetaUtils {
 
     @Test

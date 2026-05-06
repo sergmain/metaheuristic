@@ -17,6 +17,8 @@
 package ai.metaheuristic.api.data;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.lang.reflect.Field;
 
@@ -28,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * Date: 12/12/2019
  * Time: 12:31 AM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestMetaBean {
 
     @Test

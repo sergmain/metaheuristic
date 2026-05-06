@@ -22,6 +22,8 @@ import lombok.EqualsAndHashCode;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.time.Duration;
 
@@ -33,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * Date: 9/21/2023
  * Time: 2:12 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class MultiTenantedQueueTest {
 
     @Data

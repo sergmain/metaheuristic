@@ -22,6 +22,8 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlV1;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.Map;
 
@@ -32,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 8/8/2019
  * Time: 6:35 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestTaskParamsYaml {
 
     @Test

@@ -20,6 +20,8 @@ import ai.metaheuristic.commons.CommonConsts;
 import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Date: 11/26/2023
  * Time: 10:18 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class DirUtilsTest {
 
     @Test

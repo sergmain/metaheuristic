@@ -22,12 +22,15 @@ import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYamlUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@Execution(ExecutionMode.CONCURRENT)
 public class TestBundleParamsYaml {
 
     @Test

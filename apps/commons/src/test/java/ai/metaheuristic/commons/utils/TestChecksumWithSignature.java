@@ -22,6 +22,8 @@ import ai.metaheuristic.commons.utils.checksum.ChecksumWithSignatureUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.StringUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -35,6 +37,7 @@ import java.util.Random;
 import static ai.metaheuristic.api.data.checksum_signature.ChecksumAndSignatureData.ChecksumWithSignature;
 import static org.junit.jupiter.api.Assertions.*;
 
+@Execution(ExecutionMode.CONCURRENT)
 public class TestChecksumWithSignature {
 
     private static final String CONTENT_1 = Long.toString(System.currentTimeMillis());

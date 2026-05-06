@@ -24,6 +24,8 @@ import org.apache.commons.io.file.PathUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -51,6 +53,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Time: 12:24 PM
  */
 @SuppressWarnings("UnusedReturnValue")
+@Execution(ExecutionMode.CONCURRENT)
 class ZipUtilsTest {
 
     private static int currentBufferSize = ZipUtils.BUFFER_SIZE + 256;

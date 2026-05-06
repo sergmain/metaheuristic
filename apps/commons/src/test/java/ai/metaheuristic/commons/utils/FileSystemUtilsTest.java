@@ -18,6 +18,8 @@ package ai.metaheuristic.commons.utils;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -30,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
  * Date: 6/26/2023
  * Time: 8:37 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class FileSystemUtilsTest {
 
     @Test

@@ -22,6 +22,8 @@ import ai.metaheuristic.commons.yaml.env.EnvParamsYamlUtilsV2;
 import ai.metaheuristic.commons.yaml.env.EnvParamsYamlV2;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -34,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * Date: 10/16/2021
  * Time: 2:28 AM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestEnvYaml {
 
     @Test

@@ -17,11 +17,14 @@
 package ai.metaheuristic.commons.utils;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Execution(ExecutionMode.CONCURRENT)
 public class TestStrUtils {
 
     public static final Supplier<String> CODE_FUNC = () -> { throw new IllegalStateException(); };
