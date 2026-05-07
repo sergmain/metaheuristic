@@ -97,7 +97,9 @@ public class ExecContextCloneService {
             Long clonedExecContextId,
             long taskCount,
             long variableCount,
-            long elapsedMillis) {
+            long elapsedMillis,
+            java.util.Map<Long, Long> taskIdMap,
+            java.util.Map<Long, Long> variableIdMap) {
     }
 
     public CloneResult cloneExecContext(Long sourceExecContextId) {
@@ -128,7 +130,16 @@ public class ExecContextCloneService {
         ExecContextVariableState newVarState = cloneTxService.insertNewVariableState(sourceVarState, newEcId);
         cloneTxService.updateExecContextChildPointers(newEcId, newGraph.id, newTaskState.id, newVarState.id);
 
-        // Stage 1b — clone Task rows, build oldTaskId -> newTaskId map
+        // Stage 1b — clone Variable rows in parallel FIRST so the variableIdMap is
+        // available when cloning Tasks (TaskParamsYaml carries variable IDs that
+        // must be rewritten source-EC -> clone-EC). Phase 13.G.5.
+        ConcurrentHashMap<Long, Long> variableIdMap = new ConcurrentHashMap<>();
+        Set<Long> sourceVarIds = collectVariableIds(sourceVarState.getParams());
+        cloneVariablesInParallel(sourceVarIds, newEcId, options.variableThreads(), variableIdMap);
+
+        // Stage 1c — clone Task rows, build oldTaskId -> newTaskId map. Pass the
+        // variableIdMap so TaskParamsYaml.inputs/outputs variable IDs are rewritten
+        // into clone-EC space.
         ConcurrentHashMap<Long, Long> taskIdMap = new ConcurrentHashMap<>();
         List<TaskImpl> allSourceTasks = taskRepository.findByExecContextIdReadOnly(sourceExecContextId);
         List<TaskImpl> sourceTasks;
@@ -143,16 +154,24 @@ public class ExecContextCloneService {
                 }
             }
         }
+        // Two-pass clone: pass 1 inserts cloned task rows with variable IDs rewritten
+        // and parentTaskIds left as source-EC IDs; we collect the source→clone task
+        // ID map from this pass. Pass 2 rewrites parentTaskIds using the now-complete
+        // map. Necessary because TaskParamsYaml.task.init.parentTaskIds references
+        // OTHER tasks in the same EC that may not have been cloned yet at insert time.
         for (TaskImpl t : sourceTasks) {
             ExecContextCloneTxService.TaskClonedIds pair =
-                    cloneTxService.insertNewTask(t.id, newEcId);
+                    cloneTxService.insertNewTask(t.id, newEcId, variableIdMap);
             taskIdMap.put(pair.oldTaskId(), pair.newTaskId());
         }
-
-        // Stage 1c — clone Variable rows in parallel; build oldVarId -> newVarId map
-        ConcurrentHashMap<Long, Long> variableIdMap = new ConcurrentHashMap<>();
-        Set<Long> sourceVarIds = collectVariableIds(sourceVarState.getParams());
-        cloneVariablesInParallel(sourceVarIds, newEcId, options.variableThreads(), variableIdMap);
+        // Pass 2 — rewrite parentTaskIds on each cloned task using the now-complete map.
+        for (TaskImpl t : sourceTasks) {
+            Long clonedTaskId = taskIdMap.get(t.id);
+            if (clonedTaskId == null) {
+                continue;
+            }
+            cloneTxService.rewriteClonedTaskParentIds(clonedTaskId, taskIdMap);
+        }
 
         // Stage 2 — rewrite references (graph DOT inside YAML envelope, task-state
         // map keys, variable-state JSON). Pass the parsed YAML object to rewriteGraph
@@ -180,7 +199,8 @@ public class ExecContextCloneService {
         log.info("ExecContext clone complete: source={}, target={}, tasks={}, variables={}, elapsedMs={}",
                 sourceExecContextId, newEcId, sourceTasks.size(), sourceVarIds.size(), elapsed);
 
-        return new CloneResult(newEcId, sourceTasks.size(), sourceVarIds.size(), elapsed);
+        return new CloneResult(newEcId, sourceTasks.size(), sourceVarIds.size(), elapsed,
+                java.util.Map.copyOf(taskIdMap), java.util.Map.copyOf(variableIdMap));
     }
 
     private void cloneVariablesInParallel(Set<Long> sourceVarIds, Long newEcId,

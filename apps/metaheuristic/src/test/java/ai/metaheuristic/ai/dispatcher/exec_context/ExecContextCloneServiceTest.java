@@ -194,6 +194,92 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
     @Autowired
     ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository ecvsRepo;
 
+    /**
+     * Phase 13.G.5 — Characterization test for the parent-task-id rewrite bug
+     * in {@link ExecContextCloneService#cloneExecContext}.
+     *
+     * <p>The clone preserves {@code TaskParamsYaml.task.init.parentTaskIds}
+     * verbatim from the source EC's task rows, but those IDs reference SOURCE-EC
+     * task rows. After the clone, downstream code that looks up a parent task in
+     * the CLONED EC's graph (e.g. {@link ai.metaheuristic.ai.dispatcher.task.TaskVariableInitTxService}
+     * via {@code getAllParentTaskContextIds} → {@code findVertexByTaskId}) fails
+     * with {@code 179.240 vertex wasn't found for task #X} because the source-EC
+     * parent ID does not appear in the clone's graph (the graph rewriter properly
+     * replaced it with the clone-EC ID).
+     *
+     * <p>Test asserts: for every cloned task that has parentTaskIds, every parent
+     * id present in {@code TaskParamsYaml.task.init.parentTaskIds} must be a
+     * CLONE-EC task id (i.e. exists in {@code TaskRepository.findByExecContextId}
+     * for the cloned EC), not a source-EC task id.
+     *
+     * <p>Green-1 (with fix): all parentTaskIds resolve to clone-EC tasks. Without
+     * the fix, the assertion fails because parentTaskIds still point at source-EC
+     * task rows.
+     */
+    @Test
+    void test_clone_taskParentIds_rewrittenToCloneSpace() {
+        DispatcherContext ctx = new DispatcherContext(getAccount(), getCompany());
+        var creation = txSupport.createExecContext(getSourceCode(), ctx.asUserExecContext());
+        setExecContextForTest(creation.execContext);
+        step_0_0_produceTasks();
+        Long sourceId = getExecContextForTest().id;
+
+        // Confirm at least one source task has non-empty parentTaskIds — otherwise
+        // the bug is unobservable in this fixture and we should fail loudly so a
+        // future maintainer doesn't think the test passed by giving zero data.
+        List<TaskImpl> sourceTasks = taskRepository.findByExecContextIdReadOnly(sourceId);
+        assertThat(sourceTasks).isNotEmpty();
+        long sourceTasksWithParents = sourceTasks.stream()
+                .map(TaskImpl::getTaskParamsYaml)
+                .filter(tpy -> tpy.task != null && tpy.task.init != null
+                        && tpy.task.init.parentTaskIds != null
+                        && !tpy.task.init.parentTaskIds.isEmpty())
+                .count();
+        assertThat(sourceTasksWithParents)
+                .as("fixture must have at least one task with parentTaskIds for this test to be meaningful")
+                .isGreaterThan(0);
+
+        Set<Long> sourceTaskIdSet = sourceTasks.stream()
+                .map(t -> t.id)
+                .collect(Collectors.toSet());
+
+        // act — clone
+        ExecContextCloneService.CloneResult result = cloneService.cloneExecContext(sourceId);
+        Long cloneId = result.clonedExecContextId();
+        assertThat(cloneId).isNotEqualTo(sourceId);
+
+        // gather cloned tasks; build set of CLONE-EC task ids for membership checks
+        List<TaskImpl> clonedTasks = taskRepository.findByExecContextIdReadOnly(cloneId);
+        Set<Long> cloneTaskIdSet = clonedTasks.stream()
+                .map(t -> t.id)
+                .collect(Collectors.toSet());
+        assertThat(cloneTaskIdSet).hasSize(sourceTasks.size());
+
+        // assert — every parentTaskId on every cloned task must be a clone-EC task id,
+        // never a source-EC task id. Builds full diagnostic on failure.
+        java.util.List<String> violations = new java.util.ArrayList<>();
+        for (TaskImpl ct : clonedTasks) {
+            ai.metaheuristic.commons.yaml.task.TaskParamsYaml tpy = ct.getTaskParamsYaml();
+            if (tpy.task == null || tpy.task.init == null || tpy.task.init.parentTaskIds == null) {
+                continue;
+            }
+            for (Long pid : tpy.task.init.parentTaskIds) {
+                boolean isCloneSpace = cloneTaskIdSet.contains(pid);
+                boolean isSourceSpace = sourceTaskIdSet.contains(pid);
+                if (!isCloneSpace) {
+                    violations.add("clonedTask=#" + ct.id + " parentTaskId=" + pid
+                            + (isSourceSpace ? " [SOURCE-EC ID — bug: rewrite missing]"
+                                             : " [unknown — neither clone nor source EC]"));
+                }
+            }
+        }
+        assertThat(violations)
+                .as("every parentTaskId on every cloned task must be remapped to clone-EC space; " +
+                    "violations indicate ExecContextCloneTxService.insertNewTask did not rewrite " +
+                    "TaskParamsYaml.task.init.parentTaskIds via taskIdMap")
+                .isEmpty();
+    }
+
     private List<Variable> variablesByExecContext(Long execContextId) {
         // pull the variable IDs the same way the service does — straight from the
         // ExecContextVariableState content — then load each Variable row.

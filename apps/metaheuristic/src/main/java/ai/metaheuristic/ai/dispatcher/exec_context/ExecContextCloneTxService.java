@@ -115,24 +115,140 @@ public class ExecContextCloneTxService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public TaskClonedIds insertNewTask(Long sourceTaskId, Long newExecContextId) {
+        // Backward-compat overload: no variable/task rewrite (caller has not provided maps).
+        return insertNewTask(sourceTaskId, newExecContextId, java.util.Map.of(), java.util.Map.of());
+    }
+
+    public TaskClonedIds insertNewTask(Long sourceTaskId, Long newExecContextId,
+                                       java.util.Map<Long, Long> variableIdMap) {
+        // Backward-compat overload: variable rewrite only (no parentTaskIds remap).
+        return insertNewTask(sourceTaskId, newExecContextId, variableIdMap, java.util.Map.of());
+    }
+
+    /**
+     * Phase 13.G.5 — clone a task into the new ExecContext, rewriting:
+     *   (a) variable IDs in TaskParamsYaml.inputs/outputs from source-EC space
+     *       to clone-EC space (else {@code resetTask} fails 171.520 cross-EC),
+     *   (b) parent task IDs in TaskParamsYaml.task.init.parentTaskIds (else
+     *       {@code TaskVariableInitTxService} fails 179.240 vertex-not-found
+     *       when looking up parents in the cloned graph).
+     *
+     * Pass an empty taskIdMap to skip (b); pass an empty variableIdMap to skip (a).
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public TaskClonedIds insertNewTask(Long sourceTaskId, Long newExecContextId,
+                                       java.util.Map<Long, Long> variableIdMap,
+                                       java.util.Map<Long, Long> taskIdMapForParentRewrite) {
         TaskImpl src = taskRepository.findByIdReadOnly(sourceTaskId);
         if (src == null) {
             throw new IllegalStateException("Source task not found: " + sourceTaskId);
         }
         TaskImpl dst = new TaskImpl();
+        // Phase 13.G.5 — preserve execState/completed/resultReceived/completedOn so
+        // FINISHED tasks in the source remain FINISHED in the clone. Without this,
+        // every cloned task starts in NONE and MH re-executes the entire DAG from
+        // scratch in the clone, which (a) re-fires upstream tasks like open-stage
+        // (now correctly idempotent) and (b) re-writes already-inited output
+        // Variables, hitting the 171.100 immutability guard. The orchestrator's
+        // explicit reset of a specific task is the only state mutation that should
+        // happen post-clone; everything else stays as the source left it.
+        // coreId/assignedOn/accessByProcessorOn ARE reset because those are processor-
+        // assignment metadata and would falsely point at processors that never saw
+        // the cloned task.
         dst.coreId = null;
         dst.assignedOn = null;
-        dst.completedOn = null;
-        dst.completed = 0;
-        dst.functionExecResults = null;
-        dst.execContextId = newExecContextId;
-        dst.execState = EnumsApi.TaskExecState.NONE.value;
-        dst.resultReceived = 0;
-        dst.resultResourceScheduledOn = 0L;
         dst.accessByProcessorOn = null;
-        dst.setParams(src.getParams());
+        dst.completedOn = src.completedOn;
+        dst.completed = src.completed;
+        dst.functionExecResults = src.functionExecResults;
+        dst.execContextId = newExecContextId;
+        dst.execState = src.execState;
+        dst.resultReceived = src.resultReceived;
+        dst.resultResourceScheduledOn = src.resultResourceScheduledOn;
+        if (variableIdMap.isEmpty() && taskIdMapForParentRewrite.isEmpty()) {
+            dst.setParams(src.getParams());
+        } else {
+            String rewritten = rewriteTaskParamsIds(src.getParams(), variableIdMap, taskIdMapForParentRewrite);
+            dst.setParams(rewritten);
+        }
         TaskImpl saved = taskRepository.save(dst);
         return new TaskClonedIds(sourceTaskId, saved.id);
+    }
+
+    /**
+     * Phase 13.G.5 — rewrite the variable IDs and parent task IDs in a
+     * TaskParamsYaml string. Inputs/outputs variable IDs are remapped via
+     * {@code variableIdMap}; {@code task.init.parentTaskIds} are remapped via
+     * {@code taskIdMap}. Entries not present in either map are left untouched.
+     */
+    private static String rewriteTaskParamsIds(String paramsYaml,
+                                               java.util.Map<Long, Long> variableIdMap,
+                                               java.util.Map<Long, Long> taskIdMap) {
+        ai.metaheuristic.commons.yaml.task.TaskParamsYaml tpy =
+                ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils.UTILS.to(paramsYaml);
+        if (tpy == null || tpy.task == null) {
+            return paramsYaml;
+        }
+        for (ai.metaheuristic.commons.yaml.task.TaskParamsYaml.InputVariable in : tpy.task.inputs) {
+            Long mapped = variableIdMap.get(in.id);
+            if (mapped != null) {
+                in.id = mapped;
+            }
+        }
+        for (ai.metaheuristic.commons.yaml.task.TaskParamsYaml.OutputVariable out : tpy.task.outputs) {
+            Long mapped = variableIdMap.get(out.id);
+            if (mapped != null) {
+                out.id = mapped;
+            }
+        }
+        if (tpy.task.init != null && tpy.task.init.parentTaskIds != null) {
+            java.util.List<Long> remapped = new java.util.ArrayList<>(tpy.task.init.parentTaskIds.size());
+            for (Long pid : tpy.task.init.parentTaskIds) {
+                Long mapped = taskIdMap.get(pid);
+                remapped.add(mapped != null ? mapped : pid);
+            }
+            tpy.task.init.parentTaskIds = remapped;
+        }
+        return ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils.UTILS.toString(tpy);
+    }
+
+    /**
+     * Phase 13.G.5 — pass 2 of the clone: rewrite an already-cloned task's
+     * {@code TaskParamsYaml.task.init.parentTaskIds} from source-EC space to
+     * clone-EC space. Run after all task rows are inserted and the source→clone
+     * task ID map is complete. Only the parent-IDs are rewritten; variable IDs
+     * were already rewritten in pass 1.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void rewriteClonedTaskParentIds(Long clonedTaskId, java.util.Map<Long, Long> taskIdMap) {
+        TaskImpl t = taskRepository.findById(clonedTaskId).orElse(null);
+        if (t == null) {
+            log.warn("Phase13.G.5 rewriteClonedTaskParentIds: cloned task #{} not found", clonedTaskId);
+            return;
+        }
+        ai.metaheuristic.commons.yaml.task.TaskParamsYaml tpy =
+                ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils.UTILS.to(t.getParams());
+        if (tpy == null || tpy.task == null || tpy.task.init == null
+                || tpy.task.init.parentTaskIds == null
+                || tpy.task.init.parentTaskIds.isEmpty()) {
+            return;
+        }
+        boolean changed = false;
+        java.util.List<Long> remapped = new java.util.ArrayList<>(tpy.task.init.parentTaskIds.size());
+        for (Long pid : tpy.task.init.parentTaskIds) {
+            Long mapped = taskIdMap.get(pid);
+            if (mapped != null && !mapped.equals(pid)) {
+                changed = true;
+                remapped.add(mapped);
+            } else {
+                remapped.add(pid);
+            }
+        }
+        if (changed) {
+            tpy.task.init.parentTaskIds = remapped;
+            t.setParams(ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils.UTILS.toString(tpy));
+            taskRepository.save(t);
+        }
     }
 
     /**
@@ -147,9 +263,15 @@ public class ExecContextCloneTxService {
             throw new IllegalStateException("Source variable not found: " + sourceVariableId);
         }
         Variable dst = new Variable();
+        // Clone Variables verbatim. Source-EC immutability is the contract: every
+        // attribute of the source's Variable rows is preserved on the clone, including
+        // inited/nullified/variableBlobId. Blobs are SHARED (not copied) — same
+        // variableBlobId means both rows reference the same content. Subsequent task
+        // resets in the clone will reset OUTPUT Variables to inited=false before the
+        // re-running task writes them; that's the existing per-task-reset path.
         dst.inited = src.inited;
         dst.nullified = src.nullified;
-        dst.variableBlobId = src.variableBlobId;  // blob is shared, not copied
+        dst.variableBlobId = src.variableBlobId;
         dst.name = src.name;
         dst.execContextId = newExecContextId;
         dst.taskContextId = src.taskContextId;
