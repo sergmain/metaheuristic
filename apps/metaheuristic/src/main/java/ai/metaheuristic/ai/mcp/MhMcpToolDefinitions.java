@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.mcp;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextGraph;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextTaskState;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextVariableState;
@@ -65,7 +66,7 @@ import java.util.Optional;
  *
  * Activated only when both 'dispatcher' AND 'mcp' Spring profiles are active.
  *
- * 11 tools total — read-mostly access to MH internals plus a few control operations:
+ * 12 tools total — read-mostly access to MH internals plus a few control operations:
  *
  *   mh_get_variable_info               — metadata for an internal Variable by id
  *   mh_get_variable_content            — content of an internal Variable, truncated to N bytes
@@ -78,6 +79,7 @@ import java.util.Optional;
  *   mh_get_exec_context_task_state     — ExecContextTaskState by id (raw params YAML, dynamic Task DAG)
  *   mh_get_exec_context_variable_state — ExecContextVariableState by id (raw params YAML, dynamic Variable state)
  *   mh_list_source_codes               — list all SourceCodes with general info (id, uid, companyId, latch, valid)
+ *   mh_get_source_code                 — full SourceCode by id, including params YAML (truncated to maxParamsBytes)
  *
  * @author Serge
  * Date: 4/6/2026
@@ -90,6 +92,8 @@ public class MhMcpToolDefinitions {
 
     public static final int DEFAULT_VARIABLE_CONTENT_LIMIT = 1024;
     public static final int MAX_VARIABLE_CONTENT_LIMIT = 65536;
+    public static final int DEFAULT_SOURCE_CODE_PARAMS_LIMIT = 65536;
+    public static final int MAX_SOURCE_CODE_PARAMS_LIMIT = 1048576;
 
     private final VariableTxService variableTxService;
     private final TaskRepository taskRepository;
@@ -184,6 +188,19 @@ public class MhMcpToolDefinitions {
             String message
     ) {}
 
+    public record SourceCodeDto(
+            Long id,
+            @Nullable Integer version,
+            @Nullable Long companyId,
+            @Nullable String uid,
+            long createdOn,
+            boolean valid,
+            @Nullable String latch,
+            int paramsBytes,
+            boolean truncated,
+            @Nullable String params
+    ) {}
+
     // ==================== Build all tool specifications ====================
 
     public List<McpServerFeatures.SyncToolSpecification> getAllToolSpecifications() {
@@ -198,7 +215,8 @@ public class MhMcpToolDefinitions {
                 getExecContextGraphTool(),
                 getExecContextTaskStateTool(),
                 getExecContextVariableStateTool(),
-                listSourceCodesTool()
+                listSourceCodesTool(),
+                getSourceCodeTool()
         );
     }
 
@@ -561,6 +579,66 @@ public class MhMcpToolDefinitions {
                     log.info("260.250 MCP listSourceCodes()");
                     List<SourceCodeData.SourceCodeListItem> items = sourceCodeRepository.findAllAsListItems();
                     return toCallToolResult(items);
+                })
+                .build();
+    }
+
+    // ==================== Tool 11: get source code (full entity, including params YAML) ====================
+
+    private McpServerFeatures.SyncToolSpecification getSourceCodeTool() {
+        Map<String, Object> props = new HashMap<>();
+        props.put("sourceCodeId", Map.of("type", "integer", "description", "Numeric id of the SourceCode (MH_SOURCE_CODE.ID)"));
+        props.put("maxParamsBytes", Map.of("type", "integer", "description",
+                "Maximum number of bytes of the params YAML to return (default 65536, max 1048576). "
+                + "Use mh_list_source_codes first to discover available ids."));
+
+        return McpServerFeatures.SyncToolSpecification.builder()
+                .tool(Tool.builder()
+                        .name("mh_get_source_code")
+                        .title("Get SourceCode")
+                        .description("Get a SourceCode by id, including the full params YAML body "
+                                + "(the .mhsc/.mhscp source). Returns id, version, companyId, uid, createdOn, "
+                                + "valid flag, latch, params (truncated to maxParamsBytes), and a 'truncated' flag. "
+                                + "Use this to inspect what's actually deployed on the dispatcher when the on-disk "
+                                + "source and the deployed bundle have drifted apart.")
+                        .inputSchema(new McpSchema.JsonSchema("object", props, List.of("sourceCodeId"), false, null, null))
+                        .build())
+                .callHandler((exchange, request) -> {
+                    Map<String, Object> arguments = request.arguments();
+                    Long sourceCodeId = getRequiredLong(arguments, "sourceCodeId");
+                    Integer maxBytesArg = getOptionalInt(arguments, "maxParamsBytes");
+                    int limit = maxBytesArg == null
+                            ? DEFAULT_SOURCE_CODE_PARAMS_LIMIT
+                            : Math.min(Math.max(maxBytesArg, 1), MAX_SOURCE_CODE_PARAMS_LIMIT);
+                    log.info("260.260 MCP getSourceCode({}, limit={})", sourceCodeId, limit);
+
+                    SourceCodeImpl sc = sourceCodeRepository.findByIdNullable(sourceCodeId);
+                    if (sc == null) {
+                        return errorResult("SourceCode #" + sourceCodeId + " not found");
+                    }
+                    String fullParams = sc.getParams();
+                    String returnedParams;
+                    boolean truncated;
+                    int returnedBytes;
+                    if (fullParams == null) {
+                        returnedParams = null;
+                        truncated = false;
+                        returnedBytes = 0;
+                    }
+                    else if (fullParams.length() > limit) {
+                        returnedParams = fullParams.substring(0, limit);
+                        truncated = true;
+                        returnedBytes = returnedParams.length();
+                    }
+                    else {
+                        returnedParams = fullParams;
+                        truncated = false;
+                        returnedBytes = fullParams.length();
+                    }
+                    return toCallToolResult(new SourceCodeDto(
+                            sc.id, sc.version, sc.companyId, sc.uid, sc.createdOn, sc.valid, sc.latch,
+                            returnedBytes, truncated, returnedParams
+                    ));
                 })
                 .build();
     }
