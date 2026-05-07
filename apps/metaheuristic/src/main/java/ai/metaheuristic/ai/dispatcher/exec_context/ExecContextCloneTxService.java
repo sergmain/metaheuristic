@@ -172,6 +172,8 @@ public class ExecContextCloneTxService {
             dst.setParams(rewritten);
         }
         TaskImpl saved = taskRepository.save(dst);
+        log.info("Phase13.G.5 insertNewTask: srcTaskId={} -> clonedTaskId={} in clonedEC={}",
+                sourceTaskId, saved.id, newExecContextId);
         return new TaskClonedIds(sourceTaskId, saved.id);
     }
 
@@ -213,6 +215,63 @@ public class ExecContextCloneTxService {
     }
 
     /**
+     * Phase 13.G.5 — pass A of the clone: insert a minimal placeholder TaskImpl row
+     * to allocate a row id. The row is filled in pass B. Returns the allocated id.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Long preAllocateClonedTask(Long newExecContextId) {
+        TaskImpl placeholder = new TaskImpl();
+        placeholder.execContextId = newExecContextId;
+        placeholder.execState = EnumsApi.TaskExecState.NONE.value;
+        placeholder.completed = 0;
+        placeholder.resultReceived = 0;
+        placeholder.resultResourceScheduledOn = 0L;
+        placeholder.setParams("");
+        TaskImpl saved = taskRepository.save(placeholder);
+        log.info("Phase13.G.5 preAllocateClonedTask: pre-allocated clonedTaskId={} in clonedEC={}",
+                saved.id, newExecContextId);
+        return saved.id;
+    }
+
+    /**
+     * Phase 13.G.5 — pass B of the clone: fill the pre-allocated row at
+     * {@code clonedTaskId} with the source task's content (state, params),
+     * rewriting variable IDs in inputs/outputs via {@code variableIdMap} and
+     * parent task IDs in {@code task.init.parentTaskIds} via {@code taskIdMap}.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void fillClonedTask(Long sourceTaskId, Long clonedTaskId, Long newExecContextId,
+                               java.util.Map<Long, Long> variableIdMap,
+                               java.util.Map<Long, Long> taskIdMap) {
+        TaskImpl src = taskRepository.findByIdReadOnly(sourceTaskId);
+        if (src == null) {
+            throw new IllegalStateException("Phase13.G.5 fillClonedTask: source task #" + sourceTaskId + " not found");
+        }
+        TaskImpl dst = taskRepository.findById(clonedTaskId).orElse(null);
+        if (dst == null) {
+            throw new IllegalStateException("Phase13.G.5 fillClonedTask: pre-allocated cloned task #" + clonedTaskId + " not found");
+        }
+        // Preserve execState/completion so FINISHED tasks in the source remain FINISHED
+        // in the clone (see insertNewTask javadoc).
+        dst.coreId = null;
+        dst.assignedOn = null;
+        dst.accessByProcessorOn = null;
+        dst.completedOn = src.completedOn;
+        dst.completed = src.completed;
+        dst.functionExecResults = src.functionExecResults;
+        dst.execContextId = newExecContextId;
+        dst.execState = src.execState;
+        dst.resultReceived = src.resultReceived;
+        dst.resultResourceScheduledOn = src.resultResourceScheduledOn;
+
+        String rewritten = rewriteTaskParamsIds(src.getParams(), variableIdMap, taskIdMap);
+        dst.setParams(rewritten);
+        taskRepository.save(dst);
+        log.info("Phase13.G.5 fillClonedTask: filled clonedTaskId={} (from srcTaskId={}) execState={}",
+                clonedTaskId, sourceTaskId, dst.execState);
+    }
+
+    /**
      * Phase 13.G.5 — pass 2 of the clone: rewrite an already-cloned task's
      * {@code TaskParamsYaml.task.init.parentTaskIds} from source-EC space to
      * clone-EC space. Run after all task rows are inserted and the source→clone
@@ -221,9 +280,12 @@ public class ExecContextCloneTxService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void rewriteClonedTaskParentIds(Long clonedTaskId, java.util.Map<Long, Long> taskIdMap) {
-        TaskImpl t = taskRepository.findById(clonedTaskId).orElse(null);
+        // Use findByIdReadOnly (a JPQL @Query) to bypass any L2-cache miss after the
+        // pass-1 REQUIRES_NEW insert. The row is committed but the L2 cache may not
+        // have it yet on the read path.
+        TaskImpl t = taskRepository.findByIdReadOnly(clonedTaskId);
         if (t == null) {
-            log.warn("Phase13.G.5 rewriteClonedTaskParentIds: cloned task #{} not found", clonedTaskId);
+            log.warn("Phase13.G.5 rewriteClonedTaskParentIds: cloned task #{} not found via findByIdReadOnly", clonedTaskId);
             return;
         }
         ai.metaheuristic.commons.yaml.task.TaskParamsYaml tpy =
@@ -248,6 +310,11 @@ public class ExecContextCloneTxService {
             tpy.task.init.parentTaskIds = remapped;
             t.setParams(ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils.UTILS.toString(tpy));
             taskRepository.save(t);
+            log.info("Phase13.G.5 rewriteClonedTaskParentIds: clonedTask=#{} parentTaskIds rewritten to {}",
+                    clonedTaskId, remapped);
+        } else {
+            log.info("Phase13.G.5 rewriteClonedTaskParentIds: clonedTask=#{} no change (parents already mapped or not in map): {}",
+                    clonedTaskId, tpy.task.init.parentTaskIds);
         }
     }
 

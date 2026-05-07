@@ -154,23 +154,23 @@ public class ExecContextCloneService {
                 }
             }
         }
-        // Two-pass clone: pass 1 inserts cloned task rows with variable IDs rewritten
-        // and parentTaskIds left as source-EC IDs; we collect the source→clone task
-        // ID map from this pass. Pass 2 rewrites parentTaskIds using the now-complete
-        // map. Necessary because TaskParamsYaml.task.init.parentTaskIds references
-        // OTHER tasks in the same EC that may not have been cloned yet at insert time.
+        // Two-pass clone with PRE-ALLOCATED IDs (Phase 13.G.5):
+        //   Pass A — pre-allocate clone-EC task IDs by inserting placeholder rows;
+        //            build the complete src→clone taskIdMap.
+        //   Pass B — fill each cloned row's params with rewritten variable AND
+        //            parent task IDs (using the now-complete maps) and final state.
+        // Doing pre-allocation first avoids the chicken-and-egg of "need taskIdMap
+        // to write parentTaskIds, but taskIdMap is built BY writing rows".
+        // Doing both passes in REQUIRES_NEW transactions ensures rows committed in
+        // pass A are visible to pass B.
         for (TaskImpl t : sourceTasks) {
-            ExecContextCloneTxService.TaskClonedIds pair =
-                    cloneTxService.insertNewTask(t.id, newEcId, variableIdMap);
-            taskIdMap.put(pair.oldTaskId(), pair.newTaskId());
+            Long preAllocatedId = cloneTxService.preAllocateClonedTask(newEcId);
+            taskIdMap.put(t.id, preAllocatedId);
         }
-        // Pass 2 — rewrite parentTaskIds on each cloned task using the now-complete map.
+        // Pass B — fill each pre-allocated row with cloned content + rewritten IDs.
         for (TaskImpl t : sourceTasks) {
             Long clonedTaskId = taskIdMap.get(t.id);
-            if (clonedTaskId == null) {
-                continue;
-            }
-            cloneTxService.rewriteClonedTaskParentIds(clonedTaskId, taskIdMap);
+            cloneTxService.fillClonedTask(t.id, clonedTaskId, newEcId, variableIdMap, taskIdMap);
         }
 
         // Stage 2 — rewrite references (graph DOT inside YAML envelope, task-state
