@@ -228,8 +228,9 @@ public class ExecContextCloneTxService {
         placeholder.resultResourceScheduledOn = 0L;
         placeholder.setParams("");
         TaskImpl saved = taskRepository.save(placeholder);
-        log.info("Phase13.G.5 preAllocateClonedTask: pre-allocated clonedTaskId={} in clonedEC={}",
-                saved.id, newExecContextId);
+        // Force a flush so the INSERT hits the DB inside this TX before commit.
+        log.info("Phase13.G.5 preAllocateClonedTask: pre-allocated clonedTaskId={} in clonedEC={} (saved.id={}, version={})",
+                saved.id, newExecContextId, saved.id, saved.version);
         return saved.id;
     }
 
@@ -395,6 +396,36 @@ public class ExecContextCloneTxService {
         ExecContextImpl ec = execContextRepository.findById(newExecContextId).orElseThrow();
         ec.state = EnumsApi.ExecContextState.FINISHED.code;
         execContextRepository.save(ec);
+    }
+
+    /**
+     * MINIMAL ISOLATION DIAGNOSTICS — two independent read paths to the same
+     * TaskImpl row, each in its own REQUIRES_NEW TX. Used by
+     * {@code test_minimalRepro_preAllocateThenReadInAnotherTx} to determine
+     * which (if any) read path can see a row inserted by
+     * {@link #preAllocateClonedTask} in a sibling REQUIRES_NEW TX.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+    public TaskImpl debugFindById(Long id) {
+        TaskImpl t = taskRepository.findById(id).orElse(null);
+        log.info("MINREPRO debugFindById({}) -> {}", id, t == null ? "null" : ("id=" + t.id + " ec=" + t.execContextId));
+        return t;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+    public TaskImpl debugFindByIdReadOnly(Long id) {
+        TaskImpl t = taskRepository.findByIdReadOnly(id);
+        log.info("MINREPRO debugFindByIdReadOnly({}) -> {}", id, t == null ? "null" : ("id=" + t.id + " ec=" + t.execContextId));
+        return t;
+    }
+
+    /**
+     * MINIMAL DIAGNOSTIC HELPER — save a TaskImpl from outside any TX
+     * (used by tests that mutate a task's params and need it persisted).
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public TaskImpl debugSaveTask(TaskImpl t) {
+        return taskRepository.save(t);
     }
 
     public record TaskClonedIds(Long oldTaskId, Long newTaskId) {}

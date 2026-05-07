@@ -173,6 +173,41 @@ public class ExecContextCloneService {
             cloneTxService.fillClonedTask(t.id, clonedTaskId, newEcId, variableIdMap, taskIdMap);
         }
 
+        // PHASE13G5 DIAG — invariant probe: for each source task, dump
+        //   (a) source taskId -> set of source parentTaskIds from TaskParamsYaml.task.init.parentTaskIds,
+        //   (b) whether each such parent is in (1) source-task-row set, (2) source graph vertex set.
+        // This pinpoints whether the bug is "source TaskParamsYaml references parents that aren't
+        // in the source graph" — which the clone faithfully preserves.
+        try {
+            String sourceGraphDot = newGraph.getExecContextGraphParamsYaml().graph;
+            org.jgrapht.graph.DirectedAcyclicGraph<
+                    ai.metaheuristic.ai.dispatcher.data.ExecContextData.TaskVertex,
+                    org.jgrapht.graph.DefaultEdge> dag =
+                    ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService
+                            .importExecContextGraph(sourceGraphDot);
+            java.util.Set<Long> srcGraphVertexIds = new java.util.HashSet<>();
+            for (var v : dag.vertexSet()) srcGraphVertexIds.add(v.taskId);
+            java.util.Set<Long> srcTaskRowIds = new java.util.HashSet<>(taskIdMap.keySet());
+
+            for (TaskImpl t : sourceTasks) {
+                ai.metaheuristic.commons.yaml.task.TaskParamsYaml tpy = t.getTaskParamsYaml();
+                if (tpy.task == null || tpy.task.init == null || tpy.task.init.parentTaskIds == null
+                        || tpy.task.init.parentTaskIds.isEmpty()) {
+                    continue;
+                }
+                for (Long pid : tpy.task.init.parentTaskIds) {
+                    boolean inRows = srcTaskRowIds.contains(pid);
+                    boolean inGraph = srcGraphVertexIds.contains(pid);
+                    if (!inRows || !inGraph) {
+                        log.warn("Phase13.G.5 DIAG INVARIANT srcTask#{} parentTaskId={} inSrcRows={} inSrcGraph={}",
+                                t.id, pid, inRows, inGraph);
+                    }
+                }
+            }
+        } catch (Throwable th) {
+            log.warn("Phase13.G.5 DIAG: failed source-invariant probe", th);
+        }
+
         // Stage 2 — rewrite references (graph DOT inside YAML envelope, task-state
         // map keys, variable-state JSON). Pass the parsed YAML object to rewriteGraph
         // so we don't feed the whole YAML string to the DOT importer.
