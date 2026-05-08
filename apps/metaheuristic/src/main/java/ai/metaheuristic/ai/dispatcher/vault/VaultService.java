@@ -20,11 +20,12 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.data.VaultData;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
+import org.linguafranca.pwdb.Credentials;
 import org.linguafranca.pwdb.Database;
 import org.linguafranca.pwdb.Entry;
 import org.linguafranca.pwdb.Group;
-import org.linguafranca.pwdb.kdbx.KdbxCreds;
-import org.linguafranca.pwdb.kdbx.jackson.JacksonDatabase;
+import org.linguafranca.pwdb.format.KdbxCreds;
+import org.linguafranca.pwdb.kdbx.jackson.KdbxDatabase;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -37,7 +38,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 /**
- * Vault service backed by KeePass (KDBX) file storage.
+ * Vault service backed by KeePass (KDBX) file storage — KeePassJava2 v3 API.
  *
  * <p>Stores API keys per-tenant. Each entry's title encodes {@code accountId:code}
  * and the entry's password field contains the secret key value.
@@ -63,7 +64,7 @@ public class VaultService {
 
     /** Held in memory after unlock; null when locked. Volatile for safe publication. */
     @Nullable
-    private volatile Database<?, ?, ?, ?> database;
+    private volatile Database database;
 
     /** Cached path to the KDBX file. */
     @Nullable
@@ -83,7 +84,7 @@ public class VaultService {
      * Returns empty if the vault is locked or the entry does not exist.
      */
     public Optional<String> getApiKey(long accountId, String code) {
-        Database<?, ?, ?, ?> db = this.database;
+        Database db = this.database;
         if (db == null) {
             return Optional.empty();
         }
@@ -103,14 +104,13 @@ public class VaultService {
         }
         try {
             Path path = resolveVaultFile();
-            byte[] credsBytes = passphrase.getBytes(StandardCharsets.UTF_8);
-            KdbxCreds creds = new KdbxCreds(credsBytes);
+            Credentials creds = new KdbxCreds(passphrase.getBytes(StandardCharsets.UTF_8));
 
             boolean created = false;
-            Database<?, ?, ?, ?> db;
+            Database db;
             if (Files.exists(path)) {
                 try (InputStream in = Files.newInputStream(path)) {
-                    db = JacksonDatabase.load(creds, in);
+                    db = KdbxDatabase.load(creds, in);
                 }
             } else {
                 db = createEmptyDatabase(path, creds);
@@ -131,7 +131,7 @@ public class VaultService {
      * Static helper, package-private, for unit testing the entry lookup logic
      * without a real KeePass database wrapped in Spring context.
      */
-    static Optional<? extends Entry<?, ?, ?, ?>> findEntry(Database<?, ?, ?, ?> db, long accountId, String code) {
+    static Optional<? extends Entry> findEntry(Database db, long accountId, String code) {
         String title = entryTitle(accountId, code);
         // findEntries() walks the whole database recursively
         return db.findEntries(title).stream()
@@ -144,11 +144,10 @@ public class VaultService {
         return accountId + ":" + code;
     }
 
-    private Database<?, ?, ?, ?> createEmptyDatabase(Path path, KdbxCreds creds) throws IOException {
+    private Database createEmptyDatabase(Path path, Credentials creds) throws IOException {
         Files.createDirectories(path.getParent());
-        JacksonDatabase db = new JacksonDatabase();
+        KdbxDatabase db = new KdbxDatabase();
         db.setName("Metaheuristic Vault");
-        db.setShouldProtect(Entry.STANDARD_PROPERTY_NAME_PASSWORD, true);
         try (OutputStream out = Files.newOutputStream(path)) {
             db.save(creds, out);
         }
@@ -171,7 +170,7 @@ public class VaultService {
      * Visible for tests: inject an already-unlocked database (used by unit tests
      * that exercise the lookup path without performing a real unlock).
      */
-    void setDatabaseForTests(Database<?, ?, ?, ?> db) {
+    void setDatabaseForTests(Database db) {
         this.database = db;
     }
 
@@ -183,13 +182,24 @@ public class VaultService {
      * @return true if persisted, false if the vault is locked or persistence failed
      */
     public synchronized boolean putApiKey(long accountId, String code, String secret, String passphrase) {
-        Database<?, ?, ?, ?> db = this.database;
+        Database db = this.database;
         Path path = this.vaultPath;
         if (db == null || path == null) {
             return false;
         }
         try {
-            putEntry(db, accountId, code, secret);
+            String title = entryTitle(accountId, code);
+            Optional<? extends Entry> existing = findEntry(db, accountId, code);
+            Entry entry;
+            if (existing.isPresent()) {
+                entry = existing.get();
+            } else {
+                entry = db.newEntry();
+                entry.setTitle(title);
+                Group root = db.getRootGroup();
+                root.addEntry(entry);
+            }
+            entry.setPassword(secret);
             try (OutputStream out = Files.newOutputStream(path)) {
                 db.save(new KdbxCreds(passphrase.getBytes(StandardCharsets.UTF_8)), out);
             }
@@ -198,32 +208,5 @@ public class VaultService {
             log.error("Failed to write entry {}:{}: {}", accountId, code, e.getMessage());
             return false;
         }
-    }
-
-    /**
-     * Generic helper that captures the wildcard so we can call methods that take {@code E}
-     * (such as {@code Group#addEntry(E)}). Without this capture the wildcards on
-     * {@code Database<?,?,?,?>} prevent producer methods from being called.
-     */
-    @SuppressWarnings("unchecked")
-    private static <
-            D extends Database<D, G, E, I>,
-            G extends Group<D, G, E, I>,
-            E extends Entry<D, G, E, I>,
-            I extends org.linguafranca.pwdb.Icon>
-    void putEntry(Database<?, ?, ?, ?> rawDb, long accountId, String code, String secret) {
-        D db = (D) rawDb;
-        String title = entryTitle(accountId, code);
-        Optional<? extends Entry<?, ?, ?, ?>> existing = findEntry(db, accountId, code);
-        E entry;
-        if (existing.isPresent()) {
-            entry = (E) existing.get();
-        } else {
-            entry = db.newEntry();
-            entry.setTitle(title);
-            G root = db.getRootGroup();
-            root.addEntry(entry);
-        }
-        entry.setPassword(secret);
     }
 }

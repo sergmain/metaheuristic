@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.dispatcher.vault;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.data.VaultData;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -37,48 +36,48 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class VaultServiceTest {
 
-    @TempDir
-    Path mhHome;
-
-    private VaultService service;
-
-    @BeforeEach
-    void setUp() throws Exception {
+    /**
+     * Build a VaultService rooted at the given mh.home directory.
+     * Each test gets its own {@code @TempDir Path tempPath} parameter so that
+     * tests are isolated from each other without any shared state on the test class.
+     */
+    private static VaultService newVaultService(Path mhHome) throws Exception {
         Globals globals = new Globals();
         globals.home = mhHome;
         // Mirror Globals#postConstruct() bare minimum — we only need dispatcherPath.
         Path dispatcherPath = mhHome.resolve("dispatcher");
         Files.createDirectories(dispatcherPath);
         globals.dispatcherPath = dispatcherPath;
-        service = new VaultService(globals);
+        return new VaultService(globals);
     }
 
     @Test
-    void initialState_isClosed() {
+    void initialState_isClosed(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
         assertFalse(service.isOpened(), "Newly created service must be locked");
         assertEquals(Optional.empty(), service.getApiKey(1L, "any"));
     }
 
     @Test
-    void unlock_withMissingFile_createsEmptyVault() {
+    void unlock_withMissingFile_createsEmptyVault(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
         VaultData.UnlockResult r = service.unlock("master-pass-1");
         assertTrue(r.errorMessages == null || r.errorMessages.isEmpty(),
                 "Expected no errors, got: " + r.errorMessages);
         assertTrue(r.opened);
         assertTrue(r.created, "Vault file did not exist; service must report created=true");
         assertTrue(service.isOpened());
-        assertTrue(Files.exists(mhHome.resolve("dispatcher/vault/vault.kdbx")));
+        assertTrue(Files.exists(tempPath.resolve("dispatcher/vault/vault.kdbx")));
     }
 
     @Test
-    void unlock_existingFile_correctPassphrase_opensWithoutCreate() {
+    void unlock_existingFile_correctPassphrase_opensWithoutCreate(@TempDir Path tempPath) throws Exception {
         // Arrange: create the vault once
+        VaultService service = newVaultService(tempPath);
         assertTrue(service.unlock("master-pass-2").opened);
+
         // New service instance over the same directory, simulating a JVM restart
-        Globals globals = new Globals();
-        globals.home = mhHome;
-        globals.dispatcherPath = mhHome.resolve("dispatcher");
-        VaultService freshService = new VaultService(globals);
+        VaultService freshService = newVaultService(tempPath);
 
         // Act
         VaultData.UnlockResult r = freshService.unlock("master-pass-2");
@@ -89,13 +88,11 @@ class VaultServiceTest {
     }
 
     @Test
-    void unlock_existingFile_wrongPassphrase_returnsError() {
+    void unlock_existingFile_wrongPassphrase_returnsError(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
         assertTrue(service.unlock("correct-pass").opened);
-        Globals globals = new Globals();
-        globals.home = mhHome;
-        globals.dispatcherPath = mhHome.resolve("dispatcher");
-        VaultService freshService = new VaultService(globals);
 
+        VaultService freshService = newVaultService(tempPath);
         VaultData.UnlockResult r = freshService.unlock("wrong-pass");
 
         assertFalse(r.opened);
@@ -105,7 +102,8 @@ class VaultServiceTest {
     }
 
     @Test
-    void unlock_blankPassphrase_rejected() {
+    void unlock_blankPassphrase_rejected(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
         VaultData.UnlockResult r = service.unlock("");
         assertFalse(r.opened);
         assertFalse(service.isOpened());
@@ -113,20 +111,23 @@ class VaultServiceTest {
     }
 
     @Test
-    void getApiKey_afterPut_returnsValue() {
+    void getApiKey_afterPut_returnsValue(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
         service.unlock("pass");
         assertTrue(service.putApiKey(42L, "openai", "sk-test-value-1", "pass"));
         assertEquals(Optional.of("sk-test-value-1"), service.getApiKey(42L, "openai"));
     }
 
     @Test
-    void getApiKey_unknownCode_returnsEmpty() {
+    void getApiKey_unknownCode_returnsEmpty(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
         service.unlock("pass");
         assertEquals(Optional.empty(), service.getApiKey(42L, "nonexistent"));
     }
 
     @Test
-    void getApiKey_isolatesByAccountId() {
+    void getApiKey_isolatesByAccountId(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
         service.unlock("pass");
         service.putApiKey(1L, "openai", "tenant-1-secret", "pass");
         service.putApiKey(2L, "openai", "tenant-2-secret", "pass");
@@ -137,7 +138,8 @@ class VaultServiceTest {
     }
 
     @Test
-    void putApiKey_overwritesExistingEntry() {
+    void putApiKey_overwritesExistingEntry(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
         service.unlock("pass");
         service.putApiKey(1L, "openai", "old-value", "pass");
         service.putApiKey(1L, "openai", "new-value", "pass");
@@ -146,27 +148,27 @@ class VaultServiceTest {
     }
 
     @Test
-    void getApiKey_whenLocked_returnsEmpty() {
+    void getApiKey_whenLocked_returnsEmpty(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
         // service was never unlocked
         assertEquals(Optional.empty(), service.getApiKey(1L, "openai"));
     }
 
     @Test
-    void putApiKey_whenLocked_returnsFalse() {
+    void putApiKey_whenLocked_returnsFalse(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
         assertFalse(service.putApiKey(1L, "openai", "value", "pass"));
     }
 
     @Test
-    void persistedEntry_visibleAfterReopen() {
+    void persistedEntry_visibleAfterReopen(@TempDir Path tempPath) throws Exception {
         // Arrange: write through one instance
+        VaultService service = newVaultService(tempPath);
         assertTrue(service.unlock("master").opened);
         assertTrue(service.putApiKey(7L, "openai", "persisted-value", "master"));
 
         // Act: simulate restart with a fresh service over the same files
-        Globals globals = new Globals();
-        globals.home = mhHome;
-        globals.dispatcherPath = mhHome.resolve("dispatcher");
-        VaultService fresh = new VaultService(globals);
+        VaultService fresh = newVaultService(tempPath);
         assertTrue(fresh.unlock("master").opened);
 
         // Assert
