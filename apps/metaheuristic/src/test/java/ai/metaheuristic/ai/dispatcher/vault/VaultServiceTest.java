@@ -20,12 +20,14 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.data.VaultData;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * Plain unit tests for VaultService — no Spring context. Drives a real
@@ -34,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author Sergio Lissner
  */
+@Execution(CONCURRENT)
 class VaultServiceTest {
 
     /**
