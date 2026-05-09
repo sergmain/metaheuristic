@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.event.events.InputVariablesInitedEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.TaskCreatedEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.VariableUploadedEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.shutdown.ShutdownInterface;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +45,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class ExecContextVariableStateTopLevelService {
+public class ExecContextVariableStateTopLevelService implements ShutdownInterface {
 
     private final ExecContextVariableStateService execContextVariableStateService;
     private final ExecContextCache execContextCache;
@@ -59,6 +60,9 @@ public class ExecContextVariableStateTopLevelService {
     private final ReentrantReadWriteLock.WriteLock varWriteLock = varLock.writeLock();
 
     public void registerCreatedTask(TaskCreatedEvent event) {
+        if (isShutdown()) {
+            return;
+        }
         taskWriteLock.lock();
         try {
             taskCreatedEvents.computeIfAbsent(event.taskVariablesInfo.execContextId, k -> new ArrayList<>()).add(event.taskVariablesInfo);
@@ -68,6 +72,9 @@ public class ExecContextVariableStateTopLevelService {
     }
 
     public void registerVariableState(VariableUploadedEvent event) {
+        if (isShutdown()) {
+            return;
+        }
         varWriteLock.lock();
         try {
             variableUploadedEvents.computeIfAbsent(event.execContextId, k -> new ArrayList<>()).add(event);
@@ -82,6 +89,9 @@ public class ExecContextVariableStateTopLevelService {
     private final ReentrantReadWriteLock.WriteLock inputVarWriteLock = inputVarLock.writeLock();
 
     public void updateInputVariableStates(InputVariablesInitedEvent event) {
+        if (isShutdown()) {
+            return;
+        }
         inputVarWriteLock.lock();
         try {
             inputVariablesInitedEvents.computeIfAbsent(event.execContextId, k -> new ArrayList<>()).add(event);
@@ -91,6 +101,9 @@ public class ExecContextVariableStateTopLevelService {
     }
 
     public void processFlushing() {
+        if (isShutdown()) {
+            return;
+        }
         processFlushingTaskCreatedEvents();
         processFlushingVariableUploadedEvents();
         processFlushingInputVariablesInitedEvents();
@@ -202,4 +215,48 @@ public class ExecContextVariableStateTopLevelService {
     }
 
 
+
+    private boolean shutdown = false;
+
+    @Override
+    public boolean isShutdown() {
+        return shutdown;
+    }
+
+    /**
+     * Reset all JVM-static event-accumulator maps and stop accepting new events.
+     *
+     * <p>These maps are keyed by {@code execContextId}, but execContextIds reset
+     * to 1 in fresh per-test-class H2 files. Without this reset, events from
+     * the previous test class's execContextId=1 leak into the next test class's
+     * execContextId=1 during {@link org.springframework.test.annotation.DirtiesContext}
+     * rebuilds, causing {@code findVariableInAllInternalContexts} to resolve
+     * variable names to stale variableIds.
+     *
+     * <p>Wired through the {@link ai.metaheuristic.ai.shutdown.ShutdownService}
+     * {@code @PreDestroy} hook (auto-discovered via the
+     * {@link ShutdownInterface} marker).
+     */
+    @Override
+    public void shutdown() {
+        shutdown = true;
+        taskWriteLock.lock();
+        try {
+            taskCreatedEvents = new HashMap<>();
+        } finally {
+            taskWriteLock.unlock();
+        }
+        varWriteLock.lock();
+        try {
+            variableUploadedEvents = new HashMap<>();
+        } finally {
+            varWriteLock.unlock();
+        }
+        inputVarWriteLock.lock();
+        try {
+            inputVariablesInitedEvents = new HashMap<>();
+        } finally {
+            inputVarWriteLock.unlock();
+        }
+    }
 }
