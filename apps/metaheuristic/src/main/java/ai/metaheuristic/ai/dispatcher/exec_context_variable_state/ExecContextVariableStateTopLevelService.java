@@ -242,19 +242,25 @@ public class ExecContextVariableStateTopLevelService implements ShutdownInterfac
         shutdown = true;
         taskWriteLock.lock();
         try {
+            var temp = taskCreatedEvents;
             taskCreatedEvents = new HashMap<>();
+            temp.clear();
         } finally {
             taskWriteLock.unlock();
         }
         varWriteLock.lock();
         try {
+            var temp = taskCreatedEvents;
             variableUploadedEvents = new HashMap<>();
+            temp.clear();
         } finally {
             varWriteLock.unlock();
         }
         inputVarWriteLock.lock();
         try {
+            var temp = taskCreatedEvents;
             inputVariablesInitedEvents = new HashMap<>();
+            temp.clear();
         } finally {
             inputVarWriteLock.unlock();
         }
