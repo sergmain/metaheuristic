@@ -48,7 +48,7 @@
         <dependency>
             <groupId>ai.metaheuristic</groupId>
             <artifactId>mh-commons</artifactId>
-            <version>7.1.23</version>
+            <version>7.1.24</version>
         </dependency>
         <dependency>
             <!--License	Apache 2.0-->
