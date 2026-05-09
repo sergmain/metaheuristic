@@ -27,7 +27,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 
 /**
- * Data classes for KeePass-backed Key Vault.
+ * Data classes for the dispatcher Key Vault.
  * Vault stores entries in form accountId:code:key (multi-tenant by accountId).
  *
  * @author Sergio Lissner

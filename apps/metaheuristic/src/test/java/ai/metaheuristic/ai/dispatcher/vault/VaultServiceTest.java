@@ -29,8 +29,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Plain unit tests for VaultService — no Spring context. Drives a real
- * {@link org.linguafranca.pwdb.kdbx.jackson.JacksonDatabase} on a temp directory
- * to keep tests integration-style honest without the test containers/H2 etc.
+ * AES/GCM-encrypted vault file on a temp directory to keep tests
+ * integration-style honest without test containers / H2 / etc.
  *
  * @author Sergio Lissner
  */
@@ -67,7 +67,7 @@ class VaultServiceTest {
         assertTrue(r.opened);
         assertTrue(r.created, "Vault file did not exist; service must report created=true");
         assertTrue(service.isOpened());
-        assertTrue(Files.exists(tempPath.resolve("dispatcher/vault/vault.kdbx")));
+        assertTrue(Files.exists(tempPath.resolve("dispatcher/vault/mh.vault")));
     }
 
     @Test
@@ -129,11 +129,11 @@ class VaultServiceTest {
     void getApiKey_isolatesByAccountId(@TempDir Path tempPath) throws Exception {
         VaultService service = newVaultService(tempPath);
         service.unlock("pass");
-        service.putApiKey(1L, "openai", "tenant-1-secret", "pass");
         service.putApiKey(2L, "openai", "tenant-2-secret", "pass");
+        service.putApiKey(7L, "openai", "tenant-7-secret", "pass");
 
-        assertEquals(Optional.of("tenant-1-secret"), service.getApiKey(1L, "openai"));
         assertEquals(Optional.of("tenant-2-secret"), service.getApiKey(2L, "openai"));
+        assertEquals(Optional.of("tenant-7-secret"), service.getApiKey(7L, "openai"));
         assertEquals(Optional.empty(), service.getApiKey(3L, "openai"));
     }
 
@@ -141,23 +141,23 @@ class VaultServiceTest {
     void putApiKey_overwritesExistingEntry(@TempDir Path tempPath) throws Exception {
         VaultService service = newVaultService(tempPath);
         service.unlock("pass");
-        service.putApiKey(1L, "openai", "old-value", "pass");
-        service.putApiKey(1L, "openai", "new-value", "pass");
+        service.putApiKey(2L, "openai", "old-value", "pass");
+        service.putApiKey(2L, "openai", "new-value", "pass");
 
-        assertEquals(Optional.of("new-value"), service.getApiKey(1L, "openai"));
+        assertEquals(Optional.of("new-value"), service.getApiKey(2L, "openai"));
     }
 
     @Test
     void getApiKey_whenLocked_returnsEmpty(@TempDir Path tempPath) throws Exception {
         VaultService service = newVaultService(tempPath);
         // service was never unlocked
-        assertEquals(Optional.empty(), service.getApiKey(1L, "openai"));
+        assertEquals(Optional.empty(), service.getApiKey(2L, "openai"));
     }
 
     @Test
     void putApiKey_whenLocked_returnsFalse(@TempDir Path tempPath) throws Exception {
         VaultService service = newVaultService(tempPath);
-        assertFalse(service.putApiKey(1L, "openai", "value", "pass"));
+        assertFalse(service.putApiKey(2L, "openai", "value", "pass"));
     }
 
     @Test
@@ -176,7 +176,43 @@ class VaultServiceTest {
     }
 
     @Test
+    void corruptFile_unlockFails(@TempDir Path tempPath) throws Exception {
+        // Create a real vault, then truncate it so the magic header is broken.
+        VaultService service = newVaultService(tempPath);
+        assertTrue(service.unlock("master").opened);
+
+        Path vaultFile = tempPath.resolve("dispatcher/vault/mh.vault");
+        assertTrue(Files.exists(vaultFile));
+        Files.write(vaultFile, new byte[]{0, 1, 2, 3, 4, 5});
+
+        VaultService fresh = newVaultService(tempPath);
+        VaultData.UnlockResult r = fresh.unlock("master");
+        assertFalse(r.opened);
+        assertFalse(fresh.isOpened());
+    }
+
+    @Test
+    void tamperedHeader_unlockFails(@TempDir Path tempPath) throws Exception {
+        // Header bytes (magic|iterations|salt) are bound as GCM AAD.
+        // Flipping the iteration count in the on-disk file must fail authentication.
+        VaultService service = newVaultService(tempPath);
+        assertTrue(service.unlock("master").opened);
+        assertTrue(service.putApiKey(7L, "openai", "v", "master"));
+
+        Path vaultFile = tempPath.resolve("dispatcher/vault/mh.vault");
+        byte[] file = Files.readAllBytes(vaultFile);
+        // iterations is the int at offset 4 (right after MAGIC); flip a bit in it.
+        file[4] ^= 0x01;
+        Files.write(vaultFile, file);
+
+        VaultService fresh = newVaultService(tempPath);
+        VaultData.UnlockResult r = fresh.unlock("master");
+        assertFalse(r.opened, "Tampering with header bytes must fail GCM authentication");
+        assertFalse(fresh.isOpened());
+    }
+
+    @Test
     void entryTitle_format_isAccountIdColonCode() {
-        assertEquals("42:openai", VaultService.entryTitle(42L, "openai"));
+        assertEquals(VaultService.entryTitle(42L, "openai"), "42:openai");
     }
 }
