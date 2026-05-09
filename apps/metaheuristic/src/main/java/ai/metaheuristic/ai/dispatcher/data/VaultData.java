@@ -89,4 +89,72 @@ public class VaultData {
 
     /** Request body for unlock. */
     public record UnlockRequest(String passphrase) {}
+
+    /**
+     * Full entry: title + secret. Returned by the listing endpoint when the
+     * vault is unlocked. Per design: once the vault is open the UI shows secrets
+     * in plain text.
+     */
+    public record Entry(long accountId, String code, String secret) {}
+
+    /** Response wrapper for listing all entries (titles + secrets when unlocked). */
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class EntriesList extends BaseDataClass {
+        public List<Entry> entries = List.of();
+        public boolean opened;
+
+        public EntriesList(List<Entry> entries, boolean opened) {
+            this.entries = entries;
+            this.opened = opened;
+        }
+
+        public EntriesList(String error) {
+            this.opened = false;
+            addErrorMessage(error);
+        }
+
+        @JsonCreator
+        public EntriesList(
+                @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+                @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
+    }
+
+    /**
+     * Generic operation result for write/delete operations.
+     * {@code ok=true} means the operation completed; otherwise check {@code errorMessages}.
+     */
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class OpResult extends BaseDataClass {
+        public boolean ok;
+
+        public OpResult(boolean ok) {
+            this.ok = ok;
+        }
+
+        public OpResult(String error) {
+            this.ok = false;
+            addErrorMessage(error);
+        }
+
+        @JsonCreator
+        public OpResult(
+                @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+                @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
+            this.errorMessages = errorMessages;
+            this.infoMessages = infoMessages;
+        }
+    }
+
+    /** Body for creating/updating an entry. Passphrase is the proof-of-knowledge gate. */
+    public record PutEntryRequest(long accountId, String code, String secret, String passphrase) {}
+
+    /** Body for deleting an entry. Passphrase is the proof-of-knowledge gate. */
+    public record DeleteEntryRequest(String passphrase) {}
 }

@@ -32,9 +32,12 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -106,6 +109,14 @@ public class VaultService {
     /** Iteration count of the currently unlocked vault. */
     private volatile int iterationsInUse;
 
+    /**
+     * Cached derived key bytes (AES-256). Held alongside {@link #entries} for the
+     * lifetime of the unlocked session so writes do not need to re-derive from
+     * the master passphrase. Cleared on lock.
+     */
+    @Nullable
+    private volatile byte[] keyInUse;
+
     public VaultService(Globals globals) {
         this.globals = globals;
     }
@@ -144,17 +155,14 @@ public class VaultService {
             Map<String, String> map;
             byte[] salt;
             int iterations;
+            byte[] sessionKey;
 
             if (Files.exists(path)) {
                 byte[] file = Files.readAllBytes(path);
                 ParsedFile parsed = parseFile(file);
-                byte[] key = deriveKey(passphrase, parsed.salt, parsed.iterations);
-                try {
-                    String json = JsonCrypto.decrypt(key, parsed.ciphertext, parsed.header);
-                    map = readEntries(json);
-                } finally {
-                    Arrays.fill(key, (byte) 0);
-                }
+                sessionKey = deriveKey(passphrase, parsed.salt, parsed.iterations);
+                String json = JsonCrypto.decrypt(sessionKey, parsed.ciphertext, parsed.header);
+                map = readEntries(json);
                 salt = parsed.salt;
                 iterations = parsed.iterations;
             } else {
@@ -163,19 +171,21 @@ public class VaultService {
                 RNG.nextBytes(salt);
                 iterations = PBKDF2_ITERATIONS;
                 map = new LinkedHashMap<>();
-                byte[] key = deriveKey(passphrase, salt, iterations);
-                try {
-                    writeFile(path, salt, iterations, key, map);
-                } finally {
-                    Arrays.fill(key, (byte) 0);
-                }
+                sessionKey = deriveKey(passphrase, salt, iterations);
+                writeFile(path, salt, iterations, sessionKey, map);
                 created = true;
             }
 
+            // Replace any previously cached key with the new one.
+            byte[] previousKey = this.keyInUse;
             this.entries = map;
             this.vaultPath = path;
             this.saltInUse = salt;
             this.iterationsInUse = iterations;
+            this.keyInUse = sessionKey;
+            if (previousKey != null) {
+                Arrays.fill(previousKey, (byte) 0);
+            }
             log.info("Vault unlocked (created={})", created);
             return new VaultData.UnlockResult(true, created);
         } catch (Exception e) {
@@ -190,28 +200,119 @@ public class VaultService {
      * and persist the vault. Synchronised to avoid concurrent writers corrupting
      * the on-disk file.
      *
+     * <p>Uses the cached session key established at {@link #unlock(String)} time;
+     * caller is responsible for verifying the user's proof-of-knowledge of the
+     * master passphrase via {@link #verifyPassphrase(String)} before calling this.
+     *
      * @return true if persisted, false if the vault is locked or persistence failed
      */
-    public synchronized boolean putApiKey(long accountId, String code, String secret, String passphrase) {
+    public synchronized boolean putApiKey(long accountId, String code, String secret) {
         Map<String, String> map = this.entries;
         Path path = this.vaultPath;
         byte[] salt = this.saltInUse;
         int iterations = this.iterationsInUse;
-        if (map == null || path == null || salt == null) {
+        byte[] key = this.keyInUse;
+        if (map == null || path == null || salt == null || key == null) {
             return false;
         }
-        byte[] key = null;
         try {
             map.put(entryTitle(accountId, code), secret);
-            key = deriveKey(passphrase, salt, iterations);
             writeFile(path, salt, iterations, key, map);
             return true;
         } catch (Exception e) {
             log.error("Failed to write entry {}:{}: {}", accountId, code, e.getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Remove an entry and persist the vault.
+     *
+     * <p>Caller must have verified the master passphrase before calling.
+     *
+     * @return true if the entry existed and the vault was persisted; false if the
+     *         vault is locked, the entry did not exist, or persistence failed.
+     */
+    public synchronized boolean deleteApiKey(long accountId, String code) {
+        Map<String, String> map = this.entries;
+        Path path = this.vaultPath;
+        byte[] salt = this.saltInUse;
+        int iterations = this.iterationsInUse;
+        byte[] key = this.keyInUse;
+        if (map == null || path == null || salt == null || key == null) {
+            return false;
+        }
+        String title = entryTitle(accountId, code);
+        if (!map.containsKey(title)) {
+            return false;
+        }
+        try {
+            map.remove(title);
+            writeFile(path, salt, iterations, key, map);
+            return true;
+        } catch (Exception e) {
+            log.error("Failed to delete entry {}:{}: {}", accountId, code, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * List the full contents of the vault: accountId, code and secret value
+     * for every entry. Returns empty list when locked. Per design, once the
+     * vault is unlocked the UI is allowed to show secrets in plain text.
+     */
+    public List<VaultData.Entry> listEntries() {
+        Map<String, String> map = this.entries;
+        if (map == null) {
+            return List.of();
+        }
+        List<VaultData.Entry> out = new ArrayList<>(map.size());
+        for (Map.Entry<String, String> e : map.entrySet()) {
+            String title = e.getKey();
+            int colon = title.indexOf(':');
+            if (colon <= 0 || colon == title.length() - 1) {
+                continue;
+            }
+            try {
+                long accountId = Long.parseLong(title.substring(0, colon));
+                String code = title.substring(colon + 1);
+                out.add(new VaultData.Entry(accountId, code, e.getValue()));
+            } catch (NumberFormatException ex) {
+                // Skip malformed titles silently — should not happen if all writes go through entryTitle().
+                log.warn("Skipping malformed vault entry title: {}", title);
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Proof-of-knowledge check: does the supplied passphrase match the one used
+     * to unlock the vault?
+     *
+     * <p>Re-derives a key from the supplied passphrase using the in-use salt and
+     * iteration count, and compares against the cached key in constant time.
+     * Returns false if the vault is locked or the passphrase does not match.
+     */
+    public boolean verifyPassphrase(String passphrase) {
+        if (passphrase == null || passphrase.isEmpty()) {
+            return false;
+        }
+        byte[] cached = this.keyInUse;
+        byte[] salt = this.saltInUse;
+        int iterations = this.iterationsInUse;
+        if (cached == null || salt == null) {
+            return false;
+        }
+        byte[] candidate = null;
+        try {
+            candidate = deriveKey(passphrase, salt, iterations);
+            return MessageDigest.isEqual(cached, candidate);
+        } catch (GeneralSecurityException e) {
+            log.error("Failed to derive key during passphrase verification: {}", e.getMessage());
+            return false;
         } finally {
-            if (key != null) {
-                Arrays.fill(key, (byte) 0);
+            if (candidate != null) {
+                Arrays.fill(candidate, (byte) 0);
             }
         }
     }
@@ -306,5 +407,10 @@ public class VaultService {
         this.vaultPath = null;
         this.saltInUse = null;
         this.iterationsInUse = 0;
+        byte[] k = this.keyInUse;
+        if (k != null) {
+            Arrays.fill(k, (byte) 0);
+        }
+        this.keyInUse = null;
     }
 }

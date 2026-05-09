@@ -27,7 +27,10 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * REST controller for the dispatcher Key Vault.
- * Admin-only endpoints to query vault status and unlock it for the JVM lifetime.
+ * Admin-only endpoints to query vault status, unlock, list/add/delete entries.
+ *
+ * <p>All write/delete operations require the master passphrase as a
+ * proof-of-knowledge gate even after the vault has been unlocked.
  *
  * @author Sergio Lissner
  */
@@ -50,5 +53,46 @@ public class VaultRestController {
     @PostMapping("/unlock")
     public VaultData.UnlockResult unlock(@RequestBody VaultData.UnlockRequest request) {
         return vaultService.unlock(request.passphrase());
+    }
+
+    @GetMapping("/entries")
+    public VaultData.EntriesList entries() {
+        if (!vaultService.isOpened()) {
+            return new VaultData.EntriesList("Vault is locked");
+        }
+        return new VaultData.EntriesList(vaultService.listEntries(), true);
+    }
+
+    @PostMapping("/entries")
+    public VaultData.OpResult putEntry(@RequestBody VaultData.PutEntryRequest request) {
+        if (!vaultService.isOpened()) {
+            return new VaultData.OpResult("Vault is locked");
+        }
+        if (request.code() == null || request.code().isBlank()) {
+            return new VaultData.OpResult("Code must not be blank");
+        }
+        if (request.secret() == null || request.secret().isEmpty()) {
+            return new VaultData.OpResult("Secret must not be empty");
+        }
+        if (!vaultService.verifyPassphrase(request.passphrase())) {
+            return new VaultData.OpResult("Passphrase verification failed");
+        }
+        boolean ok = vaultService.putApiKey(request.accountId(), request.code(), request.secret());
+        return ok ? new VaultData.OpResult(true) : new VaultData.OpResult("Failed to persist entry");
+    }
+
+    @DeleteMapping("/entries/{accountId}/{code}")
+    public VaultData.OpResult deleteEntry(
+            @PathVariable long accountId,
+            @PathVariable String code,
+            @RequestBody VaultData.DeleteEntryRequest request) {
+        if (!vaultService.isOpened()) {
+            return new VaultData.OpResult("Vault is locked");
+        }
+        if (!vaultService.verifyPassphrase(request.passphrase())) {
+            return new VaultData.OpResult("Passphrase verification failed");
+        }
+        boolean ok = vaultService.deleteApiKey(accountId, code);
+        return ok ? new VaultData.OpResult(true) : new VaultData.OpResult("Entry not found or persistence failed");
     }
 }

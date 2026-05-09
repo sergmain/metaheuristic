@@ -117,7 +117,7 @@ class VaultServiceTest {
     void getApiKey_afterPut_returnsValue(@TempDir Path tempPath) throws Exception {
         VaultService service = newVaultService(tempPath);
         service.unlock("pass");
-        assertTrue(service.putApiKey(42L, "openai", "sk-test-value-1", "pass"));
+        assertTrue(service.putApiKey(42L, "openai", "sk-test-value-1"));
         assertEquals(Optional.of("sk-test-value-1"), service.getApiKey(42L, "openai"));
     }
 
@@ -132,8 +132,8 @@ class VaultServiceTest {
     void getApiKey_isolatesByAccountId(@TempDir Path tempPath) throws Exception {
         VaultService service = newVaultService(tempPath);
         service.unlock("pass");
-        service.putApiKey(2L, "openai", "tenant-2-secret", "pass");
-        service.putApiKey(7L, "openai", "tenant-7-secret", "pass");
+        service.putApiKey(2L, "openai", "tenant-2-secret");
+        service.putApiKey(7L, "openai", "tenant-7-secret");
 
         assertEquals(Optional.of("tenant-2-secret"), service.getApiKey(2L, "openai"));
         assertEquals(Optional.of("tenant-7-secret"), service.getApiKey(7L, "openai"));
@@ -144,8 +144,8 @@ class VaultServiceTest {
     void putApiKey_overwritesExistingEntry(@TempDir Path tempPath) throws Exception {
         VaultService service = newVaultService(tempPath);
         service.unlock("pass");
-        service.putApiKey(2L, "openai", "old-value", "pass");
-        service.putApiKey(2L, "openai", "new-value", "pass");
+        service.putApiKey(2L, "openai", "old-value");
+        service.putApiKey(2L, "openai", "new-value");
 
         assertEquals(Optional.of("new-value"), service.getApiKey(2L, "openai"));
     }
@@ -160,7 +160,7 @@ class VaultServiceTest {
     @Test
     void putApiKey_whenLocked_returnsFalse(@TempDir Path tempPath) throws Exception {
         VaultService service = newVaultService(tempPath);
-        assertFalse(service.putApiKey(2L, "openai", "value", "pass"));
+        assertFalse(service.putApiKey(2L, "openai", "value"));
     }
 
     @Test
@@ -168,7 +168,7 @@ class VaultServiceTest {
         // Arrange: write through one instance
         VaultService service = newVaultService(tempPath);
         assertTrue(service.unlock("master").opened);
-        assertTrue(service.putApiKey(7L, "openai", "persisted-value", "master"));
+        assertTrue(service.putApiKey(7L, "openai", "persisted-value"));
 
         // Act: simulate restart with a fresh service over the same files
         VaultService fresh = newVaultService(tempPath);
@@ -200,7 +200,7 @@ class VaultServiceTest {
         // Flipping the iteration count in the on-disk file must fail authentication.
         VaultService service = newVaultService(tempPath);
         assertTrue(service.unlock("master").opened);
-        assertTrue(service.putApiKey(7L, "openai", "v", "master"));
+        assertTrue(service.putApiKey(7L, "openai", "v"));
 
         Path vaultFile = tempPath.resolve("dispatcher/vault/mh.vault");
         byte[] file = Files.readAllBytes(vaultFile);
@@ -217,5 +217,101 @@ class VaultServiceTest {
     @Test
     void entryTitle_format_isAccountIdColonCode() {
         assertEquals(VaultService.entryTitle(42L, "openai"), "42:openai");
+    }
+
+    // ---- listEntries -----------------------------------------------------------------
+
+    @Test
+    void listEntries_whenLocked_returnsEmptyList(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
+        assertTrue(service.listEntries().isEmpty());
+    }
+
+    @Test
+    void listEntries_emptyVault_returnsEmptyList(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
+        service.unlock("pass");
+        assertTrue(service.listEntries().isEmpty());
+    }
+
+    @Test
+    void listEntries_returnsTitlesAndSecrets_inInsertionOrder(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
+        service.unlock("pass");
+        service.putApiKey(7L, "openai", "secret-1");
+        service.putApiKey(2L, "anthropic", "secret-2");
+        service.putApiKey(7L, "anthropic", "secret-3");
+
+        var entries = service.listEntries();
+        assertEquals(3, entries.size());
+        assertEquals(7L, entries.get(0).accountId());
+        assertEquals("openai", entries.get(0).code());
+        assertEquals("secret-1", entries.get(0).secret());
+        assertEquals(2L, entries.get(1).accountId());
+        assertEquals("anthropic", entries.get(1).code());
+        assertEquals("secret-2", entries.get(1).secret());
+        assertEquals(7L, entries.get(2).accountId());
+        assertEquals("anthropic", entries.get(2).code());
+        assertEquals("secret-3", entries.get(2).secret());
+    }
+
+    // ---- deleteApiKey ----------------------------------------------------------------
+
+    @Test
+    void deleteApiKey_existingEntry_removesAndPersists(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
+        service.unlock("pass");
+        service.putApiKey(7L, "openai", "v");
+        assertTrue(service.deleteApiKey(7L, "openai"));
+        assertEquals(Optional.empty(), service.getApiKey(7L, "openai"));
+        assertTrue(service.listEntries().isEmpty());
+
+        // Deletion must be persisted
+        VaultService fresh = newVaultService(tempPath);
+        fresh.unlock("pass");
+        assertEquals(Optional.empty(), fresh.getApiKey(7L, "openai"));
+    }
+
+    @Test
+    void deleteApiKey_unknownEntry_returnsFalse(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
+        service.unlock("pass");
+        assertFalse(service.deleteApiKey(7L, "nonexistent"));
+    }
+
+    @Test
+    void deleteApiKey_whenLocked_returnsFalse(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
+        assertFalse(service.deleteApiKey(7L, "any"));
+    }
+
+    // ---- verifyPassphrase ------------------------------------------------------------
+
+    @Test
+    void verifyPassphrase_correctPass_returnsTrue(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
+        service.unlock("master-pass");
+        assertTrue(service.verifyPassphrase("master-pass"));
+    }
+
+    @Test
+    void verifyPassphrase_wrongPass_returnsFalse(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
+        service.unlock("master-pass");
+        assertFalse(service.verifyPassphrase("wrong"));
+    }
+
+    @Test
+    void verifyPassphrase_whenLocked_returnsFalse(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
+        assertFalse(service.verifyPassphrase("anything"));
+    }
+
+    @Test
+    void verifyPassphrase_blankOrNull_returnsFalse(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
+        service.unlock("master-pass");
+        assertFalse(service.verifyPassphrase(""));
+        assertFalse(service.verifyPassphrase(null));
     }
 }
