@@ -153,7 +153,7 @@ public class VaultData {
     }
 
     /** Body for creating/updating an entry. Passphrase is the proof-of-knowledge gate. */
-    public record PutEntryRequest(long accountId, String code, String secret, String passphrase) {}
+    public record PutEntryRequest(String code, String secret, String passphrase) {}
 
     /** Body for deleting an entry. Passphrase is the proof-of-knowledge gate. */
     public record DeleteEntryRequest(String passphrase) {}

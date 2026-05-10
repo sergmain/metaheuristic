@@ -224,14 +224,14 @@ class VaultServiceTest {
     @Test
     void listEntries_whenLocked_returnsEmptyList(@TempDir Path tempPath) throws Exception {
         VaultService service = newVaultService(tempPath);
-        assertTrue(service.listEntries().isEmpty());
+        assertTrue(service.listEntries(7L).isEmpty());
     }
 
     @Test
     void listEntries_emptyVault_returnsEmptyList(@TempDir Path tempPath) throws Exception {
         VaultService service = newVaultService(tempPath);
         service.unlock("pass");
-        assertTrue(service.listEntries().isEmpty());
+        assertTrue(service.listEntries(7L).isEmpty());
     }
 
     @Test
@@ -242,17 +242,39 @@ class VaultServiceTest {
         service.putApiKey(2L, "anthropic", "secret-2");
         service.putApiKey(7L, "anthropic", "secret-3");
 
-        var entries = service.listEntries();
-        assertEquals(3, entries.size());
+        var entries = service.listEntries(7L);
+        assertEquals(2, entries.size());
         assertEquals(7L, entries.get(0).accountId());
         assertEquals("openai", entries.get(0).code());
         assertEquals("secret-1", entries.get(0).secret());
-        assertEquals(2L, entries.get(1).accountId());
+        assertEquals(7L, entries.get(1).accountId());
         assertEquals("anthropic", entries.get(1).code());
-        assertEquals("secret-2", entries.get(1).secret());
-        assertEquals(7L, entries.get(2).accountId());
-        assertEquals("anthropic", entries.get(2).code());
-        assertEquals("secret-3", entries.get(2).secret());
+        assertEquals("secret-3", entries.get(1).secret());
+    }
+
+    @Test
+    void listEntries_filtersOutOtherAccounts(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
+        service.unlock("pass");
+        service.putApiKey(7L, "openai", "tenant-7-secret");
+        service.putApiKey(2L, "openai", "tenant-2-secret");
+
+        var entriesFor2 = service.listEntries(2L);
+        assertEquals(1, entriesFor2.size());
+        assertEquals(2L, entriesFor2.get(0).accountId());
+        assertEquals("tenant-2-secret", entriesFor2.get(0).secret());
+
+        var entriesFor7 = service.listEntries(7L);
+        assertEquals(1, entriesFor7.size());
+        assertEquals(7L, entriesFor7.get(0).accountId());
+    }
+
+    @Test
+    void listEntries_unknownAccount_returnsEmpty(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
+        service.unlock("pass");
+        service.putApiKey(7L, "openai", "v");
+        assertTrue(service.listEntries(99L).isEmpty());
     }
 
     // ---- deleteApiKey ----------------------------------------------------------------
@@ -264,7 +286,7 @@ class VaultServiceTest {
         service.putApiKey(7L, "openai", "v");
         assertTrue(service.deleteApiKey(7L, "openai"));
         assertEquals(Optional.empty(), service.getApiKey(7L, "openai"));
-        assertTrue(service.listEntries().isEmpty());
+        assertTrue(service.listEntries(7L).isEmpty());
 
         // Deletion must be persisted
         VaultService fresh = newVaultService(tempPath);

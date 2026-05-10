@@ -257,30 +257,32 @@ public class VaultService {
     }
 
     /**
-     * List the full contents of the vault: accountId, code and secret value
-     * for every entry. Returns empty list when locked. Per design, once the
-     * vault is unlocked the UI is allowed to show secrets in plain text.
+     * List the contents of the vault scoped to a single account: returns
+     * accountId, code and secret value for every entry whose accountId matches.
+     * Returns empty list when locked or when no entries belong to that account.
+     * Per design, once the vault is unlocked the UI is allowed to show secrets
+     * in plain text.
+     *
+     * @param accountId account id to filter by; entries belonging to other
+     *                  accounts are excluded
      */
-    public List<VaultData.Entry> listEntries() {
+    public List<VaultData.Entry> listEntries(long accountId) {
         Map<String, String> map = this.entries;
         if (map == null) {
             return List.of();
         }
-        List<VaultData.Entry> out = new ArrayList<>(map.size());
+        String prefix = accountId + ":";
+        List<VaultData.Entry> out = new ArrayList<>();
         for (Map.Entry<String, String> e : map.entrySet()) {
             String title = e.getKey();
-            int colon = title.indexOf(':');
-            if (colon <= 0 || colon == title.length() - 1) {
+            if (!title.startsWith(prefix)) {
                 continue;
             }
-            try {
-                long accountId = Long.parseLong(title.substring(0, colon));
-                String code = title.substring(colon + 1);
-                out.add(new VaultData.Entry(accountId, code, e.getValue()));
-            } catch (NumberFormatException ex) {
-                // Skip malformed titles silently — should not happen if all writes go through entryTitle().
-                log.warn("Skipping malformed vault entry title: {}", title);
+            String code = title.substring(prefix.length());
+            if (code.isEmpty()) {
+                continue;
             }
+            out.add(new VaultData.Entry(accountId, code, e.getValue()));
         }
         return out;
     }

@@ -16,18 +16,24 @@
 
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.VaultData;
 import ai.metaheuristic.ai.dispatcher.vault.VaultService;
+import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * REST controller for the dispatcher Key Vault.
- * Admin-only endpoints to query vault status, unlock, list/add/delete entries.
+ * Each authenticated user manages their own entries — accountId is taken from
+ * the authenticated principal, never from the request body or path. Cross-account
+ * read or delete is structurally impossible: list is filtered by principal,
+ * delete refuses if the path accountId does not match the principal.
  *
  * <p>All write/delete operations require the master passphrase as a
  * proof-of-knowledge gate even after the vault has been unlocked.
@@ -39,11 +45,12 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @Profile("dispatcher")
 @CrossOrigin
-@PreAuthorize("hasAnyRole('ADMIN')")
+@PreAuthorize("isAuthenticated()")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class VaultRestController {
 
     private final VaultService vaultService;
+    private final UserContextService userContextService;
 
     @GetMapping("/status")
     public VaultData.VaultStatus status() {
@@ -56,15 +63,16 @@ public class VaultRestController {
     }
 
     @GetMapping("/entries")
-    public VaultData.EntriesList entries() {
+    public VaultData.EntriesList entries(Authentication authentication) {
         if (!vaultService.isOpened()) {
             return new VaultData.EntriesList("Vault is locked");
         }
-        return new VaultData.EntriesList(vaultService.listEntries(), true);
+        UserContext ctx = userContextService.getContext(authentication);
+        return new VaultData.EntriesList(vaultService.listEntries(ctx.getAccountId()), true);
     }
 
     @PostMapping("/entries")
-    public VaultData.OpResult putEntry(@RequestBody VaultData.PutEntryRequest request) {
+    public VaultData.OpResult putEntry(@RequestBody VaultData.PutEntryRequest request, Authentication authentication) {
         if (!vaultService.isOpened()) {
             return new VaultData.OpResult("Vault is locked");
         }
@@ -77,7 +85,8 @@ public class VaultRestController {
         if (!vaultService.verifyPassphrase(request.passphrase())) {
             return new VaultData.OpResult("Passphrase verification failed");
         }
-        boolean ok = vaultService.putApiKey(request.accountId(), request.code(), request.secret());
+        UserContext ctx = userContextService.getContext(authentication);
+        boolean ok = vaultService.putApiKey(ctx.getAccountId(), request.code(), request.secret());
         return ok ? new VaultData.OpResult(true) : new VaultData.OpResult("Failed to persist entry");
     }
 
@@ -85,9 +94,15 @@ public class VaultRestController {
     public VaultData.OpResult deleteEntry(
             @PathVariable long accountId,
             @PathVariable String code,
-            @RequestBody VaultData.DeleteEntryRequest request) {
+            @RequestBody VaultData.DeleteEntryRequest request,
+            Authentication authentication) {
         if (!vaultService.isOpened()) {
             return new VaultData.OpResult("Vault is locked");
+        }
+        UserContext ctx = userContextService.getContext(authentication);
+        if (ctx.getAccountId() == null || accountId != ctx.getAccountId()) {
+            // Refuse cross-account deletes; do not leak whether the entry exists.
+            return new VaultData.OpResult("Entry not found or persistence failed");
         }
         if (!vaultService.verifyPassphrase(request.passphrase())) {
             return new VaultData.OpResult("Passphrase verification failed");
