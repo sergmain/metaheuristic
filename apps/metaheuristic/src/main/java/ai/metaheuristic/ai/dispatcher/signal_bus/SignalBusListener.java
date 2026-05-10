@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.signal_bus.events.BatchStateSignalEvent;
 import ai.metaheuristic.ai.dispatcher.signal_bus.events.DocumentExportSignalEvent;
 import ai.metaheuristic.ai.dispatcher.signal_bus.events.ExecContextStateSignalEvent;
-import ai.metaheuristic.ai.dispatcher.signal_bus.events.ProviderSnapshotSealedSignalEvent;
 import ai.metaheuristic.ai.dispatcher.signal_bus.events.SystemNoticeSignalEvent;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
@@ -65,20 +64,6 @@ public class SignalBusListener {
     public void onSystemNotice(SystemNoticeSignalEvent e) {
         // SYSTEM_NOTICE is never terminal — TTL handles eviction.
         signalBus.put(SignalKind.SYSTEM_NOTICE, e.signalId(), e.scope(), e.info(), false);
-    }
-
-    /**
-     * Cross-Project Requirements (Stage 4) — emit
-     * {@code provider.snapshot.<providerProjectId>.sealed}. The signal id
-     * carries provider project + snapshot ids so subscribers see one
-     * entry per seal event. Always non-terminal — sealing is a discrete
-     * fact, but the topic is reused across snapshots, so subsequent
-     * seals replace earlier ones in the bus per coalesce policy.
-     */
-    @EventListener
-    public void onProviderSnapshotSealed(ProviderSnapshotSealedSignalEvent e) {
-        signalBus.put(SignalKind.PROVIDER_SNAPSHOT_SEALED, e.signalId(), e.scope(),
-            e.info(), false);
     }
 
     private static boolean isBatchTerminal(int state) {

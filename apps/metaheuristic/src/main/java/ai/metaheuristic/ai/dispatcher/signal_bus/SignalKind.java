@@ -24,17 +24,5 @@ public enum SignalKind {
     BATCH,
     EXEC_CONTEXT,
     DOCUMENT_EXPORT,
-    SYSTEM_NOTICE,
-
-    /**
-     * Cross-Project Requirements (Stage 4): emitted when a provider RG
-     * project seals a snapshot. Consumer projects that have imported from
-     * that provider can pull-discover the new snapshot via
-     * {@code RgImportQueryService.findNewerProviderSnapshots}.
-     * <p>
-     * Topic: {@code provider.snapshot.<providerProjectId>.sealed}.
-     * Coalesce policy: NONE — snapshot seals are infrequent enough that
-     * each event should reach subscribers individually.
-     */
-    PROVIDER_SNAPSHOT_SEALED
+    SYSTEM_NOTICE
 }
