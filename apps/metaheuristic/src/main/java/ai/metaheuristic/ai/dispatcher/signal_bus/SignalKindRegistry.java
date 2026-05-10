@@ -61,12 +61,16 @@ public class SignalKindRegistry {
         TopicBuilder documentExportTopic = (k, id, info) ->
             "document.export." + info.get("projectId") + ".progress";
         TopicBuilder systemNoticeTopic = (k, id, info) -> "system.notice";
+        // Cross-Project Requirements (Stage 4) — id is providerProjectId.
+        TopicBuilder providerSnapshotSealedTopic = (k, id, info) ->
+            "provider.snapshot." + id + ".sealed";
 
         Map<SignalKind, TopicBuilder> topics = new EnumMap<>(SignalKind.class);
         topics.put(SignalKind.BATCH, batchTopic);
         topics.put(SignalKind.EXEC_CONTEXT, execContextTopic);
         topics.put(SignalKind.DOCUMENT_EXPORT, documentExportTopic);
         topics.put(SignalKind.SYSTEM_NOTICE, systemNoticeTopic);
+        topics.put(SignalKind.PROVIDER_SNAPSHOT_SEALED, providerSnapshotSealedTopic);
 
         Map<SignalKind, CoalescePolicy> coalesce = new EnumMap<>(SignalKind.class);
         coalesce.put(SignalKind.BATCH, CoalescePolicy.NONE);
@@ -74,6 +78,7 @@ public class SignalKindRegistry {
         coalesce.put(SignalKind.DOCUMENT_EXPORT,
             new CoalescePolicy(java.time.Duration.ofMillis(100)));
         coalesce.put(SignalKind.SYSTEM_NOTICE, CoalescePolicy.NONE);
+        coalesce.put(SignalKind.PROVIDER_SNAPSHOT_SEALED, CoalescePolicy.NONE);
 
         return new SignalKindRegistry(topics, coalesce);
     }
