@@ -157,6 +157,9 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
     @SneakyThrows
     @Override
     public void storeVariableData(Long variableBlobId, InputStream is, long size) {
+        if (size<=0) {
+            throw new IllegalStateException("174.245 Variable can't be of zero length, variableBlobId: " + variableBlobId);
+        }
         dataStorageVariable.storeData(variableBlobId, is, size);
     }
 

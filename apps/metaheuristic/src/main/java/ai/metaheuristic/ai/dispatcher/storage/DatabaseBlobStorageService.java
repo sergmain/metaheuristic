@@ -90,6 +90,9 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
     }
 
     public void storeVariableData(Long variableBlobId, InputStream is, long size ) {
+        if (size<=0) {
+            throw new IllegalStateException("174.165 Variable can't be of zero length, variableBlobId: " + variableBlobId);
+        }
         databaseBlobStoreService.storeVariable(variableBlobId, is, size);
     }
 
