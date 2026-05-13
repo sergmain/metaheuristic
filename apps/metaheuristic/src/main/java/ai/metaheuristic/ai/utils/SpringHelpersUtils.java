@@ -21,7 +21,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static ai.metaheuristic.ai.Consts.STANDALONE_PROFILE;
 import static ai.metaheuristic.ai.Consts.WEBSOCKET_PROFILE;
@@ -34,21 +37,48 @@ import static ai.metaheuristic.ai.Consts.WEBSOCKET_PROFILE;
 @Slf4j
 public class SpringHelpersUtils {
 
-    public static final List<String> POSSIBLE_PROFILES = List.of(
-        // Spring's profiles
-        "dispatcher",
-        "processor",
-        "quickstart",
-        STANDALONE_PROFILE, // standalone это профиль для запуска в режиме приложения на базе electron
-        "external-storage",
-        "disk-storage",
-        "test", "disable-check-frontend",
-        WEBSOCKET_PROFILE,
-        "mcp",
+    // Concurrent set - plugins register their own profiles at load time from a static
+    // initializer of their auto-config class. Reads happen during dispatcher startup
+    // (checkProfiles in Config). Mixed read/write is rare but possible, so the storage
+    // must be safe under it.
+    private static final Set<String> POSSIBLE_PROFILES = ConcurrentHashMap.newKeySet();
+    static {
+        POSSIBLE_PROFILES.addAll(List.of(
+            // Spring's profiles
+            "dispatcher",
+            "processor",
+            "quickstart",
+            STANDALONE_PROFILE, // standalone это профиль для запуска в режиме приложения на базе electron
+            "external-storage",
+            "disk-storage",
+            "test", "disable-check-frontend",
+            WEBSOCKET_PROFILE,
+            "mcp",
 
             // db's profiles
-        "mysql", "postgresql", "h2", "hsqldb", "derby", "generic", "custom"
-    );
+            "mysql", "postgresql", "h2", "hsqldb", "derby", "generic", "custom"
+        ));
+    }
+
+    /**
+     * Read-only view of all currently registered profiles (base + everything plugins added).
+     */
+    public static Set<String> getPossibleProfiles() {
+        return Collections.unmodifiableSet(POSSIBLE_PROFILES);
+    }
+
+    /**
+     * Plugin extension point. Call from a plugin auto-config static initializer to
+     * make the dispatcher accept the plugin's profile without complaining as "unknown".
+     */
+    public static void registerProfile(String profile) {
+        if (profile == null || profile.isBlank()) {
+            return;
+        }
+        if (POSSIBLE_PROFILES.add(profile)) {
+            log.info("Registered plugin profile: {}", profile);
+        }
+    }
 
     public static List<String> getProfiles(String activeProfiles) {
         List<String> profiles = Arrays.stream(StringUtils.split(activeProfiles, ", "))
