@@ -38,8 +38,7 @@ import java.util.stream.Collectors;
  */
 public class SignalBus {
 
-    private final Map<SignalKind, Map<String, SignalEntry>> snapshot =
-        new EnumMap<>(SignalKind.class);
+    private final Map<SignalKind, Map<String, SignalEntry>> snapshot = new HashMap<>();
     private final AtomicLong revisionCounter = new AtomicLong(0);
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final SignalKindRegistry registry;
@@ -115,7 +114,7 @@ public class SignalBus {
         try {
             long highWater = revisionCounter.get();
             Set<SignalKind> effectiveKinds = (kinds == null || kinds.isEmpty())
-                ? EnumSet.allOf(SignalKind.class) : kinds;
+                ? registry.knownKinds() : kinds;
 
             List<SignalEntry> out = effectiveKinds.parallelStream()
                 .map(snapshot::get)

@@ -16,13 +16,38 @@
 
 package ai.metaheuristic.ai.dispatcher.signal_bus;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
- * Signal kinds in v1. Extend by adding enum values and registering a
- * {@link TopicBuilder} + {@link CoalescePolicy} in {@link SignalKindRegistry}.
+ * Signal kind — open-typed string carrier.
+ *
+ * Was an enum (BATCH, EXEC_CONTEXT, DOCUMENT_EXPORT, SYSTEM_NOTICE) up through
+ * the early Signal Bus plans. Switched to a record carrying a single String so
+ * that new kinds can be minted by callers without editing this type — the
+ * closed enum forced an edit here every time a new kind was wanted.
+ *
+ * Well-known core kinds remain available as static constants so existing call
+ * sites (SignalKind.BATCH, etc.) keep compiling unchanged. Validity of a kind
+ * is decided dynamically at query time by {@link SignalKindRegistry}, not at
+ * compile time.
+ *
+ * JSON wire format: a SignalKind serializes as the bare string ("BATCH"), not
+ * as an object ({"kind":"BATCH"}) — preserves backwards compatibility with the
+ * pre-record enum serialization and keeps the client's flat string type
+ * accurate.
  */
-public enum SignalKind {
-    BATCH,
-    EXEC_CONTEXT,
-    DOCUMENT_EXPORT,
-    SYSTEM_NOTICE
+public record SignalKind(@JsonValue String kind) {
+
+    @JsonCreator
+    public SignalKind {
+        if (kind == null || kind.isBlank()) {
+            throw new IllegalArgumentException("668.005 SignalKind.kind must be non-blank");
+        }
+    }
+
+    public static final SignalKind BATCH = new SignalKind("BATCH");
+    public static final SignalKind EXEC_CONTEXT = new SignalKind("EXEC_CONTEXT");
+    public static final SignalKind DOCUMENT_EXPORT = new SignalKind("DOCUMENT_EXPORT");
+    public static final SignalKind SYSTEM_NOTICE = new SignalKind("SYSTEM_NOTICE");
 }

@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.signal_bus.ScopeRef;
 import ai.metaheuristic.ai.dispatcher.signal_bus.SignalBus;
 import ai.metaheuristic.ai.dispatcher.signal_bus.SignalEntry;
 import ai.metaheuristic.ai.dispatcher.signal_bus.SignalKind;
+import ai.metaheuristic.ai.dispatcher.signal_bus.SignalKindRegistry;
 import ai.metaheuristic.ai.dispatcher.signal_bus.SignalPollResponse;
 import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -65,6 +67,7 @@ public class SignalBusRestController {
         new java.util.concurrent.atomic.AtomicLong(0);
 
     private final SignalBus signalBus;
+    private final SignalKindRegistry signalKindRegistry;
     private final UserContextService userContextService;
 
     @GetMapping
@@ -90,7 +93,7 @@ public class SignalBusRestController {
             return err;
         }
 
-        ParseResult parsed = parseFilters(kinds, topics);
+        ParseResult parsed = parseFilters(kinds, topics, signalKindRegistry);
         ScopeRef scope = new ScopeRef(dctx.getCompanyId());
         QueryResult qr = signalBus.query(scope, afterRev, parsed.kinds, parsed.topicGlobs);
 
@@ -110,17 +113,22 @@ public class SignalBusRestController {
         return response;
     }
 
-    private static ParseResult parseFilters(String kinds, String topics) {
-        Set<SignalKind> parsedKinds = EnumSet.noneOf(SignalKind.class);
+    private static ParseResult parseFilters(String kinds, String topics, SignalKindRegistry registry) {
+        // SignalKind is now an open record (was enum). Validity is decided by
+        // membership in registry.knownKinds() — preserves the SIG.110 warning
+        // for unknown kinds without keeping the kind universe closed at MH.
+        Set<SignalKind> known = registry.knownKinds();
+        Set<SignalKind> parsedKinds = new HashSet<>();
         List<String> warnings = new ArrayList<>();
 
         if (kinds != null && !kinds.isBlank()) {
             for (String raw : kinds.split(",")) {
                 String k = raw.trim();
                 if (k.isEmpty()) continue;
-                try {
-                    parsedKinds.add(SignalKind.valueOf(k));
-                } catch (IllegalArgumentException e) {
+                SignalKind candidate = new SignalKind(k);
+                if (known.contains(candidate)) {
+                    parsedKinds.add(candidate);
+                } else {
                     warnings.add("SIG.110 unknown kind ignored: " + k);
                 }
             }
