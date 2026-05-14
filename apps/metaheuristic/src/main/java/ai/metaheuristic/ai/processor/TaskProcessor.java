@@ -509,6 +509,28 @@ public class TaskProcessor {
                 List<String> list = Arrays.stream(StringUtils.split(functionPrepareResult.function.params)).filter(o->!S.b(o)).collect(Collectors.toList());
                 cmd.addAll(list);
             }
+            // HARD CONTRACT — DO NOT BREAK.
+            //
+            // The LAST positional argument passed to every Function is the
+            // ABSOLUTE PATH (not just the filename — full path, .toAbsolutePath())
+            // to the TaskFileParamsYaml file. Functions parse argv[-1] as the
+            // params-file path and read everything else (Function-specific args
+            // declared in FunctionConfig.params, plus any wrapper-interpreter
+            // args) from positions before it.
+            //
+            // Nothing — no flag, no named arg, no Stage-6 secret port,
+            // no debug switch — may be appended after this line. If you need
+            // to pass new per-launch data to the Function, add a field to
+            // TaskFileParamsYaml.Task (the Function already reads that file at
+            // startup; one more @Nullable field is free) and the Function-side
+            // SDK exposes it. See Stage 6 (vault secret handoff) where
+            // checkCode + secretPort live in TaskFileParamsYaml precisely
+            // because the cmdline tail is unavailable.
+            //
+            // Adding flags here would break every third-party Function (Java,
+            // Python, Go, shell) that counts argv positionally — and the
+            // breakage would be silent because most Functions don't validate
+            // the trailing arg is a real file path before opening it.
             cmd.add(paramFile.toAbsolutePath().toString());
 
             Path consoleLogFile = systemDir.resolve(Consts.MH_SYSTEM_CONSOLE_OUTPUT_FILE_NAME);

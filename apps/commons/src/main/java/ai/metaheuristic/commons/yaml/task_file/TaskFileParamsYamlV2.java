@@ -132,6 +132,11 @@ public class TaskFileParamsYamlV2 implements BaseParams {
         // @Nullable-exception rule — no version bump.
         @Nullable
         public String checkCode;
+
+        // Stage 6 (vault secret handoff): loopback TCP port. See
+        // TaskFileParamsYaml.Task.secretPort javadoc.
+        @Nullable
+        public Integer secretPort;
     }
 
     public TaskV2 task = new TaskV2();

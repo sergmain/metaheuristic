@@ -164,6 +164,20 @@ public class TaskFileParamsYaml implements BaseParams {
         // Null means "this Function declared no API key, no handoff is happening."
         @Nullable
         public String checkCode;
+
+        // Stage 6 (vault secret handoff): loopback TCP port (127.0.0.1) on
+        // which the Processor's FunctionSecretChannel is waiting. The
+        // Function connects to this port, sends the framed checkCode, and
+        // reads the framed key in response.
+        //
+        // Delivered through the params file rather than cmdline because
+        // cmd's last positional arg is the params-file path itself — adding
+        // flags would break Functions that parse argv by position.
+        //
+        // @Nullable per the @Nullable-exception rule. Null iff checkCode
+        // is also null (the two fields move together).
+        @Nullable
+        public Integer secretPort;
     }
 
     public Task task = new Task();

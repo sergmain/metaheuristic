@@ -93,10 +93,44 @@ public class SystemProcessLauncher {
         public InputStream is;
     }
 
+    /**
+     * Optional out-of-band handoff hook. When passed to {@link #execCommand},
+     * the launcher starts the process and concurrently runs {@code handoff}
+     * on a virtual thread. The Function discovers HOW to participate in the
+     * handoff (e.g. the loopback port + the per-launch check-code) by reading
+     * its params file — the launcher itself does not mutate {@code cmd},
+     * which is a hard contract (cmd's last positional arg is the params-file
+     * path).
+     *
+     * <p>This module ({@code commons}) is deliberately ignorant of the
+     * secret payload — it knows only the {@link Runnable} to invoke. Single
+     * ownership of secret bytes stays on the caller in the upper module.
+     *
+     * <p>{@code debugPort} is for diagnostic logging only; the launcher does
+     * NOT use it to mutate the command line.
+     */
+    public record SecretHandoff(int debugPort, Runnable handoff) {}
+
+
     public static FunctionApiData.SystemExecResult execCommand(
             List<String> cmd, Path execDir, Path consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
             @Nullable final DispatcherSchedule schedule, int taskConsoleOutputMaxLines) throws IOException, InterruptedException {
-        return execCommand(cmd, execDir, consoleLogFile, timeoutBeforeTerminate, functionCode, schedule, taskConsoleOutputMaxLines, List.of(), null);
+        return execCommand(cmd, execDir, consoleLogFile, timeoutBeforeTerminate, functionCode, schedule, taskConsoleOutputMaxLines, List.of(), null, null);
+    }
+
+    /**
+     * Stage 6 overload. When {@code secretHandoff != null}, appends
+     * {@code --mh-secret-port=N} to {@code cmd} and concurrently runs the
+     * loopback handoff with the spawned process. Caller owns and zeroes
+     * {@code secretHandoff.keyBytes()}.
+     */
+    public static FunctionApiData.SystemExecResult execCommandWithSecret(
+            List<String> cmd, Path execDir, Path consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
+            @Nullable final DispatcherSchedule schedule, int taskConsoleOutputMaxLines,
+            List<Supplier<Boolean>> outerInterrupters, @Nullable Path inputPath,
+            @Nullable SecretHandoff secretHandoff) throws IOException, InterruptedException {
+        return execCommand(cmd, execDir, consoleLogFile, timeoutBeforeTerminate, functionCode, schedule,
+                taskConsoleOutputMaxLines, outerInterrupters, inputPath, secretHandoff);
     }
 
     @SuppressWarnings({"WeakerAccess", "BusyWait"})
@@ -104,6 +138,16 @@ public class SystemProcessLauncher {
             List<String> cmd, Path execDir, Path consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
             @Nullable final DispatcherSchedule schedule, int taskConsoleOutputMaxLines,
             List<Supplier<Boolean>> outerInterrupters, @Nullable Path inputPath) throws IOException, InterruptedException {
+        return execCommand(cmd, execDir, consoleLogFile, timeoutBeforeTerminate, functionCode, schedule,
+                taskConsoleOutputMaxLines, outerInterrupters, inputPath, null);
+    }
+
+    @SuppressWarnings({"WeakerAccess", "BusyWait"})
+    public static FunctionApiData.SystemExecResult execCommand(
+            List<String> cmd, Path execDir, Path consoleLogFile, @Nullable Long timeoutBeforeTerminate, String functionCode,
+            @Nullable final DispatcherSchedule schedule, int taskConsoleOutputMaxLines,
+            List<Supplier<Boolean>> outerInterrupters, @Nullable Path inputPath,
+            @Nullable SecretHandoff secretHandoff) throws IOException, InterruptedException {
         log.info("Exec info:");
         log.info("\tcmd: {}", cmd);
         log.info("\ttaskDir: {}", execDir.toAbsolutePath());
@@ -120,6 +164,12 @@ public class SystemProcessLauncher {
         log.info("\ttimeout (milliseconds): {}", timeout.get() );
 
 
+        // Stage 6: the secret port + check-code are delivered to the Function
+        // via TaskFileParamsYaml (the params file the Function already reads
+        // at startup) — NOT via cmdline. The hidden contract for cmd is that
+        // the last positional argument is the params-file path; adding flags
+        // anywhere in cmd would break Functions that count arguments
+        // positionally. cmd is passed through unchanged.
         ProcessBuilder pb = new ProcessBuilder();
         pb.command(cmd);
         pb.directory(execDir.toFile());
@@ -128,6 +178,32 @@ public class SystemProcessLauncher {
             pb.redirectInput(inputPath.toFile());
         }
         final Process process = pb.start();
+
+        // Stage 6: run the secret handoff concurrently with the spawned
+        // process. The handoff blocks on accept() until the Function connects;
+        // we keep it on a vthread so the stdout reader (started below) can
+        // run in parallel and avoid any chance of deadlock if a chatty
+        // Function writes stdout before reading the secret.
+        final java.util.concurrent.atomic.AtomicReference<Throwable> handoffErr = new java.util.concurrent.atomic.AtomicReference<>();
+        Thread handoffThread = null;
+        if (secretHandoff != null) {
+            final SecretHandoff sh = secretHandoff;
+            handoffThread = Thread.ofVirtual().start(() -> {
+                try {
+                    sh.handoff().run();
+                } catch (Throwable t) {
+                    handoffErr.set(t);
+                    // Tear down the process — the secret never reached it
+                    // (or worse, was sent to a wrong peer). Either way the
+                    // spawned process is in an invalid state.
+                    try {
+                        process.destroyForcibly();
+                    } catch (Throwable ignored) {
+                        // best effort
+                    }
+                }
+            });
+        }
 
         Thread timeoutThread = null;
         final StreamHolder streamHolder = new StreamHolder();
@@ -252,6 +328,25 @@ public class SystemProcessLauncher {
         if (isTerminated.get() && exitCode==0) {
             log.error("!!! FATAL ERROR need to re-write a code");
         }
+
+        // Stage 6: surface a handoff failure as a non-zero SystemExecResult.
+        // If the handoff threw (e.g. SecurityException on check-code mismatch
+        // or SocketTimeoutException), the process was already destroyForcibly'd
+        // by the vthread. Surface the cause to the caller.
+        if (handoffThread != null) {
+            try {
+                handoffThread.join(2_000);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
+            Throwable t = handoffErr.get();
+            if (t != null) {
+                String msg = "Stage 6 secret handoff failed: " + t.getClass().getSimpleName() + ": " + t.getMessage();
+                log.warn(msg);
+                return new FunctionApiData.SystemExecResult(functionCode, false, -993, msg + "\n" + console);
+            }
+        }
+
         return new FunctionApiData.SystemExecResult(functionCode, exitCode==0, exitCode, console);
     }
 
