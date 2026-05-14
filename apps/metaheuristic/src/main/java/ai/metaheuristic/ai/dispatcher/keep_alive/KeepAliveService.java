@@ -25,6 +25,9 @@ import ai.metaheuristic.ai.dispatcher.beans.ProcessorCore;
 import ai.metaheuristic.ai.dispatcher.event.events.CheckProcessorIdEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorCache;
+import ai.metaheuristic.ai.dispatcher.secret.VaultInvalidationFanout;
+
+import java.util.List;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorSyncService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTopLevelService;
 import ai.metaheuristic.ai.dispatcher.processor.ProcessorTxService;
@@ -69,6 +72,7 @@ public class KeepAliveService {
     private final ProcessorCoreTxService processorCoreTxService;
     private final ProcessorCoreRepository processorCoreRepository;
     private final ExecContextStatusService execContextStatusService;
+    private final VaultInvalidationFanout vaultInvalidationFanout;
 
     private MultiTenantedQueue<Long, CheckProcessorIdEvent> checkProcessorIdEventPool;
 
@@ -163,6 +167,21 @@ public class KeepAliveService {
         processorTopLevelService.processKeepAliveData(processorRequest, processor);
 
         //      keepAliveCommandProcessor.processLogRequest(processorRequest.processorCommContext.processorId, dispatcherResponse);
+
+        // Stage 5: deliver pending Vault invalidations for this Processor.
+        // Drained from VaultInvalidationFanout's per-Processor queue — atomic,
+        // empty-on-drain. The Processor evicts SealedSecretCache entries on receipt.
+        List<VaultInvalidationFanout.Invalidation> pending =
+            vaultInvalidationFanout.drainFor(processor.id);
+        if (!pending.isEmpty()) {
+            List<KeepAliveResponseParamYaml.VaultEntryInvalidation> wire =
+                new java.util.ArrayList<>(pending.size());
+            for (VaultInvalidationFanout.Invalidation inv : pending) {
+                wire.add(new KeepAliveResponseParamYaml.VaultEntryInvalidation(
+                    inv.companyId(), inv.keyCode(), inv.action(), inv.ts()));
+            }
+            dispatcherResponse.vaultInvalidations = wire;
+        }
 
         return processorRequest.processorCommContext.processorId;
     }

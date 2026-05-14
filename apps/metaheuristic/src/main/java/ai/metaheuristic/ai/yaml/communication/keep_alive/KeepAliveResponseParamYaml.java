@@ -107,6 +107,24 @@ public class KeepAliveResponseParamYaml implements BaseParams {
         public String code;
     }
 
+    /**
+     * Stage 5: a single Vault invalidation event delivered to this Processor
+     * on a keep-alive response. The Processor evicts the cache entry for
+     * {@code (companyId, keyCode)} and re-fetches lazily on next reference.
+     *
+     * <p>{@code action} is one of {@code "put"} or {@code "delete"} to help
+     * with logging/debugging; the Processor reacts the same way either way.
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class VaultEntryInvalidation {
+        public long companyId;
+        public String keyCode;
+        public String action;
+        public long ts;
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -123,6 +141,11 @@ public class KeepAliveResponseParamYaml implements BaseParams {
 
         @Nullable
         public RequestLogFile requestLogFile;
+
+        // Stage 5: pending Vault-entry invalidations for this Processor.
+        // @Nullable per the @Nullable-exception rule — no version bump.
+        @Nullable
+        public List<VaultEntryInvalidation> vaultInvalidations;
 
         public DispatcherResponse(String processorCode) {
             this.processorCode = processorCode;

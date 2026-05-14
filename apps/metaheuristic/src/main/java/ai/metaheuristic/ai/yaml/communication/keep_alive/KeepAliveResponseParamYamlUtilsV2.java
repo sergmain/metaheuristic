@@ -74,6 +74,15 @@ public class KeepAliveResponseParamYamlUtilsV2 extends
             response.coreInfos.add(new KeepAliveResponseParamYaml.CoreInfo(coreInfoV2.coreId, coreInfoV2.code));
         }
 
+        // Stage 5: copy vaultInvalidations V2 -> version-less.
+        if (r.vaultInvalidations != null) {
+            response.vaultInvalidations = new java.util.ArrayList<>(r.vaultInvalidations.size());
+            for (KeepAliveResponseParamYamlV2.VaultEntryInvalidationV2 vV2 : r.vaultInvalidations) {
+                response.vaultInvalidations.add(new KeepAliveResponseParamYaml.VaultEntryInvalidation(
+                    vV2.companyId, vV2.keyCode, vV2.action, vV2.ts));
+            }
+        }
+
         t.success = v2.success;
         t.msg = v2.msg;
 

@@ -97,6 +97,20 @@ public class KeepAliveResponseParamYamlV2 implements BaseParams {
         public String code;
     }
 
+    /**
+     * Stage 5: mirror of {@code KeepAliveResponseParamYaml.VaultEntryInvalidation}
+     * on the latest versioned class.
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class VaultEntryInvalidationV2 {
+        public long companyId;
+        public String keyCode;
+        public String action;
+        public long ts;
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -113,6 +127,10 @@ public class KeepAliveResponseParamYamlV2 implements BaseParams {
 
         @Nullable
         public RequestLogFileV2 requestLogFile;
+
+        // Stage 5: mirror of vaultInvalidations on the latest versioned class.
+        @Nullable
+        public List<VaultEntryInvalidationV2> vaultInvalidations;
 
         public DispatcherResponseV2(String processorCode) {
             this.processorCode = processorCode;
