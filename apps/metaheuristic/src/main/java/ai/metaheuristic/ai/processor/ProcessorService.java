@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.exceptions.VariableProviderException;
 import ai.metaheuristic.ai.processor.actors.UploadVariableService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
+import ai.metaheuristic.ai.processor.security.ProcessorKeyPair;
 import ai.metaheuristic.ai.processor.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.processor.tasks.UploadVariableTask;
 import ai.metaheuristic.ai.processor.variable_providers.VariableProvider;
@@ -49,10 +50,14 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.net.InetAddress;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -69,6 +74,7 @@ public class ProcessorService {
     private final VariableProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
     private final CurrentExecState currentExecState;
+    private final ProcessorKeyPair processorKeyPair;
 
 //    @Value("${logging.file.name:#{null}}")
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('logging.file.name' )) }")
@@ -99,7 +105,23 @@ public class ProcessorService {
             status.addError(ExceptionUtils.getStackTrace(e));
         }
 
+        // Stage 4: send the Processor's RSA public key on every keep-alive so Dispatcher
+        // can encrypt workload secrets for this Processor's current in-memory keypair.
+        try {
+            byte[] spki = processorKeyPair.getPublicKeySpki();
+            status.publicKeySpki = Base64.getEncoder().encodeToString(spki);
+            status.keyFingerprint = sha256Hex(spki);
+        } catch (Exception e) {
+            log.error("749.020 Failed to attach public key to keep-alive", e);
+            status.addError(ExceptionUtils.getStackTrace(e));
+        }
+
         return status;
+    }
+
+    private static String sha256Hex(byte[] data) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        return HexFormat.of().formatHex(md.digest(data));
     }
 
     private static KeepAliveRequestParamYaml.Env to(EnvParamsYaml envYaml) {

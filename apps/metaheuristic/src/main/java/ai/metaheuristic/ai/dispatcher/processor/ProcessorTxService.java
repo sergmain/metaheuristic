@@ -260,6 +260,10 @@ public class ProcessorTxService {
             psy.taskParamsVersion = status.taskParamsVersion;
             psy.os = (status.os == null ? EnumsApi.OS.unknown : status.os);
             psy.currDir = status.currDir;
+
+            // Stage 4: copy Processor's RSA public key fields into the persisted YAML.
+            psy.publicKeySpki = status.publicKeySpki;
+            psy.keyFingerprint = status.keyFingerprint;
         }
 /*
         if (processorFunctionDownloadStatusDifferent) {

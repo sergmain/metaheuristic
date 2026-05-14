@@ -108,6 +108,9 @@ public class ProcessorUtils {
                 ss.logDownloadable!=status.logDownloadable ||
                 ss.taskParamsVersion!=status.taskParamsVersion||
                 ss.os!=status.os ||
-                !Objects.equals(ss.currDir, status.currDir);
+                !Objects.equals(ss.currDir, status.currDir) ||
+                // Stage 4: public key fields trigger persistence too — Processor reboot rotates the keypair.
+                !Objects.equals(ss.publicKeySpki, status.publicKeySpki) ||
+                !Objects.equals(ss.keyFingerprint, status.keyFingerprint);
     }
 }
