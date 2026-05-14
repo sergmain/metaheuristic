@@ -53,7 +53,10 @@ class VaultServiceTest {
         Path dispatcherPath = mhHome.resolve("dispatcher");
         Files.createDirectories(dispatcherPath);
         globals.dispatcherPath = dispatcherPath;
-        return new VaultService(globals);
+        // Stage 5: ApplicationEventPublisher is a no-op for these unit tests —
+        // we don't assert on VaultEntryChangedEvent here. A test verifying the
+        // publish lives in VaultInvalidationFanoutTest.
+        return new VaultService(globals, e -> { /* no-op */ });
     }
 
     @Test

@@ -77,6 +77,16 @@ public class ProcessorTopLevelService {
     // TODO 2020-12-23 20 seconds because ....
     public static final long PROCESSOR_TIMEOUT = TimeUnit.SECONDS.toMillis(140);
 
+    /**
+     * True iff the Processor's last keep-alive was within {@link #PROCESSOR_TIMEOUT}.
+     * Single source of truth for "is this Processor currently alive?" — every
+     * Dispatcher-side decision that depends on activity (UI badges, Vault
+     * invalidation fan-out, etc.) routes through this method.
+     */
+    public static boolean isActive(Processor processor) {
+        return System.currentTimeMillis() - processor.updatedOn < PROCESSOR_TIMEOUT;
+    }
+
     public ProcessorData.ProcessorResult getProcessor(Long id) {
         Processor processor = processorCache.findById(id);
         if (processor==null) {
@@ -200,7 +210,7 @@ public class ProcessorTopLevelService {
 */
 
             final ProcessorData.ProcessorStatus processorStatus = new ProcessorData.ProcessorStatus(
-                    processor, System.currentTimeMillis() - processor.updatedOn < PROCESSOR_TIMEOUT,
+                    processor, isActive(processor),
                     isFunctionProblem,
                     blacklistReason != null, blacklistReason,
                     processor.updatedOn,

@@ -35,6 +35,34 @@ import java.util.stream.Collectors;
  * In-memory store for ephemeral signals. Thread-safe via a RW lock.
  * Identity is (kind, signalId); a new publish overwrites the existing entry.
  * See docs/mh/signal-bus-01-architecture.md §7.
+ *
+ * <h2>SCOPE — UI integration only</h2>
+ *
+ * <p><strong>The Signal Bus exists for one purpose: surfacing dispatcher-side
+ * state changes to UI clients that poll for them.</strong> Examples of
+ * legitimate use: Batch state changes that the operator dashboard polls;
+ * ExecContext state transitions that the workflow UI displays; document-export
+ * progress for download buttons.
+ *
+ * <p><strong>Do NOT use the Signal Bus for server-internal cache invalidation,
+ * cross-component eventing, or any other producer/consumer pattern that is
+ * not driven by a UI poll.</strong> The Signal Bus carries the cost of
+ * persistent ring-buffer entries, kind/topic registries, scope filtering,
+ * coalescing windows, and a revision counter — all of which are designed
+ * around "UI polls; bus answers since revision N." Using it for in-process
+ * eventing pays that cost for no benefit and obscures the data flow.
+ *
+ * <p>For server-internal events (Vault invalidations, cache eviction
+ * notifications, intra-Dispatcher fan-out to enrolled Processors, anything
+ * that needs &lt;1s reaction time), use plain Spring
+ * {@code ApplicationEventPublisher} + {@code @EventListener}. If the event
+ * is published from inside a JPA transaction and consumers must wait for
+ * commit, use {@code @TransactionalEventListener(AFTER_COMMIT)}.
+ *
+ * <p>This rule is intentional and load-bearing. Future maintainers: if you
+ * find yourself adding a new {@link SignalKind} constant, ask "is a UI
+ * client polling for this?" — if the answer is no, the Signal Bus is the
+ * wrong tool.
  */
 public class SignalBus {
 

@@ -22,6 +22,7 @@ import ai.metaheuristic.commons.utils.JsonUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -117,8 +118,11 @@ public class VaultService {
     @Nullable
     private volatile byte[] keyInUse;
 
-    public VaultService(Globals globals) {
+    private final ApplicationEventPublisher applicationEventPublisher;
+
+    public VaultService(Globals globals, ApplicationEventPublisher applicationEventPublisher) {
         this.globals = globals;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     /** @return whether the vault is currently unlocked in dispatcher memory. */
@@ -243,6 +247,10 @@ public class VaultService {
         try {
             map.put(entryTitle(companyId, code), secret);
             writeFile(path, salt, iterations, key, map);
+            // Stage 5: notify Processor-facing cache invalidation fan-out.
+            // Published only on successful file write; failure path skips.
+            applicationEventPublisher.publishEvent(
+                new VaultEntryChangedEvent(companyId, code, VaultEntryChangedEvent.ACTION_PUT));
             return true;
         } catch (Exception e) {
             log.error("Failed to write entry {}:{}: {}", companyId, code, e.getMessage());
@@ -274,6 +282,9 @@ public class VaultService {
         try {
             map.remove(title);
             writeFile(path, salt, iterations, key, map);
+            // Stage 5: notify Processor-facing cache invalidation fan-out.
+            applicationEventPublisher.publishEvent(
+                new VaultEntryChangedEvent(companyId, code, VaultEntryChangedEvent.ACTION_DELETE));
             return true;
         } catch (Exception e) {
             log.error("Failed to delete entry {}:{}: {}", companyId, code, e.getMessage());

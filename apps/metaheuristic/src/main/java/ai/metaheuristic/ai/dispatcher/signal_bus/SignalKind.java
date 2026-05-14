@@ -36,6 +36,12 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * as an object ({"kind":"BATCH"}) — preserves backwards compatibility with the
  * pre-record enum serialization and keeps the client's flat string type
  * accurate.
+ *
+ * <p><strong>Scope reminder:</strong> SignalKind constants exist only for
+ * signals consumed by UI polling. For server-internal eventing (cache
+ * invalidation, intra-Dispatcher fan-out, etc.) use plain Spring
+ * {@code ApplicationEventPublisher} — do NOT add a new constant here. See
+ * {@code SignalBus} class Javadoc for the rule.
  */
 public record SignalKind(@JsonValue String kind) {
 
@@ -50,9 +56,4 @@ public record SignalKind(@JsonValue String kind) {
     public static final SignalKind EXEC_CONTEXT = new SignalKind("EXEC_CONTEXT");
     public static final SignalKind DOCUMENT_EXPORT = new SignalKind("DOCUMENT_EXPORT");
     public static final SignalKind SYSTEM_NOTICE = new SignalKind("SYSTEM_NOTICE");
-
-    /** Stage 5: a Vault entry was added, replaced, or deleted. Payload carries
-     *  {@code companyId} + {@code keyCode}. Processors consume via keep-alive
-     *  response to evict their {@code SealedSecretCache} entries. */
-    public static final SignalKind VAULT_ENTRY_CHANGED = new SignalKind("VAULT_ENTRY_CHANGED");
 }
