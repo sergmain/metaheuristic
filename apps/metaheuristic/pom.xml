@@ -378,6 +378,23 @@
                 <groupId>org.liquibase</groupId>
                 <artifactId>liquibase-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <!-- Stage 6 (vault secret handoff): peer-PID verification needs to
+                     read SocketImpl.fd via reflection (FFM downcall takes a raw int fd).
+                     Without these flags PeerPidVerifier.extractFd throws and peerPid()
+                     returns -1 — which the secret channel treats as a verification
+                     failure (fail closed). Adding the flags here lets the tests
+                     exercise the real path; production startup scripts must mirror them. -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>
+                        --add-opens=java.base/java.net=ALL-UNNAMED
+                        --add-opens=java.base/java.io=ALL-UNNAMED
+                        --enable-native-access=ALL-UNNAMED
+                    </argLine>
+                </configuration>
+            </plugin>
         </plugins>
 
         <pluginManagement>
