@@ -69,6 +69,9 @@ public class TaskParamsYamlUtilsV2
             t.task.init = new TaskParamsYaml.Init(v1.task.init.parentTaskIds, v1.task.init.nextState);
         }
 
+        // Stage 5: copy top-level companyId (greenfield exception — no V3 bump).
+        t.companyId = v1.companyId;
+
         t.checkIntegrity();
 
         return t;

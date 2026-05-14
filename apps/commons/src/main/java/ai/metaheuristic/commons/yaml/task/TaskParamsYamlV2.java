@@ -265,4 +265,8 @@ public class TaskParamsYamlV2 implements BaseParams {
 
     public TaskYamlV2 task = new TaskYamlV2();
 
+    // Stage 5: mirror of TaskParamsYaml.companyId on the latest versioned class.
+    // Greenfield exception — primitive long added directly without a version bump.
+    public long companyId;
+
 }

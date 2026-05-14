@@ -278,4 +278,12 @@ public class TaskParamsYaml implements BaseParams {
 
     public TaskYaml task = new TaskYaml();
 
+    // Stage 5: the company that owns this task's ExecContext. Used by the
+    // Processor at launch time to resolve API keys via the Vault. Greenfield
+    // exception per project agreement: primitive long added directly to both
+    // the version-less class and the latest versioned class without bumping
+    // the version. A zero value means "no company" — Processor must treat as
+    // "no API keys available" and skip the sealed-secret fetch.
+    public long companyId;
+
 }
