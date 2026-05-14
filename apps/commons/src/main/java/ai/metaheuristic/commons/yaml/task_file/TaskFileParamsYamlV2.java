@@ -126,6 +126,12 @@ public class TaskFileParamsYamlV2 implements BaseParams {
 
         // fields which are initialized at processor
         public String workingPath;
+
+        // Stage 6 (vault secret handoff): per-launch random token. See
+        // TaskFileParamsYaml.Task.checkCode javadoc. @Nullable per the
+        // @Nullable-exception rule — no version bump.
+        @Nullable
+        public String checkCode;
     }
 
     public TaskV2 task = new TaskV2();

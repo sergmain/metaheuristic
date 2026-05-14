@@ -150,6 +150,20 @@ public class TaskFileParamsYaml implements BaseParams {
 
         // fields which are initialized at processor
         public String workingPath;
+
+        // Stage 6 (vault secret handoff): per-launch random token. The Processor
+        // generates a fresh checkCode for each Function launch that needs an
+        // API key and writes it ONLY into this params file (never into cmdline
+        // or env). The Function reads the checkCode at startup and sends it
+        // back to the Processor on the loopback secret-channel BEFORE the
+        // Processor releases the decrypted key. A racing local attacker who
+        // wins the loopback connect cannot produce the correct checkCode
+        // because they never read this file.
+        //
+        // @Nullable per the @Nullable-exception rule — no version bump.
+        // Null means "this Function declared no API key, no handoff is happening."
+        @Nullable
+        public String checkCode;
     }
 
     public Task task = new Task();
