@@ -22,8 +22,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.Execution;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -335,5 +337,58 @@ class VaultServiceTest {
         service.unlock("master-pass");
         assertFalse(service.verifyPassphrase(""));
         assertFalse(service.verifyPassphrase(null));
+    }
+
+    // ---- getKeyBytes -----------------------------------------------------------------
+
+    @Test
+    void test_getKeyBytes_matchesStringUtf8(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
+        service.unlock("pass");
+        long accountId = 42L;            // never 1L
+        String code = "openai_api_key";
+        String expected = "sk-test-1234567890";
+        assertTrue(service.putApiKey(accountId, code, expected));
+
+        Optional<byte[]> opt = service.getKeyBytes(accountId, code);
+
+        assertTrue(opt.isPresent());
+        assertArrayEquals(expected.getBytes(StandardCharsets.UTF_8), opt.get());
+    }
+
+    @Test
+    void test_getKeyBytes_missing(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
+        service.unlock("pass");
+        long accountId = 42L;
+        Optional<byte[]> opt = service.getKeyBytes(accountId, "nonexistent");
+        assertTrue(opt.isEmpty());
+    }
+
+    @Test
+    void test_getKeyBytes_callerZero_noSideEffect(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
+        service.unlock("pass");
+        long accountId = 42L;
+        String code = "k";
+        String expected = "secret123";
+        assertTrue(service.putApiKey(accountId, code, expected));
+
+        byte[] first = service.getKeyBytes(accountId, code).orElseThrow();
+        Arrays.fill(first, (byte) 0);
+
+        byte[] second = service.getKeyBytes(accountId, code).orElseThrow();
+        assertArrayEquals(expected.getBytes(StandardCharsets.UTF_8), second);
+
+        // first and second must be different instances
+        assertNotSame(first, second);
+    }
+
+    @Test
+    void test_getKeyBytes_locked(@TempDir Path tempPath) throws Exception {
+        VaultService service = newVaultService(tempPath);
+        // do NOT unlock the vault
+        Optional<byte[]> opt = service.getKeyBytes(42L, "anything");
+        assertTrue(opt.isEmpty());
     }
 }

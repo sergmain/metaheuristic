@@ -87,7 +87,8 @@ public class ProcessorService {
                 "[unknown]", "[unknown]",
                 logFile!=null && Files.exists(logFile),
                 TaskParamsYamlUtils.UTILS.getDefault().getVersion(),
-                globals.os, globals.processorPath.toAbsolutePath().toString(), null);
+                globals.os, globals.processorPath.toAbsolutePath().toString(), null,
+                null, null);  // Stage 4: publicKeySpki, keyFingerprint — assigned later in caller
 
         try {
             InetAddress inetAddress = InetAddress.getLocalHost();

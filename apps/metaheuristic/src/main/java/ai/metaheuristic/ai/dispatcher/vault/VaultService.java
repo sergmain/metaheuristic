@@ -139,6 +139,31 @@ public class VaultService {
     }
 
     /**
+     * Returns the decrypted secret as a fresh byte[] (UTF-8 of the underlying String).
+     * The caller owns the returned buffer and is expected to zero it via
+     * Arrays.fill(buf, (byte) 0) after use.
+     *
+     * <p>Successive calls return independent byte[] instances; zeroing one does
+     * not affect Vault's internal state nor any other previously returned buffer.
+     *
+     * @return Optional.of(byte[]) if the entry exists, Optional.empty() otherwise.
+     */
+    public Optional<byte[]> getKeyBytes(long accountId, String code) {
+        // Reuse the existing decryption path. The internal map still holds String
+        // (unchanged from current Vault). We allocate a fresh byte[] per call so
+        // the caller's Arrays.fill cannot corrupt Vault internals.
+        Optional<String> opt = getApiKey(accountId, code);
+        if (opt.isEmpty()) {
+            return Optional.empty();
+        }
+        String s = opt.get();
+        // Use the explicit charset and a fresh allocation. Do not use s.getBytes()
+        // without charset (locale-dependent).
+        byte[] bytes = s.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        return Optional.of(bytes);
+    }
+
+    /**
      * Unlock the vault. If the vault file does not exist, an empty one is created
      * using {@code passphrase} as the master password.
      *

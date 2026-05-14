@@ -131,6 +131,13 @@ public class KeepAliveRequestParamYaml implements BaseParams {
             }
             errors.add(error);
         }
+
+        // Stage 4: Processor's RSA public key, transported on every keep-alive.
+        @Nullable
+        public String publicKeySpki;
+
+        @Nullable
+        public String keyFingerprint;
     }
 
 /*

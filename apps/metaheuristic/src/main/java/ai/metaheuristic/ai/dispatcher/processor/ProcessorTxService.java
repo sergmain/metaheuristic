@@ -167,7 +167,9 @@ public class ProcessorTxService {
         ProcessorStatusYaml psy = new ProcessorStatusYaml(null,
                 new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.unknown),
                 "", sessionId, System.currentTimeMillis(), "", "", null, false,
-                1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null, null);
+                1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null,
+                null, null,           // Stage 4: publicKeySpki, keyFingerprint
+                null);
 
         final Processor p = createProcessor(null, null, psy);
         return new DispatcherApiData.ProcessorSessionId(p.id, sessionId);
@@ -306,7 +308,9 @@ public class ProcessorTxService {
         ProcessorStatusYaml psy = new ProcessorStatusYaml(null,
                 new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),
-                Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false, 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null, null);
+                Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false, 1, EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null,
+                null, null,           // Stage 4: publicKeySpki, keyFingerprint
+                null);
         Processor p = createProcessor(description, remoteAddress, psy);
 
         return new DispatcherApiData.ProcessorSessionId(p.getId(), sessionId);

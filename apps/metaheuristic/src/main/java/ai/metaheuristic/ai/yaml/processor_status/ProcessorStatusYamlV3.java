@@ -121,6 +121,14 @@ public class ProcessorStatusYamlV3 implements BaseParams {
     @Nullable
     public LogV3 log;
 
+    // Stage 4: Processor's RSA public key, transported on every keep-alive.
+    // Both fields are @Nullable — old Processors / legacy YAML have neither.
+    @Nullable
+    public String publicKeySpki;     // Base64 of X.509 SPKI DER
+
+    @Nullable
+    public String keyFingerprint;    // SHA-256 hex of the SPKI bytes
+
     @Deprecated(forRemoval = true)
     // key - code of function, value - stae of function
     private Map<String, EnumsApi.FunctionState> functions = new HashMap<>();

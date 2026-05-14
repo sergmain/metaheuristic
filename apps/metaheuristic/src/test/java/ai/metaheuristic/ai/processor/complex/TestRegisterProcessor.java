@@ -181,7 +181,8 @@ public class TestRegisterProcessor {
                 new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.unknown, null, null),
                 "0:00 - 23:59",
                 "[unknown]", "[unknown]", false,
-                1, EnumsApi.OS.unknown, null, null);
+                1, EnumsApi.OS.unknown, null, null,
+                null, null);  // Stage 4: publicKeySpki, keyFingerprint
 
         ss.currDir = ss1.currDir;
         ss1.schedule = ss.schedule;

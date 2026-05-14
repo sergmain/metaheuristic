@@ -99,7 +99,8 @@ class TestStaticProcessorTransactionService {
                 new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.installed, "Git 1.0.0", null),
                 "0:00 - 23:59",
                 "[unknown]", "[unknown]",  true,
-                1, EnumsApi.OS.unknown, "/users/yyy", null);
+                1, EnumsApi.OS.unknown, "/users/yyy", null,
+                null, null);  // Stage 4: publicKeySpki, keyFingerprint
 
 //        ProcessorStatusYaml ss1 = ProcessorStatusYamlUtils.BASE_YAML_UTILS.to(s.status);
         assertTrue(ProcessorUtils.isProcessorStatusDifferent(psy, ss), S.f("ss1:\n%s\n\nss:\n%s", psy, ss));

@@ -106,7 +106,8 @@ public class KeepAliveServiceTest {
             new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.not_found), "",
             ""+ UUID.randomUUID(), System.currentTimeMillis(),
             Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO, null, false,
-            TaskParamsYamlUtils.UTILS.getDefault().getVersion(), EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null, null);
+            TaskParamsYamlUtils.UTILS.getDefault().getVersion(), EnumsApi.OS.unknown, Consts.UNKNOWN_INFO, null,
+            null, null, null);  // Stage 4: publicKeySpki, keyFingerprint + functions
 
         processor = processorTxService.createProcessor("processor for testing", "127.0.0.1", psy);
 

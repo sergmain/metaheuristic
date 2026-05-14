@@ -79,6 +79,10 @@ public class KeepAliveRequestParamYamlUtilsV3 extends
                 t.processor.status.taskParamsVersion = src.processor.status.taskParamsVersion;
                 t.processor.status.os = src.processor.status.os;
                 t.processor.status.currDir = src.processor.status.currDir;
+
+                // Stage 4: copy Processor's RSA public key fields
+                t.processor.status.publicKeySpki = src.processor.status.publicKeySpki;
+                t.processor.status.keyFingerprint = src.processor.status.keyFingerprint;
             }
         }
         if (src.processor.processorCommContext != null) {
