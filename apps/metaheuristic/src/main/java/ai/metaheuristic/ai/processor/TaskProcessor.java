@@ -20,7 +20,9 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.processor.actors.DownloadSealedSecretService;
 import ai.metaheuristic.ai.processor.secret.FunctionSecretGate;
+import ai.metaheuristic.ai.processor.secret.FunctionSecretChannel;
 import ai.metaheuristic.ai.processor.secret.SealedSecretCache;
+import ai.metaheuristic.ai.processor.secret.TaskSecretPlan;
 import ai.metaheuristic.ai.processor.security.ProcessorKeyPair;
 import ai.metaheuristic.ai.processor.tasks.DownloadSealedSecretTask;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
@@ -314,34 +316,115 @@ public class TaskProcessor {
                 continue;
             }
 
-            try {
-                if (!prepareParamsFileForTask(taskDir, taskParamYaml, results)) {
-                    continue;
-                }
-            } catch (Throwable th) {
-                String es = "100.110 Error while preparing params.yaml file for task #"+task.taskId+", error: " + th.getMessage();
-                log.warn(es);
-                processorTaskService.markAsFinishedWithError(core, task.taskId, es);
+            // Stage 6 (vault secret handoff): task-level secret plan.
+            // Walks pre + main + post Functions, finds which (if any) needs an
+            // API key. AWAITING → skip this task cycle; VIOLATION → mark task
+            // failed; READY → decrypt + open channel + generate checkCode now;
+            // NO_SECRET_NEEDED → continue normally with null channel/handoff.
+            final TaskSecretPlan.Plan secretPlan = TaskSecretPlan.plan(
+                    taskParamYaml.task, taskParamYaml.companyId,
+                    k -> sealedSecretCache.get(taskParamYaml.companyId, k));
+
+            if (secretPlan.kind() == TaskSecretPlan.Kind.AWAITING) {
+                downloadSealedSecretService.add(new DownloadSealedSecretTask(
+                        core, dispatcher.dispatcherLookup, task.taskId, core.processorId,
+                        taskParamYaml.companyId, secretPlan.keyCode()));
+                log.info("100.140 Sealed secret not yet cached for task {}, key {}; enqueued fetch, skip this launch cycle",
+                        task.taskId, secretPlan.keyCode());
+                continue;
+            }
+            if (secretPlan.kind() == TaskSecretPlan.Kind.MULTI_SECRET_VIOLATION) {
+                log.warn(secretPlan.violationMessage());
+                processorTaskService.markAsFinishedWithError(core, task.taskId, secretPlan.violationMessage());
                 continue;
             }
 
-            // at this point all required resources have to be prepared
-            ProcessorCoreTask taskResult = processorTaskService.setLaunchOn(core, task.taskId);
-            if (taskResult==null) {
-                String es = "100.120 Task #"+task.taskId+" wasn't found";
-                log.warn(es);
-                // there isn't this task any more. So we can't mark it as Finished
-//                processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, es);
-                continue;
-            }
+            byte[] keyBytes = null;
+            String checkCode = null;
+            FunctionSecretChannel secretChannel = null;
+            SystemProcessLauncher.SecretHandoff secretHandoff = null;
+            String secretPhase = null;
             try {
-                execAllFunctions(core, task, processorState, dispatcher, taskDir, taskParamYaml, systemDir, results);
+                if (secretPlan.kind() == TaskSecretPlan.Kind.READY) {
+                    try {
+                        keyBytes = AsymmetricEncryptor.decrypt(secretPlan.sealed(), processorKeyPair.getPrivateKey());
+                    } catch (Throwable th) {
+                        String es = "100.142 Failed to decrypt sealed secret for task #" + task.taskId + ", key " + secretPlan.keyCode() + ": " + th.getMessage();
+                        log.warn(es, th);
+                        processorTaskService.markAsFinishedWithError(core, task.taskId, es);
+                        continue;
+                    }
+                    checkCode = generateCheckCode();
+                    try {
+                        secretChannel = new FunctionSecretChannel();
+                    } catch (IOException ioe) {
+                        String es = "100.144 Failed to open FunctionSecretChannel for task #" + task.taskId + ": " + ioe.getMessage();
+                        log.warn(es, ioe);
+                        processorTaskService.markAsFinishedWithError(core, task.taskId, es);
+                        continue;
+                    }
+                    final FunctionSecretChannel ch = secretChannel;
+                    final String cc = checkCode;
+                    final byte[] kb = keyBytes;
+                    secretHandoff = new SystemProcessLauncher.SecretHandoff(
+                            ch.getPort(),
+                            () -> {
+                                try {
+                                    ch.handoff(cc, kb);
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            });
+                    secretPhase = secretPlan.phase();
+                }
+
+                try {
+                    if (!prepareParamsFileForTask(taskDir, taskParamYaml, results, checkCode,
+                            secretChannel != null ? secretChannel.getPort() : null)) {
+                        continue;
+                    }
+                } catch (Throwable th) {
+                    String es = "100.110 Error while preparing params.yaml file for task #"+task.taskId+", error: " + th.getMessage();
+                    log.warn(es);
+                    processorTaskService.markAsFinishedWithError(core, task.taskId, es);
+                    continue;
+                }
+
+                // at this point all required resources have to be prepared
+                ProcessorCoreTask taskResult = processorTaskService.setLaunchOn(core, task.taskId);
+                if (taskResult==null) {
+                    String es = "100.120 Task #"+task.taskId+" wasn't found";
+                    log.warn(es);
+                    // there isn't this task any more. So we can't mark it as Finished
+//                processorTaskService.markAsFinishedWithError(task.dispatcherUrl, task.taskId, es);
+                    continue;
+                }
+                try {
+                    execAllFunctions(core, task, processorState, dispatcher, taskDir, taskParamYaml, systemDir, results,
+                            secretPhase, secretHandoff);
+                }
+                catch(ScheduleInactivePeriodException e) {
+                    processorTaskService.resetTask(core, task.taskId);
+                    processorTaskService.delete(core, task.taskId);
+                    log.info("100.130 An execution of task #{} was terminated because of the beginning of inactivity period. " +
+                            "This task will be processed later", task.taskId);
+                }
             }
-            catch(ScheduleInactivePeriodException e) {
-                processorTaskService.resetTask(core, task.taskId);
-                processorTaskService.delete(core, task.taskId);
-                log.info("100.130 An execution of task #{} was terminated because of the beginning of inactivity period. " +
-                        "This task will be processed later", task.taskId);
+            finally {
+                // Stage 6: zero plaintext key bytes and close the loopback
+                // channel — single ownership at the task level. Whether the
+                // handoff succeeded, failed, threw, or was never invoked, we
+                // always reach this block.
+                if (keyBytes != null) {
+                    java.util.Arrays.fill(keyBytes, (byte) 0);
+                }
+                if (secretChannel != null) {
+                    try {
+                        secretChannel.close();
+                    } catch (IOException ignored) {
+                        // best effort
+                    }
+                }
             }
         }
     }
@@ -358,12 +441,18 @@ public class TaskProcessor {
                                   ProcessorCoreTask task, MetadataParamsYaml.ProcessorSession processorState,
                                   DispatcherLookupExtendedParams.DispatcherLookupExtended dispatcher,
                                   Path taskDir, TaskParamsYaml taskParamYaml,
-                                  Path systemDir, FunctionRepositoryData.@Nullable FunctionPrepareResult[] results) {
+                                  Path systemDir, FunctionRepositoryData.@Nullable FunctionPrepareResult[] results,
+                                  // Stage 6: secretPhase is the per-task secret-owning phase ("pre[N]" / "main" /
+                                  // "post[N]"), or null when no Function in this task needs a secret. secretHandoff
+                                  // is the SystemProcessLauncher hook bound to that phase. Both are null together.
+                                  @Nullable String secretPhase,
+                                  SystemProcessLauncher.@Nullable SecretHandoff secretHandoff) {
         List<FunctionApiData.SystemExecResult> preSystemExecResult = new ArrayList<>();
         List<FunctionApiData.SystemExecResult> postSystemExecResult = new ArrayList<>();
         boolean isOk = true;
         int idx = 0;
         DispatcherSchedule schedule = dispatcher.schedule.policy == ExtendedTimePeriod.SchedulePolicy.strict ? dispatcher.schedule : null;
+        int preIdx = 0;
         for (TaskParamsYaml.FunctionConfig preFunctionConfig : taskParamYaml.task.preFunctions) {
             FunctionRepositoryData.FunctionPrepareResult result = results[idx++];
             FunctionApiData.SystemExecResult execResult;
@@ -373,8 +462,11 @@ public class TaskProcessor {
                         "100.170 Illegal State, result of preparing of function "+ preFunctionConfig.code+" is null");
             }
             else {
-                execResult = execFunction(core, dispatcher.dispatcherLookup, task, taskDir, taskParamYaml, systemDir, result, schedule);
+                SystemProcessLauncher.SecretHandoff preHandoff =
+                        ("pre[" + preIdx + "]").equals(secretPhase) ? secretHandoff : null;
+                execResult = execFunction(core, dispatcher.dispatcherLookup, task, taskDir, taskParamYaml, systemDir, result, schedule, preHandoff);
             }
+            preIdx++;
             preSystemExecResult.add(execResult);
             if (!execResult.isOk) {
                 isOk = false;
@@ -393,11 +485,14 @@ public class TaskProcessor {
             }
             if (isOk) {
                 TaskParamsYaml.FunctionConfig mainFunctionConfig = result.function;
-                systemExecResult = execFunction(core, dispatcher.dispatcherLookup, task, taskDir, taskParamYaml, systemDir, result, schedule);
+                SystemProcessLauncher.SecretHandoff mainHandoff =
+                        "main".equals(secretPhase) ? secretHandoff : null;
+                systemExecResult = execFunction(core, dispatcher.dispatcherLookup, task, taskDir, taskParamYaml, systemDir, result, schedule, mainHandoff);
                 if (!systemExecResult.isOk) {
                     isOk = false;
                 }
                 if (isOk) {
+                    int postIdx = 0;
                     for (TaskParamsYaml.FunctionConfig postFunctionConfig : taskParamYaml.task.postFunctions) {
                         result = results[idx++];
                         FunctionApiData.SystemExecResult execResult;
@@ -407,8 +502,11 @@ public class TaskProcessor {
                                     "100.210 Illegal State, result of preparing of function "+ postFunctionConfig.code+" is null");
                         }
                         else {
-                            execResult = execFunction(core, dispatcher.dispatcherLookup, task, taskDir, taskParamYaml, systemDir, result, schedule);
+                            SystemProcessLauncher.SecretHandoff postHandoff =
+                                    ("post[" + postIdx + "]").equals(secretPhase) ? secretHandoff : null;
+                            execResult = execFunction(core, dispatcher.dispatcherLookup, task, taskDir, taskParamYaml, systemDir, result, schedule, postHandoff);
                         }
+                        postIdx++;
                         postSystemExecResult.add(execResult);
                         if (!execResult.isOk) {
                             isOk = false;
@@ -439,6 +537,17 @@ public class TaskProcessor {
     }
 
     private static boolean prepareParamsFileForTask(Path taskDir, TaskParamsYaml taskParamYaml, FunctionRepositoryData.FunctionPrepareResult[] results) {
+        return prepareParamsFileForTask(taskDir, taskParamYaml, results, null, null);
+    }
+
+    /**
+     * Stage 6 overload: when {@code checkCode} and {@code secretPort} are
+     * both non-null, they're written into the TaskFileParamsYaml so the
+     * Function reads them on startup and participates in the secret-channel
+     * handoff. Both null = no handoff for this task.
+     */
+    private static boolean prepareParamsFileForTask(Path taskDir, TaskParamsYaml taskParamYaml, FunctionRepositoryData.FunctionPrepareResult[] results,
+                                                    @Nullable String checkCode, @Nullable Integer secretPort) {
 
         Path artifactDir = ProcessorTaskService.prepareTaskSubDir(taskDir, ConstsApi.ARTIFACTS_DIR);
         if (artifactDir == null) {
@@ -449,7 +558,23 @@ public class TaskProcessor {
                 .map(o-> FunctionCoreUtils.getTaskParamsVersion(o.function.metas))
                 .collect(Collectors.toSet());
 
-        return ArtifactUtils.prepareParamsFileForTask(artifactDir, taskDir.toAbsolutePath().toString(), taskParamYaml, versions);
+        return ArtifactUtils.prepareParamsFileForTask(artifactDir, taskDir.toAbsolutePath().toString(), taskParamYaml, versions, checkCode, secretPort);
+    }
+
+    /**
+     * Stage 6: generates a fresh per-launch check-code. 32 bytes from
+     * {@link java.security.SecureRandom} encoded as hex (64-char string).
+     * The token is written ONLY into TaskFileParamsYaml; it never appears
+     * in the cmdline, env, or anywhere else on disk.
+     */
+    private static String generateCheckCode() {
+        byte[] raw = new byte[32];
+        new java.security.SecureRandom().nextBytes(raw);
+        StringBuilder hex = new StringBuilder(raw.length * 2);
+        for (byte b : raw) {
+            hex.append(String.format("%02x", b & 0xff));
+        }
+        return hex.toString();
     }
 
     private static int totalCountOfFunctions(TaskParamsYaml.TaskYaml taskYaml) {
@@ -466,7 +591,8 @@ public class TaskProcessor {
             ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core,
             DispatcherLookupParamsYaml.DispatcherLookup dispatcher,
             ProcessorCoreTask task, Path taskDir, TaskParamsYaml taskParamYaml, Path systemDir, FunctionRepositoryData.FunctionPrepareResult functionPrepareResult,
-            @Nullable DispatcherSchedule schedule) {
+            @Nullable DispatcherSchedule schedule,
+            SystemProcessLauncher.@Nullable SecretHandoff secretHandoff) {
 
         Path paramFile = taskDir
                 .resolve(ConstsApi.ARTIFACTS_DIR)
@@ -540,49 +666,27 @@ public class TaskProcessor {
                             EnumsApi.ExecContextState.DOESNT_EXIST, EnumsApi.ExecContextState.STOPPED, EnumsApi.ExecContextState.ERROR,
                             EnumsApi.ExecContextState.FINISHED);
 
-            // Stage 5 (vault secret handoff): gate the launch on sealed-secret availability.
-            // - NO_SECRET_NEEDED: no API key on this Function (or companyId==0L sentinel) → launch as usual.
-            // - CACHE_MISS_FETCH: enqueue a fetch and skip this launch cycle. The next launch attempt finds the cache populated.
-            // - CACHE_HIT_DECRYPT: decrypt under the Processor private key; Stage 6 (FunctionSecretChannel) will consume keyBytes here. For now we just zero after the launch.
-            final FunctionSecretGate.Outcome secretOutcome = FunctionSecretGate.decide(
-                    functionPrepareResult.function.api,
-                    taskParamYaml.companyId,
-                    k -> sealedSecretCache.get(taskParamYaml.companyId, k));
-
-            if (secretOutcome.decision() == FunctionSecretGate.Decision.CACHE_MISS_FETCH) {
-                downloadSealedSecretService.add(new DownloadSealedSecretTask(
-                        core, dispatcher, task.taskId, core.processorId, taskParamYaml.companyId, secretOutcome.keyCode()));
-                log.info("100.345 Sealed secret not yet cached for task {}, key {}; enqueued fetch, skip this launch cycle",
-                        task.taskId, secretOutcome.keyCode());
-                return new FunctionApiData.SystemExecResult(
-                        functionPrepareResult.function.code, false, -992,
-                        "100.346 Sealed secret not yet cached; awaiting fetch");
-            }
-
-            byte[] keyBytes = null;
+            // Stage 6 (vault secret handoff): if this is the phase that owns the
+            // task's single secret, pass the SecretHandoff through to the
+            // launcher; otherwise launch normally. Decrypt + checkCode + channel
+            // lifecycle live at task level (execAllFunctions caller) — single
+            // ownership of keyBytes; this method does NOT zero or close anything.
             try {
-                if (secretOutcome.decision() == FunctionSecretGate.Decision.CACHE_HIT_DECRYPT) {
-                    SealedSecret sealed = secretOutcome.sealed();
-                    // sealed is non-null on CACHE_HIT_DECRYPT by construction
-                    keyBytes = AsymmetricEncryptor.decrypt(sealed, processorKeyPair.getPrivateKey());
-                    // Stage 6: keyBytes flows to FunctionSecretChannel here. Until then, plaintext lifetime is bounded to this try block.
-                }
-                try {
-                    activeTaskProcessing.incrementAndGet();
-                    log.info("All systems are checked for the task #{}, lift off, active task processing: {}", task.taskId, activeTaskProcessing.get());
-                    // Exec function
+                activeTaskProcessing.incrementAndGet();
+                log.info("All systems are checked for the task #{}, lift off, active task processing: {}", task.taskId, activeTaskProcessing.get());
+                if (secretHandoff != null) {
+                    systemExecResult = SystemProcessLauncher.execCommandWithSecret(
+                            cmd, taskDir, consoleLogFile, taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
+                            globals.processor.taskConsoleOutputMaxLines, List.of(execContextDeletionCheck), null,
+                            secretHandoff);
+                } else {
                     systemExecResult = SystemProcessLauncher.execCommand(
                             cmd, taskDir, consoleLogFile, taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
                             globals.processor.taskConsoleOutputMaxLines, List.of(execContextDeletionCheck), null);
                 }
-                finally {
-                    activeTaskProcessing.decrementAndGet();
-                }
             }
             finally {
-                if (keyBytes != null) {
-                    java.util.Arrays.fill(keyBytes, (byte) 0);
-                }
+                activeTaskProcessing.decrementAndGet();
             }
         }
         catch (ScheduleInactivePeriodException e) {

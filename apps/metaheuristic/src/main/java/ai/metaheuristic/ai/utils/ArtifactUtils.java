@@ -22,6 +22,7 @@ import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import ai.metaheuristic.commons.utils.FileSystemUtils;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYaml;
 import ai.metaheuristic.commons.yaml.task_file.TaskFileParamsYamlUtils;
+import org.jspecify.annotations.Nullable;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -51,8 +52,24 @@ public class ArtifactUtils {
      */
     @SneakyThrows
     public static boolean prepareParamsFileForTask(Path artifactDir, String taskDir, TaskParamsYaml taskParamYaml, Set<Integer> versions) {
+        return prepareParamsFileForTask(artifactDir, taskDir, taskParamYaml, versions, null, null);
+    }
+
+    /**
+     * Stage 6 (vault secret handoff) overload. When {@code checkCode} and
+     * {@code secretPort} are both non-null, they're written into the
+     * TaskFileParamsYaml on disk so the Function can read them and
+     * participate in the loopback handoff. Both null = no handoff (the
+     * @Nullable-exception rule on the YAML schema requires the two fields
+     * to move together).
+     */
+    @SneakyThrows
+    public static boolean prepareParamsFileForTask(Path artifactDir, String taskDir, TaskParamsYaml taskParamYaml, Set<Integer> versions,
+                                                   @Nullable String checkCode, @Nullable Integer secretPort) {
         TaskFileParamsYaml taskFileParamYaml = toTaskFileParamsYaml(taskParamYaml);
         taskFileParamYaml.task.workingPath = taskDir;
+        taskFileParamYaml.task.checkCode = checkCode;
+        taskFileParamYaml.task.secretPort = secretPort;
         for (Integer version : versions) {
 
             final String params = TaskFileParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(taskFileParamYaml, version);
