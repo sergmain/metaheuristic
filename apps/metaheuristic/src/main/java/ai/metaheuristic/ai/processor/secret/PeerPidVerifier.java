@@ -24,17 +24,29 @@ import java.net.Socket;
 import java.net.SocketImpl;
 
 /**
- * Resolves the PID of the process on the other end of a connected loopback
- * {@link Socket}, by delegating to a platform-specific FFM downcall.
+ * Resolves the PID of the process on the other end of a connected
+ * {@link Socket} via {@code getsockopt(SO_PEERCRED)} on Linux or
+ * {@code getsockopt(LOCAL_PEERPID)} on macOS.
  *
- * <p>Returns {@code -1} when verification is not available (unsupported
- * platform, FFM/reflection blocked by JVM flags, or a kernel error).
- * Callers MUST treat {@code -1} as a verification failure and fail closed —
- * the secret-channel handoff rejects {@code -1} and throws
- * {@link SecurityException}. Combined with the per-launch check-code in
- * {@code TaskFileParamsYaml.Task.checkCode}, this gives belt-and-suspenders:
- * the attacker must both win the loopback race AND know the check-code that
- * was written only to a task-scoped params file.
+ * <p><b>DORMANT — not used by Stage 6.</b> Runtime probing during Stage 6
+ * implementation revealed that {@code SO_PEERCRED} on Linux returns
+ * {@code pid=0} for AF_INET (TCP) loopback sockets; it only fills the
+ * {@code ucred} struct for AF_UNIX socket pairs. Same constraint applies on
+ * macOS. The Stage 6 protocol uses TCP loopback because it's portable to
+ * Windows and avoids filesystem-path cleanup complexity.
+ *
+ * <p>The actual defense against the "racing-local-process" attack in Stage 6
+ * is the per-launch check-code in {@code TaskFileParamsYaml.Task.checkCode}:
+ * a random token written ONLY to the task-scoped params file, which the
+ * Function reads and presents on the loopback handshake. A racing attacker
+ * never reads that file, so can never produce the right token.
+ *
+ * <p>This class and its platform impls are retained intact for a future
+ * protocol that uses AF_UNIX sockets (where {@code SO_PEERCRED} actually
+ * works), or for adding belt-and-suspenders defense to AF_UNIX flows
+ * (Stage 6.X / Stage 8+). The FFM downcalls are correct as written; the
+ * limitation is the socket family the Stage 6 channel uses, not the FFM
+ * code. Do NOT delete without first deleting the AF_UNIX migration ticket.
  *
  * <p>Error-code prefix {@code 666.}.
  *
