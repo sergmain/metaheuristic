@@ -28,7 +28,7 @@ import java.util.List;
 
 /**
  * Data classes for the dispatcher Key Vault.
- * Vault stores entries in form accountId:code:key (multi-tenant by accountId).
+ * Vault stores entries in form companyId:code:key (multi-tenant by companyId).
  *
  * @author Sergio Lissner
  */
@@ -95,7 +95,7 @@ public class VaultData {
      * vault is unlocked. Per design: once the vault is open the UI shows secrets
      * in plain text.
      */
-    public record Entry(long accountId, String code, String secret) {}
+    public record Entry(long companyId, String code, String secret) {}
 
     /** Response wrapper for listing all entries (titles + secrets when unlocked). */
     @Data

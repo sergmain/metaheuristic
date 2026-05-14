@@ -45,7 +45,7 @@ import java.util.Optional;
  * Vault service backed by an AES/GCM-encrypted JSON file.
  *
  * <p>Stores API keys per-tenant in a single JSON map: the key is
- * {@code accountId:code} and the value is the secret. The whole map is
+ * {@code companyId:code} and the value is the secret. The whole map is
  * encrypted as one blob via {@link JsonCrypto}.
  *
  * <p>Lifetime: the unlocked plaintext map is held as a global singleton in
@@ -130,12 +130,12 @@ public class VaultService {
      * Resolve the API key for a given tenant + code.
      * Returns empty if the vault is locked or the entry does not exist.
      */
-    public Optional<String> getApiKey(long accountId, String code) {
+    public Optional<String> getApiKey(long companyId, String code) {
         Map<String, String> map = this.entries;
         if (map == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(map.get(entryTitle(accountId, code)));
+        return Optional.ofNullable(map.get(entryTitle(companyId, code)));
     }
 
     /**
@@ -148,11 +148,11 @@ public class VaultService {
      *
      * @return Optional.of(byte[]) if the entry exists, Optional.empty() otherwise.
      */
-    public Optional<byte[]> getKeyBytes(long accountId, String code) {
+    public Optional<byte[]> getKeyBytes(long companyId, String code) {
         // Reuse the existing decryption path. The internal map still holds String
         // (unchanged from current Vault). We allocate a fresh byte[] per call so
         // the caller's Arrays.fill cannot corrupt Vault internals.
-        Optional<String> opt = getApiKey(accountId, code);
+        Optional<String> opt = getApiKey(companyId, code);
         if (opt.isEmpty()) {
             return Optional.empty();
         }
@@ -221,7 +221,7 @@ public class VaultService {
     }
 
     /**
-     * Add or replace an entry under the given accountId+code with the supplied secret
+     * Add or replace an entry under the given companyId+code with the supplied secret
      * and persist the vault. Synchronised to avoid concurrent writers corrupting
      * the on-disk file.
      *
@@ -231,7 +231,7 @@ public class VaultService {
      *
      * @return true if persisted, false if the vault is locked or persistence failed
      */
-    public synchronized boolean putApiKey(long accountId, String code, String secret) {
+    public synchronized boolean putApiKey(long companyId, String code, String secret) {
         Map<String, String> map = this.entries;
         Path path = this.vaultPath;
         byte[] salt = this.saltInUse;
@@ -241,11 +241,11 @@ public class VaultService {
             return false;
         }
         try {
-            map.put(entryTitle(accountId, code), secret);
+            map.put(entryTitle(companyId, code), secret);
             writeFile(path, salt, iterations, key, map);
             return true;
         } catch (Exception e) {
-            log.error("Failed to write entry {}:{}: {}", accountId, code, e.getMessage());
+            log.error("Failed to write entry {}:{}: {}", companyId, code, e.getMessage());
             return false;
         }
     }
@@ -258,7 +258,7 @@ public class VaultService {
      * @return true if the entry existed and the vault was persisted; false if the
      *         vault is locked, the entry did not exist, or persistence failed.
      */
-    public synchronized boolean deleteApiKey(long accountId, String code) {
+    public synchronized boolean deleteApiKey(long companyId, String code) {
         Map<String, String> map = this.entries;
         Path path = this.vaultPath;
         byte[] salt = this.saltInUse;
@@ -267,7 +267,7 @@ public class VaultService {
         if (map == null || path == null || salt == null || key == null) {
             return false;
         }
-        String title = entryTitle(accountId, code);
+        String title = entryTitle(companyId, code);
         if (!map.containsKey(title)) {
             return false;
         }
@@ -276,27 +276,27 @@ public class VaultService {
             writeFile(path, salt, iterations, key, map);
             return true;
         } catch (Exception e) {
-            log.error("Failed to delete entry {}:{}: {}", accountId, code, e.getMessage());
+            log.error("Failed to delete entry {}:{}: {}", companyId, code, e.getMessage());
             return false;
         }
     }
 
     /**
      * List the contents of the vault scoped to a single account: returns
-     * accountId, code and secret value for every entry whose accountId matches.
+     * companyId, code and secret value for every entry whose companyId matches.
      * Returns empty list when locked or when no entries belong to that account.
      * Per design, once the vault is unlocked the UI is allowed to show secrets
      * in plain text.
      *
-     * @param accountId account id to filter by; entries belonging to other
+     * @param companyId account id to filter by; entries belonging to other
      *                  accounts are excluded
      */
-    public List<VaultData.Entry> listEntries(long accountId) {
+    public List<VaultData.Entry> listEntries(long companyId) {
         Map<String, String> map = this.entries;
         if (map == null) {
             return List.of();
         }
-        String prefix = accountId + ":";
+        String prefix = companyId + ":";
         List<VaultData.Entry> out = new ArrayList<>();
         for (Map.Entry<String, String> e : map.entrySet()) {
             String title = e.getKey();
@@ -307,7 +307,7 @@ public class VaultService {
             if (code.isEmpty()) {
                 continue;
             }
-            out.add(new VaultData.Entry(accountId, code, e.getValue()));
+            out.add(new VaultData.Entry(companyId, code, e.getValue()));
         }
         return out;
     }
@@ -344,9 +344,9 @@ public class VaultService {
         }
     }
 
-    /** Title format used inside the vault map: {@code accountId:code}. */
-    static String entryTitle(long accountId, String code) {
-        return accountId + ":" + code;
+    /** Title format used inside the vault map: {@code companyId:code}. */
+    static String entryTitle(long companyId, String code) {
+        return companyId + ":" + code;
     }
 
     /** Derive a 256-bit AES key from a passphrase using PBKDF2-HMAC-SHA256. */

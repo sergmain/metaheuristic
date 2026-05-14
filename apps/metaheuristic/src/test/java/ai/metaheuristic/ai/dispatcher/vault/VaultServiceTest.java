@@ -246,10 +246,10 @@ class VaultServiceTest {
 
         var entries = service.listEntries(7L);
         assertEquals(2, entries.size());
-        assertEquals(7L, entries.get(0).accountId());
+        assertEquals(7L, entries.get(0).companyId());
         assertEquals("openai", entries.get(0).code());
         assertEquals("secret-1", entries.get(0).secret());
-        assertEquals(7L, entries.get(1).accountId());
+        assertEquals(7L, entries.get(1).companyId());
         assertEquals("anthropic", entries.get(1).code());
         assertEquals("secret-3", entries.get(1).secret());
     }
@@ -263,12 +263,12 @@ class VaultServiceTest {
 
         var entriesFor2 = service.listEntries(2L);
         assertEquals(1, entriesFor2.size());
-        assertEquals(2L, entriesFor2.get(0).accountId());
+        assertEquals(2L, entriesFor2.get(0).companyId());
         assertEquals("tenant-2-secret", entriesFor2.get(0).secret());
 
         var entriesFor7 = service.listEntries(7L);
         assertEquals(1, entriesFor7.size());
-        assertEquals(7L, entriesFor7.get(0).accountId());
+        assertEquals(7L, entriesFor7.get(0).companyId());
     }
 
     @Test
@@ -345,12 +345,12 @@ class VaultServiceTest {
     void test_getKeyBytes_matchesStringUtf8(@TempDir Path tempPath) throws Exception {
         VaultService service = newVaultService(tempPath);
         service.unlock("pass");
-        long accountId = 42L;            // never 1L
+        long companyId = 42L;            // never 1L
         String code = "openai_api_key";
         String expected = "sk-test-1234567890";
-        assertTrue(service.putApiKey(accountId, code, expected));
+        assertTrue(service.putApiKey(companyId, code, expected));
 
-        Optional<byte[]> opt = service.getKeyBytes(accountId, code);
+        Optional<byte[]> opt = service.getKeyBytes(companyId, code);
 
         assertTrue(opt.isPresent());
         assertArrayEquals(expected.getBytes(StandardCharsets.UTF_8), opt.get());
@@ -360,8 +360,8 @@ class VaultServiceTest {
     void test_getKeyBytes_missing(@TempDir Path tempPath) throws Exception {
         VaultService service = newVaultService(tempPath);
         service.unlock("pass");
-        long accountId = 42L;
-        Optional<byte[]> opt = service.getKeyBytes(accountId, "nonexistent");
+        long companyId = 42L;
+        Optional<byte[]> opt = service.getKeyBytes(companyId, "nonexistent");
         assertTrue(opt.isEmpty());
     }
 
@@ -369,15 +369,15 @@ class VaultServiceTest {
     void test_getKeyBytes_callerZero_noSideEffect(@TempDir Path tempPath) throws Exception {
         VaultService service = newVaultService(tempPath);
         service.unlock("pass");
-        long accountId = 42L;
+        long companyId = 42L;
         String code = "k";
         String expected = "secret123";
-        assertTrue(service.putApiKey(accountId, code, expected));
+        assertTrue(service.putApiKey(companyId, code, expected));
 
-        byte[] first = service.getKeyBytes(accountId, code).orElseThrow();
+        byte[] first = service.getKeyBytes(companyId, code).orElseThrow();
         Arrays.fill(first, (byte) 0);
 
-        byte[] second = service.getKeyBytes(accountId, code).orElseThrow();
+        byte[] second = service.getKeyBytes(companyId, code).orElseThrow();
         assertArrayEquals(expected.getBytes(StandardCharsets.UTF_8), second);
 
         // first and second must be different instances

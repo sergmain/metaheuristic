@@ -68,7 +68,7 @@ public class VaultRestController {
             return new VaultData.EntriesList("Vault is locked");
         }
         UserContext ctx = userContextService.getContext(authentication);
-        return new VaultData.EntriesList(vaultService.listEntries(ctx.getAccountId()), true);
+        return new VaultData.EntriesList(vaultService.listEntries(ctx.getCompanyId()), true);
     }
 
     @PostMapping("/entries")
@@ -86,13 +86,13 @@ public class VaultRestController {
             return new VaultData.OpResult("Passphrase verification failed");
         }
         UserContext ctx = userContextService.getContext(authentication);
-        boolean ok = vaultService.putApiKey(ctx.getAccountId(), request.code(), request.secret());
+        boolean ok = vaultService.putApiKey(ctx.getCompanyId(), request.code(), request.secret());
         return ok ? new VaultData.OpResult(true) : new VaultData.OpResult("Failed to persist entry");
     }
 
-    @DeleteMapping("/entries/{accountId}/{code}")
+    @DeleteMapping("/entries/{companyId}/{code}")
     public VaultData.OpResult deleteEntry(
-            @PathVariable long accountId,
+            @PathVariable long companyId,
             @PathVariable String code,
             @RequestBody VaultData.DeleteEntryRequest request,
             Authentication authentication) {
@@ -100,14 +100,14 @@ public class VaultRestController {
             return new VaultData.OpResult("Vault is locked");
         }
         UserContext ctx = userContextService.getContext(authentication);
-        if (ctx.getAccountId() == null || accountId != ctx.getAccountId()) {
+        if (ctx.getCompanyId() == null || companyId != ctx.getCompanyId()) {
             // Refuse cross-account deletes; do not leak whether the entry exists.
             return new VaultData.OpResult("Entry not found or persistence failed");
         }
         if (!vaultService.verifyPassphrase(request.passphrase())) {
             return new VaultData.OpResult("Passphrase verification failed");
         }
-        boolean ok = vaultService.deleteApiKey(accountId, code);
+        boolean ok = vaultService.deleteApiKey(companyId, code);
         return ok ? new VaultData.OpResult(true) : new VaultData.OpResult("Entry not found or persistence failed");
     }
 }
