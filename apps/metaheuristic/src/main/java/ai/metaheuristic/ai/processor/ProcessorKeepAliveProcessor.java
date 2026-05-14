@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.processor;
 import ai.metaheuristic.ai.data.DispatcherData;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
+import ai.metaheuristic.ai.processor.secret.SealedSecretCache;
 import ai.metaheuristic.ai.yaml.communication.keep_alive.KeepAliveResponseParamYaml;
 import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupExtendedParams;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
@@ -29,6 +30,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import static ai.metaheuristic.ai.processor.ProcessorAndCoreData.DispatcherUrl;
 
@@ -45,6 +47,7 @@ public class ProcessorKeepAliveProcessor {
 
     private final ProcessorEnvironment processorEnvironment;
     private final CurrentExecState currentExecState;
+    private final SealedSecretCache sealedSecretCache;
 
     public void processKeepAliveResponseParamYaml(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {
 //        log.debug("776.020 DispatcherCommParamsYaml:\n{}", responseParamYaml);
@@ -65,7 +68,31 @@ public class ProcessorKeepAliveProcessor {
 
         storeProcessorCoreId(ref, responseParamYaml.response.coreInfos);
 
+        processVaultInvalidations(response.vaultInvalidations, sealedSecretCache::invalidate);
+
 //        processRequestLogFile(pcpy)
+    }
+
+    /**
+     * Stage 5b: keep-alive carries any pending Vault-entry invalidations for
+     * this Processor. For each entry, drop the matching sealed-secret cache
+     * row so the next task launch re-fetches the rotated key.
+     *
+     * <p>Static helper takes the invalidator as a {@link BiConsumer} —
+     * dependency injection by lambda, no Spring context required to test.
+     */
+    static void processVaultInvalidations(
+            @org.jspecify.annotations.Nullable List<KeepAliveResponseParamYaml.VaultEntryInvalidation> invalidations,
+            BiConsumer<Long, String> invalidator) {
+        if (invalidations == null || invalidations.isEmpty()) {
+            return;
+        }
+        for (KeepAliveResponseParamYaml.VaultEntryInvalidation v : invalidations) {
+            if (v == null || v.keyCode == null) {
+                continue;
+            }
+            invalidator.accept(v.companyId, v.keyCode);
+        }
     }
 
     private void storeDispatcherContext(DispatcherUrl dispatcherUrl, KeepAliveResponseParamYaml responseParamYaml) {

@@ -227,7 +227,9 @@ public class TaskProducingService {
             taskParams.task.function = new TaskParamsYaml.FunctionConfig(
                     process.function.code, "internal", null, S.b(process.function.params) ? "" : process.function.params, "internal",
                     EnumsApi.FunctionSourcing.dispatcher, null,
-                    null, CommonConsts.DEFAULT_FUNCTION_SRC_DIR, null );
+                    null, CommonConsts.DEFAULT_FUNCTION_SRC_DIR, null,
+                    // Stage 5: internal-context functions never carry an API key.
+                    null );
         }
         else {
             TaskParamsYaml.FunctionConfig fConfig = functionTopLevelService.getFunctionConfig(process.function);

@@ -42,6 +42,9 @@ public class TaskProcessorCoordinatorService {
     private final ProcessorService processorService;
     private final VariableProviderFactory resourceProviderFactory;
     private final FunctionRepositoryProcessorService functionRepositoryProcessorService;
+    private final ai.metaheuristic.ai.processor.security.ProcessorKeyPair processorKeyPair;
+    private final ai.metaheuristic.ai.processor.secret.SealedSecretCache sealedSecretCache;
+    private final ai.metaheuristic.ai.processor.actors.DownloadSealedSecretService downloadSealedSecretService;
 
     // key -coreCode, value
     private final Map<String, TaskProcessor> taskProcessors = new HashMap<>();
@@ -62,7 +65,8 @@ public class TaskProcessorCoordinatorService {
 
     public void invokeTaskProcessingOnCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
         TaskProcessor taskProcessor = taskProcessors.computeIfAbsent(core.coreCode,
-                o -> new TaskProcessor(globals, processorTaskService, currentExecState, processorEnvironment, processorService, resourceProviderFactory, functionRepositoryProcessorService));
+                o -> new TaskProcessor(globals, processorTaskService, currentExecState, processorEnvironment, processorService, resourceProviderFactory, functionRepositoryProcessorService,
+                        processorKeyPair, sealedSecretCache, downloadSealedSecretService));
         Thread.startVirtualThread(()-> {
             try {
                 taskProcessor.process(core);

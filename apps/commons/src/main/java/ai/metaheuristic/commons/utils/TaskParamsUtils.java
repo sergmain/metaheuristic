@@ -40,6 +40,10 @@ public class TaskParamsUtils {
         trg.sourcing = src.function.sourcing;
         trg.type = src.function.type;
         trg.assetDir = src.function.assetDir;
+        // Stage 5 (vault secret handoff): propagate FunctionConfigYaml.api → TaskParamsYaml.api.
+        if (src.function.api != null) {
+            trg.api = new TaskParamsYaml.Api(src.function.api.keyCode);
+        }
         return trg;
     }
 }

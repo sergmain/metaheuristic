@@ -197,6 +197,19 @@ public class TaskParamsYamlV2 implements BaseParams {
 
         @Nullable
         public String assetDir;
+
+        // Stage 5 (vault secret handoff): @Nullable per the @Nullable-exception
+        // rule — no version bump.
+        @Nullable
+        public ApiV2 api;
+    }
+
+    @Data
+    @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ApiV2 {
+        public String keyCode;
     }
 
     @Data

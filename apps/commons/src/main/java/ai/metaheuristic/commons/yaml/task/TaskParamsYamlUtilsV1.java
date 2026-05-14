@@ -93,8 +93,10 @@ public class TaskParamsYamlUtilsV1
     }
 
     private static TaskParamsYamlV2.FunctionConfigV2 toUp(TaskParamsYamlV1.FunctionConfigV1 src) {
+        // V1 has no `api` field; new TaskParamsYamlV2.FunctionConfigV2.api is left null.
         TaskParamsYamlV2.FunctionConfigV2 trg = new TaskParamsYamlV2.FunctionConfigV2(
-                src.code, src.type, src.file, src.params, src.env, src.sourcing, src.checksumMap, src.git, CommonConsts.DEFAULT_FUNCTION_SRC_DIR, null);
+                src.code, src.type, src.file, src.params, src.env, src.sourcing, src.checksumMap, src.git, CommonConsts.DEFAULT_FUNCTION_SRC_DIR, null,
+                null);
 
         trg.metas.addAll(src.metas);
         return trg;

@@ -203,6 +203,13 @@ public class TaskParamsYaml implements BaseParams {
         @Nullable
         public String assetDir;
 
+        // Stage 5 (vault secret handoff): @Nullable per the @Nullable-exception
+        // rule — no version bump. When non-null and task.companyId != 0L, the
+        // Processor fetches a sealed API key from the Dispatcher before launching
+        // the Function.
+        @Nullable
+        public Api api;
+
         public String getSrc() {
             return S.b(src) ? "" : src;
         }
@@ -210,6 +217,14 @@ public class TaskParamsYaml implements BaseParams {
         public void setSrc(String src) {
             this.src = src;
         }
+    }
+
+    @Data
+    @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Api {
+        public String keyCode;
     }
 
     @Data

@@ -18,6 +18,14 @@ package ai.metaheuristic.ai.processor;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.processor.actors.DownloadSealedSecretService;
+import ai.metaheuristic.ai.processor.secret.FunctionSecretGate;
+import ai.metaheuristic.ai.processor.secret.SealedSecretCache;
+import ai.metaheuristic.ai.processor.security.ProcessorKeyPair;
+import ai.metaheuristic.ai.processor.tasks.DownloadSealedSecretTask;
+import ai.metaheuristic.ai.yaml.dispatcher_lookup.DispatcherLookupParamsYaml;
+import ai.metaheuristic.commons.security.AsymmetricEncryptor;
+import ai.metaheuristic.commons.security.SealedSecret;
 import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import ai.metaheuristic.commons.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.ai.functions.FunctionRepositoryData;
@@ -75,6 +83,9 @@ public class TaskProcessor {
     private final ProcessorService processorService;
     private final VariableProviderFactory resourceProviderFactory;
     private final FunctionRepositoryProcessorService functionRepositoryProcessorService;
+    private final ProcessorKeyPair processorKeyPair;
+    private final SealedSecretCache sealedSecretCache;
+    private final DownloadSealedSecretService downloadSealedSecretService;
 
     private static final AtomicInteger activeTaskProcessing = new AtomicInteger();
 
@@ -86,7 +97,10 @@ public class TaskProcessor {
     public TaskProcessor(Globals globals, ProcessorTaskService processorTaskService, CurrentExecState currentExecState,
                          ProcessorEnvironment processorEnvironment, ProcessorService processorService,
                          VariableProviderFactory resourceProviderFactory,
-                         FunctionRepositoryProcessorService functionRepositoryProcessorService) {
+                         FunctionRepositoryProcessorService functionRepositoryProcessorService,
+                         ProcessorKeyPair processorKeyPair,
+                         SealedSecretCache sealedSecretCache,
+                         DownloadSealedSecretService downloadSealedSecretService) {
         this.globals = globals;
         this.processorTaskService = processorTaskService;
         this.currentExecState = currentExecState;
@@ -94,6 +108,9 @@ public class TaskProcessor {
         this.processorService = processorService;
         this.resourceProviderFactory = resourceProviderFactory;
         this.functionRepositoryProcessorService = functionRepositoryProcessorService;
+        this.processorKeyPair = processorKeyPair;
+        this.sealedSecretCache = sealedSecretCache;
+        this.downloadSealedSecretService = downloadSealedSecretService;
     }
 
     public void process(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
@@ -356,7 +373,7 @@ public class TaskProcessor {
                         "100.170 Illegal State, result of preparing of function "+ preFunctionConfig.code+" is null");
             }
             else {
-                execResult = execFunction(task, taskDir, taskParamYaml, systemDir, result, schedule);
+                execResult = execFunction(core, dispatcher.dispatcherLookup, task, taskDir, taskParamYaml, systemDir, result, schedule);
             }
             preSystemExecResult.add(execResult);
             if (!execResult.isOk) {
@@ -376,7 +393,7 @@ public class TaskProcessor {
             }
             if (isOk) {
                 TaskParamsYaml.FunctionConfig mainFunctionConfig = result.function;
-                systemExecResult = execFunction(task, taskDir, taskParamYaml, systemDir, result, schedule);
+                systemExecResult = execFunction(core, dispatcher.dispatcherLookup, task, taskDir, taskParamYaml, systemDir, result, schedule);
                 if (!systemExecResult.isOk) {
                     isOk = false;
                 }
@@ -390,7 +407,7 @@ public class TaskProcessor {
                                     "100.210 Illegal State, result of preparing of function "+ postFunctionConfig.code+" is null");
                         }
                         else {
-                            execResult = execFunction(task, taskDir, taskParamYaml, systemDir, result, schedule);
+                            execResult = execFunction(core, dispatcher.dispatcherLookup, task, taskDir, taskParamYaml, systemDir, result, schedule);
                         }
                         postSystemExecResult.add(execResult);
                         if (!execResult.isOk) {
@@ -446,6 +463,8 @@ public class TaskProcessor {
     @SuppressWarnings({"WeakerAccess", "UseBulkOperation"})
     // TODO 2019.05.02 implement unit-test for this method
     public FunctionApiData.SystemExecResult execFunction(
+            ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core,
+            DispatcherLookupParamsYaml.DispatcherLookup dispatcher,
             ProcessorCoreTask task, Path taskDir, TaskParamsYaml taskParamYaml, Path systemDir, FunctionRepositoryData.FunctionPrepareResult functionPrepareResult,
             @Nullable DispatcherSchedule schedule) {
 
@@ -499,16 +518,49 @@ public class TaskProcessor {
                             EnumsApi.ExecContextState.DOESNT_EXIST, EnumsApi.ExecContextState.STOPPED, EnumsApi.ExecContextState.ERROR,
                             EnumsApi.ExecContextState.FINISHED);
 
+            // Stage 5 (vault secret handoff): gate the launch on sealed-secret availability.
+            // - NO_SECRET_NEEDED: no API key on this Function (or companyId==0L sentinel) → launch as usual.
+            // - CACHE_MISS_FETCH: enqueue a fetch and skip this launch cycle. The next launch attempt finds the cache populated.
+            // - CACHE_HIT_DECRYPT: decrypt under the Processor private key; Stage 6 (FunctionSecretChannel) will consume keyBytes here. For now we just zero after the launch.
+            final FunctionSecretGate.Outcome secretOutcome = FunctionSecretGate.decide(
+                    functionPrepareResult.function.api,
+                    taskParamYaml.companyId,
+                    k -> sealedSecretCache.get(taskParamYaml.companyId, k));
+
+            if (secretOutcome.decision() == FunctionSecretGate.Decision.CACHE_MISS_FETCH) {
+                downloadSealedSecretService.add(new DownloadSealedSecretTask(
+                        core, dispatcher, task.taskId, core.processorId, taskParamYaml.companyId, secretOutcome.keyCode()));
+                log.info("100.345 Sealed secret not yet cached for task {}, key {}; enqueued fetch, skip this launch cycle",
+                        task.taskId, secretOutcome.keyCode());
+                return new FunctionApiData.SystemExecResult(
+                        functionPrepareResult.function.code, false, -992,
+                        "100.346 Sealed secret not yet cached; awaiting fetch");
+            }
+
+            byte[] keyBytes = null;
             try {
-                activeTaskProcessing.incrementAndGet();
-                log.info("All systems are checked for the task #{}, lift off, active task processing: {}", task.taskId, activeTaskProcessing.get());
-                // Exec function
-                systemExecResult = SystemProcessLauncher.execCommand(
-                        cmd, taskDir, consoleLogFile, taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
-                        globals.processor.taskConsoleOutputMaxLines, List.of(execContextDeletionCheck), null);
+                if (secretOutcome.decision() == FunctionSecretGate.Decision.CACHE_HIT_DECRYPT) {
+                    SealedSecret sealed = secretOutcome.sealed();
+                    // sealed is non-null on CACHE_HIT_DECRYPT by construction
+                    keyBytes = AsymmetricEncryptor.decrypt(sealed, processorKeyPair.getPrivateKey());
+                    // Stage 6: keyBytes flows to FunctionSecretChannel here. Until then, plaintext lifetime is bounded to this try block.
+                }
+                try {
+                    activeTaskProcessing.incrementAndGet();
+                    log.info("All systems are checked for the task #{}, lift off, active task processing: {}", task.taskId, activeTaskProcessing.get());
+                    // Exec function
+                    systemExecResult = SystemProcessLauncher.execCommand(
+                            cmd, taskDir, consoleLogFile, taskParamYaml.task.timeoutBeforeTerminate, functionPrepareResult.function.code, schedule,
+                            globals.processor.taskConsoleOutputMaxLines, List.of(execContextDeletionCheck), null);
+                }
+                finally {
+                    activeTaskProcessing.decrementAndGet();
+                }
             }
             finally {
-                activeTaskProcessing.decrementAndGet();
+                if (keyBytes != null) {
+                    java.util.Arrays.fill(keyBytes, (byte) 0);
+                }
             }
         }
         catch (ScheduleInactivePeriodException e) {

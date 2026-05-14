@@ -125,7 +125,8 @@ public class TaskParamsYamlUtilsV2
 
     private static TaskParamsYaml.FunctionConfig toUp(TaskParamsYamlV2.FunctionConfigV2 src) {
         TaskParamsYaml.FunctionConfig trg = new TaskParamsYaml.FunctionConfig(
-                src.code, src.type, src.file, src.params, src.env, src.sourcing, src.checksumMap, src.git, src.src, src.assetDir);
+                src.code, src.type, src.file, src.params, src.env, src.sourcing, src.checksumMap, src.git, src.src, src.assetDir,
+                src.api != null ? new TaskParamsYaml.Api(src.api.keyCode) : null);
 
         trg.metas.addAll(src.metas);
         return trg;

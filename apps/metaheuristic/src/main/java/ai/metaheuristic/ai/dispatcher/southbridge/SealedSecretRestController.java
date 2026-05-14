@@ -63,14 +63,16 @@ public class SealedSecretRestController {
 
     @PostMapping("/sealed-secret")
     public ResponseEntity<SealedSecretData.FetchResponse> fetch(
-            @RequestBody SealedSecretData.FetchRequest request) {
+            @RequestParam("processorId") long processorId,
+            @RequestParam("companyId") long companyId,
+            @RequestParam("keyCode") String keyCode) {
 
-        if (request.keyCode() == null || request.keyCode().isBlank()) {
+        if (keyCode == null || keyCode.isBlank()) {
             return ResponseEntity.badRequest().build();
         }
 
         SealedSecretService.Outcome outcome = sealedSecretService.sealFor(
-            request.processorId(), request.companyId(), request.keyCode());
+            processorId, companyId, keyCode);
 
         return switch (outcome.reason()) {
             case OK -> {
