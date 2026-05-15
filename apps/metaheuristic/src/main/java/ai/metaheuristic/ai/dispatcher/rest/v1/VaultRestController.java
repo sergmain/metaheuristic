@@ -45,7 +45,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @Profile("dispatcher")
 @CrossOrigin
-@PreAuthorize("isAuthenticated()")
+@PreAuthorize("hasAnyRole('ADMIN')")
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class VaultRestController {
 

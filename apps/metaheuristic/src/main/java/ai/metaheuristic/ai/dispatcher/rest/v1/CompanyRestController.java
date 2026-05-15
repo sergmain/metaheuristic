@@ -18,9 +18,12 @@ package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.dispatcher.company.CompanyAccountTopLevelService;
 import ai.metaheuristic.ai.dispatcher.company.CompanyTopLevelService;
+import ai.metaheuristic.ai.dispatcher.context.UserContextService;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.dispatcher.data.CompanyData;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.account.UserContext;
+import org.springframework.security.core.Authentication;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +53,7 @@ public class CompanyRestController {
 
     private final CompanyTopLevelService companyTopLevelService;
     private final CompanyAccountTopLevelService companyAccountTopLevelService;
+    private final UserContextService userContextService;
 
     @PreAuthorize("hasAnyRole('MAIN_ADMIN', 'MAIN_OPERATOR', 'MAIN_SUPPORT')")
     @GetMapping("/companies")
@@ -63,6 +67,34 @@ public class CompanyRestController {
     public OperationStatusRest addFormCommit(String companyName) {
         OperationStatusRest operationStatusRest = companyTopLevelService.addCompany(companyName);
         return operationStatusRest;
+    }
+
+    // === current company (admin view of own company) =====================
+
+    /**
+     * Returns the authenticated user's own company. ADMIN-scoped. The
+     * companyUniqueId resolves from the authentication principal, never
+     * from a request parameter — so an ADMIN cannot inspect any other
+     * company's data through this endpoint.
+     */
+    @GetMapping("/current-company")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public CompanyData.SimpleCompanyResult currentCompany(Authentication authentication) {
+        UserContext ctx = userContextService.getContext(authentication);
+        return companyTopLevelService.getSimpleCompany(ctx.getCompanyId());
+    }
+
+    /**
+     * Commit edits to the authenticated user's own company. ADMIN-scoped.
+     * The target companyUniqueId resolves from the authentication principal,
+     * not from the form body, so an ADMIN cannot redirect the edit at
+     * someone else's company.
+     */
+    @PostMapping("/current-company-edit-commit")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public OperationStatusRest currentCompanyEditFormCommit(String name, String groups, Authentication authentication) {
+        UserContext ctx = userContextService.getContext(authentication);
+        return companyTopLevelService.editFormCommit(ctx.getCompanyId(), name, groups);
     }
 
     @GetMapping(value = "/company-edit/{companyUniqueId}")
