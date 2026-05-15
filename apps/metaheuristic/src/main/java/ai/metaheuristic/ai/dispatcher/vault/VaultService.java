@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,130 +16,114 @@
 
 package ai.metaheuristic.ai.dispatcher.vault;
 
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.data.VaultData;
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
-import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Vault service backed by an AES/GCM-encrypted JSON file.
+ * Per-company Key Vault.
  *
- * <p>Stores API keys per-tenant in a single JSON map: the key is
- * {@code companyId:code} and the value is the secret. The whole map is
- * encrypted as one blob via {@link JsonCrypto}.
+ * <p>API keys are stored inside {@code Company.params} as a
+ * {@link CompanyParamsYaml.VaultEntries} blob: per-company PBKDF2 salt +
+ * iteration count, plus an AES/GCM-encrypted JSON map {@code {code: secret}}.
  *
- * <p>Lifetime: the unlocked plaintext map is held as a global singleton in
- * dispatcher memory until JVM restart. The master passphrase is never persisted.
+ * <p>Unlock state lives in dispatcher memory keyed by {@code companyUniqueId}:
+ * decrypted entries, the derived AES session key, the salt, and the iteration
+ * count. The master passphrase is never persisted. JVM restart locks every
+ * company's vault.
  *
- * <p>Vault file location: {@code {mh.home}/dispatcher/vault/mh.vault}.
- * If the file does not exist on first unlock, an empty vault is auto-created
- * using the supplied passphrase.
+ * <p>Write paths delegate to {@link VaultTxService} so the DB write is
+ * transactional and the {@code VaultEntryChangedTxEvent} fires only after
+ * commit.
  *
- * <p>File layout:
+ * <p>GCM AAD layout (binds KDF parameters to the ciphertext, so tampering
+ * with salt or iterations fails authentication on decrypt):
  * <pre>
- *   [4 bytes magic "MHV1"]
- *   [4 bytes int iterations  (PBKDF2)]
- *   [16 bytes salt]
- *   [12 bytes IV || ciphertext || 16 bytes GCM auth tag]
+ *   [4 bytes int iterations][16 bytes salt]
  * </pre>
- *
- * <p>The header bytes (magic | iterations | salt) are passed as AAD to GCM,
- * so any tampering with header fields — flipping iterations, swapping in a
- * different salt, etc. — fails authentication on decrypt.
- *
- * <p>Plaintext payload is JSON: {@code {"42:openai": "sk-...", ...}}.
  *
  * @author Sergio Lissner
  */
 @Service
 @Slf4j
 @Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class VaultService {
 
-    public static final String VAULT_DIR = "vault";
-    public static final String VAULT_FILE = "mh.vault";
-
-    /** File-format magic to detect a valid vault file early. */
-    static final byte[] MAGIC = new byte[] {'M', 'H', 'V', '1'};
-
-    /** PBKDF2 iteration count used for new vaults. Existing vaults reuse the value stored in the file. */
+    /** PBKDF2 iteration count used for new vaults. Existing vaults reuse the value stored on the entity. */
     static final int PBKDF2_ITERATIONS = 200_000;
     static final int SALT_LEN = 16;
     /** AES-256 key. */
     static final int KEY_LEN_BITS = 256;
-    /** Length of the file header that is also bound as GCM AAD. */
-    static final int HEADER_LEN = MAGIC.length + 4 + SALT_LEN;
+    /** Length of the AAD that binds the KDF params to the ciphertext. */
+    static final int AAD_LEN = 4 + SALT_LEN;
 
     private static final SecureRandom RNG = new SecureRandom();
 
-    private final Globals globals;
+    private final VaultTxService vaultTxService;
 
-    /** Held in memory after unlock; null when locked. Volatile for safe publication. */
-    @Nullable
-    private volatile Map<String, String> entries;
+    /** Per-company in-memory unlocked state. Cleared on lock or JVM restart. */
+    private final ConcurrentHashMap<Long, UnlockedState> unlocked = new ConcurrentHashMap<>();
 
-    /** Cached path to the vault file. */
-    @Nullable
-    private volatile Path vaultPath;
+    /** Unlocked vault state for a single company. */
+    static final class UnlockedState {
+        /** Mutable map of {@code code -> secret}. Guarded by {@link #lock}. */
+        final Map<String, String> entries;
+        final byte[] salt;
+        final int iterations;
+        /** Derived AES-256 key. */
+        final byte[] key;
+        /** Per-company lock so put/delete don't race a concurrent rewrite. */
+        final Object lock = new Object();
 
-    /** Salt of the currently unlocked vault — needed to re-derive the key for writes. */
-    @Nullable
-    private volatile byte[] saltInUse;
-
-    /** Iteration count of the currently unlocked vault. */
-    private volatile int iterationsInUse;
-
-    /**
-     * Cached derived key bytes (AES-256). Held alongside {@link #entries} for the
-     * lifetime of the unlocked session so writes do not need to re-derive from
-     * the master passphrase. Cleared on lock.
-     */
-    @Nullable
-    private volatile byte[] keyInUse;
-
-    private final ApplicationEventPublisher applicationEventPublisher;
-
-    public VaultService(Globals globals, ApplicationEventPublisher applicationEventPublisher) {
-        this.globals = globals;
-        this.applicationEventPublisher = applicationEventPublisher;
+        UnlockedState(Map<String, String> entries, byte[] salt, int iterations, byte[] key) {
+            this.entries = entries;
+            this.salt = salt;
+            this.iterations = iterations;
+            this.key = key;
+        }
     }
 
-    /** @return whether the vault is currently unlocked in dispatcher memory. */
-    public boolean isOpened() {
-        return entries != null;
+    /** @return whether the given company's vault is currently unlocked in dispatcher memory. */
+    public boolean isOpened(long companyUniqueId) {
+        return unlocked.containsKey(companyUniqueId);
     }
 
     /**
-     * Resolve the API key for a given tenant + code.
+     * Resolve the API key for a given company + code.
      * Returns empty if the vault is locked or the entry does not exist.
      */
-    public Optional<String> getApiKey(long companyId, String code) {
-        Map<String, String> map = this.entries;
-        if (map == null) {
+    public Optional<String> getApiKey(long companyUniqueId, String code) {
+        UnlockedState s = unlocked.get(companyUniqueId);
+        if (s == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(map.get(entryTitle(companyId, code)));
+        synchronized (s.lock) {
+            return Optional.ofNullable(s.entries.get(code));
+        }
     }
 
     /**
@@ -149,113 +133,111 @@ public class VaultService {
      *
      * <p>Successive calls return independent byte[] instances; zeroing one does
      * not affect Vault's internal state nor any other previously returned buffer.
-     *
-     * @return Optional.of(byte[]) if the entry exists, Optional.empty() otherwise.
      */
-    public Optional<byte[]> getKeyBytes(long companyId, String code) {
-        // Reuse the existing decryption path. The internal map still holds String
-        // (unchanged from current Vault). We allocate a fresh byte[] per call so
-        // the caller's Arrays.fill cannot corrupt Vault internals.
-        Optional<String> opt = getApiKey(companyId, code);
+    public Optional<byte[]> getKeyBytes(long companyUniqueId, String code) {
+        Optional<String> opt = getApiKey(companyUniqueId, code);
         if (opt.isEmpty()) {
             return Optional.empty();
         }
-        String s = opt.get();
-        // Use the explicit charset and a fresh allocation. Do not use s.getBytes()
-        // without charset (locale-dependent).
-        byte[] bytes = s.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-        return Optional.of(bytes);
+        return Optional.of(opt.get().getBytes(StandardCharsets.UTF_8));
     }
 
     /**
-     * Unlock the vault. If the vault file does not exist, an empty one is created
-     * using {@code passphrase} as the master password.
+     * Unlock the vault for a single company. If the company has no vault yet,
+     * an empty one is created using {@code passphrase} as the master password
+     * — but the empty blob is NOT yet persisted (persistence happens on the
+     * first put). This lets a user unlock and inspect an empty vault without
+     * dirtying Company.params until they actually add a key.
      *
-     * @param passphrase master password (must not be blank)
-     * @return result with {@code opened} and {@code created} flags, or an error
+     * @param companyUniqueId company.uniqueId from UserContext
+     * @param passphrase      master password (must not be blank)
      */
-    public synchronized VaultData.UnlockResult unlock(String passphrase) {
+    public VaultData.UnlockResult unlock(long companyUniqueId, String passphrase) {
         if (passphrase == null || passphrase.isBlank()) {
             return new VaultData.UnlockResult("Passphrase must not be blank");
         }
         try {
-            Path path = resolveVaultFile();
+            CompanyParamsYaml.VaultEntries blob = vaultTxService.loadVaultBlob(companyUniqueId);
             boolean created = false;
             Map<String, String> map;
             byte[] salt;
             int iterations;
             byte[] sessionKey;
 
-            if (Files.exists(path)) {
-                byte[] file = Files.readAllBytes(path);
-                ParsedFile parsed = parseFile(file);
-                sessionKey = deriveKey(passphrase, parsed.salt, parsed.iterations);
-                String json = JsonCrypto.decrypt(sessionKey, parsed.ciphertext, parsed.header);
-                map = readEntries(json);
-                salt = parsed.salt;
-                iterations = parsed.iterations;
-            } else {
-                Files.createDirectories(path.getParent());
+            if (blob == null) {
+                // First-time use for this company. Allocate fresh KDF params,
+                // empty in-memory entries. Persistence is deferred until put().
                 salt = new byte[SALT_LEN];
                 RNG.nextBytes(salt);
                 iterations = PBKDF2_ITERATIONS;
                 map = new LinkedHashMap<>();
                 sessionKey = deriveKey(passphrase, salt, iterations);
-                writeFile(path, salt, iterations, sessionKey, map);
                 created = true;
+            } else {
+                salt = Base64.getDecoder().decode(blob.salt);
+                iterations = blob.iterations;
+                sessionKey = deriveKey(passphrase, salt, iterations);
+                byte[] payload = Base64.getDecoder().decode(blob.encryptedEntries);
+                byte[] aad = buildAad(salt, iterations);
+                String json = JsonCrypto.decrypt(sessionKey, payload, aad);
+                map = readEntries(json);
             }
 
-            // Replace any previously cached key with the new one.
-            byte[] previousKey = this.keyInUse;
-            this.entries = map;
-            this.vaultPath = path;
-            this.saltInUse = salt;
-            this.iterationsInUse = iterations;
-            this.keyInUse = sessionKey;
-            if (previousKey != null) {
-                Arrays.fill(previousKey, (byte) 0);
+            // Atomic-ish swap of state for this company. Any previous derived
+            // key for this company gets zeroed.
+            UnlockedState previous = unlocked.put(companyUniqueId,
+                new UnlockedState(map, salt, iterations, sessionKey));
+            if (previous != null) {
+                Arrays.fill(previous.key, (byte) 0);
             }
-            log.info("Vault unlocked (created={})", created);
+            log.info("0670.020 Vault unlocked for companyUniqueId={} (created={})", companyUniqueId, created);
             return new VaultData.UnlockResult(true, created);
         } catch (Exception e) {
-            log.error("Failed to unlock vault: {}", e.getMessage());
+            log.error("0670.030 Failed to unlock vault for companyUniqueId={}: {}", companyUniqueId, e.getMessage());
             // Do not leak details about why unlock failed (wrong passphrase vs IO error).
             return new VaultData.UnlockResult("Unable to open vault");
         }
     }
 
     /**
-     * Add or replace an entry under the given companyId+code with the supplied secret
-     * and persist the vault. Synchronised to avoid concurrent writers corrupting
-     * the on-disk file.
+     * Add or replace an entry under the given company+code with the supplied
+     * secret and persist the vault.
      *
-     * <p>Uses the cached session key established at {@link #unlock(String)} time;
-     * caller is responsible for verifying the user's proof-of-knowledge of the
-     * master passphrase via {@link #verifyPassphrase(String)} before calling this.
+     * <p>Uses the cached session key established at {@link #unlock(long, String)}
+     * time; caller is responsible for verifying the user's proof-of-knowledge
+     * of the master passphrase via {@link #verifyPassphrase(long, String)}
+     * before calling this.
      *
      * @return true if persisted, false if the vault is locked or persistence failed
      */
-    public synchronized boolean putApiKey(long companyId, String code, String secret) {
-        Map<String, String> map = this.entries;
-        Path path = this.vaultPath;
-        byte[] salt = this.saltInUse;
-        int iterations = this.iterationsInUse;
-        byte[] key = this.keyInUse;
-        if (map == null || path == null || salt == null || key == null) {
+    public boolean putApiKey(long companyUniqueId, String code, String secret) {
+        UnlockedState s = unlocked.get(companyUniqueId);
+        if (s == null) {
             return false;
         }
-        try {
-            map.put(entryTitle(companyId, code), secret);
-            writeFile(path, salt, iterations, key, map);
-            // Stage 5: notify Processor-facing cache invalidation fan-out.
-            // Published only on successful file write; failure path skips.
-            applicationEventPublisher.publishEvent(
-                new VaultEntryChangedEvent(companyId, code, VaultEntryChangedEvent.ACTION_PUT));
-            return true;
-        } catch (Exception e) {
-            log.error("Failed to write entry {}:{}: {}", companyId, code, e.getMessage());
-            return false;
+        // Snapshot the encrypted blob under the per-company lock so we don't
+        // race with a concurrent put/delete on the same company.
+        CompanyParamsYaml.VaultEntries blob;
+        synchronized (s.lock) {
+            s.entries.put(code, secret);
+            try {
+                blob = serialize(s);
+            } catch (Exception e) {
+                // Roll back the in-memory mutation so memory and DB stay consistent.
+                s.entries.remove(code);
+                log.error("0670.040 Failed to encrypt entry companyUniqueId={}, code={}: {}",
+                    companyUniqueId, code, e.getMessage());
+                return false;
+            }
         }
+        boolean ok = vaultTxService.saveVaultBlob(companyUniqueId, blob, code, VaultEntryChangedEvent.ACTION_PUT);
+        if (!ok) {
+            // Persistence failed (company not found). Revert the in-memory put.
+            synchronized (s.lock) {
+                s.entries.remove(code);
+            }
+        }
+        return ok;
     }
 
     /**
@@ -263,90 +245,84 @@ public class VaultService {
      *
      * <p>Caller must have verified the master passphrase before calling.
      *
-     * @return true if the entry existed and the vault was persisted; false if the
-     *         vault is locked, the entry did not exist, or persistence failed.
+     * @return true if the entry existed and the vault was persisted; false if
+     *         the vault is locked, the entry did not exist, or persistence failed.
      */
-    public synchronized boolean deleteApiKey(long companyId, String code) {
-        Map<String, String> map = this.entries;
-        Path path = this.vaultPath;
-        byte[] salt = this.saltInUse;
-        int iterations = this.iterationsInUse;
-        byte[] key = this.keyInUse;
-        if (map == null || path == null || salt == null || key == null) {
+    public boolean deleteApiKey(long companyUniqueId, String code) {
+        UnlockedState s = unlocked.get(companyUniqueId);
+        if (s == null) {
             return false;
         }
-        String title = entryTitle(companyId, code);
-        if (!map.containsKey(title)) {
-            return false;
+        CompanyParamsYaml.VaultEntries blob;
+        String previousValue;
+        synchronized (s.lock) {
+            if (!s.entries.containsKey(code)) {
+                return false;
+            }
+            previousValue = s.entries.remove(code);
+            try {
+                blob = serialize(s);
+            } catch (Exception e) {
+                // Roll back the in-memory mutation.
+                s.entries.put(code, previousValue);
+                log.error("0670.050 Failed to encrypt vault on delete companyUniqueId={}, code={}: {}",
+                    companyUniqueId, code, e.getMessage());
+                return false;
+            }
         }
-        try {
-            map.remove(title);
-            writeFile(path, salt, iterations, key, map);
-            // Stage 5: notify Processor-facing cache invalidation fan-out.
-            applicationEventPublisher.publishEvent(
-                new VaultEntryChangedEvent(companyId, code, VaultEntryChangedEvent.ACTION_DELETE));
-            return true;
-        } catch (Exception e) {
-            log.error("Failed to delete entry {}:{}: {}", companyId, code, e.getMessage());
-            return false;
+        boolean ok = vaultTxService.saveVaultBlob(companyUniqueId, blob, code, VaultEntryChangedEvent.ACTION_DELETE);
+        if (!ok) {
+            // Persistence failed. Revert.
+            synchronized (s.lock) {
+                s.entries.put(code, previousValue);
+            }
         }
+        return ok;
     }
 
     /**
-     * List the contents of the vault scoped to a single account: returns
-     * companyId, code and secret value for every entry whose companyId matches.
-     * Returns empty list when locked or when no entries belong to that account.
+     * List the contents of the vault scoped to a single company.
+     * Returns empty list when locked or when the company has no entries.
      * Per design, once the vault is unlocked the UI is allowed to show secrets
      * in plain text.
-     *
-     * @param companyId account id to filter by; entries belonging to other
-     *                  accounts are excluded
      */
-    public List<VaultData.Entry> listEntries(long companyId) {
-        Map<String, String> map = this.entries;
-        if (map == null) {
+    public List<VaultData.Entry> listEntries(long companyUniqueId) {
+        UnlockedState s = unlocked.get(companyUniqueId);
+        if (s == null) {
             return List.of();
         }
-        String prefix = companyId + ":";
-        List<VaultData.Entry> out = new ArrayList<>();
-        for (Map.Entry<String, String> e : map.entrySet()) {
-            String title = e.getKey();
-            if (!title.startsWith(prefix)) {
-                continue;
+        synchronized (s.lock) {
+            List<VaultData.Entry> out = new ArrayList<>(s.entries.size());
+            for (Map.Entry<String, String> e : s.entries.entrySet()) {
+                out.add(new VaultData.Entry(companyUniqueId, e.getKey(), e.getValue()));
             }
-            String code = title.substring(prefix.length());
-            if (code.isEmpty()) {
-                continue;
-            }
-            out.add(new VaultData.Entry(companyId, code, e.getValue()));
+            return out;
         }
-        return out;
     }
 
     /**
-     * Proof-of-knowledge check: does the supplied passphrase match the one used
-     * to unlock the vault?
+     * Proof-of-knowledge check: does the supplied passphrase match the one
+     * used to unlock this company's vault?
      *
-     * <p>Re-derives a key from the supplied passphrase using the in-use salt and
-     * iteration count, and compares against the cached key in constant time.
-     * Returns false if the vault is locked or the passphrase does not match.
+     * <p>Re-derives a key from the supplied passphrase using the in-use salt
+     * and iteration count for this company, and compares against the cached
+     * key in constant time. Returns false if the vault is locked or the
+     * passphrase does not match.
      */
-    public boolean verifyPassphrase(String passphrase) {
+    public boolean verifyPassphrase(long companyUniqueId, String passphrase) {
         if (passphrase == null || passphrase.isEmpty()) {
             return false;
         }
-        byte[] cached = this.keyInUse;
-        byte[] salt = this.saltInUse;
-        int iterations = this.iterationsInUse;
-        if (cached == null || salt == null) {
+        UnlockedState s = unlocked.get(companyUniqueId);
+        if (s == null) {
             return false;
         }
         byte[] candidate = null;
         try {
-            candidate = deriveKey(passphrase, salt, iterations);
-            return MessageDigest.isEqual(cached, candidate);
+            candidate = deriveKey(passphrase, s.salt, s.iterations);
+            return MessageDigest.isEqual(s.key, candidate);
         } catch (GeneralSecurityException e) {
-            log.error("Failed to derive key during passphrase verification: {}", e.getMessage());
+            log.error("0670.060 Failed to derive key during passphrase verification: {}", e.getMessage());
             return false;
         } finally {
             if (candidate != null) {
@@ -355,9 +331,15 @@ public class VaultService {
         }
     }
 
-    /** Title format used inside the vault map: {@code companyId:code}. */
-    static String entryTitle(long companyId, String code) {
-        return companyId + ":" + code;
+    /** Re-encrypt the company's entries under its session key + KDF params. Caller must hold the lock. */
+    private static CompanyParamsYaml.VaultEntries serialize(UnlockedState s) throws Exception {
+        String json = JsonUtils.getMapper().writeValueAsString(s.entries);
+        byte[] aad = buildAad(s.salt, s.iterations);
+        byte[] encrypted = JsonCrypto.encrypt(s.key, json, aad);
+        return new CompanyParamsYaml.VaultEntries(
+            Base64.getEncoder().encodeToString(s.salt),
+            s.iterations,
+            Base64.getEncoder().encodeToString(encrypted));
     }
 
     /** Derive a 256-bit AES key from a passphrase using PBKDF2-HMAC-SHA256. */
@@ -371,84 +353,32 @@ public class VaultService {
         }
     }
 
-    /** Build the on-disk header bytes (also used as GCM AAD). */
-    static byte[] buildHeader(byte[] salt, int iterations) {
-        ByteBuffer h = ByteBuffer.allocate(HEADER_LEN);
-        h.put(MAGIC);
+    /** Build the AAD that binds KDF params to the ciphertext. */
+    static byte[] buildAad(byte[] salt, int iterations) {
+        ByteBuffer h = ByteBuffer.allocate(AAD_LEN);
         h.putInt(iterations);
         h.put(salt);
         return h.array();
     }
 
-    /** Parsed file frame: header + ciphertext blob ready for {@link JsonCrypto#decrypt}. */
-    record ParsedFile(byte[] salt, int iterations, byte[] ciphertext, byte[] header) {}
-
-    /** Parse the on-disk frame: magic | iterations | salt | encrypted-payload. */
-    static ParsedFile parseFile(byte[] file) throws IOException {
-        if (file.length < HEADER_LEN) {
-            throw new IOException("Vault file too short");
-        }
-        ByteBuffer buf = ByteBuffer.wrap(file);
-        byte[] magic = new byte[MAGIC.length];
-        buf.get(magic);
-        if (!Arrays.equals(magic, MAGIC)) {
-            throw new IOException("Bad vault magic");
-        }
-        int iterations = buf.getInt();
-        if (iterations <= 0) {
-            throw new IOException("Bad iteration count");
-        }
-        byte[] salt = new byte[SALT_LEN];
-        buf.get(salt);
-        byte[] ciphertext = new byte[buf.remaining()];
-        buf.get(ciphertext);
-        byte[] header = Arrays.copyOfRange(file, 0, HEADER_LEN);
-        return new ParsedFile(salt, iterations, ciphertext, header);
-    }
-
-    /** Encrypt {@code map} as JSON and atomically write the framed file. */
-    static void writeFile(Path path, byte[] salt, int iterations, byte[] key, Map<String, String> map) throws IOException, GeneralSecurityException {
-        String json = JsonUtils.getMapper().writeValueAsString(map);
-        byte[] header = buildHeader(salt, iterations);
-        byte[] encrypted = JsonCrypto.encrypt(key, json, header);
-
-        ByteBuffer out = ByteBuffer.allocate(HEADER_LEN + encrypted.length);
-        out.put(header);
-        out.put(encrypted);
-
-        // Atomic-ish write: write to .tmp, then move. ATOMIC_MOVE is best-effort across filesystems.
-        Path tmp = path.resolveSibling(path.getFileName().toString() + ".tmp");
-        Files.write(tmp, out.array());
-        try {
-            Files.move(tmp, path, java.nio.file.StandardCopyOption.ATOMIC_MOVE, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-        } catch (java.nio.file.AtomicMoveNotSupportedException e) {
-            Files.move(tmp, path, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-        }
-    }
-
     /** Decode the JSON payload into a mutable map. */
-    static Map<String, String> readEntries(String json) throws IOException {
+    static Map<String, String> readEntries(String json) throws Exception {
         Map<String, String> parsed = JsonUtils.getMapper().readValue(json, new TypeReference<Map<String, String>>() {});
         // Always return a mutable LinkedHashMap so subsequent putApiKey() calls work.
         return new LinkedHashMap<>(parsed);
     }
 
-    private Path resolveVaultFile() {
-        return globals.dispatcherPath.resolve(VAULT_DIR).resolve(VAULT_FILE);
+    /** Visible for tests: clear in-memory state. Does not change persisted data. */
+    void resetForTests() {
+        for (UnlockedState s : unlocked.values()) {
+            Arrays.fill(s.key, (byte) 0);
+        }
+        unlocked.clear();
     }
 
-    /**
-     * Visible for tests: clear in-memory state. Does not delete the file on disk.
-     */
-    void resetForTests() {
-        this.entries = null;
-        this.vaultPath = null;
-        this.saltInUse = null;
-        this.iterationsInUse = 0;
-        byte[] k = this.keyInUse;
-        if (k != null) {
-            Arrays.fill(k, (byte) 0);
-        }
-        this.keyInUse = null;
+    /** Visible for tests: how many companies have an unlocked vault right now. */
+    @Nullable
+    UnlockedState peekUnlockedState(long companyUniqueId) {
+        return unlocked.get(companyUniqueId);
     }
 }

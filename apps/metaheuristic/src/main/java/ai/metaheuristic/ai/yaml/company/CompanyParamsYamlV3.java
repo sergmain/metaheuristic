@@ -23,14 +23,17 @@ import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
 
 /**
- * @author Serge
- * Date: 10/3/2019
- * Time: 4:51 PM
+ * Frozen schema for CompanyParams at version 3.
+ * Adds per-company VaultEntries — encrypted blob holding API keys plus the
+ * KDF parameters (salt + iterations) needed to re-derive the AES key from
+ * the master passphrase on every unlock.
+ *
+ * @author Sergio Lissner
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CompanyParamsYaml implements BaseParams {
+public class CompanyParamsYamlV3 implements BaseParams {
 
     public final int version=3;
 
@@ -42,7 +45,7 @@ public class CompanyParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class AccessControl {
+    public static class AccessControlV3 {
         public String groups;
     }
 
@@ -61,7 +64,7 @@ public class CompanyParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class VaultEntries {
+    public static class VaultEntriesV3 {
         /** Base64-encoded salt (16 bytes). */
         public String salt;
         /** PBKDF2 iteration count. */
@@ -73,9 +76,9 @@ public class CompanyParamsYaml implements BaseParams {
     public long createdOn;
     public long updatedOn;
 
-    public @Nullable AccessControl ac;
+    public @Nullable AccessControlV3 ac;
 
     /** Per-company encrypted Key Vault. Null until the user creates the vault. */
-    public @Nullable VaultEntries vault;
+    public @Nullable VaultEntriesV3 vault;
 
 }

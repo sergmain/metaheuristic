@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,10 +30,10 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * REST controller for the dispatcher Key Vault.
- * Each authenticated user manages their own entries — accountId is taken from
- * the authenticated principal, never from the request body or path. Cross-account
+ * Each company manages its own entries — companyUniqueId is taken from the
+ * authenticated principal, never from the request body or path. Cross-company
  * read or delete is structurally impossible: list is filtered by principal,
- * delete refuses if the path accountId does not match the principal.
+ * delete refuses if the path companyId does not match the principal.
  *
  * <p>All write/delete operations require the master passphrase as a
  * proof-of-knowledge gate even after the vault has been unlocked.
@@ -53,27 +53,30 @@ public class VaultRestController {
     private final UserContextService userContextService;
 
     @GetMapping("/status")
-    public VaultData.VaultStatus status() {
-        return new VaultData.VaultStatus(vaultService.isOpened());
+    public VaultData.VaultStatus status(Authentication authentication) {
+        UserContext ctx = userContextService.getContext(authentication);
+        return new VaultData.VaultStatus(vaultService.isOpened(ctx.getCompanyId()));
     }
 
     @PostMapping("/unlock")
-    public VaultData.UnlockResult unlock(@RequestBody VaultData.UnlockRequest request) {
-        return vaultService.unlock(request.passphrase());
+    public VaultData.UnlockResult unlock(@RequestBody VaultData.UnlockRequest request, Authentication authentication) {
+        UserContext ctx = userContextService.getContext(authentication);
+        return vaultService.unlock(ctx.getCompanyId(), request.passphrase());
     }
 
     @GetMapping("/entries")
     public VaultData.EntriesList entries(Authentication authentication) {
-        if (!vaultService.isOpened()) {
+        UserContext ctx = userContextService.getContext(authentication);
+        if (!vaultService.isOpened(ctx.getCompanyId())) {
             return new VaultData.EntriesList("Vault is locked");
         }
-        UserContext ctx = userContextService.getContext(authentication);
         return new VaultData.EntriesList(vaultService.listEntries(ctx.getCompanyId()), true);
     }
 
     @PostMapping("/entries")
     public VaultData.OpResult putEntry(@RequestBody VaultData.PutEntryRequest request, Authentication authentication) {
-        if (!vaultService.isOpened()) {
+        UserContext ctx = userContextService.getContext(authentication);
+        if (!vaultService.isOpened(ctx.getCompanyId())) {
             return new VaultData.OpResult("Vault is locked");
         }
         if (request.code() == null || request.code().isBlank()) {
@@ -82,10 +85,9 @@ public class VaultRestController {
         if (request.secret() == null || request.secret().isEmpty()) {
             return new VaultData.OpResult("Secret must not be empty");
         }
-        if (!vaultService.verifyPassphrase(request.passphrase())) {
+        if (!vaultService.verifyPassphrase(ctx.getCompanyId(), request.passphrase())) {
             return new VaultData.OpResult("Passphrase verification failed");
         }
-        UserContext ctx = userContextService.getContext(authentication);
         boolean ok = vaultService.putApiKey(ctx.getCompanyId(), request.code(), request.secret());
         return ok ? new VaultData.OpResult(true) : new VaultData.OpResult("Failed to persist entry");
     }
@@ -96,15 +98,15 @@ public class VaultRestController {
             @PathVariable String code,
             @RequestBody VaultData.DeleteEntryRequest request,
             Authentication authentication) {
-        if (!vaultService.isOpened()) {
-            return new VaultData.OpResult("Vault is locked");
-        }
         UserContext ctx = userContextService.getContext(authentication);
         if (ctx.getCompanyId() == null || companyId != ctx.getCompanyId()) {
             // Refuse cross-account deletes; do not leak whether the entry exists.
             return new VaultData.OpResult("Entry not found or persistence failed");
         }
-        if (!vaultService.verifyPassphrase(request.passphrase())) {
+        if (!vaultService.isOpened(companyId)) {
+            return new VaultData.OpResult("Vault is locked");
+        }
+        if (!vaultService.verifyPassphrase(companyId, request.passphrase())) {
             return new VaultData.OpResult("Passphrase verification failed");
         }
         boolean ok = vaultService.deleteApiKey(companyId, code);

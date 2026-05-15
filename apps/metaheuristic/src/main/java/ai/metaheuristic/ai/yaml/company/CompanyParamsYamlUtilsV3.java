@@ -20,39 +20,39 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 /**
- * @author Serge
- * Date: 6/17/2019
- * Time: 12:10 AM
+ * @author Sergio Lissner
  */
-public class CompanyParamsYamlUtilsV2
-        extends AbstractParamsYamlUtils<CompanyParamsYamlV2, CompanyParamsYamlV3, CompanyParamsYamlUtilsV3, Void, Void, Void> {
+public class CompanyParamsYamlUtilsV3
+        extends AbstractParamsYamlUtils<CompanyParamsYamlV3, CompanyParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 2;
+        return 3;
     }
 
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(CompanyParamsYamlV2.class);
+        return YamlUtils.init(CompanyParamsYamlV3.class);
     }
 
     @NonNull
     @Override
-    public CompanyParamsYamlV3 upgradeTo(@NonNull CompanyParamsYamlV2 src) {
+    public CompanyParamsYaml upgradeTo(@NonNull CompanyParamsYamlV3 src) {
         src.checkIntegrity();
-        CompanyParamsYamlV3 trg = new CompanyParamsYamlV3();
+        CompanyParamsYaml trg = new CompanyParamsYaml();
         if (src.ac!=null) {
-            trg.ac = new CompanyParamsYamlV3.AccessControlV3(src.ac.groups);
+            trg.ac = new CompanyParamsYaml.AccessControl(src.ac.groups);
+        }
+        if (src.vault!=null) {
+            trg.vault = new CompanyParamsYaml.VaultEntries(
+                src.vault.salt, src.vault.iterations, src.vault.encryptedEntries);
         }
         trg.createdOn = src.createdOn;
         trg.updatedOn = src.updatedOn;
-        // vault left null — V2 had no vault entries
         trg.checkIntegrity();
         return trg;
     }
@@ -64,8 +64,8 @@ public class CompanyParamsYamlUtilsV2
     }
 
     @Override
-    public @Nullable CompanyParamsYamlUtilsV3 nextUtil() {
-        return (CompanyParamsYamlUtilsV3) CompanyParamsYamlUtils.BASE_YAML_UTILS.getForVersion(3);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -74,14 +74,14 @@ public class CompanyParamsYamlUtilsV2
     }
 
     @Override
-    public String toString(@NonNull CompanyParamsYamlV2 yaml) {
+    public String toString(@NonNull CompanyParamsYamlV3 yaml) {
         return getYaml().dump(yaml);
     }
 
     @NonNull
     @Override
-    public CompanyParamsYamlV2 to(@NonNull String s) {
-        final CompanyParamsYamlV2 p = getYaml().load(s);
+    public CompanyParamsYamlV3 to(@NonNull String s) {
+        final CompanyParamsYamlV3 p = getYaml().load(s);
         return p;
     }
 

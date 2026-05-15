@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,12 +29,14 @@ public class CompanyParamsYamlUtils {
 
     private static final CompanyParamsYamlUtilsV1 YAML_UTILS_V_1 = new CompanyParamsYamlUtilsV1();
     private static final CompanyParamsYamlUtilsV2 YAML_UTILS_V_2 = new CompanyParamsYamlUtilsV2();
-    private static final CompanyParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+    private static final CompanyParamsYamlUtilsV3 YAML_UTILS_V_3 = new CompanyParamsYamlUtilsV3();
+    private static final CompanyParamsYamlUtilsV3 DEFAULT_UTILS = YAML_UTILS_V_3;
 
     public static final BaseYamlUtils<CompanyParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, YAML_UTILS_V_1,
-                    2, YAML_UTILS_V_2
+                    2, YAML_UTILS_V_2,
+                    3, YAML_UTILS_V_3
             ),
             DEFAULT_UTILS
     );

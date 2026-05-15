@@ -19,16 +19,18 @@ package ai.metaheuristic.ai.dispatcher.vault;
 /**
  * A Vault entry was added, replaced, or deleted.
  *
- * <p>Published synchronously by {@link VaultService#putApiKey(long, String, String)}
- * and {@link VaultService#deleteApiKey(long, String)} via
- * {@code ApplicationEventPublisher} right after the file write succeeds.
+ * <p>Plain (non-transactional) Spring event. Published by
+ * {@code EventsBoundedToTx} as the AFTER_COMMIT conversion of
+ * {@code VaultEntryChangedTxEvent}, which is published from inside the
+ * {@code @Transactional} write path that updates Company.params. Listeners
+ * such as {@code VaultInvalidationFanout} see this event only after the DB
+ * write has committed, never before.
  *
- * <p>Plain Spring event by design — NOT a signal-bus signal. The Signal Bus
- * is for UI polling; this event is for server-internal fan-out to enrolled
- * Processors via {@code VaultInvalidationFanout}. See {@code SignalBus} class
- * Javadoc for the scope rule.
+ * <p>Not a signal-bus signal. The Signal Bus is for UI polling; this event
+ * is for server-internal fan-out to enrolled Processors via
+ * {@code VaultInvalidationFanout}.
  *
- * @param companyId  the company that owns the changed entry
+ * @param companyId  the company.uniqueId that owns the changed entry
  * @param keyCode    the Vault entry code
  * @param action     {@code "put"} for add/replace, {@code "delete"} for removal
  */
