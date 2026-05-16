@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -29,7 +28,7 @@ import org.yaml.snakeyaml.Yaml;
  * Time: 12:10 AM
  */
 public class CompanyParamsYamlUtilsV2
-        extends AbstractParamsYamlUtils<CompanyParamsYamlV2, CompanyParamsYamlV3, CompanyParamsYamlUtilsV3, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<CompanyParamsYamlV2, CompanyParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -44,15 +43,18 @@ public class CompanyParamsYamlUtilsV2
 
     @NonNull
     @Override
-    public CompanyParamsYamlV3 upgradeTo(@NonNull CompanyParamsYamlV2 src) {
+    public CompanyParamsYaml upgradeTo(@NonNull CompanyParamsYamlV2 src) {
         src.checkIntegrity();
-        CompanyParamsYamlV3 trg = new CompanyParamsYamlV3();
+        CompanyParamsYaml trg = new CompanyParamsYaml();
         if (src.ac!=null) {
-            trg.ac = new CompanyParamsYamlV3.AccessControlV3(src.ac.groups);
+            trg.ac = new CompanyParamsYaml.AccessControl(src.ac.groups);
+        }
+        if (src.vault!=null) {
+            trg.vault = new CompanyParamsYaml.VaultEntries(
+                src.vault.salt, src.vault.iterations, src.vault.encryptedEntries);
         }
         trg.createdOn = src.createdOn;
         trg.updatedOn = src.updatedOn;
-        // vault left null — V2 had no vault entries
         trg.checkIntegrity();
         return trg;
     }
@@ -64,8 +66,8 @@ public class CompanyParamsYamlUtilsV2
     }
 
     @Override
-    public @Nullable CompanyParamsYamlUtilsV3 nextUtil() {
-        return (CompanyParamsYamlUtilsV3) CompanyParamsYamlUtils.BASE_YAML_UTILS.getForVersion(3);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override

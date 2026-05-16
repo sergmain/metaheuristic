@@ -32,7 +32,7 @@ import org.jspecify.annotations.Nullable;
 @AllArgsConstructor
 public class CompanyParamsYaml implements BaseParams {
 
-    public final int version=3;
+    public final int version=2;
 
     @Override
     public boolean checkIntegrity() {
@@ -57,6 +57,11 @@ public class CompanyParamsYaml implements BaseParams {
      *
      * <p>The salt + iterations are bound as AAD to GCM, so tampering with
      * those fields fails authentication on decrypt.
+     *
+     * <p>This is a {@code @Nullable} field added without a version bump per the
+     * multi-versioning {@code @Nullable}-exception rule: SnakeYAML is configured
+     * with {@code setSkipMissingProperties(true)}, so older V2 YAML documents
+     * that lack this field deserialize fine — {@code vault} stays {@code null}.
      */
     @Data
     @AllArgsConstructor
