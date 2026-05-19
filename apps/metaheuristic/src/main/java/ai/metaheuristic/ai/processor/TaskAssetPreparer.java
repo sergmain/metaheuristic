@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.functions.FunctionRepositoryData;
 import ai.metaheuristic.ai.functions.FunctionRepositoryProcessorService;
 import ai.metaheuristic.ai.processor.data.ProcessorData;
 import ai.metaheuristic.ai.processor.event.AssetPreparingForProcessorTaskEvent;
+import ai.metaheuristic.ai.processor.event.TaskAssetReadyEvent;
 import ai.metaheuristic.ai.processor.processor_environment.ProcessorEnvironment;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.metadata.MetadataParamsYaml;
@@ -208,6 +209,8 @@ public class TaskAssetPreparer {
         if (isAllReady.get()) {
             log.info("951.330 All assets were prepared for task #{}, dispatcher: {}", task.taskId, task.dispatcherUrl);
             processorTaskService.markAsAssetPrepared(core, task.taskId, true);
+            // notify the coordinator immediately instead of waiting for the next taskProcessor scheduler tick
+            eventPublisher.publishEvent(new TaskAssetReadyEvent(core, task.taskId));
         }
         return null;
     }

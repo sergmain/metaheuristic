@@ -23,7 +23,10 @@ import ai.metaheuristic.ai.processor.variable_providers.VariableProviderFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import ai.metaheuristic.ai.processor.event.TaskAssetReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -61,6 +64,25 @@ public class TaskProcessorCoordinatorService {
         for (ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core : processorEnvironment.getProcessorEnv().metadataParams().getAllEnabledRefsForCores()) {
             invokeTaskProcessingOnCore(core);
         }
+    }
+
+    /**
+     * Reacts to a task whose assets just became fully prepared (TaskAssetPreparer,
+     * log code 951.330). Invokes task processing on the affected core immediately
+     * instead of waiting for the next taskProcessor scheduler tick (up to SECONDS_9).
+     * The scheduler remains in place as a fallback safety-net.
+     */
+    @Async
+    @EventListener
+    public void onTaskAssetReady(TaskAssetReadyEvent event) {
+        if (globals.testing) {
+            return;
+        }
+        if (!globals.processor.enabled) {
+            return;
+        }
+        log.info("415.040 TaskAssetReadyEvent received for task #{}, core: {}", event.taskId, event.core.coreCode);
+        invokeTaskProcessingOnCore(event.core);
     }
 
     public void invokeTaskProcessingOnCore(ProcessorData.ProcessorCoreAndProcessorIdAndDispatcherUrlRef core) {
