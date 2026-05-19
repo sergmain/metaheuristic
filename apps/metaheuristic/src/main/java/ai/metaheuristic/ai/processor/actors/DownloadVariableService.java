@@ -40,6 +40,8 @@ import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.net.URIBuilder;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
+import ai.metaheuristic.ai.processor.event.AssetPreparingForProcessorTaskEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -60,6 +62,7 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
     private final Globals globals;
     private final ProcessorTaskService processorTaskService;
     private final CurrentExecState currentExecState;
+    private final ApplicationEventPublisher eventPublisher;
 
     @SuppressWarnings("Duplicates")
     public void process() {
@@ -280,6 +283,8 @@ public class DownloadVariableService extends AbstractTaskQueue<DownloadVariableT
                 return;
             }
             log.info("Variable #{} was loaded", task.variableId);
+            // notify TaskAssetPreparer immediately instead of waiting for the next taskAssigner scheduler tick
+            eventPublisher.publishEvent(new AssetPreparingForProcessorTaskEvent(task.core, task.taskId));
         } catch (HttpResponseException e) {
             if (e.getStatusCode() == HttpServletResponse.SC_CONFLICT) {
                 log.warn("810.080 Variable with id {} is broken and need to be recreated", task.variableId);
