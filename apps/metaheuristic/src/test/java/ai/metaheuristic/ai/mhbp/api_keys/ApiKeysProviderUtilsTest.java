@@ -68,8 +68,7 @@ public class ApiKeysProviderUtilsTest {
         Account acc = new Account();
         AccountParamsYaml params = new AccountParamsYaml();
         params.openaiKey = "123";
-        acc.updateParams(params);
-        String token = ApiKeysProviderUtils.getActualToken(apiAuth.auth, ()-> acc, (key)-> {
+        String token = ApiKeysProviderUtils.getActualToken(apiAuth.auth, ()-> params, (key)-> {
             //noinspection ReturnOfNull
             return null;
         });
@@ -92,8 +91,7 @@ public class ApiKeysProviderUtilsTest {
 
         Account acc = new Account();
         AccountParamsYaml params = new AccountParamsYaml();
-        acc.updateParams(params);
-        String token = ApiKeysProviderUtils.getActualToken(apiAuth.auth, ()-> acc, (key)-> {
+        String token = ApiKeysProviderUtils.getActualToken(apiAuth.auth, ()-> params, (key)-> {
             //noinspection ReturnOfNull
             return "OPENAI_API_KEY".equals(key) ? "123" : null;
         });

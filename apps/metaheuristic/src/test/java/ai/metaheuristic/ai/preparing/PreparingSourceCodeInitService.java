@@ -103,9 +103,9 @@ public class PreparingSourceCodeInitService {
         preparingSourceCodeService.cleanUp(sourceCodeParamsYaml.source.uid);
 
         data.company = new Company();
-        data.company.name = "Test company #2";
-        companyTopLevelService.addCompany(data.company);
-        data.company = Objects.requireNonNull(companyTopLevelService.getCompanyByUniqueId(data.company.uniqueId));
+        companyTopLevelService.addCompany("Test company #2");
+        Long maxUniqueId = companyRepository.getMaxUniqueIdValue();
+        data.company = Objects.requireNonNull(companyTopLevelService.getCompanyByUniqueId(maxUniqueId));
 
         AccountData.NewAccount account = new AccountData.NewAccount();
         account.username = "test-"+ System.currentTimeMillis()+r.nextInt(1000);

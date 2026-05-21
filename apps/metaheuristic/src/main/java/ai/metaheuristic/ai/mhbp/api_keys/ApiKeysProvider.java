@@ -17,8 +17,10 @@
 package ai.metaheuristic.ai.mhbp.api_keys;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
+import ai.metaheuristic.ai.dispatcher.account.AccountService;
+import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.mhbp.provider.ProviderData;
+import ai.metaheuristic.ai.yaml.account.AccountParamsYaml;
 import ai.metaheuristic.commons.yaml.auth.ApiAuth;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,11 +41,22 @@ import org.springframework.stereotype.Service;
 public class ApiKeysProvider {
 
     private final Globals globals;
-    private final AccountRepository accountRepository;
+    private final AccountService accountService;
 
     @Nullable
     public String getActualToken(ApiAuth.Auth auth, ProviderData.QueriedData queriedData) {
-        return ApiKeysProviderUtils.getActualToken(auth, ()->accountRepository.findById(queriedData.userExecContext().accountId()).orElseThrow(), System::getProperty);
+        // PARAMS lives on the AccountRevision satellite — compose via the service.
+        return ApiKeysProviderUtils.getActualToken(
+                auth,
+                () -> {
+                    AccountData.AccountWithRevision composed = accountService.getCurrent(queriedData.userExecContext().accountId());
+                    if (composed == null) {
+                        throw new IllegalStateException("Account not found, id=" + queriedData.userExecContext().accountId());
+                    }
+                    return composed.paramsYaml();
+                },
+                System::getProperty);
     }
 
 }
+

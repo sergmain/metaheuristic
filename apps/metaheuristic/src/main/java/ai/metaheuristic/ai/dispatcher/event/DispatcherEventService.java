@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.DispatcherEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.DispatcherApplicationEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.CompanyRevisionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.DispatcherEventRepository;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
@@ -74,6 +75,7 @@ public class DispatcherEventService {
     private final Globals globals;
     private final DispatcherEventRepository dispatcherEventRepository;
     private final CompanyRepository companyRepository;
+    private final CompanyRevisionRepository companyRevisionRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     public void publishBatchEvent(
@@ -179,7 +181,13 @@ public class DispatcherEventService {
         }
         CompanyApiData.CompanyList companyList = new CompanyApiData.CompanyList();
         companyRepository.findAll()
-                .forEach(c-> companyList.companies.add(new CompanyApiData.CompanyShortData(c.uniqueId, c.name)));
+                .forEach(c-> {
+                    // NAME lives on the satellite — look up the head revision.
+                    String name = c.headRevisionId == null
+                            ? ""
+                            : companyRevisionRepository.findById(c.headRevisionId).map(r -> r.name).orElse("");
+                    companyList.companies.add(new CompanyApiData.CompanyShortData(c.uniqueId, name));
+                });
 
         Path companyYamlFile = filesDir.resolve("companies.yaml");
         Yaml companyYaml = YamlUtils.init(ListOfEvents.class);

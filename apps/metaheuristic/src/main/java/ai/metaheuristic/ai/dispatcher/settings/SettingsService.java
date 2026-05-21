@@ -17,7 +17,9 @@
 package ai.metaheuristic.ai.dispatcher.settings;
 
 import ai.metaheuristic.ai.dispatcher.DispatcherContext;
+import ai.metaheuristic.ai.dispatcher.account.AccountService;
 import ai.metaheuristic.ai.dispatcher.account.AccountTxService;
+import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.dispatcher.data.SettingsData;
 import ai.metaheuristic.ai.yaml.account.AccountParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -45,12 +47,15 @@ import java.util.stream.Collectors;
 public class SettingsService {
 
     private final AccountTxService accountTxService;
+    private final AccountService accountService;
 
     public SettingsData.ApiKeys getApiKeys(UserContext context) {
         if (!(context instanceof DispatcherContext dispatcherContext)) {
             return new SettingsData.ApiKeys(List.of("236.040 (!(context instanceof DispatcherContext dispatcherContext))"), List.of());
         }
-        AccountParamsYaml params = dispatcherContext.account.getAccountParamsYaml();
+        // PARAMS lives on the AccountRevision satellite — pull via the composer.
+        AccountData.AccountWithRevision composed = accountService.getCurrent(dispatcherContext.account.id);
+        AccountParamsYaml params = composed != null ? composed.paramsYaml() : new AccountParamsYaml();
 
         SettingsData.ApiKeys apiKeys = new SettingsData.ApiKeys(
                 params.apiKeys.stream()

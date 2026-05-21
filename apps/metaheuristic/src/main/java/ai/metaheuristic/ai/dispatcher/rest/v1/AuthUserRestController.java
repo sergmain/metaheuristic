@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.rest.v1;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.dispatcher.account.AccountService;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ import java.util.Collection;
 public class AuthUserRestController {
 
     private final Globals globals;
+    private final AccountService accountService;
 
     // this end-point is used by angular's part only
     @RequestMapping("/user")
@@ -46,8 +48,12 @@ public class AuthUserRestController {
         UsernamePasswordAuthenticationToken passwordAuthenticationToken = (UsernamePasswordAuthenticationToken) user;
         Account acc = (Account) passwordAuthenticationToken.getPrincipal();
         Collection<GrantedAuthority> authorities = passwordAuthenticationToken.getAuthorities();
-        return new AccountData.UserData(acc.username, acc.getPublicName(), authorities, acc.companyId, globals.activeProfiles);
+        // PUBLIC_NAME lives on the AccountRevision satellite — pull via the composer.
+        AccountData.AccountWithRevision composed = accountService.getCurrent(acc.id);
+        String publicName = composed != null ? composed.publicName() : "";
+        return new AccountData.UserData(acc.username, publicName, authorities, acc.companyId, globals.activeProfiles);
     }
 
 
 }
+

@@ -100,10 +100,12 @@ class TestExecSourceCode {
 
     @BeforeEach
     public void init() {
-        company = new Company();
-        company.name = "Test company #2";
-        companyTopLevelService.addCompany(company);
-        company = Objects.requireNonNull(companyTopLevelService.getCompanyByUniqueId(company.uniqueId));
+        // NAME lives on the satellite — addCompany takes a name string and writes envelope + first revision.
+        companyTopLevelService.addCompany("Test company #2");
+        // Find the freshly created envelope by scanning unique IDs (the highest one we don't already know).
+        // For test isolation, the test fixture is the only writer in this transaction, so finding by max UNIQUE_ID is fine.
+        Long maxUniqueId = companyRepository.getMaxUniqueIdValue();
+        company = Objects.requireNonNull(companyTopLevelService.getCompanyByUniqueId(maxUniqueId));
 
         assertNotNull(company.id);
         assertNotNull(company.uniqueId);

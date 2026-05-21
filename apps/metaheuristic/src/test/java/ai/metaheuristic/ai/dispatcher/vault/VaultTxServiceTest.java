@@ -17,10 +17,14 @@
 package ai.metaheuristic.ai.dispatcher.vault;
 
 import ai.metaheuristic.ai.dispatcher.beans.Company;
+import ai.metaheuristic.ai.dispatcher.beans.CompanyRevision;
 import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
+import ai.metaheuristic.ai.dispatcher.company.CompanyRevisionWriter;
 import ai.metaheuristic.ai.dispatcher.event.events.VaultEntryChangedTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.CompanyRevisionRepository;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.springframework.context.ApplicationEvent;
@@ -30,12 +34,11 @@ import org.springframework.data.domain.Pageable;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
@@ -43,9 +46,9 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 /**
  * Plain unit tests for {@link VaultTxService}. The Spring transaction boundary
  * itself is exercised in @SpringBootTest integration tests elsewhere; here we
- * verify only the behavioural contract: the right blob is written through to
- * the cache, the {@code @Version} optimistic-lock path is preserved, the
- * {@code VaultEntryChangedTxEvent} is published on success, and missing
+ * verify only the behavioural contract: the right blob is written into a
+ * new {@link CompanyRevision} via {@link CompanyRevisionWriter}, the
+ * {@link VaultEntryChangedTxEvent} is published on success, and missing
  * companies return false without emitting an event.
  *
  * @author Sergio Lissner
@@ -91,6 +94,47 @@ class VaultTxServiceTest {
     }
 
     /**
+     * Hand-rolled stand-in for {@link CompanyRevisionRepository}. Tracks
+     * inserted revision rows keyed by id, plus the max revision number
+     * per companyId for {@code findMaxRevision}.
+     */
+    private static final class FakeCompanyRevisionRepository implements CompanyRevisionRepository {
+        final Map<Long, CompanyRevision> byId = new HashMap<>();
+        final AtomicLong idGen = new AtomicLong(10_000L);
+
+        @Override
+        public Long findMaxRevision(Long companyId) {
+            return byId.values().stream()
+                    .filter(r -> r.companyId.equals(companyId))
+                    .map(r -> r.revision)
+                    .max(Long::compare)
+                    .orElse(null);
+        }
+
+        @Override public <S extends CompanyRevision> S save(S entity) {
+            if (entity.id == null) {
+                entity.id = idGen.getAndIncrement();
+            }
+            byId.put(entity.id, entity);
+            return entity;
+        }
+
+        @Override public Optional<CompanyRevision> findById(Long id) { return Optional.ofNullable(byId.get(id)); }
+
+        // --- Unused methods ---
+        @Override public <S extends CompanyRevision> Iterable<S> saveAll(Iterable<S> entities) { throw new UnsupportedOperationException(); }
+        @Override public boolean existsById(Long aLong) { throw new UnsupportedOperationException(); }
+        @Override public Iterable<CompanyRevision> findAll() { throw new UnsupportedOperationException(); }
+        @Override public Iterable<CompanyRevision> findAllById(Iterable<Long> longs) { throw new UnsupportedOperationException(); }
+        @Override public long count() { throw new UnsupportedOperationException(); }
+        @Override public void deleteById(Long id) { throw new UnsupportedOperationException(); }
+        @Override public void delete(CompanyRevision entity) { throw new UnsupportedOperationException(); }
+        @Override public void deleteAllById(Iterable<? extends Long> longs) { throw new UnsupportedOperationException(); }
+        @Override public void deleteAll(Iterable<? extends CompanyRevision> entities) { throw new UnsupportedOperationException(); }
+        @Override public void deleteAll() { throw new UnsupportedOperationException(); }
+    }
+
+    /**
      * Subclass of {@link CompanyCache} that bypasses the real one, since the
      * cache's save() asserts a real TX context exists.
      */
@@ -104,7 +148,6 @@ class VaultTxServiceTest {
 
         @Override public Company save(Company c) {
             this.saved = c;
-            // Mirror the real path: keep the repository's view consistent with what was saved.
             fakeRepo.byUniqueId.put(c.uniqueId, c);
             return c;
         }
@@ -114,32 +157,59 @@ class VaultTxServiceTest {
         }
     }
 
-    private static Company company(long uniqueId, @Nullable String existingParams) {
+    /** Seed a company envelope (no satellite) with the given uniqueId. */
+    private static Company envelope(long uniqueId) {
         Company c = new Company();
         c.id = uniqueId + 1000L;
         c.uniqueId = uniqueId;
-        c.name = "co-" + uniqueId;
-        if (existingParams != null) {
-            c.setParams(existingParams);
-        }
+        c.deleted = false;
+        c.headRevisionId = null;
         return c;
+    }
+
+    /** Seed a head CompanyRevision (NAME, PARAMS) for the given envelope and wire it as head. */
+    private static CompanyRevision seedHead(Company envelope, FakeCompanyRevisionRepository revRepo,
+                                            String name, @Nullable String params, long revisionNumber) {
+        CompanyRevision rev = new CompanyRevision();
+        rev.companyId = envelope.id;
+        rev.revision = revisionNumber;
+        rev.name = name;
+        rev.setParams(params);
+        rev.deleted = false;
+        rev.createdOn = System.currentTimeMillis();
+        revRepo.save(rev);
+        envelope.headRevisionId = rev.id;
+        return rev;
+    }
+
+    private static VaultTxService newTx(FakeCompanyRepository repo,
+                                        FakeCompanyRevisionRepository revRepo,
+                                        FakeCompanyCache cache,
+                                        ApplicationEventPublisher pub) {
+        CompanyRevisionWriter writer = new CompanyRevisionWriter(repo, revRepo, cache);
+        return new VaultTxService(repo, revRepo, cache, writer, pub);
     }
 
     @Test
     void saveVaultBlob_companyExists_persistsBlobAndEmitsEvent() {
         FakeCompanyRepository repo = new FakeCompanyRepository();
+        FakeCompanyRevisionRepository revRepo = new FakeCompanyRevisionRepository();
         FakeCompanyCache cache = new FakeCompanyCache(repo);
         CapturingPublisher pub = new CapturingPublisher();
 
         long companyId = 42L;
-        repo.byUniqueId.put(companyId, company(companyId, null));
+        Company env = envelope(companyId);
+        seedHead(env, revRepo, "co-42", null, 1L);
+        repo.byUniqueId.put(companyId, env);
 
-        VaultTxService tx = new VaultTxService(repo, cache, pub);
+        VaultTxService tx = newTx(repo, revRepo, cache, pub);
         CompanyParamsYaml.VaultEntries blob = new CompanyParamsYaml.VaultEntries("c2FsdA==", 200_000, "ZW5jcnlwdGVk");
         assertTrue(tx.saveVaultBlob(companyId, blob, "openai", VaultEntryChangedEvent.ACTION_PUT));
 
-        assertNotNull(cache.saved);
-        CompanyParamsYaml cpy = cache.saved.getCompanyParamsYaml();
+        // The new head revision must carry the new vault blob.
+        CompanyRevision newHead = revRepo.findById(env.headRevisionId).orElseThrow();
+        assertEquals(2L, newHead.revision, "writeNewRevision must produce revision=2 after seed revision=1");
+        CompanyParamsYaml cpy = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(newHead.getParams());
         assertNotNull(cpy.vault);
         assertEquals(blob.salt, cpy.vault.salt);
         assertEquals(blob.iterations, cpy.vault.iterations);
@@ -159,10 +229,11 @@ class VaultTxServiceTest {
     @Test
     void saveVaultBlob_companyMissing_returnsFalse_noEvent() {
         FakeCompanyRepository repo = new FakeCompanyRepository();
+        FakeCompanyRevisionRepository revRepo = new FakeCompanyRevisionRepository();
         FakeCompanyCache cache = new FakeCompanyCache(repo);
         CapturingPublisher pub = new CapturingPublisher();
 
-        VaultTxService tx = new VaultTxService(repo, cache, pub);
+        VaultTxService tx = newTx(repo, revRepo, cache, pub);
         CompanyParamsYaml.VaultEntries blob = new CompanyParamsYaml.VaultEntries("c2FsdA==", 200_000, "ZW5jcnlwdGVk");
         assertFalse(tx.saveVaultBlob(99L, blob, "openai", VaultEntryChangedEvent.ACTION_PUT));
 
@@ -172,24 +243,27 @@ class VaultTxServiceTest {
 
     @Test
     void saveVaultBlob_preservesPreexistingAccessControl() {
-        // Verify saving a vault blob does not clobber the existing access-control state.
+        // Verify saving a vault blob does not clobber the existing access-control state from the head revision.
         FakeCompanyRepository repo = new FakeCompanyRepository();
+        FakeCompanyRevisionRepository revRepo = new FakeCompanyRevisionRepository();
         FakeCompanyCache cache = new FakeCompanyCache(repo);
         CapturingPublisher pub = new CapturingPublisher();
 
         long companyId = 42L;
-        Company c = company(companyId, null);
-        CompanyParamsYaml seed = c.getCompanyParamsYaml();
+        Company env = envelope(companyId);
+        CompanyParamsYaml seed = new CompanyParamsYaml();
         seed.ac = new CompanyParamsYaml.AccessControl("ops,devs");
         seed.createdOn = 1_700_000_000_000L;
-        c.updateParams(seed);
-        repo.byUniqueId.put(companyId, c);
+        String seededParams = CompanyParamsYamlUtils.BASE_YAML_UTILS.toString(seed);
+        seedHead(env, revRepo, "co-42", seededParams, 1L);
+        repo.byUniqueId.put(companyId, env);
 
-        VaultTxService tx = new VaultTxService(repo, cache, pub);
+        VaultTxService tx = newTx(repo, revRepo, cache, pub);
         CompanyParamsYaml.VaultEntries blob = new CompanyParamsYaml.VaultEntries("c2FsdA==", 200_000, "ZW5jcnlwdGVk");
         assertTrue(tx.saveVaultBlob(companyId, blob, "openai", VaultEntryChangedEvent.ACTION_PUT));
 
-        CompanyParamsYaml after = cache.saved.getCompanyParamsYaml();
+        CompanyRevision newHead = revRepo.findById(env.headRevisionId).orElseThrow();
+        CompanyParamsYaml after = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(newHead.getParams());
         assertNotNull(after.ac);
         assertEquals("ops,devs", after.ac.groups);
         assertNotNull(after.vault);
@@ -199,17 +273,19 @@ class VaultTxServiceTest {
     @Test
     void loadVaultBlob_companyExists_withVault_returnsBlob() {
         FakeCompanyRepository repo = new FakeCompanyRepository();
+        FakeCompanyRevisionRepository revRepo = new FakeCompanyRevisionRepository();
         FakeCompanyCache cache = new FakeCompanyCache(repo);
         CapturingPublisher pub = new CapturingPublisher();
 
         long companyId = 7L;
-        Company c = company(companyId, null);
-        CompanyParamsYaml seed = c.getCompanyParamsYaml();
+        Company env = envelope(companyId);
+        CompanyParamsYaml seed = new CompanyParamsYaml();
         seed.vault = new CompanyParamsYaml.VaultEntries("c2FsdA==", 200_000, "ZW5jcnlwdGVk");
-        c.updateParams(seed);
-        repo.byUniqueId.put(companyId, c);
+        String seededParams = CompanyParamsYamlUtils.BASE_YAML_UTILS.toString(seed);
+        seedHead(env, revRepo, "co-7", seededParams, 1L);
+        repo.byUniqueId.put(companyId, env);
 
-        VaultTxService tx = new VaultTxService(repo, cache, pub);
+        VaultTxService tx = newTx(repo, revRepo, cache, pub);
         CompanyParamsYaml.VaultEntries blob = tx.loadVaultBlob(companyId);
         assertNotNull(blob);
         assertEquals("c2FsdA==", blob.salt);
@@ -220,22 +296,26 @@ class VaultTxServiceTest {
     @Test
     void loadVaultBlob_companyExists_withoutVault_returnsNull() {
         FakeCompanyRepository repo = new FakeCompanyRepository();
+        FakeCompanyRevisionRepository revRepo = new FakeCompanyRevisionRepository();
         FakeCompanyCache cache = new FakeCompanyCache(repo);
         CapturingPublisher pub = new CapturingPublisher();
 
         long companyId = 7L;
-        repo.byUniqueId.put(companyId, company(companyId, null));
+        Company env = envelope(companyId);
+        seedHead(env, revRepo, "co-7", null, 1L);
+        repo.byUniqueId.put(companyId, env);
 
-        VaultTxService tx = new VaultTxService(repo, cache, pub);
+        VaultTxService tx = newTx(repo, revRepo, cache, pub);
         assertNull(tx.loadVaultBlob(companyId));
     }
 
     @Test
     void loadVaultBlob_companyMissing_returnsNull() {
         FakeCompanyRepository repo = new FakeCompanyRepository();
+        FakeCompanyRevisionRepository revRepo = new FakeCompanyRevisionRepository();
         FakeCompanyCache cache = new FakeCompanyCache(repo);
         CapturingPublisher pub = new CapturingPublisher();
-        VaultTxService tx = new VaultTxService(repo, cache, pub);
+        VaultTxService tx = newTx(repo, revRepo, cache, pub);
 
         assertNull(tx.loadVaultBlob(123L));
     }

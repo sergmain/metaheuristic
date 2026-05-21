@@ -45,8 +45,7 @@ public class CompanyService {
     private final CompanyRevisionRepository companyRevisionRepository;
 
     /** Envelope + head revision joined into a CompanyWithRevision. Returns null if envelope not found. */
-    @Nullable
-    public CompanyData.CompanyWithRevision getCurrent(Long companyId) {
+    public CompanyData.@Nullable CompanyWithRevision getCurrent(Long companyId) {
         Company envelope = companyRepository.findById(companyId).orElse(null);
         if (envelope == null) {
             return null;
@@ -55,8 +54,7 @@ public class CompanyService {
     }
 
     /** Envelope + head revision joined into a CompanyWithRevision, found by UNIQUE_ID. Returns null if envelope not found. */
-    @Nullable
-    public CompanyData.CompanyWithRevision getCurrentByUniqueId(Long uniqueId) {
+    public CompanyData.@Nullable CompanyWithRevision getCurrentByUniqueId(Long uniqueId) {
         Company envelope = companyRepository.findByUniqueId(uniqueId);
         if (envelope == null) {
             return null;
@@ -64,8 +62,7 @@ public class CompanyService {
         return composeFromEnvelope(envelope);
     }
 
-    @Nullable
-    private CompanyData.CompanyWithRevision composeFromEnvelope(Company envelope) {
+    private CompanyData.@Nullable CompanyWithRevision composeFromEnvelope(Company envelope) {
         if (envelope.headRevisionId == null) {
             // envelope without a head revision is a corrupt state — bootstrap should have written rev=1
             log.error("Company.id={} has no HEAD_REVISION_ID; envelope is missing its satellite", envelope.id);

@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.mhbp.api_keys;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.dispatcher.beans.Account;
 import ai.metaheuristic.commons.yaml.auth.ApiAuth;
 import ai.metaheuristic.ai.yaml.account.AccountParamsYaml;
 import ai.metaheuristic.commons.S;
@@ -34,8 +33,13 @@ import java.util.function.Supplier;
  */
 public class ApiKeysProviderUtils {
 
+    /**
+     * @param accountParamsProviderFunc supplies the AccountParamsYaml for the current account.
+     *                                  PARAMS lives on the AccountRevision satellite; the caller is
+     *                                  expected to compose it (e.g., via AccountService.getCurrent).
+     */
     @Nullable
-    public static String getActualToken(ApiAuth.Auth auth, Supplier<Account> accountProviderFunc, Function<String, String> systemEnvFunc ) {
+    public static String getActualToken(ApiAuth.Auth auth, Supplier<AccountParamsYaml> accountParamsProviderFunc, Function<String, String> systemEnvFunc ) {
         if (auth.token==null) {
             throw new IllegalStateException("(auth.token==null)");
         }
@@ -43,15 +47,14 @@ public class ApiKeysProviderUtils {
             return getTokenFromEnvironment(systemEnvFunc, auth.token.env);
         }
         if (auth.token.key!=null) {
-            return getTokenFromAccount(accountProviderFunc, auth.token.key);
+            return getTokenFromAccount(accountParamsProviderFunc, auth.token.key);
         }
         return null;
     }
 
     @Nullable
-    private static String getTokenFromAccount(Supplier<Account> accountProviderFunc, String key) {
-        Account account = accountProviderFunc.get();
-        AccountParamsYaml params = account.getAccountParamsYaml();
+    private static String getTokenFromAccount(Supplier<AccountParamsYaml> accountParamsProviderFunc, String key) {
+        AccountParamsYaml params = accountParamsProviderFunc.get();
         String keyName = normalizeKeyName(key);
 
         String apiKey = getPredefinedApiKey(keyName, params);
@@ -95,3 +98,4 @@ public class ApiKeysProviderUtils {
         return env.substring(start, env.length()-end);
     }
 }
+

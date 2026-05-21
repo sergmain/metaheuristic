@@ -75,8 +75,7 @@ public class AccountService {
      * Envelope + head AccountRevision joined into an AccountWithRevision.
      * Returns null if envelope not found.
      */
-    @Nullable
-    public AccountData.AccountWithRevision getCurrent(Long accountId) {
+    public AccountData.@Nullable AccountWithRevision getCurrent(Long accountId) {
         Account envelope = accountRepository.findById(accountId).orElse(null);
         if (envelope == null) {
             return null;
@@ -88,8 +87,7 @@ public class AccountService {
      * Envelope + head AccountRevision joined into an AccountWithRevision, found by USERNAME.
      * Returns null if envelope not found.
      */
-    @Nullable
-    public AccountData.AccountWithRevision getCurrentByUsername(String username) {
+    public AccountData.@Nullable AccountWithRevision getCurrentByUsername(String username) {
         Account envelope = accountRepository.findByUsername(username);
         if (envelope == null) {
             return null;
@@ -97,8 +95,7 @@ public class AccountService {
         return composeFromEnvelope(envelope);
     }
 
-    @Nullable
-    private AccountData.AccountWithRevision composeFromEnvelope(Account envelope) {
+    private AccountData.@Nullable AccountWithRevision composeFromEnvelope(Account envelope) {
         if (envelope.headRevisionId == null) {
             log.error("Account.id={} has no HEAD_REVISION_ID; envelope is missing its satellite", envelope.id);
             return null;

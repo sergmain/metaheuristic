@@ -18,8 +18,10 @@ package ai.metaheuristic.ai.dispatcher.replication;
 
 import ai.metaheuristic.ai.dispatcher.account.AccountCache;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
+import ai.metaheuristic.ai.dispatcher.beans.AccountRevision;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.AccountRevisionRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +53,7 @@ public class ReplicationAccountTopLevelService {
     private final ReplicationCoreService replicationCoreService;
     private final ReplicationAccountService replicationAccountService;
     private final AccountRepository accountRepository;
+    private final AccountRevisionRepository accountRevisionRepository;
     private final AccountCache accountCache;
 
     @Data
@@ -75,7 +78,12 @@ public class ReplicationAccountTopLevelService {
             for (ReplicationData.AccountShortAsset actualAccount : actualAccounts) {
                 if (actualAccount.username.equals(a.username)) {
                     isDeleted = false;
-                    if (actualAccount.updateOn != a.updatedOn) {
+                    // UPDATED_ON lives on the satellite — load via HEAD_REVISION_ID.
+                    AccountRevision head = a.headRevisionId == null
+                            ? null
+                            : accountRevisionRepository.findById(a.headRevisionId).orElse(null);
+                    long headUpdatedOn = head != null ? head.updatedOn : 0L;
+                    if (actualAccount.updateOn != headUpdatedOn) {
                         AccountLoopEntry accountLoopEntry = new AccountLoopEntry(actualAccount, a);
                         forUpdating.add(accountLoopEntry);
                     }

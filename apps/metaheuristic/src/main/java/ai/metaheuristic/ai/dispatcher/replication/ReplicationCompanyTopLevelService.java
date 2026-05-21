@@ -79,8 +79,12 @@ public class ReplicationCompanyTopLevelService {
             for (ReplicationData.CompanyShortAsset actualCompany : actualCompanies) {
                 if (actualCompany.uniqueId.equals(c.uniqueId)) {
                     isDeleted = false;
-                    CompanyParamsYaml cpy = c.getCompanyParamsYaml();
-                    if (actualCompany.updateOn != cpy.updatedOn) {
+                    // PARAMS lives on the satellite — load via HEAD_REVISION_ID.
+                    CompanyRevision head = c.headRevisionId == null
+                            ? null
+                            : companyRevisionRepository.findById(c.headRevisionId).orElse(null);
+                    long headUpdatedOn = head != null ? head.getCompanyParamsYaml().updatedOn : 0L;
+                    if (actualCompany.updateOn != headUpdatedOn) {
                         CompanyLoopEntry companyLoopEntry = new CompanyLoopEntry(actualCompany, c);
                         forUpdating.add(companyLoopEntry);
                     }

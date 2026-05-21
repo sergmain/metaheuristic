@@ -56,7 +56,7 @@ class VaultServiceTest {
         Long failOnCompanyId = null;
 
         FakeVaultTxService() {
-            super(null, null, null);
+            super(null, null, null, null, null);
         }
 
         @Override
