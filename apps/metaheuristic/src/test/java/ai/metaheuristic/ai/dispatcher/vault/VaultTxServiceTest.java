@@ -70,9 +70,21 @@ class VaultTxServiceTest {
      */
     private static final class FakeCompanyRepository implements CompanyRepository {
         final Map<Long, Company> byUniqueId = new HashMap<>();
+        final Map<Long, Company> byId = new HashMap<>();
+
+        void put(Company c) {
+            byUniqueId.put(c.uniqueId, c);
+            byId.put(c.id, c);
+        }
 
         @Override public Company findByUniqueIdForUpdate(Long uniqueId) { return byUniqueId.get(uniqueId); }
         @Override public Company findByUniqueId(Long uniqueId)         { return byUniqueId.get(uniqueId); }
+        @Override public Optional<Company> findById(Long id)            { return Optional.ofNullable(byId.get(id)); }
+        @Override public <S extends Company> S save(S entity) {
+            byId.put(entity.id, entity);
+            byUniqueId.put(entity.uniqueId, entity);
+            return entity;
+        }
 
         // --- Unused methods ---
         @Override public void deleteById(Long id) { throw new UnsupportedOperationException(); }
@@ -80,9 +92,7 @@ class VaultTxServiceTest {
         @Override public Page<ai.metaheuristic.ai.dispatcher.data.SimpleCompany> findAllAsSimple(Pageable pageable) { throw new UnsupportedOperationException(); }
         @Override public Long getMaxUniqueIdValue() { throw new UnsupportedOperationException(); }
         @Override public List<Long> findAllUniqueIds() { throw new UnsupportedOperationException(); }
-        @Override public <S extends Company> S save(S entity) { throw new UnsupportedOperationException(); }
         @Override public <S extends Company> Iterable<S> saveAll(Iterable<S> entities) { throw new UnsupportedOperationException(); }
-        @Override public Optional<Company> findById(Long aLong) { throw new UnsupportedOperationException(); }
         @Override public boolean existsById(Long aLong) { throw new UnsupportedOperationException(); }
         @Override public Iterable<Company> findAll() { throw new UnsupportedOperationException(); }
         @Override public Iterable<Company> findAllById(Iterable<Long> longs) { throw new UnsupportedOperationException(); }
@@ -200,7 +210,7 @@ class VaultTxServiceTest {
         long companyId = 42L;
         Company env = envelope(companyId);
         seedHead(env, revRepo, "co-42", null, 1L);
-        repo.byUniqueId.put(companyId, env);
+        repo.put(env);
 
         VaultTxService tx = newTx(repo, revRepo, cache, pub);
         CompanyParamsYaml.VaultEntries blob = new CompanyParamsYaml.VaultEntries("c2FsdA==", 200_000, "ZW5jcnlwdGVk");
@@ -256,7 +266,7 @@ class VaultTxServiceTest {
         seed.createdOn = 1_700_000_000_000L;
         String seededParams = CompanyParamsYamlUtils.BASE_YAML_UTILS.toString(seed);
         seedHead(env, revRepo, "co-42", seededParams, 1L);
-        repo.byUniqueId.put(companyId, env);
+        repo.put(env);
 
         VaultTxService tx = newTx(repo, revRepo, cache, pub);
         CompanyParamsYaml.VaultEntries blob = new CompanyParamsYaml.VaultEntries("c2FsdA==", 200_000, "ZW5jcnlwdGVk");
@@ -283,7 +293,7 @@ class VaultTxServiceTest {
         seed.vault = new CompanyParamsYaml.VaultEntries("c2FsdA==", 200_000, "ZW5jcnlwdGVk");
         String seededParams = CompanyParamsYamlUtils.BASE_YAML_UTILS.toString(seed);
         seedHead(env, revRepo, "co-7", seededParams, 1L);
-        repo.byUniqueId.put(companyId, env);
+        repo.put(env);
 
         VaultTxService tx = newTx(repo, revRepo, cache, pub);
         CompanyParamsYaml.VaultEntries blob = tx.loadVaultBlob(companyId);
@@ -303,7 +313,7 @@ class VaultTxServiceTest {
         long companyId = 7L;
         Company env = envelope(companyId);
         seedHead(env, revRepo, "co-7", null, 1L);
-        repo.byUniqueId.put(companyId, env);
+        repo.put(env);
 
         VaultTxService tx = newTx(repo, revRepo, cache, pub);
         assertNull(tx.loadVaultBlob(companyId));
