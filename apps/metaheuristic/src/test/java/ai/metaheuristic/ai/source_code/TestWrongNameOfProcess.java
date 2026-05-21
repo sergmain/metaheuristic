@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.spi.MhSpi;
@@ -44,6 +45,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Serge
@@ -82,6 +86,7 @@ public class TestWrongNameOfProcess extends PreparingSourceCode {
     }
 
     @Autowired private SourceCodeValidationService sourceCodeValidationService;
+    @Autowired private SourceCodeService sourceCodeService;
 
     @Override
     @SneakyThrows
@@ -89,12 +94,42 @@ public class TestWrongNameOfProcess extends PreparingSourceCode {
         return IOUtils.resourceToString("/source_code/yaml/for-testing-wrong-name-of-process.yaml", StandardCharsets.UTF_8);
     }
 
+    // The YAML used here describes a user process whose `code` is `mh.finish` (the implicit final
+    // process name) but whose `function.code` is `mh.nop` — i.e. someone mis-named a regular
+    // process as the implicit terminator. The expected behavior is that createSourceCode rejects
+    // this with WRONG_CODE_OF_PROCESS_ERROR via static (YAML-only) validation before the
+    // graph-building stage. We bypass the standard PreparingSourceCode setup because that setup
+    // requires the SourceCode to be persisted, which is precisely what should NOT happen for an
+    // invalid YAML.
+
+    @Override
+    public void beforePreparingSourceCode() {
+        // intentionally no-op: the YAML under test is invalid by design and must not be persisted.
+    }
+
+    @Override
+    public void afterPreparingSourceCode() {
+        // intentionally no-op: nothing was persisted.
+    }
+
     @Test
     public void test() {
-        SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(getSourceCode());
-        assertEquals(EnumsApi.SourceCodeValidateStatus.WRONG_CODE_OF_PROCESS_ERROR, status.status);
+        String yaml = getSourceCodeYamlAsString();
+
+        // companyUniqueId=2L; createSourceCode must reject the YAML before reaching persistence,
+        // so the company value is irrelevant — any non-1L value is fine.
+        SourceCodeApiData.SourceCodeResult result = sourceCodeService.createSourceCode(
+                yaml, EnumsApi.SourceCodeLang.yaml, 2L);
+
+        // Red/Green-3: desired behavior. Static (YAML-only) validation must run BEFORE the graph
+        // builder, so the YAML is rejected cleanly with WRONG_CODE_OF_PROCESS_ERROR. No persistence,
+        // no JGraphT exception leaking out.
+        assertNull(result.id, "id should be null because nothing was persisted");
+        assertTrue(result.isErrorMessages(), "result should carry an error message");
+        assertEquals(EnumsApi.SourceCodeValidateStatus.WRONG_CODE_OF_PROCESS_ERROR, result.validationResult.status,
+                "static validation must reject mh.finish-coded process with non-mh.finish function");
+        String firstError = result.getErrorMessagesAsList().get(0);
+        assertTrue(firstError.contains("177.215"),
+                "error message should reference validation code 177.215, actual: " + firstError);
     }
 }
-
-
-

@@ -31,6 +31,7 @@ import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
+import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.source_code.SourceCodeStoredParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.account.UserContext;
@@ -83,6 +84,29 @@ public class SourceCodeService {
             }
             if (StringUtils.isBlank(sourceCodeAsStr)) {
                 return new SourceCodeApiData.SourceCodeResult("560.060 sourceCode yaml is empty");
+            }
+
+            // Stage-1: YAML-only (static) validation. Runs BEFORE SourceCodeGraphFactory.parse(...)
+            // because the graph builder can throw raw exceptions on inputs that the static
+            // validator would reject cleanly (e.g. user process coded as "mh.finish" but bound to
+            // a non-mh.finish function, which would otherwise self-loop in the JGraphT DAG).
+            if (lang == EnumsApi.SourceCodeLang.yaml) {
+                try {
+                    SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeAsStr);
+                    SourceCodeApiData.SourceCodeValidationResult staticValidation =
+                            SourceCodeValidationUtils.validateStatic(sourceCodeParamsYaml);
+                    if (staticValidation != null && staticValidation.status != EnumsApi.SourceCodeValidateStatus.OK) {
+                        log.error("560.075 Static validation failed: {} - {}", staticValidation.status, staticValidation.error);
+                        return new SourceCodeApiData.SourceCodeResult(
+                                staticValidation.error == null ? ("560.075 Static validation failed: " + staticValidation.status) : staticValidation.error,
+                                staticValidation);
+                    }
+                }
+                catch (WrongVersionOfParamsException e) {
+                    String es = "560.085 An error parsing yaml: " + e.getMessage();
+                    log.error(es);
+                    return new SourceCodeApiData.SourceCodeResult(es);
+                }
             }
 
             SourceCodeGraph sourceCodeGraph;

@@ -44,6 +44,24 @@ public class SourceCodeValidationUtils {
     public static final Function<SourceCodeParamsYaml.Process, SourceCodeApiData.SourceCodeValidationResult> NULL_CHECK_FUNC =
             (p)-> new SourceCodeApiData.SourceCodeValidationResult(OK, null);
 
+    /**
+     * Static (YAML-only) validation of a SourceCodeParamsYaml. Runs all structural checks that
+     * do NOT require DB lookups (no function resolution, no sub-source-code resolution).
+     *
+     * This is Stage-1 of the two-stage validation pipeline: it is safe to call BEFORE the
+     * SourceCode is persisted, and BEFORE SourceCodeGraphFactory.parse(...) — which is important
+     * because the graph builder can throw raw exceptions on inputs that Stage-1 would reject
+     * cleanly (e.g. a user process whose code collides with the implicit mh.finish terminator).
+     *
+     * Returns null when no static issue is found; the caller is then responsible for Stage-2
+     * (cross-reference) validation via {@link SourceCodeValidationService}.
+     *
+     * @author Sergio Lissner
+     */
+    public static SourceCodeApiData.@Nullable SourceCodeValidationResult validateStatic(SourceCodeParamsYaml sourceCodeParamsYaml) {
+        return validateSourceCodeParamsYaml(NULL_CHECK_FUNC, sourceCodeParamsYaml);
+    }
+
     public static SourceCodeApiData.@Nullable SourceCodeValidationResult validateSourceCodeParamsYaml(
             Function<SourceCodeParamsYaml.Process, SourceCodeApiData.SourceCodeValidationResult> checkFunctionsFunc,
             SourceCodeParamsYaml sourceCodeParamsYaml) {
