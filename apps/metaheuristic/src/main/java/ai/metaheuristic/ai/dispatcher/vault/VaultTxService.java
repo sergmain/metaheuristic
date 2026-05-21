@@ -17,10 +17,14 @@
 package ai.metaheuristic.ai.dispatcher.vault;
 
 import ai.metaheuristic.ai.dispatcher.beans.Company;
+import ai.metaheuristic.ai.dispatcher.beans.CompanyRevision;
 import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
+import ai.metaheuristic.ai.dispatcher.company.CompanyRevisionWriter;
 import ai.metaheuristic.ai.dispatcher.event.events.VaultEntryChangedTxEvent;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.CompanyRevisionRepository;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
@@ -34,8 +38,9 @@ import org.springframework.transaction.annotation.Transactional;
  * Transactional companion for {@link VaultService}.
  *
  * <p>Loads the Company under a pessimistic lock, applies a per-company
- * {@link CompanyParamsYaml.VaultEntries} mutation, and persists the change.
- * The {@link VaultEntryChangedTxEvent} is published inside the transaction;
+ * {@link CompanyParamsYaml.VaultEntries} mutation, and persists the change
+ * as a new {@link CompanyRevision} via {@link CompanyRevisionWriter}. The
+ * {@link VaultEntryChangedTxEvent} is published inside the transaction;
  * {@code EventsBoundedToTx} converts it to a plain {@code VaultEntryChangedEvent}
  * after commit so fan-out runs only on successful persistence.
  *
@@ -48,7 +53,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class VaultTxService {
 
     private final CompanyRepository companyRepository;
+    private final CompanyRevisionRepository companyRevisionRepository;
     private final CompanyCache companyCache;
+    private final CompanyRevisionWriter companyRevisionWriter;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
@@ -68,15 +75,20 @@ public class VaultTxService {
             log.warn("0670.010 Company not found for vault save, companyUniqueId={}", companyUniqueId);
             return false;
         }
-        CompanyParamsYaml cpy = c.getCompanyParamsYaml();
+        // Pull current head revision to derive a base CompanyParamsYaml + NAME to carry into the new revision.
+        CompanyRevision currentHead = c.headRevisionId == null
+                ? null
+                : companyRevisionRepository.findById(c.headRevisionId).orElse(null);
+        CompanyParamsYaml cpy = currentHead != null ? currentHead.getCompanyParamsYaml() : new CompanyParamsYaml();
         cpy.vault = blob;
         long now = System.currentTimeMillis();
         if (cpy.createdOn == 0L) {
             cpy.createdOn = now;
         }
         cpy.updatedOn = now;
-        c.updateParams(cpy);
-        companyCache.save(c);
+        String paramsYaml = CompanyParamsYamlUtils.BASE_YAML_UTILS.toString(cpy);
+        String name = currentHead != null ? currentHead.name : "";
+        companyRevisionWriter.writeNewRevision(c.id, name, paramsYaml);
         eventPublisher.publishEvent(new VaultEntryChangedTxEvent(companyUniqueId, keyCode, action));
         return true;
     }
@@ -92,6 +104,14 @@ public class VaultTxService {
         if (c == null) {
             return null;
         }
-        return c.getCompanyParamsYaml().vault;
+        // Vault blob lives inside PARAMS on the head CompanyRevision.
+        CompanyRevision head = c.headRevisionId == null
+                ? null
+                : companyRevisionRepository.findById(c.headRevisionId).orElse(null);
+        if (head == null) {
+            return null;
+        }
+        return head.getCompanyParamsYaml().vault;
     }
 }
+

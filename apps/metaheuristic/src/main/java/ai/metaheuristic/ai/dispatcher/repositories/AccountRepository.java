@@ -57,8 +57,9 @@ public interface AccountRepository extends CrudRepository<Account, Long> {
     Page<Account> findAll(Pageable pageable);
 
     @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.api.data.account.SimpleAccount(a.id, a.companyId, a.username, a.publicName, a.enabled, a.createdOn, a.updatedOn, a.roles) " +
-            " from Account a where a.companyId=:companyUniqueId")
+    @Query(value="select new ai.metaheuristic.api.data.account.SimpleAccount(a.id, a.companyId, a.username, r.publicName, a.enabled, a.createdOn, r.updatedOn, a.roles) " +
+            " from Account a, AccountRevision r" +
+            " where r.id = a.headRevisionId and a.companyId=:companyUniqueId")
     Page<SimpleAccount> findAllByCompanyUniqueId(Pageable pageable, Long companyUniqueId);
 
     @Transactional(readOnly = true)

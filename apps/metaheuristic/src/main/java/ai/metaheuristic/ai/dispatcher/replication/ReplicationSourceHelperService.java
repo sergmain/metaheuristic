@@ -18,12 +18,16 @@ package ai.metaheuristic.ai.dispatcher.replication;
 
 import ai.metaheuristic.ai.dispatcher.account.AccountCache;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
+import ai.metaheuristic.ai.dispatcher.beans.AccountRevision;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
+import ai.metaheuristic.ai.dispatcher.beans.CompanyRevision;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.AccountRevisionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.CompanyRevisionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeCache;
@@ -52,7 +56,9 @@ import java.util.stream.Collectors;
 public class ReplicationSourceHelperService {
 
     private final CompanyRepository companyRepository;
+    private final CompanyRevisionRepository companyRevisionRepository;
     private final AccountRepository accountRepository;
+    private final AccountRevisionRepository accountRevisionRepository;
     private final SourceCodeRepository sourceCodeRepository;
     private final FunctionRepository functionRepository;
     private final SourceCodeCache sourceCodeCache;
@@ -102,8 +108,12 @@ public class ReplicationSourceHelperService {
                         return null;
                     }
                     long updatedOn = -1;
-                    if (!S.b(company.getParams())) {
-                        CompanyParamsYaml cpy = company.getCompanyParamsYaml();
+                    // PARAMS lives on the satellite — load via HEAD_REVISION_ID.
+                    CompanyRevision head = company.headRevisionId == null
+                            ? null
+                            : companyRevisionRepository.findById(company.headRevisionId).orElse(null);
+                    if (head != null && !S.b(head.getParams())) {
+                        CompanyParamsYaml cpy = head.getCompanyParamsYaml();
                         updatedOn = cpy.updatedOn;
                     }
                     return new ReplicationData.CompanyShortAsset(company.uniqueId, updatedOn);
@@ -117,7 +127,12 @@ public class ReplicationSourceHelperService {
                     if (account==null) {
                         return null;
                     }
-                    return new ReplicationData.AccountShortAsset(account.username, account.updatedOn);
+                    // UPDATED_ON lives on the satellite — load via HEAD_REVISION_ID.
+                    AccountRevision head = account.headRevisionId == null
+                            ? null
+                            : accountRevisionRepository.findById(account.headRevisionId).orElse(null);
+                    long updatedOn = head != null ? head.updatedOn : -1L;
+                    return new ReplicationData.AccountShortAsset(account.username, updatedOn);
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList()));

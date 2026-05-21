@@ -17,10 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.beans;
 
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
-import ai.metaheuristic.ai.yaml.account.AccountParamsYaml;
-import ai.metaheuristic.ai.yaml.account.AccountParamsYamlUtils;
 import ai.metaheuristic.commons.account.AccountRoles;
-import ai.metaheuristic.commons.utils.threads.ThreadUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -36,6 +33,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
+ * Envelope row for Account. Identity (USERNAME, COMPANY_ID, CREATED_ON) +
+ * Spring-Security primitives (PASSWORD, IS_ENABLED, ROLES, IS_ACC_NOT_EXPIRED,
+ * IS_NOT_LOCKED, IS_CRED_NOT_EXPIRED) stay here so every authentication is one
+ * envelope-row read. Mutable profile/audit scalars (PUBLIC_NAME, MAIL_ADDRESS,
+ * PHONE, PHONE_AS_STR, UPDATED_ON, SECRET_KEY, TWO_FA, PARAMS) live in
+ * {@link AccountRevision}, append-only, looked up manually by HEAD_REVISION_ID
+ * — see AccountService.
+ *
  * User: Serg
  * Date: 12.08.13
  * Time: 23:19
@@ -80,36 +85,21 @@ public class Account implements UserDetails, Serializable {
     @Column(name="IS_ENABLED")
     public boolean enabled;
 
-    @Column(name="PUBLIC_NAME")
-    public String publicName;
-
-    @Nullable
-    @Column(name="MAIL_ADDRESS")
-    public String mailAddress;
-
-    @Nullable
-    @Column(name="PHONE")
-    public String phone;
-
-    @Nullable
-    private String phoneAsStr;
-
     @Column(name="CREATED_ON")
     public long createdOn;
-
-    @Column(name="UPDATED_ON")
-    public long updatedOn;
 
     // this field contains Authorities, not role. I.e. authority is "ROLE_" + role
     @Nullable
     public String roles;
 
-    @Nullable
-    @Column(name="SECRET_KEY")
-    public String secretKey;
+    /** Mirror of the head revision's IS_DELETED. Flipped to true alongside a tombstone revision insert. */
+    @Column(name = "IS_DELETED")
+    public boolean deleted;
 
-    @Column(name="TWO_FA")
-    public boolean twoFA;
+    /** Pointer to the latest AccountRevision row for this envelope. Repointed on every new-revision insert. */
+    @Nullable
+    @Column(name = "HEAD_REVISION_ID")
+    public Long headRevisionId;
 
     @Transient
     @JsonIgnore
@@ -120,37 +110,5 @@ public class Account implements UserDetails, Serializable {
                 .map(o->new AccountData.SerializableGrantedAuthority(o.authority))
                 .collect(Collectors.toList());
     }
-
-    @Column(name = "PARAMS")
-    private String params;
-
-    public String getParams() {
-        return params;
-    }
-
-    public void setParams(String params) {
-        this.paramsLocked.reset(()->this.params = params);
-    }
-
-    @Transient
-    @JsonIgnore
-    private final ThreadUtils.CommonThreadLocker<AccountParamsYaml> paramsLocked =
-            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
-
-    private AccountParamsYaml parseParams() {
-        AccountParamsYaml temp = params!=null ? AccountParamsYamlUtils.UTILS.to(params) : null;
-        AccountParamsYaml ecpy = temp==null ? new AccountParamsYaml() : temp;
-        return ecpy;
-    }
-
-    @JsonIgnore
-    public AccountParamsYaml getAccountParamsYaml() {
-        return paramsLocked.get();
-    }
-
-    @JsonIgnore
-    public void updateParams(AccountParamsYaml tpy) {
-        setParams(AccountParamsYamlUtils.UTILS.toString(tpy));
-    }
-
 }
+

@@ -17,9 +17,11 @@
 package ai.metaheuristic.ai.dispatcher.replication;
 
 import ai.metaheuristic.ai.dispatcher.beans.Company;
+import ai.metaheuristic.ai.dispatcher.beans.CompanyRevision;
 import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.CompanyRevisionRepository;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -52,6 +54,7 @@ public class ReplicationCompanyTopLevelService {
     private final ReplicationCoreService replicationCoreService;
     private final ReplicationCompanyService replicationCompanyService;
     private final CompanyRepository companyRepository;
+    private final CompanyRevisionRepository companyRevisionRepository;
     private final CompanyCache companyCache;
 
     @Data

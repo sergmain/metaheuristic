@@ -16,9 +16,15 @@
 
 package ai.metaheuristic.ai.dispatcher.replication;
 
+import ai.metaheuristic.ai.dispatcher.beans.Account;
+import ai.metaheuristic.ai.dispatcher.beans.AccountRevision;
+import ai.metaheuristic.ai.dispatcher.beans.Company;
+import ai.metaheuristic.ai.dispatcher.beans.CompanyRevision;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.AccountRevisionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.CompanyRevisionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.FunctionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +45,9 @@ import org.springframework.stereotype.Service;
 public class ReplicationSourceService {
 
     private final CompanyRepository companyRepository;
+    private final CompanyRevisionRepository companyRevisionRepository;
     private final AccountRepository accountRepository;
+    private final AccountRevisionRepository accountRevisionRepository;
     private final SourceCodeRepository sourceCodeRepository;
     private final FunctionRepository functionRepository;
     private final ReplicationSourceHelperService replicationSourceHelperService;
@@ -59,12 +67,19 @@ public class ReplicationSourceService {
     }
 
     public ReplicationData.CompanyAsset getCompany(long uniqueId) {
-        ReplicationData.CompanyAsset companyAsset = new ReplicationData.CompanyAsset(companyRepository.findByUniqueId(uniqueId));
-        return companyAsset;
+        Company envelope = companyRepository.findByUniqueId(uniqueId);
+        CompanyRevision head = (envelope == null || envelope.headRevisionId == null)
+                ? null
+                : companyRevisionRepository.findById(envelope.headRevisionId).orElse(null);
+        return new ReplicationData.CompanyAsset(envelope, head);
     }
 
     public ReplicationData.AccountAsset getAccount(String username) {
-        ReplicationData.AccountAsset accountAsset = new ReplicationData.AccountAsset(accountRepository.findByUsername(username));
-        return accountAsset;
+        Account envelope = accountRepository.findByUsername(username);
+        AccountRevision head = (envelope == null || envelope.headRevisionId == null)
+                ? null
+                : accountRevisionRepository.findById(envelope.headRevisionId).orElse(null);
+        return new ReplicationData.AccountAsset(envelope, head);
     }
 }
+

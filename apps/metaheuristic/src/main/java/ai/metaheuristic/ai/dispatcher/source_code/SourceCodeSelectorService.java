@@ -18,9 +18,11 @@ package ai.metaheuristic.ai.dispatcher.source_code;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
+import ai.metaheuristic.ai.dispatcher.beans.CompanyRevision;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
 import ai.metaheuristic.ai.dispatcher.data.SourceCodeData;
+import ai.metaheuristic.ai.dispatcher.repositories.CompanyRevisionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
 import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
@@ -61,6 +63,7 @@ public class SourceCodeSelectorService {
     private final SourceCodeCache sourceCodeCache;
     private final SourceCodeRepository sourceCodeRepository;
     private final CompanyCache companyCache;
+    private final CompanyRevisionRepository companyRevisionRepository;
 
     @Transactional(readOnly = true)
     public List<SourceCodeData.SourceCodeUid> filterSourceCodes(UserContext context, List<String> uids) {
@@ -120,10 +123,14 @@ public class SourceCodeSelectorService {
         }).collect(Collectors.toList());
 
         Company company = companyCache.findByUniqueId(companyUniqueId);
-        if (company!=null && !S.b(company.getParams())) {
+        // PARAMS lives on the satellite — load via HEAD_REVISION_ID.
+        CompanyRevision head = (company == null || company.headRevisionId == null)
+                ? null
+                : companyRevisionRepository.findById(company.headRevisionId).orElse(null);
+        if (company != null && head != null && !S.b(head.getParams())) {
             final Set<String> groups;
             try {
-                CompanyParamsYaml cpy = company.getCompanyParamsYaml();
+                CompanyParamsYaml cpy = head.getCompanyParamsYaml();
                 if (cpy.ac!=null && !S.b(cpy.ac.groups)) {
                     groups = getGroups(cpy.ac.groups);
                 }
@@ -134,7 +141,7 @@ public class SourceCodeSelectorService {
                 final String es = "984.100 Can't parse Company params. It's broken or version is unknown. Company companyUniqueId: #" + companyUniqueId;
                 sourceCodesForCompany.addErrorMessage(es);
                 log.error(es);
-                log.error("984.120 Params:\n{}", company.getParams());
+                log.error("984.120 Params:\n{}", head.getParams());
                 log.error("984.140 Error: {}", e.toString());
                 return sourceCodesForCompany;
             }

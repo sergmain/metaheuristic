@@ -91,20 +91,49 @@ CREATE UNIQUE INDEX mh_dispatcher_code_unq_idx
 
 CREATE TABLE mh_company
 (
-    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION         INT UNSIGNED    NOT NULL,
-    UNIQUE_ID       INT UNSIGNED    NOT NULL,
-    NAME            VARCHAR(50)   NOT NULL,
-    PARAMS          MEDIUMTEXT null
+    ID                INT UNSIGNED   NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    VERSION           INT UNSIGNED   NOT NULL,
+    UNIQUE_ID         INT UNSIGNED   NOT NULL,
+    IS_DELETED        BOOLEAN        NOT NULL DEFAULT FALSE,
+    HEAD_REVISION_ID  INT UNSIGNED
 );
 
 CREATE UNIQUE INDEX mh_company_unique_id_unq_idx
     ON mh_company (UNIQUE_ID);
 
+CREATE INDEX mh_company_head_revision_id_idx
+    ON mh_company (HEAD_REVISION_ID);
+
+CREATE TABLE mh_company_revision
+(
+    ID          INT UNSIGNED   NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    VERSION     INT UNSIGNED   NOT NULL,
+    COMPANY_ID  INT UNSIGNED   NOT NULL,
+    REVISION    INT UNSIGNED   NOT NULL,
+    NAME        VARCHAR(50)    NOT NULL,
+    PARAMS      MEDIUMTEXT,
+    IS_DELETED  BOOLEAN        NOT NULL DEFAULT FALSE,
+    CREATED_ON  bigint         NOT NULL
+);
+
+CREATE UNIQUE INDEX mh_company_revision_company_id_revision_unq_idx
+    ON mh_company_revision (COMPANY_ID, REVISION);
+
+CREATE INDEX mh_company_revision_company_id_idx
+    ON mh_company_revision (COMPANY_ID);
+
+-- Seed: 'Main company' — envelope + first revision
 insert into mh_company
-(id, version, UNIQUE_ID, name, params)
+(id, version, UNIQUE_ID, IS_DELETED, HEAD_REVISION_ID)
 VALUES
-(1, 0, 1, 'Main company', '');
+(1, 0, 1, false, null);
+
+insert into mh_company_revision
+(id, version, COMPANY_ID, REVISION, NAME, PARAMS, IS_DELETED, CREATED_ON)
+VALUES
+(1, 0, 1, 1, 'Main company', '', false, UNIX_TIMESTAMP() * 1000);
+
+update mh_company set HEAD_REVISION_ID = 1 where ID = 1;
 
 -- !!! this insert must be executed after creating 'master company' immediately;
 
@@ -114,28 +143,19 @@ select 'mh_ids', max(UNIQUE_ID) from mh_company;
 
 create table mh_account
 (
-    ID              INT UNSIGNED    NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-    VERSION         INT UNSIGNED    NOT NULL,
-    COMPANY_ID      INT UNSIGNED    NOT NULL,
-    USERNAME varchar(30) NOT NULL,
-    PASSWORD varchar(100) NOT NULL,
-    ROLES varchar(100),
-    PUBLIC_NAME varchar(100) NOT NULL,
-
-    is_acc_not_expired BOOLEAN not null default true,
-    is_not_locked BOOLEAN not null default false,
-    is_cred_not_expired BOOLEAN not null default false,
-    is_enabled BOOLEAN not null default false,
-
-    mail_address varchar(100) ,
-    PHONE varchar(100) ,
-    PHONE_AS_STR varchar(100) ,
-
-    CREATED_ON  bigint not null,
-    UPDATED_ON  bigint not null,
-    SECRET_KEY  varchar(25),
-    TWO_FA      BOOLEAN not null default false,
-    PARAMS      MEDIUMTEXT
+    ID                  INT UNSIGNED   NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    VERSION             INT UNSIGNED   NOT NULL,
+    COMPANY_ID          INT UNSIGNED   NOT NULL,
+    USERNAME            varchar(30)    NOT NULL,
+    PASSWORD            varchar(100)   NOT NULL,
+    ROLES               varchar(100),
+    is_acc_not_expired  BOOLEAN        not null default true,
+    is_not_locked       BOOLEAN        not null default false,
+    is_cred_not_expired BOOLEAN        not null default false,
+    is_enabled          BOOLEAN        not null default false,
+    CREATED_ON          bigint         not null,
+    IS_DELETED          BOOLEAN        NOT NULL DEFAULT FALSE,
+    HEAD_REVISION_ID    INT UNSIGNED
 );
 
 CREATE INDEX mh_account_company_id_idx
@@ -143,6 +163,33 @@ CREATE INDEX mh_account_company_id_idx
 
 CREATE UNIQUE INDEX mh_account_username_unq_idx
     ON mh_account (USERNAME);
+
+CREATE INDEX mh_account_head_revision_id_idx
+    ON mh_account (HEAD_REVISION_ID);
+
+CREATE TABLE mh_account_revision
+(
+    ID            INT UNSIGNED   NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    VERSION       INT UNSIGNED   NOT NULL,
+    ACCOUNT_ID    INT UNSIGNED   NOT NULL,
+    REVISION      INT UNSIGNED   NOT NULL,
+    PUBLIC_NAME   varchar(100)   NOT NULL,
+    MAIL_ADDRESS  varchar(100),
+    PHONE         varchar(100),
+    PHONE_AS_STR  varchar(100),
+    UPDATED_ON    bigint         NOT NULL,
+    SECRET_KEY    varchar(25),
+    TWO_FA        BOOLEAN        NOT NULL DEFAULT FALSE,
+    PARAMS        MEDIUMTEXT,
+    IS_DELETED    BOOLEAN        NOT NULL DEFAULT FALSE,
+    CREATED_ON    bigint         NOT NULL
+);
+
+CREATE UNIQUE INDEX mh_account_revision_account_id_revision_unq_idx
+    ON mh_account_revision (ACCOUNT_ID, REVISION);
+
+CREATE INDEX mh_account_revision_account_id_idx
+    ON mh_account_revision (ACCOUNT_ID);
 
 CREATE TABLE mh_processor
 (

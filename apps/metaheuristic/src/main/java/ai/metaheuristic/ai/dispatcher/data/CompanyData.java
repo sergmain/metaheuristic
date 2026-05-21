@@ -137,4 +137,23 @@ public class CompanyData {
         }
     }
 
+    /**
+     * Composite read view of a Company: envelope (identity, IS_DELETED flag,
+     * head pointer) joined with the head CompanyRevision (current NAME, PARAMS).
+     * Built by CompanyService.getCurrent(...) — never load a Company by id and
+     * expect to read its NAME directly from the envelope.
+     *
+     * @param paramsYaml parsed CompanyParamsYaml from the head revision (lazy via the bean's locker).
+     */
+    public record CompanyWithRevision(
+            Long id,
+            Long uniqueId,
+            boolean deleted,
+            @Nullable Long headRevisionId,
+            String name,
+            @Nullable String params,
+            ai.metaheuristic.ai.yaml.company.CompanyParamsYaml paramsYaml
+    ) {}
+
 }
+

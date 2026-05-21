@@ -18,13 +18,15 @@ package ai.metaheuristic.ai.dispatcher.account;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
+import ai.metaheuristic.ai.dispatcher.beans.AccountRevision;
 import ai.metaheuristic.ai.dispatcher.data.AccountData;
 import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.AccountRevisionRepository;
 import ai.metaheuristic.ai.sec.RoleService;
 import ai.metaheuristic.ai.sec.SecConsts;
 import ai.metaheuristic.ai.yaml.account.AccountParamsYaml;
+import ai.metaheuristic.ai.yaml.account.AccountParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.account.SimpleAccount;
@@ -58,7 +60,9 @@ public class AccountTxService {
 
     private final Globals globals;
     private final AccountRepository accountRepository;
+    private final AccountRevisionRepository accountRevisionRepository;
     private final AccountCache accountCache;
+    private final AccountRevisionWriter accountRevisionWriter;
     private final PasswordEncoder passwordEncoder;
     private final RoleService roleService;
 
@@ -101,22 +105,21 @@ public class AccountTxService {
                     String.format("235.040 Username '%s' was already registered", acc.getUsername()));
         }
 
-        Account account = new Account();
-        account.username = acc.username;
-        account.password = acc.password;
-        account.publicName = acc.publicName;
-        account.roles = roles;
+        // Envelope draft — identity + security primitives. PUBLIC_NAME goes on the first revision.
+        Account envelopeDraft = new Account();
+        envelopeDraft.username = acc.username;
+        envelopeDraft.password = passwordEncoder.encode(acc.password);
+        envelopeDraft.roles = roles;
+        envelopeDraft.accountNonExpired = true;
+        envelopeDraft.accountNonLocked = true;
+        envelopeDraft.credentialsNonExpired = true;
+        envelopeDraft.enabled = true;
+        envelopeDraft.companyId = companyUniqueId;
+        envelopeDraft.createdOn = System.currentTimeMillis();
 
-        account.setPassword(passwordEncoder.encode(account.getPassword()));
-        account.setCreatedOn(System.currentTimeMillis());
-        account.setUpdatedOn(account.createdOn);
-        account.setAccountNonExpired(true);
-        account.setAccountNonLocked(true);
-        account.setCredentialsNonExpired(true);
-        account.setEnabled(true);
-        account.setCompanyId(companyUniqueId);
-
-        accountCache.save(account);
+        AccountRevisionWriter.ProfilePayload profile = new AccountRevisionWriter.ProfilePayload(
+                acc.publicName, null, null, null, null, false, null);
+        accountRevisionWriter.create(envelopeDraft, profile);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -126,11 +129,16 @@ public class AccountTxService {
         if (account == null || !Objects.equals(account.companyId, companyUniqueId)) {
             return new AccountData.AccountResult("235.050 account wasn't found, accountId: " + id);
         }
-        return new AccountData.AccountResult(toSimple(account));
+        AccountRevision head = account.headRevisionId == null
+                ? null
+                : accountRevisionRepository.findById(account.headRevisionId).orElse(null);
+        return new AccountData.AccountResult(toSimple(account, head));
     }
 
-    private static SimpleAccount toSimple(Account acc) {
-        return new SimpleAccount(acc.id, acc.companyId, acc.username, acc.publicName, acc.enabled, acc.createdOn, acc.updatedOn, acc.accountRoles.asString());
+    private static SimpleAccount toSimple(Account acc, @Nullable AccountRevision head) {
+        String publicName = head != null ? head.publicName : "";
+        long updatedOn = head != null ? head.updatedOn : 0L;
+        return new SimpleAccount(acc.id, acc.companyId, acc.username, publicName, acc.enabled, acc.createdOn, updatedOn, acc.accountRoles.asString());
     }
 
     @Transactional
@@ -148,10 +156,13 @@ public class AccountTxService {
         if (a == null || !Objects.equals(a.companyId, companyUniqueId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"235.060 account wasn't found, accountId: " + accountId);
         }
-        a.setEnabled(enabled);
-        a.setPublicName(publicName);
-        a.updatedOn = System.currentTimeMillis();
-        accountCache.save(a);
+        // IS_ENABLED lives on the envelope (Spring-Security primitive) — envelope-only write.
+        accountRevisionWriter.updateEnabled(accountId, enabled);
+        // PUBLIC_NAME lives on the satellite — new revision carrying current fields with new publicName.
+        AccountRevision currentHead = a.headRevisionId == null
+                ? null
+                : accountRevisionRepository.findById(a.headRevisionId).orElse(null);
+        accountRevisionWriter.writeNewRevision(accountId, profilePayloadFrom(currentHead, publicName));
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of account was changed successfully", "");
     }
 
@@ -168,9 +179,8 @@ public class AccountTxService {
         if (a == null || !Objects.equals(a.companyId, companyUniqueId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "235.100 account wasn't found, accountId: " + accountId);
         }
-        a.setPassword(passwordEncoder.encode(password));
-        a.updatedOn = System.currentTimeMillis();
-        accountCache.save(a);
+        // PASSWORD is an envelope-resident Spring-Security primitive.
+        accountRevisionWriter.updatePassword(accountId, passwordEncoder.encode(password));
 
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The password was changed successfully", "");
     }
@@ -188,9 +198,8 @@ public class AccountTxService {
                 .filter(possibleRoles::contains)
                 .collect(Collectors.joining(", "));
 
-        account.setRoles(str);
-        account.updatedOn = System.currentTimeMillis();
-        accountCache.save(account);
+        // ROLES lives on the envelope.
+        accountRevisionWriter.updateRoles(accountId, str);
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of account was changed successfully", "");
     }
 
@@ -225,9 +234,8 @@ public class AccountTxService {
             account.accountRoles.removeRole(SecConsts.ROLE_SERVER_REST_ACCESS);
         }
 
-        account.roles = account.accountRoles.asString();
-        account.updatedOn = System.currentTimeMillis();
-        accountCache.save(account);
+        // accountRoles mutations write through to the envelope's `roles` field via the AccountRoles setter lambda.
+        accountRevisionWriter.updateRoles(accountId, account.accountRoles.asString());
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Role "+role+" was changed successfully", "");
     }
 
@@ -242,9 +250,8 @@ public class AccountTxService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "235.330 Old password is wrong");
         }
 
-        a.setPassword(passwordEncoder.encode(newPassword));
-        a.updatedOn = System.currentTimeMillis();
-        accountCache.save(a);
+        // PASSWORD is an envelope-resident Spring-Security primitive.
+        accountRevisionWriter.updatePassword(a.id, passwordEncoder.encode(newPassword));
 
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The password was changed successfully", "");
     }
@@ -275,13 +282,46 @@ public class AccountTxService {
         if (account == null || !Objects.equals(account.companyId, companyId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"235.360 account wasn't found, accountId: " + accountId);
         }
-        AccountParamsYaml params = account.getAccountParamsYaml();
+        // PARAMS lives on the satellite — pull current head, mutate, and INSERT new revision.
+        AccountRevision currentHead = account.headRevisionId == null
+                ? null
+                : accountRevisionRepository.findById(account.headRevisionId).orElse(null);
+        AccountParamsYaml params = currentHead != null
+                ? currentHead.getAccountParamsYaml()
+                : new AccountParamsYaml();
         updateFunc.accept(params);
-        account.updateParams(params);
-        account.updatedOn = System.currentTimeMillis();
-        accountCache.save(account);
+        String paramsYaml = AccountParamsYamlUtils.UTILS.toString(params);
+
+        AccountRevisionWriter.ProfilePayload payload = new AccountRevisionWriter.ProfilePayload(
+                currentHead != null ? currentHead.publicName : "",
+                currentHead != null ? currentHead.mailAddress : null,
+                currentHead != null ? currentHead.phone : null,
+                currentHead != null ? currentHead.phoneAsStr : null,
+                currentHead != null ? currentHead.secretKey : null,
+                currentHead != null && currentHead.twoFA,
+                paramsYaml
+        );
+        accountRevisionWriter.writeNewRevision(accountId, payload);
 
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,okMessage, "");
     }
-}
 
+    /**
+     * Build a profile payload from the existing head revision, overriding only the publicName.
+     * Used by editFormCommit which changes only PUBLIC_NAME on the satellite.
+     */
+    private static AccountRevisionWriter.ProfilePayload profilePayloadFrom(@Nullable AccountRevision head, String newPublicName) {
+        if (head == null) {
+            return new AccountRevisionWriter.ProfilePayload(newPublicName, null, null, null, null, false, null);
+        }
+        return new AccountRevisionWriter.ProfilePayload(
+                newPublicName,
+                head.mailAddress,
+                head.phone,
+                head.phoneAsStr,
+                head.secretKey,
+                head.twoFA,
+                head.getParams()
+        );
+    }
+}

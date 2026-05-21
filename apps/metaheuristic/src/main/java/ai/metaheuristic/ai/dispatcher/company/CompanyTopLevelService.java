@@ -18,12 +18,15 @@ package ai.metaheuristic.ai.dispatcher.company;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
+import ai.metaheuristic.ai.dispatcher.beans.CompanyRevision;
 import ai.metaheuristic.ai.dispatcher.beans.Ids;
 import ai.metaheuristic.ai.dispatcher.data.CompanyData;
 import ai.metaheuristic.ai.dispatcher.data.SimpleCompany;
 import ai.metaheuristic.ai.dispatcher.repositories.CompanyRepository;
+import ai.metaheuristic.ai.dispatcher.repositories.CompanyRevisionRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.IdsRepository;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
+import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.S;
@@ -47,7 +50,9 @@ public class CompanyTopLevelService {
 
     private final Globals globals;
     private final CompanyRepository companyRepository;
+    private final CompanyRevisionRepository companyRevisionRepository;
     private final CompanyCache companyCache;
+    private final CompanyRevisionWriter companyRevisionWriter;
     private final IdsRepository idsRepository;
 
     public CompanyData.SimpleCompaniesResult getCompanies(Pageable pageable) {
@@ -60,30 +65,22 @@ public class CompanyTopLevelService {
 
     @Transactional
     public OperationStatusRest addCompany(String companyName) {
-        return addCompany(new Company(companyName));
-    }
-
-    @Transactional
-    public OperationStatusRest addCompany(Company company) {
         if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "237.010 Can't create a new company while 'replicated' mode of asset is active");
         }
-        if (S.b(company.name)) {
+        if (S.b(companyName)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "237.020 Name of company name must not be null");
         }
 
-        CompanyParamsYaml cpy = company.getCompanyParamsYaml();
+        CompanyParamsYaml cpy = new CompanyParamsYaml();
         cpy.createdOn = System.currentTimeMillis();
         cpy.updatedOn = cpy.createdOn;
+        String paramsYaml = CompanyParamsYamlUtils.BASE_YAML_UTILS.toString(cpy);
 
-        company.updateParams(cpy);
-
-        if (company.uniqueId==null) {
-            company.uniqueId = getUniqueId();
-        }
-        companyCache.save(company);
+        Long uniqueId = getUniqueId();
+        companyRevisionWriter.create(uniqueId, companyName, paramsYaml);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -109,8 +106,15 @@ public class CompanyTopLevelService {
         if (company == null) {
             return new CompanyData.SimpleCompanyResult("237.050 company wasn't found, companyUniqueId: " + companyUniqueId);
         }
+        // Head NAME/PARAMS live on the satellite — load via HEAD_REVISION_ID.
+        CompanyRevision head = company.headRevisionId == null
+                ? null
+                : companyRevisionRepository.findById(company.headRevisionId).orElse(null);
+        if (head == null) {
+            return new CompanyData.SimpleCompanyResult("237.051 company has no head revision, companyUniqueId: " + companyUniqueId);
+        }
         String groups = "";
-        CompanyParamsYaml cpy = company.getCompanyParamsYaml();
+        CompanyParamsYaml cpy = head.getCompanyParamsYaml();
 
         if (cpy.ac!=null && !S.b(cpy.ac.groups)) {
             groups = cpy.ac.groups;
@@ -118,7 +122,7 @@ public class CompanyTopLevelService {
         SimpleCompany simpleCompany = new SimpleCompany();
         simpleCompany.id = company.id;
         simpleCompany.uniqueId = company.uniqueId;
-        simpleCompany.name = company.name;
+        simpleCompany.name = head.name;
         CompanyData.SimpleCompanyResult companyResult = new CompanyData.SimpleCompanyResult(simpleCompany);
         companyResult.companyAccessControl.groups = groups;
         return companyResult;
@@ -139,14 +143,19 @@ public class CompanyTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"237.060 company wasn't found, companyUniqueId: " + companyUniqueId);
         }
 
+        // Pull the current head revision to derive a base CompanyParamsYaml to mutate.
+        CompanyRevision currentHead = c.headRevisionId == null
+                ? null
+                : companyRevisionRepository.findById(c.headRevisionId).orElse(null);
+
         Long createdOn = null;
-        if (S.b(c.getParams())) {
+        if (currentHead == null || S.b(currentHead.getParams())) {
             createdOn = System.currentTimeMillis();
         }
 
         CompanyParamsYaml cpy;
         try {
-            cpy = c.getCompanyParamsYaml();
+            cpy = currentHead != null ? currentHead.getCompanyParamsYaml() : new CompanyParamsYaml();
             if (createdOn!=null) {
                 cpy.createdOn = createdOn;
             }
@@ -155,9 +164,8 @@ public class CompanyTopLevelService {
         } catch (Throwable th) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"237.080 company params is in wrong format, error: " + th.getMessage());
         }
-        c.updateParams(cpy);
-        c.setName(name);
-        companyCache.save(c);
+        String paramsYaml = CompanyParamsYamlUtils.BASE_YAML_UTILS.toString(cpy);
+        companyRevisionWriter.writeNewRevision(c.id, name, paramsYaml);
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of company was changed successfully", null);
     }
 
@@ -167,3 +175,4 @@ public class CompanyTopLevelService {
         return companyCache.findByUniqueId(uniqueId);
     }
 }
+

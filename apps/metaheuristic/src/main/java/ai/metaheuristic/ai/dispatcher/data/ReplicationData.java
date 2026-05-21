@@ -17,7 +17,9 @@
 package ai.metaheuristic.ai.dispatcher.data;
 
 import ai.metaheuristic.ai.dispatcher.beans.Account;
+import ai.metaheuristic.ai.dispatcher.beans.AccountRevision;
 import ai.metaheuristic.ai.dispatcher.beans.Company;
+import ai.metaheuristic.ai.dispatcher.beans.CompanyRevision;
 import ai.metaheuristic.ai.dispatcher.beans.Function;
 import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.api.data.BaseDataClass;
@@ -68,6 +70,10 @@ public class ReplicationData {
     @AllArgsConstructor
     public static class CompanyAsset extends BaseDataClass implements ReplicationAsset {
         public Company company;
+        // Head revision payload — carries the mutable scalars (NAME, PARAMS) for this company.
+        // Required on the consumer side to reconstruct the satellite row via CompanyRevisionWriter.
+        @Nullable
+        public CompanyRevision headRevision;
         public CompanyAsset(List<String> errorMessages) {
             addErrorMessages(errorMessages);
         }
@@ -90,6 +96,11 @@ public class ReplicationData {
     @AllArgsConstructor
     public static class AccountAsset extends BaseDataClass implements ReplicationAsset {
         public Account account;
+        // Head revision payload — carries mutable profile/audit scalars (PUBLIC_NAME, MAIL_ADDRESS,
+        // PHONE, PHONE_AS_STR, UPDATED_ON, SECRET_KEY, TWO_FA, PARAMS) for this account.
+        // Required on the consumer side to reconstruct the satellite row via AccountRevisionWriter.
+        @Nullable
+        public AccountRevision headRevision;
         public AccountAsset(List<String> errorMessages) {
             addErrorMessages(errorMessages);
         }

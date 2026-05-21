@@ -17,7 +17,9 @@
 package ai.metaheuristic.ai.dispatcher.replication;
 
 import ai.metaheuristic.ai.dispatcher.account.AccountCache;
+import ai.metaheuristic.ai.dispatcher.account.AccountRevisionWriter;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
+import ai.metaheuristic.ai.dispatcher.beans.AccountRevision;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.ai.dispatcher.repositories.AccountRepository;
 import lombok.RequiredArgsConstructor;
@@ -42,40 +44,75 @@ public class ReplicationAccountService {
 
     private final AccountRepository accountRepository;
     private final AccountCache accountCache;
+    private final AccountRevisionWriter accountRevisionWriter;
 
     @Transactional
     public void updateAccount(AccountLoopEntry accountLoopEntry, ReplicationData.AccountAsset accountAsset) {
+        if (accountAsset.headRevision == null) {
+            log.error("Asset for username={} is missing headRevision; cannot update",
+                    accountLoopEntry.account.username);
+            return;
+        }
 
-        accountLoopEntry.account.companyId = accountAsset.account.companyId;
-        accountLoopEntry.account.username = accountAsset.account.username;
-        accountLoopEntry.account.password = accountAsset.account.password;
-        accountLoopEntry.account.accountNonExpired = accountAsset.account.accountNonExpired;
-        accountLoopEntry.account.accountNonLocked = accountAsset.account.accountNonLocked;
-        accountLoopEntry.account.credentialsNonExpired = accountAsset.account.credentialsNonExpired;
-        accountLoopEntry.account.enabled = accountAsset.account.enabled;
-        accountLoopEntry.account.publicName = accountAsset.account.publicName;
-        accountLoopEntry.account.mailAddress = accountAsset.account.mailAddress;
-        accountLoopEntry.account.phone = accountAsset.account.phone;
-        accountLoopEntry.account.createdOn = accountAsset.account.createdOn;
-        accountLoopEntry.account.updatedOn = accountAsset.account.updatedOn;
-        accountLoopEntry.account.roles = accountAsset.account.accountRoles.asString();
-        accountLoopEntry.account.secretKey = accountAsset.account.secretKey;
-        accountLoopEntry.account.twoFA = accountAsset.account.twoFA;
+        // Mutate the envelope-resident Spring-Security primitives + ROLES directly.
+        // USERNAME, COMPANY_ID, CREATED_ON are identity and intentionally never change.
+        Account envelope = accountLoopEntry.account;
+        envelope.password = accountAsset.account.password;
+        envelope.accountNonExpired = accountAsset.account.accountNonExpired;
+        envelope.accountNonLocked = accountAsset.account.accountNonLocked;
+        envelope.credentialsNonExpired = accountAsset.account.credentialsNonExpired;
+        envelope.enabled = accountAsset.account.enabled;
+        envelope.roles = accountAsset.account.accountRoles.asString();
+        accountCache.save(envelope);
 
-        accountCache.save(accountLoopEntry.account);
+        // Profile/audit scalars get a new satellite revision carrying the upstream values.
+        AccountRevision incoming = accountAsset.headRevision;
+        AccountRevisionWriter.ProfilePayload payload = new AccountRevisionWriter.ProfilePayload(
+                incoming.publicName,
+                incoming.mailAddress,
+                incoming.phone,
+                incoming.phoneAsStr,
+                incoming.secretKey,
+                incoming.twoFA,
+                incoming.getParams()
+        );
+        accountRevisionWriter.writeNewRevision(envelope.id, payload);
     }
 
     @Transactional
     public void createAccount(ReplicationData.AccountAsset accountAsset) {
         Account a = accountRepository.findByUsername(accountAsset.account.username);
-        if (a!=null) {
+        if (a != null) {
+            return;
+        }
+        if (accountAsset.headRevision == null) {
+            log.error("Asset for username={} is missing headRevision; cannot replicate",
+                    accountAsset.account.username);
             return;
         }
 
-        //noinspection ConstantConditions
-        accountAsset.account.id=null;
-        //noinspection ConstantConditions
-        accountAsset.account.version=null;
-        accountCache.save(accountAsset.account);
+        // Envelope draft — copy identity + security primitives from the upstream snapshot.
+        Account envelopeDraft = new Account();
+        envelopeDraft.companyId = accountAsset.account.companyId;
+        envelopeDraft.username = accountAsset.account.username;
+        envelopeDraft.password = accountAsset.account.password;
+        envelopeDraft.accountNonExpired = accountAsset.account.accountNonExpired;
+        envelopeDraft.accountNonLocked = accountAsset.account.accountNonLocked;
+        envelopeDraft.credentialsNonExpired = accountAsset.account.credentialsNonExpired;
+        envelopeDraft.enabled = accountAsset.account.enabled;
+        envelopeDraft.createdOn = accountAsset.account.createdOn;
+        envelopeDraft.roles = accountAsset.account.accountRoles.asString();
+
+        AccountRevision incoming = accountAsset.headRevision;
+        AccountRevisionWriter.ProfilePayload profile = new AccountRevisionWriter.ProfilePayload(
+                incoming.publicName,
+                incoming.mailAddress,
+                incoming.phone,
+                incoming.phoneAsStr,
+                incoming.secretKey,
+                incoming.twoFA,
+                incoming.getParams()
+        );
+        accountRevisionWriter.create(envelopeDraft, profile);
     }
 }

@@ -16,10 +16,6 @@
 
 package ai.metaheuristic.ai.dispatcher.beans;
 
-import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
-import ai.metaheuristic.ai.yaml.company.CompanyParamsYamlUtils;
-import ai.metaheuristic.commons.utils.threads.ThreadUtils;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,6 +26,10 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
+ * Envelope row for Company. Identity-only: ID, VERSION, UNIQUE_ID + revision plumbing.
+ * Mutable scalars (NAME, PARAMS) live in {@link CompanyRevision}, append-only,
+ * looked up manually by HEAD_REVISION_ID — see CompanyService.
+ *
  * @author Serge
  * Date: 10/27/2019
  * Time: 7:10 PM
@@ -54,46 +54,13 @@ public class Company implements Serializable {
     @Column(name = "UNIQUE_ID")
     public Long uniqueId;
 
-    public String name;
+    /** Mirror of the head revision's IS_DELETED. Flipped to true alongside a tombstone revision insert. */
+    @Column(name = "IS_DELETED")
+    public boolean deleted;
 
-    public Company(String companyName) {
-        this.name = companyName;
-    }
-
-    @Column(name = "PARAMS")
-    private String params;
-
+    /** Pointer to the latest CompanyRevision row for this envelope. Repointed on every new-revision insert. */
     @Nullable
-    public String getParams() {
-        return params;
-    }
-
-    public void setParams(String params) {
-        this.paramsLocked.reset(()->this.params = params);
-    }
-
-    @Transient
-    @JsonIgnore
-    private final ThreadUtils.CommonThreadLocker<CompanyParamsYaml> paramsLocked =
-            new ThreadUtils.CommonThreadLocker<>(this::parseParams);
-
-    private CompanyParamsYaml parseParams() {
-        if (params==null) {
-            return new CompanyParamsYaml();
-        }
-        CompanyParamsYaml temp = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(params);
-        CompanyParamsYaml ecpy = temp==null ? new CompanyParamsYaml() : temp;
-        return ecpy;
-    }
-
-    @JsonIgnore
-    public CompanyParamsYaml getCompanyParamsYaml() {
-        return paramsLocked.get();
-    }
-
-    @JsonIgnore
-    public void updateParams(CompanyParamsYaml tpy) {
-        setParams(CompanyParamsYamlUtils.BASE_YAML_UTILS.toString(tpy));
-    }
-
+    @Column(name = "HEAD_REVISION_ID")
+    public Long headRevisionId;
 }
+

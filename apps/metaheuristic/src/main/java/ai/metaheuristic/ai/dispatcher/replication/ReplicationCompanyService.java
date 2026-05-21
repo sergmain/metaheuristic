@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.replication;
 
 import ai.metaheuristic.ai.dispatcher.beans.Company;
 import ai.metaheuristic.ai.dispatcher.company.CompanyCache;
+import ai.metaheuristic.ai.dispatcher.company.CompanyRevisionWriter;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,26 +41,39 @@ import static ai.metaheuristic.ai.dispatcher.replication.ReplicationCompanyTopLe
 public class ReplicationCompanyService {
 
     private final CompanyCache companyCache;
+    private final CompanyRevisionWriter companyRevisionWriter;
 
     @Transactional
     public void createCompany(ReplicationData.CompanyAsset companyAsset) {
         Company c = companyCache.findByUniqueId(companyAsset.company.uniqueId);
-        if (c!=null) {
+        if (c != null) {
+            return;
+        }
+        if (companyAsset.headRevision == null) {
+            log.error("Asset for uniqueId={} is missing headRevision; cannot replicate", companyAsset.company.uniqueId);
             return;
         }
 
-        //noinspection ConstantConditions
-        companyAsset.company.id=null;
-        //noinspection ConstantConditions
-        companyAsset.company.version=null;
-        companyCache.save(companyAsset.company);
+        // Envelope + first revision constructed through the writer so the satellite is properly populated.
+        companyRevisionWriter.create(
+                companyAsset.company.uniqueId,
+                companyAsset.headRevision.name,
+                companyAsset.headRevision.getParams()
+        );
     }
 
     @Transactional
     public void updateCompany(CompanyLoopEntry companyLoopEntry, ReplicationData.CompanyAsset companyAsset) {
-        companyLoopEntry.company.name = companyAsset.company.name;
-        companyLoopEntry.company.setParams( companyAsset.company.getParams() );
-
-        companyCache.save(companyLoopEntry.company);
+        if (companyAsset.headRevision == null) {
+            log.error("Asset for uniqueId={} is missing headRevision; cannot update",
+                    companyLoopEntry.company.uniqueId);
+            return;
+        }
+        // INSERT a new satellite row carrying the upstream NAME/PARAMS; envelope.HEAD_REVISION_ID is repointed.
+        companyRevisionWriter.writeNewRevision(
+                companyLoopEntry.company.id,
+                companyAsset.headRevision.name,
+                companyAsset.headRevision.getParams()
+        );
     }
 }

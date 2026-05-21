@@ -59,8 +59,13 @@ public interface CompanyRepository extends CrudRepository<Company, Long> {
     @Query(value="select a from Company a order by a.uniqueId")
     Page<Company> findAll(Pageable pageable);
 
+    // Head NAME lives in CompanyRevision (referenced by Company.headRevisionId).
+    // Join envelope to its head revision to project SimpleCompany without an extra query per row.
     @Transactional(readOnly = true)
-    @Query(value="select new ai.metaheuristic.ai.dispatcher.data.SimpleCompany(a.id, a.uniqueId, a.name) from Company a order by a.uniqueId")
+    @Query(value="select new ai.metaheuristic.ai.dispatcher.data.SimpleCompany(a.id, a.uniqueId, r.name)" +
+                 " from Company a, CompanyRevision r" +
+                 " where r.id = a.headRevisionId" +
+                 " order by a.uniqueId")
     Page<SimpleCompany> findAllAsSimple(Pageable pageable);
 
     @Transactional(readOnly = true)
@@ -71,3 +76,4 @@ public interface CompanyRepository extends CrudRepository<Company, Long> {
     @Query(value="select c.uniqueId from Company c")
     List<Long> findAllUniqueIds();
 }
+

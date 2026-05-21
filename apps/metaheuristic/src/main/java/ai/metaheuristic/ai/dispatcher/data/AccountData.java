@@ -134,4 +134,39 @@ public class AccountData {
         public Long companyId;
         public String[] profiles;
     }
+
+    /**
+     * Composite read view of an Account: envelope (identity, security primitives,
+     * IS_DELETED flag, head pointer) joined with the head AccountRevision
+     * (current profile/audit scalars). Built by AccountService.getCurrent(...) —
+     * never load an Account by id and expect to read PUBLIC_NAME etc. directly
+     * from the envelope.
+     *
+     * @param paramsYaml parsed AccountParamsYaml from the head revision (lazy via the bean's locker).
+     */
+    public record AccountWithRevision(
+            Long id,
+            Long companyId,
+            String username,
+            String password,
+            boolean accountNonExpired,
+            boolean accountNonLocked,
+            boolean credentialsNonExpired,
+            boolean enabled,
+            long createdOn,
+            @Nullable String roles,
+            boolean deleted,
+            @Nullable Long headRevisionId,
+            // head-revision fields
+            String publicName,
+            @Nullable String mailAddress,
+            @Nullable String phone,
+            @Nullable String phoneAsStr,
+            long updatedOn,
+            @Nullable String secretKey,
+            boolean twoFA,
+            @Nullable String params,
+            ai.metaheuristic.ai.yaml.account.AccountParamsYaml paramsYaml
+    ) {}
 }
+

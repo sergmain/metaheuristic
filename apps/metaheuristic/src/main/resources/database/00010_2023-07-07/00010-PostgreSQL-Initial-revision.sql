@@ -73,20 +73,53 @@ CREATE UNIQUE INDEX MH_DISPATCHER_CODE_UNQ_IDX
 
 CREATE TABLE MH_COMPANY
 (
-    ID              SERIAL PRIMARY KEY,
-    VERSION         NUMERIC(10, 0)  NOT NULL,
-    UNIQUE_ID       NUMERIC(10, 0) NOT NULL,
-    NAME            VARCHAR(50)   NOT NULL,
-    PARAMS          TEXT null
+    ID                SERIAL PRIMARY KEY,
+    VERSION           NUMERIC(10, 0) NOT NULL,
+    UNIQUE_ID         NUMERIC(10, 0) NOT NULL,
+    IS_DELETED        BOOLEAN        NOT NULL DEFAULT FALSE,
+    HEAD_REVISION_ID  NUMERIC(10, 0)
 );
 
 CREATE UNIQUE INDEX MH_COMPANY_UNIQUE_ID_UNQ_IDX
     ON MH_COMPANY (UNIQUE_ID);
 
+CREATE INDEX MH_COMPANY_HEAD_REVISION_ID_IDX
+    ON MH_COMPANY (HEAD_REVISION_ID);
+
+CREATE TABLE MH_COMPANY_REVISION
+(
+    ID          SERIAL PRIMARY KEY,
+    VERSION     NUMERIC(10, 0) NOT NULL,
+    COMPANY_ID  NUMERIC(10, 0) NOT NULL,
+    REVISION    NUMERIC(10, 0) NOT NULL,
+    NAME        VARCHAR(50)    NOT NULL,
+    PARAMS      TEXT,
+    IS_DELETED  BOOLEAN        NOT NULL DEFAULT FALSE,
+    CREATED_ON  bigint         NOT NULL
+);
+
+CREATE UNIQUE INDEX MH_COMPANY_REVISION_COMPANY_ID_REVISION_UNQ_IDX
+    ON MH_COMPANY_REVISION (COMPANY_ID, REVISION);
+
+CREATE INDEX MH_COMPANY_REVISION_COMPANY_ID_IDX
+    ON MH_COMPANY_REVISION (COMPANY_ID);
+
+-- Seed: 'Main company' — envelope + first revision
 insert into MH_COMPANY
-(id, version, UNIQUE_ID, name, params)
+(id, version, UNIQUE_ID, IS_DELETED, HEAD_REVISION_ID)
 VALUES
-(nextval('mh_company_id_seq'), 0, 1, 'Main company', '');
+(nextval('mh_company_id_seq'), 0, 1, false, null);
+
+insert into MH_COMPANY_REVISION
+(id, version, COMPANY_ID, REVISION, NAME, PARAMS, IS_DELETED, CREATED_ON)
+VALUES
+(nextval('mh_company_revision_id_seq'), 0,
+ (select ID from MH_COMPANY where UNIQUE_ID=1), 1, 'Main company', '', false,
+ EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint * 1000);
+
+update MH_COMPANY set HEAD_REVISION_ID =
+    (select ID from MH_COMPANY_REVISION where COMPANY_ID=(select ID from MH_COMPANY where UNIQUE_ID=1) and REVISION=1)
+    where UNIQUE_ID=1;
 
 -- !!! this insert must be after creating 'master company'
 insert into MH_GEN_IDS
@@ -95,28 +128,19 @@ select 'mh_ids', max(UNIQUE_ID) from mh_company;
 
 create table MH_ACCOUNT
 (
-  ID          SERIAL PRIMARY KEY,
-  VERSION     NUMERIC(10, 0)  NOT NULL,
-  COMPANY_ID     NUMERIC(10, 0) NOT NULL,
-  USERNAME varchar(30) not null,
-  PASSWORD varchar(100) not null,
-  ROLES varchar(100),
-  PUBLIC_NAME varchar(100) not null,
-
-  is_acc_not_expired BOOLEAN not null default true,
-  is_not_locked BOOLEAN not null default false,
-  is_cred_not_expired BOOLEAN not null default false,
-  is_enabled BOOLEAN not null default false,
-
-  mail_address varchar(100) ,
-  PHONE varchar(100) ,
-  PHONE_AS_STR varchar(100) ,
-
-  CREATED_ON  bigint not null,
-  UPDATED_ON  bigint not null,
-  SECRET_KEY  varchar(25),
-  TWO_FA      BOOLEAN not null default false,
-  PARAMS      TEXT
+  ID                  SERIAL PRIMARY KEY,
+  VERSION             NUMERIC(10, 0) NOT NULL,
+  COMPANY_ID          NUMERIC(10, 0) NOT NULL,
+  USERNAME            varchar(30)    not null,
+  PASSWORD            varchar(100)   not null,
+  ROLES               varchar(100),
+  is_acc_not_expired  BOOLEAN        not null default true,
+  is_not_locked       BOOLEAN        not null default false,
+  is_cred_not_expired BOOLEAN        not null default false,
+  is_enabled          BOOLEAN        not null default false,
+  CREATED_ON          bigint         not null,
+  IS_DELETED          BOOLEAN        NOT NULL DEFAULT FALSE,
+  HEAD_REVISION_ID    NUMERIC(10, 0)
 );
 
 CREATE INDEX mh_account_company_id_idx
@@ -124,6 +148,33 @@ CREATE INDEX mh_account_company_id_idx
 
 CREATE UNIQUE INDEX MH_ACCOUNT_USERNAME_UNQ_IDX
     ON MH_ACCOUNT (USERNAME);
+
+CREATE INDEX MH_ACCOUNT_HEAD_REVISION_ID_IDX
+    ON MH_ACCOUNT (HEAD_REVISION_ID);
+
+CREATE TABLE MH_ACCOUNT_REVISION
+(
+    ID            SERIAL PRIMARY KEY,
+    VERSION       NUMERIC(10, 0) NOT NULL,
+    ACCOUNT_ID    NUMERIC(10, 0) NOT NULL,
+    REVISION      NUMERIC(10, 0) NOT NULL,
+    PUBLIC_NAME   varchar(100)   NOT NULL,
+    MAIL_ADDRESS  varchar(100),
+    PHONE         varchar(100),
+    PHONE_AS_STR  varchar(100),
+    UPDATED_ON    bigint         NOT NULL,
+    SECRET_KEY    varchar(25),
+    TWO_FA        BOOLEAN        NOT NULL DEFAULT FALSE,
+    PARAMS        TEXT,
+    IS_DELETED    BOOLEAN        NOT NULL DEFAULT FALSE,
+    CREATED_ON    bigint         NOT NULL
+);
+
+CREATE UNIQUE INDEX MH_ACCOUNT_REVISION_ACCOUNT_ID_REVISION_UNQ_IDX
+    ON MH_ACCOUNT_REVISION (ACCOUNT_ID, REVISION);
+
+CREATE INDEX MH_ACCOUNT_REVISION_ACCOUNT_ID_IDX
+    ON MH_ACCOUNT_REVISION (ACCOUNT_ID);
 
 CREATE TABLE MH_PROCESSOR
 (
