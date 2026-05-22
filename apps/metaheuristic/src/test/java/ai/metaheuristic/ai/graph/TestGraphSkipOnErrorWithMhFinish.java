@@ -139,22 +139,22 @@ public class TestGraphSkipOnErrorWithMhFinish extends PreparingSourceCode {
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(), List.of(t1));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(1L), List.of(t2));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(2L), List.of(t3));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(3L), List.of(t4));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // Verify initial state
         assertEquals(EnumsApi.TaskExecState.NONE, preparingSourceCodeService.findTaskState(getExecContextForTest(), 1L));
@@ -171,14 +171,14 @@ public class TestGraphSkipOnErrorWithMhFinish extends PreparingSourceCode {
         txSupportForTestingService.updateTaskExecState(
                 execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
                 getExecContextForTest().execContextTaskStateId, 1L, EnumsApi.TaskExecState.OK, t1.taskContextId);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // Set task2 to ERROR
         ExecContextOperationStatusWithTaskList status = txSupportForTestingService.updateTaskExecState(
                 execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
                 getExecContextForTest().execContextTaskStateId, 2L, EnumsApi.TaskExecState.ERROR, t2.taskContextId);
         assertEquals(EnumsApi.OperationStatus.OK, status.status.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // task3 must be SKIPPED (non-leaf descendant of errored task)
         assertEquals(EnumsApi.TaskExecState.OK, preparingSourceCodeService.findTaskState(getExecContextForTest(), 1L));
@@ -241,27 +241,27 @@ public class TestGraphSkipOnErrorWithMhFinish extends PreparingSourceCode {
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(), List.of(t1));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(1L), List.of(t2a, t2b));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(21L), List.of(t3a));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(22L), List.of(t3b));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(1L, 31L, 32L), List.of(tFinish));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         assertEquals(6, preparingSourceCodeService.getCountUnfinishedTasks(getExecContextForTest()));
 
@@ -269,13 +269,13 @@ public class TestGraphSkipOnErrorWithMhFinish extends PreparingSourceCode {
         txSupportForTestingService.updateTaskExecState(
                 execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
                 getExecContextForTest().execContextTaskStateId, 1L, EnumsApi.TaskExecState.OK, t1.taskContextId);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // Set task2a to ERROR (branch A fails)
         txSupportForTestingService.updateTaskExecState(
                 execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
                 getExecContextForTest().execContextTaskStateId, 21L, EnumsApi.TaskExecState.ERROR, t2a.taskContextId);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // task3a should be SKIPPED
         assertEquals(EnumsApi.TaskExecState.SKIPPED, preparingSourceCodeService.findTaskState(getExecContextForTest(), 31L));
@@ -291,12 +291,12 @@ public class TestGraphSkipOnErrorWithMhFinish extends PreparingSourceCode {
         txSupportForTestingService.updateTaskExecState(
                 execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
                 getExecContextForTest().execContextTaskStateId, 22L, EnumsApi.TaskExecState.OK, t2b.taskContextId);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         txSupportForTestingService.updateTaskExecState(
                 execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
                 getExecContextForTest().execContextTaskStateId, 32L, EnumsApi.TaskExecState.OK, t3b.taskContextId);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // mh.finish should now be assignable
         List<ExecContextData.TaskVertex> vertices = execContextGraphService.findAllForAssigning(

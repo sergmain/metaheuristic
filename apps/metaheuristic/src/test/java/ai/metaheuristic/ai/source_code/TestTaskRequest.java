@@ -63,7 +63,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 @Slf4j
 public class TestTaskRequest extends FeatureMethods {
@@ -126,14 +126,12 @@ public class TestTaskRequest extends FeatureMethods {
         step_4(processorIdAndCoreIds);
     }
 
-
-
     private void step_2(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
-//        preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
 
         final AtomicReference<DispatcherCommParamsYaml.AssignedTask> tRef = new AtomicReference<>();
+        // get a task for processing
         await()
             .atLeast(Duration.ofMillis(500))
             .atMost(Duration.ofSeconds(300))
@@ -145,8 +143,6 @@ public class TestTaskRequest extends FeatureMethods {
                 return task!=null;
             });
 
-        // get a task for processing
-        //DispatcherCommParamsYaml.AssignedTask t = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         assertNotNull(tRef.get());
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();
@@ -198,11 +194,10 @@ public class TestTaskRequest extends FeatureMethods {
         assertTrue(task2.completed!=0);
 
         execContextTopLevelService.updateExecContextStatus(getExecContextForTest().id);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
     }
 
     private void step_3(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {
-//        preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
         preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
 
         final ProcessorCommParamsYaml processorComm0 = new ProcessorCommParamsYaml();

@@ -136,23 +136,23 @@ public class TestGraphSkipPropagation extends PreparingSourceCode {
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(), List.of(t1));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(1L), List.of(t2));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(2L), List.of(t3));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(3L), List.of(t4));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(4L), List.of(t5));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // Verify initial state
         for (long id = 1; id <= 5; id++) {
@@ -163,14 +163,14 @@ public class TestGraphSkipPropagation extends PreparingSourceCode {
         txSupportForTestingService.updateTaskExecState(
                 execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
                 getExecContextForTest().execContextTaskStateId, 1L, EnumsApi.TaskExecState.OK, t1.taskContextId);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // task2 SKIPPED
         ExecContextOperationStatusWithTaskList status = txSupportForTestingService.updateTaskExecState(
                 execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
                 getExecContextForTest().execContextTaskStateId, 2L, EnumsApi.TaskExecState.SKIPPED, t2.taskContextId);
         assertEquals(EnumsApi.OperationStatus.OK, status.status.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         assertEquals(EnumsApi.TaskExecState.OK, preparingSourceCodeService.findTaskState(getExecContextForTest(), 1L));
         assertEquals(EnumsApi.TaskExecState.SKIPPED, preparingSourceCodeService.findTaskState(getExecContextForTest(), 2L));
@@ -241,50 +241,50 @@ public class TestGraphSkipPropagation extends PreparingSourceCode {
         // Build the graph at ctx="1,2" level: check-obj -> wrapper -> read-req -> decompose
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(), List.of(tCheckObj));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(10L), List.of(tWrapper));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(20L), List.of(tReadReq));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(30L), List.of(tDecompose));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // Build wrapper's sub-process at ctx="1,2,3": nop-cond -> eval-obj -> store-obj
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(20L), List.of(tNopCond));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(21L), List.of(tEvalObj));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(22L), List.of(tStoreObj));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // Execute: check-obj OK, wrapper OK
         txSupportForTestingService.updateTaskExecState(
                 execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
                 getExecContextForTest().execContextTaskStateId, 10L, EnumsApi.TaskExecState.OK, tCheckObj.taskContextId);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         txSupportForTestingService.updateTaskExecState(
                 execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
                 getExecContextForTest().execContextTaskStateId, 20L, EnumsApi.TaskExecState.OK, tWrapper.taskContextId);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // nop-cond SKIPPED at ctx="1,2,3"
         ExecContextOperationStatusWithTaskList status = txSupportForTestingService.updateTaskExecState(
                 execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
                 getExecContextForTest().execContextTaskStateId, 21L, EnumsApi.TaskExecState.SKIPPED, tNopCond.taskContextId);
         assertEquals(EnumsApi.OperationStatus.OK, status.status.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // eval-obj must be SKIPPED (ctx="1,2,3", descendant of nop-cond, non-leaf)
         assertEquals(EnumsApi.TaskExecState.SKIPPED, preparingSourceCodeService.findTaskState(getExecContextForTest(), 22L),

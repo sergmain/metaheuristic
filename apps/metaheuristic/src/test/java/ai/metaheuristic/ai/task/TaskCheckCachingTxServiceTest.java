@@ -70,7 +70,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
 
@@ -183,7 +183,8 @@ public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
 
         v = variableTxService.getVariable(variableId);
 
-        TaskCheckCachingTxService.CheckCachingStatus status = taskCheckCachingTxService.checkCaching(getExecContextForTest().id, taskId, prepareData.cacheProcess);
+        TaskCheckCachingTxService.CheckCachingStatus status = TaskSyncService.getWithSync(taskId,
+            ()->taskCheckCachingTxService.checkCaching(getExecContextForTest().id, taskId, prepareData.cacheProcess));
         assertEquals(TaskCheckCachingTxService.CheckCachingStatus.copied_from_cache, status, "Actual: " + status);
 
         v = variableTxService.getVariable(variableId);

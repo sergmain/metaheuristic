@@ -200,7 +200,7 @@ class TestExecSourceCode {
     }
 
     private void finalize(SourceCodeApiData.@Nullable SourceCodeResult scr) {
-        if (scr != null) {
+        if (scr != null && scr.id!=null) {
             SourceCodeImpl sc = Objects.requireNonNull(sourceCodeCache.findById(scr.id));
             try {
                 sourceCodeTxService.deleteSourceCodeById(sc.id);
