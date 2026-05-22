@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.internal_function.evaluation;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.preparing.MhInternalTaskPipelineRunner;
 import ai.metaheuristic.ai.spi.MhSpi;
 import ai.metaheuristic.api.EnumsApi;
 import ch.qos.logback.classic.LoggerContext;
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -38,14 +40,25 @@ import org.springframework.test.context.DynamicPropertySource;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Tests that boolean conditions work in all three forms:
  * 1. bare variable reference: condition: varName
  * 2. equality comparison: condition: varName==true
  * 3. ternary (regression): condition: 'varName ? true : false'
+ * <p>
+ * Each condition-test process is wrapped in an outer mh.nop with a single
+ * sub-process. A SKIP on the inner sub-process is isolated to that wrapper's
+ * subtree and does not cascade to the next top-level process. Production uses
+ * the .mhsc SourceCode language which produces a different (correct) graph
+ * topology directly; this fan-out structure is a YAML-fixture concern.
  */
 @SuppressWarnings("unused")
 @SpringBootTest(classes = MhComplexTestConfig.class)
@@ -57,6 +70,8 @@ public class TestEvaluationOfConditionBoolean extends TestBaseEvaluation {
 
     @org.junit.jupiter.api.io.TempDir
     static Path tempDir;
+
+    @Autowired private MhInternalTaskPipelineRunner pipelineRunner;
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
@@ -94,63 +109,48 @@ public class TestEvaluationOfConditionBoolean extends TestBaseEvaluation {
         System.out.println("start execContextStatusService.resetStatus()");
         execContextStatusService.resetStatus();
 
-        Long taskId;
+        // Drive the whole pipeline to completion. The scaffold handles async
+        // event drainage, task assignment, and condition-gated SKIP propagation
+        // for us; we only need to inspect the final task states.
+        pipelineRunner.runPipelineToCompletion(getExecContextForTest().id, 30);
 
-        // Step 1: mh.string-as-variable for boolTrue
-        taskId = initVariableEvents();
-        preparingSourceCodeService.findRegisterInternalTaskInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.waitUntilTaskFinished(taskId);
+        List<TaskImpl> tasks = taskRepositoryForTest.findByExecContextIdAsList(getExecContextForTest().id);
+        Map<String, TaskImpl> byProcessCode = tasks.stream()
+                .collect(Collectors.toMap(
+                        t -> t.getTaskParamsYaml().task.processCode,
+                        Function.identity()));
 
-        // Step 2: mh.string-as-variable for boolFalse
-        taskId = initVariableEvents();
-        preparingSourceCodeService.findRegisterInternalTaskInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.waitUntilTaskFinished(taskId);
+        // Init tasks — must have run successfully so boolTrue/boolFalse exist
+        assertExecState(byProcessCode, "mh.string-as-variable-bool-true", EnumsApi.TaskExecState.OK);
+        assertExecState(byProcessCode, "mh.string-as-variable-bool-false", EnumsApi.TaskExecState.OK);
 
-        // Step 3: mh.nop-bare-true (condition: boolTrue) — should execute (not skip)
-        taskId = initVariableEvents();
-        preparingSourceCodeService.findRegisterInternalTaskInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.waitUntilTaskFinished(taskId);
-        TaskImpl taskBareTrue = taskRepositoryForTest.findById(taskId).orElseThrow();
-        assertEquals(EnumsApi.TaskExecState.OK.value, taskBareTrue.execState,
-                "Task with 'condition: boolTrue' should have executed successfully");
+        // Wrapper mh.nop parents — always run (no condition on them)
+        assertExecState(byProcessCode, "mh.nop-wrap-bare-true", EnumsApi.TaskExecState.OK);
+        assertExecState(byProcessCode, "mh.nop-wrap-bare-false", EnumsApi.TaskExecState.OK);
+        assertExecState(byProcessCode, "mh.nop-wrap-eq-true", EnumsApi.TaskExecState.OK);
+        assertExecState(byProcessCode, "mh.nop-wrap-eq-false", EnumsApi.TaskExecState.OK);
+        assertExecState(byProcessCode, "mh.nop-wrap-ternary-true", EnumsApi.TaskExecState.OK);
 
-        // Step 4: mh.nop-bare-false (condition: boolFalse) — should be SKIPPED
-        taskId = initVariableEvents();
-        preparingSourceCodeService.findRegisterInternalTaskInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.waitUntilTaskFinished(taskId);
-        TaskImpl taskBareFalse = taskRepositoryForTest.findById(taskId).orElseThrow();
-        assertEquals(EnumsApi.TaskExecState.SKIPPED.value, taskBareFalse.execState,
-                "Task with 'condition: boolFalse' should have been skipped");
+        // Condition-test tasks — the actual coverage. Production conditions
+        // are evaluated independently for each, with no cross-sibling cascade
+        // because each lives under its own wrapper subtree.
+        assertExecState(byProcessCode, "mh.nop-bare-true", EnumsApi.TaskExecState.OK);
+        assertExecState(byProcessCode, "mh.nop-bare-false", EnumsApi.TaskExecState.SKIPPED);
+        assertExecState(byProcessCode, "mh.nop-eq-true", EnumsApi.TaskExecState.OK);
+        assertExecState(byProcessCode, "mh.nop-eq-false", EnumsApi.TaskExecState.SKIPPED);
+        assertExecState(byProcessCode, "mh.nop-ternary-true", EnumsApi.TaskExecState.OK);
 
-        // Step 5: mh.nop-eq-true (condition: boolTrue==true) — should execute (not skip)
-        taskId = initVariableEvents();
-        preparingSourceCodeService.findRegisterInternalTaskInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.waitUntilTaskFinished(taskId);
-        TaskImpl taskEqTrue = taskRepositoryForTest.findById(taskId).orElseThrow();
-        assertEquals(EnumsApi.TaskExecState.OK.value, taskEqTrue.execState,
-                "Task with 'condition: boolTrue==true' should have executed successfully");
+        // mh.finish — must complete
+        assertExecState(byProcessCode, "mh.finish", EnumsApi.TaskExecState.OK);
 
-        // Step 6: mh.nop-eq-false (condition: boolFalse==true) — should be SKIPPED
-        taskId = initVariableEvents();
-        preparingSourceCodeService.findRegisterInternalTaskInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.waitUntilTaskFinished(taskId);
-        TaskImpl taskEqFalse = taskRepositoryForTest.findById(taskId).orElseThrow();
-        assertEquals(EnumsApi.TaskExecState.SKIPPED.value, taskEqFalse.execState,
-                "Task with 'condition: boolFalse==true' should have been skipped");
+        // Total: 2 init + 5 wrappers + 5 conditions + 1 mh.finish = 13 tasks
+        assertEquals(13, tasks.size(), "Unexpected task count");
+    }
 
-        // Step 7: mh.nop-ternary-true (condition: 'boolTrue ? true : false') — regression, should execute
-        taskId = initVariableEvents();
-        preparingSourceCodeService.findRegisterInternalTaskInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.waitUntilTaskFinished(taskId);
-        TaskImpl taskTernaryTrue = taskRepositoryForTest.findById(taskId).orElseThrow();
-        assertEquals(EnumsApi.TaskExecState.OK.value, taskTernaryTrue.execState,
-                "Task with ternary condition 'boolTrue ? true : false' should have executed successfully");
-
-        // mh.finish
-        taskId = initVariableEvents();
-        preparingSourceCodeService.findRegisterInternalTaskInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.waitUntilTaskFinished(taskId);
-
-        finalAssertions(8); // 2 init + 5 condition + 1 mh.finish
+    private static void assertExecState(Map<String, TaskImpl> byProcessCode, String processCode, EnumsApi.TaskExecState expected) {
+        TaskImpl task = byProcessCode.get(processCode);
+        assertNotNull(task, "Task with processCode '" + processCode + "' wasn't found");
+        assertEquals(expected.value, task.execState,
+                "Task '" + processCode + "' expected " + expected + " but was " + EnumsApi.TaskExecState.from(task.execState));
     }
 }

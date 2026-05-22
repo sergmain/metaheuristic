@@ -42,42 +42,88 @@ source:
         - name: boolFalse
           ext: .txt
 
+    # Each condition-test is wrapped in an mh.nop parent so a SKIP isolates to
+    # that wrapper's subtree and does not cascade to the next top-level
+    # process. Production uses the .mhsc SourceCode language which produces a
+    # different (correct) graph topology; this fan-out is a YAML-only fixture
+    # concern.
+
     # Step 3: Test bare variable reference "condition: boolTrue" — should NOT skip
-    - code: mh.nop-bare-true
-      name: mh.nop-bare-true
+    - code: mh.nop-wrap-bare-true
+      name: mh.nop-wrap-bare-true
       function:
         code: mh.nop
         context: internal
-      condition: boolTrue
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: mh.nop-bare-true
+            name: mh.nop-bare-true
+            function:
+              code: mh.nop
+              context: internal
+            condition: boolTrue
 
     # Step 4: Test bare variable reference "condition: boolFalse" — should SKIP
-    - code: mh.nop-bare-false
-      name: mh.nop-bare-false
+    - code: mh.nop-wrap-bare-false
+      name: mh.nop-wrap-bare-false
       function:
         code: mh.nop
         context: internal
-      condition: boolFalse
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: mh.nop-bare-false
+            name: mh.nop-bare-false
+            function:
+              code: mh.nop
+              context: internal
+            condition: boolFalse
 
     # Step 5: Test equality "condition: boolTrue==true" — should NOT skip
-    - code: mh.nop-eq-true
-      name: mh.nop-eq-true
+    - code: mh.nop-wrap-eq-true
+      name: mh.nop-wrap-eq-true
       function:
         code: mh.nop
         context: internal
-      condition: boolTrue==true
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: mh.nop-eq-true
+            name: mh.nop-eq-true
+            function:
+              code: mh.nop
+              context: internal
+            condition: boolTrue==true
 
     # Step 6: Test equality "condition: boolFalse==true" — should SKIP
-    - code: mh.nop-eq-false
-      name: mh.nop-eq-false
+    - code: mh.nop-wrap-eq-false
+      name: mh.nop-wrap-eq-false
       function:
         code: mh.nop
         context: internal
-      condition: boolFalse==true
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: mh.nop-eq-false
+            name: mh.nop-eq-false
+            function:
+              code: mh.nop
+              context: internal
+            condition: boolFalse==true
 
     # Step 7: Test ternary (regression) "condition: 'boolTrue ? true : false'" — should NOT skip
-    - code: mh.nop-ternary-true
-      name: mh.nop-ternary-true
+    - code: mh.nop-wrap-ternary-true
+      name: mh.nop-wrap-ternary-true
       function:
         code: mh.nop
         context: internal
-      condition: 'boolTrue ? true : false'
+      subProcesses:
+        logic: sequential
+        processes:
+          - code: mh.nop-ternary-true
+            name: mh.nop-ternary-true
+            function:
+              code: mh.nop
+              context: internal
+            condition: 'boolTrue ? true : false'
