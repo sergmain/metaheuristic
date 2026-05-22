@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.source_code;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
+import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeService;
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.spi.MhSpi;
@@ -44,6 +45,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Serge
@@ -82,6 +85,7 @@ public class TestWrongNameOfVariables extends PreparingSourceCode {
     }
 
     @Autowired private SourceCodeValidationService sourceCodeValidationService;
+    @Autowired private SourceCodeService sourceCodeService;
 
     @Override
     @SneakyThrows
@@ -89,12 +93,39 @@ public class TestWrongNameOfVariables extends PreparingSourceCode {
         return IOUtils.resourceToString("/source_code/yaml/for-testing-wrong-name-of-variables.yaml", StandardCharsets.UTF_8);
     }
 
+    // The YAML used here describes a process with an OUTPUT variable whose name is
+    // "1#var-processed-file-1" — illegal characters per StrUtils.isVarNameOk. The expected
+    // behavior is that createSourceCode rejects this with WRONG_FORMAT_OF_VARIABLE_NAME_ERROR
+    // via Stage-1 (static, YAML-only) validation BEFORE the graph-builder stage and BEFORE
+    // any persistence attempt. We bypass the standard PreparingSourceCode setup because that
+    // setup requires the SourceCode to be persisted, which is precisely what should NOT
+    // happen for an invalid YAML.
+
+    @Override
+    public void beforePreparingSourceCode() {
+        // intentionally no-op: the YAML under test is invalid by design and must not be persisted.
+    }
+
+    @Override
+    public void afterPreparingSourceCode() {
+        // intentionally no-op: nothing was persisted.
+    }
+
     @Test
     public void test() {
-        SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(getSourceCode());
-        assertEquals(EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_VARIABLE_NAME_ERROR, status.status);
+        String yaml = getSourceCodeYamlAsString();
+
+        // companyUniqueId=2L; createSourceCode must reject the YAML before reaching persistence,
+        // so the company value is irrelevant — any non-1L value is fine.
+        SourceCodeApiData.SourceCodeResult result = sourceCodeService.createSourceCode(
+                yaml, EnumsApi.SourceCodeLang.yaml, 2L);
+
+        // Stage-1 (static) validation must reject the variable name "1#var-processed-file-1"
+        // — a leading digit + '#' isn't a legal variable name per StrUtils.isVarNameOk.
+        assertNull(result.id, "id should be null because nothing was persisted");
+        assertTrue(result.isErrorMessages(), "result should carry an error message");
+        assertEquals(EnumsApi.SourceCodeValidateStatus.WRONG_FORMAT_OF_VARIABLE_NAME_ERROR,
+                result.validationResult.status,
+                "static validation must reject ill-formed variable names");
     }
 }
-
-
-
