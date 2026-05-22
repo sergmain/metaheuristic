@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.data.ReplicationData;
 import ai.metaheuristic.ai.dispatcher.replication.ReplicationSourceService;
+import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
 import ai.metaheuristic.ai.spi.MhSpi;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import ch.qos.logback.classic.LoggerContext;
@@ -34,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.boot.test.autoconfigure.core.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -62,6 +64,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @Execution(ExecutionMode.SAME_THREAD)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @AutoConfigureCache
+@Import(SpringSecurityWebAuxTestConfig.class)
 public class TestRestReplicationJson {
 
     private MockMvc mockMvc;
