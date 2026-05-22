@@ -56,10 +56,23 @@ class TestExecContextSorting {
                     CTX_1_2___100, CTX_1_2___5, CTX_1_2___50, CTX_1_2___500, CTX_1, CTX_1_2, CTX_1_11
                     ));
 
+    // ExecContextUtils.compare delegates to ContextUtils.compareTaskContextIds, which is
+    // explicitly DESCENDING by design ("Sort order (descending): longer processContextIds
+    // first, then by ancestor segments, then by instance number" — see ContextUtils
+    // javadoc). The rationale is that variable lookup must find the most specific match
+    // first. So EXPECTED here is the descending order the comparator must produce:
+    //   - Longer processContextId first (1,2... and 1,11 before bare 1, 2, 3)
+    //   - Within same length, larger segments first (1,11 before 1,2)
+    //   - Within same processContextId, contexts WITH a #suffix come before those WITHOUT
+    //     (the suffixed forms are "more specific" → win)
+    //   - Within the same suffixed group, suffix value descending (500, 100, 50, ...)
     private static final List<String> EXPECTED = List.of(
-            CTX_1, CTX_1_2, CTX_1_2___1, CTX_1_2___2, CTX_1_2___3, CTX_1_2___5,
-            CTX_1_2___10, CTX_1_2___11, CTX_1_2___50,
-            CTX_1_2___100, CTX_1_2___500, CTX_1_11, CTX_2, CTX_3
+            CTX_1_11,
+            CTX_1_2___500, CTX_1_2___100, CTX_1_2___50,
+            CTX_1_2___11, CTX_1_2___10, CTX_1_2___5,
+            CTX_1_2___3, CTX_1_2___2, CTX_1_2___1,
+            CTX_1_2,
+            CTX_3, CTX_2, CTX_1
     );
 
     @Test
