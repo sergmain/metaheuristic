@@ -360,8 +360,12 @@ public class MhInternalTaskPipelineRunner {
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
             String data = outputData.get(output.name);
             if (data != null) {
-                txSupportForTestingService.storeOutputVariableWithTaskContextId(
-                        ec.id, output.name, data, tpy.task.taskContextId, task.id);
+                // Write by variable id: handles both plain outputs and
+                // parentContext outputs (where the variable lives in the
+                // parent task's context, not the producing task's own).
+                // output.id is already resolved by the dispatcher.
+                txSupportForTestingService.storeOutputVariableById(
+                        ec.id, output.id, data, task.id);
             }
             else if (output.getNullable()) {
                 log.info("  Nullable output '{}' has no synthetic data, skipping", output.name);

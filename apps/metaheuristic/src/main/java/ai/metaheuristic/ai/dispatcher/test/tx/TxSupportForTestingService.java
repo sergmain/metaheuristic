@@ -174,6 +174,35 @@ public class TxSupportForTestingService {
         }
     }
 
+    /**
+     * Stores data for an output variable identified by its variable ID, bypassing
+     * the (variableName, taskContextId) lookup. This is the right entry point for
+     * outputs declared with {@code parentContext: true}, where the variable lives
+     * in the parent task's context rather than the producing task's own context.
+     * The task's {@code OutputVariable.id} is already resolved by the dispatcher
+     * to the correct variable row, so the test scaffold can use it directly.
+     */
+    @Transactional
+    public void storeOutputVariableById(Long execContextId, Long variableId, String variableData, Long taskId) {
+        if (!globals.testing) {
+            throw new IllegalStateException("Only for testing");
+        }
+        Variable v = variableRepository.findById(variableId).orElse(null);
+        if (v==null || v.inited) {
+            throw new IllegalStateException("(v==null || v.inited), variableId: " + variableId + ", v==null: " + (v==null) + (v!=null ? ", v.inited: " + v.inited : ""));
+        }
+        byte[] bytes = variableData.getBytes();
+        VariableSyncService.getWithSyncVoidForCreation(variableId, ()-> variableTxService.storeVariable(new ByteArrayInputStream(bytes), bytes.length, execContextId, taskId, variableId));
+
+        v = variableRepository.findById(variableId).orElse(null);
+        if (v==null) {
+            throw new IllegalStateException("(v==null)");
+        }
+        if (!v.inited) {
+            throw new IllegalStateException("(!v.inited)");
+        }
+    }
+
     @Transactional
     public ExecContextOperationStatusWithTaskList updateTaskExecState(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, Long taskId, EnumsApi.TaskExecState execState, String taskContextId) {
         if (!globals.testing) {
