@@ -24,6 +24,9 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextFSM;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingTopLevelService;
+import ai.metaheuristic.ai.dispatcher.event.events.ResetTasksWithErrorEvent;
+import org.jspecify.annotations.Nullable;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.TaskWithInternalContextEventService;
@@ -107,14 +110,23 @@ public class MhInternalTaskPipelineRunner {
     private final TaskVariableTopLevelService taskVariableTopLevelService;
     private final TxSupportForTestingService txSupportForTestingService;
     private final ExecContextFSM execContextFSM;
+    private final ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
 
     /**
      * Callback to provide synthetic data for an external function task.
      * Map keys are output-variable names; map values are the data to store.
+     * <p>
+     * Returning {@code null} signals "simulate a failed function execution" — the
+     * runner reports a non-OK SystemExecResult instead of writing outputs. If the
+     * source-code declares {@code triesAfterError} on the failed process, the task
+     * transitions to ERROR_WITH_RECOVERY and the runner automatically fires a
+     * {@code ResetTasksWithErrorEvent} to put it back into NONE so the next outer
+     * iteration picks it up and re-calls this provider (typically returning
+     * non-null on the retry to simulate eventual success).
      */
     @FunctionalInterface
     public interface SyntheticDataProvider {
-        Map<String, String> provide(String functionCode, TaskParamsYaml tpy);
+        @Nullable Map<String, String> provide(String functionCode, TaskParamsYaml tpy);
     }
 
     /**
@@ -289,8 +301,42 @@ public class MhInternalTaskPipelineRunner {
             taskRepository.save(t);
         });
 
-        // Get synthetic data for output variables.
+        // Get synthetic data for output variables. Null signals "fail this attempt".
         Map<String, String> outputData = syntheticDataProvider.provide(functionCode, tpy);
+
+        if (outputData == null) {
+            // Failure path: report a non-OK SystemExecResult. The dispatcher's
+            // result-store logic checks triesAfterError on the process and either
+            // transitions the task to ERROR (give up) or ERROR_WITH_RECOVERY (will
+            // be reset and retried). We then drive recovery explicitly so the next
+            // outer iteration of the loop re-picks the task and re-calls the
+            // provider — which typically returns non-null on the second try to
+            // simulate eventual success.
+            log.info("  Simulating FAILURE for function {} (task #{})", functionCode, task.id);
+            FunctionApiData.FunctionExec failExec = new FunctionApiData.FunctionExec(
+                    new FunctionApiData.SystemExecResult(functionCode, false, 1, "Synthetic failure"),
+                    null, null, null);
+            ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult failResult =
+                    new ProcessorCommParamsYaml.ReportTaskProcessingResult.SimpleTaskExecResult();
+            failResult.setTaskId(task.id);
+            failResult.setResult(FunctionExecUtils.toString(failExec));
+
+            TaskSyncService.getWithSyncVoid(task.id, () ->
+                    ExecContextSyncService.getWithSyncVoid(ec.id, () ->
+                            execContextFSM.storeExecResultWithTx(failResult)));
+
+            processScheduledTasks();
+
+            // If the task is now in ERROR_WITH_RECOVERY, drive the production recovery
+            // path to transition it back to NONE so the runner's next pass can retry.
+            TaskImpl afterFail = taskRepository.findById(task.id).orElse(null);
+            if (afterFail != null && afterFail.execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value) {
+                execContextTaskResettingTopLevelService.resetTasksWithErrorForRecovery(
+                        new ResetTasksWithErrorEvent(ec.id));
+                processScheduledTasks();
+            }
+            return;
+        }
 
         for (TaskParamsYaml.OutputVariable output : tpy.task.outputs) {
             String data = outputData.get(output.name);
