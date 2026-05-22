@@ -325,7 +325,26 @@ public class MhInternalTaskPipelineRunner {
                     ExecContextSyncService.getWithSyncVoid(ec.id, () ->
                             execContextFSM.storeExecResultWithTx(failResult)));
 
-            processScheduledTasks();
+            // storeExecResultWithTx fires an @Async @TransactionalEventListener chain
+            // that ultimately transitions the task from IN_PROGRESS to its terminal
+            // failure state (ERROR_WITH_RECOVERY when triesAfterError tolerates this
+            // attempt, ERROR otherwise). Reloading the task immediately after the
+            // commit is racy — the async listener may not have run yet — so poll
+            // until the task leaves IN_PROGRESS before deciding whether to fire
+            // recovery.
+            await().atMost(Duration.ofSeconds(15))
+                    .pollInterval(Duration.ofMillis(200))
+                    .until(() -> {
+                        processScheduledTasks();
+                        TaskImpl reloaded = taskRepository.findById(task.id).orElse(null);
+                        if (reloaded == null) {
+                            return true;
+                        }
+                        int state = reloaded.execState;
+                        return state == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value
+                                || state == EnumsApi.TaskExecState.ERROR.value
+                                || state == EnumsApi.TaskExecState.NONE.value;
+                    });
 
             // If the task is now in ERROR_WITH_RECOVERY, drive the production recovery
             // path to transition it back to NONE so the runner's next pass can retry.
