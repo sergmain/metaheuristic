@@ -24,12 +24,12 @@ functions:
   - code: function-01:1.1
     assetManagerUrl: http://localhost:8080
     state: not_found
-    sourcing: processor
+    sourcing: dispatcher
   - code: function-02:1.1
     assetManagerUrl: http://localhost:8080
     state: not_found
-    sourcing: processor
+    sourcing: dispatcher
   - code: fileless-function:1.0
     assetManagerUrl: https://localhost:8888
     state: not_found
-    sourcing: processor
+    sourcing: dispatcher

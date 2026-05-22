@@ -23,16 +23,16 @@ metadata:
     - code: function-01:1.1
       dispatcherUrl: http://localhost:8080
       functionState: not_found
-      sourcing: processor
+      sourcing: dispatcher
       verified: false
     - code: function-02:1.1
       dispatcherUrl: http://localhost:8080
       functionState: not_found
-      sourcing: processor
+      sourcing: dispatcher
       verified: false
     - code: fileless-function:1.0
       dispatcherUrl: https://localhost:8888
       functionState: not_found
-      sourcing: processor
+      sourcing: dispatcher
       verified: false
     version: 1
