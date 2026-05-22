@@ -111,11 +111,14 @@ public class SignalBusRestControllerTest {
             new ScopeRef(DATA_REST_COMPANY_ID), 0L,
             java.util.Set.of(SignalKind.BATCH), java.util.List.of()).serverRev();
 
+        // SignalPollResponse.signals is @JsonInclude(NON_EMPTY): when no signals match, the field
+        // is omitted from JSON entirely. Assert ABSENCE of the field rather than running a
+        // filter over a non-existent path (which raises "No value at JSON path").
         mockMvc.perform(get("/rest/v1/dispatcher/signals")
                 .param("afterRev", String.valueOf(rev))
                 .param("kinds", "BATCH"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.signals[?(@.signalId == 'rest-43')]").isEmpty())
+            .andExpect(jsonPath("$.signals").doesNotExist())
             .andExpect(jsonPath("$.serverRev").value(rev));
     }
 
