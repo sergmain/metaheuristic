@@ -1,6 +1,8 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -10,6 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * task sits in TaskQueue with state=NONE, !assigned, and no processor claims it.
  * Without this re-notify, the task stalls forever.
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TaskProviderUtilsDecideRenotifyTest {
 
     @Test

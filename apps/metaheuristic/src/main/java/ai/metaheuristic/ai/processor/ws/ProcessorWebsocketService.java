@@ -162,7 +162,10 @@ public class ProcessorWebsocketService {
                 }
                 return true;
             }
-            catch (Throwable e) {
+            catch(InterruptedException e) {
+                //
+            }
+            catch(Throwable e) {
                 if (!"IOException: The remote computer refused the network connection".equals(ExceptionUtils.getRootCauseMessage(e))) {
                     log.error("Error, " + url, e);
                 }

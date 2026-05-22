@@ -27,6 +27,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * <b>!!! BEFORE MAKING ANY EDITION IN THIS CLASS, READ <a href="https://github.com/sergmain/metaheuristic/wiki/multi-versioning-mechanic">...</a></b>
+ * <br/>
  * @author Serge
  * Date: 3/30/2021
  * Time: 1:46 PM

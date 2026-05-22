@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.signal_bus;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -30,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Sergio Lissner
  * Plan 01 — Foundation, Step 9. TTL sweep.
  */
+@Execution(ExecutionMode.CONCURRENT)
 class SignalBusSweeperTest {
 
     private static final Instant T0 = Instant.parse("2026-01-01T00:00:00Z");

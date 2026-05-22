@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.signal_bus;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.time.Duration;
 import java.util.Map;
@@ -28,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Plan 01 — Foundation, Step 10. Smoke test per kind asserting the
  * generated topic string matches signal-bus-06-topics.md §3.
  */
+@Execution(ExecutionMode.CONCURRENT)
 class SignalKindRegistryTest {
 
     private final SignalKindRegistry registry = SignalKindRegistry.v1Default();

@@ -44,7 +44,7 @@ public class CompanyParamsYamlUtilsV1
 
     @NonNull
     @Override
-    public CompanyParamsYamlV2 upgradeTo(@NonNull CompanyParamsYamlV1 src) {
+    public CompanyParamsYamlV2 upgradeTo(CompanyParamsYamlV1 src) {
         src.checkIntegrity();
         CompanyParamsYamlV2 trg = new CompanyParamsYamlV2();
         if (src.ac!=null) {
@@ -54,9 +54,8 @@ public class CompanyParamsYamlUtilsV1
         return trg;
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         return null;
     }
 
@@ -71,13 +70,12 @@ public class CompanyParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(@NonNull CompanyParamsYamlV1 yaml) {
+    public String toString(CompanyParamsYamlV1 yaml) {
         return getYaml().dump(yaml);
     }
 
-    @NonNull
     @Override
-    public CompanyParamsYamlV1 to(@NonNull String s) {
+    public CompanyParamsYamlV1 to(String s) {
         final CompanyParamsYamlV1 p = getYaml().load(s);
         return p;
     }

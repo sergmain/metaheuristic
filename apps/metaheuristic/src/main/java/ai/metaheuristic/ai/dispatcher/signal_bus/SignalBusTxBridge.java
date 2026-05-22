@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.signal_bus;
 import ai.metaheuristic.ai.dispatcher.signal_bus.events.BatchStateSignalTxEvent;
 import ai.metaheuristic.ai.dispatcher.signal_bus.events.ExecContextStateSignalTxEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -34,7 +35,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
  */
 @Component
 @Profile("dispatcher")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_={@Autowired})
 public class SignalBusTxBridge {
 
     private final ApplicationEventPublisher applicationEventPublisher;

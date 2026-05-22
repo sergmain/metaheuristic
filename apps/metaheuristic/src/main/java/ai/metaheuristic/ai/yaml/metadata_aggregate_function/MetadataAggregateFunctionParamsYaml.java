@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * <b>!!! BEFORE MAKING ANY EDITION IN THIS CLASS, READ <a href="https://github.com/sergmain/metaheuristic/wiki/multi-versioning-mechanic">...</a></b>
+ * <br/>
  * @author Serge
  * Date: 11/13/2021
  * Time: 5:09 PM

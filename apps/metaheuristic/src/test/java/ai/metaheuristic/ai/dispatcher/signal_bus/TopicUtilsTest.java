@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.signal_bus;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Plan 01 — Foundation, Step 11.
  * Regex-driven so it gets its own test class — regexes are a known foot-gun.
  */
+@Execution(ExecutionMode.CONCURRENT)
 class TopicUtilsTest {
 
     @Test

@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.signal_bus;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * the minimal Plan 01 surface (SignalBus, SignalKind, ScopeRef, SignalEntry,
  * SignalKindRegistry, TopicBuilder, CoalescePolicy, QueryResult) exists.
  */
+@Execution(ExecutionMode.CONCURRENT)
 class SignalBusTest {
 
     private static SignalBus newBatchBus() {

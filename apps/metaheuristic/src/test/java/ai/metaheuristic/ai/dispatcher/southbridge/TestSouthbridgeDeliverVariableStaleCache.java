@@ -28,6 +28,8 @@ import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.http.ResponseEntity;
@@ -81,6 +83,7 @@ import static org.mockito.Mockito.mock;
  * @author Sergio Lissner
  * Date: 4/7/2026
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestSouthbridgeDeliverVariableStaleCache {
 
     // An in-memory backing "DB" for variable content. The fake storeToFileWithTx

@@ -21,6 +21,8 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.InOrder;
 
 import java.nio.charset.StandardCharsets;
@@ -29,8 +31,7 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.mock;import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 /**
@@ -47,6 +48,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
  * @author Sergio Lissner
  * Date: 4/7/2026
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class TestAssetFileService {
 
     @Test
@@ -124,7 +126,7 @@ public class TestAssetFileService {
         VariableTxService variableTxService = mock(VariableTxService.class);
 
         // Record order: when variableTxService.resetVariable is called, the file must already be gone.
-        org.mockito.Mockito.doAnswer(inv -> {
+        org.mockito.Mockito.doAnswer(_ -> {
             assertFalse(Files.exists(staleAssetFile),
                     "file must be deleted BEFORE variableTxService.resetVariable is called");
             return null;

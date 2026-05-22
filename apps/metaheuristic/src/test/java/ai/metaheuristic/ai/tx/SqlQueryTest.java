@@ -53,7 +53,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 public class SqlQueryTest extends PreparingSourceCode {
 
@@ -99,11 +99,11 @@ public class SqlQueryTest extends PreparingSourceCode {
         setExecContextForTest(r.execContext);
 
         System.out.println("### warm cache");
-        ExecContextImpl ec = execContextCache.findById(getExecContextForTest().id);
-        ec = execContextCache.findById(getExecContextForTest().id);
+        ExecContextImpl ec = execContextCache.findById(getExecContextForTest().id, true);
+        ec = execContextCache.findById(getExecContextForTest().id, true);
 
         System.out.println("### call via execContextCache");
-        ec = execContextCache.findById(getExecContextForTest().id);
+        ec = execContextCache.findById(getExecContextForTest().id, true);
 
         System.out.println("### call via state only");
         var state = execContextRepository.findState(getExecContextForTest().id);

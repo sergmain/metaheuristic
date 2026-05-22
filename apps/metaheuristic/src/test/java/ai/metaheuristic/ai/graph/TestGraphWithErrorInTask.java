@@ -122,7 +122,7 @@ public class TestGraphWithErrorInTask extends PreparingSourceCode {
         final TaskApiData.TaskWithContext t1 = new TaskApiData.TaskWithContext(1L, CommonConsts.TOP_LEVEL_CONTEXT_ID);
         OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(), List.of(t1));
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
 

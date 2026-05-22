@@ -14,30 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.exec_context_graph;
+@NullMarked
+package ai.metaheuristic.ai.dispatcher.signal_bus.events;
 
-import ai.metaheuristic.api.ConstsApi;
-import ai.metaheuristic.api.data.BaseParams;
-import lombok.Data;
-
-/**
- * <b>!!! BEFORE MAKING ANY EDITION IN THIS CLASS, READ <a href="https://github.com/sergmain/metaheuristic/wiki/multi-versioning-mechanic">...</a></b>
- * <br/>
- * @author Serge
- * Date: 3/17/2021
- * Time: 10:33 AM
- */
-@Data
-public class ExecContextGraphParamsYaml implements BaseParams {
-
-    public final int version = 1;
-
-    @Override
-    public boolean checkIntegrity() {
-        return true;
-    }
-
-    // this is a graph of processes for runtime phase
-    public String graph = ConstsApi.EMPTY_GRAPH;
-
-}
+import org.jspecify.annotations.NullMarked;

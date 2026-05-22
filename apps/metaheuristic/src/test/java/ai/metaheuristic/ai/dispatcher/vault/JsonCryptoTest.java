@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.dispatcher.vault;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import javax.crypto.AEADBadTagException;
 import java.security.SecureRandom;
@@ -28,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author Sergio Lissner
  */
+@Execution(ExecutionMode.CONCURRENT)
 class JsonCryptoTest {
 
     private static byte[] aes256Key() {

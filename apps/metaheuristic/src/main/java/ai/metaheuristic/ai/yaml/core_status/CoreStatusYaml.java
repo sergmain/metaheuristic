@@ -23,6 +23,11 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.jspecify.annotations.Nullable;
 
+/**
+ * <b>!!! BEFORE MAKING ANY EDITION IN THIS CLASS, READ <a href="https://github.com/sergmain/metaheuristic/wiki/multi-versioning-mechanic">...</a></b>
+ * <br/>
+ *
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

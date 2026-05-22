@@ -22,6 +22,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
+ * <b>!!! BEFORE MAKING ANY EDITION IN THIS CLASS, READ <a href="https://github.com/sergmain/metaheuristic/wiki/multi-versioning-mechanic">...</a></b>
+ * <br/>
  * @author Serge
  * Date: 12/21/2019
  * Time: 11:38 PM

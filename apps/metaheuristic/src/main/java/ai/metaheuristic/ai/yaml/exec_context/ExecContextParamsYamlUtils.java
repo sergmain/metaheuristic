@@ -20,6 +20,11 @@ import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
 import java.util.Map;
 
+/**
+ * <b>!!! BEFORE MAKING ANY EDITION IN THIS CLASS, READ <a href="https://github.com/sergmain/metaheuristic/wiki/multi-versioning-mechanic">...</a></b>
+ * <br/>
+ *
+ */
 public class ExecContextParamsYamlUtils {
 
     private static final ExecContextParamsYamlUtilsV1 YAML_UTILS_V_1 = new ExecContextParamsYamlUtilsV1();

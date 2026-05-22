@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.dispatcher.signal_bus.events;
 
 import ai.metaheuristic.ai.dispatcher.signal_bus.ScopeRef;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.Map;
 
@@ -28,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * of info — info is conventionally owned by the event, and mutating it after
  * publish is already a bug.
  */
+@Execution(ExecutionMode.CONCURRENT)
 class BatchStateSignalTxEventTest {
 
     @Test

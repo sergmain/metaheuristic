@@ -97,7 +97,10 @@ class CompanyParamsYamlUtilsTest {
     @Test
     void emptyDocument_givesDefaultLatest() {
         // No version field — defaults to V1, upgrades to latest (V2) cleanly.
-        String emptyYaml = "ac:\n  groups: 'x'\n";
+        String emptyYaml = """
+            ac:
+              groups: 'x'
+            """;
         CompanyParamsYaml result = CompanyParamsYamlUtils.BASE_YAML_UTILS.to(emptyYaml);
         assertNotNull(result);
         assertEquals(2, result.version);

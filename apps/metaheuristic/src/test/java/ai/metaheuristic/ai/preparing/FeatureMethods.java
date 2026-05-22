@@ -105,7 +105,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
         execContextStatusService.resetStatus();
         assertEquals(EnumsApi.ExecContextState.STARTED, execContextStatusService.getExecContextStatuses().statuses.get(getExecContextForTest().id));
 
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
         assertEquals(EnumsApi.ExecContextState.STARTED.code, getExecContextForTest().getState());
     }
 

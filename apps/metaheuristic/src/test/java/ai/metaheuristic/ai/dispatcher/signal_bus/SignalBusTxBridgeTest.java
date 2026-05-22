@@ -21,6 +21,8 @@ import ai.metaheuristic.ai.dispatcher.signal_bus.events.BatchStateSignalTxEvent;
 import ai.metaheuristic.ai.dispatcher.signal_bus.events.ExecContextStateSignalEvent;
 import ai.metaheuristic.ai.dispatcher.signal_bus.events.ExecContextStateSignalTxEvent;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.ApplicationEventPublisher;
 
@@ -36,6 +38,7 @@ import static org.mockito.Mockito.verify;
  * Unit test, no Spring. Each Tx bridge method must re-publish the plain event
  * via e.to() with identical field values.
  */
+@Execution(ExecutionMode.CONCURRENT)
 class SignalBusTxBridgeTest {
 
     @Test

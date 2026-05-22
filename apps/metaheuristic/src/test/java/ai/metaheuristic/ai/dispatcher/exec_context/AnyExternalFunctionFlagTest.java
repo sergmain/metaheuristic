@@ -22,6 +22,8 @@ import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -48,6 +50,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Claude
  * Date: 4/9/2026
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class AnyExternalFunctionFlagTest {
 
     private static final String PURE_INTERNAL_YAML = """

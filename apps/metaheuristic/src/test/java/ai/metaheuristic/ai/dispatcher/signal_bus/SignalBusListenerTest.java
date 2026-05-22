@@ -21,6 +21,8 @@ import ai.metaheuristic.ai.dispatcher.signal_bus.events.DocumentExportSignalEven
 import ai.metaheuristic.ai.dispatcher.signal_bus.events.ExecContextStateSignalEvent;
 import ai.metaheuristic.ai.dispatcher.signal_bus.events.SystemNoticeSignalEvent;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.Map;
 
@@ -36,6 +38,7 @@ import static org.mockito.Mockito.verify;
  * with the correct kind, signalId, scope, info, and terminal flag derived
  * from the BatchExecState code.
  */
+@Execution(ExecutionMode.CONCURRENT)
 class SignalBusListenerTest {
 
     @Test
