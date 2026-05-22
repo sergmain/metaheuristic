@@ -1,5 +1,5 @@
 /*
- * Metaheuristic, Copyright (C) 2017-2025, Innovation platforms, LLC
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,10 +22,10 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTxService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
-import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
+import ai.metaheuristic.ai.preparing.MhInternalTaskPipelineRunner;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.ai.spi.MhSpi;
@@ -49,9 +49,6 @@ import org.springframework.test.context.DynamicPropertySource;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings("unused")
 @SpringBootTest(classes = MhComplexTestConfig.class)
@@ -93,6 +90,7 @@ class TestPermuteValuesOfVariables extends PreparingSourceCode {
     @Autowired private ExecContextGraphTopLevelService execContextGraphTopLevelService;
     @Autowired private ExecContextRepository execContextRepository;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
+    @Autowired private MhInternalTaskPipelineRunner pipelineRunner;
 
     @SneakyThrows
     @Override
@@ -110,38 +108,41 @@ class TestPermuteValuesOfVariables extends PreparingSourceCode {
         }
     }
 
+    /**
+     * Verifies that {@code mh.permute-values-of-variables} dynamically creates one
+     * subprocess task per permutation of its input variables.
+     * <p>
+     * The YAML sets {@code batches: '[40, 60]'} (two values) and uses
+     * {@code mh.permute-values-of-variables} which reads {@code batchSize} and produces
+     * one subprocess invocation per value. Expected final task count:
+     * <ul>
+     *   <li>mh.inline-as-variable — 1 task</li>
+     *   <li>mh.permute-values-of-variables — 1 task</li>
+     *   <li>mh.nop subprocess — 2 tasks (one per batchSize value)</li>
+     *   <li>mh.finish — 1 task</li>
+     * </ul>
+     * Total: 5 finished tasks, all OK.
+     * <p>
+     * Previously this test stepped through {@code findTaskForRegisteringInQueue} calls
+     * and asserted intermediate counts, but that path only awaits the task-allocator
+     * registration step — NOT the downstream {@code @Async @EventListener} that drains
+     * {@code TaskWithInternalContextEvent}s through the internal-context MTQ. The
+     * intermediate assertion {@code assertEquals(2, ...)} was racing the async chain
+     * and saw 0 tasks finished. The runner closes that race by directly enqueuing each
+     * internal task and awaiting its terminal state. Final-count semantics are
+     * preserved by {@code finalAssertions(5)}.
+     */
     @Test
     public void testCreateTasks() {
-
         System.out.println("start produceTasksForTest()");
         preparingSourceCodeService.produceTasksForTest(getSourceCodeYamlAsString(), preparingSourceCodeData);
-
-        // ======================
 
         System.out.println("start execContextStatusService.resetStatus()");
         execContextStatusService.resetStatus();
 
-        System.out.println("start findTaskForRegisteringInQueue()");
-        preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
-
-        final List<Long> taskIds = getFinishedTaskVertices(getExecContextForTest());
-        assertEquals(2, taskIds.size());
-
-        System.out.println("start findTaskForRegisteringInQueue() #5");
-
-        // mh.permute-variables
-        preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
-
-        ExecContextTaskStateSyncService.getWithSync(getExecContextForTest().execContextTaskStateId,
-            ()->execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(getExecContextForTest().id, getExecContextForTest().execContextTaskStateId));
-
-        // mh.permute-variables
-        preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
-
-        // mh.finish
-        preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);
+        System.out.println("start runPipelineToCompletion()");
+        pipelineRunner.runPipelineToCompletion(getExecContextForTest().id, 20);
 
         finalAssertions(5);
     }
-
 }

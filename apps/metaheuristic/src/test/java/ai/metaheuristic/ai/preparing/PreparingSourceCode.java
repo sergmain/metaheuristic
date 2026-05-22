@@ -207,7 +207,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
             List<Long> taskIds = getUnfinishedTaskVertices(getExecContextForTest());
             assertEquals(0, taskIds.size());
 
-            ExecContext execContext = execContextCache.findById(getExecContextForTest().id);
+            ExecContext execContext = execContextCache.findById(getExecContextForTest().id, true);
             assertNotNull(execContext);
             assertEquals(EnumsApi.ExecContextState.FINISHED, EnumsApi.ExecContextState.toState(execContext.getState()));
 
