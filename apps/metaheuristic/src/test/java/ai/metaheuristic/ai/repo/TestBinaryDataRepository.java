@@ -44,10 +44,25 @@ import org.springframework.test.context.DynamicPropertySource;
 
 import java.io.ByteArrayInputStream;
 import java.nio.file.Path;
-import java.sql.Timestamp;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Verifies two related contracts on {@link VariableTxService}:
+ * <ol>
+ *   <li>An inited variable round-trips its bytes through dispatcher blob
+ *       storage — {@code createInitializedTx} + {@code getVariableAsBytes}.</li>
+ *   <li>The immutability invariant is enforced — calling {@code updateWithTx}
+ *       on an already-inited variable throws {@code IllegalStateException}
+ *       with the {@code 171.100} marker, because {@code VariableTxService.update}
+ *       refuses to mutate an inited row.</li>
+ * </ol>
+ * Before the immutability model, {@code update()} silently overwrote inited
+ * variables and a single test exercised both "create then read" and
+ * "create then mutate then read". The mutation half is now obsolete by
+ * design; this test promotes that obsolescence into an explicit positive
+ * assertion of the immutability rule.
+ */
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
@@ -88,39 +103,59 @@ public class TestBinaryDataRepository {
     public void after() {
         if (var1!=null) {
             variableRepository.deleteById(var1.id);
+            var1 = null;
         }
     }
 
     @Test
-    public void test() throws InterruptedException {
+    public void test_createAndReadInitedVariable_roundTripsBytes() {
         final byte[] bytes = "this is very short data".getBytes();
-
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
         var1 = variableTxService.createInitializedTx(
-                        inputStream, bytes.length, "test-01", "test-file.bin", 10L, CommonConsts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.binary);
+                inputStream, bytes.length, "test-01", "test-file.bin", 10L, CommonConsts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.binary);
 
-        Timestamp ts = var1.getUploadTs();
+        assertNotNull(var1);
+        assertTrue(var1.inited, "Variable created via createInitializedTx must be inited");
 
-        final Variable var2 = variableTxService.getVariable(var1.getId());
-        assertNotNull(var2);
-        final byte[] bytesVar2 = variableTxService.getVariableAsBytes(var1.getId());
-        assertArrayEquals(bytes, bytesVar2);
+        final Variable reloaded = variableTxService.getVariable(var1.getId());
+        assertNotNull(reloaded);
+        assertEquals(var1.id, reloaded.id);
+        assertTrue(reloaded.inited);
 
-        // to check timestamp
-        Thread.sleep(1100);
+        final byte[] readBack = variableTxService.getVariableAsBytes(var1.getId());
+        assertArrayEquals(bytes, readBack, "bytes read back from dispatcher blob storage must match what was written");
+    }
 
-        final byte[] bytes2 = "another one very short data".getBytes();
-        final ByteArrayInputStream inputStream2 = new ByteArrayInputStream(bytes2);
-        ExecContextSyncService.getWithSyncVoid(10L,
-                ()-> VariableSyncService.getWithSyncVoidForCreation(var2.id,
-                        ()-> variableTxService.updateWithTx(null, inputStream2, bytes2.length, var2.id)));
+    @Test
+    public void test_updatingInitedVariable_isRejectedByImmutabilityInvariant() {
+        final byte[] originalBytes = "original payload".getBytes();
+        final ByteArrayInputStream originalStream = new ByteArrayInputStream(originalBytes);
 
-        final Variable var3 = variableRepository.findById(var2.getId()).orElse(null);
-        assertNotNull(var3);
-        assertNotEquals(ts, var3.getUploadTs());
+        var1 = variableTxService.createInitializedTx(
+                originalStream, originalBytes.length, "test-02", "test-file.bin", 11L, CommonConsts.TOP_LEVEL_CONTEXT_ID, EnumsApi.VariableType.binary);
+        assertTrue(var1.inited);
 
-        final byte[] bytesVar3 = variableTxService.getVariableAsBytes(var1.getId());
-        assertArrayEquals(bytes2, bytesVar3);
+        final byte[] replacementBytes = "replacement payload — must be rejected".getBytes();
+        final ByteArrayInputStream replacementStream = new ByteArrayInputStream(replacementBytes);
+        final Long variableId = var1.getId();
+
+        // updateWithTx on an inited variable must throw because
+        // VariableTxService.update() enforces immutability via
+        //     if (data.inited) throw new IllegalStateException("171.100 ...")
+        IllegalStateException thrown = assertThrows(IllegalStateException.class, () ->
+                ExecContextSyncService.getWithSyncVoid(11L,
+                        () -> VariableSyncService.getWithSyncVoidForCreation(variableId,
+                                () -> variableTxService.updateWithTx(null, replacementStream, replacementBytes.length, variableId))));
+
+        assertTrue(thrown.getMessage().contains("171.100"),
+                "Exception must carry the 171.100 immutability marker, was: " + thrown.getMessage());
+        assertTrue(thrown.getMessage().contains("can't be mutated"),
+                "Exception must say the variable can't be mutated, was: " + thrown.getMessage());
+
+        // The original bytes must still be retrievable — the failed mutation
+        // is a no-op from the caller's perspective.
+        final byte[] readBack = variableTxService.getVariableAsBytes(variableId);
+        assertArrayEquals(originalBytes, readBack, "Original bytes must survive the rejected update attempt");
     }
 }
