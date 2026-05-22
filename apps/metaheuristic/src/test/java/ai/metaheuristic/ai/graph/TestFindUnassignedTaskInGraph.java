@@ -254,12 +254,18 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
         assertTrue(Set.of(311L, 312L, 313L).contains(vertices.get(1).taskId));
         assertTrue(Set.of(311L, 312L, 313L).contains(vertices.get(2).taskId));
 
-        // in production code this will never happened, i.e. switching from ERROR state to OK state
+        // In production a task never transitions from ERROR back to OK, but this test
+        // exercises that hypothetical to verify the lower-level helper's contract.
         ExecContextImpl ec1 = getExecContextForTest();
         status = txSupportForTestingService.updateTaskExecState(
             execContextGraphService.getExecContextDAC(ec1.id, ec1.execContextGraphId), getExecContextForTest().execContextTaskStateId,22L, EnumsApi.TaskExecState.OK, "123#1");
 
-        // so we update children manually
+        // Attempt to manually reset 22's children (321/322/323) from SKIPPED → NONE.
+        // This is a no-op under the current contract of setStateForAllChildrenTasksInternal:
+        // the helper now only propagates a state to descendants whose ALL parents are in
+        // ERROR or SKIPPED. Since 22 is now OK (above), the gate filters out 321/322/323
+        // and they stay SKIPPED. The call is left in place to document that the helper
+        // CANNOT be used to undo a SKIPPED-cascade after-the-fact.
         ExecContextImpl ec = getExecContextForTest();
         txSupportForTestingService.setStateForAllChildrenTasksInternal(
             execContextGraphService.getExecContextDAC(ec.id, ec.execContextGraphId), getExecContextForTest().execContextTaskStateId, 22L, status, EnumsApi.TaskExecState.NONE);
@@ -269,14 +275,14 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
 
         vertices = execContextGraphService.findAllForAssigning(getExecContextForTest().execContextGraphId, getExecContextForTest().execContextTaskStateId, true);
 
-        assertEquals(6, vertices.size());
+        // Only 311/312/313 are NONE-and-assignable. 321/322/323 remain SKIPPED from the
+        // earlier 22→ERROR cascade and are NOT re-eligible just because 22 was flipped
+        // back to OK. This is the load-bearing invariant: a SKIPPED-cascade is sticky.
+        assertEquals(3, vertices.size());
         assertEquals(EnumsApi.TaskExecState.NONE, preparingSourceCodeService.findTaskState(getExecContextForTest(), vertices.get(0).taskId));
-        assertTrue(Set.of(311L, 312L, 313L, 321L, 322L, 323L).contains(vertices.get(0).taskId));
-        assertTrue(Set.of(311L, 312L, 313L, 321L, 322L, 323L).contains(vertices.get(1).taskId));
-        assertTrue(Set.of(311L, 312L, 313L, 321L, 322L, 323L).contains(vertices.get(2).taskId));
-        assertTrue(Set.of(311L, 312L, 313L, 321L, 322L, 323L).contains(vertices.get(3).taskId));
-        assertTrue(Set.of(311L, 312L, 313L, 321L, 322L, 323L).contains(vertices.get(4).taskId));
-        assertTrue(Set.of(311L, 312L, 313L, 321L, 322L, 323L).contains(vertices.get(5).taskId));
+        assertTrue(Set.of(311L, 312L, 313L).contains(vertices.get(0).taskId));
+        assertTrue(Set.of(311L, 312L, 313L).contains(vertices.get(1).taskId));
+        assertTrue(Set.of(311L, 312L, 313L).contains(vertices.get(2).taskId));
     }
 
 }
