@@ -130,7 +130,11 @@ public class SourceCodeApiData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class SourceCodeResult extends BaseDataClass {
-        public Long id;
+        /**
+         * id should be null because nothing was persisted
+         * right now, verification 2-stage process. first one is static, i.e. without Spring context
+         */
+        public @Nullable Long id;
         public Integer version;
         public String uid;
         public Long companyId;

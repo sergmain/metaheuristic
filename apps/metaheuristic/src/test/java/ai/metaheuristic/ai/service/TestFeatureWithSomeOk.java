@@ -54,7 +54,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
 @Slf4j
 class TestFeatureWithSomeOk extends FeatureMethods {
@@ -100,13 +100,11 @@ class TestFeatureWithSomeOk extends FeatureMethods {
         produceTasks();
         log.info("produceTasks() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
-        ExecContextSyncService.getWithSync(getExecContextForTest().id, () -> {
+        ExecContextSyncService.getWithSyncVoid(getExecContextForTest().id, () -> {
             txSupportForTestingService.toStarted(getExecContextForTest().id);
-            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().getId())));
+            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().getId(), true)));
 
             assertEquals(EnumsApi.ExecContextState.STARTED.code, getExecContextForTest().getState());
-
-            return null;
         });
 
         PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds = preparingSourceCodeService.step_1_0_init_session_id(preparingCodeData.processor.getId());

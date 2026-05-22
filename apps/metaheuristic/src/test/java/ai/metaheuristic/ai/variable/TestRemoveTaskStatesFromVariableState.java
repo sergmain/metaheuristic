@@ -126,7 +126,7 @@ public class TestRemoveTaskStatesFromVariableState {
      */
     @Test
     public void test_removeTaskStates_fixesOrphanVariableLookup() {
-        ExecContextImpl ec = execContextCache.findById(execContextId);
+        ExecContextImpl ec = execContextCache.findById(execContextId, true);
         assertNotNull(ec);
         assertNotNull(ec.execContextVariableStateId);
 

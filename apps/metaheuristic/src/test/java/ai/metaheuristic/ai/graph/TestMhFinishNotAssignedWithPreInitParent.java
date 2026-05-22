@@ -151,45 +151,45 @@ public class TestMhFinishNotAssignedWithPreInitParent extends PreparingSourceCod
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(), List.of(t1));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(1L), List.of(t2));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(2L), List.of(t3));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // task4 added with PRE_INIT state (simulates task created but not yet initialized)
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(3L), List.of(t4), EnumsApi.TaskExecState.PRE_INIT);
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(4L), List.of(tFinish));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // Set task1 and task2 to OK
         txSupportForTestingService.updateTaskExecState(
                 execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
                 getExecContextForTest().execContextTaskStateId, 1L, EnumsApi.TaskExecState.OK, t1.taskContextId);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         txSupportForTestingService.updateTaskExecState(
                 execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
                 getExecContextForTest().execContextTaskStateId, 2L, EnumsApi.TaskExecState.OK, t2.taskContextId);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // Set task3 to ERROR_WITH_RECOVERY
         txSupportForTestingService.updateTaskExecState(
                 execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
                 getExecContextForTest().execContextTaskStateId, 3L, EnumsApi.TaskExecState.ERROR_WITH_RECOVERY, t3.taskContextId);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // Verify states
         assertEquals(EnumsApi.TaskExecState.OK, preparingSourceCodeService.findTaskState(getExecContextForTest(), 1L));
@@ -235,39 +235,39 @@ public class TestMhFinishNotAssignedWithPreInitParent extends PreparingSourceCod
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(), List.of(t1));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(1L), List.of(t2));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(2L), List.of(t3));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id,
                 List.of(3L), List.of(tFinish));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // Set task1 and task2 to OK
         txSupportForTestingService.updateTaskExecState(
                 execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
                 getExecContextForTest().execContextTaskStateId, 1L, EnumsApi.TaskExecState.OK, t1.taskContextId);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         txSupportForTestingService.updateTaskExecState(
                 execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
                 getExecContextForTest().execContextTaskStateId, 2L, EnumsApi.TaskExecState.OK, t2.taskContextId);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // Set task3 to ERROR_WITH_RECOVERY — it's a direct parent of mh.finish
         txSupportForTestingService.updateTaskExecState(
                 execContextGraphService.getExecContextDAC(getExecContextForTest().id, getExecContextForTest().execContextGraphId),
                 getExecContextForTest().execContextTaskStateId, 3L, EnumsApi.TaskExecState.ERROR_WITH_RECOVERY, t3.taskContextId);
-        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+        setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
         // Verify states
         assertEquals(EnumsApi.TaskExecState.OK, preparingSourceCodeService.findTaskState(getExecContextForTest(), 1L));

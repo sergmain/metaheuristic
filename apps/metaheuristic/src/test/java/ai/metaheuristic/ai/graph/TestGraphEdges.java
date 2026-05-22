@@ -115,7 +115,7 @@ public class TestGraphEdges extends PreparingSourceCode {
                             OperationStatusRest osr = txSupportForTestingService.addTasksToGraphWithTx(getExecContextForTest().id, List.of(),
                                     List.of(new TaskApiData.TaskWithContext(1L, "123###1")));
 
-                            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+                            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
                             assertEquals(EnumsApi.OperationStatus.OK, osr.status);
 
@@ -127,7 +127,7 @@ public class TestGraphEdges extends PreparingSourceCode {
                                     new TaskApiData.TaskWithContext(22L, "123###1"),
                                     new TaskApiData.TaskWithContext(23L, "123###1")));
                             assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-                            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+                            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
                             List<ExecContextData.TaskVertex> leafs = testGraphService.findLeafs(getExecContextForTest());
 
@@ -142,7 +142,7 @@ public class TestGraphEdges extends PreparingSourceCode {
                                     new TaskApiData.TaskWithContext(312L, "123###1"),
                                     new TaskApiData.TaskWithContext(313L, "123###1")));
                             assertEquals(EnumsApi.OperationStatus.OK, osr.status);
-                            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id)));
+                            setExecContextForTest(Objects.requireNonNull(execContextCache.findById(getExecContextForTest().id, true)));
 
                             Set<ExecContextData.TaskVertex> descendands = execContextGraphService.findDescendants(getExecContextForTest().id, getExecContextForTest().execContextGraphId, 1L);
                             assertEquals(6, descendands.size());
