@@ -37,6 +37,7 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -218,8 +219,23 @@ public class LuceneIndexService implements ShutdownInterface {
      * @param maxResults     upper bound on results returned
      * @return list of hits; empty if the bucket doesn't exist yet
      */
-    @SneakyThrows
     public List<LuceneHit> search(String bucket, String luceneQuery, String defaultField,
+                                  Set<String> keywordFields, int maxResults) {
+        return search(bucket, luceneQuery, List.of(defaultField), keywordFields, maxResults);
+    }
+
+    /**
+     * Multi-default-field variant of {@link #search(String, String, String, Set, int)}.
+     * Bare terms in {@code luceneQuery} are expanded across every entry of
+     * {@code defaultFields} via {@link MultiFieldQueryParser} (the terms become an
+     * OR across fields). Explicit field prefixes in the user query —
+     * {@code name:waypoint} — are respected and override the default expansion.
+     *
+     * <p>Single-element {@code defaultFields} behaves identically to the
+     * single-field overload.
+     */
+    @SneakyThrows
+    public List<LuceneHit> search(String bucket, String luceneQuery, List<String> defaultFields,
                                   Set<String> keywordFields, int maxResults) {
         if (isShutdown()) {
             return List.of();
@@ -227,6 +243,9 @@ public class LuceneIndexService implements ShutdownInterface {
         validateBucket(bucket);
         if (maxResults <= 0) {
             return List.of();
+        }
+        if (defaultFields == null || defaultFields.isEmpty()) {
+            throw new IllegalArgumentException("defaultFields must not be null/empty");
         }
         Path bucketDir = bucketPath(bucket);
         if (!Files.isDirectory(bucketDir)) {
@@ -239,7 +258,9 @@ public class LuceneIndexService implements ShutdownInterface {
         Analyzer queryAnalyzer = keywordFields == null || keywordFields.isEmpty()
                 ? analyzer
                 : buildQueryAnalyzer(keywordFields);
-        QueryParser parser = new QueryParser(defaultField, queryAnalyzer);
+        QueryParser parser = defaultFields.size() == 1
+                ? new QueryParser(defaultFields.get(0), queryAnalyzer)
+                : new MultiFieldQueryParser(defaultFields.toArray(new String[0]), queryAnalyzer);
         Query query;
         try {
             query = parser.parse(luceneQuery);
