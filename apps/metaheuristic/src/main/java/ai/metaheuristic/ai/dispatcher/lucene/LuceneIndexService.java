@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.lucene;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.shutdown.ShutdownInterface;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -44,6 +45,7 @@ import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -64,25 +66,25 @@ import java.util.stream.Stream;
 
 /**
  * Generic, tenant-agnostic Lucene index manager.
- *
+ * <br/>
  * Design notes:
- *
+ * <br/>
  *   • An "index bucket" is identified by an opaque string and stored on disk under
  *     {@code <dispatcherStoragePath>/lucene-indexes/<bucket>}. The bucket name is
  *     restricted to [A-Za-z0-9._-]+ to keep it safe as a directory name; callers are
  *     responsible for composing per-tenant/per-project keys (e.g. "rg-7-DRONE").
- *
+ * <br/>
  *   • MH knows nothing about RG / requirements / governance. The schema of each
  *     indexed document is fully determined by the caller via {@link LuceneDocument}
  *     and {@link LuceneFieldValue}. The only reserved field name is {@code _docId},
  *     a non-analyzed StringField used as the per-bucket update/delete key.
- *
+ * <br/>
  *   • Searches use the standard Lucene query parser. Callers pass a query string
  *     and the default field name to use when the query contains bare terms.
- *
+ * <br/>
  *   • A {@link SearcherManager} per bucket caches open readers and is refreshed
  *     after every mutation (addOrUpdate / delete) and on rebuild swap.
- *
+ * <br/>
  *   • {@link #rebuildAtomic(String, Stream)} performs a zero-downtime rebuild:
  *     it writes a new index to {@code <bucket>.next}, then closes the live
  *     SearcherManager, performs an atomic directory swap, opens a fresh
@@ -90,7 +92,7 @@ import java.util.stream.Stream;
  *     continue against the old SearcherManager until the swap moment; the
  *     read-side window where the manager is rebuilt is bounded by the time to
  *     open a single IndexReader on the new dir (milliseconds).
- *
+ * <br/>
  *   • Concurrent rebuild on the same bucket is rejected with
  *     {@link LuceneBucketLockedException}. Per-bucket rebuild lock state lives in
  *     {@link #activeRebuilds}.
@@ -101,8 +103,8 @@ import java.util.stream.Stream;
 @Service
 @Profile("dispatcher")
 @Slf4j
-@RequiredArgsConstructor
-public class LuceneIndexService {
+@RequiredArgsConstructor(onConstructor_={@Autowired})
+public class LuceneIndexService implements ShutdownInterface {
 
     /** Reserved field name used as the per-bucket update/delete term. */
     public static final String DOC_ID_FIELD = "_docId";
@@ -144,6 +146,12 @@ public class LuceneIndexService {
 
     /** Cached Analyzer instance — StandardAnalyzer is thread-safe and immutable. */
     private final Analyzer analyzer = new StandardAnalyzer();
+
+    private boolean shutdown = false;
+
+    public boolean isShutdown() {
+        return shutdown;
+    }
 
     // ==================== Public API ====================
 
@@ -386,6 +394,10 @@ public class LuceneIndexService {
 
     @PreDestroy
     public void shutdown() {
+        if (shutdown) {
+            return;
+        }
+        shutdown = true;
         for (Map.Entry<String, SearcherManager> e : searchers.entrySet()) {
             try {
                 e.getValue().close();

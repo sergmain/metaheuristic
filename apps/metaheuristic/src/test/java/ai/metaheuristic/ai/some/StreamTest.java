@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.some;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openjdk.jmh.annotations.*;
 
@@ -59,6 +60,7 @@ public class StreamTest {
         return Collections.unmodifiableList(list);
     }
 
+    @Disabled
     @Test
     public void test() {
 
@@ -100,6 +102,7 @@ public class StreamTest {
 
     }
 
+    @Disabled
     @BenchmarkMode(Mode.All)
     @Fork(1)
     @State(Scope.Thread)

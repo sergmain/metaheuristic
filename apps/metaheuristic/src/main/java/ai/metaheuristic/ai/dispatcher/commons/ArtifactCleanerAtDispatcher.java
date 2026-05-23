@@ -89,11 +89,6 @@ public class ArtifactCleanerAtDispatcher implements ShutdownInterface {
         shutdown = true;
     }
 
-//    public boolean isShutdown() {
-//        return shutdown;
-//    }
-
-
     public boolean isShutdown() {
         return shutdown || isBusy();
     }
