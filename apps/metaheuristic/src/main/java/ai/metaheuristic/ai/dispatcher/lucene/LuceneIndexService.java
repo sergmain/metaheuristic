@@ -94,8 +94,8 @@ import java.util.stream.Stream;
  *     open a single IndexReader on the new dir (milliseconds).
  * <br/>
  *   • Concurrent rebuild on the same bucket is rejected with
- *     {@link LuceneBucketLockedException}. Per-bucket rebuild lock state lives in
- *     {@link #activeRebuilds}.
+ *     {@link LuceneBucketLockedException}. Per-bucket write-op lock state lives in
+ *     {@link #activeBucketOps}.
  *
  * @author Serge
  * Date: 5/15/2026
