@@ -125,6 +125,15 @@ public class LuceneIndexService {
     private final Map<String, SearcherManager> searchers = new ConcurrentHashMap<>();
 
     /**
+     * Live {@link Directory} per bucket — opened alongside the
+     * {@link SearcherManager} in {@link #tryOpenSearcher(String)}. Tracked
+     * separately because {@code SearcherManager} does NOT take ownership of
+     * the Directory; on Windows the unreleased file locks block deletion of
+     * the index directory (e.g. JUnit {@code @TempDir} class-level teardown).
+     */
+    private final Map<String, Directory> searcherDirs = new ConcurrentHashMap<>();
+
+    /**
      * Per-bucket write-op flag — presence means a bucket-level write operation
      * (rebuildAtomic or addBatch) is in progress for that bucket. Lucene allows
      * only one IndexWriter per directory, so both write paths share this guard;
@@ -385,6 +394,16 @@ public class LuceneIndexService {
             }
         }
         searchers.clear();
+        // Directory.close() is the caller's responsibility -- SearcherManager does NOT own it.
+        // On Windows the unreleased NIOFSDirectory keeps file locks alive, which blocks @TempDir cleanup.
+        for (Map.Entry<String, Directory> e : searcherDirs.entrySet()) {
+            try {
+                e.getValue().close();
+            } catch (Throwable t) {
+                log.warn("Failed to close Directory for bucket {}: {}", e.getKey(), t.getMessage());
+            }
+        }
+        searcherDirs.clear();
     }
 
     // ==================== Internals ====================
@@ -443,7 +462,9 @@ public class LuceneIndexService {
                 dir.close();
                 return Optional.empty();
             }
-            return Optional.of(new SearcherManager(dir, null));
+            SearcherManager mgr = new SearcherManager(dir, null);
+            searcherDirs.put(bucket, dir);
+            return Optional.of(mgr);
         } catch (IOException e) {
             log.warn("Failed to open SearcherManager for bucket {}: {}", bucket, e.getMessage());
             return Optional.empty();
@@ -484,6 +505,14 @@ public class LuceneIndexService {
                 mgr.close();
             } catch (Throwable t) {
                 log.warn("Error closing SearcherManager for bucket {}: {}", bucket, t.getMessage());
+            }
+        }
+        Directory dir = searcherDirs.remove(bucket);
+        if (dir != null) {
+            try {
+                dir.close();
+            } catch (Throwable t) {
+                log.warn("Error closing Directory for bucket {}: {}", bucket, t.getMessage());
             }
         }
     }
