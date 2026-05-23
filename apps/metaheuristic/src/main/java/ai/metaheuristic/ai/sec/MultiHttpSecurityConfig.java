@@ -92,6 +92,7 @@ public class MultiHttpSecurityConfig {
                     .requestMatchers("/","/index.html", "/*.js", "/*.css", "/favicon.ico", "/assets/**","/resources/**", "/rest/login").permitAll()
                     .requestMatchers("/rest/v1/standalone/anon/**", "/rest/v1/dispatcher/anon/**").permitAll()
                     .requestMatchers("/rest/v1/dispatcher/status/**").hasAuthority("ROLE_MAIN_ADMIN")
+                    .requestMatchers("/rest/v1/mcp", "/rest/v1/mcp/**").hasAuthority("ROLE_ADMIN")
                     .requestMatchers("/rest/**").authenticated()
                     .requestMatchers("/ws/**").hasAuthority("ROLE_SERVER_REST_ACCESS")
                     .anyRequest().denyAll()

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.mcp;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpSyncServer;
 import io.modelcontextprotocol.server.transport.WebMvcStreamableServerTransportProvider;
@@ -27,8 +28,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Spring Boot configuration for the Metaheuristic MCP Server over HTTP
@@ -90,6 +96,19 @@ public class MhMcpServerConfig {
         WebMvcStreamableServerTransportProvider transportProvider = WebMvcStreamableServerTransportProvider.builder()
                 .jsonMapper(new io.modelcontextprotocol.json.jackson2.JacksonMcpJsonMapper(objectMapper))
                 .mcpEndpoint(MCP_ENDPOINT)
+                // Capture the Spring Security Authentication while the request is still on the
+                // servlet dispatch thread (where SecurityContextHolder is populated) and stash it
+                // in the McpTransportContext. The MCP transport propagates this context across
+                // the async/reactive boundary so tool call handlers can read the original
+                // Authentication via exchange.transportContext().get("authentication").
+                .contextExtractor(serverRequest -> {
+                    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                    Map<String, Object> data = new HashMap<>();
+                    if (authentication != null) {
+                        data.put("authentication", authentication);
+                    }
+                    return McpTransportContext.create(data);
+                })
                 .build();
 
         mcpSyncServer = McpServer.sync(transportProvider)
