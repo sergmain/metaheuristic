@@ -165,6 +165,9 @@ public class LuceneIndexService implements ShutdownInterface {
      */
     @SneakyThrows
     public void addOrUpdate(String bucket, LuceneDocument doc) {
+        if (isShutdown()) {
+            return;
+        }
         validateBucket(bucket);
         if (doc.docId() == null || doc.docId().isEmpty()) {
             throw new IllegalArgumentException("docId must not be null or empty");
@@ -186,6 +189,9 @@ public class LuceneIndexService implements ShutdownInterface {
      */
     @SneakyThrows
     public void delete(String bucket, String docId) {
+        if (isShutdown()) {
+            return;
+        }
         validateBucket(bucket);
         Path bucketDir = bucketPath(bucket);
         if (!Files.isDirectory(bucketDir)) {
@@ -215,6 +221,9 @@ public class LuceneIndexService implements ShutdownInterface {
     @SneakyThrows
     public List<LuceneHit> search(String bucket, String luceneQuery, String defaultField,
                                   Set<String> keywordFields, int maxResults) {
+        if (isShutdown()) {
+            return List.of();
+        }
         validateBucket(bucket);
         if (maxResults <= 0) {
             return List.of();
@@ -263,6 +272,9 @@ public class LuceneIndexService implements ShutdownInterface {
      * index is non-empty or healthy.
      */
     public boolean bucketExists(String bucket) {
+        if (isShutdown()) {
+            return false;
+        }
         validateBucket(bucket);
         return Files.isDirectory(bucketPath(bucket));
     }
@@ -271,6 +283,9 @@ public class LuceneIndexService implements ShutdownInterface {
      * Returns true if a rebuild is currently running for this bucket.
      */
     public boolean isRebuildInProgress(String bucket) {
+        if (isShutdown()) {
+            return false;
+        }
         validateBucket(bucket);
         return activeBucketOps.containsKey(bucket);
     }
@@ -292,6 +307,9 @@ public class LuceneIndexService implements ShutdownInterface {
      */
     @SneakyThrows
     public int rebuildAtomic(String bucket, Stream<LuceneDocument> docs) {
+        if (isShutdown()) {
+            return 0;
+        }
         validateBucket(bucket);
         Boolean prev = activeBucketOps.putIfAbsent(bucket, Boolean.TRUE);
         if (prev != null) {
@@ -360,6 +378,9 @@ public class LuceneIndexService implements ShutdownInterface {
      */
     @SneakyThrows
     public int addBatch(String bucket, Stream<LuceneDocument> docs) {
+        if (isShutdown()) {
+            return 0;
+        }
         validateBucket(bucket);
         Boolean prev = activeBucketOps.putIfAbsent(bucket, Boolean.TRUE);
         if (prev != null) {
