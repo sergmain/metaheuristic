@@ -234,9 +234,28 @@ public class LuceneIndexService implements ShutdownInterface {
      * <p>Single-element {@code defaultFields} behaves identically to the
      * single-field overload.
      */
-    @SneakyThrows
     public List<LuceneHit> search(String bucket, String luceneQuery, List<String> defaultFields,
                                   Set<String> keywordFields, int maxResults) {
+        if (defaultFields == null || defaultFields.isEmpty()) {
+            throw new IllegalArgumentException("defaultFields must not be null/empty");
+        }
+        Query parsed = parseQuery(luceneQuery, defaultFields, keywordFields);
+        return search(bucket, parsed, maxResults);
+    }
+
+    /**
+     * Pre-built-{@link Query} overload — the Lucene equivalent of binding values
+     * to a JDBC PreparedStatement. Callers that need to combine user-supplied
+     * search clauses with server-controlled filter clauses (e.g. RG’s snapshotId
+     * scope) should build a {@link org.apache.lucene.search.BooleanQuery} in
+     * application code and pass it here; no string concatenation is involved,
+     * so user input cannot structurally alter the server-controlled clauses.
+     *
+     * <p>To turn a user-supplied string into a {@link Query} scoped to a fixed
+     * field, use {@link #parseQuery(String, List, Set)}.
+     */
+    @SneakyThrows
+    public List<LuceneHit> search(String bucket, Query query, int maxResults) {
         if (isShutdown()) {
             return List.of();
         }
@@ -244,8 +263,8 @@ public class LuceneIndexService implements ShutdownInterface {
         if (maxResults <= 0) {
             return List.of();
         }
-        if (defaultFields == null || defaultFields.isEmpty()) {
-            throw new IllegalArgumentException("defaultFields must not be null/empty");
+        if (query == null) {
+            throw new IllegalArgumentException("query must not be null");
         }
         Path bucketDir = bucketPath(bucket);
         if (!Files.isDirectory(bucketDir)) {
@@ -254,18 +273,6 @@ public class LuceneIndexService implements ShutdownInterface {
         SearcherManager mgr = getOrOpenSearcher(bucket);
         if (mgr == null) {
             return List.of();
-        }
-        Analyzer queryAnalyzer = keywordFields == null || keywordFields.isEmpty()
-                ? analyzer
-                : buildQueryAnalyzer(keywordFields);
-        QueryParser parser = defaultFields.size() == 1
-                ? new QueryParser(defaultFields.get(0), queryAnalyzer)
-                : new MultiFieldQueryParser(defaultFields.toArray(new String[0]), queryAnalyzer);
-        Query query;
-        try {
-            query = parser.parse(luceneQuery);
-        } catch (ParseException e) {
-            throw new IllegalArgumentException("Invalid Lucene query: " + e.getMessage(), e);
         }
         IndexSearcher searcher = mgr.acquire();
         try {
@@ -285,6 +292,31 @@ public class LuceneIndexService implements ShutdownInterface {
             return out;
         } finally {
             mgr.release(searcher);
+        }
+    }
+
+    /**
+     * Parse a user-supplied Lucene query string into a {@link Query}. Bare terms
+     * expand across {@code defaultFields} via {@link MultiFieldQueryParser};
+     * {@code keywordFields} are passed through the keyword-preserving analyzer
+     * so their stored case is honored. Provides the parser that callers use
+     * when they want to assemble a {@link org.apache.lucene.search.BooleanQuery}
+     * combining the parsed user query with server-controlled clauses.
+     */
+    public Query parseQuery(String luceneQuery, List<String> defaultFields, Set<String> keywordFields) {
+        if (defaultFields == null || defaultFields.isEmpty()) {
+            throw new IllegalArgumentException("defaultFields must not be null/empty");
+        }
+        Analyzer queryAnalyzer = keywordFields == null || keywordFields.isEmpty()
+                ? analyzer
+                : buildQueryAnalyzer(keywordFields);
+        QueryParser parser = defaultFields.size() == 1
+                ? new QueryParser(defaultFields.get(0), queryAnalyzer)
+                : new MultiFieldQueryParser(defaultFields.toArray(new String[0]), queryAnalyzer);
+        try {
+            return parser.parse(luceneQuery);
+        } catch (ParseException e) {
+            throw new IllegalArgumentException("Invalid Lucene query: " + e.getMessage(), e);
         }
     }
 
