@@ -98,12 +98,8 @@ public class TxSupportForTestingService {
         if (!globals.testing) {
             throw new IllegalStateException("Only for testing");
         }
-        try {
-            return SourceCodeSyncService.getWithSyncForCreation(sourceCode.id,
-                    () -> execContextCreatorService.createExecContext(sourceCode, context, null, new ExecContextData.ExecContextCreationInfo("For testing")));
-        } catch (CommonRollbackException e) {
-            return new ExecContextCreatorService.ExecContextCreationResult(e.messages);
-        }
+        return SourceCodeSyncService.getWithSyncForCreation(sourceCode.id,
+            () -> execContextCreatorService.createExecContext(sourceCode, context, null, new ExecContextData.ExecContextCreationInfo("For testing")));
     }
 
     @Transactional

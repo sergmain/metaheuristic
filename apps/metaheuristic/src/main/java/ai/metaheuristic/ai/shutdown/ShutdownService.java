@@ -41,6 +41,8 @@ public class ShutdownService {
     @Order(Ordered.HIGHEST_PRECEDENCE)
     @PreDestroy
     public void preDestroy() {
-        shutdowns.parallelStream().forEach(ShutdownInterface::shutdown);
+        for (ShutdownInterface shutdown : shutdowns) {
+            Thread.startVirtualThread(shutdown::shutdown);
+        }
     }
 }

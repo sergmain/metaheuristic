@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.dispatcher.lucene;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.shutdown.ShutdownInterface;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -557,7 +558,7 @@ public class LuceneIndexService implements ShutdownInterface {
         }
     }
 
-    private SearcherManager getOrOpenSearcher(String bucket) {
+    private @Nullable SearcherManager getOrOpenSearcher(String bucket) {
         SearcherManager existing = searchers.get(bucket);
         if (existing != null) {
             return existing;

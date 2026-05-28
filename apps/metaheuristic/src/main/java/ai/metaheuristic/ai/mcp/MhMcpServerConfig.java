@@ -16,12 +16,14 @@
 
 package ai.metaheuristic.ai.mcp;
 
+import ai.metaheuristic.ai.shutdown.ShutdownInterface;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpSyncServer;
 import io.modelcontextprotocol.server.transport.WebMvcStreamableServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,11 +84,11 @@ import java.util.Map;
 @Configuration
 @Profile("dispatcher & mcp")
 @Slf4j
-public class MhMcpServerConfig {
+public class MhMcpServerConfig implements ShutdownInterface {
 
     public static final String MCP_ENDPOINT = "/rest/v1/mcp";
 
-    private McpSyncServer mcpSyncServer;
+    private @Nullable McpSyncServer mcpSyncServer = null;
 
     @Bean
     public RouterFunction<ServerResponse> mhMcpRouterFunction(
@@ -126,8 +128,14 @@ public class MhMcpServerConfig {
         return transportProvider.getRouterFunction();
     }
 
-    @PreDestroy
+    private boolean shutdown = false;
+
+    public boolean isShutdown() {
+        return shutdown;
+    }
+
     public void shutdown() {
+        shutdown = true;
         if (mcpSyncServer != null) {
             mcpSyncServer.close();
             log.info("260.520 Metaheuristic MCP Server shut down");
