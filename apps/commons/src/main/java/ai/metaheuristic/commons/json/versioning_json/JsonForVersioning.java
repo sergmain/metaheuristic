@@ -26,32 +26,60 @@ import com.fasterxml.jackson.core.JsonToken;
 import java.io.IOException;
 
 /**
+ * Fast extraction of the <b>top-level</b> {@code "version"} field from a JSON
+ * document, without building a full object tree.
+ *
+ * <p>The lexer walks the token stream of the root object and skips any nested
+ * objects/arrays entirely. A {@code "version"} field nested inside another
+ * object is not the top-level version and is not returned. If no top-level
+ * {@code "version"} field is present, version 1 is the default.
+ *
+ * <p>The input is assumed to be a well-formed JSON object serialized by this
+ * codebase — no defensive parsing of pathological inputs. Broken JSON is the
+ * caller's responsibility.
+ *
  * @author Serge
  * Date: 4/16/2021
  * Time: 5:38 PM
  */
 public class JsonForVersioning {
 
-    // https://stackoverflow.com/questions/38732849/how-to-read-single-json-field-with-jackson/38733637#38733637
     public static ParamsVersion getParamsVersion(String json) {
         try {
             String versionValue = null;
             JsonFactory jsonFactory = new JsonFactory();
             try (JsonParser parser = jsonFactory.createParser(json)) {
-                while (parser.nextToken() != JsonToken.END_OBJECT) {
-                    String fieldName = parser.currentName();
-                    if ("version".equals(fieldName)) {
-                        if (parser.nextToken() == JsonToken.VALUE_NUMBER_INT) {
-                            versionValue = parser.getValueAsString();
-                            break;
-                        }
-                    } else {
-                        parser.skipChildren();
+                // First token is the root START_OBJECT.
+                if (parser.nextToken() != JsonToken.START_OBJECT) {
+                    return ConstsApi.PARAMS_VERSION_1;
+                }
+                // Walk only the direct children of the root object. On each
+                // FIELD_NAME, check the key; if it's "version", read the next
+                // numeric token; otherwise consume the field's value subtree
+                // and continue at depth 1.
+                JsonToken token;
+                while ((token = parser.nextToken()) != null && token != JsonToken.END_OBJECT) {
+                    if (token != JsonToken.FIELD_NAME) {
+                        // Shouldn't happen for well-formed JSON inside an
+                        // object — every child position starts with a
+                        // FIELD_NAME. Skip defensively.
+                        continue;
                     }
+                    String fieldName = parser.currentName();
+                    JsonToken valueToken = parser.nextToken();
+                    if ("version".equals(fieldName) && valueToken == JsonToken.VALUE_NUMBER_INT) {
+                        versionValue = parser.getValueAsString();
+                        break;
+                    }
+                    // Consume this field's value entirely. For scalar tokens
+                    // skipChildren() is a no-op; for START_OBJECT /
+                    // START_ARRAY it advances to the matching END_*, leaving
+                    // the parser ready for the next FIELD_NAME at depth 1.
+                    parser.skipChildren();
                 }
             }
 
-            return versionValue==null ? ConstsApi.PARAMS_VERSION_1 : new ParamsVersion(Integer.valueOf(versionValue));
+            return versionValue == null ? ConstsApi.PARAMS_VERSION_1 : new ParamsVersion(Integer.valueOf(versionValue));
         }
         catch (IOException e) {
             throw new ParamsProcessingException("Error: " + e, e);
