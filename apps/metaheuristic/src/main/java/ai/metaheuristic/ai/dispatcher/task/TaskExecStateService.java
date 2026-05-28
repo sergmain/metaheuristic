@@ -53,24 +53,26 @@ public class TaskExecStateService {
     private final TaskRepository taskRepository;
     private final EventPublisherService eventPublisherService;
     private final ApplicationEventPublisher eventPublisher;
+    private final TaskTxService taskTxService;
 
     @Transactional(rollbackFor = CommonRollbackException.class)
     public void updateTaskExecStates(Long taskId, EnumsApi.TaskExecState execState) {
         TaskImpl task = taskRepository.findById(taskId).orElseThrow();
         updateTaskExecStates(task, execState, false);
+        taskTxService.save(task);
     }
 
     public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState, boolean markAsCompleted) {
         TxUtils.checkTxExists();
         TaskSyncService.checkWriteLockPresent(task.id);
-        TaskImpl t = changeTaskState(task, execState);
+        changeTaskState(task, execState);
         if (markAsCompleted) {
-            t.setCompleted(1);
-            t.setCompletedOn(System.currentTimeMillis());
+            task.setCompleted(1);
+            task.setCompletedOn(System.currentTimeMillis());
         }
     }
 
-    private TaskImpl changeTaskState(TaskImpl task, EnumsApi.TaskExecState state){
+    private void changeTaskState(TaskImpl task, EnumsApi.TaskExecState state){
         TxUtils.checkTxExists();
         TaskSyncService.checkWriteLockPresent(task.id);
 
@@ -125,7 +127,6 @@ public class TaskExecStateService {
 
         final SetTaskExecStateInQueueTxEvent event = getSetTaskExecStateInQueueTxEvent(task);
         eventPublisherService.publishSetTaskExecStateInQueueTxEvent(event);
-        return task;
     }
 
     private static SetTaskExecStateInQueueTxEvent getSetTaskExecStateInQueueTxEvent(TaskImpl task) {
@@ -153,7 +154,7 @@ public class TaskExecStateService {
                 TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
                 if (task != null) {
                     updateTaskExecStates(task, t.state, true);
-                    taskRepository.save(task);
+                    taskTxService.save(task);
                 } else {
                     log.error("305.200 Graph state is compromised, found task in graph but it doesn't exist in db");
                 }

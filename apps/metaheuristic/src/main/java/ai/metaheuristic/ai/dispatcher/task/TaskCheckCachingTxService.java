@@ -67,6 +67,7 @@ public class TaskCheckCachingTxService {
     private final EventPublisherService eventPublisherService;
     private final DispatcherBlobStorage dispatcherBlobStorage;
     private final TaskExecStateService taskExecStateService;
+    private final TaskTxService taskTxService;
 
     @Transactional
     public void invalidateCacheItemAndSetTaskToNone(Long execContextId, Long taskId, Long cacheProcessId) {
@@ -82,6 +83,7 @@ public class TaskCheckCachingTxService {
 
         invalidateCacheItemInternal(cacheProcessId);
         taskExecStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE, false);
+        taskTxService.save(task);
     }
 
     @Transactional
@@ -178,13 +180,7 @@ public class TaskCheckCachingTxService {
             task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
             task.setResultReceived(1);
 
-//            task.setCompleted(1);
-//            task.setCompletedOn(System.currentTimeMillis());
-//            task.execState = EnumsApi.TaskExecState.OK.value;
-//            taskExecStateService.changeTaskState(task, EnumsApi.TaskExecState.OK);
             taskExecStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK, true);
-
-            taskRepository.save(task);
             status = CheckCachingStatus.copied_from_cache;
         }
         else {
@@ -192,6 +188,8 @@ public class TaskCheckCachingTxService {
             taskExecStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.NONE, false);
             status = CheckCachingStatus.no_prev_cache;
         }
+        taskTxService.save(task);
+
         eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInExecContextTxEvent(task.execContextId, List.of(task.id)));
         return status;
     }

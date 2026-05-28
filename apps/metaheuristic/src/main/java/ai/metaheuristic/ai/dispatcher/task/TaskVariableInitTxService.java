@@ -69,6 +69,7 @@ public class TaskVariableInitTxService {
     private final TaskRepository taskRepository;
     private final GlobalVariableRepository globalVariableRepository;
     private final EventPublisherService eventPublisherService;
+    private final TaskTxService taskTxService;
 
     @Transactional(rollbackFor = CommonRollbackException.class)
     public void intiVariables(InitVariablesEvent event) {
@@ -94,9 +95,9 @@ public class TaskVariableInitTxService {
             prepareVariables(ec.getExecContextParamsYaml(), task, allParentTaskContextIds);
         }
         task.execState = paramsYaml.task.init.nextState.value;
-
-        taskRepository.save(task);
         taskExecStateService.updateTaskExecStates(task, paramsYaml.task.init.nextState, false);
+        taskTxService.save(task);
+
         eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInExecContextTxEvent(task.execContextId, List.of(task.id)));
     }
 

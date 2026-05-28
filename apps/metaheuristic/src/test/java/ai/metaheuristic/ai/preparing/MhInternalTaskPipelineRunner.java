@@ -421,7 +421,6 @@ public class MhInternalTaskPipelineRunner {
     }
 
     private void processScheduledTasks() {
-        execContextTaskStateService.processUpdateTaskExecStatesInGraph();
         execContextVariableStateTopLevelService.processFlushing();
         execContextSchedulerService.initTaskVariables();
         execContextSchedulerService.updateExecContextStatuses();

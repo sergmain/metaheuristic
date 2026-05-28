@@ -36,6 +36,7 @@ import java.util.List;
 @Profile("dispatcher")
 public interface TaskRepositoryForTest extends CrudRepository<TaskImpl, Long> {
 
+    @Transactional(readOnly = true)
     @Query(value="select t from TaskImpl t where t.coreId=:coreId and t.resultReceived=0")
     List<TaskImpl> findByCoreIdAndResultReceivedIs0(Long coreId);
 
@@ -45,11 +46,12 @@ public interface TaskRepositoryForTest extends CrudRepository<TaskImpl, Long> {
     @Query(value="select t.id, t.params from TaskImpl t where t.execContextId=:execContextId")
     List<Object[]> findByExecContextId(Long execContextId);
 
+    @Transactional(readOnly = true)
     @Query(value="select t from TaskImpl t where t.execContextId=:execContextId")
     List<TaskImpl> findByExecContextIdAsList(Long execContextId);
 
     @Modifying
-    @Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+    @Transactional(propagation = Propagation.REQUIRED)
     void deleteByExecContextId(Long execContextId);
 
 }

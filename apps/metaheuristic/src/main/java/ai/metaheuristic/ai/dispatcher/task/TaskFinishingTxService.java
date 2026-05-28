@@ -62,6 +62,7 @@ public class TaskFinishingTxService {
     private final EventPublisherService eventPublisherService;
     private final ApplicationEventPublisher eventPublisher;
     private final TaskExecStateService taskExecStateService;
+    private final TaskTxService taskTxService;
 
     @Transactional
     public void finishAsOkAndStoreVariable(Long taskId, ExecContextParamsYaml ecpy) {
@@ -88,6 +89,7 @@ public class TaskFinishingTxService {
         eventPublisherService.publishUpdateTaskExecStatesInGraphTxEvent(new UpdateTaskExecStatesInExecContextTxEvent(task.execContextId, List.of(taskId)));
 
         taskExecStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK, true);
+        taskTxService.save(task);
 
         if (store) {
             TaskParamsYaml tpy = task.getTaskParamsYaml();

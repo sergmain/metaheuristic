@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphCache;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -76,7 +77,9 @@ public class TaskStateService {
     }
 
     private void changeTaskStateToInitForChildrenTasksTxEventInternal(ChangeTaskStateToInitForChildrenTasksEvent event) {
-        TaskImpl task = taskRepository.findById(event.taskId).orElse(null);
+        TxUtils.checkTxNotExists();
+
+        TaskImpl task = taskRepository.findByIdReadOnly(event.taskId);
         if (task==null) {
             return;
         }
@@ -103,7 +106,7 @@ public class TaskStateService {
             boolean nextState = true;
             boolean anyParentError = false;
             for (ExecContextData.TaskVertex vertex : parents) {
-                TaskImpl t = taskRepository.findById(vertex.taskId).orElse(null);
+                TaskImpl t = taskRepository.findByIdReadOnly(vertex.taskId);
                 if (t==null) {
                     log.error("189.160 task #{} wasn't found", vertex.taskId);
                     continue;

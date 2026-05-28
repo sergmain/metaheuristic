@@ -407,7 +407,7 @@ public class ExecContextCloneTxService {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     public TaskImpl debugFindById(Long id) {
-        TaskImpl t = taskRepository.findById(id).orElse(null);
+        TaskImpl t = taskRepository.findByIdReadOnly(id);
         log.info("MINREPRO debugFindById({}) -> {}", id, t == null ? "null" : ("id=" + t.id + " ec=" + t.execContextId));
         return t;
     }

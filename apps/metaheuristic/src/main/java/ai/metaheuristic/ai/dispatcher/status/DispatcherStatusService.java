@@ -116,7 +116,7 @@ public class DispatcherStatusService {
         ExecContextApiData.ExecContextVariableStates varStates = ecvs.getExecContextVariableStateInfo();
         ExecContextTaskStateParamsYaml taskStateParams = ects.getExecContextTaskStateParamsYaml();
         for (Map.Entry<Long, EnumsApi.TaskExecState> en : taskStateParams.states.entrySet()) {
-            TaskImpl task = taskRepository.findById(en.getKey()).orElse(null);
+            TaskImpl task = taskRepository.findByIdReadOnly(en.getKey());
             if (task!=null) {
                 var funcCode = task.getTaskParamsYaml().task.function.code;
                 s.append(S.f("  Task: #%d, %s. Func: %s\n", en.getKey(), en.getValue(), funcCode));

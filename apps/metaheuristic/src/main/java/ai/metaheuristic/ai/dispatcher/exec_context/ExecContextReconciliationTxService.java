@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
+import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +46,7 @@ public class ExecContextReconciliationTxService {
     private final TaskRepository taskRepository;
     private final ExecContextTaskResettingService execContextTaskResettingService;
     private final TaskExecStateService taskExecStateService;
+    private final TaskTxService taskTxService;
 
     @Transactional
     public void finishReconciliation(ExecContextData.ReconciliationStatus status) {
@@ -76,6 +78,7 @@ public class ExecContextReconciliationTxService {
                     return;
                 }
                 taskExecStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.OK, false);
+                taskTxService.save(task);
             });
         }
     }

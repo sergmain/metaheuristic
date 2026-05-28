@@ -146,9 +146,9 @@ public class TaskWithInternalContextService {
 
         task.setAssignedOn(System.currentTimeMillis());
         task.setResultResourceScheduledOn(0);
-        task = taskTxService.save(task);
 
         taskExecStateService.updateTaskExecStates(task, EnumsApi.TaskExecState.IN_PROGRESS, false);
+        task = taskTxService.save(task);
 
         TaskParamsYaml taskParamsYaml = task.getTaskParamsYaml();
         ExecContextParamsYaml.Process p = simpleExecContext.paramsYaml.findProcess(taskParamsYaml.task.processCode);

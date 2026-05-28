@@ -88,10 +88,6 @@ public class ExecContextTaskStateService {
         updateTaskExecStatesInGraphEventThreadedPool.putToQueue(event);
     }
 
-    public void processUpdateTaskExecStatesInGraph() {
-//        updateTaskExecStatesInGraphEventThreadedPool.entrySet().stream().parallel().forEach(e->e.getValue().processEvent());
-    }
-
     public void updateTaskExecStatesExecContext(UpdateTaskExecStatesInExecContextEvent event) {
         if (event.taskIds.isEmpty()) {
             return;

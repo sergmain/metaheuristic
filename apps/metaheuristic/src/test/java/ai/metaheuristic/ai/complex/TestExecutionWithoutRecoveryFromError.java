@@ -171,7 +171,6 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
     }
 
     private void processScheduledTasks() {
-        execContextTaskStateTopLevelService.processUpdateTaskExecStatesInGraph();
         execContextVariableStateTopLevelService.processFlushing();
     }
 

@@ -36,12 +36,13 @@ import java.util.stream.Stream;
 @Profile("dispatcher")
 public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
+    // used only CRUD DML operations
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(propagation = Propagation.MANDATORY)
     Optional<TaskImpl> findById(Long id);
 
     @Nullable
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
     @Query("SELECT t FROM TaskImpl t where t.id=:id")
     TaskImpl findByIdReadOnly(Long id);
 

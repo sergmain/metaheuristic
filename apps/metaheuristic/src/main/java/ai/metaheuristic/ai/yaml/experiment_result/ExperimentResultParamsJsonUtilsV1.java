@@ -24,8 +24,6 @@ import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.json.versioning_json.AbstractParamsJsonUtils;
 import ai.metaheuristic.commons.json.versioning_json.BaseJsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.jspecify.annotations.NonNull;
-
 
 /**
  * @author Serge
@@ -40,15 +38,13 @@ public class ExperimentResultParamsJsonUtilsV1
         return 1;
     }
 
-    @NonNull
     @Override
-    public ExperimentResultParamsV2 upgradeTo(@NonNull ExperimentResultParamsV1 src) {
+    public ExperimentResultParamsV2 upgradeTo(ExperimentResultParamsV1 src) {
         throw new UpgradeNotSupportedException();
     }
 
-    @NonNull
     @Override
-    public Void downgradeTo(@NonNull Void yaml) {
+    public Void downgradeTo(Void yaml) {
         throw new DowngradeNotSupportedException();
     }
 
@@ -63,7 +59,7 @@ public class ExperimentResultParamsJsonUtilsV1
     }
 
     @Override
-    public String toString(@NonNull ExperimentResultParamsV1 json) {
+    public String toString(ExperimentResultParamsV1 json) {
         try {
             return BaseJsonUtils.getMapper().writeValueAsString(json);
         }
@@ -72,9 +68,8 @@ public class ExperimentResultParamsJsonUtilsV1
         }
     }
 
-    @NonNull
     @Override
-    public ExperimentResultParamsV1 to(@NonNull String s) {
+    public ExperimentResultParamsV1 to(String s) {
         try {
             final ExperimentResultParamsV1 p = BaseJsonUtils.getMapper().readValue(s, ExperimentResultParamsV1.class);
             return p;
