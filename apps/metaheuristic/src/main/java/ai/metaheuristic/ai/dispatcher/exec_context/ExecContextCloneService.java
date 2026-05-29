@@ -100,7 +100,8 @@ public class ExecContextCloneService {
             long variableCount,
             long elapsedMillis,
             java.util.Map<Long, Long> taskIdMap,
-            java.util.Map<Long, Long> variableIdMap) {
+            java.util.Map<Long, Long> variableIdMap,
+            Long sourceExecContextId) {
     }
 
     public CloneResult cloneExecContext(Long sourceExecContextId) {
@@ -204,7 +205,7 @@ public class ExecContextCloneService {
                 sourceExecContextId, newEcId, sourceTasks.size(), sourceVarIds.size(), elapsed);
 
         return new CloneResult(newEcId, sourceTasks.size(), sourceVarIds.size(), elapsed,
-                java.util.Map.copyOf(taskIdMap), java.util.Map.copyOf(variableIdMap));
+                java.util.Map.copyOf(taskIdMap), java.util.Map.copyOf(variableIdMap), sourceExecContextId);
     }
 
     private void cloneVariablesInParallel(Set<Long> sourceVarIds, Long newEcId,
