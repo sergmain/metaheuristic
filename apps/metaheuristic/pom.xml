@@ -243,11 +243,13 @@
         </dependency>
 
         <!-- Source: https://mvnrepository.com/artifact/org.ehcache/ehcache -->
+<!--
         <dependency>
             <groupId>org.ehcache</groupId>
             <artifactId>ehcache</artifactId>
             <scope>compile</scope>
         </dependency>
+-->
         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-jcache</artifactId>

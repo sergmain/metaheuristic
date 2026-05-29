@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +49,7 @@ public class ExecContextReconciliationTxService {
     private final TaskExecStateService taskExecStateService;
     private final TaskTxService taskTxService;
 
-    @Transactional
+    @Transactional(rollbackFor =  CommonRollbackException.class)
     public void finishReconciliation(ExecContextData.ReconciliationStatus status) {
         ExecContextSyncService.checkWriteLockPresent(status.execContextId);
 

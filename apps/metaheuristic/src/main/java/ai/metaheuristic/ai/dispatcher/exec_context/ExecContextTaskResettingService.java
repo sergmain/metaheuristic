@@ -35,6 +35,7 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -66,7 +67,7 @@ public class ExecContextTaskResettingService {
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final TaskFinishingTxService taskFinishingTxService;
 
-    @Transactional
+    @Transactional(rollbackFor =  CommonRollbackException.class)
     public void resetTasksWithErrorForRecovery(Long execContextId, List<TaskData.TaskWithRecoveryStatus> statuses) {
         ExecContextSyncService.checkWriteLockPresent(execContextId);
 
@@ -138,7 +139,7 @@ public class ExecContextTaskResettingService {
         TaskParamsYaml taskParams = task.getTaskParamsYaml();
         final ExecContextParamsYaml.Process process = execContext.getExecContextParamsYaml().findProcess(taskParams.task.processCode);
         if (process==null) {
-            throw new BreakFromLambdaException("155.160 Process '" + taskParams.task.processCode + "' wasn't found");
+            throw new CommonRollbackException("155.160 Process '" + taskParams.task.processCode + "' wasn't found", EnumsApi.OperationStatus.ERROR);
         }
 
         task.setFunctionExecResults(null);
@@ -163,7 +164,7 @@ public class ExecContextTaskResettingService {
         taskTxService.save(task);
         for (TaskParamsYaml.OutputVariable output : taskParams.task.outputs) {
             if (output.context== EnumsApi.VariableContext.global) {
-                throw new IllegalStateException("155.200 (output.context== EnumsApi.VariableContext.global)");
+                throw new CommonRollbackException("155.200 (output.context== EnumsApi.VariableContext.global)", EnumsApi.OperationStatus.ERROR);
             }
             // Route through AssetFileService so the on-disk Southbridge cache file is invalidated
             // alongside the DB-side reset. See AssetFileService javadoc for ordering rationale.

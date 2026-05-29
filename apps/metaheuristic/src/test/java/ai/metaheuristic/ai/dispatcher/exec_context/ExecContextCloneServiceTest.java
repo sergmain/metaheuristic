@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.DispatcherContext;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
@@ -89,6 +90,8 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
     @Autowired VariableRepository variableRepository;
     @Autowired TxSupportForTestingService txSupport;
     @Autowired ExecContextCloneTxService cloneTxService;
+    @Autowired ExecContextGraphRepository ecgRepo;
+
 
     @Test
     void test_clone_minimalFreshExecContext_producesFinishedClone() {
@@ -301,7 +304,8 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
         Long ecId = creation.execContext.id;
 
         // act — pre-allocate
-        Long allocatedId = cloneTxService.preAllocateClonedTask(ecId);
+        TaskImpl newTask = cloneTxService.preAllocateClonedTask(ecId);
+        Long allocatedId = newTask.id;
         org.slf4j.LoggerFactory.getLogger(getClass())
                 .info("MINREPRO: preAllocate returned id={}", allocatedId);
 
@@ -350,7 +354,8 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
         // pass A — pre-allocate one row per source task
         java.util.Map<Long, Long> taskIdMap = new java.util.HashMap<>();
         for (TaskImpl src : sourceTasks) {
-            Long clonedId = cloneTxService.preAllocateClonedTask(targetEcId);
+            TaskImpl task = cloneTxService.preAllocateClonedTask(targetEcId);
+            Long clonedId = task.id;
             taskIdMap.put(src.id, clonedId);
         }
         org.slf4j.LoggerFactory.getLogger(getClass())
@@ -370,9 +375,6 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
             assertThat(t).as("cloned task " + clonedId + " must be visible after fill").isNotNull();
         }
     }
-
-
-    @Autowired ai.metaheuristic.ai.dispatcher.repositories.ExecContextGraphRepository ecgRepo;
 
     /**
      * THIRD-LEVEL REPRO — clones a real produced ExecContext and asserts that

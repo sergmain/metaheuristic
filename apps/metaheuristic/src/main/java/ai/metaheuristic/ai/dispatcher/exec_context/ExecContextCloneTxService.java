@@ -27,9 +27,11 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepositor
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskTxService;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -56,6 +58,7 @@ public class ExecContextCloneTxService {
     private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final TaskRepository taskRepository;
     private final VariableRepository variableRepository;
+    private final TaskTxService taskTxService;
 
     /**
      * Insert the new ExecContext row in {@code state=CLONING}. Graph / task-state /
@@ -219,7 +222,7 @@ public class ExecContextCloneTxService {
      * to allocate a row id. The row is filled in pass B. Returns the allocated id.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Long preAllocateClonedTask(Long newExecContextId) {
+    public TaskImpl preAllocateClonedTask(Long newExecContextId) {
         TaskImpl placeholder = new TaskImpl();
         placeholder.execContextId = newExecContextId;
         placeholder.execState = EnumsApi.TaskExecState.NONE.value;
@@ -227,11 +230,9 @@ public class ExecContextCloneTxService {
         placeholder.resultReceived = 0;
         placeholder.resultResourceScheduledOn = 0L;
         placeholder.setParams("");
-        TaskImpl saved = taskRepository.save(placeholder);
-        // Force a flush so the INSERT hits the DB inside this TX before commit.
-        log.info("Phase13.G.5 preAllocateClonedTask: pre-allocated clonedTaskId={} in clonedEC={} (saved.id={}, version={})",
-                saved.id, newExecContextId, saved.id, saved.version);
-        return saved.id;
+
+        TaskImpl saved = taskTxService.save(placeholder);
+        return saved;
     }
 
     /**
@@ -406,14 +407,14 @@ public class ExecContextCloneTxService {
      * {@link #preAllocateClonedTask} in a sibling REQUIRES_NEW TX.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
-    public TaskImpl debugFindById(Long id) {
+    public @Nullable TaskImpl debugFindById(Long id) {
         TaskImpl t = taskRepository.findByIdReadOnly(id);
         log.info("MINREPRO debugFindById({}) -> {}", id, t == null ? "null" : ("id=" + t.id + " ec=" + t.execContextId));
         return t;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
-    public TaskImpl debugFindByIdReadOnly(Long id) {
+    public @Nullable TaskImpl debugFindByIdReadOnly(Long id) {
         TaskImpl t = taskRepository.findByIdReadOnly(id);
         log.info("MINREPRO debugFindByIdReadOnly({}) -> {}", id, t == null ? "null" : ("id=" + t.id + " ec=" + t.execContextId));
         return t;

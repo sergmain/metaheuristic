@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskProviderTopLevelService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +50,11 @@ public class ExecContextSchedulerService {
     public void updateExecContextStatuses() {
         List<Long> execContextIds = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.STARTED.code);
         for (Long execContextId : execContextIds) {
-            execContextTopLevelService.updateExecContextStatus(execContextId);
+            try {
+                execContextTopLevelService.updateExecContextStatus(execContextId);
+            } catch (CommonRollbackException e) {
+                //
+            }
         }
         TaskProviderTopLevelService.shrink();
     }

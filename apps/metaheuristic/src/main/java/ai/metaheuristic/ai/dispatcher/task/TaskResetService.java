@@ -22,6 +22,8 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,10 +52,21 @@ public class TaskResetService {
             return;
         }
 
-        ExecContextSyncService.getWithSyncVoid(ec.id, ()->
-            ExecContextGraphSyncService.getWithSyncVoid(ec.execContextGraphId, ()->
-                ExecContextTaskStateSyncService.getWithSyncVoid(ec.execContextTaskStateId, ()->
-                    taskResetTxService.resetTaskAndExecContextTx(ec.id, taskId)
-                )));
+            ExecContextSyncService.getWithSyncVoid(ec.id, ()->
+                ExecContextGraphSyncService.getWithSyncVoid(ec.execContextGraphId, ()->
+                    ExecContextTaskStateSyncService.getWithSyncVoid(ec.execContextTaskStateId, ()-> {
+                            try {
+                                taskResetTxService.resetTaskAndExecContextTx(ec.id, taskId);
+                            } catch (CommonRollbackException e) {
+                                if (e.status== EnumsApi.OperationStatus.ERROR) {
+                                    log.error(e.getErrorMessage());
+                                    throw new RuntimeException(e.getErrorMessage());
+                                }
+                                else if(e.status== EnumsApi.OperationStatus.OK) {
+                                    log.info(e.infoMessage());
+                                }
+                            }
+                        }
+                    )));
     }
 }

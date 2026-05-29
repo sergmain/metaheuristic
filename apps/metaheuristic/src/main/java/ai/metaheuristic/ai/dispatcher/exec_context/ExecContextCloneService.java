@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextTaskStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextVariableStateRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYaml;
 import ai.metaheuristic.ai.yaml.exec_context_graph.ExecContextGraphParamsYamlUtils;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
@@ -107,6 +108,7 @@ public class ExecContextCloneService {
     }
 
     public CloneResult cloneExecContext(Long sourceExecContextId, CloneOptions options) {
+        TxUtils.checkTxNotExists();
         long start = System.currentTimeMillis();
 
         ExecContextImpl source = execContextRepository.findByIdNullable(sourceExecContextId);
@@ -164,8 +166,10 @@ public class ExecContextCloneService {
         // Doing both passes in REQUIRES_NEW transactions ensures rows committed in
         // pass A are visible to pass B.
         for (TaskImpl t : sourceTasks) {
-            Long preAllocatedId = cloneTxService.preAllocateClonedTask(newEcId);
-            taskIdMap.put(t.id, preAllocatedId);
+            TaskImpl saved = cloneTxService.preAllocateClonedTask(newEcId);
+            log.info("Phase13.G.5 preAllocateClonedTask: pre-allocated clonedTaskId={} in clonedEC={} (saved.id={}, version={})",
+                saved.id, newEcId, saved.id, saved.version);
+            taskIdMap.put(t.id, saved.id);
         }
         // Pass B — fill each pre-allocated row with cloned content + rewritten IDs.
         for (TaskImpl t : sourceTasks) {

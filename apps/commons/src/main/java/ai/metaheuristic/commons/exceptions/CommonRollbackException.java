@@ -54,4 +54,8 @@ public class CommonRollbackException extends RuntimeException {
     public String getErrorMessage() {
         return String.join(". ", messages);
     }
+
+    public String infoMessage() {
+        return String.join(". ", messages);
+    }
 }

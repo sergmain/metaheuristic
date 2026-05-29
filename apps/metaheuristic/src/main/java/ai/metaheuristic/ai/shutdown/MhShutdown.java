@@ -18,6 +18,9 @@ package ai.metaheuristic.ai.shutdown;
 
 import ai.metaheuristic.ai.dispatcher.task.TaskQueueService;
 
+import javax.cache.CacheManager;
+import javax.cache.Caching;
+
 /**
  * @author Sergio Lissner
  * Date: 3/15/2026
@@ -27,5 +30,19 @@ public class MhShutdown {
 
     public static void cleanUp() {
         TaskQueueService.resetQueue();
+
+        // Get the JCache manager (configured via ehcache.xml or properties)
+        CacheManager jcacheManager = Caching.getCachingProvider().getCacheManager();
+        jcacheManager.getCacheNames().forEach(name -> {
+            try {
+                javax.cache.Cache<?, ?> cache = jcacheManager.getCache(name);
+                if (cache != null) {
+                    cache.clear();
+                }
+            } catch (Throwable ex) {
+                //
+            }
+        });
+
     }
 }
