@@ -25,12 +25,14 @@ public class FunctionConfigYamlUtils {
 
     private static final FunctionConfigYamlUtilsV1 UTILS_V_1 = new FunctionConfigYamlUtilsV1();
     private static final FunctionConfigYamlUtilsV2 UTILS_V_2 = new FunctionConfigYamlUtilsV2();
-    private static final FunctionConfigYamlUtilsV2 DEFAULT_UTILS = UTILS_V_2;
+    private static final FunctionConfigYamlUtilsV3 UTILS_V_3 = new FunctionConfigYamlUtilsV3();
+    private static final FunctionConfigYamlUtilsV3 DEFAULT_UTILS = UTILS_V_3;
 
     public static final BaseYamlUtils<FunctionConfigYaml> UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, UTILS_V_1,
-                    2, UTILS_V_2
+                    2, UTILS_V_2,
+                    3, UTILS_V_3
             ),
             DEFAULT_UTILS
     );

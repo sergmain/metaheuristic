@@ -39,6 +39,11 @@ public class CommonConsts {
     public static final String MH_FUNCTION_YAML = "mh-function.yaml";
     public static final String MH_BUNDLE_YAML = "mh-bundle.yaml";
     public static final String DEFAULT_FUNCTION_SRC_DIR = "src";
+
+    // Fallback key for a Function's per-OS 'targets' map: an OS-agnostic target used
+    // when no entry matches the Processor's detected OsArch. Also the key under which a
+    // legacy single src/file bundle is placed during V2->V3 upgrade.
+    public static final String MH_DEFAULT_OS_KEY = "mh-default";
     public static final String ZIP_EXTENSION = ".zip";
     public static final String GIT_REPO = "git-repo";
     public static final String HTTP = "http://";

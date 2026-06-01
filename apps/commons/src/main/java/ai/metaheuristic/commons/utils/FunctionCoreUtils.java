@@ -22,6 +22,7 @@ import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import ai.metaheuristic.commons.S;
+import java.util.stream.Collectors;
 import ai.metaheuristic.commons.yaml.function.FunctionConfigYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.extern.slf4j.Slf4j;
@@ -39,8 +40,8 @@ public class FunctionCoreUtils {
     private static final FunctionApiData.FunctionConfigStatus FUNCTION_CONFIG_STATUS_OK = new FunctionApiData.FunctionConfigStatus(true, null);
 
     public static FunctionApiData.FunctionConfigStatus validate(FunctionConfigYaml.FunctionConfig functionConfig) {
-        if ((functionConfig.file ==null || functionConfig.file.isBlank()) && (functionConfig.env ==null || functionConfig.env.isBlank())) {
-            return new FunctionApiData.FunctionConfigStatus(false, "401.010 Fields 'file' and 'env' can't be null or empty both.");
+        if (isTargetsEmpty(functionConfig) && (functionConfig.env ==null || functionConfig.env.isBlank())) {
+            return new FunctionApiData.FunctionConfigStatus(false, "401.010 Fields 'targets' and 'env' can't be null or empty both.");
         }
         if (S.b(functionConfig.code)) {
             return new FunctionApiData.FunctionConfigStatus(false, "401.015 The field 'code' is blank: " + functionConfig);
@@ -56,8 +57,13 @@ public class FunctionCoreUtils {
         }
         switch (functionConfig.sourcing) {
             case dispatcher:
-                if (StringUtils.isBlank(functionConfig.file)) {
-                    return new FunctionApiData.FunctionConfigStatus(false, "401.030 sourcing is 'dispatcher' but file is empty: " + functionConfig);
+                if (isTargetsEmpty(functionConfig)) {
+                    return new FunctionApiData.FunctionConfigStatus(false, "401.030 sourcing is 'dispatcher' but targets are empty: " + functionConfig);
+                }
+                for (Map.Entry<String, FunctionConfigYaml.Target> e : functionConfig.targets.entrySet()) {
+                    if (StringUtils.isBlank(e.getValue().file)) {
+                        return new FunctionApiData.FunctionConfigStatus(false, "401.031 sourcing is 'dispatcher' but target '" + e.getKey() + "' has an empty file: " + functionConfig);
+                    }
                 }
                 break;
             case git:
@@ -71,7 +77,22 @@ public class FunctionCoreUtils {
 
     public static String getDataForChecksumForConfigOnly(FunctionConfigYaml.FunctionConfig functionConfig) {
         return getDataForChecksumForConfigOnly(
-                functionConfig.code, functionConfig.env, functionConfig.file, functionConfig.params, functionConfig.git, functionConfig.sourcing);
+                functionConfig.code, functionConfig.env, targetsAsString(functionConfig.targets), functionConfig.params, functionConfig.git, functionConfig.sourcing);
+    }
+
+    private static boolean isTargetsEmpty(FunctionConfigYaml.FunctionConfig fc) {
+        return fc.targets==null || fc.targets.isEmpty();
+    }
+
+    @Nullable
+    private static String targetsAsString(@Nullable Map<String, FunctionConfigYaml.Target> targets) {
+        if (targets==null || targets.isEmpty()) {
+            return null;
+        }
+        return targets.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> e.getKey() + ":" + e.getValue().src + "/" + e.getValue().file)
+                .collect(Collectors.joining(","));
     }
 
     public static String getDataForChecksumForConfigOnly(TaskParamsYaml.FunctionConfig functionConfig) {

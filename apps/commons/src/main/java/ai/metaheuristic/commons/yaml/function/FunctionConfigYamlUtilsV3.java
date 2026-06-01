@@ -16,40 +16,39 @@
 
 package ai.metaheuristic.commons.yaml.function;
 
-import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.jspecify.annotations.NonNull;
 import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Serge
  * Date: 6/17/2019
  * Time: 12:10 AM
  */
-public class FunctionConfigYamlUtilsV2
-        extends AbstractParamsYamlUtils<FunctionConfigYamlV2, FunctionConfigYamlV3, FunctionConfigYamlUtilsV3, Void, Void, Void> {
+public class FunctionConfigYamlUtilsV3
+        extends AbstractParamsYamlUtils<FunctionConfigYamlV3, FunctionConfigYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 2;
+        return 3;
     }
 
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(FunctionConfigYamlV2.class);
+        return YamlUtils.init(FunctionConfigYamlV3.class);
     }
 
     @Override
-    public FunctionConfigYamlV3 upgradeTo(FunctionConfigYamlV2 src) {
+    public FunctionConfigYaml upgradeTo(FunctionConfigYamlV3 src) {
         src.checkIntegrity();
-        FunctionConfigYamlV3 trg = new FunctionConfigYamlV3();
+        FunctionConfigYaml trg = new FunctionConfigYaml();
         trg.function = to(src.function);
         // trg was just created so system isn't null
         //noinspection DataFlowIssue
@@ -59,27 +58,27 @@ public class FunctionConfigYamlUtilsV2
         return trg;
     }
 
-    static FunctionConfigYamlV3.FunctionConfigV3 to(FunctionConfigYamlV2.FunctionConfigV2 src) {
-        FunctionConfigYamlV3.FunctionConfigV3 trg = new FunctionConfigYamlV3.FunctionConfigV3();
-        // copies code,type,params,env,sourcing,git,assetDir; the removed file/src are not on trg
-        BeanUtils.copyProperties(src, trg);
+    static FunctionConfigYaml.FunctionConfig to(FunctionConfigYamlV3.FunctionConfigV3 src) {
+        FunctionConfigYaml.FunctionConfig trg = new FunctionConfigYaml.FunctionConfig();
+        BeanUtils.copyProperties(src, trg, "metas", "targets", "api");
 
         if (src.metas!=null) {
             trg.metas = new ArrayList<>(src.metas);
         }
 
         if (src.api!=null) {
-            trg.api = new FunctionConfigYamlV3.ApiV3(src.api.keyCode);
+            trg.api = new FunctionConfigYaml.Api(src.api.keyCode);
         }
 
-        // wrap the legacy single (src,file) pair into the OS-agnostic default target
         trg.targets = new LinkedHashMap<>();
-        trg.targets.put(CommonConsts.MH_DEFAULT_OS_KEY, new FunctionConfigYamlV3.TargetV3(src.src, src.file));
+        for (Map.Entry<String, FunctionConfigYamlV3.TargetV3> e : src.targets.entrySet()) {
+            trg.targets.put(e.getKey(), new FunctionConfigYaml.Target(e.getValue().src, e.getValue().file));
+        }
 
         return trg;
     }
 
-    private static void toSystem(FunctionConfigYamlV2.SystemV2 src, FunctionConfigYamlV3.SystemV3 trg) {
+    private static void toSystem(FunctionConfigYamlV3.SystemV3 src, FunctionConfigYaml.System trg) {
         trg.checksumMap.putAll(src.checksumMap);
         trg.archive = src.archive;
     }
@@ -90,8 +89,8 @@ public class FunctionConfigYamlUtilsV2
     }
 
     @Override
-    public FunctionConfigYamlUtilsV3 nextUtil() {
-        return (FunctionConfigYamlUtilsV3) FunctionConfigYamlUtils.UTILS.getForVersion(3);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -100,16 +99,16 @@ public class FunctionConfigYamlUtilsV2
     }
 
     @Override
-    public String toString(FunctionConfigYamlV2 yaml) {
+    public String toString(FunctionConfigYamlV3 yaml) {
         return getYaml().dump(yaml);
     }
 
     @Override
-    public FunctionConfigYamlV2 to(String yaml) {
+    public FunctionConfigYamlV3 to(String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
-        final FunctionConfigYamlV2 p = getYaml().load(yaml);
+        final FunctionConfigYamlV3 p = getYaml().load(yaml);
         return p;
     }
 

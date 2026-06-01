@@ -29,6 +29,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +44,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class FunctionConfigYaml implements BaseParams, Cloneable {
 
-    public final int version=2;
+    public final int version=3;
 
     @Override
     public boolean checkIntegrity() {
@@ -51,8 +52,17 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
             throw new CheckIntegrityFailedException("sourcing==null");
         }
         List<String> errors = new ArrayList<>();
-        if (function.sourcing==EnumsApi.FunctionSourcing.dispatcher && S.b(function.file)) {
-            errors.add(S.f("function %s has a sourcing as %s but file are empty", function.code, function.sourcing));
+        if (function.sourcing==EnumsApi.FunctionSourcing.dispatcher) {
+            if (function.targets==null || function.targets.isEmpty()) {
+                errors.add(S.f("function %s has a sourcing as %s but targets are empty", function.code, function.sourcing));
+            }
+            else {
+                for (Map.Entry<String, Target> e : function.targets.entrySet()) {
+                    if (S.b(e.getValue().file)) {
+                        errors.add(S.f("function %s, target '%s' has an empty file", function.code, e.getKey()));
+                    }
+                }
+            }
         }
         final String value = MetaUtils.getValue(function.metas, ConstsApi.META_MH_TASK_PARAMS_VERSION);
         if (value!=null) {
@@ -109,6 +119,27 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
         public String keyCode;
     }
 
+    /**
+     * A per-OS deployment target inside the function package. 'src' is the subdirectory
+     * holding the actual file (default {@link CommonConsts#DEFAULT_FUNCTION_SRC_DIR});
+     * 'file' is the executable/artifact filename within that subdirectory. One Target per
+     * supported OS/arch, keyed in {@link FunctionConfig#targets} by an OsArch key
+     * (e.g. linux_amd64) or by {@link CommonConsts#MH_DEFAULT_OS_KEY} for OS-agnostic.
+     */
+    @Data
+    @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Target implements Cloneable {
+        public String src = CommonConsts.DEFAULT_FUNCTION_SRC_DIR;
+        public @Nullable String file;
+
+        @SneakyThrows
+        public Target clone() {
+            return (Target) super.clone();
+        }
+    }
+
     @Data
     @ToString
     @NoArgsConstructor
@@ -122,6 +153,10 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
             if (this.metas!=null) {
                 clone.metas = new ArrayList<>(this.metas);
             }
+            clone.targets = new LinkedHashMap<>();
+            for (Map.Entry<String, Target> e : this.targets.entrySet()) {
+                clone.targets.put(e.getKey(), e.getValue().clone());
+            }
             return clone;
         }
 
@@ -130,7 +165,6 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
          */
         public String code;
         public @Nullable String type;
-        public @Nullable String file;
         /**
          * params for command line for invoking function
          * <p>
@@ -143,7 +177,11 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
         public @Nullable GitInfo git;
         public @Nullable List<Map<String, String>> metas = new ArrayList<>();
 
-        public String src = CommonConsts.DEFAULT_FUNCTION_SRC_DIR;
+        /**
+         * per-OS deployment targets: key is an OsArch key (e.g. linux_amd64) or
+         * {@link CommonConsts#MH_DEFAULT_OS_KEY}. Replaces the former single src+file pair.
+         */
+        public Map<String, Target> targets = new LinkedHashMap<>();
 
         public @Nullable String assetDir;
 

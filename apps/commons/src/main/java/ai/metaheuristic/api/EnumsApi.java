@@ -110,6 +110,86 @@ public class EnumsApi {
 
     public enum OS { unknown, any, windows, linux, macos }
 
+    /**
+     * OS + CPU architecture, named with the golang GOOS_GOARCH convention so the enum
+     * constant doubles as the per-OS key in a Function's 'targets' map (e.g. linux_amd64).
+     * detect() resolves the current JVM's os.name/os.arch into one of these constants.
+     */
+    public enum OsArch {
+        linux_amd64(OS.linux, "amd64"),
+        linux_arm64(OS.linux, "arm64"),
+        windows_amd64(OS.windows, "amd64"),
+        windows_arm64(OS.windows, "arm64"),
+        darwin_amd64(OS.macos, "amd64"),
+        darwin_arm64(OS.macos, "arm64");
+
+        public final OS os;
+        public final String arch;
+
+        OsArch(OS os, String arch) {
+            this.os = os;
+            this.arch = arch;
+        }
+
+        public String key() {
+            return name();
+        }
+
+        @Nullable
+        public static OsArch fromKey(@Nullable String key) {
+            if (key==null) {
+                return null;
+            }
+            for (OsArch v : values()) {
+                if (v.name().equals(key)) {
+                    return v;
+                }
+            }
+            return null;
+        }
+
+        public static OsArch normalize(String osName, String osArch) {
+            final String n = osName.toLowerCase();
+            final OS os;
+            // mac/darwin MUST be checked before windows: "darwin" contains the substring "win"
+            if (n.contains("mac") || n.contains("darwin")) {
+                os = OS.macos;
+            }
+            else if (n.contains("win")) {
+                os = OS.windows;
+            }
+            else if (n.contains("nux") || n.contains("nix") || n.contains("aix")) {
+                os = OS.linux;
+            }
+            else {
+                os = OS.unknown;
+            }
+
+            final String a = osArch.toLowerCase();
+            final String arch;
+            if (a.equals("amd64") || a.equals("x86_64") || a.equals("x64")) {
+                arch = "amd64";
+            }
+            else if (a.equals("aarch64") || a.equals("arm64")) {
+                arch = "arm64";
+            }
+            else {
+                arch = a;
+            }
+
+            for (OsArch v : values()) {
+                if (v.os==os && v.arch.equals(arch)) {
+                    return v;
+                }
+            }
+            throw new IllegalStateException("Unsupported OS/arch combination: os.name='" + osName + "', os.arch='" + osArch + "'");
+        }
+
+        public static OsArch detect() {
+            return normalize(System.getProperty("os.name", ""), System.getProperty("os.arch", ""));
+        }
+    }
+
     @ToString
     public enum DataSourcing {
         // data will be downloaded from dispatcher

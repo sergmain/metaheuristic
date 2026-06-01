@@ -225,21 +225,29 @@ public class BundleUtils {
             isError=true;
         }
         if (function.sourcing== EnumsApi.FunctionSourcing.dispatcher) {
-            if (S.b(function.file)) {
-                log.error("function " + function.code + " has an empty 'file' field.");
+            if (function.targets==null || function.targets.isEmpty()) {
+                log.error("function " + function.code + " has no targets.");
                 isError = true;
             }
             else {
-                Path sn = tempFuncPath.resolve(function.src).resolve(function.file);
-                if (Files.notExists(sn)) {
-                    log.error("Function {} has missing file {}", function.code, function.file);
-                    isError = true;
-                }
+                for (Map.Entry<String, FunctionConfigYaml.Target> e : function.targets.entrySet()) {
+                    final FunctionConfigYaml.Target target = e.getValue();
+                    if (S.b(target.file)) {
+                        log.error("function " + function.code + ", target '" + e.getKey() + "' has an empty 'file' field.");
+                        isError = true;
+                        continue;
+                    }
+                    Path sn = tempFuncPath.resolve(target.src).resolve(target.file);
+                    if (Files.notExists(sn)) {
+                        log.error("Function {} target {} has missing file {}", function.code, e.getKey(), target.file);
+                        isError = true;
+                    }
 
-                Path f = Path.of(function.file);
-                if (!f.toString().equals(function.file)) {
-                    log.error("Relative path for function file isn't supported, file: " + function.file);
-                    isError = true;
+                    Path f = Path.of(target.file);
+                    if (!f.toString().equals(target.file)) {
+                        log.error("Relative path for function file isn't supported, target: " + e.getKey() + ", file: " + target.file);
+                        isError = true;
+                    }
                 }
             }
         }

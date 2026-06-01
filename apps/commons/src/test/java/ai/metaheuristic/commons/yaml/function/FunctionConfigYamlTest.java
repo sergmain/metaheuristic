@@ -19,6 +19,7 @@ package ai.metaheuristic.commons.yaml.function;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.sourcing.GitInfo;
+import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -37,6 +38,15 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 @Execution(CONCURRENT)
 public class FunctionConfigYamlTest {
 
+    private static void setFile(FunctionConfigYaml.FunctionConfig fc, String file) {
+        fc.targets.put(CommonConsts.MH_DEFAULT_OS_KEY, new FunctionConfigYaml.Target(CommonConsts.DEFAULT_FUNCTION_SRC_DIR, file));
+    }
+
+    private static String fileOf(FunctionConfigYaml.FunctionConfig fc) {
+        FunctionConfigYaml.Target t = fc.targets.get(CommonConsts.MH_DEFAULT_OS_KEY);
+        return t==null ? null : t.file;
+    }
+
     @Test
     public void testUpgradeToLatest_55() {
         FunctionConfigYamlV1 sc1 = getFunctionConfigYamlV1();
@@ -48,7 +58,8 @@ public class FunctionConfigYamlTest {
     @Test
     public void testUpgradeToV2() {
         FunctionConfigYamlV2 sc = new FunctionConfigYamlUtilsV1().upgradeTo(getFunctionConfigYamlV1());
-        FunctionConfigYaml sc2 = new FunctionConfigYamlUtilsV2().upgradeTo(sc);
+        FunctionConfigYamlV3 sc3 = new FunctionConfigYamlUtilsV2().upgradeTo(sc);
+        FunctionConfigYaml sc2 = new FunctionConfigYamlUtilsV3().upgradeTo(sc3);
 
         System.out.println(FunctionConfigYamlUtils.UTILS.toString(sc2));
 
@@ -60,8 +71,9 @@ public class FunctionConfigYamlTest {
 
         assertEquals(sc2.function.code, "sc.code");
         assertEquals(sc2.function.type, "sc.type");
-        assertEquals(sc2.function.file, "sc.file");
-        assertEquals(sc2.function.params, "sc.params");
+        // the legacy single src/file was wrapped into the OS-agnostic default target
+        assertEquals("sc.file", fileOf(sc2.function));
+        assertEquals("sc.params", sc2.function.params);
         assertEquals(sc2.function.env, "sc.env");
         assertEquals(sc2.function.sourcing, EnumsApi.FunctionSourcing.dispatcher);
         assertNotNull(sc2.function.git);
@@ -83,7 +95,7 @@ public class FunctionConfigYamlTest {
     @Test
     public void testUpgradeToLatest() {
         FunctionConfigYamlV1 sc1 = getFunctionConfigYamlV1();
-        FunctionConfigYaml sc2 = new FunctionConfigYamlUtilsV2().upgradeTo(new FunctionConfigYamlUtilsV1().upgradeTo(sc1));
+        FunctionConfigYaml sc2 = new FunctionConfigYamlUtilsV3().upgradeTo(new FunctionConfigYamlUtilsV2().upgradeTo(new FunctionConfigYamlUtilsV1().upgradeTo(sc1)));
         checkLatest(sc2);
     }
 
@@ -110,7 +122,7 @@ public class FunctionConfigYamlTest {
         FunctionConfigYaml sc = new FunctionConfigYaml();
         sc.function.code = "sc.code";
         sc.function.type = "sc.type";
-        sc.function.file = "sc.file";
+        setFile(sc.function, "sc.file");
         sc.function.params = "sc.params";
         sc.function.env = "sc.env";
         sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
@@ -134,8 +146,8 @@ public class FunctionConfigYamlTest {
     private static void checkLatest(FunctionConfigYaml sc) {
         assertEquals(sc.function.code, "sc.code");
         assertEquals(sc.function.type, "sc.type");
-        assertEquals(sc.function.file, "sc.file");
-        assertEquals(sc.function.params, "sc.params");
+        assertEquals("sc.file", fileOf(sc.function));
+        assertEquals("sc.params", sc.function.params);
         assertEquals(sc.function.env, "sc.env");
         assertEquals(sc.function.sourcing, EnumsApi.FunctionSourcing.dispatcher);
         assertNotNull(sc.function.git);
@@ -158,7 +170,7 @@ public class FunctionConfigYamlTest {
         FunctionConfigYaml sc = new FunctionConfigYaml();
         sc.function.code = "sc.code";
         sc.function.type = "sc.type";
-        sc.function.file = "sc.file";
+        setFile(sc.function, "sc.file");
         sc.function.params = "sc.params";
         sc.function.env = "sc.env";
         sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
@@ -167,7 +179,7 @@ public class FunctionConfigYamlTest {
 
         assertEquals(sc1.function.code, "sc.code");
         assertEquals(sc1.function.type, "sc.type");
-        assertEquals(sc1.function.file, "sc.file");
+        assertEquals("sc.file", fileOf(sc1.function));
         assertEquals(sc1.function.env, "sc.env");
         assertEquals(sc1.function.sourcing, EnumsApi.FunctionSourcing.dispatcher);
         assertNull(sc1.function.git);
