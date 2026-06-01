@@ -105,7 +105,7 @@ public class TestFunctionConfigSchemeValidation {
         cfgList.system.checksumMap.put(EnumsApi.HashAlgo.SHA256, "123");
         cfg.code = "code";
         cfg.type = "type";
-        cfg.file = "file";
+        cfg.targets.put(ai.metaheuristic.commons.CommonConsts.MH_DEFAULT_OS_KEY, new FunctionConfigYaml.Target(ai.metaheuristic.commons.CommonConsts.DEFAULT_FUNCTION_SRC_DIR, "file"));
         cfg.params = "params";
         cfg.env = "env";
         cfg.sourcing = EnumsApi.FunctionSourcing.dispatcher;

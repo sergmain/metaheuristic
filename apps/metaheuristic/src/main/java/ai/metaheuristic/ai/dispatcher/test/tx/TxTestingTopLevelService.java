@@ -73,7 +73,7 @@ public class TxTestingTopLevelService {
             sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
             sc.function.type = funcType;
             sc.function.env = "python-3";
-            sc.function.file = file;
+            sc.function.targets.put(ai.metaheuristic.commons.CommonConsts.MH_DEFAULT_OS_KEY, new FunctionConfigYaml.Target(ai.metaheuristic.commons.CommonConsts.DEFAULT_FUNCTION_SRC_DIR, file));
             sc.function.params = "AAA";
             sc.function.metas.add(Map.of(ConstsApi.META_MH_TASK_PARAMS_VERSION, "1"));
 

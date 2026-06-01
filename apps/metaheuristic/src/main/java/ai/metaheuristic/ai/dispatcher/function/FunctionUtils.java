@@ -35,7 +35,14 @@ public class FunctionUtils {
         TaskParamsYaml.FunctionConfig fc = TaskParamsUtils.toFunctionConfig(f.getFunctionConfigYaml());
 
         fsc.code = fc.code;
-        fsc.file = fc.file;
+        // FunctionShortConfig is a summary DTO carrying a single file; project the
+        // OS-agnostic default target (else the first target) for listing/comparison.
+        ai.metaheuristic.commons.yaml.task.TaskParamsYaml.Target fscTarget =
+                fc.targets.get(ai.metaheuristic.commons.CommonConsts.MH_DEFAULT_OS_KEY);
+        if (fscTarget==null && !fc.targets.isEmpty()) {
+            fscTarget = fc.targets.values().iterator().next();
+        }
+        fsc.file = fscTarget==null ? null : fscTarget.file;
         fsc.checksumMap = fc.checksumMap;
         fsc.sourcing = fc.sourcing;
         fsc.metas.addAll(fc.metas);

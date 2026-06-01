@@ -100,13 +100,12 @@ public class TestTaskParamYaml {
                 new FunctionConfigYaml.FunctionConfig(
                     "123:1.0",
                     CommonConsts.FIT_TYPE,
-                    "file.txt",
                     "112233",
                     "python",
                     EnumsApi.FunctionSourcing.dispatcher,
                     null,
                     List.of(),
-                    CommonConsts.DEFAULT_FUNCTION_SRC_DIR,
+                    new java.util.LinkedHashMap<>(java.util.Map.of(CommonConsts.MH_DEFAULT_OS_KEY, new FunctionConfigYaml.Target(CommonConsts.DEFAULT_FUNCTION_SRC_DIR, "file.txt"))),
                     null, null
                 ),
                 null)

@@ -21,6 +21,7 @@ import ai.metaheuristic.api.data.AssetFile;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.ArtifactCommonUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
+import ai.metaheuristic.commons.CommonConsts;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -29,6 +30,10 @@ import org.jspecify.annotations.Nullable;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Set;
+import java.util.HashSet;
+import java.nio.file.attribute.PosixFilePermission;
+import java.io.IOException;
 
 @Slf4j
 public class AssetUtils {
@@ -146,9 +151,41 @@ public class AssetUtils {
 
     @Nullable
     public static String getActualFunctionFile(TaskParamsYaml.FunctionConfig functionConfig) {
-        String actualFunctionFile = functionConfig.getSrc().isEmpty()
-            ? functionConfig.file
-            : functionConfig.getSrc() + File.separatorChar + functionConfig.file;
-        return actualFunctionFile;
+        TaskParamsYaml.Target target = selectTarget(functionConfig, EnumsApi.OsArch.detect());
+        if (target==null || S.b(target.file)) {
+            return null;
+        }
+        // src may be a multi-segment, '/'-style path (e.g. bin/linux-amd64); Path normalises per-OS
+        return S.b(target.src)
+            ? target.file
+            : Path.of(target.src).resolve(target.file).toString();
+    }
+
+    public static TaskParamsYaml.@Nullable Target selectTarget(TaskParamsYaml.FunctionConfig functionConfig, EnumsApi.OsArch osArch) {
+        TaskParamsYaml.Target t = functionConfig.targets.get(osArch.key());
+        if (t==null) {
+            t = functionConfig.targets.get(CommonConsts.MH_DEFAULT_OS_KEY);
+        }
+        return t;
+    }
+
+    /**
+     * ZIP entries don't preserve the POSIX executable bit, so a native Function binary
+     * unpacked from a function package isn't runnable until +x is restored. Sets
+     * owner/group/others execute on POSIX file systems; a no-op on Windows.
+     */
+    public static void makeExecutableIfPosix(Path file) {
+        try {
+            if (file.getFileSystem().supportedFileAttributeViews().contains("posix")) {
+                Set<PosixFilePermission> perms = new HashSet<>(Files.getPosixFilePermissions(file));
+                perms.add(PosixFilePermission.OWNER_EXECUTE);
+                perms.add(PosixFilePermission.GROUP_EXECUTE);
+                perms.add(PosixFilePermission.OTHERS_EXECUTE);
+                Files.setPosixFilePermissions(file, perms);
+            }
+        }
+        catch (IOException e) {
+            log.warn("Can't set the executable bit on {}: {}", file, e.getMessage());
+        }
     }
 }

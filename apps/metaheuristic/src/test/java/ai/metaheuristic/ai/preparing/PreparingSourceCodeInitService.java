@@ -164,7 +164,7 @@ public class PreparingSourceCodeInitService {
         FunctionConfigYaml sc = new FunctionConfigYaml();
         sc.function.code = functionCode;
         sc.function.type = functionCode + "-type";
-        sc.function.file = "some-file";
+        sc.function.targets.put(ai.metaheuristic.commons.CommonConsts.MH_DEFAULT_OS_KEY, new FunctionConfigYaml.Target(ai.metaheuristic.commons.CommonConsts.DEFAULT_FUNCTION_SRC_DIR, "some-file"));
         sc.function.env = "env-for-test-function";
         sc.function.sourcing = EnumsApi.FunctionSourcing.dispatcher;
 

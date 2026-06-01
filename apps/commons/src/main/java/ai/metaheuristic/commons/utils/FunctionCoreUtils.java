@@ -97,7 +97,18 @@ public class FunctionCoreUtils {
 
     public static String getDataForChecksumForConfigOnly(TaskParamsYaml.FunctionConfig functionConfig) {
         return getDataForChecksumForConfigOnly(
-                functionConfig.code, functionConfig.env, functionConfig.file, functionConfig.params, functionConfig.git, functionConfig.sourcing);
+                functionConfig.code, functionConfig.env, taskTargetsAsString(functionConfig.targets), functionConfig.params, functionConfig.git, functionConfig.sourcing);
+    }
+
+    @Nullable
+    private static String taskTargetsAsString(@Nullable Map<String, TaskParamsYaml.Target> targets) {
+        if (targets==null || targets.isEmpty()) {
+            return null;
+        }
+        return targets.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> e.getKey() + ":" + e.getValue().src + "/" + e.getValue().file)
+                .collect(Collectors.joining(","));
     }
 
     private static String getDataForChecksumForConfigOnly(

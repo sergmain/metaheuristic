@@ -33,7 +33,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * class TaskParamsYaml is for storing parameters of task in db table MH_TASK
+ * Frozen snapshot of the V3 schema (per-OS FunctionConfig 'targets'). Mirrors the
+ * version-less TaskParamsYaml at the time V3 became latest. Never modify its field set.
+ *
+ * class TaskParamsYamlV3 is for storing parameters of task in db table MH_TASK
  * AND for storing parameters internally at Processor side.
  *
  * <br/>
@@ -47,7 +50,7 @@ import java.util.Map;
 @SuppressWarnings("DuplicatedCode")
 @Data
 @EqualsAndHashCode
-public class TaskParamsYaml implements BaseParams {
+public class TaskParamsYamlV3 implements BaseParams {
 
     public final int version = 3;
 
@@ -68,7 +71,7 @@ public class TaskParamsYaml implements BaseParams {
                             "task.function.sourcing==EnumsApi.FunctionSourcing.dispatcher && " +
                             "task.function.targets.isEmpty())");
         }
-        for (OutputVariable output : task.outputs) {
+        for (OutputVariableV3 output : task.outputs) {
             // global variable as output isn't supported right now
             if (output.context!= EnumsApi.VariableContext.local && output.context!= EnumsApi.VariableContext.array) {
                 throw new CheckIntegrityFailedException("(output.context!= EnumsApi.VariableContext.local && output.context!= EnumsApi.VariableContext.array)");
@@ -80,7 +83,7 @@ public class TaskParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class InputVariable {
+    public static class InputVariableV3 {
         // it's actually id from a related table - MH_VARIABLE or MH_VARIABLE_GLOBAL
         // for context==VariableContext.local the table is MH_VARIABLE
         // for context==VariableContext.global the table is MH_VARIABLE_GLOBAL
@@ -122,7 +125,7 @@ public class TaskParamsYaml implements BaseParams {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class OutputVariable {
+    public static class OutputVariableV3 {
         // it's actually id from a related table - MH_VARIABLE or MH_VARIABLE_GLOBAL
         // for context==VariableContext.local the table is MH_VARIABLE
         // for context==VariableContext.global the table is MH_VARIABLE_GLOBAL
@@ -160,17 +163,17 @@ public class TaskParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(of = "code")
-    public static class FunctionConfig implements Cloneable {
+    public static class FunctionConfigV3 implements Cloneable {
 
         @SneakyThrows
-        public FunctionConfig clone() {
-            final FunctionConfig clone = (FunctionConfig) super.clone();
+        public FunctionConfigV3 clone() {
+            final FunctionConfigV3 clone = (FunctionConfigV3) super.clone();
             if (this.checksumMap != null) {
                 clone.checksumMap = new HashMap<>(this.checksumMap);
             }
             clone.metas.addAll(this.metas);
             clone.targets = new LinkedHashMap<>();
-            for (Map.Entry<String, Target> e : this.targets.entrySet()) {
+            for (Map.Entry<String, TargetV3> e : this.targets.entrySet()) {
                 clone.targets.put(e.getKey(), e.getValue().clone());
             }
             return clone;
@@ -188,7 +191,7 @@ public class TaskParamsYaml implements BaseParams {
          * per-OS deployment targets: key is an OsArch key (e.g. linux_amd64) or
          * {@link CommonConsts#MH_DEFAULT_OS_KEY}. Replaces the former single src+file pair.
          */
-        public Map<String, Target> targets = new LinkedHashMap<>();
+        public Map<String, TargetV3> targets = new LinkedHashMap<>();
 
         /**
          * params for command line for invoking function
@@ -215,20 +218,20 @@ public class TaskParamsYaml implements BaseParams {
         // Processor fetches a sealed API key from the Dispatcher before launching
         // the Function.
         @Nullable
-        public Api api;
+        public ApiV3 api;
     }
 
     @Data
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Target implements Cloneable {
+    public static class TargetV3 implements Cloneable {
         public String src = CommonConsts.DEFAULT_FUNCTION_SRC_DIR;
         public @Nullable String file;
 
         @SneakyThrows
-        public Target clone() {
-            return (Target) super.clone();
+        public TargetV3 clone() {
+            return (TargetV3) super.clone();
         }
     }
 
@@ -236,7 +239,7 @@ public class TaskParamsYaml implements BaseParams {
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class Api {
+    public static class ApiV3 {
         public String keyCode;
     }
 
@@ -244,7 +247,7 @@ public class TaskParamsYaml implements BaseParams {
     @ToString
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Cache {
+    public static class CacheV3 {
         public boolean enabled;
         public boolean omitInline;
         public boolean cacheMeta;
@@ -252,11 +255,11 @@ public class TaskParamsYaml implements BaseParams {
 
     @Data
     @NoArgsConstructor
-    public static class Init {
+    public static class InitV3 {
         public List<Long> parentTaskIds;
         public EnumsApi.TaskExecState nextState;
 
-        public Init(List<Long> parentTaskIds, EnumsApi.TaskExecState nextState) {
+        public InitV3(List<Long> parentTaskIds, EnumsApi.TaskExecState nextState) {
             this.parentTaskIds = parentTaskIds;
             this.nextState = nextState;
         }
@@ -264,28 +267,28 @@ public class TaskParamsYaml implements BaseParams {
 
     @Data
     @NoArgsConstructor
-    public static class TaskYaml {
+    public static class TaskYamlV3 {
         public Long execContextId;
         public String taskContextId;
         public String processCode;
-        public FunctionConfig function;
-        public final List<FunctionConfig> preFunctions = new ArrayList<>();
-        public final List<FunctionConfig> postFunctions = new ArrayList<>();
+        public FunctionConfigV3 function;
+        public final List<FunctionConfigV3> preFunctions = new ArrayList<>();
+        public final List<FunctionConfigV3> postFunctions = new ArrayList<>();
 
         public boolean clean = false;
         public EnumsApi.FunctionExecContext context;
 
         @Nullable public Map<String, Map<String, String>> inline;
-        public final List<InputVariable> inputs = new ArrayList<>();
-        public final List<OutputVariable> outputs = new ArrayList<>();
+        public final List<InputVariableV3> inputs = new ArrayList<>();
+        public final List<OutputVariableV3> outputs = new ArrayList<>();
         public final List<Map<String, String>> metas = new ArrayList<>();
 
-        @Nullable public Cache cache;
+        @Nullable public CacheV3 cache;
 
         // this field has meaning only for state EnumsApi.TaskExecState.INIT
         // must be not null if task.state is EnumsApi.TaskExecState.INIT
         @Nullable
-        public Init init;
+        public InitV3 init;
 
         /**
          * Timeout before terminate a process with function
@@ -304,7 +307,7 @@ public class TaskParamsYaml implements BaseParams {
         public boolean fromCache;
     }
 
-    public TaskYaml task = new TaskYaml();
+    public TaskYamlV3 task = new TaskYamlV3();
 
     // Stage 5: the company that owns this task's ExecContext. Used by the
     // Processor at launch time to resolve API keys via the Vault. Greenfield

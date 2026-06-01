@@ -31,14 +31,10 @@ public class TaskParamsUtils {
         trg.checksumMap = src.system!=null ? src.system.checksumMap : null;
         trg.code = src.function.code;
         trg.env = src.function.env;
-        // TEMP BRIDGE (Phase 1 of 016): TaskParamsYaml.FunctionConfig still carries a single
-        // 'file' until Phase 2 gives it 'targets'. Until then pick the OS-agnostic default
-        // target if present, else the first target, and project its file across.
-        FunctionConfigYaml.Target bridgeTarget = src.function.targets.get(ai.metaheuristic.commons.CommonConsts.MH_DEFAULT_OS_KEY);
-        if (bridgeTarget==null && !src.function.targets.isEmpty()) {
-            bridgeTarget = src.function.targets.values().iterator().next();
+        // copy per-OS targets across (FunctionConfigYaml.Target -> TaskParamsYaml.Target)
+        for (java.util.Map.Entry<String, FunctionConfigYaml.Target> e : src.function.targets.entrySet()) {
+            trg.targets.put(e.getKey(), new TaskParamsYaml.Target(e.getValue().src, e.getValue().file));
         }
-        trg.file = bridgeTarget==null ? null : bridgeTarget.file;
         trg.git = src.function.git;
         if (src.function.metas!=null) {
             trg.metas.addAll(src.function.metas);

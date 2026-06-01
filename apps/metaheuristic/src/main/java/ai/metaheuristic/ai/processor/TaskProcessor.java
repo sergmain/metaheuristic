@@ -41,6 +41,7 @@ import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.FunctionApiData;
 import ai.metaheuristic.commons.S;
+import ai.metaheuristic.ai.utils.asset.AssetUtils;
 import ai.metaheuristic.commons.dispatcher_schedule.DispatcherSchedule;
 import ai.metaheuristic.commons.dispatcher_schedule.ExtendedTimePeriod;
 import ai.metaheuristic.commons.exceptions.CheckIntegrityFailedException;
@@ -624,6 +625,11 @@ public class TaskProcessor {
                         throw new IllegalStateException("100.310 functionAssetFile is null");
                     }
                     cmd.add(functionPrepareResult.functionAssetFile.file.toAbsolutePath().toString());
+                    // native Function (no interpreter env): restore the executable bit lost
+                    // when the binary was unpacked from the ZIP package (no-op on Windows).
+                    if (S.b(functionPrepareResult.function.env)) {
+                        AssetUtils.makeExecutableIfPosix(functionPrepareResult.functionAssetFile.file);
+                    }
                     break;
                 default:
                     throw new IllegalStateException("100.330 Unknown sourcing: "+ functionPrepareResult.function.sourcing );
@@ -696,7 +702,7 @@ public class TaskProcessor {
                     "\tinterpreter: " + interpreter+"\n" +
                     "\tfile: " + (functionPrepareResult.functionAssetFile !=null && functionPrepareResult.functionAssetFile.file!=null
                     ? functionPrepareResult.functionAssetFile.file.toAbsolutePath()
-                    : functionPrepareResult.function.file) +"\n" +
+                    : functionPrepareResult.function.targets) +"\n" +
                     "\tparams", th);
             systemExecResult = new FunctionApiData.SystemExecResult(
                     functionPrepareResult.function.code, false, -1, ExceptionUtils.getStackTrace(th));

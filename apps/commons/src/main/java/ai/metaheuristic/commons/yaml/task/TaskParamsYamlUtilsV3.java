@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.commons.yaml.task;
 
-import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
 import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
@@ -26,6 +25,7 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
 
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -34,40 +34,40 @@ import java.util.stream.Collectors;
  * Time: 12:10 AM
  */
 @SuppressWarnings("DuplicatedCode")
-public class TaskParamsYamlUtilsV2
-        extends AbstractParamsYamlUtils<TaskParamsYamlV2, TaskParamsYamlV3, TaskParamsYamlUtilsV3, Void, Void, Void> {
+public class TaskParamsYamlUtilsV3
+        extends AbstractParamsYamlUtils<TaskParamsYamlV3, TaskParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 2;
+        return 3;
     }
 
     @NonNull
     @Override
     public Yaml getYaml() {
-        return YamlUtils.init(TaskParamsYamlV2.class);
+        return YamlUtils.init(TaskParamsYamlV3.class);
     }
 
     @NonNull
     @Override
-    public TaskParamsYamlV3 upgradeTo(@NonNull TaskParamsYamlV2 v1) {
+    public TaskParamsYaml upgradeTo(@NonNull TaskParamsYamlV3 v1) {
         v1.checkIntegrity();
-        TaskParamsYamlV3 t = new TaskParamsYamlV3();
-        t.task = new TaskParamsYamlV3.TaskYamlV3();
+        TaskParamsYaml t = new TaskParamsYaml();
+        t.task = new TaskParamsYaml.TaskYaml();
         BeanUtils.copyProperties(v1.task, t.task, "function", "preFunctions", "postFunctions", "inline", "inputs", "outputs", "metas", "cache");
         t.task.function = toUp(v1.task.function);
-        v1.task.preFunctions.stream().map(TaskParamsYamlUtilsV2::toUp).collect(Collectors.toCollection(()->t.task.preFunctions));
-        v1.task.postFunctions.stream().map(TaskParamsYamlUtilsV2::toUp).collect(Collectors.toCollection(()->t.task.postFunctions));
+        v1.task.preFunctions.stream().map(TaskParamsYamlUtilsV3::toUp).collect(Collectors.toCollection(()->t.task.preFunctions));
+        v1.task.postFunctions.stream().map(TaskParamsYamlUtilsV3::toUp).collect(Collectors.toCollection(()->t.task.postFunctions));
 
         t.task.inline = v1.task.inline;
-        v1.task.inputs.stream().map(TaskParamsYamlUtilsV2::upInputVariable).collect(Collectors.toCollection(()->t.task.inputs));
-        v1.task.outputs.stream().map(TaskParamsYamlUtilsV2::upOutputVariable).collect(Collectors.toCollection(()->t.task.outputs));
+        v1.task.inputs.stream().map(TaskParamsYamlUtilsV3::upInputVariable).collect(Collectors.toCollection(()->t.task.inputs));
+        v1.task.outputs.stream().map(TaskParamsYamlUtilsV3::upOutputVariable).collect(Collectors.toCollection(()->t.task.outputs));
         t.task.metas.addAll(v1.task.metas);
         if (v1.task.cache!=null) {
-            t.task.cache = new TaskParamsYamlV3.CacheV3(v1.task.cache.enabled, v1.task.cache.omitInline, v1.task.cache.cacheMeta);
+            t.task.cache = new TaskParamsYaml.Cache(v1.task.cache.enabled, v1.task.cache.omitInline, v1.task.cache.cacheMeta);
         }
         if (v1.task.init!=null) {
-            t.task.init = new TaskParamsYamlV3.InitV3(v1.task.init.parentTaskIds, v1.task.init.nextState);
+            t.task.init = new TaskParamsYaml.Init(v1.task.init.parentTaskIds, v1.task.init.nextState);
         }
 
         // Stage 5: copy top-level companyId (greenfield exception — no bump).
@@ -78,25 +78,18 @@ public class TaskParamsYamlUtilsV2
         return t;
     }
 
-    private static TaskParamsYamlV3.InputVariableV3 upInputVariable(TaskParamsYamlV2.InputVariableV2 v1) {
-        TaskParamsYamlV3.InputVariableV3 v = new TaskParamsYamlV3.InputVariableV3(
-                v1.id, v1.context, v1.name, v1.sourcing, v1.git, v1.disk, v1.filename, v1.type,  v1.empty, v1.getNullable(), v1.ext);
-        return v;
+    private static TaskParamsYaml.InputVariable upInputVariable(TaskParamsYamlV3.InputVariableV3 v1) {
+        return new TaskParamsYaml.InputVariable(
+                v1.id, v1.context, v1.name, v1.sourcing, v1.git, v1.disk, v1.filename, v1.type, v1.empty, v1.getNullable(), v1.ext);
     }
 
-    private static TaskParamsYamlV3.OutputVariableV3 upOutputVariable(TaskParamsYamlV2.OutputVariableV2 v1) {
-        TaskParamsYamlV3.OutputVariableV3 v = new TaskParamsYamlV3.OutputVariableV3(
+    private static TaskParamsYaml.OutputVariable upOutputVariable(TaskParamsYamlV3.OutputVariableV3 v1) {
+        return new TaskParamsYaml.OutputVariable(
                 v1.id, v1.context, v1.name, v1.sourcing, v1.git, v1.disk, v1.filename, v1.uploaded, v1.type, v1.empty, v1.getNullable(), v1.ext);
-        return v;
     }
 
-    @Override
-    public Void downgradeTo(Void yaml) {
-        throw new DowngradeNotSupportedException();
-    }
-
-    private static TaskParamsYamlV3.FunctionConfigV3 toUp(TaskParamsYamlV2.FunctionConfigV2 src) {
-        TaskParamsYamlV3.FunctionConfigV3 trg = new TaskParamsYamlV3.FunctionConfigV3();
+    private static TaskParamsYaml.FunctionConfig toUp(TaskParamsYamlV3.FunctionConfigV3 src) {
+        TaskParamsYaml.FunctionConfig trg = new TaskParamsYaml.FunctionConfig();
         trg.code = src.code;
         trg.type = src.type;
         trg.params = src.params;
@@ -106,21 +99,23 @@ public class TaskParamsYamlUtilsV2
         trg.git = src.git;
         trg.assetDir = src.assetDir;
         if (src.api != null) {
-            trg.api = new TaskParamsYamlV3.ApiV3(src.api.keyCode);
+            trg.api = new TaskParamsYaml.Api(src.api.keyCode);
         }
-        // wrap the legacy single (src,file) into the OS-agnostic default target.
-        // internal-context functions have no file -> no target (keeps targets empty).
-        if (!S.b(src.file)) {
-            trg.targets.put(CommonConsts.MH_DEFAULT_OS_KEY, new TaskParamsYamlV3.TargetV3(src.src, src.file));
+        for (Map.Entry<String, TaskParamsYamlV3.TargetV3> e : src.targets.entrySet()) {
+            trg.targets.put(e.getKey(), new TaskParamsYaml.Target(e.getValue().src, e.getValue().file));
         }
-
         trg.metas.addAll(src.metas);
         return trg;
     }
 
     @Override
-    public TaskParamsYamlUtilsV3 nextUtil() {
-        return (TaskParamsYamlUtilsV3) TaskParamsYamlUtils.UTILS.getForVersion(3);
+    public Void downgradeTo(Void yaml) {
+        throw new DowngradeNotSupportedException();
+    }
+
+    @Override
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -129,18 +124,18 @@ public class TaskParamsYamlUtilsV2
     }
 
     @Override
-    public String toString(@NonNull TaskParamsYamlV2 params) {
+    public String toString(@NonNull TaskParamsYamlV3 params) {
         params.checkIntegrity();
         return getYaml().dump(params);
     }
 
     @NonNull
     @Override
-    public TaskParamsYamlV2 to(@NonNull String yaml) {
+    public TaskParamsYamlV3 to(@NonNull String yaml) {
         if (S.b(yaml)) {
             throw new BlankYamlParamsException("'yaml' parameter is blank");
         }
-        final TaskParamsYamlV2 p = getYaml().load(yaml);
+        final TaskParamsYamlV3 p = getYaml().load(yaml);
         return p;
     }
 

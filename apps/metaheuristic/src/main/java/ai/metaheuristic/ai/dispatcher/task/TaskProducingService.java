@@ -224,12 +224,15 @@ public class TaskProducingService {
         taskParams.task.metas.addAll(process.metas);
 
         if (taskParams.task.context== EnumsApi.FunctionExecContext.internal) {
-            taskParams.task.function = new TaskParamsYaml.FunctionConfig(
-                    process.function.code, "internal", null, S.b(process.function.params) ? "" : process.function.params, "internal",
-                    EnumsApi.FunctionSourcing.dispatcher, null,
-                    null, CommonConsts.DEFAULT_FUNCTION_SRC_DIR, null,
-                    // Stage 5: internal-context functions never carry an API key.
-                    null );
+            // Stage 5: internal-context functions never carry an API key.
+            // internal context has no binary -> no targets (keeps targets empty).
+            TaskParamsYaml.FunctionConfig internalFc = new TaskParamsYaml.FunctionConfig();
+            internalFc.code = process.function.code;
+            internalFc.type = "internal";
+            internalFc.params = S.b(process.function.params) ? "" : process.function.params;
+            internalFc.env = "internal";
+            internalFc.sourcing = EnumsApi.FunctionSourcing.dispatcher;
+            taskParams.task.function = internalFc;
         }
         else {
             TaskParamsYaml.FunctionConfig fConfig = functionTopLevelService.getFunctionConfig(process.function);
