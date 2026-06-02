@@ -60,6 +60,7 @@ public class FunctionCoreUtils {
                 if (isTargetsEmpty(functionConfig)) {
                     return new FunctionApiData.FunctionConfigStatus(false, "401.030 sourcing is 'dispatcher' but targets are empty: " + functionConfig);
                 }
+                //noinspection DataFlowIssue
                 for (Map.Entry<String, FunctionConfigYaml.Target> e : functionConfig.targets.entrySet()) {
                     if (StringUtils.isBlank(e.getValue().file)) {
                         return new FunctionApiData.FunctionConfigStatus(false, "401.031 sourcing is 'dispatcher' but target '" + e.getKey() + "' has an empty file: " + functionConfig);

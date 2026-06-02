@@ -137,7 +137,7 @@ public class FunctionConfigYamlV3 implements BaseParams, Cloneable {
         public @Nullable GitInfo git;
         public @Nullable List<Map<String, String>> metas = new ArrayList<>();
 
-        public Map<String, TargetV3> targets = new LinkedHashMap<>();
+        public @Nullable Map<String, TargetV3> targets = new LinkedHashMap<>();
 
         public @Nullable String assetDir;
 

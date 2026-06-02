@@ -181,7 +181,7 @@ public class FunctionConfigYaml implements BaseParams, Cloneable {
          * per-OS deployment targets: key is an OsArch key (e.g. linux_amd64) or
          * {@link CommonConsts#MH_DEFAULT_OS_KEY}. Replaces the former single src+file pair.
          */
-        public Map<String, Target> targets = new LinkedHashMap<>();
+        public @Nullable Map<String, Target> targets = new LinkedHashMap<>();
 
         public @Nullable String assetDir;
 
