@@ -18,13 +18,18 @@ package ai.metaheuristic.ai.shutdown;
 
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author Sergio Lissner
@@ -33,6 +38,7 @@ import java.util.List;
  */
 @Service
 @Profile("dispatcher")
+@Slf4j
 @RequiredArgsConstructor(onConstructor_={@Autowired})
 public class ShutdownService {
 
@@ -41,8 +47,25 @@ public class ShutdownService {
     @Order(Ordered.HIGHEST_PRECEDENCE)
     @PreDestroy
     public void preDestroy() {
-        for (ShutdownInterface shutdown : shutdowns) {
-            Thread.startVirtualThread(shutdown::shutdown);
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            List<CompletableFuture<Void>> futures = new ArrayList<>();
+            for (ShutdownInterface shutdown : shutdowns) {
+                log.warn("inform "+shutdown.getClass().getSimpleName()+" about shutdown");
+                futures.add(CompletableFuture.runAsync(() -> {
+                    try {
+                        shutdown.shutdown();
+                    } catch (Throwable t) {
+                        log.error("Error during shutdown of " + shutdown.getClass().getSimpleName(), t);
+                    }
+                }, executor));
+            }
+            // Block until EVERY ShutdownInterface.shutdown() has returned. The previous
+            // code started the virtual threads fire-and-forget and returned immediately,
+            // so @PreDestroy completed (and the Spring context "closed") while the drains
+            // were still running. On Windows that left in-flight Lucene IndexWriters open
+            // and blocked @TempDir cleanup. Joining here makes context-close wait for the
+            // drains to finish before resources are considered released.
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         }
     }
 }
