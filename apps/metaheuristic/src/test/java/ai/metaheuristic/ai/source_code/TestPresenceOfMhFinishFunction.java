@@ -100,7 +100,7 @@ public class TestPresenceOfMhFinishFunction extends FeatureMethods {
         produceTasks();
         List<Object[]> list = taskRepositoryForTest.findAllExecStateAndParamsByExecContextId(getExecContextForTest().id);
         assertEquals(1, list.size());
-        TaskImpl task = taskRepository.findById((Long)list.get(0)[0]).orElse(null);
+        TaskImpl task = taskRepository.findByIdReadOnly((Long)list.get(0)[0]);
         assertNotNull(task);
         TaskParamsYaml taskParamsYaml = task.getTaskParamsYaml();
         assertEquals(CommonConsts.MH_FINISH_FUNCTION, taskParamsYaml.task.function.code);

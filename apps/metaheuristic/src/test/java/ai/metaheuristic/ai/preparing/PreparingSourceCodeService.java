@@ -48,6 +48,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.api.dispatcher.SourceCode;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +62,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.ai.preparing.PreparingConsts.GLOBAL_TEST_VARIABLE;
@@ -218,7 +220,7 @@ public class PreparingSourceCodeService {
                 new GtiUtils.GitStatusInfo(EnumsApi.GitStatus.installed, "Git 1.0.0", null),
                 "0:00 - 23:59",
                 "[unknown]", "[unknown]", true,
-                1, EnumsApi.OS.unknown, "/users/yyy", null,
+            TaskParamsYamlUtils.UTILS.getDefault().getVersion(), EnumsApi.OS.unknown, "/users/yyy", null,
                 null, null);  // Stage 4: publicKeySpki, keyFingerprint
         pr.processorCommContext = new KeepAliveRequestParamYaml.ProcessorCommContext(processorIdAndCoreIds.processorId, processorIdAndCoreIds.sessionId);
 
@@ -292,7 +294,7 @@ public class PreparingSourceCodeService {
             .atMost(Duration.ofSeconds(100))
             .with()
             .pollInterval(Duration.ofMillis(500))
-            .until(() -> taskRepository.findById(taskId).filter(t-> EnumsApi.TaskExecState.isFinishedStateIncludingRecovery(t.execState)).isPresent());
+            .until(() -> Optional.ofNullable(taskRepository.findByIdReadOnly(taskId)).filter(t-> EnumsApi.TaskExecState.isFinishedStateIncludingRecovery(t.execState)).isPresent());
     }
 
     @SneakyThrows

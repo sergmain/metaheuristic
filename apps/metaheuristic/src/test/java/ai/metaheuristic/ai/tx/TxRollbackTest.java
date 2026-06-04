@@ -114,7 +114,8 @@ public class TxRollbackTest extends PreparingSourceCode {
             //
         }
         // result - data was committed
-        TaskImpl t1 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        TaskImpl t1 = taskRepository.findByIdReadOnly(task.id);
+        assertNotNull(t1, "Task not found");
         assertEquals(newParam, t1.getParams());
 
         // =====================
@@ -130,7 +131,8 @@ public class TxRollbackTest extends PreparingSourceCode {
             //
         }
         // result - data wasn't committed
-        TaskImpl t2 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        TaskImpl t2 = taskRepository.findByIdReadOnly(task.id);
+        assertNotNull(t2, "Task not found");
         assertEquals(version2, t2.version);
         assertNotEquals(newParam2, t2.getParams());
 
@@ -146,7 +148,8 @@ public class TxRollbackTest extends PreparingSourceCode {
             //
         }
         // result - data was committed
-        TaskImpl t3 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        TaskImpl t3 = taskRepository.findByIdReadOnly(task.id);
+        assertNotNull(t3, "Task not found");
         assertNotEquals(version3, t3.version);
         assertEquals(newParam3, t3.getParams());
 
@@ -161,7 +164,8 @@ public class TxRollbackTest extends PreparingSourceCode {
             //
         }
         // result - data wasn't committed
-        TaskImpl t4 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        TaskImpl t4 = taskRepository.findByIdReadOnly(task.id);
+        assertNotNull(t4, "Task not found");
         assertEquals(version4, t4.version);
 
 
@@ -194,7 +198,8 @@ public class TxRollbackTest extends PreparingSourceCode {
             //
         }
         // result - data was committed
-        TaskImpl t1 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        TaskImpl t1 = taskRepository.findByIdReadOnly(task.id);
+        assertNotNull(t1, "Task not found");
         assertEquals(newParam, t1.getParams());
 
         // =====================
@@ -210,7 +215,8 @@ public class TxRollbackTest extends PreparingSourceCode {
             //
         }
         // result - data wasn't committed
-        TaskImpl t2 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        TaskImpl t2 = taskRepository.findByIdReadOnly(task.id);
+        assertNotNull(t2, "Task not found");
         assertEquals(version2, t2.version);
         assertNotEquals(newParam2, t2.getParams());
 
@@ -243,7 +249,8 @@ public class TxRollbackTest extends PreparingSourceCode {
             //
         }
         // result - data was committed
-        TaskImpl t1 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        TaskImpl t1 = taskRepository.findByIdReadOnly(task.id);
+        assertNotNull(t1, "Task not found");
         assertEquals(newParam, t1.getParams());
 
         // =====================
@@ -259,7 +266,8 @@ public class TxRollbackTest extends PreparingSourceCode {
             //
         }
         // result - data wasn't committed
-        TaskImpl t2 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        TaskImpl t2 = taskRepository.findByIdReadOnly(task.id);
+        assertNotNull(t2, "Task not found");
         assertEquals(version2, t2.version);
         assertNotEquals(newParam2, t2.getParams());
 

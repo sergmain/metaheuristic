@@ -227,7 +227,7 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
         // function code is function-01:1.1
         assertNotNull(simpleTask);
         assertNotNull(simpleTask.getTaskId());
-        TaskImpl task = taskRepository.findById(simpleTask.getTaskId()).orElse(null);
+        TaskImpl task = taskRepository.findByIdReadOnly(simpleTask.getTaskId());
         assertNotNull(task);
 
         DispatcherCommParamsYaml.AssignedTask simpleTask2 =
@@ -274,13 +274,13 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
             TaskSyncService.getWithSyncVoid(simpleTask.taskId,
                     () -> taskFinishingTxService.finishWithErrorWithTx(simpleTask.taskId, "1st cycle of error"));
 
-            TaskImpl task1 = taskRepository.findById(simpleTask.taskId).orElse(null);
+            TaskImpl task1 = taskRepository.findByIdReadOnly(simpleTask.taskId);
             assertNotNull(task1);
             assertEquals(EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value, task1.execState);
 
             execContextTaskResettingTopLevelService.resetTasksWithErrorForRecovery(new ResetTasksWithErrorEvent(task1.execContextId));
 
-            TaskImpl task2 = taskRepository.findById(simpleTask.taskId).orElse(null);
+            TaskImpl task2 = taskRepository.findByIdReadOnly(simpleTask.taskId);
             assertNotNull(task2);
             assertEquals(expectedState.value, task2.execState);
         }

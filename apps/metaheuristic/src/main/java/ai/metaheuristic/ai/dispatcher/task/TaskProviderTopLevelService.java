@@ -415,7 +415,7 @@ public class TaskProviderTopLevelService {
                 if (execState==EnumsApi.TaskExecState.IN_PROGRESS.value) {
                     log.warn("393.680 already assigned task, core: #{}, task #{}, task execStatus: {}",
                         processorAndCoreParams.coreId(), taskId, EnumsApi.TaskExecState.from(execState));
-                    TaskImpl task = taskRepository.findById(taskId).orElse(null);
+                    TaskImpl task = taskRepository.findByIdReadOnly(taskId);
                     if (task!=null) {
                         if (processorAndCoreParams.psy().env==null) {
                             log.error("393.720 Core #{} has empty env.yaml", processorAndCoreParams.coreId());

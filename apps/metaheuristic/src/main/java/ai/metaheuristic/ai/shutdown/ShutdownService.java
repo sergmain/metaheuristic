@@ -47,6 +47,7 @@ public class ShutdownService {
     @Order(Ordered.HIGHEST_PRECEDENCE)
     @PreDestroy
     public void preDestroy() {
+        log.warn("start ShutdownService.preDestroy(), count: {}", shutdowns.size());
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             List<CompletableFuture<Void>> futures = new ArrayList<>();
             for (ShutdownInterface shutdown : shutdowns) {

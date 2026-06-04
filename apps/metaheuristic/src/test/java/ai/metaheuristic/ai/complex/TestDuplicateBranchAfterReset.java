@@ -191,7 +191,7 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
         int taskCountAfterPhase1 = phase1Vertices.size();
         System.out.println("Task count after Phase 1: " + taskCountAfterPhase1);
         for (ExecContextData.TaskVertex v : phase1Vertices) {
-            TaskImpl t = taskRepository.findById(v.taskId).orElse(null);
+            TaskImpl t = taskRepository.findByIdReadOnly(v.taskId);
             String state = t != null ? EnumsApi.TaskExecState.from(t.execState).toString() : "NOT_FOUND";
             System.out.println("  Task#" + v.taskId + " ctx=" + v.taskContextId + " state=" + state);
         }
@@ -243,7 +243,7 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
         int taskCountAfterPhase3 = phase3Vertices.size();
         System.out.println("Task count after Phase 3: " + taskCountAfterPhase3);
         for (ExecContextData.TaskVertex v : phase3Vertices) {
-            TaskImpl t = taskRepository.findById(v.taskId).orElse(null);
+            TaskImpl t = taskRepository.findByIdReadOnly(v.taskId);
             String state = t != null ? EnumsApi.TaskExecState.from(t.execState).toString() : "NOT_FOUND";
             System.out.println("  Task#" + v.taskId + " ctx=" + v.taskContextId + " state=" + state);
         }

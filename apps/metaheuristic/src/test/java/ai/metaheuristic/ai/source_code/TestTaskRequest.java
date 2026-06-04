@@ -175,7 +175,7 @@ public class TestTaskRequest extends FeatureMethods {
         assertEquals(tRef.get().taskId, assignedTask.taskId);
 
         storeConsoleResultAsOk(processorIdAndCoreIds);
-        final TaskImpl task = taskRepository.findById(tRef.get().taskId).orElse(null);
+        final TaskImpl task = taskRepository.findByIdReadOnly(tRef.get().taskId);
         assertNotNull(task);
 
         TaskParamsYaml tpy = task.getTaskParamsYaml();
@@ -189,7 +189,7 @@ public class TestTaskRequest extends FeatureMethods {
         ExecContextTaskStateSyncService.getWithSyncNullable(getExecContextForTest().execContextTaskStateId,
             ()->execContextTaskStateTopLevelService.transferStateFromTaskQueueToExecContext(getExecContextForTest().id, getExecContextForTest().execContextTaskStateId));
 
-        final TaskImpl task2 = taskRepository.findById(tRef.get().taskId).orElse(null);
+        final TaskImpl task2 = taskRepository.findByIdReadOnly(tRef.get().taskId);
         assertNotNull(task2);
         assertTrue(task2.completed!=0);
 

@@ -288,7 +288,7 @@ public class TaskProviderUnassignedTaskService {
             return searching;
         }
 
-        TaskImpl t = taskRepository.findById(resultTask.queuedTask.task.id).orElse(null);
+        TaskImpl t = taskRepository.findByIdReadOnly(resultTask.queuedTask.task.id);
         if (t==null) {
             log.warn("317.180 Can't assign task #{}, task doesn't exist", resultTask.queuedTask.task.id);
             searching.status = task_doesnt_exist;

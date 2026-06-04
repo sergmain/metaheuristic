@@ -134,7 +134,8 @@ public class TestTx extends PreparingSourceCode {
         assertNotNull(task2.version);
         assertEquals("BBB", task2.getParams());
         assertTrue((int)task2.version>task1.version);
-        TaskImpl t2 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        TaskImpl t2 = taskRepository.findByIdReadOnly(task.id);
+        assertNotNull(t2, "Task not found");
         assertEquals(t2, task2);
 
 
@@ -149,11 +150,12 @@ public class TestTx extends PreparingSourceCode {
         assertNotNull(task3.version);
         assertEquals("BBB", task3.getParams());
         assertTrue((int)task3.version>task2.version);
-        TaskImpl t3 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        TaskImpl t3 = taskRepository.findByIdReadOnly(task.id);
+        assertNotNull(t3, "Task not found");
         assertEquals(t3, task3);
 
 
-        ////
+        //
 
         s = txTestingService.updateDouble(getExecContextForTest().id, task.id);
         assertEquals("AAAAAA", s);
@@ -164,10 +166,9 @@ public class TestTx extends PreparingSourceCode {
         assertNotNull(task4.version);
         assertEquals("BBB", task4.getParams());
         assertTrue((int)task4.version>task3.version);
-        TaskImpl t4 = taskRepository.findById(task.id).orElseThrow(() -> new IllegalStateException("Task not found"));
+        TaskImpl t4 = taskRepository.findByIdReadOnly(task.id);
         assertEquals(t4, task4);
 
-        ////
     }
 
 
@@ -249,7 +250,7 @@ public class TestTx extends PreparingSourceCode {
         String s = txTestingTopLevelService.updateWithSyncSingle(getExecContextForTest().id, taskId);
         assertEquals("AAA", s);
 
-        ////
+        //
 
         s = txTestingTopLevelService.updateWithSyncDouble(getExecContextForTest().id, taskId);
         assertEquals("AAAAAA", s);
@@ -329,13 +330,13 @@ public class TestTx extends PreparingSourceCode {
     }
 
     private void testService(Long taskId) {
-        ////
+        //
         String s = ExecContextSyncService.getWithSync(getExecContextForTest().id,
             () -> txTestingService.updateWithSyncSingle(getExecContextForTest().id, taskId));
 
         assertEquals("AAA", s);
 
-        ////
+        //
 
         s = ExecContextSyncService.getWithSync(getExecContextForTest().id,
             () -> txTestingService.updateWithSyncDouble(getExecContextForTest().id, taskId));

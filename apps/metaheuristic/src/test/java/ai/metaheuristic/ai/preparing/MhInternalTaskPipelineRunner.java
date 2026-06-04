@@ -98,6 +98,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 @RequiredArgsConstructor(onConstructor_ = {@Autowired})
 public class MhInternalTaskPipelineRunner {
 
+    private final MhInternalTaskPipelineRunnerTxService mhInternalTaskPipelineRunnerTxService;
     private final TaskRepository taskRepository;
     private final TaskRepositoryForTest taskRepositoryForTest;
     private final ExecContextCache execContextCache;
@@ -174,7 +175,7 @@ public class MhInternalTaskPipelineRunner {
 
             for (Object[] row : taskRows) {
                 Long taskId = (Long) row[0];
-                TaskImpl task = taskRepository.findById(taskId).orElse(null);
+                TaskImpl task = taskRepository.findByIdReadOnly(taskId);
                 if (task == null) {
                     continue;
                 }
@@ -245,7 +246,7 @@ public class MhInternalTaskPipelineRunner {
                 .pollInterval(Duration.ofMillis(200))
                 .until(() -> {
                     processScheduledTasks();
-                    TaskImpl reloaded = taskRepository.findById(task.id).orElse(null);
+                    TaskImpl reloaded = taskRepository.findByIdReadOnly(task.id);
                     if (reloaded == null) {
                         return true;
                     }
@@ -260,7 +261,7 @@ public class MhInternalTaskPipelineRunner {
                             || state == EnumsApi.TaskExecState.ERROR.value;
                 });
 
-        TaskImpl result = taskRepository.findById(task.id).orElse(null);
+        TaskImpl result = taskRepository.findByIdReadOnly(task.id);
         if (result != null) {
             EnumsApi.TaskExecState finalState = EnumsApi.TaskExecState.from(result.execState);
             log.info("  Internal function {} (task #{}) finished with state: {}",
@@ -288,18 +289,12 @@ public class MhInternalTaskPipelineRunner {
                     processScheduledTasks();
                     enqueueCheckCacheTasks(ec.id);
                     taskCheckCachingService.checkCaching();
-                    TaskImpl reloaded = taskRepository.findById(task.id).orElse(null);
+                    TaskImpl reloaded = taskRepository.findByIdReadOnly(task.id);
                     return reloaded != null && reloaded.execState == EnumsApi.TaskExecState.NONE.value;
                 });
 
         // Transition task to IN_PROGRESS (simulates Processor picking it up).
-        TaskSyncService.getWithSyncVoid(task.id, () -> {
-            TaskImpl t = taskRepository.findById(task.id).orElse(null);
-            assertNotNull(t);
-            t.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
-            t.setAssignedOn(System.currentTimeMillis());
-            taskRepository.save(t);
-        });
+        TaskSyncService.getWithSyncVoid(task.id, () -> mhInternalTaskPipelineRunnerTxService.transitionToInProgress(task.id));
 
         // Get synthetic data for output variables. Null signals "fail this attempt".
         Map<String, String> outputData = syntheticDataProvider.provide(functionCode, tpy);
@@ -336,7 +331,7 @@ public class MhInternalTaskPipelineRunner {
                     .pollInterval(Duration.ofMillis(200))
                     .until(() -> {
                         processScheduledTasks();
-                        TaskImpl reloaded = taskRepository.findById(task.id).orElse(null);
+                        TaskImpl reloaded = taskRepository.findByIdReadOnly(task.id);
                         if (reloaded == null) {
                             return true;
                         }
@@ -348,7 +343,7 @@ public class MhInternalTaskPipelineRunner {
 
             // If the task is now in ERROR_WITH_RECOVERY, drive the production recovery
             // path to transition it back to NONE so the runner's next pass can retry.
-            TaskImpl afterFail = taskRepository.findById(task.id).orElse(null);
+            TaskImpl afterFail = taskRepository.findByIdReadOnly(task.id);
             if (afterFail != null && afterFail.execState == EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value) {
                 execContextTaskResettingTopLevelService.resetTasksWithErrorForRecovery(
                         new ResetTasksWithErrorEvent(ec.id));
@@ -395,7 +390,7 @@ public class MhInternalTaskPipelineRunner {
 
         // Mark output variables uploaded — the production sequence after a Processor
         // reports a result.
-        TaskImpl updatedTask = taskRepository.findById(task.id).orElse(null);
+        TaskImpl updatedTask = taskRepository.findByIdReadOnly(task.id);
         assertNotNull(updatedTask);
         TaskParamsYaml updatedTpy = updatedTask.getTaskParamsYaml();
         for (TaskParamsYaml.OutputVariable output : updatedTpy.task.outputs) {
@@ -413,7 +408,7 @@ public class MhInternalTaskPipelineRunner {
         List<Object[]> allTaskRows = taskRepositoryForTest.findAllExecStateAndParamsByExecContextId(execContextId);
         for (Object[] row : allTaskRows) {
             Long taskId = (Long) row[0];
-            TaskImpl t = taskRepository.findById(taskId).orElse(null);
+            TaskImpl t = taskRepository.findByIdReadOnly(taskId);
             if (t != null && t.execState == EnumsApi.TaskExecState.CHECK_CACHE.value) {
                 taskCheckCachingService.putToQueue(new RegisterTaskForCheckCachingEvent(execContextId, taskId));
             }

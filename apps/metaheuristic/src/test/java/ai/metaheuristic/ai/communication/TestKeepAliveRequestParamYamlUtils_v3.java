@@ -100,7 +100,7 @@ class TestKeepAliveRequestParamYamlUtils_v3 {
         r.status.host = "host-17";
         r.status.errors = List.of("error-1", "error-2");
         r.status.logDownloadable = true;
-        r.status.taskParamsVersion = 2;
+        r.status.taskParamsVersion = 3;
         r.status.os = EnumsApi.OS.any;
         r.status.currDir = "/home";
 
@@ -154,7 +154,7 @@ class TestKeepAliveRequestParamYamlUtils_v3 {
         assertEquals("error-1", kar.processor.status.errors.get(0));
         assertEquals("error-2", kar.processor.status.errors.get(1));
         assertTrue(kar.processor.status.logDownloadable);
-        assertEquals(2, kar.processor.status.taskParamsVersion);
+        assertEquals(3, kar.processor.status.taskParamsVersion);
         assertEquals(EnumsApi.OS.any, kar.processor.status.os);
         assertEquals("/home", kar.processor.status.currDir);
 
@@ -217,7 +217,7 @@ class TestKeepAliveRequestParamYamlUtils_v3 {
         assertEquals("error-1", karV3.processor.status.errors.get(0));
         assertEquals("error-2", karV3.processor.status.errors.get(1));
         assertTrue(karV3.processor.status.logDownloadable);
-        assertEquals(2, karV3.processor.status.taskParamsVersion);
+        assertEquals(3, karV3.processor.status.taskParamsVersion);
         assertEquals(EnumsApi.OS.any, karV3.processor.status.os);
         assertEquals("/home", karV3.processor.status.currDir);
 
