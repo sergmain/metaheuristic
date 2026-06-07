@@ -17,11 +17,11 @@
 package ai.metaheuristic.ai.mcp;
 
 import ai.metaheuristic.ai.shutdown.ShutdownInterface;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpSyncServer;
-import io.modelcontextprotocol.server.transport.WebMvcStreamableServerTransportProvider;
+import org.springframework.ai.mcp.server.webmvc.transport.WebMvcStreamableServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -93,10 +93,10 @@ public class MhMcpServerConfig implements ShutdownInterface {
     @Bean
     public RouterFunction<ServerResponse> mhMcpRouterFunction(
             @Autowired MhMcpToolDefinitions toolDefinitions,
-            @Autowired ObjectMapper objectMapper) {
+            @Autowired JsonMapper objectMapper) {
 
         WebMvcStreamableServerTransportProvider transportProvider = WebMvcStreamableServerTransportProvider.builder()
-                .jsonMapper(new io.modelcontextprotocol.json.jackson2.JacksonMcpJsonMapper(objectMapper))
+                .jsonMapper(new io.modelcontextprotocol.json.jackson3.JacksonMcpJsonMapper(objectMapper))
                 .mcpEndpoint(MCP_ENDPOINT)
                 // Capture the Spring Security Authentication while the request is still on the
                 // servlet dispatch thread (where SecurityContextHolder is populated) and stash it

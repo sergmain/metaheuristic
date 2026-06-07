@@ -51,7 +51,7 @@ import ai.metaheuristic.ai.yaml.communication.processor.ProcessorCommParamsYamlU
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.commons.S;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.input.BoundedInputStream;
@@ -277,7 +277,7 @@ public class SouthbridgeService {
             try {
                 json = JsonUtils.getMapper().writeValueAsString(scpy);
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 json = scpy.toString();
             }
             log.error("444.320 Error while processing client's request, size: {}, ProcessorCommParamsYaml:\n{}", json.length(), json);

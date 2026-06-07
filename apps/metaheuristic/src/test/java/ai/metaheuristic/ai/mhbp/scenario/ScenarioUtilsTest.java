@@ -27,7 +27,7 @@ import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.utils.MetaUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -49,7 +49,7 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 public class ScenarioUtilsTest {
 
     @Test
-    public void test_toPromptEvaluation() throws JsonProcessingException {
+    public void test_toPromptEvaluation() throws JacksonException {
         String json = """
             {"uuid":"0ae1019f-717a-4ab9-9afc-44a49718781e","prompt":"Make short description of fruit {{fruit}}","variables":[{"name":"fruit","value":"Orange"}]}""";
         ChatData.PromptEvaluation r = ScenarioUtils.toPromptEvaluation(json);

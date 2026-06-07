@@ -16,9 +16,10 @@
 package ai.metaheuristic.commons.utils;
 
 import ai.metaheuristic.api.EnumsApi;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.SerializationFeature;
 import lombok.SneakyThrows;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
@@ -35,8 +36,9 @@ public class Checksum {
     private static ObjectMapper mapper;
 
     static {
-        mapper = new ObjectMapper();
-        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        mapper = JsonMapper.builder()
+                .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+                .build();
     }
 
     public static String getChecksum(EnumsApi.HashAlgo type, String data)  {
@@ -69,7 +71,7 @@ public class Checksum {
     public String toJson() {
         try {
             return mapper.writeValueAsString(this);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException("error", e);
         }
     }
@@ -78,7 +80,7 @@ public class Checksum {
         try {
             Checksum checksum = mapper.readValue(json, Checksum.class);
             return checksum;
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException("error in json:\n"+json, e);
         }
     }

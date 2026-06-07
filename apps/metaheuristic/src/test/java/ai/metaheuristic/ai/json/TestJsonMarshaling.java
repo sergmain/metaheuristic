@@ -20,7 +20,7 @@ import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -157,7 +157,7 @@ public class TestJsonMarshaling {
     }
 
     @Test
-    public void test() throws JsonProcessingException {
+    public void test() throws JacksonException {
         StatusClass rest = JsonUtils.getMapper().readValue(JSON, StatusClass.class);
 
         assertNotNull(rest);

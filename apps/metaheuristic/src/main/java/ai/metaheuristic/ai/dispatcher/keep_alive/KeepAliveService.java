@@ -39,7 +39,7 @@ import ai.metaheuristic.ai.yaml.core_status.CoreStatusYaml;
 import ai.metaheuristic.api.data.DispatcherApiData;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -116,7 +116,7 @@ public class KeepAliveService {
             try {
                 json = JsonUtils.getMapper().writeValueAsString(req);
             }
-            catch (JsonProcessingException e) {
+            catch (JacksonException e) {
                 json = req.toString();
             }
             log.error("446.040 Error while processing client's request, size: {}, ProcessorCommParamsYaml:\n{}", json.length(), json);

@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.mhbp.questions.QuestionData;
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParams;
 import ai.metaheuristic.commons.utils.JsonUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import lombok.SneakyThrows;
 import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -154,11 +154,11 @@ public class OpenaiJsonReader {
         return o1 instanceof String ? (String)o1 : null;
     }
 
-    public static OpenaiInput toOpenaiInput(String json) throws JsonProcessingException {
+    public static OpenaiInput toOpenaiInput(String json) throws JacksonException {
         try {
             return JsonUtils.getMapper().readValue(json, OpenaiInput.class);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new RuntimeException(e);
         }
     }

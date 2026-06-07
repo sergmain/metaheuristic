@@ -36,9 +36,8 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
@@ -105,7 +104,7 @@ public class MhMcpToolDefinitions {
     private final ExecContextVariableStateRepository execContextVariableStateRepository;
     private final SourceCodeRepository sourceCodeRepository;
 
-    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     // ==================== DTOs ====================
 
@@ -676,7 +675,7 @@ public class MhMcpToolDefinitions {
                     .isError(false)
                     .build();
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             log.error("260.240 Error serializing tool result", e);
             return CallToolResult.builder()
                     .content(List.of(new TextContent("Error: " + e.getMessage())))

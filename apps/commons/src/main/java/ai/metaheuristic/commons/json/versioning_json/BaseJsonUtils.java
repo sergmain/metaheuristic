@@ -20,10 +20,11 @@ import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.ParamsVersion;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.ParamsProcessingException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.SerializationFeature;
 import org.jspecify.annotations.Nullable;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -40,9 +41,10 @@ public class BaseJsonUtils<T extends BaseParams> {
 
     private static final ObjectMapper mapper;
     static {
-        ObjectMapper m = new ObjectMapper();
-        m.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        m.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        ObjectMapper m = JsonMapper.builder()
+                .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .build();
         mapper = m;
     }
 
@@ -105,7 +107,7 @@ public class BaseJsonUtils<T extends BaseParams> {
         try {
             return mapper.writeValueAsString(baseParams);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new ParamsProcessingException("Error: " + e.getMessage(), e);
         }
     }

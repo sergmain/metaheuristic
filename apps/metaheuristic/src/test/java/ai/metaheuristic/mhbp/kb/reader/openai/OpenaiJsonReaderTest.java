@@ -30,7 +30,7 @@ import ai.metaheuristic.ai.mhbp.services.LocalGitRepoService;
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParams;
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParamsUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Disabled;
@@ -131,7 +131,7 @@ public class OpenaiJsonReaderTest {
     }
 
     @Test
-    public void test_toOpenaiInput_1() throws JsonProcessingException {
+    public void test_toOpenaiInput_1() throws JacksonException {
 
         String json = """
                 {
@@ -160,7 +160,7 @@ public class OpenaiJsonReaderTest {
     }
 
     @Test
-    public void test_toOpenaiInput_2() throws JsonProcessingException {
+    public void test_toOpenaiInput_2() throws JacksonException {
 
         String json = """
                 {
@@ -192,7 +192,7 @@ public class OpenaiJsonReaderTest {
     }
 
     @Test
-    public void test_toOpenaiInput_3() throws JsonProcessingException {
+    public void test_toOpenaiInput_3() throws JacksonException {
 
         String json = """
                {

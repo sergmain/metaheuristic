@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.yaml.series;
 
 import ai.metaheuristic.commons.utils.JsonUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 
@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 public class TestSeriesParamsYamlKey {
 
     @Test
-    public void test1() throws JsonProcessingException {
+    public void test1() throws JacksonException {
         SeriesParamsYaml params = new SeriesParamsYaml();
 
         SeriesParamsYaml.ExperimentPart part = new SeriesParamsYaml.ExperimentPart();

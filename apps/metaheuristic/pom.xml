@@ -139,12 +139,6 @@
             <artifactId>spring-boot-starter-cache</artifactId>
         </dependency>
 
-        <!-- Jackson 2 JSR-310 datatype: SB4 defaults to Jackson 3, so Jackson 2 datatype jars are no longer on the classpath transitively. Kept temporarily until the Jackson 3 migration. -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-        </dependency>
-
 <!--
         <dependency>
             <groupId>org.springframework</groupId>
@@ -194,16 +188,12 @@
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
 
-        <!-- MCP Java SDK (Streamable HTTP transport via Spring MVC) -->
+        <!-- MCP via Spring AI 2.0 WebMVC streamable transport (Jackson 3 JSON) -->
         <dependency>
-            <groupId>io.modelcontextprotocol.sdk</groupId>
-            <artifactId>mcp</artifactId>
-            <version>0.18.1</version>
-        </dependency>
-        <dependency>
-            <groupId>io.modelcontextprotocol.sdk</groupId>
-            <artifactId>mcp-spring-webmvc</artifactId>
-            <version>0.18.1</version>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
+            <version>2.0.0-M8</version>
+            <scope>compile</scope>
         </dependency>
 
         <!-- End of spring's section -->

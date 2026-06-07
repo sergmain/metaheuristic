@@ -20,8 +20,8 @@ import ai.metaheuristic.ai.dispatcher.beans.Batch;
 import ai.metaheuristic.api.data.BaseDataClass;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -62,7 +62,7 @@ public class IssueWithJackson {
         }
     }
 
-    static void main() throws JsonProcessingException {
+    static void main() throws JacksonException {
         ObjectMapper mapper = new ObjectMapper();
 
         Bbb b = new Bbb();

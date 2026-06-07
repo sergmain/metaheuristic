@@ -23,7 +23,7 @@ import ai.metaheuristic.commons.exceptions.ParamsProcessingException;
 import ai.metaheuristic.commons.exceptions.UpgradeNotSupportedException;
 import ai.metaheuristic.commons.json.versioning_json.AbstractParamsJsonUtils;
 import ai.metaheuristic.commons.json.versioning_json.BaseJsonUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 
 /**
  * @author Serge
@@ -63,7 +63,7 @@ public class ExperimentResultParamsJsonUtilsV1
         try {
             return BaseJsonUtils.getMapper().writeValueAsString(json);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new ParamsProcessingException("Error: " + e.getMessage(), e);
         }
     }
@@ -74,7 +74,7 @@ public class ExperimentResultParamsJsonUtilsV1
             final ExperimentResultParamsV1 p = BaseJsonUtils.getMapper().readValue(s, ExperimentResultParamsV1.class);
             return p;
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new ParamsProcessingException("Error: " + e.getMessage(), e);
         }
     }

@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.dispatcher.vault;
 import ai.metaheuristic.ai.dispatcher.data.VaultData;
 import ai.metaheuristic.ai.yaml.company.CompanyParamsYaml;
 import ai.metaheuristic.commons.utils.JsonUtils;
-import com.fasterxml.jackson.core.type.TypeReference;
+import tools.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;

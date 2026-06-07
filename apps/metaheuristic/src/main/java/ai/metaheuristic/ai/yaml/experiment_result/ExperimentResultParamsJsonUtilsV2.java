@@ -21,7 +21,7 @@ import ai.metaheuristic.api.data.experiment_result.ExperimentResultParamsV2;
 import ai.metaheuristic.commons.exceptions.ParamsProcessingException;
 import ai.metaheuristic.commons.json.versioning_json.AbstractParamsJsonUtils;
 import ai.metaheuristic.commons.json.versioning_json.BaseJsonUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import org.jspecify.annotations.NonNull;
 
 
@@ -119,7 +119,7 @@ public class ExperimentResultParamsJsonUtilsV2
         try {
             return BaseJsonUtils.getMapper().writeValueAsString(json);
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new ParamsProcessingException("Error: " + e.getMessage(), e);
         }
     }
@@ -131,7 +131,7 @@ public class ExperimentResultParamsJsonUtilsV2
             final ExperimentResultParamsV2 p = BaseJsonUtils.getMapper().readValue(s, ExperimentResultParamsV2.class);
             return p;
         }
-        catch (JsonProcessingException e) {
+        catch (JacksonException e) {
             throw new ParamsProcessingException("Error: " + e.getMessage(), e);
         }
     }

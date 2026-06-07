@@ -32,7 +32,7 @@ import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.StrUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
@@ -117,7 +117,7 @@ public class ScenarioUtils {
 
     public record OutputVariables(String main, @Nullable String raw) {}
 
-    public static ChatData.PromptEvaluation toPromptEvaluation(String stepEvaluation) throws JsonProcessingException {
+    public static ChatData.PromptEvaluation toPromptEvaluation(String stepEvaluation) throws JacksonException {
         return JsonUtils.getMapper().readValue(stepEvaluation, ChatData.PromptEvaluation.class);
     }
 

@@ -30,8 +30,10 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.core.JacksonException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -79,8 +81,9 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
     private final CurrentExecState currentExecState;
 
     static {
-        mapper = new ObjectMapper();
-        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        mapper = JsonMapper.builder()
+                .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+                .build();
     }
 
     private final Globals globals;
@@ -91,7 +94,7 @@ public class UploadVariableService extends AbstractTaskQueue<UploadVariableTask>
         try {
             UploadResult result = mapper.readValue(json, UploadResult.class);
             return result;
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException("311.010 error", e);
         }
     }

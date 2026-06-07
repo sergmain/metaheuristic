@@ -20,7 +20,7 @@ import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -79,7 +79,7 @@ public class JsonUtilsTest {
     }
 
     @Test
-    public void test_() throws JsonProcessingException {
+    public void test_() throws JacksonException {
 
 
         String json = JsonUtils.getMapper().writeValueAsString(SIMPLE_LIST);

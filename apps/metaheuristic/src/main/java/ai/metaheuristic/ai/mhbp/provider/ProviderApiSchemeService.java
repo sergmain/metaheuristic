@@ -30,7 +30,7 @@ import ai.metaheuristic.ai.utils.HttpUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
-import com.fasterxml.jackson.core.io.JsonStringEncoder;
+import tools.jackson.core.io.JsonStringEncoder;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -137,7 +137,9 @@ public class ProviderApiSchemeService {
         if (schemeAndParams.scheme.scheme.request.type== EnumsApi.HttpMethodType.post) {
             request = Request.post(uri).connectTimeout(Timeout.ofSeconds(5)); //.socketTimeout(20000);
             if (schemeAndParams.scheme.scheme.request.prompt.place== EnumsApi.PromptPlace.text) {
-                String encoded = new String(encoder.quoteAsString(info.text));
+                StringBuilder encodedSb = new StringBuilder();
+                encoder.quoteAsString(info.text, encodedSb);
+                String encoded = encodedSb.toString();
                 String json = schemeAndParams.scheme.scheme.request.prompt.text.replace(schemeAndParams.scheme.scheme.request.prompt.replace, encoded);
                 StringEntity entity = new StringEntity(json, StandardCharsets.UTF_8);
                 request.body(entity);

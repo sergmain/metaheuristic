@@ -16,17 +16,19 @@
 
 package ai.metaheuristic.commons.utils;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.SerializationFeature;
 
 public class JsonUtils {
 
     private static final ObjectMapper mapper;
     static {
-        ObjectMapper m = new ObjectMapper();
-        m.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        m.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        ObjectMapper m = JsonMapper.builder()
+                .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .build();
         mapper = m;
     }
 

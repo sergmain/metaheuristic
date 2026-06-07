@@ -29,7 +29,7 @@ import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.variable.VariableArrayParamsYaml;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tools.jackson.core.JacksonException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
@@ -83,12 +83,12 @@ public class VariableUtils {
         return S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
     }
 
-    public static String permutationAsString(VariableData.Permutation ps) throws JsonProcessingException {
+    public static String permutationAsString(VariableData.Permutation ps) throws JacksonException {
         String s = JsonUtils.getMapper().writeValueAsString(ps);
         return s;
     }
 
-    public static VariableData.Permutation asStringAsPermutation(String json) throws JsonProcessingException {
+    public static VariableData.Permutation asStringAsPermutation(String json) throws JacksonException {
         VariableData.Permutation p = JsonUtils.getMapper().readValue(json, VariableData.Permutation.class);
         return p;
     }

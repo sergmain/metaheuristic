@@ -19,9 +19,10 @@ package ai.metaheuristic.commons.json.versioning_json;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.ParamsVersion;
 import ai.metaheuristic.commons.exceptions.ParamsProcessingException;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.core.JacksonException;
 
 import java.io.IOException;
 
@@ -59,7 +60,7 @@ public class JsonForVersioning {
                 // and continue at depth 1.
                 JsonToken token;
                 while ((token = parser.nextToken()) != null && token != JsonToken.END_OBJECT) {
-                    if (token != JsonToken.FIELD_NAME) {
+                    if (token != JsonToken.PROPERTY_NAME) {
                         // Shouldn't happen for well-formed JSON inside an
                         // object — every child position starts with a
                         // FIELD_NAME. Skip defensively.
@@ -81,7 +82,7 @@ public class JsonForVersioning {
 
             return versionValue == null ? ConstsApi.PARAMS_VERSION_1 : new ParamsVersion(Integer.valueOf(versionValue));
         }
-        catch (IOException e) {
+        catch (JacksonException e) {
             throw new ParamsProcessingException("Error: " + e, e);
         }
     }
