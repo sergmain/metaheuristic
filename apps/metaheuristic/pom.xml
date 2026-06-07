@@ -222,6 +222,13 @@
             </exclusions>
         </dependency>
 
+        <!-- SB4 modularized Liquibase: provides LiquibaseDatabaseInitializerDetector so manually-registered
+             SpringLiquibase beans run before DB-consuming beans. Standard LiquibaseAutoConfiguration stays off via spring.liquibase.enabled=false. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-liquibase</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>jakarta.persistence</groupId>
             <artifactId>jakarta.persistence-api</artifactId>
