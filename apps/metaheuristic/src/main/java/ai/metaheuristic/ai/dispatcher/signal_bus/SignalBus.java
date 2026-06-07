@@ -141,8 +141,7 @@ public class SignalBus {
         lock.readLock().lock();
         try {
             long highWater = revisionCounter.get();
-            Set<SignalKind> effectiveKinds = (kinds == null || kinds.isEmpty())
-                ? registry.knownKinds() : kinds;
+            Set<SignalKind> effectiveKinds = kinds.isEmpty() ? registry.knownKinds() : kinds;
 
             List<SignalEntry> out = effectiveKinds.parallelStream()
                 .map(snapshot::get)

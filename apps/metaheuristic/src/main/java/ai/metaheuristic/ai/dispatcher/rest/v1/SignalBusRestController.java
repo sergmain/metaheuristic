@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.dispatcher.signal_bus.SignalPollResponse;
 import ai.metaheuristic.commons.account.UserContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -74,8 +75,8 @@ public class SignalBusRestController {
     @PreAuthorize("isAuthenticated()")
     public SignalPollResponse get(
             @RequestParam(defaultValue = "0") long afterRev,
-            @RequestParam(required = false) String kinds,
-            @RequestParam(required = false) String topics,
+            @RequestParam(required = false) @Nullable String kinds,
+            @RequestParam(required = false) @Nullable String topics,
             @RequestParam(defaultValue = "500") int max,
             Authentication authentication) {
 
@@ -104,16 +105,15 @@ public class SignalBusRestController {
 
         SignalPollResponse response = new SignalPollResponse(
             qr.serverRev(), Instant.now(), capped, truncated);
-        if (!parsed.warnings.isEmpty()) {
-            parsed.warnings.forEach(response::addInfoMessage);
-        }
+        parsed.warnings.forEach(response::addInfoMessage);
+
         log.warn("SIG-DBG poll#{} EXIT companyId={} serverRev={} signals={} truncated={} warnings={} dtMs={}",
             n, dctx.getCompanyId(), qr.serverRev(), capped.size(), truncated,
             parsed.warnings.size(), (System.nanoTime() - t0) / 1_000_000);
         return response;
     }
 
-    private static ParseResult parseFilters(String kinds, String topics, SignalKindRegistry registry) {
+    private static ParseResult parseFilters(@Nullable String kinds, @Nullable String topics, SignalKindRegistry registry) {
         // SignalKind is now an open record (was enum). Validity is decided by
         // membership in registry.knownKinds() — preserves the SIG.110 warning
         // for unknown kinds without keeping the kind universe closed at MH.
@@ -148,9 +148,9 @@ public class SignalBusRestController {
         }
 
         // Empty kinds → SignalBus.query treats as "all kinds"; preserve that semantics
-        Set<SignalKind> effectiveKinds = parsedKinds.isEmpty() ? null : parsedKinds;
+        Set<SignalKind> effectiveKinds = parsedKinds.isEmpty() ? Set.of() : parsedKinds;
         return new ParseResult(effectiveKinds, topicGlobs, Collections.unmodifiableList(warnings));
     }
 
-    private record ParseResult(Set<SignalKind> kinds, List<GlobPattern> topicGlobs, List<String> warnings) {}
+    private record ParseResult( Set<SignalKind> kinds, List<GlobPattern> topicGlobs, List<String> warnings) {}
 }
