@@ -37,6 +37,7 @@ import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -122,7 +123,7 @@ public class BatchSplitterFunction implements InternalFunction {
 
             final Path workingDir;
             Map<String, String> mapping;
-            if (StringUtils.endsWithIgnoreCase(originFilename, ZIP_EXT)) {
+            if (Strings.CI.endsWith(originFilename, ZIP_EXT)) {
                 log.debug("Start unzipping archive");
                 Path zipDir=tempDir.resolve("zip");
                 Files.createDirectory(zipDir);

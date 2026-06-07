@@ -57,6 +57,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -262,7 +263,7 @@ public class BatchTopLevelService {
                     "981.060 file without extension, bad filename: " + originFilename);
         }
         String ext = extTemp.toLowerCase();
-        if (!StringUtils.equalsAny(ext, ZIP_EXT, XML_EXT)) {
+        if (!Strings.CS.equalsAny(ext, ZIP_EXT, XML_EXT)) {
             return new BatchData.UploadingStatus("981.080 only '.zip', '.xml' files are supported, bad filename: " + originFilename);
         }
 

@@ -37,8 +37,8 @@ public class StringVariableData {
     @Data
     @AllArgsConstructor
     public static class StringVariableItem {
-        public final Map<String, String> inlines;
-        public final String inlineKey;
+        public final @Nullable Map<String, String> inlines;
+        public final @Nullable String inlineKey;
     }
 
     @Data

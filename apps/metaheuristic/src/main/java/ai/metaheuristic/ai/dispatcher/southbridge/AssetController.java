@@ -23,19 +23,18 @@ import ai.metaheuristic.ai.dispatcher.function.FunctionService;
 import ai.metaheuristic.ai.exceptions.CommonErrorWithDataException;
 import ai.metaheuristic.ai.utils.cleaner.CleanerInfo;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.replication.ReplicationApiData;
 import ai.metaheuristic.commons.S;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.jspecify.annotations.Nullable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -73,7 +72,7 @@ public class AssetController {
             @Nullable String code, @Nullable String chunkSize, @Nullable Integer chunkNum) {
         if (globals.dispatcher.asset.mode== EnumsApi.DispatcherAssetMode.replicated) {
             log.error("105.020 Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions");
-            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.UNPROCESSABLE_ENTITY);
+            return new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, HttpStatus.UNPROCESSABLE_CONTENT);
         }
         log.debug("deliverFunction(), code: {}, chunkSize: {}, chunkNum: {}", code, chunkSize, chunkNum);
         if (S.b(code) || S.b(chunkSize) || chunkNum==null) {

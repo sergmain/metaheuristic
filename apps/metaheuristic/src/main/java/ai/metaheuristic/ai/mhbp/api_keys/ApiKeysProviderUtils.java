@@ -17,10 +17,10 @@
 package ai.metaheuristic.ai.mhbp.api_keys;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.commons.yaml.auth.ApiAuth;
 import ai.metaheuristic.ai.yaml.account.AccountParamsYaml;
 import ai.metaheuristic.commons.S;
-import org.apache.commons.lang3.StringUtils;
+import ai.metaheuristic.commons.yaml.auth.ApiAuth;
+import org.apache.commons.lang3.Strings;
 import org.jspecify.annotations.Nullable;
 
 import java.util.function.Function;
@@ -89,10 +89,10 @@ public class ApiKeysProviderUtils {
         }
         int start = 0;
         int end = 0;
-        if (StringUtils.startsWithAny(env, "%", "$")) {
+        if (Strings.CS.startsWithAny(env, "%", "$")) {
             ++start;
         }
-        if (StringUtils.endsWithAny(env, "%", "$")) {
+        if (Strings.CS.endsWithAny(env, "%", "$")) {
             ++end;
         }
         return env.substring(start, env.length()-end);

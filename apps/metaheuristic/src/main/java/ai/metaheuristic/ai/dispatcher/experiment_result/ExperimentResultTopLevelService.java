@@ -47,6 +47,7 @@ import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -118,7 +119,7 @@ public class ExperimentResultTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "422.020 file without extension, bad filename: " + originFilename);
         }
-        if (!StringUtils.equalsAny(ext.toLowerCase(), ZIP_EXT)) {
+        if (!Strings.CS.equalsAny(ext.toLowerCase(), ZIP_EXT)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "422.030 only '.zip' file is supported, filename: " + originFilename);
         }

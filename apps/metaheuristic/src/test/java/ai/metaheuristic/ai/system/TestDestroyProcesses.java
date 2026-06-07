@@ -20,6 +20,7 @@ import ai.metaheuristic.commons.system.SystemProcessLauncher;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.Execution;
@@ -51,7 +52,7 @@ public class TestDestroyProcesses {
     @Test
     public void testDestroyProcesses(@TempDir Path path) throws IOException, InterruptedException {
 
-        if (!StringUtils.startsWithIgnoreCase(System.getProperty("os.name"), "Windows")) {
+        if (!Strings.CI.startsWith(System.getProperty("os.name"), "Windows")) {
             log.info("this test can't be run on non-window OS");
         }
         Path p = path.resolve(HELLO_WORLD_CMD_EXE);

@@ -14,12 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/**
- * Core abstractions behind the <em>Spring Expression Language</em>.
- */
-@NonNullApi
-@NonNullFields
+@NullMarked
 package ai.metaheuristic.ai.dispatcher.internal_functions.evaluation;
 
-import org.springframework.lang.NonNullApi;
-import org.springframework.lang.NonNullFields;
+import org.jspecify.annotations.NullMarked;

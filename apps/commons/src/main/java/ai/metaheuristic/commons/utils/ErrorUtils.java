@@ -19,6 +19,7 @@ package ai.metaheuristic.commons.utils;
 import ai.metaheuristic.commons.S;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jspecify.annotations.Nullable;
 
@@ -80,10 +81,10 @@ public class ErrorUtils {
         }
         else {
             if (i >= bytes.length) {
-                return StringUtils.replace(new String(bytes), "\n", addAtEndLine + "\n");
+                return Strings.CS.replace(new String(bytes), "\n", addAtEndLine + "\n");
             }
             else {
-                return StringUtils.replace(new String(bytes, 0, i), "\n", addAtEndLine + "\n");
+                return Strings.CS.replace(new String(bytes, 0, i), "\n", addAtEndLine + "\n");
             }
         }
     }

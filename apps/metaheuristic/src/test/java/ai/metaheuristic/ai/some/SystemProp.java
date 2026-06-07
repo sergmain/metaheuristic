@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.some;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 
@@ -37,7 +38,7 @@ class SystemProp {
         System.out.println( TimeUnit.HOURS.toMillis(1));
 
         System.getProperties().forEach( (o, o2) -> {
-            if (o instanceof String s && StringUtils.equalsAny(s, "java.class.path", "java.library.path", "line.separator")) {
+            if (o instanceof String s && Strings.CS.equalsAny(s, "java.class.path", "java.library.path", "line.separator")) {
                 return;
             }
             System.out.printf("'\t%s: %s\n", o, o2);

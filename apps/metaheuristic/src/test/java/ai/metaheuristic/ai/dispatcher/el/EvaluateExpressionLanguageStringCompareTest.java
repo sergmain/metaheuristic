@@ -16,13 +16,13 @@
 
 package ai.metaheuristic.ai.dispatcher.el;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.TypeComparator;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
-import org.springframework.lang.Nullable;
 
 import java.util.Map;
 

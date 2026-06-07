@@ -25,6 +25,7 @@ import tools.jackson.core.JacksonException;
 import org.jspecify.annotations.NonNull;
 
 
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 /**
@@ -54,15 +55,15 @@ public class ExperimentResultParamsJsonUtilsV2
 
         trg.execContext = new ExperimentResultParams.ExecContextWithParams(src.execContext.execContextId, src.execContext.execContextParams);
         trg.hyperParams.addAll(src.hyperParams);
-        src.features.stream().map(this::toFeature).collect(Collectors.toCollection(()->trg.features));
-        src.taskFeatures.stream().map(this::toTaskFeature).collect(Collectors.toCollection(()->trg.taskFeatures));
-        src.parts.stream().map(this::toParts).collect(Collectors.toCollection(()->trg.parts));
+        src.features.stream().map(ExperimentResultParamsJsonUtilsV2::toFeature).collect(Collectors.toCollection(()->trg.features));
+        src.taskFeatures.stream().map(ExperimentResultParamsJsonUtilsV2::toTaskFeature).collect(Collectors.toCollection(()->trg.taskFeatures));
+        src.parts.stream().map(ExperimentResultParamsJsonUtilsV2::toParts).collect(Collectors.toCollection(()->trg.parts));
 
         trg.checkIntegrity();
         return trg;
     }
 
-    private ExperimentResultParams.ExperimentPart toParts(ExperimentResultParamsV2.ExperimentPartV2 src) {
+    private static ExperimentResultParams.ExperimentPart toParts(ExperimentResultParamsV2.ExperimentPartV2 src) {
         ExperimentResultParams.ExperimentPart trg = new ExperimentResultParams.ExperimentPart();
         trg.taskContextId = src.taskContextId;
         trg.fitting = src.fitting;
@@ -74,7 +75,7 @@ public class ExperimentResultParamsJsonUtilsV2
         return trg;
     }
 
-    private ExperimentResultParams.ExperimentTaskFeature toTaskFeature(ExperimentResultParamsV2.ExperimentTaskFeatureV2 src) {
+    private static ExperimentResultParams.ExperimentTaskFeature toTaskFeature(ExperimentResultParamsV2.ExperimentTaskFeatureV2 src) {
         ExperimentResultParams.ExperimentTaskFeature etf = new ExperimentResultParams.ExperimentTaskFeature();
 
         etf.id = src.id;
@@ -87,10 +88,12 @@ public class ExperimentResultParamsJsonUtilsV2
         return etf;
     }
 
-    private ExperimentResultParams.ExperimentFeature toFeature(ExperimentResultParamsV2.ExperimentFeatureV2 src) {
+    private static ExperimentResultParams.ExperimentFeature toFeature(ExperimentResultParamsV2.ExperimentFeatureV2 src) {
         ExperimentResultParams.ExperimentFeature ef = new ExperimentResultParams.ExperimentFeature();
         ef.id = src.id;
-        ef.variables = src.variables;
+        if (src.variables!=null) {
+            ef.variables = new ArrayList<>(src.variables);
+        }
         ef.execStatus = src.execStatus;
         ef.experimentId = src.experimentId;
         ef.maxValues.putAll(src.maxValues);

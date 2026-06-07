@@ -24,6 +24,7 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -100,7 +101,7 @@ public class Attr implements Comparable<Attr> {
 
     @Override
     public int compareTo(Attr attr) {
-        int nsCompare = StringUtils.compare(this.nameSpace, attr.nameSpace);
+        int nsCompare = Strings.CS.compare(this.nameSpace, attr.nameSpace);
         if (nsCompare!=0) {
             return nsCompare;
         }

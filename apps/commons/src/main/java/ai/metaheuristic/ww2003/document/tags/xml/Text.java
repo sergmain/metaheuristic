@@ -19,7 +19,7 @@ package ai.metaheuristic.ww2003.document.tags.xml;
 import ai.metaheuristic.ww2003.document.Leaf;
 import ai.metaheuristic.ww2003.document.exceptions.UtilsExecutingException;
 import lombok.Getter;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.jspecify.annotations.Nullable;
 
 import java.util.regex.Pattern;
@@ -85,7 +85,7 @@ public class Text extends Leaf implements XmlTag, TextContainer {
     }
 
     public Text replaceIgnoreCase(String target, String replacement) {
-        text = StringUtils.replaceIgnoreCase(text, target, replacement);
+        text = Strings.CI.replace(text, target, replacement);
         return this;
     }
 

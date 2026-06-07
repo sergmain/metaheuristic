@@ -396,9 +396,11 @@ public class ExperimentResultService {
     private void updateData(ExperimentResult experimentResult, ExperimentResultParams experimentResultParamsYaml,
                             StringVariableData.StringVariableItem item, List<ExperimentFeature> features, List<ExperimentTaskFeature> taskFeatures) {
 
-        item.inlines.entrySet().stream()
+        if (item.inlines!=null && !item.inlines.isEmpty()) {
+            item.inlines.entrySet().stream()
                 .map(e-> new ExperimentApiData.HyperParam(e.getKey(), e.getValue(), InlineVariableUtils.getNumberOfVariants(e.getValue()).count))
                 .collect(Collectors.toCollection(()->experimentResultParamsYaml.hyperParams));
+        }
         experimentResultParamsYaml.features.addAll(features);
         experimentResultParamsYaml.taskFeatures.addAll(taskFeatures);
 

@@ -228,8 +228,8 @@ public class ExecContextApiData {
 
         @JsonCreator
         public ExecContextSimpleStateResult(
-            @JsonProperty("errorMessages") @org.springframework.lang.Nullable List<String> errorMessages,
-            @JsonProperty("infoMessages") @org.springframework.lang.Nullable List<String> infoMessages) {
+            @JsonProperty("errorMessages") @Nullable List<String> errorMessages,
+            @JsonProperty("infoMessages") @Nullable List<String> infoMessages) {
             this.errorMessages = errorMessages;
             this.infoMessages = infoMessages;
         }

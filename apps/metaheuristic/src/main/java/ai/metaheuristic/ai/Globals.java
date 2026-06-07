@@ -29,6 +29,7 @@ import jakarta.annotation.PreDestroy;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Value;
@@ -877,7 +878,7 @@ public class Globals {
                 (oldValue, newValue) -> oldValue, LinkedHashMap::new));
 
         collect.forEach( (o, o2) -> {
-            if (o instanceof String s && StringUtils.equalsAny(s, "java.class.path", "java.library.path", "line.separator")) {
+            if (o instanceof String s && Strings.CS.equalsAny(s, "java.class.path", "java.library.path", "line.separator")) {
                 return;
             }
             log.info("'\t{}: {}", o, o2);

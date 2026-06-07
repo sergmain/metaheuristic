@@ -24,6 +24,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.text.matcher.StringMatcherFactory;
 import org.jspecify.annotations.Nullable;
 
@@ -161,7 +162,7 @@ public class InlineVariableUtils {
             return ZERO_VARIANT;
         }
         String s = variantsAsStr.trim();
-        if ( s.charAt(0)!='(' && s.charAt(0)!='[' && !StringUtils.startsWithIgnoreCase(s.toLowerCase(), RANGE)) {
+        if ( s.charAt(0)!='(' && s.charAt(0)!='[' && !Strings.CI.startsWith(s.toLowerCase(), RANGE)) {
             final NumberOfVariants variants = extractValues(s);
             return variants;
         }
@@ -175,7 +176,7 @@ public class InlineVariableUtils {
         }
 
         String s1 = s;
-        if (StringUtils.startsWithIgnoreCase(s1,RANGE)) {
+        if (Strings.CI.startsWith(s1,RANGE)) {
             s1 = s1.substring(RANGE.length()).trim();
         }
         if (s1.charAt(0) == '(') {

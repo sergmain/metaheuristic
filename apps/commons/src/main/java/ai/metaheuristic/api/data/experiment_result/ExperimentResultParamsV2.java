@@ -72,7 +72,7 @@ public class ExperimentResultParamsV2 implements BaseParams {
     @NoArgsConstructor
     public static class ExperimentFeatureV2 {
         public Long id;
-        public List<String> variables;
+        public @Nullable List<String> variables;
         public int execStatus;
         public Long experimentId;
         public final Map<String, Double> maxValues = new HashMap<>();

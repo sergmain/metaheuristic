@@ -34,6 +34,7 @@ import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -75,7 +76,7 @@ public class MhbpSettingsService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "561.080 file without extension, bad filename: " + originFilename);
         }
-        if (!StringUtils.equalsAny(ext.toLowerCase(), YAML_EXT, YML_EXT)) {
+        if (!Strings.CS.equalsAny(ext.toLowerCase(), YAML_EXT, YML_EXT)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "561.120 only '.yml' and '.yaml' files are supported, filename: " + originFilename);
         }

@@ -76,7 +76,7 @@ public class ExperimentResultParams implements BaseParams {
     @AllArgsConstructor
     public static class ExperimentFeature {
         public Long id;
-        public List<String> variables;
+        public @Nullable List<String> variables;
         public int execStatus;
         public Long experimentId;
         public final LinkedHashMap<String, Double> maxValues = new LinkedHashMap<>();
