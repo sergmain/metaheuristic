@@ -18,7 +18,7 @@ package ai.metaheuristic.ai;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.boot.autoconfigure.domain.EntityScanPackages;
+import org.springframework.boot.persistence.autoconfigure.EntityScanPackages;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;

@@ -214,7 +214,7 @@ public class SouthbridgeService {
                 final long size = Long.parseLong(chunkSize);
                 final long offset = size * chunkNum;
                 if (offset >= Files.size(assetFile.file)) {
-                    MultiValueMap<String, String> headers = new HttpHeaders();
+                    HttpHeaders headers = new HttpHeaders();
                     headers.add(Consts.HEADER_MH_IS_LAST_CHUNK, "true");
                     headers.add(Consts.HEADER_MH_CHUNK_SIZE, "0");
                     resource.entity = new ResponseEntity<>(Consts.ZERO_BYTE_ARRAY_RESOURCE, headers, HttpStatus.OK);

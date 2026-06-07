@@ -139,6 +139,12 @@
             <artifactId>spring-boot-starter-cache</artifactId>
         </dependency>
 
+        <!-- Jackson 2 JSR-310 datatype: SB4 defaults to Jackson 3, so Jackson 2 datatype jars are no longer on the classpath transitively. Kept temporarily until the Jackson 3 migration. -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+
 <!--
         <dependency>
             <groupId>org.springframework</groupId>
@@ -168,6 +174,18 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-test-autoconfigure</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- SB4 modular test infra: AutoConfigureCache moved to spring-boot-cache-test, AutoConfigureMockMvc to spring-boot-webmvc-test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-cache-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-webmvc-test</artifactId>
             <scope>test</scope>
         </dependency>
 
