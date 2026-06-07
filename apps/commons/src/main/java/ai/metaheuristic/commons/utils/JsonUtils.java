@@ -20,6 +20,7 @@ import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.MapperFeature;
 
 public class JsonUtils {
 
@@ -28,6 +29,7 @@ public class JsonUtils {
         ObjectMapper m = JsonMapper.builder()
                 .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .configure(MapperFeature.USE_GETTERS_AS_SETTERS, true)
                 .build();
         mapper = m;
     }
