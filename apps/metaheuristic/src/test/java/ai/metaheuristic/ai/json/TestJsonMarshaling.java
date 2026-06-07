@@ -16,16 +16,18 @@
 
 package ai.metaheuristic.ai.json;
 
-import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.S;
-import com.fasterxml.jackson.annotation.*;
-import tools.jackson.core.JacksonException;
+import ai.metaheuristic.commons.utils.JsonUtils;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.junit.jupiter.api.Test;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
@@ -157,7 +159,7 @@ public class TestJsonMarshaling {
     }
 
     @Test
-    public void test() throws JacksonException {
+    public void test() {
         StatusClass rest = JsonUtils.getMapper().readValue(JSON, StatusClass.class);
 
         assertNotNull(rest);

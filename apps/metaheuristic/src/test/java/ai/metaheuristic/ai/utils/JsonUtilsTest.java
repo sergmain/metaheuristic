@@ -20,13 +20,12 @@ import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import tools.jackson.core.JacksonException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.junit.jupiter.api.Test;
 import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
@@ -79,7 +78,7 @@ public class JsonUtilsTest {
     }
 
     @Test
-    public void test_() throws JacksonException {
+    public void test_() {
 
 
         String json = JsonUtils.getMapper().writeValueAsString(SIMPLE_LIST);

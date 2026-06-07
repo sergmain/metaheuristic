@@ -83,12 +83,12 @@ public class VariableUtils {
         return S.f("mh.array-element-%s-%d", UUID.randomUUID().toString(), System.currentTimeMillis());
     }
 
-    public static String permutationAsString(VariableData.Permutation ps) throws JacksonException {
+    public static String permutationAsString(VariableData.Permutation ps) {
         String s = JsonUtils.getMapper().writeValueAsString(ps);
         return s;
     }
 
-    public static VariableData.Permutation asStringAsPermutation(String json) throws JacksonException {
+    public static VariableData.Permutation asStringAsPermutation(String json) {
         VariableData.Permutation p = JsonUtils.getMapper().readValue(json, VariableData.Permutation.class);
         return p;
     }

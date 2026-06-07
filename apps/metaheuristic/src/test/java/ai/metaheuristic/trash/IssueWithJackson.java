@@ -62,7 +62,7 @@ public class IssueWithJackson {
         }
     }
 
-    static void main() throws JacksonException {
+    static void main() {
         ObjectMapper mapper = new ObjectMapper();
 
         Bbb b = new Bbb();

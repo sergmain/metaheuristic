@@ -21,13 +21,12 @@ import ai.metaheuristic.ai.dispatcher.internal_functions.batch_line_splitter.Bat
 import ai.metaheuristic.ai.dispatcher.source_code.SourceCodeValidationUtils;
 import ai.metaheuristic.ai.mhbp.beans.Scenario;
 import ai.metaheuristic.ai.mhbp.data.ChatData;
-import ai.metaheuristic.commons.yaml.scheme.ApiScheme;
-import ai.metaheuristic.commons.yaml.scheme.ApiSchemeUtils;
-import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.source_code.SourceCodeParamsYaml;
 import ai.metaheuristic.commons.utils.MetaUtils;
-import tools.jackson.core.JacksonException;
+import ai.metaheuristic.commons.yaml.scheme.ApiScheme;
+import ai.metaheuristic.commons.yaml.scheme.ApiSchemeUtils;
+import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -49,7 +48,7 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 public class ScenarioUtilsTest {
 
     @Test
-    public void test_toPromptEvaluation() throws JacksonException {
+    public void test_toPromptEvaluation() {
         String json = """
             {"uuid":"0ae1019f-717a-4ab9-9afc-44a49718781e","prompt":"Make short description of fruit {{fruit}}","variables":[{"name":"fruit","value":"Orange"}]}""";
         ChatData.PromptEvaluation r = ScenarioUtils.toPromptEvaluation(json);

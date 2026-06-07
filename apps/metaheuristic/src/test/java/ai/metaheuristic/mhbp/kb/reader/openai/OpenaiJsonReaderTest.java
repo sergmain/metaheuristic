@@ -17,20 +17,19 @@
 package ai.metaheuristic.mhbp.kb.reader.openai;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.commons.CommonConsts;
-import ai.metaheuristic.commons.system.SystemProcessLauncher;
-import ai.metaheuristic.api.data.GitData;
 import ai.metaheuristic.ai.mhbp.kb.reader.openai.OpenaiInput;
 import ai.metaheuristic.ai.mhbp.kb.reader.openai.OpenaiJsonReader;
-import ai.metaheuristic.commons.utils.JsonUtils;
-import ai.metaheuristic.commons.S;
 import ai.metaheuristic.ai.mhbp.questions.QuestionData;
 import ai.metaheuristic.ai.mhbp.services.LocalGitRepoService;
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParams;
 import ai.metaheuristic.ai.mhbp.yaml.kb.KbParamsUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.GitData;
+import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.system.SystemProcessLauncher;
+import ai.metaheuristic.commons.utils.JsonUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
-import tools.jackson.core.JacksonException;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Disabled;
@@ -131,7 +130,7 @@ public class OpenaiJsonReaderTest {
     }
 
     @Test
-    public void test_toOpenaiInput_1() throws JacksonException {
+    public void test_toOpenaiInput_1() {
 
         String json = """
                 {
@@ -160,7 +159,7 @@ public class OpenaiJsonReaderTest {
     }
 
     @Test
-    public void test_toOpenaiInput_2() throws JacksonException {
+    public void test_toOpenaiInput_2() {
 
         String json = """
                 {
@@ -192,7 +191,7 @@ public class OpenaiJsonReaderTest {
     }
 
     @Test
-    public void test_toOpenaiInput_3() throws JacksonException {
+    public void test_toOpenaiInput_3() {
 
         String json = """
                {
