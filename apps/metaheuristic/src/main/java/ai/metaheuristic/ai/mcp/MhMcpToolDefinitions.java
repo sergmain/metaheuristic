@@ -226,13 +226,11 @@ public class MhMcpToolDefinitions {
         props.put("variableId", Map.of("type", "integer", "description", "Numeric id of the Variable"));
 
         return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder()
-                        .name("mh_get_variable_info")
+                .tool(Tool.builder("mh_get_variable_info", objectSchema(props, List.of("variableId")))
                         .title("Get Variable Info")
                         .description("Get metadata about an internal Variable by its numeric id. Returns name, "
                                 + "execContextId, taskContextId, inited/nullified flags, blobId, filename, and params. "
                                 + "Does NOT return the variable content — use mh_get_variable_content for that.")
-                        .inputSchema(new McpSchema.JsonSchema("object", props, List.of("variableId"), false, null, null))
                         .build())
                 .callHandler((exchange, request) -> {
                     Long variableId = getRequiredLong(request.arguments(), "variableId");
@@ -260,13 +258,11 @@ public class MhMcpToolDefinitions {
                 "Maximum number of bytes to return (default 1024, max 65536)"));
 
         return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder()
-                        .name("mh_get_variable_content")
+                .tool(Tool.builder("mh_get_variable_content", objectSchema(props, List.of("variableId")))
                         .title("Get Variable Content")
                         .description("Get the textual content of an internal Variable by its numeric id, "
                                 + "truncated to maxBytes (default 1024, max 65536). Returns the content as a UTF-8 "
                                 + "string and a 'truncated' flag indicating whether the original was longer.")
-                        .inputSchema(new McpSchema.JsonSchema("object", props, List.of("variableId"), false, null, null))
                         .build())
                 .callHandler((exchange, request) -> {
                     Map<String, Object> arguments = request.arguments();
@@ -310,11 +306,9 @@ public class MhMcpToolDefinitions {
         props.put("execContextId", Map.of("type", "integer", "description", "Numeric id of the ExecContext"));
 
         return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder()
-                        .name("mh_start_exec_context")
+                .tool(Tool.builder("mh_start_exec_context", objectSchema(props, List.of("execContextId")))
                         .title("Start ExecContext")
                         .description("Start a specific ExecContext by id. Transitions the ExecContext to STARTED state.")
-                        .inputSchema(new McpSchema.JsonSchema("object", props, List.of("execContextId"), false, null, null))
                         .build())
                 .callHandler((exchange, request) -> {
                     Long execContextId = getRequiredLong(request.arguments(), "execContextId");
@@ -331,11 +325,9 @@ public class MhMcpToolDefinitions {
         props.put("execContextId", Map.of("type", "integer", "description", "Numeric id of the ExecContext"));
 
         return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder()
-                        .name("mh_stop_exec_context")
+                .tool(Tool.builder("mh_stop_exec_context", objectSchema(props, List.of("execContextId")))
                         .title("Stop ExecContext")
                         .description("Stop a specific ExecContext by id. Transitions the ExecContext to STOPPED state.")
-                        .inputSchema(new McpSchema.JsonSchema("object", props, List.of("execContextId"), false, null, null))
                         .build())
                 .callHandler((exchange, request) -> {
                     Long execContextId = getRequiredLong(request.arguments(), "execContextId");
@@ -365,12 +357,10 @@ public class MhMcpToolDefinitions {
         props.put("taskId", Map.of("type", "integer", "description", "Numeric id of the Task"));
 
         return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder()
-                        .name("mh_get_task_info")
+                .tool(Tool.builder("mh_get_task_info", objectSchema(props, List.of("taskId")))
                         .title("Get Task Info")
                         .description("Get info about a Task by id: execContextId, current execState, completion flags, "
                                 + "assignment timestamps, and a short excerpt of functionExecResults if present.")
-                        .inputSchema(new McpSchema.JsonSchema("object", props, List.of("taskId"), false, null, null))
                         .build())
                 .callHandler((exchange, request) -> {
                     Long taskId = getRequiredLong(request.arguments(), "taskId");
@@ -402,13 +392,11 @@ public class MhMcpToolDefinitions {
         props.put("taskId", Map.of("type", "integer", "description", "Numeric id of the Task"));
 
         return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder()
-                        .name("mh_reset_task")
+                .tool(Tool.builder("mh_reset_task", objectSchema(props, List.of("taskId")))
                         .title("Reset Task")
                         .description("Reset a specific Task by id. Resets the task to INIT state and, if the parent "
                                 + "ExecContext was FINISHED, transitions it back to STARTED. Delegates to "
                                 + "TaskResetService.resetTaskAndExecContext which acquires the required write locks.")
-                        .inputSchema(new McpSchema.JsonSchema("object", props, List.of("taskId"), false, null, null))
                         .build())
                 .callHandler((exchange, request) -> {
                     Long taskId = getRequiredLong(request.arguments(), "taskId");
@@ -438,8 +426,7 @@ public class MhMcpToolDefinitions {
         props.put("execContextId", Map.of("type", "integer", "description", "Numeric id of the ExecContext"));
 
         return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder()
-                        .name("mh_get_exec_context_info")
+                .tool(Tool.builder("mh_get_exec_context_info", objectSchema(props, List.of("execContextId")))
                         .title("Get ExecContext Info")
                         .description("Get ExecContext info by id. This is the polling endpoint for execution "
                                 + "completion: call repeatedly (every 3–5 seconds) after mhdg_rg_execute_project "
@@ -448,7 +435,6 @@ public class MhMcpToolDefinitions {
                                 + "run is still in progress and you must keep polling. Returns: state (numeric), "
                                 + "stateName, sourceCodeId, companyId, accountId, graph/task-state/variable-state ids, "
                                 + "root id, createdOn/completedOn timestamps, and validity flag.")
-                        .inputSchema(new McpSchema.JsonSchema("object", props, List.of("execContextId"), false, null, null))
                         .build())
                 .callHandler((exchange, request) -> {
                     Long execContextId = getRequiredLong(request.arguments(), "execContextId");
@@ -481,13 +467,11 @@ public class MhMcpToolDefinitions {
         props.put("execContextGraphId", Map.of("type", "integer", "description", "Numeric id of the ExecContextGraph"));
 
         return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder()
-                        .name("mh_get_exec_context_graph")
+                .tool(Tool.builder("mh_get_exec_context_graph", objectSchema(props, List.of("execContextGraphId")))
                         .title("Get ExecContext Graph")
                         .description("Get an ExecContextGraph by its id (NOT by execContextId — use "
                                 + "mh_get_exec_context_info first to find the execContextGraphId). Returns the raw "
                                 + "params YAML representing the static Process DAG.")
-                        .inputSchema(new McpSchema.JsonSchema("object", props, List.of("execContextGraphId"), false, null, null))
                         .build())
                 .callHandler((exchange, request) -> {
                     Long execContextGraphId = getRequiredLong(request.arguments(), "execContextGraphId");
@@ -509,13 +493,11 @@ public class MhMcpToolDefinitions {
         props.put("execContextTaskStateId", Map.of("type", "integer", "description", "Numeric id of the ExecContextTaskState"));
 
         return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder()
-                        .name("mh_get_exec_context_task_state")
+                .tool(Tool.builder("mh_get_exec_context_task_state", objectSchema(props, List.of("execContextTaskStateId")))
                         .title("Get ExecContext Task State")
                         .description("Get an ExecContextTaskState by its id (NOT by execContextId — use "
                                 + "mh_get_exec_context_info first to find the execContextTaskStateId). Returns the raw "
                                 + "params YAML representing the dynamic Task execution state.")
-                        .inputSchema(new McpSchema.JsonSchema("object", props, List.of("execContextTaskStateId"), false, null, null))
                         .build())
                 .callHandler((exchange, request) -> {
                     Long execContextTaskStateId = getRequiredLong(request.arguments(), "execContextTaskStateId");
@@ -537,14 +519,12 @@ public class MhMcpToolDefinitions {
         props.put("execContextVariableStateId", Map.of("type", "integer", "description", "Numeric id of the ExecContextVariableState"));
 
         return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder()
-                        .name("mh_get_exec_context_variable_state")
+                .tool(Tool.builder("mh_get_exec_context_variable_state", objectSchema(props, List.of("execContextVariableStateId")))
                         .title("Get ExecContext Variable State")
                         .description("Get an ExecContextVariableState by its id (NOT by execContextId \u2014 use "
                                 + "mh_get_exec_context_info first to find the execContextVariableStateId). Returns the raw "
                                 + "params YAML representing the dynamic Variable state (per-variable inited/nullified "
                                 + "status, blob ids, task context ids).")
-                        .inputSchema(new McpSchema.JsonSchema("object", props, List.of("execContextVariableStateId"), false, null, null))
                         .build())
                 .callHandler((exchange, request) -> {
                     Long execContextVariableStateId = getRequiredLong(request.arguments(), "execContextVariableStateId");
@@ -565,14 +545,12 @@ public class MhMcpToolDefinitions {
         Map<String, Object> props = new HashMap<>();
 
         return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder()
-                        .name("mh_list_source_codes")
+                .tool(Tool.builder("mh_list_source_codes", objectSchema(props, List.of()))
                         .title("List SourceCodes")
                         .description("List all SourceCodes in the database with general info: id, uid, "
                                 + "companyId, latch, and valid flag. Returns all rows across all companies "
                                 + "(no companyId filter). Use this to discover available SourceCodes and their "
                                 + "uids before calling tools that require a sourceCodeUidPrefix.")
-                        .inputSchema(new McpSchema.JsonSchema("object", props, List.of(), false, null, null))
                         .build())
                 .callHandler((exchange, request) -> {
                     log.info("260.250 MCP listSourceCodes()");
@@ -592,15 +570,13 @@ public class MhMcpToolDefinitions {
                 + "Use mh_list_source_codes first to discover available ids."));
 
         return McpServerFeatures.SyncToolSpecification.builder()
-                .tool(Tool.builder()
-                        .name("mh_get_source_code")
+                .tool(Tool.builder("mh_get_source_code", objectSchema(props, List.of("sourceCodeId")))
                         .title("Get SourceCode")
                         .description("Get a SourceCode by id, including the full params YAML body "
                                 + "(the .mhsc/.mhscp source). Returns id, version, companyId, uid, createdOn, "
                                 + "valid flag, latch, params (truncated to maxParamsBytes), and a 'truncated' flag. "
                                 + "Use this to inspect what's actually deployed on the dispatcher when the on-disk "
                                 + "source and the deployed bundle have drifted apart.")
-                        .inputSchema(new McpSchema.JsonSchema("object", props, List.of("sourceCodeId"), false, null, null))
                         .build())
                 .callHandler((exchange, request) -> {
                     Map<String, Object> arguments = request.arguments();
@@ -667,18 +643,27 @@ public class MhMcpToolDefinitions {
         return Integer.parseInt(value.toString());
     }
 
+    private static Map<String, Object> objectSchema(Map<String, Object> properties, List<String> required) {
+        Map<String, Object> schema = new HashMap<>();
+        schema.put("type", "object");
+        schema.put("properties", properties);
+        schema.put("required", required);
+        schema.put("additionalProperties", false);
+        return schema;
+    }
+
     private CallToolResult toCallToolResult(Object result) {
         try {
             String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
             return CallToolResult.builder()
-                    .content(List.of(new TextContent(json)))
+                    .addTextContent(json)
                     .isError(false)
                     .build();
         }
         catch (JacksonException e) {
             log.error("260.240 Error serializing tool result", e);
             return CallToolResult.builder()
-                    .content(List.of(new TextContent("Error: " + e.getMessage())))
+                    .addTextContent("Error: " + e.getMessage())
                     .isError(true)
                     .build();
         }
@@ -686,7 +671,7 @@ public class MhMcpToolDefinitions {
 
     private static CallToolResult errorResult(String message) {
         return CallToolResult.builder()
-                .content(List.of(new TextContent(message)))
+                .addTextContent(message)
                 .isError(true)
                 .build();
     }
