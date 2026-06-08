@@ -29,6 +29,7 @@ public class JsonUtils {
         ObjectMapper m = JsonMapper.builder()
                 .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .configure(DeserializationFeature.FAIL_ON_TRAILING_TOKENS, false)
                 .configure(MapperFeature.USE_GETTERS_AS_SETTERS, true)
                 .build();
         mapper = m;
