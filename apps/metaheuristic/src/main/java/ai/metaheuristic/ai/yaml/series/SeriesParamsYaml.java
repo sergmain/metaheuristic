@@ -64,7 +64,7 @@ public class SeriesParamsYaml implements BaseParams {
     // it will actually be handled as Set. it's List for a compatibility with yaml
     public final List<ExperimentPart> parts = new ArrayList<>();
 
-    public final Map<EnumsApi.Fitting, Integer> fittingCounts = new HashMap<>();
+    public final Map<EnumsApi.Fitting, Integer> fittingCounts = new EnumMap<>(EnumsApi.Fitting.class);
 
     public final List<String> experimentResults = new ArrayList<>();
 
