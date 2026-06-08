@@ -146,6 +146,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     @AfterEach
     public void afterPreparingSourceCode() {
+        //noinspection ConstantValue
         if (preparingSourceCodeData!=null) {
             preparingSourceCodeInitService.afterPreparingSourceCode(preparingSourceCodeData);
         }
@@ -166,7 +167,6 @@ public abstract class PreparingSourceCode extends PreparingCore {
             assertNotNull(gv);
 
             assertEquals(EnumsApi.ExecContextState.STARTED.code, getExecContextForTest().getState());
-            //noinspection ReturnOfNull
             return null;
         });
         System.out.println("start execContextStatusService.resetStatus()");

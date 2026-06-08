@@ -26,7 +26,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService
 import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.*;
-import ai.metaheuristic.ai.shutdown.ShutdownService;
+import ai.metaheuristic.ai.shutdown.ShutdownInterface;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
 @Profile("dispatcher")
 @Slf4j
 @RequiredArgsConstructor(onConstructor_={@Autowired})
-public class ExecContextTaskAssigningTopLevelService {
+public class ExecContextTaskAssigningTopLevelService implements ShutdownInterface {
 
     private final Globals globals;
     private final ExecContextCache execContextCache;
@@ -71,7 +71,16 @@ public class ExecContextTaskAssigningTopLevelService {
     private final ExecContextRepository execContextRepository;
     private final ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
     private final ApplicationEventPublisher eventPublisher;
-    private final ShutdownService shutdownService;
+
+    private boolean shutdown = false;
+
+    public void shutdown() {
+        shutdown = true;
+    }
+
+    public boolean isShutdown() {
+        return shutdown;
+    }
 
     public static class UnassignedTasksStat {
         public int found;
@@ -94,6 +103,9 @@ public class ExecContextTaskAssigningTopLevelService {
     }
 
     public void putToQueue(final FindUnassignedTasksAndRegisterInQueueEvent event) {
+        if (isShutdown()) {
+            return;
+        }
         EXEC_CONTEXT_TASK_ASSIGNING_MTQ.putToQueue(event);
     }
 
@@ -110,6 +122,9 @@ public class ExecContextTaskAssigningTopLevelService {
 
     private void findUnassignedTasksAndRegisterInQueue(FindUnassignedTasksAndRegisterInQueueEvent event) {
 //        System.gc();
+        if (isShutdown()) {
+            return;
+        }
         System.out.printf("total memory: %d, free memory: %d, max memory: %s\n",
             Runtime.getRuntime().totalMemory(), Runtime.getRuntime().freeMemory(), Runtime.getRuntime().maxMemory());
 

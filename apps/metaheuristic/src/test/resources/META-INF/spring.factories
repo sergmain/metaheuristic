@@ -1,1 +1,2 @@
-org.springframework.test.context.TestExecutionListener=ai.metaheuristic.ai.MhShutdownTestExecutionListener
+org.springframework.test.context.TestExecutionListener=\
+ai.metaheuristic.ai.MhShutdownTestExecutionListener

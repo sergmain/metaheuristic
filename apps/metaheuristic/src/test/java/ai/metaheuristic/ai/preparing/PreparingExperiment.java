@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.preparing;
 import ai.metaheuristic.ai.dispatcher.beans.Experiment;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCreatorService;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +38,7 @@ public abstract class PreparingExperiment extends PreparingSourceCode {
     @Autowired private PreparingExperimentInitService preparingExperimentService;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
 
-    private Experiment experiment = null;
+    private @Nullable Experiment experiment = null;
 
     @BeforeEach
     public void beforePreparingExperiment() {
@@ -62,7 +63,7 @@ public abstract class PreparingExperiment extends PreparingSourceCode {
         log.info("afterPreparingExperiment() was finished for {} milliseconds", System.currentTimeMillis() - mills);
     }
 
-    public Experiment getExperiment() {
+    public @Nullable Experiment getExperiment() {
         return experiment;
     }
 
