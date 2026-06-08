@@ -31,6 +31,10 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.util.List;
 
+import tools.jackson.core.JacksonException;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -85,5 +89,33 @@ public class JsonUtilsTest {
         System.out.println(json);
 
         assertTrue(json.contains(INFO_MESSAGE));
+    }
+
+    // --- Characterization tests: JsonUtils.getMapper() Jackson-3 leniency contract ---
+
+    @Test
+    public void test_getMapper_toleratesTrailingTokens() {
+        // Jackson 3.x flipped FAIL_ON_TRAILING_TOKENS default to true; JsonUtils disables it
+        // to keep the Jackson 2.x contract, so trailing junk after the first value is ignored.
+        SimpleItem item = JsonUtils.getMapper().readValue("{\"id\":7,\"name\":\"seven\"}\";", SimpleItem.class);
+        assertEquals(7, item.id());
+        assertEquals("seven", item.name());
+    }
+
+    @Test
+    public void test_getMapper_ignoresUnknownProperties() {
+        // FAIL_ON_UNKNOWN_PROPERTIES is disabled: unexpected fields are skipped, not fatal.
+        SimpleItem item = JsonUtils.getMapper().readValue("{\"id\":3,\"name\":\"three\",\"extra\":true}", SimpleItem.class);
+        assertEquals(3, item.id());
+        assertEquals("three", item.name());
+    }
+
+    @Test
+    public void test_getMapper_failsOnNullForMissingPrimitive() {
+        // Characterizes the one Jackson-3 default NOT restored on the central mapper:
+        // FAIL_ON_NULL_FOR_PRIMITIVES stays true, so an omitted primitive (int id) throws.
+        // If that feature is ever disabled on JsonUtils, this test will go red on purpose.
+        assertThrows(JacksonException.class,
+                () -> JsonUtils.getMapper().readValue("{\"name\":\"no-id\"}", SimpleItem.class));
     }
 }
