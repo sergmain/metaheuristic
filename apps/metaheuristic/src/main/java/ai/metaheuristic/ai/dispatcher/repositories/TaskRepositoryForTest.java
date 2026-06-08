@@ -52,6 +52,7 @@ public interface TaskRepositoryForTest extends CrudRepository<TaskImpl, Long> {
 
     @Modifying
     @Transactional(propagation = Propagation.REQUIRED)
+    @Query("delete from TaskImpl t where t.execContextId=:execContextId")
     void deleteByExecContextId(Long execContextId);
 
 }

@@ -223,7 +223,11 @@ public class PreparingSourceCodeInitService {
                     log.error("Error while execContextTaskStateRepository.deleteById()", th);
                 }
             }
-            taskRepositoryForTest.deleteByExecContextId(data.getExecContextForTest().getId());
+            try {
+                taskRepositoryForTest.deleteByExecContextId(data.getExecContextForTest().getId());
+            } catch (Throwable th) {
+                log.error("Error while taskRepositoryForTest.deleteByExecContextId()", th);
+            }
         }
         try {
             globalVariableService.deleteByVariable(PreparingConsts.GLOBAL_TEST_VARIABLE);
