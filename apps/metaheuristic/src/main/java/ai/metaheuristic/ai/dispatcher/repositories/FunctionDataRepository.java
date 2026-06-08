@@ -69,5 +69,6 @@ public interface FunctionDataRepository extends CrudRepository<FunctionData, Lon
 
     @Modifying
     @Transactional
+    @Query("delete from FunctionData e where e.functionCode=:functionCode")
     void deleteByFunctionCode(String functionCode);
 }

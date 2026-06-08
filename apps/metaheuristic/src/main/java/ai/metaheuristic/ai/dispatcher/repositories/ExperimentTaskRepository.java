@@ -58,5 +58,6 @@ public interface ExperimentTaskRepository extends CrudRepository<ExperimentTask,
     ExperimentTask findByExperimentResultIdAndTaskId(Long experimentResultId, Long taskId);
 
     @Modifying
+    @Query("delete from ExperimentTask e where e.experimentResultId=:experimentResultId")
     void deleteByExperimentResultId(Long experimentResultId);
 }

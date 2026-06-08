@@ -70,6 +70,8 @@ public interface GlobalVariableRepository extends CrudRepository<GlobalVariable,
 //    @Transactional(readOnly = true)
     Page<GlobalVariable> findAll(Pageable pageable);
 
+    @Modifying
+    @Query("delete from GlobalVariable e where e.name=:variable")
     void deleteByName(String variable);
 
 //    @Transactional(readOnly = true)

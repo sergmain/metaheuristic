@@ -44,6 +44,7 @@ public interface ExecContextVariableStateRepository extends CrudRepository<ExecC
     List<Long> findAllByExecContextId(Pageable pageable, Long execContextId);
 
     @Modifying
+    @Query("delete from ExecContextVariableState e where e.id in (:ids)")
     void deleteAllByIdIn(List<Long> ids);
 
     @Query(value="select w.id from ExecContextVariableState w")

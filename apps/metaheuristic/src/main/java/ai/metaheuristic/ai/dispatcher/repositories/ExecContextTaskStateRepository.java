@@ -45,6 +45,7 @@ public interface ExecContextTaskStateRepository extends CrudRepository<ExecConte
     List<Long> findAllByExecContextId(Pageable pageable, Long execContextId);
 
     @Modifying
+    @Query("delete from ExecContextTaskState e where e.id in (:ids)")
     void deleteAllByIdIn(List<Long> ids);
 
     @Query(value="select w.id from ExecContextTaskState w")

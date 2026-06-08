@@ -37,6 +37,7 @@ import java.util.List;
 public interface DispatcherEventRepository extends CrudRepository<DispatcherEvent, Long> {
 
     @Modifying
+    @Query("delete from DispatcherEvent e where e.id in (:ids)")
     void deleteAllByIdIn(List<Long> ids);
 
     @Override

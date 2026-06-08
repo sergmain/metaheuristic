@@ -41,6 +41,7 @@ import java.util.Set;
 public interface CacheProcessRepository extends CrudRepository<CacheProcess, Long> {
 
     @Modifying
+    @Query("delete from CacheProcess e where e.id in (:ids)")
     void deleteAllByIdIn(List<Long> ids);
 
     @Modifying
