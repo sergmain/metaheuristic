@@ -346,7 +346,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <compilerArgument>--enable-preview</compilerArgument>
                     <compilerArgument>-parameters</compilerArgument>
                     <release>25</release>
                     <encoding>${project.build.sourceEncoding}</encoding>
