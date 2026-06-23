@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesEvent;
+import ai.metaheuristic.ai.exceptions.TaskCreationException;
 import ai.metaheuristic.ai.exceptions.VariableImmutabilityException;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
@@ -75,6 +76,14 @@ public class TaskVariableInitService {
                         () -> taskFinishingTxService.finishWithErrorWithTx(event.taskId, e.getMessage(), EnumsApi.TaskExecState.ERROR));
             } catch (Throwable th) {
                 log.error("179.310 Failed to set task #{} to ERROR state after immutability violation", event.taskId, th);
+            }
+        } catch (TaskCreationException e) {
+            log.error("179.320 Failed to init input variables for task #{}: {}", event.taskId, e.getMessage());
+            try {
+                TaskSyncService.getWithSyncVoid(event.taskId,
+                        () -> taskFinishingTxService.finishWithErrorWithTx(event.taskId, e.getMessage()));
+            } catch (Throwable th) {
+                log.error("179.330 Failed to set task #{} to ERROR_WITH_RECOVERY state after input-variable init error", event.taskId, th);
             }
         }
     }
