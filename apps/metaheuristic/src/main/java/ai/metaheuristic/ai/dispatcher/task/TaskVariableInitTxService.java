@@ -134,7 +134,7 @@ public class TaskVariableInitTxService {
         variableTxService.initOutputVariables(execContextId, task, p, taskParams);
     }
 
-    private TaskParamsYaml.InputVariable toInputVariable(List<String> allParentTaskContextIds, ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {
+    TaskParamsYaml.InputVariable toInputVariable(List<String> allParentTaskContextIds, ExecContextParamsYaml.Variable v, String taskContextId, Long execContextId) {
         TaskParamsYaml.InputVariable iv = new TaskParamsYaml.InputVariable();
         if (v.context==EnumsApi.VariableContext.local || v.context==EnumsApi.VariableContext.array) {
             String contextId = Boolean.TRUE.equals(v.parentContext) ? VariableUtils.getParentContext(taskContextId) : taskContextId;
@@ -145,12 +145,17 @@ public class TaskVariableInitTxService {
             }
             Object[] variable = variableTxService.findVariableInAllInternalContexts(allParentTaskContextIds, v.name, execContextId);
             if (variable==null) {
-                throw new TaskCreationException(
-                        S.f("179.120 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
-                                v.name, v.context, taskContextId, execContextId));
+                if (!Boolean.TRUE.equals(v.getNullable())) {
+                    throw new TaskCreationException(
+                            S.f("179.120 (variable==null), name: %s, variableContext: %s, taskContextId: %s, execContextId: %s",
+                                    v.name, v.context, taskContextId, execContextId));
+                }
+                // nullable + unseeded -> resolve to an absent input: id/filename stay null
             }
-            iv.id = (Long)variable[0];
-            iv.filename = (String)variable[1];
+            else {
+                iv.id = (Long)variable[0];
+                iv.filename = (String)variable[1];
+            }
         }
         else {
             SimpleGlobalVariable variable = globalVariableRepository.findIdByName(v.name);
