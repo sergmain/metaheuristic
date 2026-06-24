@@ -160,6 +160,41 @@ public class VariableUtils {
         }
     }
 
+    /**
+     * Ensures every declared nullable INPUT variable has a backing Variable row before tasks are
+     * produced. A nullable input that nothing provided gets a nullified (null-blob) row created via
+     * {@code createNullVariable}, so the rest of the pipeline resolves it like every other nullable
+     * variable - a real id pointing at a null blob - in both the cache and non-cache paths.
+     * Non-nullable inputs and global inputs are left untouched.
+     *
+     * @param inputs top-level input variable definitions from the ExecContext
+     * @param topLevelContextId the top-level taskContextId to create the rows in
+     * @param findVariable finds an existing variable by name and contextId, returns its ID or null
+     * @param createNullVariable creates a nullified (null-blob) variable by name and contextId, returns its ID
+     */
+    public static void initAbsentNullableInputVariables(
+            List<ExecContextParamsYaml.Variable> inputs,
+            String topLevelContextId,
+            VariableResolver findVariable,
+            VariableCreator createNullVariable) {
+
+        for (ExecContextParamsYaml.Variable input : inputs) {
+            if (input.context==EnumsApi.VariableContext.global) {
+                // global variables are managed separately; never auto-created here
+                continue;
+            }
+            if (!Boolean.TRUE.equals(input.getNullable())) {
+                // a non-nullable input must be provided; if it's missing, fail later (179.120)
+                continue;
+            }
+            if (findVariable.find(input.name, topLevelContextId) != null) {
+                // already seeded (provided, or explicitly set as null): keep the existing row
+                continue;
+            }
+            createNullVariable.create(input.name, topLevelContextId);
+        }
+    }
+
     @FunctionalInterface
     public interface VariableResolver {
         @Nullable Long find(String name, String contextId);

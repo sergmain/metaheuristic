@@ -595,6 +595,10 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
             ExecContextParamsYaml.Variable var = new ExecContextParamsYaml.Variable(name, EnumsApi.VariableContext.local, EnumsApi.DataSourcing.dispatcher,
                     null, null, null, null, null, null, null);
             applyVarModifiers(ctx, var);
+            // Handle '?' shorthand for nullable
+            if (ctx.getText().endsWith("?")) {
+                var.setNullable(true);
+            }
             return var;
         }
 

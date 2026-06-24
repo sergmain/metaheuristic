@@ -32,6 +32,8 @@ import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.api.data.source_code.SourceCodeApiData;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import ai.metaheuristic.commons.graph.ExecContextProcessGraphService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,6 +65,7 @@ public class ExecContextTaskProducingService {
     private final ApplicationEventPublisher eventPublisher;
     private final InternalFunctionRegisterService internalFunctionRegisterService;
     private final ExecContextGraphService execContextGraphService;
+    private final VariableTxService variableTxService;
 
     public SourceCodeApiData.TaskProducingResultComplex produceAndStartAllTasks(
             SourceCodeImpl sourceCode, ExecContextImpl execContext) {
@@ -85,6 +88,18 @@ public class ExecContextTaskProducingService {
         log.info("701.140 Start producing tasks for SourceCode {}, execContextId: #{}", sourceCode.uid, execContext.id);
 
         ExecContextData.GraphAndStates graphAndStates = execContextGraphService.prepareGraphAndStates(execContext.execContextGraphId, execContext.execContextTaskStateId);
+
+        // ensure every declared nullable input that nothing seeded gets a nullified row, so it
+        // resolves like any other nullable variable (real id + null blob) in cache and non-cache paths
+        final ExecContextParamsYaml ecpyForInputs = execContext.getExecContextParamsYaml();
+        VariableUtils.initAbsentNullableInputVariables(
+                ecpyForInputs.variables.inputs,
+                CommonConsts.TOP_LEVEL_CONTEXT_ID,
+                (name, contextId) -> {
+                    var v = variableTxService.findVariableInAllInternalContexts(name, contextId, execContext.id);
+                    return v==null ? null : v.id;
+                },
+                (name, contextId) -> variableTxService.createInitializedWithNull(name, execContext.id, contextId).id);
 
         // create all not dynamic tasks
         TaskData.ProduceTaskResult produceTaskResult = produceTasksForExecContext(execContext, graphAndStates);
