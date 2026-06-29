@@ -16,10 +16,8 @@
 
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.shutdown.ShutdownService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.io.TempDir;
-import org.springframework.context.ApplicationContext;
 import org.springframework.core.Ordered;
 import org.springframework.test.context.TestContext;
 import org.springframework.test.context.TestExecutionListener;
@@ -66,6 +64,7 @@ public class MhShutdownTestExecutionListener implements TestExecutionListener, O
 
     @Override
     public void afterTestClass(TestContext testContext) {
+/*
         if (!hasTempDirField(testContext.getTestClass())) {
             return;
         }
@@ -79,6 +78,7 @@ public class MhShutdownTestExecutionListener implements TestExecutionListener, O
             log.warn("Best-effort shutdown drain after {} failed: {}",
                 testContext.getTestClass().getSimpleName(), t.toString());
         }
+*/
     }
 
     private static boolean hasTempDirField(Class<?> clazz) {

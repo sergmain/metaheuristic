@@ -63,7 +63,7 @@ public class OpenaiJsonReaderTest {
 
         String s = """
                 TASK: Read the chess position provided in FEN-notation, then identify the best move to the board position below, in the format A. Your answer should only contain the letter of the correct move. Do not provide any further explanation.
-                            
+                
                 White to move FEN: rn2k2r/pp2ppPp/2p5/6Q1/2q3b1/2N5/PPP2PPP/R1B1K1NR Possible Moves: A: Rg8, B: Qd4, C: Qxc3 Answer only with the letter of the beset move.""";
 
         String yaml = """
@@ -117,7 +117,7 @@ public class OpenaiJsonReaderTest {
                 balance-chemical-equation:
                   id: balance-chemical-equation.dev.v0
                   metrics: [accuracy]
-                                
+                
                 balance-chemical-equation.dev.v0:
                   class: evals.elsuite.basic.match:Match
                   args:

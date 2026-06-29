@@ -29,12 +29,11 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.utils.JsonUtils;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.cache.test.autoconfigure.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -75,9 +74,8 @@ import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 @Execution(ExecutionMode.SAME_THREAD)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureCache
+@Slf4j
 public class ExecContextCloneVariableTimingTest extends PreparingSourceCode {
-
-    private static final Logger log = LoggerFactory.getLogger(ExecContextCloneVariableTimingTest.class);
 
     @org.junit.jupiter.api.io.TempDir
     static Path tempDir;

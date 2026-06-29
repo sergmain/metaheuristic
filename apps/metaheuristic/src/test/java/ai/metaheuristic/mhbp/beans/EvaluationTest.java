@@ -18,17 +18,20 @@ package ai.metaheuristic.mhbp.beans;
 
 import ai.metaheuristic.ai.mhbp.beans.Evaluation;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * @author Sergio Lissner
  * Date: 4/16/2023
  * Time: 11:48 PM
  */
+@Execution(CONCURRENT)
 public class EvaluationTest {
 
     @Test

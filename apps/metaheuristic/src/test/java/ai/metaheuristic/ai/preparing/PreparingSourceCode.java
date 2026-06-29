@@ -69,7 +69,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
     @Autowired private FunctionService functionService;
 
     public SourceCodeImpl getSourceCode() {
-        return preparingSourceCodeData.sourceCode;
+        return Objects.requireNonNull(preparingSourceCodeData.sourceCode);
     }
 
     public Function getF1() {
@@ -123,8 +123,6 @@ public abstract class PreparingSourceCode extends PreparingCore {
     }
 
     public PreparingData.PreparingSourceCodeData preparingSourceCodeData;
-
-    public abstract String getSourceCodeYamlAsString();
 
     @SneakyThrows
     public static String getSourceCodeV1() {
