@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.commands;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
@@ -65,7 +66,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 @Slf4j
-public class TestReAssignProcessorIdTimeoutDifferentSessionId {
+public class TestReAssignProcessorIdTimeoutDifferentSessionId extends MhSharedItTest {
 
     private static final long EXPIRED_SESSION_CREATED_ON = 1L;
 

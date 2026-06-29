@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.commands;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
@@ -60,7 +61,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 @Slf4j
-public class TestReAssignProcessorId {
+public class TestReAssignProcessorId extends MhSharedItTest {
 
     @org.junit.jupiter.api.io.TempDir
     static Path tempDir;

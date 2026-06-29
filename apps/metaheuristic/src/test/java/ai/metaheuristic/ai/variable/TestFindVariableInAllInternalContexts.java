@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.variable;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
@@ -65,7 +66,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 @Slf4j
 @Transactional
-public class TestFindVariableInAllInternalContexts {
+public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
 
     private static final AtomicInteger counter = new AtomicInteger(0);
 

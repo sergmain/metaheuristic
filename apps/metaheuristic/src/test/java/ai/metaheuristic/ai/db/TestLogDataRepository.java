@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.db;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.MhComplexTestConfig;
@@ -45,7 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
-public class TestLogDataRepository {
+public class TestLogDataRepository extends MhSharedItTest {
 
     @org.junit.jupiter.api.io.TempDir
     static Path tempDir;

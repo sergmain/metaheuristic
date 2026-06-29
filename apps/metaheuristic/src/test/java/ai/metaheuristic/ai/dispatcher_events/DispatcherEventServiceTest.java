@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.dispatcher_events;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.event.events.DispatcherApplicationEvent;
@@ -54,7 +55,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
-public class DispatcherEventServiceTest {
+public class DispatcherEventServiceTest extends MhSharedItTest {
 
     @org.junit.jupiter.api.io.TempDir
     static Path tempDir;

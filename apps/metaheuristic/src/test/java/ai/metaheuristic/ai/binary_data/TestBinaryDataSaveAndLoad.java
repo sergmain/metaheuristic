@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.binary_data;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
@@ -59,7 +60,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
-public class TestBinaryDataSaveAndLoad {
+public class TestBinaryDataSaveAndLoad extends MhSharedItTest {
 
     private static final String DATA_FILE_BIN = "data-file.bin";
     private static final String TRG_DATA_FILE_BIN = "trg-data-file.bin";

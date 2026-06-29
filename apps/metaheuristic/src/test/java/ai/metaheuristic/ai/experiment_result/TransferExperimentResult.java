@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.experiment_result;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
@@ -53,7 +54,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 @DisplayName("experiments postponed for very long period of time")
-public class TransferExperimentResult {
+public class TransferExperimentResult extends MhSharedItTest {
 
     @org.junit.jupiter.api.io.TempDir
     static Path tempDir;

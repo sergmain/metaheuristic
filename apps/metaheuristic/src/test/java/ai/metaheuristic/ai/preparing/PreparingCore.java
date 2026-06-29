@@ -17,6 +17,7 @@ package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.SharedItEnv;
+import ai.metaheuristic.ai.MhSharedItTest;
 import ai.metaheuristic.ai.spi.MhSpi;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
@@ -37,14 +38,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
-public abstract class PreparingCore {
-
-    @DynamicPropertySource
-    static void sharedProps(DynamicPropertyRegistry r) {
-        r.add("spring.datasource.url",  () -> SharedItEnv.DB_URL);
-        r.add("mh.home",                () -> SharedItEnv.MH_HOME);
-        r.add("spring.profiles.active", () -> "dispatcher,h2,test");
-    }
+public abstract class PreparingCore extends MhSharedItTest {
 
     public record SourceCodeUriAndLang(String uri, EnumsApi.SourceCodeLang lang, @Nullable String sourceCode) {}
     public record SourceCodeAndLang(String sourceCode, EnumsApi.SourceCodeLang lang) {}

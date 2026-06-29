@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.sec;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
@@ -61,7 +62,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @Execution(ExecutionMode.SAME_THREAD)
 @Import({SpringSecurityWebAuxTestConfig.class})
 @AutoConfigureCache
-public class TestAccessForAllEndPoints {
+public class TestAccessForAllEndPoints extends MhSharedItTest {
 
     private MockMvc mockMvc;
 

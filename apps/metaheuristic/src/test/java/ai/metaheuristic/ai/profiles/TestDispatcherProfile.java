@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.profiles;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
@@ -49,7 +50,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Execution(ExecutionMode.SAME_THREAD)
 @TestPropertySource(locations="classpath:test-dispatcher-profile.properties")
 @AutoConfigureCache
-public class TestDispatcherProfile {
+public class TestDispatcherProfile extends MhSharedItTest {
 
     @org.junit.jupiter.api.io.TempDir
     static Path tempDir;

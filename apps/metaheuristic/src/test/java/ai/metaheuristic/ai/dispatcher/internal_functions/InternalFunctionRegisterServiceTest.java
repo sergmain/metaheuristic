@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.dispatcher.internal_functions;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
@@ -51,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
-public class InternalFunctionRegisterServiceTest {
+public class InternalFunctionRegisterServiceTest extends MhSharedItTest {
 
     @org.junit.jupiter.api.io.TempDir
     static Path tempDir;

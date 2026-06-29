@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.repo;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
@@ -67,7 +68,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
-public class TestBinaryDataRepository {
+public class TestBinaryDataRepository extends MhSharedItTest {
 
     @org.junit.jupiter.api.io.TempDir
     static Path tempDir;

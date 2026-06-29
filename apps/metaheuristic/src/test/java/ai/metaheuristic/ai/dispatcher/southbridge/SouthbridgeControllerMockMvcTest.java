@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.dispatcher.southbridge;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
@@ -85,7 +86,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @AutoConfigureMockMvc
 @Import({SpringSecurityWebAuxTestConfig.class, SouthbridgeControllerMockMvcTest.BigFileUploadingTestController.class})
 @AutoConfigureCache
-public class SouthbridgeControllerMockMvcTest {
+public class SouthbridgeControllerMockMvcTest extends MhSharedItTest {
 
     public static final int SIZE_FOR_UPLOADING = 40_000_000;
     public static final byte[] bytes = new byte[SIZE_FOR_UPLOADING];

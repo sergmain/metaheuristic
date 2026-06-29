@@ -7,6 +7,7 @@
  */
 
 package ai.metaheuristic.ai.dispatcher.rest.v1;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
@@ -48,7 +49,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureMockMvc
 @Import({SpringSecurityWebAuxTestConfig.class})
-public class ExecContextRestControllerMockMvcTest {
+public class ExecContextRestControllerMockMvcTest extends MhSharedItTest {
 
     @org.junit.jupiter.api.io.TempDir
     static Path tempDir;

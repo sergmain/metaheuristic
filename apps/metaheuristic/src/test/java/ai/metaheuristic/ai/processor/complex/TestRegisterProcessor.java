@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.processor.complex;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.Processor;
@@ -76,7 +77,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @AutoConfigureCache
 @Import({SpringSecurityWebAuxTestConfig.class})
 @Slf4j
-public class TestRegisterProcessor {
+public class TestRegisterProcessor extends MhSharedItTest {
 
     private MockMvc mockMvc;
 

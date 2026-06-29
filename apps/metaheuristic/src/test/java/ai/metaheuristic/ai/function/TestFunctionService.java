@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.function;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.MhComplexTestConfig;
@@ -59,7 +60,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 @Slf4j
-class TestFunctionService {
+class TestFunctionService extends MhSharedItTest {
 
     public static final String TEST_FUNCTION = "test.function:1.0";
     public static final String FUNCTION_PARAMS = "AAA";

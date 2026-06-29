@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.dispatcher.keep_alive;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
@@ -60,7 +61,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
-public class KeepAliveServiceTest {
+public class KeepAliveServiceTest extends MhSharedItTest {
     public static final String HOME_CORE_1 = "/home/core-1";
     public static final String HOME_CORE_2 = "/home/core-2";
 

@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.sec;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.spi.MhSpi;
@@ -48,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
-class TestPasswordEncoding {
+class TestPasswordEncoding extends MhSharedItTest {
 
     @org.junit.jupiter.api.io.TempDir
     static Path tempDir;

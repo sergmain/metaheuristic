@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.rest;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
@@ -64,7 +65,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 @Import(SpringSecurityWebAuxTestConfig.class)
-public class TestRestReplicationJson {
+public class TestRestReplicationJson extends MhSharedItTest {
 
     private MockMvc mockMvc;
 

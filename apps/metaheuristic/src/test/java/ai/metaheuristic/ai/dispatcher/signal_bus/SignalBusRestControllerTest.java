@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.dispatcher.signal_bus;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
@@ -53,7 +54,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
-public class SignalBusRestControllerTest {
+public class SignalBusRestControllerTest extends MhSharedItTest {
 
     @org.junit.jupiter.api.io.TempDir
     static Path tempDir;

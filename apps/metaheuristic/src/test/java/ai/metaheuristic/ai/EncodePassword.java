@@ -40,7 +40,7 @@ import java.nio.file.Path;
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 @DisplayName("it's actually for encoding a password, not actual test")
-public class EncodePassword {
+public class EncodePassword extends MhSharedItTest {
 
     public static final String PASS = "xxx";
 

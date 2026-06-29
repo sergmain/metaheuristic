@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.dispatcher.southbridge;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.processor.net.HttpClientExecutor;
@@ -65,7 +66,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 @Execution(ExecutionMode.SAME_THREAD)
 @Import({SpringSecurityWebAuxTestConfig.class})
 @AutoConfigureCache
-public class SouthbridgeControllerTest {
+public class SouthbridgeControllerTest extends MhSharedItTest {
 
     public static final int SIZE_FOR_UPLOADING = 40_000_000;
     public static final byte[] bytes = new byte[SIZE_FOR_UPLOADING];

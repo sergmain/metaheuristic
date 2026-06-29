@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.dispatcher.signal_bus;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.signal_bus.events.BatchStateSignalTxEvent;
@@ -51,19 +52,10 @@ import static org.awaitility.Awaitility.await;
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
-public class SignalBusTxIntegrationTest {
+public class SignalBusTxIntegrationTest extends MhSharedItTest {
 
     @org.junit.jupiter.api.io.TempDir
     static Path tempDir;
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        String dbUrl = "jdbc:h2:file:" + tempDir.resolve("db-h2/mh").toAbsolutePath()
-            + ";DB_CLOSE_ON_EXIT=FALSE";
-        registry.add("spring.datasource.url", () -> dbUrl);
-        registry.add("mh.home", () -> tempDir.toAbsolutePath().toString());
-        registry.add("spring.profiles.active", () -> "dispatcher,h2,test");
-    }
 
     @Autowired ApplicationEventPublisher publisher;
     @Autowired SignalBus signalBus;

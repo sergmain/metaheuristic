@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.variable;
+import ai.metaheuristic.ai.MhSharedItTest;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
@@ -74,7 +75,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Execution(ExecutionMode.SAME_THREAD)
 @AutoConfigureCache
 @Slf4j
-public class TestRemoveTaskStatesFromVariableState {
+public class TestRemoveTaskStatesFromVariableState extends MhSharedItTest {
 
     private static final AtomicInteger counter = new AtomicInteger(0);
 
