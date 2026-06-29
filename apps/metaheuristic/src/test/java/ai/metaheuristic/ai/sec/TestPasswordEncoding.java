@@ -51,9 +51,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @AutoConfigureCache
 class TestPasswordEncoding extends MhSharedItTest {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired public PasswordEncoder passwordEncoder;
 
     private static final String PASS = "wR8&refuzlhucr-ch4ci";

@@ -60,9 +60,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @AutoConfigureCache
 public class TestWrongNameOfProcess extends PreparingSourceCode {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private SourceCodeValidationService sourceCodeValidationService;
     @Autowired private SourceCodeService sourceCodeService;
 

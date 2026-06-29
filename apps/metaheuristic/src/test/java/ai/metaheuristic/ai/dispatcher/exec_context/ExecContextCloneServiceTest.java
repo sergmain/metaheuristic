@@ -63,9 +63,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureCache
 public class ExecContextCloneServiceTest extends PreparingSourceCode {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @SneakyThrows
         public SourceCodeUriAndLang getSourceCodeAndLang() {
         return new SourceCodeUriAndLang("/source_code/yaml/default-source-code-for-batch-testing.yaml", EnumsApi.SourceCodeLang.yaml, null);

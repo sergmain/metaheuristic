@@ -49,9 +49,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @AutoConfigureCache
 class TestEvaluationOfConditionVariables extends TestBaseEvaluation {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @SneakyThrows
         public SourceCodeUriAndLang getSourceCodeAndLang() {
         return new SourceCodeUriAndLang("/source_code/yaml/test-evaluation/test-evaluation-of-condition-1.yaml", EnumsApi.SourceCodeLang.yaml, null);

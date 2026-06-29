@@ -79,9 +79,6 @@ public class TestRestUploadFunction extends MhSharedItTest {
 
     private MockMvc mockMvc;
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private WebApplicationContext webApplicationContext;
     @Autowired private FunctionRepository functionRepository;
     @Autowired private TxSupportForTestingService txSupportForTestingService;

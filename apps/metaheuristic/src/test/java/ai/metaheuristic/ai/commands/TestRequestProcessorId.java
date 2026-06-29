@@ -63,9 +63,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 public class TestRequestProcessorId extends MhSharedItTest {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired public SouthbridgeService serverService;
     @Autowired public ProcessorCache processorCache;
     @Autowired public ProcessorTopLevelService processorTopLevelService;

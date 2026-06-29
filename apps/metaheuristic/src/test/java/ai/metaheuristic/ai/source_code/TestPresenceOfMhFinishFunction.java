@@ -62,9 +62,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Slf4j
 public class TestPresenceOfMhFinishFunction extends FeatureMethods {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
     @Autowired private TaskRepository taskRepository;
 

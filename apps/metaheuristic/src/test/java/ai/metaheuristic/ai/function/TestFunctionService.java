@@ -65,9 +65,6 @@ class TestFunctionService extends MhSharedItTest {
     public static final String TEST_FUNCTION = "test.function:1.0";
     public static final String FUNCTION_PARAMS = "AAA";
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private FunctionTxService functionTxService;
     @Autowired private FunctionService functionTopLevelService;
     @Autowired private TxTestingTopLevelService txTestingTopLevelService;

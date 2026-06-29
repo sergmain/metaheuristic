@@ -86,9 +86,6 @@ public class TestRegisterProcessor extends MhSharedItTest {
     private final Set<Long> processorIds =new HashSet<>();
     private String sessionId = null;
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private WebApplicationContext webApplicationContext;
     @Autowired private ProcessorRepository processorRepository;
 

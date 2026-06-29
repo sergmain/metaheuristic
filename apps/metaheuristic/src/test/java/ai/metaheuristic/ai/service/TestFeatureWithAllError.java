@@ -50,9 +50,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 public class TestFeatureWithAllError extends FeatureMethods {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
     @Autowired private TaskProviderTopLevelService taskProviderTopLevelService;
 

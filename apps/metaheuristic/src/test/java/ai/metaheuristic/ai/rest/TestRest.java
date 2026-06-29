@@ -74,9 +74,6 @@ public class TestRest extends MhSharedItTest {
 
     private static final String MSG_TEXT = "test msg, ИИИ, 日本語, natürlich";
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @RestController
     public static class JsonTestController {
 

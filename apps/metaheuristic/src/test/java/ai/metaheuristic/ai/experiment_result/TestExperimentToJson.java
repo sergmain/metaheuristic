@@ -52,9 +52,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @DisplayName("experiments postponed for very long period of time")
 public class TestExperimentToJson extends PreparingExperiment {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private ExperimentResultService experimentResultService;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
 

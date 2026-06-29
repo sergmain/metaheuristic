@@ -73,9 +73,6 @@ public class TestAccessRestriction extends MhSharedItTest {
 
     private MockMvc mockMvc;
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private WebApplicationContext webApplicationContext;
 
     @BeforeEach

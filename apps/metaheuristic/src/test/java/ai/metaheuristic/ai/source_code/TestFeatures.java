@@ -48,9 +48,6 @@ import java.nio.file.Path;
 @Slf4j
 public class TestFeatures extends PreparingExperiment {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
 
         public SourceCodeUriAndLang getSourceCodeAndLang() {

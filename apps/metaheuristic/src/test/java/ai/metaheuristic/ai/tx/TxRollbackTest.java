@@ -57,9 +57,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class TxRollbackTest extends PreparingSourceCode {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private TxTestingService txTestingService;
     @Autowired private TaskRepository taskRepository;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;

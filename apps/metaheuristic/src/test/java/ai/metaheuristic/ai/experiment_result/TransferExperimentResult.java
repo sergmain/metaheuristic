@@ -56,9 +56,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @DisplayName("experiments postponed for very long period of time")
 public class TransferExperimentResult extends MhSharedItTest {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired public ExperimentResultService experimentResultService;
     @Autowired public ExecContextCache execContextCache;
 

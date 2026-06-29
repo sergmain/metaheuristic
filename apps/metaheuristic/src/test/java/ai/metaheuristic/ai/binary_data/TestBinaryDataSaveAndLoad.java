@@ -67,9 +67,6 @@ public class TestBinaryDataSaveAndLoad extends MhSharedItTest {
     private static final String TEST_VARIABLE = "test-variable";
     public static final String SYSTEM_PARAMS_V_2_YAML = "system/params-v2.yaml";
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private VariableTxService variableService;
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private VariableRepository variableRepository;

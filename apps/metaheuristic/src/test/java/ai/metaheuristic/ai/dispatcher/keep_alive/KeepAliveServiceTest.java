@@ -65,9 +65,6 @@ public class KeepAliveServiceTest extends MhSharedItTest {
     public static final String HOME_CORE_1 = "/home/core-1";
     public static final String HOME_CORE_2 = "/home/core-2";
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private ProcessorCoreRepository processorCoreRepository;
     @Autowired private ProcessorCoreRepository processorRepository;
     @Autowired private ProcessorTxService processorTxService;

@@ -57,9 +57,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 @AutoConfigureCache
 public class DispatcherEventServiceTest extends MhSharedItTest {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired
     public DispatcherEventService dispatcherEventService;
 

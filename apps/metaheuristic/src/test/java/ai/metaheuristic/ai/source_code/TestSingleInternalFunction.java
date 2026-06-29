@@ -61,9 +61,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class TestSingleInternalFunction extends FeatureMethods {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
     @Autowired private TaskRepository taskRepository;
 

@@ -15,6 +15,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
 import ai.metaheuristic.ai.spi.MhSpi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -51,13 +52,9 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @Import({SpringSecurityWebAuxTestConfig.class})
 public class ExecContextRestControllerMockMvcTest extends MhSharedItTest {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     static void setSystemProperties() {
         MhSpi.cleanUpOnShutdown();
-        System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
     }
 
     @Autowired

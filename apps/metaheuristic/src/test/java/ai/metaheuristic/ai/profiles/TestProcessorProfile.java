@@ -41,6 +41,10 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * this unit-test is about Processor's functionality.
+ * Because of that, no need in migrating to a testing harness V3
+ */
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"processor", "test", "standalone"})
 @Execution(ExecutionMode.SAME_THREAD)

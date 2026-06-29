@@ -70,9 +70,6 @@ public class TestReAssignProcessorIdTimeoutDifferentSessionId extends MhSharedIt
 
     private static final long EXPIRED_SESSION_CREATED_ON = 1L;
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired public SouthbridgeService serverService;
     @Autowired public ProcessorCache processorCache;
     @Autowired public ProcessorRepository processorRepository;

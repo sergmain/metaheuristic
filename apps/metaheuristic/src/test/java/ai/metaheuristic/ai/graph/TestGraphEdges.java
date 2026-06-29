@@ -65,9 +65,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class TestGraphEdges extends PreparingSourceCode {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private ExecContextCache execContextCache;
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;

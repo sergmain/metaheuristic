@@ -69,9 +69,6 @@ public class TestRestReplicationJson extends MhSharedItTest {
 
     private MockMvc mockMvc;
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private ReplicationSourceService replicationSourceService;
     @Autowired private WebApplicationContext webApplicationContext;
 

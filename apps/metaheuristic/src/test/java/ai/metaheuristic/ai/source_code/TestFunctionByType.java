@@ -56,9 +56,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @AutoConfigureCache
 public class TestFunctionByType extends PreparingSourceCode {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private SourceCodeValidationService sourceCodeValidationService;
 
     @Override

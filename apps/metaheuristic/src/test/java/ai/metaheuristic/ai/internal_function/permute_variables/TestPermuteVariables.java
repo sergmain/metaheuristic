@@ -68,9 +68,6 @@ public class TestPermuteVariables extends PreparingSourceCode {
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
     @Autowired private MhInternalTaskPipelineRunner pipelineRunner;
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @SneakyThrows
         public SourceCodeUriAndLang getSourceCodeAndLang() {
         return new SourceCodeUriAndLang("/source_code/yaml/variables/variables-as-not-present.yaml", EnumsApi.SourceCodeLang.yaml, null);

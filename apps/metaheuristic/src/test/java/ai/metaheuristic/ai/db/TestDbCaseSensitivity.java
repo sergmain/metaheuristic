@@ -64,9 +64,6 @@ public class TestDbCaseSensitivity extends PreparingSourceCode {
 
     private static final String TEST_VARIABLE = "test-variable";
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private GlobalVariableRepository globalVariableRepository;
     @Autowired private VariableTxService variableService;
     @Autowired private VariableRepository variableRepository;

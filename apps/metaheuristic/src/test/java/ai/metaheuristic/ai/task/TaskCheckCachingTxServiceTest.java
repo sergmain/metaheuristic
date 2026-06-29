@@ -73,9 +73,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private TaskCheckCachingService taskCheckCachingTopLevelService;
     @Autowired private TaskRepository taskRepository;
     @Autowired private VariableTxService variableTxService;

@@ -67,9 +67,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @AutoConfigureCache
 public class TestEvaluationOfConditionBoolean extends TestBaseEvaluation {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private MhInternalTaskPipelineRunner pipelineRunner;
 
     @SneakyThrows

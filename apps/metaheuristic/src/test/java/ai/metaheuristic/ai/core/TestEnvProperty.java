@@ -48,9 +48,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class TestEnvProperty extends MhSharedItTest {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.processor.download-dataset-task.timeout'), 1, 10, 5) }")
     private int envProperty;
 

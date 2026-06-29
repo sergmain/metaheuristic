@@ -65,9 +65,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 class TestExecSourceCode extends MhSharedItTest {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
     @Autowired private SourceCodeService sourceCodeService;
     @Autowired private SourceCodeCache sourceCodeCache;

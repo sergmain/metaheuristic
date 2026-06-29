@@ -54,9 +54,6 @@ import static org.awaitility.Awaitility.await;
 @AutoConfigureCache
 public class SignalBusTxIntegrationTest extends MhSharedItTest {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired ApplicationEventPublisher publisher;
     @Autowired SignalBus signalBus;
     @Autowired PlatformTransactionManager txManager;

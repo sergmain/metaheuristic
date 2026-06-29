@@ -50,9 +50,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class TestCountOfTasks extends PreparingExperiment {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
     @Autowired private ExperimentCache experimentCache;
 

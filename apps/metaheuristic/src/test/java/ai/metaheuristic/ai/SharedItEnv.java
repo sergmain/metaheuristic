@@ -20,7 +20,7 @@ public final class SharedItEnv {
         try {
             Path home = DirUtils.createMhTempPath("mh-");
             if (home==null) {
-                throw new IllegalStateException("MH HOME DIR NOT FOUND");
+                throw new IllegalStateException("MH HOME DIR wasn't created");
             }
             MH_HOME = home.toAbsolutePath().toString();
             System.setProperty("mh.home", MH_HOME);   // <-- resolves ${mh.home} at env-prepared time

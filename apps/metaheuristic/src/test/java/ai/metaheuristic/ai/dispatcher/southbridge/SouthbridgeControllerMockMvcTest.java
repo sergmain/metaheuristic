@@ -92,9 +92,6 @@ public class SouthbridgeControllerMockMvcTest extends MhSharedItTest {
     public static final byte[] bytes = new byte[SIZE_FOR_UPLOADING];
     private MockMvc mockMvc;
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Value("${server.port:#{-1}}")
     public Integer serverPort;
 

@@ -44,9 +44,6 @@ public class EncodePassword extends MhSharedItTest {
 
     public static final String PASS = "xxx";
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private PasswordEncoder passwordEncoder;
 
     @Test

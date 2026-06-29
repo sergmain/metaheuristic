@@ -57,9 +57,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @AutoConfigureCache
 public class SqlQueryTest extends PreparingSourceCode {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
     @Autowired private ExecContextCache execContextCache;
     @Autowired private ExecContextRepository execContextRepository;

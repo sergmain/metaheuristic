@@ -58,9 +58,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Slf4j
 public class TestFunctionNotFoundByType extends PreparingSourceCode {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private SourceCodeValidationService sourceCodeValidationService;
 
     @Override

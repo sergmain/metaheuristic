@@ -56,9 +56,6 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @AutoConfigureCache
 public class SignalBusRestControllerTest extends MhSharedItTest {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired WebApplicationContext webApplicationContext;
     @Autowired SignalBus signalBus;
 

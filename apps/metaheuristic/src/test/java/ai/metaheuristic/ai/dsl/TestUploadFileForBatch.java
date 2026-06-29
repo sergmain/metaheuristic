@@ -68,9 +68,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @Slf4j
 public class TestUploadFileForBatch extends PreparingSourceCode {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private BatchTopLevelService batchTopLevelService;
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;

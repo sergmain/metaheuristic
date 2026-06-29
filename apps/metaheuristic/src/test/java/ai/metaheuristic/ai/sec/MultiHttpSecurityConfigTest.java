@@ -72,9 +72,6 @@ public class MultiHttpSecurityConfigTest extends MhSharedItTest {
     //    @Autowired
     private MockMvc mockMvc;
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @RestController
     public static class JsonTestController {
         // This isn't the test, actual test is MultiHttpSecurityConfigTest.testApiEndpointWithCORSCustomHeader() below

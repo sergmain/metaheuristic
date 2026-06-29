@@ -70,9 +70,6 @@ public class TestFindVariableInAllInternalContexts extends MhSharedItTest {
 
     private static final AtomicInteger counter = new AtomicInteger(0);
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private VariableTxService variableTxService;
     @Autowired private VariableRepository variableRepository;
     @Autowired private ExecContextRepository execContextRepository;

@@ -90,9 +90,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @AutoConfigureCache
 public class TestSourceCodeService extends PreparingSourceCode {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private MhInternalTaskPipelineRunner pipelineRunner;
     @Autowired private ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest taskRepositoryForTestLocal;

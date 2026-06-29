@@ -54,9 +54,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @AutoConfigureCache
 public class InternalFunctionRegisterServiceTest extends MhSharedItTest {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @BeforeEach
     public void setup() {
         MhSpi.cleanUpOnShutdown();

@@ -71,9 +71,6 @@ public class SouthbridgeControllerTest extends MhSharedItTest {
     public static final int SIZE_FOR_UPLOADING = 40_000_000;
     public static final byte[] bytes = new byte[SIZE_FOR_UPLOADING];
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Value("${server.port:#{-1}}")
     public Integer serverPort;
 

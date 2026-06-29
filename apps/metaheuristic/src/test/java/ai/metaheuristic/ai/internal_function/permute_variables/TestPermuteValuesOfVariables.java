@@ -58,9 +58,6 @@ import java.nio.file.Path;
 @AutoConfigureCache
 class TestPermuteValuesOfVariables extends PreparingSourceCode {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private TxSupportForTestingService txSupportForTestingService;
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
     @Autowired private ExecContextTxService execContextTxService;

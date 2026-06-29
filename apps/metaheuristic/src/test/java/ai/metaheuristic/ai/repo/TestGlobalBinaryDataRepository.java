@@ -56,9 +56,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 class TestGlobalBinaryDataRepository extends MhSharedItTest {
 
-    @org.junit.jupiter.api.io.TempDir
-    static Path tempDir;
-
     @Autowired private GlobalVariableTxService globalVariableService;
     @Autowired private GeneralBlobTxService variableBlobTxService;
     @Autowired private DispatcherBlobStorage dispatcherBlobStorage;
