@@ -17,6 +17,7 @@ package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.SharedItEnv;
+import ai.metaheuristic.ai.spi.MhSpi;
 import ai.metaheuristic.ai.dispatcher.beans.*;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
@@ -126,6 +127,7 @@ public abstract class PreparingCore {
             // pipeline driver can't pick it up from the shared DB (DESCRIPTION-TEST-PIPELINE-V2-V3.md, 2.4).
             stopAllNonFinishedExecContexts();
             preparingCoreService.resetTransientStatePerTest();
+            MhSpi.cleanUpOnShutdown();
         }
         catch (Throwable th) {
             log.error("Error", th);

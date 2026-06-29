@@ -158,7 +158,9 @@ public abstract class PreparingSourceCode extends PreparingCore {
     public void afterPreparingSourceCode() {
         //noinspection ConstantValue
         if (preparingSourceCodeData!=null) {
-            preparingSourceCodeInitService.afterPreparingSourceCode(preparingSourceCodeData);
+            // V3: nothing is deleted per @Test. Shared infra (company/account/functions/global-var)
+            // and the SourceCode are reused by uid; the per-@Test ExecContext is stopped (not deleted)
+            // by PreparingCore.afterPreparingCore -> stopAllNonFinishedExecContexts().
         }
     }
 

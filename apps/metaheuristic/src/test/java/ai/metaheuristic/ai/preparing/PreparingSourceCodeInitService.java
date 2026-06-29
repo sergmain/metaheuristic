@@ -35,6 +35,8 @@ import ai.metaheuristic.commons.spi.GeneralBlobTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
 import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
+import ai.metaheuristic.ai.dispatcher.repositories.SourceCodeRepository;
+import ai.metaheuristic.ai.dispatcher.beans.SourceCodeImpl;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -75,6 +77,7 @@ public class PreparingSourceCodeInitService {
     private final GeneralBlobTxService variableBlobTxService;
     private final SourceCodeService sourceCodeService;
     private final SourceCodeCache sourceCodeCache;
+    private final SourceCodeRepository sourceCodeRepository;
     private final FunctionRepository functionRepository;
     private final FunctionTxService functionTxService;
     private final TxSupportForTestingService txSupportForTestingService;
@@ -91,17 +94,43 @@ public class PreparingSourceCodeInitService {
 
     static Random r = new Random();
 
+    // V3: shared sourcecode-layer infra (company/account/f1-f5/global-var). Built ONCE for the
+    // whole run, reused, never deleted. The SourceCode + ExecContext are per-@Test.
+    private static PreparingData.PreparingSourceCodeData sharedSourceInfra = null;
+
     @SneakyThrows
     public PreparingData.PreparingSourceCodeData beforePreparingSourceCode(String source, EnumsApi.SourceCodeLang lang) {
         assertTrue(globals.testing);
         assertNotSame(globals.dispatcher.asset.mode, EnumsApi.DispatcherAssetMode.replicated);
 
+        if (sharedSourceInfra == null) {
+            sharedSourceInfra = buildSharedSourceInfra();
+        }
+
         PreparingData.PreparingSourceCodeData data = new PreparingData.PreparingSourceCodeData();
+        data.company = sharedSourceInfra.company;
+        data.account = sharedSourceInfra.account;
+        data.f1 = sharedSourceInfra.f1;
+        data.f2 = sharedSourceInfra.f2;
+        data.f3 = sharedSourceInfra.f3;
+        data.f4 = sharedSourceInfra.f4;
+        data.f5 = sharedSourceInfra.f5;
+        data.testGlobalVariable = sharedSourceInfra.testGlobalVariable;
 
-        // V3: lang-aware parse (yaml OR mhsc) to compute the SourceCode uid.
-        String sourceCodeUid = SourceCodeGraphFactory.parse(lang, source).uid;
+        // V3: SourceCode is per-@Test, idempotent by uid (reused, never deleted) so the shared DB
+        // does not accumulate duplicates and a re-run reuses the same row.
+        data.sourceCode = obtainSourceCode(source, lang, data.company.uniqueId);
 
-        preparingSourceCodeService.cleanUp(sourceCodeUid);
+        data.execContextYaml = new ExecContextParamsYaml();
+        data.execContextYaml.variables.globals = new ArrayList<>();
+        data.execContextYaml.variables.globals.add(GLOBAL_TEST_VARIABLE);
+
+        return data;
+    }
+
+    @SneakyThrows
+    private PreparingData.PreparingSourceCodeData buildSharedSourceInfra() {
+        PreparingData.PreparingSourceCodeData data = new PreparingData.PreparingSourceCodeData();
 
         data.company = new Company();
         companyTopLevelService.addCompany("Test company #2");
@@ -120,10 +149,7 @@ public class PreparingSourceCodeInitService {
         data.account = accountRepository.findByUsername(account.username);
         assertNotNull(data.account);
 
-
         data.company = Objects.requireNonNull(companyTopLevelService.getCompanyByUniqueId(data.company.uniqueId));
-
-
 
         assertNotNull(data.company.id);
         assertNotNull(data.company.uniqueId);
@@ -137,28 +163,26 @@ public class PreparingSourceCodeInitService {
         data.f4 = createFunction("function-04:1.1");
         data.f5 = createFunction("function-05:1.1");
 
-        SourceCodeApiData.SourceCodeResult scr = sourceCodeService.createSourceCode(source, lang, data.company.uniqueId);
-        data.sourceCode = Objects.requireNonNull(sourceCodeCache.findById(scr.id));
-
         byte[] bytes = "A resource for input pool".getBytes();
-
-        try {
-            globalVariableService.deleteByVariable(GLOBAL_TEST_VARIABLE);
-        } catch (Throwable th) {
-            log.error("error preparing variables", th);
-        }
-
         Long globalVariableId = variableBlobTxService.createEmptyGlobalVariable(GLOBAL_TEST_VARIABLE, "file-01.txt");
         try (InputStream is = new ByteArrayInputStream(bytes)) {
             dispatcherBlobStorage.storeGlobalVariableData(globalVariableId, is, bytes.length);
         }
         data.testGlobalVariable = globalVariableRepository.findById(globalVariableId).orElseThrow();
 
-        data.execContextYaml = new ExecContextParamsYaml();
-        data.execContextYaml.variables.globals = new ArrayList<>();
-        data.execContextYaml.variables.globals.add(GLOBAL_TEST_VARIABLE);
-
         return data;
+    }
+
+    // V3: idempotent by uid - reuse the existing SourceCode row if present (a prior @Test using the
+    // same source under the shared DB), otherwise create it. MH_SOURCE_CODE.UID is globally unique.
+    private SourceCodeImpl obtainSourceCode(String source, EnumsApi.SourceCodeLang lang, Long companyUniqueId) {
+        String uid = SourceCodeGraphFactory.parse(lang, source).uid;
+        SourceCodeImpl existing = sourceCodeRepository.findByUid(uid);
+        if (existing != null) {
+            return existing;
+        }
+        SourceCodeApiData.SourceCodeResult scr = sourceCodeService.createSourceCode(source, lang, companyUniqueId);
+        return Objects.requireNonNull(sourceCodeCache.findById(scr.id));
     }
 
     private Function createFunction(String functionCode) {
