@@ -24,9 +24,12 @@ import ai.metaheuristic.ai.dispatcher.data.TaskData;
 import ai.metaheuristic.ai.dispatcher.event.events.TransferStateFromTaskQueueToExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.event.events.UpdateTaskExecStatesInExecContextEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextOperationStatusWithTaskList;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskQueue;
+import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.yaml.exec_context_task_state.ExecContextTaskStateParamsYaml;
 import ai.metaheuristic.api.EnumsApi;
@@ -60,6 +63,7 @@ public class ExecContextTaskStateService {
     private final TaskRepository taskRepository;
     private final ExecContextCache execContextCache;
     private final ExecContextGraphService execContextGraphService;
+    private final TaskExecStateService taskExecStateService;
 
 
     private final MultiTenantedQueue<Long, TransferStateFromTaskQueueToExecContextEvent> threadedPoolMap =
@@ -134,7 +138,9 @@ public class ExecContextTaskStateService {
     }
 
     private OperationStatusRest updateTaskExecStatesExecContext(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, List<TaskData.TaskWithStateAndTaskContextId> taskWithStates) {
-        return execContextTaskStateService.updateTaskExecStatesInGraph(execContextDAC, execContextTaskStateId, taskWithStates);
+        final ExecContextOperationStatusWithTaskList status = execContextTaskStateService.updateTaskExecStatesInGraph(execContextDAC, execContextTaskStateId, taskWithStates);
+        persistSkippedTasksInDb(status.childrenTasks);
+        return status.status;
     }
 
     public void transferStateFromTaskQueueToExecContext(TransferStateFromTaskQueueToExecContextEvent event) {
@@ -159,6 +165,27 @@ public class ExecContextTaskStateService {
         }
     }
 
+    /**
+     * Persists the to-be-SKIPPED task rows OUTSIDE any open Tx: each per-task write runs in its own
+     * @Transactional method wrapped by the per-task lock (getWithSyncVoid), so the lock spans the commit
+     * and serializes with variable-init's per-task locked Tx. The graph update committed in a separate Tx
+     * (in the TxService); the transient graph/DB split is absorbed by reconciliation.
+     */
+    private void persistSkippedTasksInDb(Set<TaskData.TaskWithState> skippedTasks) {
+        for (TaskData.TaskWithState t : skippedTasks) {
+            if (t.state != EnumsApi.TaskExecState.SKIPPED) {
+                // rn only SKIPPED state must go here
+                throw new IllegalStateException("(t.state!=SKIPPED)");
+            }
+            if (taskRepository.findByIdReadOnly(t.taskId) == null) {
+                log.error("305.200 Graph state is compromised, found task in graph but it doesn't exist in db");
+                continue;
+            }
+            TaskSyncService.getWithSyncVoid(t.taskId,
+                () -> taskExecStateService.updateTaskExecStates(t.taskId, EnumsApi.TaskExecState.SKIPPED, true));
+        }
+    }
+
     public TaskQueue.TaskGroups transferStateFromTaskQueueToExecContext(Long execContextId, Long execContextTaskStateId) {
         try {
             ExecContextImpl ec = execContextCache.findById(execContextId, true);
@@ -167,9 +194,10 @@ public class ExecContextTaskStateService {
             }
             final ExecContextData.ExecContextDAC execContextDAC = execContextGraphService.getExecContextDAC(execContextId, ec.execContextGraphId);
 
-            final TaskQueue.TaskGroups taskGroups = execContextTaskStateService.transferStateFromTaskQueueToExecContext(execContextDAC, execContextId, execContextTaskStateId);
-            taskGroups.reset();
-            return taskGroups;
+            final ExecContextTaskStateTxService.TransferStateResult result = execContextTaskStateService.transferStateFromTaskQueueToExecContext(execContextDAC, execContextId, execContextTaskStateId);
+            result.taskGroups().reset();
+            persistSkippedTasksInDb(result.skippedTasks());
+            return result.taskGroups();
         } catch (CommonRollbackException e) {
             return TaskQueue.EMPTY;
         }

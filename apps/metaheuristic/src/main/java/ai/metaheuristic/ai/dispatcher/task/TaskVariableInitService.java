@@ -25,7 +25,6 @@ import ai.metaheuristic.api.EnumsApi;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -70,11 +69,6 @@ public class TaskVariableInitService {
             TaskSyncService.getWithSyncVoid(event.taskId, ()-> taskVariableInitTxService.intiVariables(event));
         } catch (CommonRollbackException e) {
             //
-        } catch (ObjectOptimisticLockingFailureException e) {
-            // 179.290 benign race: task #{} was concurrently transitioned out of INIT (e.g. SKIPPED by the
-            // parent-error cascade, or reset), so this variable init is moot. The optimistic lock correctly
-            // prevented a lost update over that concurrent change — there is nothing to recover here.
-            log.debug("179.290 task #{} was concurrently modified during variable init; skipped", event.taskId);
         } catch (VariableImmutabilityException e) {
             log.error("179.300 Variable immutability violation for task #{}: {}", event.taskId, e.getMessage());
             try {

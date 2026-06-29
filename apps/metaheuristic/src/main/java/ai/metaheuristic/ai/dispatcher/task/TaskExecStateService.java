@@ -62,6 +62,13 @@ public class TaskExecStateService {
         taskTxService.save(task);
     }
 
+    @Transactional(rollbackFor = CommonRollbackException.class)
+    public void updateTaskExecStates(Long taskId, EnumsApi.TaskExecState execState, boolean markAsCompleted) {
+        TaskImpl task = taskRepository.findById(taskId).orElseThrow();
+        updateTaskExecStates(task, execState, markAsCompleted);
+        taskTxService.save(task);
+    }
+
     public void updateTaskExecStates(TaskImpl task, EnumsApi.TaskExecState execState, boolean markAsCompleted) {
         TxUtils.checkTxExists();
         TaskSyncService.checkWriteLockPresent(task.id);
@@ -142,25 +149,6 @@ public class TaskExecStateService {
         return event;
     }
 
-    public void updateTasksStateInDb(ExecContextOperationStatusWithTaskList status) {
-        TxUtils.checkTxExists();
-
-        for (TaskData.TaskWithState t : status.childrenTasks) {
-            if (t.state!=SKIPPED) {
-                // rn only SKIPPED state must go here
-                throw new IllegalStateException("(t.state!=SKIPPED)");
-            }
-            TaskSyncService.getWithSyncVoid(t.taskId, () -> {
-                TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
-                if (task != null) {
-                    updateTaskExecStates(task, t.state, true);
-                    taskTxService.save(task);
-                } else {
-                    log.error("305.200 Graph state is compromised, found task in graph but it doesn't exist in db");
-                }
-            });
-        }
-    }
 
 
 }

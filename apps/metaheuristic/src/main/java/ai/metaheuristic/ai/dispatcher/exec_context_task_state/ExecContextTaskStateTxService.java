@@ -38,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Serge
@@ -55,21 +56,23 @@ public class ExecContextTaskStateTxService {
     private final ExecContextTaskStateRepository execContextTaskStateRepository;
     private final EventPublisherService eventPublisherService;
 
+    public record TransferStateResult(TaskQueue.TaskGroups taskGroups, Set<TaskData.TaskWithState> skippedTasks) {}
+
     @Transactional(rollbackFor = CommonRollbackException.class)
-    public OperationStatusRest updateTaskExecStatesInGraph(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, List<TaskData.TaskWithStateAndTaskContextId> taskWithStates) {
+    public ExecContextOperationStatusWithTaskList updateTaskExecStatesInGraph(ExecContextData.ExecContextDAC execContextDAC, Long execContextTaskStateId, List<TaskData.TaskWithStateAndTaskContextId> taskWithStates) {
         ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
 
         final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(
             execContextDAC, execContextTaskStateId, taskWithStates);
 
-        taskExecStateService.updateTasksStateInDb(status);
+        // the to-be-SKIPPED task-row writes are persisted by the orchestrator (per-task lock wrapping the per-task Tx), not here
         eventPublisherService.handleFindUnassignedTasksAndRegisterInQueueEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
 
-        return status.status;
+        return status;
     }
 
     @Transactional(rollbackFor = CommonRollbackException.class)
-    public TaskQueue.TaskGroups transferStateFromTaskQueueToExecContext(ExecContextData.ExecContextDAC execContextDAC, Long execContextId, Long execContextTaskStateId) {
+    public TransferStateResult transferStateFromTaskQueueToExecContext(ExecContextData.ExecContextDAC execContextDAC, Long execContextId, Long execContextTaskStateId) {
         ExecContextTaskStateSyncService.checkWriteLockPresent(execContextTaskStateId);
 
         TaskQueue.TaskGroups taskGroups = TaskProviderTopLevelService.getTaskGroupForTransferring(execContextId);
@@ -99,8 +102,8 @@ public class ExecContextTaskStateTxService {
         }
         final ExecContextOperationStatusWithTaskList status = execContextGraphService.updateTaskExecState(execContextDAC, execContextTaskStateId, taskWithStates);
 
-        taskExecStateService.updateTasksStateInDb(status);
-        return taskGroups;
+        // the to-be-SKIPPED task-row writes are persisted by the orchestrator (per-task lock wrapping the per-task Tx), not here
+        return new TransferStateResult(taskGroups, status.childrenTasks);
     }
 
     @Transactional
