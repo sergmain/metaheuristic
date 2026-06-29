@@ -1,6 +1,6 @@
 version: 3
 source:
-  uid: for-testing-exec-source-code-1.0
+  uid: test-for-testing-exec-source-code-1-3
   variables:
     inputs:
       - name: var-input-1
@@ -17,4 +17,4 @@ source:
       outputs:
         - name: var-output-1
       metas:
-        - source-code-uid: for-testing-exec-source-code-1.0
+        - source-code-uid: test-for-testing-exec-source-code-1-3

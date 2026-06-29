@@ -1,5 +1,5 @@
 source:
-  uid: for-testing-presence-of-mh-finish-function
+  uid: test-for-testing-presence-of-mh-finish-function-1
   processes:
     - code: mh.finish
       name: mh.finish

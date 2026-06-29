@@ -1,5 +1,5 @@
 source:
-  uid: for-testing-function-type
+  uid: test-for-testing-function-by-type-5
   processes:
     - code: test-funtion-type
       name: test-funtion-type

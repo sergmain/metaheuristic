@@ -1,6 +1,6 @@
 version: 3
 source:
-  uid: for-testing-exec-source-code-1.0
+  uid: test-for-testing-variable-caching-3
   variables:
     outputs:
       - name: var-output-1

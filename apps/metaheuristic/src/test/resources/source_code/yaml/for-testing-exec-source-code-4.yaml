@@ -1,6 +1,6 @@
 version: 3
 source:
-  uid: for-testing-exec-source-code-1.0
+  uid: test-for-testing-exec-source-code-4-3
   ac:
     groups: test
   variables:
@@ -20,4 +20,4 @@ source:
         - name: var-output-1
         - name: var-output-2
       metas:
-        - source-code-uid: for-testing-exec-source-code-1.0
+        - source-code-uid: test-for-testing-exec-source-code-4-3
