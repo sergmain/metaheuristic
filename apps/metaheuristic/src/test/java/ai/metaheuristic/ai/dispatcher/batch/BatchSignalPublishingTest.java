@@ -62,21 +62,11 @@ import static org.awaitility.Awaitility.await;
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @AutoConfigureCache
 public class BatchSignalPublishingTest extends PreparingSourceCode {
 
     @org.junit.jupiter.api.io.TempDir
     static Path tempDir;
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        String dbUrl = "jdbc:h2:file:" + tempDir.resolve("db-h2/mh").toAbsolutePath()
-            + ";DB_CLOSE_ON_EXIT=FALSE";
-        registry.add("spring.datasource.url", () -> dbUrl);
-        registry.add("mh.home", () -> tempDir.toAbsolutePath().toString());
-        registry.add("spring.profiles.active", () -> "dispatcher,h2,test");
-    }
 
     @SneakyThrows
         public SourceCodeUriAndLang getSourceCodeAndLang() {

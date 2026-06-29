@@ -46,21 +46,12 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureMockMvc
 @Import({SpringSecurityWebAuxTestConfig.class})
 public class ExecContextRestControllerMockMvcTest {
 
     @org.junit.jupiter.api.io.TempDir
     static Path tempDir;
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        String dbUrl = "jdbc:h2:file:" + tempDir.resolve("db-h2/mh").toAbsolutePath() + ";DB_CLOSE_ON_EXIT=FALSE";
-        registry.add("spring.datasource.url", () -> dbUrl);
-        registry.add("mh.home", () -> tempDir.toAbsolutePath().toString());
-        registry.add("spring.profiles.active", () -> "dispatcher,h2,test");
-    }
 
     @org.junit.jupiter.api.BeforeAll
     static void setSystemProperties() {

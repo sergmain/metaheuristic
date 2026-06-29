@@ -51,34 +51,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @AutoConfigureCache
 @DisplayName("experiments postponed for very long period of time")
 public class TransferExperimentResult {
 
     @org.junit.jupiter.api.io.TempDir
     static Path tempDir;
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        String dbUrl = "jdbc:h2:file:" + tempDir.resolve("db-h2/mh").toAbsolutePath() + ";DB_CLOSE_ON_EXIT=FALSE";
-        registry.add("spring.datasource.url", () -> dbUrl);
-        registry.add("mh.home", () -> tempDir.toAbsolutePath().toString());
-        registry.add("spring.profiles.active", () -> "dispatcher,h2,test");
-    }
-
-    @BeforeAll
-    static void setSystemProperties() {
-        MhSpi.cleanUpOnShutdown();
-        System.setProperty("mh.home", tempDir.toAbsolutePath().toString());
-    }
-
-    @AfterAll
-    static void cleanupLogging() {
-        MhSpi.cleanUpOnShutdown();
-        LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.stop();
-    }
 
     @Autowired public ExperimentResultService experimentResultService;
     @Autowired public ExecContextCache execContextCache;
