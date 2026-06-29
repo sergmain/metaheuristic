@@ -3,7 +3,7 @@ source:
   clean: false
   strictNaming: true
   instances: 1
-  uid: test-evaluation-condition-boolean-1.0
+  uid: test-evaluation-of-condition-boolean-1.0
   variables:
     inline:
       keys:
