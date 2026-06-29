@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.source_code;
+import ai.metaheuristic.api.EnumsApi;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -91,8 +92,8 @@ public class TestPresenceOfMhFinishFunction extends FeatureMethods {
 
     @Override
     @SneakyThrows
-    public String getSourceCodeYamlAsString() {
-        return IOUtils.resourceToString("/source_code/yaml/for-testing-presence-of-mh-finish-function.yaml", StandardCharsets.UTF_8);
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/for-testing-presence-of-mh-finish-function.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Test

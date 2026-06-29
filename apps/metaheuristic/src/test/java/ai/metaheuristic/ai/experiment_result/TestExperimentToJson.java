@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.experiment_result;
+import ai.metaheuristic.api.EnumsApi;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.MhComplexTestConfig;
@@ -79,16 +80,15 @@ public class TestExperimentToJson extends PreparingExperiment {
     @Autowired private ExperimentResultService experimentResultService;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
 
-    @Override
-    public String getSourceCodeYamlAsString() {
-        return getSourceParamsYamlAsString_Simple();
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/default-source-code-for-testing.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Test
     public void toExperimentStoredToExperimentResultToYaml() {
         createExperiment();
 
-        preparingSourceCodeService.produceTasksForTest(getSourceCodeYamlAsString(), preparingSourceCodeData);
+        preparingSourceCodeService.produceTasksForTest(resolveSourceCode(getSourceCodeAndLang()), preparingSourceCodeData);
 
         assertNotNull(getExperiment());
         assertNotNull(getExperiment().getId());

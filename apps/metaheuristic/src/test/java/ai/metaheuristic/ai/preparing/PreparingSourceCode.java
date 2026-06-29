@@ -133,13 +133,25 @@ public abstract class PreparingSourceCode extends PreparingCore {
         return getSourceCodeV1();
     }
 
+    // V3: resolve the actual source text for the @Test. A leaf either ships an inline
+    // text (3rd record arg, e.g. a programmatically-built source) or a classpath uri to load.
+    protected String resolveSourceCode(SourceCodeUriAndLang s) {
+        return s.sourceCode() != null ? s.sourceCode() : loadResource(s.uri());
+    }
+
+    @SneakyThrows
+    private static String loadResource(String uri) {
+        return IOUtils.resourceToString(uri, StandardCharsets.UTF_8);
+    }
+
     @BeforeEach
     public void beforePreparingSourceCode() {
         assertTrue(globals.testing);
         assertNotSame(globals.dispatcher.asset.mode, EnumsApi.DispatcherAssetMode.replicated);
 
-        String yamlAsString = getSourceCodeYamlAsString();
-        preparingSourceCodeData = preparingSourceCodeInitService.beforePreparingSourceCode(yamlAsString);
+        SourceCodeUriAndLang scAndLang = getSourceCodeAndLang();
+        String source = resolveSourceCode(scAndLang);
+        preparingSourceCodeData = preparingSourceCodeInitService.beforePreparingSourceCode(source, scAndLang.lang());
     }
 
     @AfterEach
@@ -178,7 +190,7 @@ public abstract class PreparingSourceCode extends PreparingCore {
 
     public void step_0_0_produceTasks() {
         System.out.println("start produceTasksForTest()");
-        preparingSourceCodeService.produceTasksForTest(getSourceCodeYamlAsString(), preparingSourceCodeData);
+        preparingSourceCodeService.produceTasksForTest(resolveSourceCode(getSourceCodeAndLang()), preparingSourceCodeData);
 
         List<Object[]> tasks = taskRepositoryForTest.findByExecContextId(getExecContextForTest().getId());
 

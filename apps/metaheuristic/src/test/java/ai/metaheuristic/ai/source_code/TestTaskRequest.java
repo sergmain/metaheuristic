@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.source_code;
+import ai.metaheuristic.api.EnumsApi;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
@@ -102,9 +103,8 @@ public class TestTaskRequest extends FeatureMethods {
     @Autowired private TaskRepository taskRepository;
     @Autowired private ExecContextCache execContextCache;
 
-    @Override
-    public String getSourceCodeYamlAsString() {
-        return getSourceParamsYamlAsString_Simple();
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/default-source-code-for-testing.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Test

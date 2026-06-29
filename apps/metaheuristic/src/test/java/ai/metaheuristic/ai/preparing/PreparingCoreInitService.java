@@ -184,6 +184,13 @@ public class PreparingCoreInitService {
 
 
     }
+    // V3: per-test reset of TRANSIENT (non-DB) state only. The shared context/DB is never
+    // recreated and the infra is never deleted; we just drain the in-memory internal-task queue
+    // so queued events from one @Test don't bleed into the next.
+    public void resetTransientStatePerTest() {
+        taskWithInternalContextEventService.clearQueue();
+    }
+
     private void deleteProcessorCore(@Nullable ProcessorCore s) {
         if (s!=null) {
             try {

@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.tx;
+import ai.metaheuristic.api.EnumsApi;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
@@ -87,9 +88,8 @@ public class SqlQueryTest extends PreparingSourceCode {
     @Autowired private EntityManager em;
     @Autowired private TxTestingService txTestingService;
 
-    @Override
-    public String getSourceCodeYamlAsString() {
-        return getSourceParamsYamlAsString_Simple();
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/default-source-code-for-testing.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Test

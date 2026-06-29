@@ -117,9 +117,8 @@ public class TestSourceCodeService extends PreparingSourceCode {
     @Autowired private MhInternalTaskPipelineRunner pipelineRunner;
     @Autowired private ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest taskRepositoryForTestLocal;
 
-    @Override
-    public String getSourceCodeYamlAsString() {
-        return getSourceParamsYamlAsString_Simple();
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/default-source-code-for-testing.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @AfterEach

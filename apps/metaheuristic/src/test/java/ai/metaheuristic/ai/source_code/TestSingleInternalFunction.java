@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.source_code;
+import ai.metaheuristic.api.EnumsApi;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
@@ -90,8 +91,8 @@ public class TestSingleInternalFunction extends FeatureMethods {
 
     @Override
     @SneakyThrows
-    public String getSourceCodeYamlAsString() {
-        return IOUtils.resourceToString("/source_code/yaml/for-testing-single-internal-function.yaml", StandardCharsets.UTF_8);
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/for-testing-single-internal-function.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Test

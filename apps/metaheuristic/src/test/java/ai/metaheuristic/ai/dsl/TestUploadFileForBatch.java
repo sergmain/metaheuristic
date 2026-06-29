@@ -99,7 +99,7 @@ public class TestUploadFileForBatch extends PreparingSourceCode {
     @Autowired private SourceCodeTxService sourceCodeTxService;
 
     @Override
-    public String getSourceCodeYamlAsString() {
+    public SourceCodeUriAndLang getSourceCodeAndLang() {
         SourceCodeParamsYamlV1 planParamsYaml = new SourceCodeParamsYamlV1();
 
         planParamsYaml.source = new SourceCodeParamsYamlV1.SourceCodeV1();
@@ -118,7 +118,7 @@ public class TestUploadFileForBatch extends PreparingSourceCode {
 
         String yaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
         System.out.println("TestUploadFileForBatch.getPlanYamlAsString yaml:\n" + yaml);
-        return yaml;
+        return new SourceCodeUriAndLang("inline://test-upload-file-for-batch", EnumsApi.SourceCodeLang.yaml, yaml);
     }
 
     private BatchData.UploadingStatus uploadingStatus = null;
@@ -169,7 +169,7 @@ public class TestUploadFileForBatch extends PreparingSourceCode {
         assertNotNull(getSourceCode());
         assertTrue(getSourceCode().isValid());
 
-        String planYamlAsString = getSourceCodeYamlAsString();
+        String planYamlAsString = resolveSourceCode(getSourceCodeAndLang());
         System.out.println("actual sourceCode yaml:\n" + planYamlAsString);
         SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsString);
         MockMultipartFile mockFile = new MockMultipartFile("random-name.txt", "file-for-batch-processing.xml", StandardCharsets.UTF_8.toString(), "content of file".getBytes());

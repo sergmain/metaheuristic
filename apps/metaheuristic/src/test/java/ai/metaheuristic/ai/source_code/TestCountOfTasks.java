@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.source_code;
+import ai.metaheuristic.api.EnumsApi;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.experiment.ExperimentCache;
@@ -77,9 +78,8 @@ public class TestCountOfTasks extends PreparingExperiment {
     @Autowired private TaskRepositoryForTest taskRepositoryForTest;
     @Autowired private ExperimentCache experimentCache;
 
-    @Override
-    public String getSourceCodeYamlAsString() {
-        return getSourceParamsYamlAsString_Simple();
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/default-source-code-for-testing.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Test

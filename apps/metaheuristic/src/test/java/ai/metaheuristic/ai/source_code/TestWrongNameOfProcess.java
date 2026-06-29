@@ -90,8 +90,8 @@ public class TestWrongNameOfProcess extends PreparingSourceCode {
 
     @Override
     @SneakyThrows
-    public String getSourceCodeYamlAsString() {
-        return IOUtils.resourceToString("/source_code/yaml/for-testing-wrong-name-of-process.yaml", StandardCharsets.UTF_8);
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/for-testing-wrong-name-of-process.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     // The YAML used here describes a user process whose `code` is `mh.finish` (the implicit final
@@ -114,7 +114,7 @@ public class TestWrongNameOfProcess extends PreparingSourceCode {
 
     @Test
     public void test() {
-        String yaml = getSourceCodeYamlAsString();
+        String yaml = resolveSourceCode(getSourceCodeAndLang());
 
         // companyUniqueId=2L; createSourceCode must reject the YAML before reaching persistence,
         // so the company value is irrelevant — any non-1L value is fine.

@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.tx;
+import ai.metaheuristic.api.EnumsApi;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
@@ -91,9 +92,8 @@ public class TestTx extends PreparingSourceCode {
     @Autowired private TaskRepository taskRepository;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
 
-    @Override
-    public String getSourceCodeYamlAsString() {
-        return getSourceParamsYamlAsString_Simple();
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/default-source-code-for-testing.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Test

@@ -95,16 +95,15 @@ public class TestEvaluationOfConditionBoolean extends TestBaseEvaluation {
     }
 
     @SneakyThrows
-    @Override
-    public String getSourceCodeYamlAsString() {
-        return IOUtils.resourceToString("/source_code/yaml/test-evaluation/test-evaluation-of-condition-boolean-1.yaml", StandardCharsets.UTF_8);
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/test-evaluation/test-evaluation-of-condition-boolean-1.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Test
     public void testBooleanConditions() {
 
         System.out.println("start produceTasksForTest()");
-        preparingSourceCodeService.produceTasksForTest(getSourceCodeYamlAsString(), preparingSourceCodeData);
+        preparingSourceCodeService.produceTasksForTest(resolveSourceCode(getSourceCodeAndLang()), preparingSourceCodeData);
 
         System.out.println("start execContextStatusService.resetStatus()");
         execContextStatusService.resetStatus();

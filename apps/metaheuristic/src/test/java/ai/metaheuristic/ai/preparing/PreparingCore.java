@@ -18,6 +18,9 @@ package ai.metaheuristic.ai.preparing;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.SharedItEnv;
 import ai.metaheuristic.ai.dispatcher.beans.*;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTopLevelService;
+import ai.metaheuristic.ai.dispatcher.repositories.ExecContextRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.account.UserContext;
 import lombok.extern.slf4j.Slf4j;
@@ -42,11 +45,14 @@ public abstract class PreparingCore {
         r.add("spring.profiles.active", () -> "dispatcher,h2,test");
     }
 
-    public record SourceCodeUriAndLang(String uri, EnumsApi.SourceCodeLang lang) {}
+    public record SourceCodeUriAndLang(String uri, EnumsApi.SourceCodeLang lang, @Nullable String sourceCode) {}
     public record SourceCodeAndLang(String sourceCode, EnumsApi.SourceCodeLang lang) {}
 
     @Autowired private Globals globals;
     @Autowired private PreparingCoreInitService preparingCoreService;
+    @Autowired private ExecContextRepository execContextRepository;
+    @Autowired private ExecContextCache execContextCache;
+    @Autowired private ExecContextTopLevelService execContextTopLevelService;
 
     /**
      * Result of the infra phase: company + account + registered functions +
@@ -74,9 +80,14 @@ public abstract class PreparingCore {
         }
     }
     public static @Nullable Infra sharedInfra = null;
+
+    // V3: infra (processor + cores + functions) is built ONCE and reused across the whole
+    // run; never deleted, never nulled. Per-test isolation is by unique codes + stopping
+    // non-finished ExecContexts, not by per-test deletion.
+    public static PreparingData.@Nullable PreparingCodeData sharedCodeData = null;
 //    public abstract SourceCodeUriAndLang getSourceCodeAndLang();
 
-    public abstract String getSourceCodeYamlAsString();
+    public abstract SourceCodeUriAndLang getSourceCodeAndLang();
 
     public PreparingData.PreparingCodeData preparingCodeData;
 
@@ -101,16 +112,38 @@ public abstract class PreparingCore {
     @BeforeEach
     public void beforePreparingCore() {
         assertTrue(globals.testing);
-        preparingCodeData = preparingCoreService.beforePreparingCore();
+        if (sharedCodeData == null) {
+            sharedCodeData = preparingCoreService.beforePreparingCore();
+        }
+        preparingCodeData = sharedCodeData;
     }
 
     @AfterEach
     public void afterPreparingCore() {
         try {
-            preparingCoreService.afterPreparingCore(preparingCodeData);
+            // V3: the shared context/DB is never recreated, so we DON'T delete the infra here.
+            // We only stop any ExecContext left non-terminal by the @Test so the next test's
+            // pipeline driver can't pick it up from the shared DB (DESCRIPTION-TEST-PIPELINE-V2-V3.md, 2.4).
+            stopAllNonFinishedExecContexts();
+            preparingCoreService.resetTransientStatePerTest();
         }
         catch (Throwable th) {
             log.error("Error", th);
+        }
+    }
+
+    protected void stopAllNonFinishedExecContexts() {
+        for (Long ecId : execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.STARTED.code)) {
+            try {
+                ExecContextImpl ec = execContextCache.findById(ecId, true);
+                if (ec == null) {
+                    continue;
+                }
+                execContextTopLevelService.execContextTargetState(ecId, EnumsApi.ExecContextState.STOPPED, ec.companyId);
+            }
+            catch (Throwable th) {
+                log.error("Error stopping leftover ExecContext #" + ecId, th);
+            }
         }
     }
 }

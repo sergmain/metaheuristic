@@ -89,8 +89,8 @@ public class TestWrongNameOfVariables extends PreparingSourceCode {
 
     @Override
     @SneakyThrows
-    public String getSourceCodeYamlAsString() {
-        return IOUtils.resourceToString("/source_code/yaml/for-testing-wrong-name-of-variables.yaml", StandardCharsets.UTF_8);
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/for-testing-wrong-name-of-variables.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     // The YAML used here describes a process with an OUTPUT variable whose name is
@@ -113,7 +113,7 @@ public class TestWrongNameOfVariables extends PreparingSourceCode {
 
     @Test
     public void test() {
-        String yaml = getSourceCodeYamlAsString();
+        String yaml = resolveSourceCode(getSourceCodeAndLang());
 
         // companyUniqueId=2L; createSourceCode must reject the YAML before reaching persistence,
         // so the company value is irrelevant — any non-1L value is fine.

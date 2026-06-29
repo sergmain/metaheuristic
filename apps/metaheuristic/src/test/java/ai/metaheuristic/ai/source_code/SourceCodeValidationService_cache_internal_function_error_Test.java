@@ -84,8 +84,8 @@ public class SourceCodeValidationService_cache_internal_function_error_Test exte
 
     @Override
     @SneakyThrows
-    public String getSourceCodeYamlAsString() {
-        return IOUtils.resourceToString("/source_code/yaml/for-testing-exec-source-code-cache-internal-function-error.yaml", StandardCharsets.UTF_8);
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/for-testing-exec-source-code-cache-internal-function-error.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Test

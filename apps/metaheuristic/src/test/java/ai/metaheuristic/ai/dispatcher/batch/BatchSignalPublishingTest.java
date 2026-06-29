@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.dispatcher.batch;
+import ai.metaheuristic.api.EnumsApi;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.MhComplexTestConfig;
@@ -78,11 +79,8 @@ public class BatchSignalPublishingTest extends PreparingSourceCode {
     }
 
     @SneakyThrows
-    @Override
-    public String getSourceCodeYamlAsString() {
-        return IOUtils.resourceToString(
-            "/source_code/yaml/default-source-code-for-batch-testing.yaml",
-            StandardCharsets.UTF_8);
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/default-source-code-for-batch-testing.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Autowired BatchTxService batchTxService;

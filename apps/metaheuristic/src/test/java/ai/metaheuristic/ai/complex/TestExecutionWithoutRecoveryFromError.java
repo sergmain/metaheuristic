@@ -112,8 +112,8 @@ public class TestExecutionWithoutRecoveryFromError extends PreparingSourceCode {
 
     @Override
     @SneakyThrows
-    public String getSourceCodeYamlAsString() {
-        return IOUtils.resourceToString("/source_code/yaml/source-code-for-testing-error-recovery.yaml", StandardCharsets.UTF_8);
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/source-code-for-testing-error-recovery.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @AfterEach

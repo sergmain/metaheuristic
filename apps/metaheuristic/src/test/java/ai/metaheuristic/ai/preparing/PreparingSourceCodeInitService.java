@@ -34,6 +34,7 @@ import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.commons.spi.GeneralBlobTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.commons.yaml.source_code.SourceCodeParamsYamlUtils;
+import ai.metaheuristic.commons.graph.source_code_graph.SourceCodeGraphFactory;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
@@ -91,16 +92,16 @@ public class PreparingSourceCodeInitService {
     static Random r = new Random();
 
     @SneakyThrows
-    public PreparingData.PreparingSourceCodeData beforePreparingSourceCode(String yamlAsString) {
+    public PreparingData.PreparingSourceCodeData beforePreparingSourceCode(String source, EnumsApi.SourceCodeLang lang) {
         assertTrue(globals.testing);
         assertNotSame(globals.dispatcher.asset.mode, EnumsApi.DispatcherAssetMode.replicated);
 
         PreparingData.PreparingSourceCodeData data = new PreparingData.PreparingSourceCodeData();
 
-        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(yamlAsString);
-        sourceCodeParamsYaml.checkIntegrity();
+        // V3: lang-aware parse (yaml OR mhsc) to compute the SourceCode uid.
+        String sourceCodeUid = SourceCodeGraphFactory.parse(lang, source).uid;
 
-        preparingSourceCodeService.cleanUp(sourceCodeParamsYaml.source.uid);
+        preparingSourceCodeService.cleanUp(sourceCodeUid);
 
         data.company = new Company();
         companyTopLevelService.addCompany("Test company #2");
@@ -136,7 +137,7 @@ public class PreparingSourceCodeInitService {
         data.f4 = createFunction("function-04:1.1");
         data.f5 = createFunction("function-05:1.1");
 
-        SourceCodeApiData.SourceCodeResult scr = sourceCodeService.createSourceCode(yamlAsString, EnumsApi.SourceCodeLang.yaml, data.company.uniqueId);
+        SourceCodeApiData.SourceCodeResult scr = sourceCodeService.createSourceCode(source, lang, data.company.uniqueId);
         data.sourceCode = Objects.requireNonNull(sourceCodeCache.findById(scr.id));
 
         byte[] bytes = "A resource for input pool".getBytes();

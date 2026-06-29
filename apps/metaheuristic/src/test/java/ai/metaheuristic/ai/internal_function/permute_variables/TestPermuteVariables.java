@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.internal_function.permute_variables;
+import ai.metaheuristic.api.EnumsApi;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextGraphTopLevelService;
@@ -93,9 +94,8 @@ public class TestPermuteVariables extends PreparingSourceCode {
     }
 
     @SneakyThrows
-    @Override
-    public String getSourceCodeYamlAsString() {
-        return IOUtils.resourceToString("/source_code/yaml/variables/variables-as-not-present.yaml", StandardCharsets.UTF_8);
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/variables/variables-as-not-present.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @AfterEach
@@ -129,7 +129,7 @@ public class TestPermuteVariables extends PreparingSourceCode {
     @Test
     public void testCreateTasks() {
         System.out.println("start produceTasksForTest()");
-        preparingSourceCodeService.produceTasksForTest(getSourceCodeYamlAsString(), preparingSourceCodeData);
+        preparingSourceCodeService.produceTasksForTest(resolveSourceCode(getSourceCodeAndLang()), preparingSourceCodeData);
 
         System.out.println("start execContextStatusService.resetStatus()");
         execContextStatusService.resetStatus();

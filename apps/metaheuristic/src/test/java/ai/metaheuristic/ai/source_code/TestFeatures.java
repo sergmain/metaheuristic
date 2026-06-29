@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.source_code;
+import ai.metaheuristic.api.EnumsApi;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.preparing.PreparingExperiment;
@@ -74,9 +75,8 @@ public class TestFeatures extends PreparingExperiment {
 
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
 
-    @Override
-    public String getSourceCodeYamlAsString() {
-        return getSourceParamsYamlAsString_Simple();
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/default-source-code-for-testing.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Test
@@ -86,7 +86,7 @@ public class TestFeatures extends PreparingExperiment {
         long mills = System.currentTimeMillis();
         log.info("Start experimentService.produceFeaturePermutations()");
 
-        preparingSourceCodeService.produceTasksForTest(getSourceCodeYamlAsString(), preparingSourceCodeData);
+        preparingSourceCodeService.produceTasksForTest(resolveSourceCode(getSourceCodeAndLang()), preparingSourceCodeData);
         log.info("experimentService.produceFeaturePermutations() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
         mills = System.currentTimeMillis();

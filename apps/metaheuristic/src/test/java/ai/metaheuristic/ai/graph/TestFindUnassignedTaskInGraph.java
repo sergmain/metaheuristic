@@ -100,9 +100,8 @@ public class TestFindUnassignedTaskInGraph extends PreparingSourceCode {
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
     @Autowired private ExecContextGraphService execContextGraphService;
 
-    @Override
-    public String getSourceCodeYamlAsString() {
-        return getSourceParamsYamlAsString_Simple();
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/default-source-code-for-testing.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Test

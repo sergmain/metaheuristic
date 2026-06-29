@@ -85,8 +85,8 @@ public class SourceCodeValidationService_cache_internal_function_ok_Test extends
 
     @Override
     @SneakyThrows
-    public String getSourceCodeYamlAsString() {
-        return IOUtils.resourceToString("/source_code/yaml/for-testing-exec-source-code-cache-internal-function-ok.yaml", StandardCharsets.UTF_8);
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/for-testing-exec-source-code-cache-internal-function-ok.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Test

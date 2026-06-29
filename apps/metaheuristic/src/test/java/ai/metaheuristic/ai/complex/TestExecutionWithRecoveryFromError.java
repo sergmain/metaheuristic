@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.complex;
+import ai.metaheuristic.api.EnumsApi;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
@@ -112,8 +113,8 @@ public class TestExecutionWithRecoveryFromError extends PreparingSourceCode {
 
     @Override
     @SneakyThrows
-    public String getSourceCodeYamlAsString() {
-        return IOUtils.resourceToString("/source_code/yaml/source-code-for-testing-error-recovery.yaml", StandardCharsets.UTF_8);
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/source-code-for-testing-error-recovery.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @AfterEach

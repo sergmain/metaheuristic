@@ -53,9 +53,8 @@ public abstract class FeatureMethods extends PreparingExperiment {
     @Autowired private ExecContextTopLevelService execContextTopLevelService;
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
 
-    @Override
-    public String getSourceCodeYamlAsString() {
-        return getSourceParamsYamlAsString_Simple();
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/default-source-code-for-testing.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     protected DispatcherCommParamsYaml.AssignedTask getTaskAndAssignToProcessor_mustBeNewTask(PreparingData.ProcessorIdAndCoreIds processorIdAndCoreIds) {

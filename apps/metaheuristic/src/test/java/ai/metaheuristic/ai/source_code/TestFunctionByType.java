@@ -85,8 +85,8 @@ public class TestFunctionByType extends PreparingSourceCode {
 
     @Override
     @SneakyThrows
-    public String getSourceCodeYamlAsString() {
-        return IOUtils.resourceToString("/source_code/yaml/for-testing-function-by-type.yaml", StandardCharsets.UTF_8);
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/for-testing-function-by-type.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Test

@@ -77,11 +77,8 @@ public class ExecContextCloneServiceTest extends PreparingSourceCode {
     }
 
     @SneakyThrows
-    @Override
-    public String getSourceCodeYamlAsString() {
-        return IOUtils.resourceToString(
-                "/source_code/yaml/default-source-code-for-batch-testing.yaml",
-                StandardCharsets.UTF_8);
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/default-source-code-for-batch-testing.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Autowired ExecContextCloneService cloneService;

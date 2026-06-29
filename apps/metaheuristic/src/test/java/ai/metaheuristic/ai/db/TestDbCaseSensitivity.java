@@ -15,6 +15,7 @@
  */
 
 package ai.metaheuristic.ai.db;
+import ai.metaheuristic.api.EnumsApi;
 
 import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.Variable;
@@ -96,9 +97,8 @@ public class TestDbCaseSensitivity extends PreparingSourceCode {
     @Autowired private PreparingSourceCodeService preparingSourceCodeService;
 
     @SneakyThrows
-    @Override
-    public String getSourceCodeYamlAsString() {
-        return getSourceParamsYamlAsString_Simple();
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/default-source-code-for-testing.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Test

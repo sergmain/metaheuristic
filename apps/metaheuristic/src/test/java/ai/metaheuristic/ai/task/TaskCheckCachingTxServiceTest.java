@@ -109,9 +109,8 @@ public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
     private final String textWithUUID = UUID.randomUUID().toString();
 
     @SneakyThrows
-    @Override
-    public String getSourceCodeYamlAsString() {
-        return IOUtils.resourceToString("/source_code/yaml/test-caching/for-testing-variable-caching.yaml", StandardCharsets.UTF_8);
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/test-caching/for-testing-variable-caching.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Test

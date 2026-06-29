@@ -137,8 +137,8 @@ public class TestDuplicateBranchAfterReset extends PreparingSourceCode {
 
     @Override
     @SneakyThrows
-    public String getSourceCodeYamlAsString() {
-        return IOUtils.resourceToString("/source_code/yaml/source-code-for-duplicate-branch-test.yaml", StandardCharsets.UTF_8);
+        public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/source-code-for-duplicate-branch-test.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @AfterEach
