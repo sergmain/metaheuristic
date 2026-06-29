@@ -1,4 +1,6 @@
+version: 5
 source:
+  uid: error-name-of-input-variable-5-1-1
   clean: false
   instances: 1
   processes:
@@ -106,5 +108,3 @@ source:
       timeoutBeforeTerminate: 60
       triesAfterError: 2
   strictNaming: true
-  uid: fruit_production-5-1-1
-version: 5

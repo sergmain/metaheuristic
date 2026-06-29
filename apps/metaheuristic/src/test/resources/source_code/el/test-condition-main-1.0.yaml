@@ -1,9 +1,9 @@
 version: 4
 source:
+  uid: test-condition-main-1.9
   clean: false
   strictNaming: true
   instances: 1
-  uid: test-condition-main-1.9
   variables:
     inline:
       mh.hyper-params:

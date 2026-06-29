@@ -1,8 +1,8 @@
 version: 4
 source:
+  uid: test-condition-related-1.8
   clean: false
   strictNaming: true
-  uid: test-condition-related-1.8
   variables:
     inputs:
       - name: isVar1
