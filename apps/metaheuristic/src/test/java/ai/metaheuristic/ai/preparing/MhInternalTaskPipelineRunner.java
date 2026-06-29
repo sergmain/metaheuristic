@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSchedulerService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextTaskResettingTopLevelService;
 import ai.metaheuristic.ai.dispatcher.event.events.ResetTasksWithErrorEvent;
+import ai.metaheuristic.ai.utils.TxUtils;
 import org.jspecify.annotations.Nullable;
 import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateService;
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateTopLevelService;
@@ -151,6 +152,7 @@ public class MhInternalTaskPipelineRunner {
      * Run the pipeline until FINISHED. External tasks are simulated via the provider.
      */
     public void runPipelineToCompletion(Long execContextId, SyntheticDataProvider syntheticDataProvider, int maxIterations) {
+        TxUtils.checkTxNotExists();
         for (int iteration = 0; iteration < maxIterations; iteration++) {
             processScheduledTasks();
 
@@ -218,7 +220,7 @@ public class MhInternalTaskPipelineRunner {
                             List<Object[]> rows = taskRepositoryForTest.findAllExecStateAndParamsByExecContextId(execContextId);
                             for (Object[] r : rows) {
                                 Long tid = (Long) r[0];
-                                TaskImpl t = taskRepository.findById(tid).orElse(null);
+                                TaskImpl t = taskRepository.findByIdReadOnly(tid);
                                 if (t != null && t.execState == EnumsApi.TaskExecState.NONE.value) {
                                     return true;
                                 }
