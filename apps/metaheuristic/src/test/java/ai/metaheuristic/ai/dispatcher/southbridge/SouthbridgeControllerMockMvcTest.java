@@ -83,8 +83,6 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
 @Execution(ExecutionMode.SAME_THREAD)
-@AutoConfigureMockMvc
-@Import({SpringSecurityWebAuxTestConfig.class, SouthbridgeControllerMockMvcTest.BigFileUploadingTestController.class})
 @AutoConfigureCache
 public class SouthbridgeControllerMockMvcTest extends MhSharedItTest {
 
@@ -188,7 +186,7 @@ public class SouthbridgeControllerMockMvcTest extends MhSharedItTest {
         final MockHttpServletResponse response = mockMvc.perform(MockMvcRequestBuilders.multipart(uri)
                 .file(multipartFile)
                 .param("processorId", "1")
-                .param("taskId", "1")
+                .param("taskId", Long.toString(Long.MAX_VALUE))
                 .param("variableId", "1")
                 .param("nullified", "false")
                 .characterEncoding("UTF-8"))

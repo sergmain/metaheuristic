@@ -27,6 +27,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.context.annotation.Import;
+import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
+import ai.metaheuristic.ai.dispatcher.southbridge.SouthbridgeControllerMockMvcTest;
 
 /**
  * V3 test harness base for the single shared Spring context.
@@ -42,6 +45,7 @@ import org.springframework.test.context.DynamicPropertySource;
  *
  * @author Sergio Lissner
  */
+@Import({SpringSecurityWebAuxTestConfig.class, SouthbridgeControllerMockMvcTest.BigFileUploadingTestController.class})
 @Slf4j
 public abstract class MhSharedItTest {
 
