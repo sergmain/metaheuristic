@@ -255,6 +255,31 @@ public class TxSupportForTestingService {
     }
 
     /**
+     * Only for testing.
+     * Produces all tasks for the ExecContext but, unlike {@link #produceAndStartAllTasks},
+     * deliberately leaves the ExecContext in STOPPED (NOT STARTED) within the SAME transaction:
+     * produceAndStartAllTasks() flips the state to STARTED and saves, and we immediately flip it
+     * back to STOPPED and save again here, so the committed state is never STARTED. A non-STARTED
+     * ExecContext is invisible to ExecContextTaskAssigningTopLevelService.findAllStartedIds(), so its
+     * freshly produced CHECK_CACHE task can never be advanced by the async allocator/cache-checker.
+     * This lets a focused cache test hold a task in CHECK_CACHE deterministically, without the
+     * TaskCheckCachingService.disableCacheChecking kill-switch.
+     */
+    @Transactional
+    public void produceTasksWithoutStarting(SourceCodeImpl sourceCode, Long execContextId) {
+        if (!globals.testing) {
+            throw new IllegalStateException("Only for testing");
+        }
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            throw new IllegalStateException("Need better solution for this state");
+        }
+        execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContext);
+        execContext.setState(EnumsApi.ExecContextState.STOPPED.code);
+        execContextCache.save(execContext);
+    }
+
+    /**
      * Only for testing
      */
     @Transactional

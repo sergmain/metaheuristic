@@ -26,36 +26,22 @@ import ai.metaheuristic.ai.dispatcher.repositories.CacheProcessRepository;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingService;
 import ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingTxService;
-import ai.metaheuristic.ai.dispatcher.task.TaskExecStateService;
 import ai.metaheuristic.ai.dispatcher.task.TaskSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
-import ai.metaheuristic.ai.spi.MhSpi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
-import ch.qos.logback.classic.LoggerContext;
-import lombok.SneakyThrows;
-import org.apache.commons.io.IOUtils;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.cache.test.autoconfigure.AutoConfigureCache;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -63,9 +49,20 @@ import static ai.metaheuristic.ai.dispatcher.task.TaskCheckCachingService.Prepar
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
+ * Capability test: MH must be able to
+ *   (1) CACHE the result (the output variable) produced by a task's execution, and
+ *   (2) RESTORE that result from the cache on a later CHECK_CACHE pass ({@code copied_from_cache}),
+ *       byte-for-byte, without re-executing the task.
+ *
+ * V3 harness. Determinism is by construction, not by suppression: the ExecContext is produced but
+ * deliberately NOT started ({@link #step_0_0_produceTasks_withoutStarting}). The task reaches
+ * CHECK_CACHE asynchronously (InitVariables: INIT -> CHECK_CACHE); because a non-STARTED ExecContext
+ * is invisible to the async allocator/cache-checker
+ * (ExecContextTaskAssigningTopLevelService.findAllStartedIds()), once the task settles in CHECK_CACHE
+ * nothing advances it further. So we simply wait for that settled state. There is no reliance on
+ * TaskCheckCachingService.disableCacheChecking.
+ *
  * @author Sergio Lissner
- * Date: 6/12/2023
- * Time: 5:47 PM
  */
 @SpringBootTest(classes = MhComplexTestConfig.class)
 @ActiveProfiles({"dispatcher", "h2", "test"})
@@ -73,103 +70,105 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureCache
 public class TaskCheckCachingTxServiceTest extends PreparingSourceCode {
 
-    @Autowired private TaskCheckCachingService taskCheckCachingTopLevelService;
     @Autowired private TaskRepository taskRepository;
     @Autowired private VariableTxService variableTxService;
     @Autowired private CacheTxService cacheTxService;
     @Autowired private CacheProcessRepository cacheProcessRepository;
+    @Autowired private TaskCheckCachingService taskCheckCachingService;
     @Autowired private TaskCheckCachingTxService taskCheckCachingTxService;
-    @Autowired private TaskExecStateService taskExecStateService;
 
     private final String textWithUUID = UUID.randomUUID().toString();
 
-    @SneakyThrows
-        public SourceCodeUriAndLang getSourceCodeAndLang() {
+    @Override
+    public SourceCodeUriAndLang getSourceCodeAndLang() {
         return new SourceCodeUriAndLang("/source_code/yaml/test-caching/for-testing-variable-caching.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Test
-    public void test() throws IOException {
-        Variable v;
-
-        taskCheckCachingTopLevelService.disableCacheChecking = true;
-
-        step_0_0_produceTasks();
+    public void test_cacheResultOfExecution_andRestoreFromCache() throws Exception {
+        // produce the pipeline but keep the ExecContext OUT of STARTED.
+        step_0_0_produceTasks_withoutStarting();
 
         TaskImpl task = taskRepository.findByExecContextIdReadOnly(getExecContextForTest().id).stream()
-                .filter(t->!t.getTaskParamsYaml().task.function.code.equals(CommonConsts.MH_FINISH_FUNCTION))
+                .filter(t -> !t.getTaskParamsYaml().task.function.code.equals(CommonConsts.MH_FINISH_FUNCTION))
                 .findFirst().orElseThrow();
-
         final Long taskId = Objects.requireNonNull(task.id);
 
+        // The task reaches CHECK_CACHE asynchronously (InitVariables: INIT -> CHECK_CACHE). Because the
+        // ExecContext is STOPPED, once the task settles in CHECK_CACHE nothing advances it further, so
+        // we wait for that settled state - deterministically, without any kill-switch.
+        awaitTaskExecState(taskId, EnumsApi.TaskExecState.CHECK_CACHE);
+
+        task = Objects.requireNonNull(taskRepository.findByIdReadOnly(taskId));
         assertEquals(EnumsApi.TaskExecState.CHECK_CACHE.value, task.execState);
+
         final TaskParamsYaml tpy = task.getTaskParamsYaml();
         assertEquals(1, tpy.task.outputs.size());
         final Long variableId = tpy.task.outputs.get(0).id;
         assertNotNull(variableId);
 
-
-        CacheData.SimpleKey key = taskCheckCachingTopLevelService.getSimpleKey(getExecContextForTest().getExecContextParamsYaml(), task);
+        // make sure no stale cache entry exists for this cache key
+        final CacheData.SimpleKey key = taskCheckCachingService.getSimpleKey(getExecContextForTest().getExecContextParamsYaml(), task);
         assertNotNull(key);
-
-
         CacheProcess cacheProcess = cacheProcessRepository.findByKeySha256LengthReadOnly(key.key());
-        if (cacheProcess!=null) {
+        if (cacheProcess != null) {
             taskCheckCachingTxService.invalidateCacheItem(cacheProcess.id);
         }
-        cacheProcess = cacheProcessRepository.findByKeySha256LengthReadOnly(key.key());
-        assertNull(cacheProcess);
+        assertNull(cacheProcessRepository.findByKeySha256LengthReadOnly(key.key()));
 
-
+        // (a) produce a result: store a known value into the task's output variable
         VariableSyncService.getWithSyncVoidForCreation(variableId,
-                ()-> variableTxService.storeStringInVariable(getExecContextForTest().id, taskId, tpy.task.outputs.get(0), textWithUUID));
+                () -> variableTxService.storeStringInVariable(getExecContextForTest().id, taskId, tpy.task.outputs.get(0), textWithUUID));
 
-        ExecContextParamsYaml.Process p = getExecContextForTest().getExecContextParamsYaml().findProcess(tpy.task.processCode);
+        // (b) CACHE THE RESULT
+        final ExecContextParamsYaml.Process p = getExecContextForTest().getExecContextParamsYaml().findProcess(tpy.task.processCode);
         assertNotNull(p);
         cacheTxService.storeVariablesTx(tpy, p.function);
+        assertNotNull(cacheProcessRepository.findByKeySha256LengthReadOnly(key.key()), "the result wasn't cached");
 
-
-        cacheProcess = cacheProcessRepository.findByKeySha256LengthReadOnly(key.key());
-        assertNotNull(cacheProcess);
-
-        v = variableTxService.getVariable(variableId);
+        // (c) wipe the result, so the ONLY way to get it back is from the cache
         VariableSyncService.getWithSyncVoidForCreation(variableId,
-                ()-> variableTxService.resetVariableTx(getExecContextForTest().id, variableId));
-
-        v = variableTxService.getVariable(variableId);
+                () -> variableTxService.resetVariableTx(getExecContextForTest().id, variableId));
+        Variable v = variableTxService.getVariable(variableId);
         assertNotNull(v);
         assertFalse(v.inited);
         assertTrue(v.nullified);
 
-        TaskSyncService.getWithSyncVoid(taskId,
-                ()-> taskExecStateService.updateTaskExecStates(taskId, EnumsApi.TaskExecState.CHECK_CACHE));
-
-        v = variableTxService.getVariable(variableId);
-
-        task = taskRepository.findByIdReadOnly(taskId);
-        assertNotNull(task);
+        // task is still held in CHECK_CACHE (STOPPED ExecContext -> nothing advanced it)
+        task = Objects.requireNonNull(taskRepository.findByIdReadOnly(taskId));
         assertEquals(EnumsApi.TaskExecState.CHECK_CACHE.value, task.execState);
 
-
-        TaskCheckCachingService.PrepareData prepareData = taskCheckCachingTopLevelService.getCacheProcess(getExecContextForTest().asSimple(), taskId);
+        // (d) the cache must be discoverable for this task
+        final TaskCheckCachingService.PrepareData prepareData = taskCheckCachingService.getCacheProcess(getExecContextForTest().asSimple(), taskId);
         assertEquals(ok, prepareData.state);
         assertNotNull(prepareData.cacheProcess);
 
-        v = variableTxService.getVariable(variableId);
-
-        TaskCheckCachingTxService.CheckCachingStatus status = TaskSyncService.getWithSync(taskId,
-            ()->taskCheckCachingTxService.checkCaching(getExecContextForTest().id, taskId, prepareData.cacheProcess));
+        // (e) THE CAPABILITY: checkCaching restores the result from the cache
+        final TaskCheckCachingTxService.CheckCachingStatus status = TaskSyncService.getWithSync(taskId,
+                () -> taskCheckCachingTxService.checkCaching(getExecContextForTest().id, taskId, prepareData.cacheProcess));
         assertEquals(TaskCheckCachingTxService.CheckCachingStatus.copied_from_cache, status, "Actual: " + status);
 
+        // (f) the output variable is restored from cache, byte-for-byte
         v = variableTxService.getVariable(variableId);
         assertNotNull(v);
         assertTrue(v.inited);
         assertFalse(v.nullified);
         assertNotNull(v.variableBlobId);
+        assertEquals(textWithUUID, variableTxService.getVariableDataAsString(variableId));
+    }
 
-        String s = variableTxService.getVariableDataAsString(variableId);
-        assertEquals(textWithUUID, s);
-
+    private void awaitTaskExecState(Long taskId, EnumsApi.TaskExecState expected) throws InterruptedException {
+        final long deadline = System.currentTimeMillis() + 20_000L;
+        Integer actual = null;
+        while (System.currentTimeMillis() < deadline) {
+            final TaskImpl t = taskRepository.findByIdReadOnly(taskId);
+            actual = (t == null) ? null : t.execState;
+            if (actual != null && actual == expected.value) {
+                return;
+            }
+            Thread.sleep(100L);
+        }
+        fail("task #" + taskId + " didn't reach " + expected + " (value=" + expected.value + "); actual execState=" + actual);
     }
 
 }
