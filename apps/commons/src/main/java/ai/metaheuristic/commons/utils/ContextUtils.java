@@ -19,6 +19,7 @@ package ai.metaheuristic.commons.utils;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
@@ -68,7 +69,7 @@ public class ContextUtils {
      */
     @Nullable
     public static String getPath(String taskContextId) {
-        if (StringUtils.contains(taskContextId, CONTEXT_SEPARATOR)) {
+        if (Strings.CS.contains(taskContextId, CONTEXT_SEPARATOR)) {
             return taskContextId.substring(taskContextId.indexOf(CONTEXT_SEPARATOR)+CONTEXT_SEPARATOR.length());
         }
         return null;

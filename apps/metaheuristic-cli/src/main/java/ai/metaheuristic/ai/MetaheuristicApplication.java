@@ -19,6 +19,7 @@ package ai.metaheuristic.ai;
 import ai.metaheuristic.standalone.StatusFileUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -35,7 +36,7 @@ public class MetaheuristicApplication {
         initAppStatus(args);
         System.out.println("Metaheuristic was started at " + LocalDateTime.now()+", uuid: " + APP_UUID);
         final String encoding = System.getProperty("file.encoding");
-        if (!StringUtils.equalsAnyIgnoreCase(encoding, "utf8", "utf-8")) {
+        if (!Strings.CI.equalsAny(encoding, "utf8", "utf-8")) {
             System.out.println("Must be run with -Dfile.encoding=UTF-8, actual file.encoding: " + encoding);
             System.exit(-1);
         }

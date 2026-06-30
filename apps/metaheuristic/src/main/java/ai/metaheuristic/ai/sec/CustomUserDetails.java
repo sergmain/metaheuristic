@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.dispatcher.account.AccountTxService;
 import ai.metaheuristic.ai.dispatcher.beans.Account;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -58,7 +59,7 @@ public class CustomUserDetails implements UserDetailsService {
             throw new UsernameNotFoundException("Username not found");
         }
 
-        if (StringUtils.equals(globals.dispatcher.masterUsername, complexUsername.getUsername())) {
+        if (Strings.CS.equals(globals.dispatcher.masterUsername, complexUsername.getUsername())) {
 
             Account account = new Account();
 

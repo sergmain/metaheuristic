@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.MhComplexTestConfig;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.api.EnumsApi;
 import lombok.SneakyThrows;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -70,7 +71,7 @@ public class TestEvaluationVariables extends TestBaseEvaluation {
         finalAssertions(3);
     }
 
-    private TaskImpl findTaskByFunctionCode(Long execContextId, String functionCode) {
+    private @Nullable TaskImpl findTaskByFunctionCode(Long execContextId, String functionCode) {
         for (TaskImpl task : taskRepositoryForTest.findByExecContextIdAsList(execContextId)) {
             if (functionCode.equals(task.getTaskParamsYaml().task.function.code)) {
                 return task;

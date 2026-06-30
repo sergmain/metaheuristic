@@ -220,8 +220,7 @@ public class DownloadFunctionService {
                         throw new IllegalStateException("(!(httpResponse instanceof ClassicHttpResponse classicHttpResponse))");
                     }
                     final int statusCode = classicHttpResponse.getCode();
-                    //noinspection deprecation
-                    if (statusCode == HttpStatus.UNPROCESSABLE_ENTITY.value() || statusCode == HttpStatus.UNPROCESSABLE_CONTENT.value()) {
+                    if (statusCode == HttpStatus.UNPROCESSABLE_CONTENT.value()) {
                         final String es = S.f("811.047 Function %s can't be downloaded, assetManager manager %s was mis-configure. Reason: Current dispatcher is configured with assetMode==replicated, but you're trying to use it as the source for downloading of functions", task.functionCode, assetManager.url);
                         log.error(es);
                         FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.dispatcher_config_error, assetFile);
@@ -268,8 +267,7 @@ public class DownloadFunctionService {
                         break;
                     }
                 } catch (HttpResponseException e) {
-                    //noinspection deprecation
-                    if (e.getStatusCode() == HttpStatus.UNPROCESSABLE_ENTITY.value() || (e.getStatusCode() == HttpStatus.UNPROCESSABLE_CONTENT.value())) {
+                    if (e.getStatusCode() == HttpStatus.UNPROCESSABLE_CONTENT.value()) {
                         final String es = S.f("811.065 Function %s can't be downloaded, assetManager manager %s was mis-configured", task.functionCode, assetManager.url);
                         log.warn(es);
                         FunctionRepositoryProcessorService.setFunctionState(assetManagerUrl, functionCode, EnumsApi.FunctionState.dispatcher_config_error, assetFile);
