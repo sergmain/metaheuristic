@@ -254,11 +254,7 @@ public class PreparingSourceCodeInitService {
                 log.error("Error while taskRepositoryForTest.deleteByExecContextId()", th);
             }
         }
-        try {
-            globalVariableService.deleteByVariable(PreparingConsts.GLOBAL_TEST_VARIABLE);
-        } catch (Throwable th) {
-            log.error("error", th);
-        }
+        // V3: global-test-variable is shared infra and must not be deleted here (see cleanUp()).
     }
 
     private void deleteFunction(@Nullable Function s) {
