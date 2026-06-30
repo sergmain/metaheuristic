@@ -126,7 +126,7 @@ public class TaskExecStateService {
             eventPublisher.publishEvent(new FindUnassignedTasksAndRegisterInQueueTxEvent());
         }
         if (state==INIT) {
-            eventPublisher.publishEvent(new InitVariablesTxEvent(task.id));
+            eventPublisher.publishEvent(new InitVariablesTxEvent(task.execContextId, task.id));
         }
         if (EnumsApi.TaskExecState.isFinishedState(state)) {
             eventPublisher.publishEvent(new ChangeTaskStateToInitForChildrenTasksTxEvent(task.id));

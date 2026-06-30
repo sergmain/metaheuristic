@@ -18,17 +18,16 @@ package ai.metaheuristic.ai.dispatcher.task;
 
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesEvent;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.ai.exceptions.TaskCreationException;
 import ai.metaheuristic.ai.exceptions.VariableImmutabilityException;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Input-variable initialization runs OUTSIDE the Function life-cycle (before any
@@ -113,8 +112,9 @@ public class TaskVariableInitServiceErrorRecoveryTest {
                 new TaskCreationException("179.120 (variable==null), name: topLevelReqCount, variableContext: local, taskContextId: 1, execContextId: 156"));
         RecordingTaskFinishingTxService finishingFake = new RecordingTaskFinishingTxService();
         TaskVariableInitService service = newService(txFake, finishingFake);
-
-        InitVariablesEvent event = new InitVariablesEvent(taskId);
+        var ec = service.resolveExecContext(taskId);
+        assertNotNull(ec);
+        InitVariablesEvent event = new InitVariablesEvent(ec.id, taskId);
 
         assertDoesNotThrow(() -> service.intiVariables(event));
         assertEquals(1, finishingFake.recoveryCalls, "TaskCreationException during input-variable init must be finished as ERROR_WITH_RECOVERY");
@@ -127,8 +127,11 @@ public class TaskVariableInitServiceErrorRecoveryTest {
         ThrowingTaskVariableInitTxService txFake = new ThrowingTaskVariableInitTxService(new CommonRollbackException());
         RecordingTaskFinishingTxService finishingFake = new RecordingTaskFinishingTxService();
         TaskVariableInitService service = newService(txFake, finishingFake);
+        long taskId = 42L;
+        var ec = service.resolveExecContext(taskId);
+        assertNotNull(ec);
 
-        assertDoesNotThrow(() -> service.intiVariables(new InitVariablesEvent(42L)));
+        assertDoesNotThrow(() -> service.intiVariables(new InitVariablesEvent(ec.id, taskId)));
         assertEquals(0, finishingFake.recoveryCalls);
         assertEquals(0, finishingFake.erroredCalls);
     }
@@ -139,8 +142,11 @@ public class TaskVariableInitServiceErrorRecoveryTest {
                 new VariableImmutabilityException("immutability violation", "topLevelReqs", "1", "1#2"));
         RecordingTaskFinishingTxService finishingFake = new RecordingTaskFinishingTxService();
         TaskVariableInitService service = newService(txFake, finishingFake);
+        long taskId = 7L;
+        var ec = service.resolveExecContext(taskId);
+        assertNotNull(ec);
 
-        assertDoesNotThrow(() -> service.intiVariables(new InitVariablesEvent(7L)));
+        assertDoesNotThrow(() -> service.intiVariables(new InitVariablesEvent(ec.id, taskId)));
         assertEquals(1, finishingFake.erroredCalls);
         assertEquals(EnumsApi.TaskExecState.ERROR, finishingFake.erroredState);
         assertEquals(0, finishingFake.recoveryCalls);
@@ -152,7 +158,10 @@ public class TaskVariableInitServiceErrorRecoveryTest {
         RecordingTaskFinishingTxService finishingFake = new RecordingTaskFinishingTxService();
         TaskVariableInitService service = newService(txFake, finishingFake);
 
-        assertDoesNotThrow(() -> service.intiVariables(new InitVariablesEvent(100L)));
+        long taskId = 100L;
+        var ec = service.resolveExecContext(taskId);
+        assertNotNull(ec);
+        assertDoesNotThrow(() -> service.intiVariables(new InitVariablesEvent(ec.id, taskId)));
         assertEquals(1, txFake.calls);
         assertEquals(0, finishingFake.recoveryCalls);
         assertEquals(0, finishingFake.erroredCalls);

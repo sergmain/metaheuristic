@@ -29,6 +29,7 @@ import java.util.List;
  */
 @AllArgsConstructor
 public class InitVariablesEvent implements EventWithId<Long> {
+    public final Long execContextId;
     public final Long taskId;
 
     @Override

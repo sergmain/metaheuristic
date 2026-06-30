@@ -75,7 +75,7 @@ public class TaskVariableInitService {
             TaskSyncService.getWithSyncVoid(event.taskId, () -> {
                 // ExecContext is resolved OUTSIDE the @Transactional boundary; the tx-service
                 // receives only the already-resolved execContextGraphId and ExecContextParamsYaml.
-                final ExecContextImpl ec = resolveExecContext(event.taskId);
+                final ExecContextImpl ec = execContextCache.findById(event.execContextId, true);
                 if (ec==null) {
                     return;
                 }

@@ -237,8 +237,6 @@ public class TaskProducingService {
         else {
             TaskParamsYaml.FunctionConfig fConfig = functionTopLevelService.getFunctionConfig(process.function);
             if (fConfig == null) {
-//                log.error("375.140 Function '{}' wasn't found", process.function.code);
-//                return null;
                 String es = S.f("375.140 Function '%s' wasn't found", process.function.code);
                 throw new CommonRollbackException(es, EnumsApi.OperationStatus.ERROR);
             }
@@ -247,8 +245,6 @@ public class TaskProducingService {
                 for (ExecContextParamsYaml.FunctionDefinition preFunction : process.getPreFunctions()) {
                     TaskParamsYaml.FunctionConfig functionConfig = functionTopLevelService.getFunctionConfig(preFunction);
                     if (functionConfig==null) {
-//                        log.error("375.145 Pre-function '{}' wasn't found", preFunction.code);
-//                        continue;
                         String es = S.f("375.145 Pre-function '%s' wasn't found", preFunction.code);
                         throw new CommonRollbackException(es, EnumsApi.OperationStatus.ERROR);
                     }
@@ -259,8 +255,6 @@ public class TaskProducingService {
                 for (ExecContextParamsYaml.FunctionDefinition postFunction : process.getPostFunctions()) {
                     TaskParamsYaml.FunctionConfig functionConfig = functionTopLevelService.getFunctionConfig(postFunction);
                     if (functionConfig==null) {
-//                        log.error("375.150 Post-function '{}' wasn't found", postFunction.code);
-//                        continue;
                         String es = S.f("375.150 Post-function '%s' wasn't found", postFunction.code);
                         throw new CommonRollbackException(es, EnumsApi.OperationStatus.ERROR);
                     }
@@ -285,7 +279,7 @@ public class TaskProducingService {
         task = taskTxService.save(task);
 
         // event will land at ai.metaheuristic.ai.dispatcher.task.TaskVariableInitService.handleEvent
-        eventPublisher.publishEvent(new InitVariablesTxEvent(task.id));
+        eventPublisher.publishEvent(new InitVariablesTxEvent(task.execContextId, task.id));
 
         return task;
     }

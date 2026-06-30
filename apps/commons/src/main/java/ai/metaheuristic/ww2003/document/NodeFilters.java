@@ -21,6 +21,7 @@ import ai.metaheuristic.ww2003.document.tags.xml.Run;
 import ai.metaheuristic.ww2003.document.tags.xml.Text;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -140,7 +141,7 @@ public class NodeFilters {
         public Function<CDNode, FilterResult> getFilter() {
             return (node) -> {
                 if (node instanceof Text text) {
-                    return new FilterResult(Enums.ContinueStrategy.non_stop, StringUtils.containsIgnoreCase(text.getText(), searchText));
+                    return new FilterResult(Enums.ContinueStrategy.non_stop, Strings.CI.contains(text.getText(), searchText));
                 }
                 return SKIP_AND_CONTINUE_RESULT;
             };

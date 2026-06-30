@@ -25,9 +25,10 @@ import lombok.AllArgsConstructor;
  */
 @AllArgsConstructor
 public class InitVariablesTxEvent {
+    public final Long execContextId;
     public final Long taskId;
 
     public InitVariablesEvent to() {
-        return new InitVariablesEvent(taskId);
+        return new InitVariablesEvent(execContextId, taskId);
     }
 }

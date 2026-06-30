@@ -63,7 +63,7 @@ public class ExecContextSchedulerService {
         List<Long> execContextIds = execContextRepository.findIdsByExecState(EnumsApi.ExecContextState.STARTED.code);
         for (Long execContextId : execContextIds) {
             List<Long> l = taskRepository.findTaskWithInitState(execContextId);
-            l.forEach(taskId->eventPublisher.publishEvent(new InitVariablesEvent(taskId)));
+            l.forEach(taskId->eventPublisher.publishEvent(new InitVariablesEvent(execContextId, taskId)));
 
         }
         TaskProviderTopLevelService.shrink();

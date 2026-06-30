@@ -31,10 +31,10 @@ import ai.metaheuristic.ai.dispatcher.task.TaskVariableInitTxService;
 import ai.metaheuristic.ai.dispatcher.test.tx.TxSupportForTestingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
-import ai.metaheuristic.commons.exceptions.CommonRollbackException;
-import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.MhInternalTaskPipelineRunner;
+import ai.metaheuristic.ai.preparing.PreparingSourceCode;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
+import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -42,8 +42,6 @@ import java.time.Duration;
 import java.util.List;
 
 import static org.awaitility.Awaitility.await;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public abstract class TestBaseEvaluation extends PreparingSourceCode {
@@ -98,7 +96,8 @@ public abstract class TestBaseEvaluation extends PreparingSourceCode {
         Long forUpdating = null;
         for (Long taskId : taskIds) {
             try {
-                TaskSyncService.getWithSyncVoid(taskId, ()-> taskVariableInitTxService.intiVariables(new InitVariablesEvent(taskId), ecForTest.execContextGraphId, ecForTest.getExecContextParamsYaml()));
+                TaskSyncService.getWithSyncVoid(taskId,
+                    ()-> taskVariableInitTxService.intiVariables(new InitVariablesEvent(getExecContextForTest().id, taskId), ecForTest.execContextGraphId, ecForTest.getExecContextParamsYaml()));
                 forUpdating = taskId;
                 break;
             } catch (CommonRollbackException e) {

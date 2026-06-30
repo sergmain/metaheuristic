@@ -243,7 +243,7 @@ public class ExecContextTaskAssigningTopLevelService implements ShutdownInterfac
                 }
 
                 if (task.execState == EnumsApi.TaskExecState.INIT.value) {
-                    eventPublisher.publishEvent(new InitVariablesEvent(task.id));
+                    eventPublisher.publishEvent(new InitVariablesEvent(task.execContextId, task.id));
                     if (log.isInfoEnabled()) stat.notAllocatedReasons.add("703.410 task #"+task.getId()+" task.execState == EnumsApi.TaskExecState.INIT");
                     continue;
                 }

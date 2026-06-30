@@ -19,12 +19,11 @@ package ai.metaheuristic.commons.json.versioning_json;
 import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.data.ParamsVersion;
 import ai.metaheuristic.commons.exceptions.ParamsProcessingException;
+import tools.jackson.core.ObjectReadContext;
 import tools.jackson.core.json.JsonFactory;
 import tools.jackson.core.JsonParser;
 import tools.jackson.core.JsonToken;
 import tools.jackson.core.JacksonException;
-
-import java.io.IOException;
 
 /**
  * Fast extraction of the <b>top-level</b> {@code "version"} field from a JSON
@@ -49,7 +48,7 @@ public class JsonForVersioning {
         try {
             String versionValue = null;
             JsonFactory jsonFactory = new JsonFactory();
-            try (JsonParser parser = jsonFactory.createParser(json)) {
+            try (JsonParser parser = jsonFactory.createParser(ObjectReadContext.empty(), json)) {
                 // First token is the root START_OBJECT.
                 if (parser.nextToken() != JsonToken.START_OBJECT) {
                     return ConstsApi.PARAMS_VERSION_1;
