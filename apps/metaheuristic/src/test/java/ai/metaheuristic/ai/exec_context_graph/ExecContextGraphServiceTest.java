@@ -87,7 +87,7 @@ class ExecContextGraphServiceTest {
 
     @Test
     public void test_isDescendantContext() {
-        // Production scenario from MHDG-RG:
+        // Production scenario
         // Wrapper task ctx: "1,2,5|1#1" (nopObjectivesWrapper instance #1)
         // Direct child ctx: "1,2,5,6|1|1#0" (nopObjectives — layer 1 below wrapper)
         // Grandchild ctx:   "1,2,5,6,7|1|1|0#0" (evaluateObjective — layer 2 below wrapper)

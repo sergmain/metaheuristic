@@ -88,7 +88,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  * isn't being papered over, only the test-side concurrency hazard.
  *
  * Internal-function execution flows through {@link TaskWithInternalContextEventService}
- * directly (bypassing the {@code @Async} hop), mirroring the RG harness pattern.
+ * directly (bypassing the {@code @Async} hop)
  *
  * @author Sergio Lissner
  * Date: 5/21/2026

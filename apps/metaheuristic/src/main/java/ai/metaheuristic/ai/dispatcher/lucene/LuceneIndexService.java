@@ -76,7 +76,7 @@ import java.util.stream.Stream;
  *     restricted to [A-Za-z0-9._-]+ to keep it safe as a directory name; callers are
  *     responsible for composing per-tenant/per-project keys (e.g. "rg-7-DRONE").
  * <br/>
- *   • MH knows nothing about RG / requirements / governance. The schema of each
+ *   • MH knows nothing about 3rd party. The schema of each
  *     indexed document is fully determined by the caller via {@link LuceneDocument}
  *     and {@link LuceneFieldValue}. The only reserved field name is {@code _docId},
  *     a non-analyzed StringField used as the per-bucket update/delete key.
@@ -247,8 +247,7 @@ public class LuceneIndexService implements ShutdownInterface {
     /**
      * Pre-built-{@link Query} overload — the Lucene equivalent of binding values
      * to a JDBC PreparedStatement. Callers that need to combine user-supplied
-     * search clauses with server-controlled filter clauses (e.g. RG’s snapshotId
-     * scope) should build a {@link org.apache.lucene.search.BooleanQuery} in
+     * search clauses with server-controlled filter clauses should build a {@link org.apache.lucene.search.BooleanQuery} in
      * application code and pass it here; no string concatenation is involved,
      * so user input cannot structurally alter the server-controlled clauses.
      *

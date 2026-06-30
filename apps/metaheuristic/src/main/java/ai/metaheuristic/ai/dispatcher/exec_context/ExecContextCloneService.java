@@ -71,7 +71,7 @@ import java.util.concurrent.Executors;
  * Then flip the new ExecContext from CLONING to FINISHED.
  *
  * MH has no awareness of snapshots; the primitive is generic. Callers
- * (e.g. RG) compose this against their own STAGE/COMMITTED semantics.
+ * compose this against their own STAGE/COMMITTED semantics.
  */
 @Service
 @Profile("dispatcher")

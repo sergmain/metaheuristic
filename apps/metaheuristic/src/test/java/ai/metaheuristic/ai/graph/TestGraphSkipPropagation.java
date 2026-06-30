@@ -170,7 +170,7 @@ public class TestGraphSkipPropagation extends PreparingSourceCode {
     }
 
     /**
-     * Test 2: Sub-process context isolation — models actual RG architecture (option 1).
+     * Test 2: Sub-process context isolation
      *
      * The conditional mh.nop is wrapped inside a plain mh.nop-wrapper.
      * The wrapper always executes at ctx="1,2" (batch-line-splitter sub-process).

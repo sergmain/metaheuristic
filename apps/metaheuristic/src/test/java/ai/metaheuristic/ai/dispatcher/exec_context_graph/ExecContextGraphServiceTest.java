@@ -230,7 +230,7 @@ class ExecContextGraphServiceTest {
     }
 
     /**
-     * Simulates the MHDG-RG scenario from the screenshot:
+     * Simulates the scenario from the screenshot:
      * A(305) -> B(306) -> C(308) -> D(309) -> E(311) -> F(312)
      *                                                \-> G(310)
      *                                                         \-> H(307) -> FINISH(293)

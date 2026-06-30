@@ -43,7 +43,7 @@ public final class SharedItEnv {
     public static String uniqueCode(String prefix) { return prefix + "_" + SEQ.incrementAndGet(); }
 
     // Process-global unique Long for tests that write a UNIQUE-constrained numeric column under the
-    // shared DB (e.g. RG_REQUIREMENT.DOCUMENT_ID / UK_RG_REQ_DOCUMENT). High base avoids colliding
+    // shared DB. High base avoids colliding
     // with system-assigned ids.
     private static final AtomicLong LONG_SEQ = new AtomicLong(1_000_000_000L);
     public static long uniqueLong() { return LONG_SEQ.incrementAndGet(); }

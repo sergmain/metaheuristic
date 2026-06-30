@@ -43,10 +43,6 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
  * those descendants, creating an edge newChild → oldChild. This produces a duplicate
  * branch in the DAG.
  *
- * Real scenario from MHDG-RG: mh.nop-objectives-wrapper-2 (Task#153) re-executes after
- * objective is applied. findDirectDescendants returns [Task#154 (old nop-objectives-2),
- * Task#141 (mh.finish)]. New Task#155 is created and createEdges produces 155→154 and
- * 155→141. The 155→154 edge is the bug — it makes the old task a child of the new one.
  *
  * @author Sergio Lissner
  * Date: 3/6/2026

@@ -232,7 +232,7 @@ class TestExecContextStateExtended {
         assertEquals(13L, result.lines[3].cells[1].taskId);
     }
 
-    // Test same function code used in multiple process codes (the RG template pattern)
+    // Test same function code used in multiple process codes
     @Test
     public void test_sameFunctionDifferentProcessCodes() {
         List<ExecContextApiData.VariableState> infos = List.of(
@@ -280,7 +280,7 @@ class TestExecContextStateExtended {
         assertEquals(3L, result.lines[2].cells[2].taskId);
     }
 
-    // Test fan-out combined with depth - realistic RG scenario
+    // Test fan-out combined with depth
     @Test
     public void test_depthWithFanOut() {
         List<ExecContextApiData.VariableState> infos = List.of(
@@ -357,7 +357,7 @@ class TestExecContextStateExtended {
     }
 
     // Test hierarchical ordering: fan-out children grouped under their parent
-    // Simulates the real RG scenario: batch-splitter creates 1,2#1, 1,2#2, 1,2#3
+    // Simulates the real scenario: batch-splitter creates 1,2#1, 1,2#2, 1,2#3
     // then nop creates nested tasks 1,2,3,1#0, 1,2,3,2#0, 1,2,3,3#0
     @Test
     public void test_hierarchicalOrdering_fanOutWithNestedChildren() {
