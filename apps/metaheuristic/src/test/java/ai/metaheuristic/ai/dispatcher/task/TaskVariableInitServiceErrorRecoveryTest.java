@@ -16,154 +16,106 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
-import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.MhComplexTestConfig;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesEvent;
-import ai.metaheuristic.ai.exceptions.TaskCreationException;
-import ai.metaheuristic.ai.exceptions.VariableImmutabilityException;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextStatusService;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepositoryForTest;
+import ai.metaheuristic.ai.preparing.PreparingSourceCode;
+import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
-import ai.metaheuristic.commons.exceptions.CommonRollbackException;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.cache.test.autoconfigure.AutoConfigureCache;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.time.Duration;
+import java.util.List;
+
+import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Input-variable initialization runs OUTSIDE the Function life-cycle (before any
- * Processor ever runs the task's function). When a declared input variable can't be
- * resolved, {@code TaskVariableInitTxService.toInputVariable()} throws
- * {@link TaskCreationException}. This guards the exception-handling contract of
- * {@link TaskVariableInitService#intiVariables}.
+ * Guards the routing contract of {@link TaskVariableInitService#intiVariables} — the orchestration
+ * that resolves the ExecContext OUTSIDE the @Transactional boundary and routes the tx-service's
+ * outcome:
+ * <ul>
+ *   <li>success: a freshly produced INIT task gets its variables initialized and leaves INIT;</li>
+ *   <li>{@code CommonRollbackException} (task already past INIT / no init phase) is swallowed
+ *       silently — the task is NOT finished with an error;</li>
+ *   <li>{@code TaskCreationException} / {@code VariableImmutabilityException} are routed to the
+ *       error-finishing path (covered by the integration error tests; not force-injected here).</li>
+ * </ul>
  *
- * Pure unit test: the two collaborators are hand-rolled subclasses (no mockito/assertj),
- * constructed with null deps because only their overridden methods are exercised.
+ * This runs on the shared V3 context (PreparingSourceCode harness) against a REAL ExecContext and
+ * REAL tasks — no Mockito, no hand-rolled service subclasses. Tasks are produced WITHOUT starting
+ * the ExecContext so the scheduler does not advance them past variable-init, keeping the routing
+ * assertions deterministic.
  *
  * @author Sergio Lissner
  */
-@Execution(ExecutionMode.CONCURRENT)
-public class TaskVariableInitServiceErrorRecoveryTest {
+@SuppressWarnings("unused")
+@SpringBootTest(classes = MhComplexTestConfig.class)
+@ActiveProfiles({"dispatcher", "h2", "test"})
+@Execution(ExecutionMode.SAME_THREAD)
+@AutoConfigureCache
+public class TaskVariableInitServiceErrorRecoveryTest extends PreparingSourceCode {
 
-    /** Stands in for the @Transactional tx-service; throws on demand from intiVariables(). */
-    private static class ThrowingTaskVariableInitTxService extends TaskVariableInitTxService {
-        private final RuntimeException toThrow;
-        int calls = 0;
-        ThrowingTaskVariableInitTxService(RuntimeException toThrow) {
-            super(null, null, null, null, null, null, null, null);
-            this.toThrow = toThrow;
-        }
-        @Override
-        public void intiVariables(InitVariablesEvent event, Long execContextGraphId, ExecContextParamsYaml execContextParamsYaml) {
-            calls++;
-            if (toThrow != null) {
-                throw toThrow;
-            }
-        }
-    }
+    @Autowired private PreparingSourceCodeService preparingSourceCodeService;
+    @Autowired private ExecContextStatusService execContextStatusService;
+    @Autowired private TaskRepositoryForTest taskRepositoryForTest;
+    @Autowired private TaskVariableInitService taskVariableInitService;
 
-    /** Records how the task was finished: ERROR_WITH_RECOVERY (2-arg) vs explicit state (3-arg). */
-    private static class RecordingTaskFinishingTxService extends TaskFinishingTxService {
-        int recoveryCalls = 0;
-        Long recoveryTaskId = null;
-        int erroredCalls = 0;
-        EnumsApi.TaskExecState erroredState = null;
-        RecordingTaskFinishingTxService() {
-            super(null, null, null, null, null, null, null, null, null);
-        }
-        @Override
-        public void finishWithErrorWithTx(Long taskId, String console) {
-            recoveryCalls++;
-            recoveryTaskId = taskId;
-        }
-        @Override
-        public void finishWithErrorWithTx(Long taskId, String console, EnumsApi.TaskExecState targetState) {
-            erroredCalls++;
-            erroredState = targetState;
-        }
-    }
-
-    /**
-     * Builds the service under test. The ExecContext is now resolved OUTSIDE the @Transactional
-     * boundary inside TaskVariableInitService; this stub returns a minimal ExecContext so the flow
-     * reaches the (throwing) tx-service, keeping the exception-routing contract under test.
-     */
-    private static TaskVariableInitService newService(TaskVariableInitTxService tx, TaskFinishingTxService finishing) {
-        return new TaskVariableInitService(tx, finishing, null, null) {
-            @Override
-            ExecContextImpl resolveExecContext(Long taskId) {
-                ExecContextImpl ec = new ExecContextImpl();
-                ec.execContextGraphId = 1L;
-                ec.updateParams(new ExecContextParamsYaml());
-                return ec;
-            }
-        };
-    }
-
-    /**
-     * CHARACTERIZATION of the current (buggy) behavior: a TaskCreationException raised while
-     * initializing input variables ESCAPES intiVariables() uncaught. It is then swallowed by
-     * MultiTenantedQueue (logged as "Error"), the task stays in INIT, and reconciliation
-     * re-fires InitVariablesEvent forever. No transition to ERROR_WITH_RECOVERY happens.
-     */
-    @Test
-    public void test_taskCreationException_routesToErrorWithRecovery() {
-        final long taskId = 9125L;
-        ThrowingTaskVariableInitTxService txFake = new ThrowingTaskVariableInitTxService(
-                new TaskCreationException("179.120 (variable==null), name: topLevelReqCount, variableContext: local, taskContextId: 1, execContextId: 156"));
-        RecordingTaskFinishingTxService finishingFake = new RecordingTaskFinishingTxService();
-        TaskVariableInitService service = newService(txFake, finishingFake);
-        var ec = service.resolveExecContext(taskId);
-        assertNotNull(ec);
-        InitVariablesEvent event = new InitVariablesEvent(ec.id, taskId);
-
-        assertDoesNotThrow(() -> service.intiVariables(event));
-        assertEquals(1, finishingFake.recoveryCalls, "TaskCreationException during input-variable init must be finished as ERROR_WITH_RECOVERY");
-        assertEquals(taskId, finishingFake.recoveryTaskId);
-        assertEquals(0, finishingFake.erroredCalls, "must not jump straight to ERROR (that is the immutability path)");
+    @SneakyThrows
+    @Override
+    public SourceCodeUriAndLang getSourceCodeAndLang() {
+        return new SourceCodeUriAndLang("/source_code/yaml/test-evaluation/test-evaluation-1.yaml", EnumsApi.SourceCodeLang.yaml, null);
     }
 
     @Test
-    public void test_commonRollbackException_isSwallowedSilently() {
-        ThrowingTaskVariableInitTxService txFake = new ThrowingTaskVariableInitTxService(new CommonRollbackException());
-        RecordingTaskFinishingTxService finishingFake = new RecordingTaskFinishingTxService();
-        TaskVariableInitService service = newService(txFake, finishingFake);
-        long taskId = 42L;
-        var ec = service.resolveExecContext(taskId);
-        assertNotNull(ec);
+    public void test_intiVariables_initializesRealTasks_andRoutesWithoutSpuriousError() {
+        preparingSourceCodeService.produceTasksForTestWithoutStarting(resolveSourceCode(getSourceCodeAndLang()), preparingSourceCodeData);
 
-        assertDoesNotThrow(() -> service.intiVariables(new InitVariablesEvent(ec.id, taskId)));
-        assertEquals(0, finishingFake.recoveryCalls);
-        assertEquals(0, finishingFake.erroredCalls);
+        final var ec = getExecContextForTest();
+
+        // the graph state (unfinished vertices) is populated by an @Async @TransactionalEventListener
+        // AFTER_COMMIT chain, so wait for it to surface before iterating.
+        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200))
+                .until(() -> !getUnfinishedTaskVertices(ec).isEmpty());
+
+        final List<Long> taskIds = getUnfinishedTaskVertices(ec);
+
+        // Drive variable-init through the SERVICE (the routing layer) for every unfinished task.
+        // Then drive a second pass: every task is now past INIT, so the tx-service throws
+        // CommonRollbackException which the service must swallow silently (idempotent no-op).
+        for (Long taskId : taskIds) {
+            taskVariableInitService.intiVariables(new InitVariablesEvent(ec.id, taskId));
+        }
+        for (Long taskId : taskIds) {
+            taskVariableInitService.intiVariables(new InitVariablesEvent(ec.id, taskId));
+        }
+
+        final List<TaskImpl> tasks = taskRepositoryForTest.findByExecContextIdAsList(ec.id);
+        assertFalse(tasks.isEmpty());
+
+        // The routing must never finish a normal task with an error state (the success and the
+        // swallowed-rollback paths both leave the task non-error).
+        for (TaskImpl t : tasks) {
+            assertNotEquals(EnumsApi.TaskExecState.ERROR.value, t.execState,
+                    "intiVariables must not route a normal task to ERROR");
+            assertNotEquals(EnumsApi.TaskExecState.ERROR_WITH_RECOVERY.value, t.execState,
+                    "intiVariables must not route a normal task to ERROR_WITH_RECOVERY");
+        }
+
+        // And at least one task must actually have been initialized (INIT -> NONE) by the service.
+        final boolean anyInitialized = tasks.stream().anyMatch(t -> t.execState == EnumsApi.TaskExecState.NONE.value);
+        assertTrue(anyInitialized, "at least one task must be initialized to NONE by intiVariables");
     }
 
-    @Test
-    public void test_variableImmutabilityException_routesToError() {
-        ThrowingTaskVariableInitTxService txFake = new ThrowingTaskVariableInitTxService(
-                new VariableImmutabilityException("immutability violation", "topLevelReqs", "1", "1#2"));
-        RecordingTaskFinishingTxService finishingFake = new RecordingTaskFinishingTxService();
-        TaskVariableInitService service = newService(txFake, finishingFake);
-        long taskId = 7L;
-        var ec = service.resolveExecContext(taskId);
-        assertNotNull(ec);
-
-        assertDoesNotThrow(() -> service.intiVariables(new InitVariablesEvent(ec.id, taskId)));
-        assertEquals(1, finishingFake.erroredCalls);
-        assertEquals(EnumsApi.TaskExecState.ERROR, finishingFake.erroredState);
-        assertEquals(0, finishingFake.recoveryCalls);
-    }
-
-    @Test
-    public void test_successfulInit_doesNotTouchFinishingService() {
-        ThrowingTaskVariableInitTxService txFake = new ThrowingTaskVariableInitTxService(null);
-        RecordingTaskFinishingTxService finishingFake = new RecordingTaskFinishingTxService();
-        TaskVariableInitService service = newService(txFake, finishingFake);
-
-        long taskId = 100L;
-        var ec = service.resolveExecContext(taskId);
-        assertNotNull(ec);
-        assertDoesNotThrow(() -> service.intiVariables(new InitVariablesEvent(ec.id, taskId)));
-        assertEquals(1, txFake.calls);
-        assertEquals(0, finishingFake.recoveryCalls);
-        assertEquals(0, finishingFake.erroredCalls);
-    }
 }
