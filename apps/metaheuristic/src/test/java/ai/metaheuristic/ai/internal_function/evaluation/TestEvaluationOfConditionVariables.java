@@ -60,33 +60,33 @@ class TestEvaluationOfConditionVariables extends TestBaseEvaluation {
         System.out.println("start produceTasksForTest()");
         preparingSourceCodeService.produceTasksForTest(resolveSourceCode(getSourceCodeAndLang()), preparingSourceCodeData);
 
-        // ======================
-
         System.out.println("start execContextStatusService.resetStatus()");
         execContextStatusService.resetStatus();
 
-        Long taskId;
+        // V3 async model: drive the whole pipeline to completion order-independently rather than
+        // single-stepping a guessed task id. The old lockstep (initVariableEvents -> findRegister ->
+        // waitUntilTaskFinished, three fixed rounds) assumed a cold scheduler; under a warm scheduler
+        // (a prior test in the shared V3 context) the async wiring finishes an earlier task before the
+        // test picks it, so the round's "first unfinished" id is the NEXT task and the test deadlocks
+        // waiting on a task it never enqueues. See RgPipelineTestExecutionService.runPipelineToCompletion.
+        preparingSourceCodeService.runInternalPipelineToCompletion(getExecContextForTest().id, 40);
 
-        // mh.string-as-variable
-        taskId = initVariableEvents();
-        preparingSourceCodeService.findRegisterInternalTaskInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.waitUntilTaskFinished(taskId);
-
-        // mh.evaluation
-        taskId = initVariableEvents();
-        preparingSourceCodeService.findRegisterInternalTaskInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.waitUntilTaskFinished(taskId);
-
-        TaskImpl task = taskRepositoryForTest.findById(taskId).orElseThrow();
-        String value = variableTxService.getVariableDataAsString(task.getTaskParamsYaml().task.outputs.get(0).id);
+        // mh.evaluation's output variable must hold "false" (condition expression result).
+        TaskImpl evaluationTask = findTaskByFunctionCode(getExecContextForTest().id, "mh.evaluation");
+        assertNotNull(evaluationTask);
+        String value = variableTxService.getVariableDataAsString(evaluationTask.getTaskParamsYaml().task.outputs.get(0).id);
         assertEquals("false", value);
 
-        // mh.finish
-        taskId = initVariableEvents();
-        preparingSourceCodeService.findRegisterInternalTaskInQueue(getExecContextForTest().id);
-        preparingSourceCodeService.waitUntilTaskFinished(taskId);
-
         finalAssertions(3);
+    }
+
+    private TaskImpl findTaskByFunctionCode(Long execContextId, String functionCode) {
+        for (TaskImpl task : taskRepositoryForTest.findByExecContextIdAsList(execContextId)) {
+            if (functionCode.equals(task.getTaskParamsYaml().task.function.code)) {
+                return task;
+            }
+        }
+        return null;
     }
 
 

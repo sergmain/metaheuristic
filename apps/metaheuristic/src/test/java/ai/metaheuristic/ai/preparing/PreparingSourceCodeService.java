@@ -57,6 +57,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Profile;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
+import org.awaitility.core.ConditionTimeoutException;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -97,6 +98,7 @@ public class PreparingSourceCodeService {
     private final ApplicationEventPublisher eventPublisher;
     private final ExecContextTaskResettingTopLevelService execContextTaskResettingTopLevelService;
     private final TaskWithInternalContextEventService taskWithInternalContextEventService;
+    private final ExecContextTopLevelService execContextTopLevelService;
 
     public void cleanUp(String sourceCodeUid) {
         SourceCode sc = sourceCodeRepository.findByUid(sourceCodeUid);
@@ -285,6 +287,100 @@ public class PreparingSourceCodeService {
             .with()
             .pollInterval(Duration.ofMillis(100))
             .until(() -> taskWithInternalContextEventService.TASK_WITH_INTERNAL_CTX_MTQ.size(execContextId)==0);
+    }
+
+    /**
+     * V3 async-model driver for internal-function pipelines: drives the ExecContext to completion
+     * ORDER-INDEPENDENTLY instead of single-stepping a chosen task id. Each round it registers + runs
+     * EVERY currently-ready (NONE) internal task, recomputes the EC status (so it flips to FINISHED
+     * once the last task completes), and — when nothing is ready yet — waits for the production async
+     * wiring (variable-init INIT->NONE, state propagation) to surface the next ready task or finish the
+     * EC. Because it never waits on a specific task id, a warm scheduler that advances tasks on its own
+     * cannot deadlock it. This is the batch-only ConditionTimeout that fixed-lockstep single-stepping
+     * hits (cf. RgPipelineTestExecutionService.runPipelineToCompletion in the RG harness).
+     */
+    @SneakyThrows
+    public void runInternalPipelineToCompletion(Long execContextId, int maxIterations) {
+        for (int iteration = 0; iteration < maxIterations; iteration++) {
+            ExecContextImpl ec = execContextCache.findById(execContextId, true);
+            assertNotNull(ec);
+            final int state = ec.getState();
+            if (state == EnumsApi.ExecContextState.FINISHED.code) {
+                return;
+            }
+            if (state == EnumsApi.ExecContextState.ERROR.code) {
+                fail("ExecContext #" + execContextId + " entered ERROR state at iteration " + iteration);
+            }
+
+            boolean progressed = driveReadyInternalTasks(execContextId);
+
+            // Recompute the EC status from the graph/task states so it flips to FINISHED once the
+            // last task (mh.finish) completes.
+            execContextTopLevelService.updateExecContextStatus(execContextId);
+
+            if (!progressed) {
+                // Nothing was ready this round. Let the async wiring surface the next NONE task or
+                // finish the EC, re-nudging the allocator each poll. Bounded; the maxIterations guard
+                // caps total time. A timeout here is not fatal: the next iteration re-checks the EC
+                // state (updateExecContextStatus above may have flipped it to FINISHED).
+                try {
+                    await()
+                        .atMost(Duration.ofSeconds(10))
+                        .pollInterval(Duration.ofMillis(300))
+                        .until(() -> {
+                            ExecContextImpl ecCheck = execContextCache.findById(execContextId, true);
+                            if (ecCheck == null) {
+                                return true;
+                            }
+                            final int s = ecCheck.getState();
+                            if (s == EnumsApi.ExecContextState.FINISHED.code || s == EnumsApi.ExecContextState.ERROR.code) {
+                                return true;
+                            }
+                            execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
+                            return taskWithInternalContextEventService.TASK_WITH_INTERNAL_CTX_MTQ.isNotEmpty(execContextId);
+                        });
+                } catch (ConditionTimeoutException e) {
+                    // no progress within the poll window; fall through to the next iteration
+                }
+            }
+        }
+        fail("ExecContext #" + execContextId + " did not finish within " + maxIterations + " iterations");
+    }
+
+    /**
+     * Register and run every internal task currently ready (NONE) for this ExecContext, draining the
+     * internal-context MTQ. Order-independent and non-blocking on "nothing ready": returns false if no
+     * internal task becomes ready within a short window (so the caller can wait for async transitions),
+     * true after it has processed the ready pool.
+     */
+    @SneakyThrows
+    private boolean driveReadyInternalTasks(Long execContextId) {
+        taskWithInternalContextEventService.TASK_WITH_INTERNAL_CTX_MTQ.registerProcessSuspender(() -> true);
+        execContextTaskAssigningTopLevelService.putToQueue(new FindUnassignedTasksAndRegisterInQueueEvent());
+
+        boolean anyReady;
+        try {
+            await()
+                .atMost(Duration.ofSeconds(3))
+                .pollInterval(Duration.ofMillis(100))
+                .until(() -> taskWithInternalContextEventService.TASK_WITH_INTERNAL_CTX_MTQ.isNotEmpty(execContextId));
+            anyReady = true;
+        } catch (ConditionTimeoutException e) {
+            anyReady = false;
+        } finally {
+            taskWithInternalContextEventService.TASK_WITH_INTERNAL_CTX_MTQ.deRegisterProcessSuspender();
+        }
+
+        if (!anyReady) {
+            return false;
+        }
+
+        taskWithInternalContextEventService.TASK_WITH_INTERNAL_CTX_MTQ.processPoolOfExecutors(execContextId);
+        await()
+            .atMost(Duration.ofSeconds(15))
+            .pollInterval(Duration.ofMillis(100))
+            .until(() -> taskWithInternalContextEventService.TASK_WITH_INTERNAL_CTX_MTQ.size(execContextId)==0);
+        return true;
     }
 
     @SneakyThrows
