@@ -82,10 +82,18 @@ public class TestFeatureWithAllError extends FeatureMethods {
         storeConsoleResultAsError(processorIdAndCoreIds);
         log.info("storeConsoleResultAsError() was finished for {} milliseconds", System.currentTimeMillis() - mills);
 
-        preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
-
         mills = System.currentTimeMillis();
         log.info("Start noNewTask()");
+
+        // The whole feature errors out. Error-propagation for the failed task and the resulting
+        // InitVariablesEvent storm for its reset children are asynchronous. findTask() actually
+        // assigns (it can't be polled), so drain the queue several times first - each call also
+        // advances error-recovery resetting and carries its own settle - to let that storm finish
+        // before the single negative check below. A single drain left a race where a just-initialized
+        // child was transiently assignable.
+        for (int i = 0; i < 5; i++) {
+            preparingSourceCodeService.findTaskForRegisteringInQueueAndWait(getExecContextForTest());
+        }
 
         DispatcherCommParamsYaml.AssignedTask task2 = taskProviderTopLevelService.findTask(processorIdAndCoreIds.coreId1, false);
         assertNull(task2);
