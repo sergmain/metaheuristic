@@ -210,6 +210,25 @@ public abstract class PreparingSourceCode extends PreparingCore {
         assertNull(simpleTask0);
     }
 
+    /**
+     * V3 helper for focused task-state tests: produce all tasks but keep the ExecContext STOPPED
+     * (not STARTED), so the async allocator/cache-checker can never advance the produced tasks.
+     * See PreparingSourceCodeService.produceTasksForTestWithoutStarting.
+     */
+    public void step_0_0_produceTasks_withoutStarting() {
+        System.out.println("start produceTasksForTestWithoutStarting()");
+        preparingSourceCodeService.produceTasksForTestWithoutStarting(resolveSourceCode(getSourceCodeAndLang()), preparingSourceCodeData);
+
+        List<Object[]> tasks = taskRepositoryForTest.findByExecContextId(getExecContextForTest().getId());
+
+        assertNotNull(getExecContextForTest());
+        assertNotNull(tasks);
+        assertFalse(tasks.isEmpty());
+
+        System.out.println("start verifyGraphIntegrity()");
+        verifyGraphIntegrity();
+    }
+
     public void finalAssertions(int expectedNumberOfTasks) {
         // try execute mh.finish if it hasn't yet
         preparingSourceCodeService.findTaskForRegisteringInQueue(getExecContextForTest().id);

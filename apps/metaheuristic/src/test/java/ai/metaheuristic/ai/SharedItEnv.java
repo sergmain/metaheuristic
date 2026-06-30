@@ -15,6 +15,7 @@ public final class SharedItEnv {
 
     public static final String MH_HOME;
     public static final String DB_URL;
+    public static final String WEB_DB_URL;
 
     static {
         try {
@@ -27,6 +28,11 @@ public final class SharedItEnv {
             // ONE file DB for the whole JVM run. DB_CLOSE_DELAY=-1 keeps it alive
             // across any momentary zero-connection window so it lives the entire suite.
             DB_URL = "jdbc:h2:file:" + home.resolve("db-h2/mh").toAbsolutePath()
+                     + ";DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
+            // Isolated DB for forked web/security/MockMvc contexts (see MhWebItTest): they can't share
+            // the single pipeline context, so an own H2 keeps their dispatcher schedulers from mutating
+            // the shared pipeline DB's tasks.
+            WEB_DB_URL = "jdbc:h2:file:" + home.resolve("db-h2-web/mh").toAbsolutePath()
                      + ";DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
         } catch (Throwable e) {
             throw new RuntimeException("error", e);

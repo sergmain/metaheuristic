@@ -351,6 +351,44 @@ public class PreparingSourceCodeService {
         assertEquals(EnumsApi.ExecContextState.STARTED, execContextStatusService.getExecContextState(preparingSourceCodeData.getExecContextForTest().id));
     }
 
+    /**
+     * Same as {@link #produceTasksForTest} but keeps the ExecContext OUT of STARTED (left STOPPED),
+     * so the produced CHECK_CACHE task is never visible to the async allocator/cache-checker and a
+     * focused cache test can hold it deterministically. See
+     * {@link TxSupportForTestingService#produceTasksWithoutStarting}.
+     */
+    public void produceTasksForTestWithoutStarting(String sourceCodeParams, PreparingData.PreparingSourceCodeData preparingSourceCodeData) {
+        SourceCodeParamsYaml sourceCodeParamsYaml = SourceCodeParamsYamlUtils.BASE_YAML_UTILS.to(sourceCodeParams);
+        assertFalse(sourceCodeParamsYaml.source.processes.isEmpty());
+
+        SourceCodeApiData.SourceCodeValidationResult status = sourceCodeValidationService.checkConsistencyOfSourceCode(preparingSourceCodeData.getSourceCode());
+        assertEquals(EnumsApi.SourceCodeValidateStatus.OK, status.status, status.error);
+
+        ExecContextCreatorService.ExecContextCreationResult result = createExecContextForTest(preparingSourceCodeData);
+        preparingSourceCodeData.setExecContextForTest(result.execContext);
+        ExecContextSyncService.getWithSyncVoid(preparingSourceCodeData.getExecContextForTest().id, () -> {
+
+            assertFalse(result.isErrorMessages());
+            assertNotNull(preparingSourceCodeData.getExecContextForTest());
+            assertEquals(EnumsApi.ExecContextState.NONE.code, preparingSourceCodeData.getExecContextForTest().getState());
+
+            preparingSourceCodeData.setExecContextForTest(Objects.requireNonNull(execContextCache.findById(preparingSourceCodeData.getExecContextForTest().id, true)));
+            assertNotNull(preparingSourceCodeData.getExecContextForTest());
+
+            assertEquals(EnumsApi.ExecContextState.NONE.code, preparingSourceCodeData.getExecContextForTest().getState());
+            ExecContextGraphSyncService.getWithSyncVoid(preparingSourceCodeData.getExecContextForTest().execContextGraphId, ()->
+                    ExecContextTaskStateSyncService.getWithSyncVoid(preparingSourceCodeData.getExecContextForTest().execContextTaskStateId, ()-> {
+                        txSupportForTestingService.produceTasksWithoutStarting(preparingSourceCodeData.getSourceCode(), result.execContext.id);
+                    }));
+        });
+
+        final ExecContextImpl byId = execContextCache.findById(preparingSourceCodeData.getExecContextForTest().id, true);
+        preparingSourceCodeData.setExecContextForTest(Objects.requireNonNull(byId));
+        // V3: deliberately NOT started - kept STOPPED so the async allocator/cache-checker can't touch
+        // the produced CHECK_CACHE task. See TxSupportForTestingService.produceTasksWithoutStarting.
+        assertEquals(EnumsApi.ExecContextState.STOPPED.code, preparingSourceCodeData.getExecContextForTest().getState());
+    }
+
     public long getCountUnfinishedTasks(ExecContextImpl execContext) {
         if (execContext.execContextTaskStateId==null) {
             return 0;

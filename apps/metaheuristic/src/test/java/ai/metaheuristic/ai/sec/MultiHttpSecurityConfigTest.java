@@ -15,7 +15,7 @@
  */
 
 package ai.metaheuristic.ai.sec;
-import ai.metaheuristic.ai.MhSharedItTest;
+import ai.metaheuristic.ai.MhWebItTest;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.MhComplexTestConfig;
@@ -65,7 +65,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @AutoConfigureMockMvc
 @Import({SpringSecurityWebAuxTestConfig.class, MultiHttpSecurityConfigTest.JsonTestController .class})
 @AutoConfigureCache
-public class MultiHttpSecurityConfigTest extends MhSharedItTest {
+public class MultiHttpSecurityConfigTest extends MhWebItTest {
 
     public static final String NEW_NAME_XML = "new-name.xml";
     public static final String SOME_TEXT_DATA = "some-text-data";
