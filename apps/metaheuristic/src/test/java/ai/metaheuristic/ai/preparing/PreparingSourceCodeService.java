@@ -140,11 +140,9 @@ public class PreparingSourceCodeService {
             }
         }
 
-        try {
-            globalVariableService.deleteByVariable(GLOBAL_TEST_VARIABLE);
-        } catch (Throwable th) {
-            log.error("error", th);
-        }
+        // V3: global-test-variable is shared infra (built once in PreparingSourceCodeInitService,
+        // never deleted). cleanUp() must NOT delete it - doing so left the static sharedSourceInfra
+        // cache stale and made order-dependent tests (e.g. TestFeatureWithAllError) flaky.
     }
 
     /**
