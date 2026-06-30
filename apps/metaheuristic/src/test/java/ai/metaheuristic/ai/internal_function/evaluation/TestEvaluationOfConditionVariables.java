@@ -69,7 +69,7 @@ class TestEvaluationOfConditionVariables extends TestBaseEvaluation {
         // (a prior test in the shared V3 context) the async wiring finishes an earlier task before the
         // test picks it, so the round's "first unfinished" id is the NEXT task and the test deadlocks
         // waiting on a task it never enqueues. See RgPipelineTestExecutionService.runPipelineToCompletion.
-        preparingSourceCodeService.runInternalPipelineToCompletion(getExecContextForTest().id, 40);
+        pipelineRunner.runPipelineToCompletion(getExecContextForTest().id, 40);
 
         // mh.evaluation's output variable must hold "false" (condition expression result).
         TaskImpl evaluationTask = findTaskByFunctionCode(getExecContextForTest().id, "mh.evaluation");

@@ -33,6 +33,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.preparing.PreparingSourceCode;
+import ai.metaheuristic.ai.preparing.MhInternalTaskPipelineRunner;
 import ai.metaheuristic.ai.preparing.PreparingSourceCodeService;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +61,7 @@ public abstract class TestBaseEvaluation extends PreparingSourceCode {
     @Autowired public TaskFinishingTxService taskFinishingTxService;
     @Autowired public VariableService variableService;
     @Autowired public VariableTxService variableTxService;
+    @Autowired public MhInternalTaskPipelineRunner pipelineRunner;
 
     @AfterEach
     public void afterTestSourceCodeService() {
