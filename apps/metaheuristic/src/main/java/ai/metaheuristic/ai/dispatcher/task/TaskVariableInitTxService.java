@@ -72,7 +72,7 @@ public class TaskVariableInitTxService {
     private final TaskTxService taskTxService;
 
     @Transactional(rollbackFor = CommonRollbackException.class)
-    public void intiVariables(InitVariablesEvent event) {
+    public void intiVariables(InitVariablesEvent event, Long execContextGraphId, ExecContextParamsYaml execContextParamsYaml) {
         TaskImpl task = taskRepository.findById(event.taskId).orElse(null);
         if (task==null) {
             throw new CommonRollbackException();
@@ -85,14 +85,9 @@ public class TaskVariableInitTxService {
             throw new CommonRollbackException();
         }
 
-        ExecContextImpl ec = execContextCache.findById(task.execContextId, true);
-        if (ec==null) {
-            throw new CommonRollbackException();
-        }
-
-        List<String> allParentTaskContextIds = getAllParentTaskContextIds(task, paramsYaml.task.init.parentTaskIds, paramsYaml.task.taskContextId, ec);
+        List<String> allParentTaskContextIds = getAllParentTaskContextIds(task, paramsYaml.task.init.parentTaskIds, paramsYaml.task.taskContextId, execContextGraphId);
         if (allParentTaskContextIds!=null) {
-            prepareVariables(ec.getExecContextParamsYaml(), task, allParentTaskContextIds);
+            prepareVariables(execContextParamsYaml, task, allParentTaskContextIds);
         }
         task.execState = paramsYaml.task.init.nextState.value;
         taskExecStateService.updateTaskExecStates(task, paramsYaml.task.init.nextState, false);
@@ -172,10 +167,10 @@ public class TaskVariableInitTxService {
     }
 
     @Nullable
-    private List<String> getAllParentTaskContextIds(TaskImpl task, List<Long> parentTaskIds, String taskContextId, ExecContextImpl ec) {
-        ExecContextGraph ecg = execContextGraphCache.findById(ec.execContextGraphId);
+    private List<String> getAllParentTaskContextIds(TaskImpl task, List<Long> parentTaskIds, String taskContextId, Long execContextGraphId) {
+        ExecContextGraph ecg = execContextGraphCache.findById(execContextGraphId);
         if (ecg==null) {
-            log.error("179.200 can't find ExecContextGraph #" + ec.execContextGraphId);
+            log.error("179.200 can't find ExecContextGraph #" + execContextGraphId);
             return null;
         }
         Set<String> set = new HashSet<>();

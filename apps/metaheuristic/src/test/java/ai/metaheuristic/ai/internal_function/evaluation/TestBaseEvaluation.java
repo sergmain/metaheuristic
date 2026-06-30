@@ -94,10 +94,11 @@ public abstract class TestBaseEvaluation extends PreparingSourceCode {
         // and "already initialized (CommonRollbackException)" as equivalent
         // success outcomes and pick the first such task as the active one.
         List<Long> taskIds = getUnfinishedTaskVertices(getExecContextForTest());
+        final var ecForTest = getExecContextForTest();
         Long forUpdating = null;
         for (Long taskId : taskIds) {
             try {
-                TaskSyncService.getWithSyncVoid(taskId, ()-> taskVariableInitTxService.intiVariables(new InitVariablesEvent(taskId)));
+                TaskSyncService.getWithSyncVoid(taskId, ()-> taskVariableInitTxService.intiVariables(new InitVariablesEvent(taskId), ecForTest.execContextGraphId, ecForTest.getExecContextParamsYaml()));
                 forUpdating = taskId;
                 break;
             } catch (CommonRollbackException e) {

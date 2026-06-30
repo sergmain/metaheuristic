@@ -16,7 +16,9 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesEvent;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.ai.exceptions.TaskCreationException;
 import ai.metaheuristic.ai.exceptions.VariableImmutabilityException;
 import ai.metaheuristic.api.EnumsApi;
@@ -52,7 +54,7 @@ public class TaskVariableInitServiceErrorRecoveryTest {
             this.toThrow = toThrow;
         }
         @Override
-        public void intiVariables(InitVariablesEvent event) {
+        public void intiVariables(InitVariablesEvent event, Long execContextGraphId, ExecContextParamsYaml execContextParamsYaml) {
             calls++;
             if (toThrow != null) {
                 throw toThrow;
@@ -82,6 +84,23 @@ public class TaskVariableInitServiceErrorRecoveryTest {
     }
 
     /**
+     * Builds the service under test. The ExecContext is now resolved OUTSIDE the @Transactional
+     * boundary inside TaskVariableInitService; this stub returns a minimal ExecContext so the flow
+     * reaches the (throwing) tx-service, keeping the exception-routing contract under test.
+     */
+    private static TaskVariableInitService newService(TaskVariableInitTxService tx, TaskFinishingTxService finishing) {
+        return new TaskVariableInitService(tx, finishing, null, null) {
+            @Override
+            ExecContextImpl resolveExecContext(Long taskId) {
+                ExecContextImpl ec = new ExecContextImpl();
+                ec.execContextGraphId = 1L;
+                ec.updateParams(new ExecContextParamsYaml());
+                return ec;
+            }
+        };
+    }
+
+    /**
      * CHARACTERIZATION of the current (buggy) behavior: a TaskCreationException raised while
      * initializing input variables ESCAPES intiVariables() uncaught. It is then swallowed by
      * MultiTenantedQueue (logged as "Error"), the task stays in INIT, and reconciliation
@@ -93,7 +112,7 @@ public class TaskVariableInitServiceErrorRecoveryTest {
         ThrowingTaskVariableInitTxService txFake = new ThrowingTaskVariableInitTxService(
                 new TaskCreationException("179.120 (variable==null), name: topLevelReqCount, variableContext: local, taskContextId: 1, execContextId: 156"));
         RecordingTaskFinishingTxService finishingFake = new RecordingTaskFinishingTxService();
-        TaskVariableInitService service = new TaskVariableInitService(txFake, finishingFake);
+        TaskVariableInitService service = newService(txFake, finishingFake);
 
         InitVariablesEvent event = new InitVariablesEvent(taskId);
 
@@ -107,7 +126,7 @@ public class TaskVariableInitServiceErrorRecoveryTest {
     public void test_commonRollbackException_isSwallowedSilently() {
         ThrowingTaskVariableInitTxService txFake = new ThrowingTaskVariableInitTxService(new CommonRollbackException());
         RecordingTaskFinishingTxService finishingFake = new RecordingTaskFinishingTxService();
-        TaskVariableInitService service = new TaskVariableInitService(txFake, finishingFake);
+        TaskVariableInitService service = newService(txFake, finishingFake);
 
         assertDoesNotThrow(() -> service.intiVariables(new InitVariablesEvent(42L)));
         assertEquals(0, finishingFake.recoveryCalls);
@@ -119,7 +138,7 @@ public class TaskVariableInitServiceErrorRecoveryTest {
         ThrowingTaskVariableInitTxService txFake = new ThrowingTaskVariableInitTxService(
                 new VariableImmutabilityException("immutability violation", "topLevelReqs", "1", "1#2"));
         RecordingTaskFinishingTxService finishingFake = new RecordingTaskFinishingTxService();
-        TaskVariableInitService service = new TaskVariableInitService(txFake, finishingFake);
+        TaskVariableInitService service = newService(txFake, finishingFake);
 
         assertDoesNotThrow(() -> service.intiVariables(new InitVariablesEvent(7L)));
         assertEquals(1, finishingFake.erroredCalls);
@@ -131,7 +150,7 @@ public class TaskVariableInitServiceErrorRecoveryTest {
     public void test_successfulInit_doesNotTouchFinishingService() {
         ThrowingTaskVariableInitTxService txFake = new ThrowingTaskVariableInitTxService(null);
         RecordingTaskFinishingTxService finishingFake = new RecordingTaskFinishingTxService();
-        TaskVariableInitService service = new TaskVariableInitService(txFake, finishingFake);
+        TaskVariableInitService service = newService(txFake, finishingFake);
 
         assertDoesNotThrow(() -> service.intiVariables(new InitVariablesEvent(100L)));
         assertEquals(1, txFake.calls);

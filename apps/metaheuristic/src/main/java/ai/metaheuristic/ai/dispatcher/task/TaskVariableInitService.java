@@ -16,13 +16,17 @@
 
 package ai.metaheuristic.ai.dispatcher.task;
 
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.event.events.InitVariablesEvent;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.exceptions.TaskCreationException;
 import ai.metaheuristic.ai.exceptions.VariableImmutabilityException;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import ai.metaheuristic.api.EnumsApi;
 import jakarta.annotation.PreDestroy;
+import org.jspecify.annotations.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -45,6 +49,8 @@ public class TaskVariableInitService {
 
     private final TaskVariableInitTxService taskVariableInitTxService;
     private final TaskFinishingTxService taskFinishingTxService;
+    private final TaskRepository taskRepository;
+    private final ExecContextCache execContextCache;
 
     private final MultiTenantedQueue<Long, InitVariablesEvent> threadedPool =
             new MultiTenantedQueue<>(10, Duration.ZERO, true, "InitVariablesEvent-", this::intiVariables);
@@ -66,7 +72,15 @@ public class TaskVariableInitService {
 
     public void intiVariables(InitVariablesEvent event) {
         try {
-            TaskSyncService.getWithSyncVoid(event.taskId, ()-> taskVariableInitTxService.intiVariables(event));
+            TaskSyncService.getWithSyncVoid(event.taskId, () -> {
+                // ExecContext is resolved OUTSIDE the @Transactional boundary; the tx-service
+                // receives only the already-resolved execContextGraphId and ExecContextParamsYaml.
+                final ExecContextImpl ec = resolveExecContext(event.taskId);
+                if (ec==null) {
+                    return;
+                }
+                taskVariableInitTxService.intiVariables(event, ec.execContextGraphId, ec.getExecContextParamsYaml());
+            });
         } catch (CommonRollbackException e) {
             //
         } catch (VariableImmutabilityException e) {
@@ -86,6 +100,15 @@ public class TaskVariableInitService {
                 log.error("179.330 Failed to set task #{} to ERROR_WITH_RECOVERY state after input-variable init error", event.taskId, th);
             }
         }
+    }
+
+    @Nullable
+    ExecContextImpl resolveExecContext(Long taskId) {
+        final Long execContextId = taskRepository.getExecContextId(taskId);
+        if (execContextId==null) {
+            return null;
+        }
+        return execContextCache.findById(execContextId, true);
     }
 
 }
