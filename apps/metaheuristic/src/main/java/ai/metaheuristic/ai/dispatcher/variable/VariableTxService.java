@@ -317,7 +317,9 @@ public class VariableTxService {
         VariableSyncService.checkWriteLockPresent(variableId);
 
         Variable v = getVariableNotNull(variableId);
-
+        if (v!=null) {
+            throw new IllegalStateException("171.495 Variable #"+variableId+" must be immutable and not modified");
+        }
         if (!execContextId.equals(v.execContextId)) {
             final String es = "171.520 the different execContextId than variable #"+variableId+", " +
                     "task execContextId: #"+execContextId+", var execContextId: #"+v.execContextId;
