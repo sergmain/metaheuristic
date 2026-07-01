@@ -36,6 +36,11 @@ public interface DispatcherBlobStorage {
 
     void storeVariableData(Long variableBlobId, InputStream is, long size);
 
+    // Immutability (WORM): create the VariableBlob and store its data in one operation, returning the new id.
+    // DB backend INSERTs the row with real data (record touched once, no stub); external backends mint a fresh
+    // anchor id then write the file/object. Replaces the create-empty + store two-step for the write path.
+    Long createAndStoreVariableData(InputStream is, long size);
+
     void copyVariableData(StoredVariable sourceVariable, TaskParamsYaml.OutputVariable targetVariable);
 
     InputStream getGlobalVariableDataAsStreamById(Long globalVariableId);

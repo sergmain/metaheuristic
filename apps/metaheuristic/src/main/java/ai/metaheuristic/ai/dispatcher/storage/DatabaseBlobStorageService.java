@@ -97,6 +97,14 @@ public class DatabaseBlobStorageService implements DispatcherBlobStorage {
     }
 
     @Override
+    public Long createAndStoreVariableData(InputStream is, long size) {
+        if (size<=0) {
+            throw new IllegalStateException("174.170 Variable can't be of zero length");
+        }
+        return databaseBlobStoreService.createVariableWithData(is, size);
+    }
+
+    @Override
     public void copyVariableData(StoredVariable sourceVariable, TaskParamsYaml.OutputVariable targetVariable) {
         variableDatabaseSpecificService.copyData(sourceVariable, targetVariable);
     }

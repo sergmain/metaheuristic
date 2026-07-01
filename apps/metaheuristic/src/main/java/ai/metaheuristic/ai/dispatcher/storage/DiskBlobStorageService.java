@@ -160,7 +160,33 @@ public class DiskBlobStorageService implements DispatcherBlobStorage {
         if (size<=0) {
             throw new IllegalStateException("174.245 Variable can't be of zero length, variableBlobId: " + variableBlobId);
         }
+        // Immutability (WORM): a VariableBlob file is write-once. If the target file already exists, some
+        // path is trying to over-write materialized content, which is forbidden - re-execution must allocate
+        // a NEW VariableBlob (new id => new file) rather than mutate this one. S3 is intentionally NOT guarded
+        // here: AWS enforces this physically via S3 Object Lock in governance mode.
+        final Path dataPath = getPoweredPath(dataStorageVariable.basePath, variableBlobId).resolve(variableBlobId + CommonConsts.BIN_EXT);
+        if (Files.exists(dataPath)) {
+            throw new IllegalStateException("174.247 VariableBlob file already exists and is immutable (write-once): " + dataPath);
+        }
         dataStorageVariable.storeData(variableBlobId, is, size);
+    }
+
+    @SneakyThrows
+    @Override
+    public Long createAndStoreVariableData(InputStream is, long size) {
+        if (size<=0) {
+            throw new IllegalStateException("174.172 Variable can't be of zero length");
+        }
+        // Immutability (WORM): external mode mints a fresh anchor VariableBlob id, then writes the file. The
+        // anchor is created once; the DB DATA there is inert (never read) and never updated. A fresh id must
+        // not map to a pre-existing file.
+        final Long variableBlobId = generalBlobService.createVariableIfNotExist(null);
+        final Path newDataPath = getPoweredPath(dataStorageVariable.basePath, variableBlobId).resolve(variableBlobId + CommonConsts.BIN_EXT);
+        if (Files.exists(newDataPath)) {
+            throw new IllegalStateException("174.174 VariableBlob file already exists and is immutable (write-once): " + newDataPath);
+        }
+        dataStorageVariable.storeData(variableBlobId, is, size);
+        return variableBlobId;
     }
 
     @SneakyThrows

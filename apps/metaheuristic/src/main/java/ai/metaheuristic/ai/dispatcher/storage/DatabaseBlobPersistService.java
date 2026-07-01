@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.dispatcher.storage;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.dispatcher.beans.CacheVariable;
 import ai.metaheuristic.ai.dispatcher.beans.FunctionData;
 import ai.metaheuristic.ai.dispatcher.beans.GlobalVariable;
@@ -68,9 +69,41 @@ public class DatabaseBlobPersistService {
             throw new VariableCommonException("174.040 variableBlob not found", variableBlobId);
         }
 
+        // Immutability: a VariableBlob record is write-once. A freshly created record carries only
+        // Consts.STUB_BYTES; the first (and only) real store replaces that stub. If the record already
+        // holds real data (more than the stub) some path is trying to over-write a materialized blob,
+        // which is forbidden - re-execution must allocate a NEW VariableBlob (the Variable re-points to
+        // it) rather than mutate this one. Enforced in the default DB backend so the whole default-context
+        // test suite exercises it; external (disk/S3) backends inherit the same invariant.
+        final Blob existing = variableBlob.getData();
+        if (existing!=null) {
+            final long existingLen;
+            try {
+                existingLen = existing.length();
+            }
+            catch (java.sql.SQLException e) {
+                throw new IllegalStateException("174.043 can't read existing VariableBlob #"+variableBlobId+" length", e);
+            }
+            if (existingLen > Consts.STUB_BYTES.length) {
+                throw new IllegalStateException("174.045 VariableBlob #"+variableBlobId+" already has data; record is immutable (write-once)");
+            }
+        }
+
         Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
         variableBlob.setData(blob);
         VariableBlob result = variableBlobRepository.save(variableBlob);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Long createVariableWithData(InputStream is, long size) {
+        // Immutability (WORM): the VariableBlob record is written exactly once. The DB backend INSERTs the row
+        // together with its real data in a single operation - no empty pre-create, no stub, no later UPDATE of
+        // DATA. This is the create-at-store-time path that makes the record literally touched once.
+        VariableBlob variableBlob = new VariableBlob();
+        Blob blob = em.unwrap(SessionImplementor.class).getLobCreator().createBlob(is, size);
+        variableBlob.setData(blob);
+        VariableBlob result = variableBlobRepository.save(variableBlob);
+        return result.id;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

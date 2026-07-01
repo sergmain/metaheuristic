@@ -121,8 +121,7 @@ public class VariableTxService {
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
         data.setTaskContextId(taskContextId);
 
-        data.variableBlobId = generalBlobTxService.createEmptyVariable();;
-        dispatcherBlobStorage.storeVariableData(data.variableBlobId, is, size);
+        data.variableBlobId = dispatcherBlobStorage.createAndStoreVariableData(is, size);
 
         variableRepository.save(data);
 
@@ -145,8 +144,7 @@ public class VariableTxService {
         dsp.size = size;
         data.updateParams(dsp);
 
-        data.variableBlobId = generalBlobService.createVariableIfNotExist(data.variableBlobId);
-        dispatcherBlobStorage.storeVariableData(data.variableBlobId, is, size);
+        data.variableBlobId = dispatcherBlobStorage.createAndStoreVariableData(is, size);
 
         data.inited = true;
         data.nullified = false;
@@ -168,8 +166,7 @@ public class VariableTxService {
         data.filename = filename;
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
-        data.variableBlobId = generalBlobService.createVariableIfNotExist(data.variableBlobId);
-        dispatcherBlobStorage.storeVariableData(data.variableBlobId, is, size);
+        data.variableBlobId = dispatcherBlobStorage.createAndStoreVariableData(is, size);
 
         data.inited = true;
         data.nullified = false;
@@ -317,9 +314,7 @@ public class VariableTxService {
         VariableSyncService.checkWriteLockPresent(variableId);
 
         Variable v = getVariableNotNull(variableId);
-        if (v!=null) {
-            throw new IllegalStateException("171.495 Variable #"+variableId+" must be immutable and not modified");
-        }
+
         if (!execContextId.equals(v.execContextId)) {
             final String es = "171.520 the different execContextId than variable #"+variableId+", " +
                     "task execContextId: #"+execContextId+", var execContextId: #"+v.execContextId;
