@@ -19,7 +19,7 @@ package ai.metaheuristic.apps.license_signer;
 import ai.metaheuristic.commons.spi.license.JwsSigner;
 import ai.metaheuristic.commons.spi.license.LicenseClaimsBuilder;
 import ai.metaheuristic.commons.spi.license.LicenseClaimsV1;
-import ai.metaheuristic.commons.spi.license.LicenseConfigYamlV1;
+import ai.metaheuristic.api.data.license.LicenseConfigYaml;
 import ai.metaheuristic.commons.yaml.license.LicenseConfigYamlUtils;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -40,9 +40,9 @@ import java.util.Date;
 /**
  * Generic, proprietary-free license-file creator.
  *
- * Reads a YAML recipe ({@link LicenseConfigYamlV1}), resolves it into {@link LicenseClaimsV1}, and
+ * Reads a YAML recipe ({@link LicenseConfigYaml}), resolves it into {@link LicenseClaimsV1}, and
  * writes a compact JWS license file (ES256). Feature keys are opaque strings taken verbatim from the
- * config - the tool never expands an 'edition' into a feature closure, so no RG/Legal/jcons concept
+ * config - the tool never expands an 'edition' into a feature closure, so no proprietary closure concept
  * enters MH. The 'signing' section of the config governs the key/output and never enters the token.
  *
  * @author Serge
@@ -105,9 +105,9 @@ public class LicenseSigner implements CommandLineRunner {
             return;
         }
         final String yaml = Files.readString(configFile, StandardCharsets.UTF_8);
-        final LicenseConfigYamlV1 config = LicenseConfigYamlUtils.BASE_YAML_UTILS.to(yaml);
+        final LicenseConfigYaml config = LicenseConfigYamlUtils.BASE_YAML_UTILS.to(yaml);
 
-        final LicenseConfigYamlV1.Signing signing = config.signing;
+        final LicenseConfigYaml.Signing signing = config.signing;
         if (!"ES256".equals(signing.algorithm)) {
             System.out.println("249.030 only ES256 is supported by this backend, got: " + signing.algorithm);
             return;

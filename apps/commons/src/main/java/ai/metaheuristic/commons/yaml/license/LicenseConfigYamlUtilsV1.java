@@ -16,19 +16,24 @@
 
 package ai.metaheuristic.commons.yaml.license;
 
+import ai.metaheuristic.api.data.license.LicenseConfigYaml;
+import ai.metaheuristic.api.data.license.LicenseConfigYamlV1;
 import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.exceptions.BlankYamlParamsException;
-import ai.metaheuristic.commons.spi.license.LicenseConfigYamlV1;
+import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.jspecify.annotations.NonNull;
 import org.yaml.snakeyaml.Yaml;
 
 /**
+ * Latest (and only) license-config utility: deserializes V1 and upgrades it to the version-less
+ * LicenseConfigYaml. End of the chain (nextUtil == null); downgrade unsupported.
+ *
  * @author Serge
  */
 public class LicenseConfigYamlUtilsV1
-        extends AbstractParamsYamlUtils<LicenseConfigYamlV1, LicenseConfigYamlV1, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<LicenseConfigYamlV1, LicenseConfigYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -43,15 +48,33 @@ public class LicenseConfigYamlUtilsV1
 
     @NonNull
     @Override
-    public LicenseConfigYamlV1 upgradeTo(@NonNull LicenseConfigYamlV1 src) {
+    public LicenseConfigYaml upgradeTo(@NonNull LicenseConfigYamlV1 src) {
         src.checkIntegrity();
-        return src;
+        final LicenseConfigYaml trg = new LicenseConfigYaml();
+
+        trg.license.licensee = src.license.licensee;
+        trg.license.edition = src.license.edition;
+        trg.license.features = src.license.features;
+        trg.license.notBefore = src.license.notBefore;
+        trg.license.expiresAt = src.license.expiresAt;
+        trg.license.validityDuration = src.license.validityDuration;
+        trg.license.requiredProfiles = src.license.requiredProfiles;
+        trg.license.forbiddenProfiles = src.license.forbiddenProfiles;
+        trg.license.installationId = src.license.installationId;
+
+        trg.signing.algorithm = src.signing.algorithm;
+        trg.signing.privateKeyFile = src.signing.privateKeyFile;
+        trg.signing.kid = src.signing.kid;
+        trg.signing.outputFile = src.signing.outputFile;
+
+        trg.checkIntegrity();
+        return trg;
     }
 
     @NonNull
     @Override
     public Void downgradeTo(@NonNull Void yaml) {
-        return null;
+        throw new DowngradeNotSupportedException();
     }
 
     @Override

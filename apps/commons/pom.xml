@@ -182,6 +182,12 @@
             <version>1.5.2</version>
         </dependency>
 
+        <!-- BOM-managed Nimbus (JOSE/JWT) for the license verify path (LicenseTokenCodec). -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-jose</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

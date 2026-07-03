@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.commons.spi.license;
 
+import ai.metaheuristic.api.data.license.LicenseConfigYaml;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -34,17 +36,17 @@ public class LicenseClaimsBuilderTest {
 
     private static final Instant NOW = Instant.parse("2026-01-01T00:00:00Z");
 
-    private static LicenseConfigYamlV1.License baseLicense() {
-        final LicenseConfigYamlV1.License lic = new LicenseConfigYamlV1.License();
+    private static LicenseConfigYaml.License baseLicense() {
+        final LicenseConfigYaml.License lic = new LicenseConfigYaml.License();
         lic.licensee = "ACME Corp";
         lic.edition = "ENTERPRISE";
-        lic.features = List.of("JCONS", "LEGAL", "RG");
+        lic.features = List.of("FEATURE_A", "FEATURE_B", "FEATURE_C");
         return lic;
     }
 
     @Test
     public void test_explicitExpiresAt() {
-        final LicenseConfigYamlV1.License lic = baseLicense();
+        final LicenseConfigYaml.License lic = baseLicense();
         lic.expiresAt = "2027-01-01T00:00:00Z";
 
         final LicenseClaimsV1 claims = LicenseClaimsBuilder.build(lic, NOW);
@@ -56,7 +58,7 @@ public class LicenseClaimsBuilderTest {
 
     @Test
     public void test_validityDuration() {
-        final LicenseConfigYamlV1.License lic = baseLicense();
+        final LicenseConfigYaml.License lic = baseLicense();
         lic.validityDuration = "P30D";
 
         final LicenseClaimsV1 claims = LicenseClaimsBuilder.build(lic, NOW);
@@ -66,7 +68,7 @@ public class LicenseClaimsBuilderTest {
 
     @Test
     public void test_notBefore_parsed() {
-        final LicenseConfigYamlV1.License lic = baseLicense();
+        final LicenseConfigYaml.License lic = baseLicense();
         lic.expiresAt = "2027-01-01T00:00:00Z";
         lic.notBefore = "2026-02-01T00:00:00Z";
 
@@ -77,7 +79,7 @@ public class LicenseClaimsBuilderTest {
 
     @Test
     public void test_bothExpiresAtAndDuration_rejected() {
-        final LicenseConfigYamlV1.License lic = baseLicense();
+        final LicenseConfigYaml.License lic = baseLicense();
         lic.expiresAt = "2027-01-01T00:00:00Z";
         lic.validityDuration = "P30D";
 
@@ -87,7 +89,7 @@ public class LicenseClaimsBuilderTest {
 
     @Test
     public void test_timeless_withoutRequiredProfiles_rejected() {
-        final LicenseConfigYamlV1.License lic = baseLicense();
+        final LicenseConfigYaml.License lic = baseLicense();
 
         final IllegalStateException ex = assertThrows(IllegalStateException.class, () -> LicenseClaimsBuilder.build(lic, NOW));
         assertTrue(ex.getMessage().startsWith("248.020"), ex.getMessage());
@@ -95,7 +97,7 @@ public class LicenseClaimsBuilderTest {
 
     @Test
     public void test_timeless_withRequiredProfiles_ok() {
-        final LicenseConfigYamlV1.License lic = baseLicense();
+        final LicenseConfigYaml.License lic = baseLicense();
         lic.edition = "TRIAL";
         lic.requiredProfiles = List.of("h2");
 
@@ -107,7 +109,7 @@ public class LicenseClaimsBuilderTest {
 
     @Test
     public void test_blankLicensee_rejected() {
-        final LicenseConfigYamlV1.License lic = baseLicense();
+        final LicenseConfigYaml.License lic = baseLicense();
         lic.licensee = "  ";
         lic.expiresAt = "2027-01-01T00:00:00Z";
 
@@ -117,7 +119,7 @@ public class LicenseClaimsBuilderTest {
 
     @Test
     public void test_blankEdition_rejected() {
-        final LicenseConfigYamlV1.License lic = baseLicense();
+        final LicenseConfigYaml.License lic = baseLicense();
         lic.edition = "";
         lic.expiresAt = "2027-01-01T00:00:00Z";
 
@@ -127,11 +129,11 @@ public class LicenseClaimsBuilderTest {
 
     @Test
     public void test_features_opaque_passthrough() {
-        final LicenseConfigYamlV1.License lic = baseLicense();
+        final LicenseConfigYaml.License lic = baseLicense();
         lic.expiresAt = "2027-01-01T00:00:00Z";
 
         final LicenseClaimsV1 claims = LicenseClaimsBuilder.build(lic, NOW);
 
-        assertEquals(List.of("JCONS", "LEGAL", "RG"), claims.features);
+        assertEquals(List.of("FEATURE_A", "FEATURE_B", "FEATURE_C"), claims.features);
     }
 }

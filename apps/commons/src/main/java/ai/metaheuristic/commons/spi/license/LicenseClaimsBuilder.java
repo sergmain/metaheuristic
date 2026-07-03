@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.commons.spi.license;
 
+import ai.metaheuristic.api.data.license.LicenseConfigYaml;
 import ai.metaheuristic.commons.S;
 
 import java.time.Duration;
@@ -24,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Pure, Spring-less resolution of an operator {@link LicenseConfigYamlV1.License} recipe into a
+ * Pure, Spring-less resolution of an operator {@link LicenseConfigYaml.License} recipe into a
  * signed-ready {@link LicenseClaimsV1}. Generic and proprietary-free: 'features' pass through as
  * opaque strings, and 'edition' is never expanded into a feature closure here.
  *
@@ -38,7 +39,7 @@ public class LicenseClaimsBuilder {
     private LicenseClaimsBuilder() {
     }
 
-    public static LicenseClaimsV1 build(LicenseConfigYamlV1.License lic, Instant now) {
+    public static LicenseClaimsV1 build(LicenseConfigYaml.License lic, Instant now) {
         if (S.b(lic.licensee)) {
             throw new IllegalStateException("248.030 'licensee' must not be blank");
         }

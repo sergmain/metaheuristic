@@ -16,12 +16,15 @@
 
 package ai.metaheuristic.commons.yaml.license;
 
-import ai.metaheuristic.commons.spi.license.LicenseConfigYamlV1;
+import ai.metaheuristic.api.data.license.LicenseConfigYaml;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 
 import java.util.Map;
 
 /**
+ * Registry for the license-config version chain. Callers use BASE_YAML_UTILS.to(yaml) (returns the
+ * version-less LicenseConfigYaml, upgrading through the chain) and BASE_YAML_UTILS.toString(cfg).
+ *
  * @author Serge
  */
 public class LicenseConfigYamlUtils {
@@ -29,7 +32,7 @@ public class LicenseConfigYamlUtils {
     private static final LicenseConfigYamlUtilsV1 YAML_UTILS_V_1 = new LicenseConfigYamlUtilsV1();
     private static final LicenseConfigYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
-    public static final BaseYamlUtils<LicenseConfigYamlV1> BASE_YAML_UTILS = new BaseYamlUtils<>(
+    public static final BaseYamlUtils<LicenseConfigYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
                     1, YAML_UTILS_V_1
             ),

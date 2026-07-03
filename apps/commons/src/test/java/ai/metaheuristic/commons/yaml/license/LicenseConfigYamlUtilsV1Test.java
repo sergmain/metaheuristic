@@ -18,7 +18,7 @@ package ai.metaheuristic.commons.yaml.license;
 
 import ai.metaheuristic.commons.spi.license.LicenseClaimsBuilder;
 import ai.metaheuristic.commons.spi.license.LicenseClaimsV1;
-import ai.metaheuristic.commons.spi.license.LicenseConfigYamlV1;
+import ai.metaheuristic.api.data.license.LicenseConfigYaml;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -45,9 +45,9 @@ public class LicenseConfigYamlUtilsV1Test {
               licensee: "ACME Aerospace, Inc."
               edition: "ENTERPRISE"
               features:
-                - "JCONS"
-                - "LEGAL"
-                - "RG"
+                - "FEATURE_A"
+                - "FEATURE_B"
+                - "FEATURE_C"
               validityDuration: "P365D"
             signing:
               algorithm: "ES256"
@@ -62,9 +62,9 @@ public class LicenseConfigYamlUtilsV1Test {
               licensee: "Evaluation User"
               edition: "TRIAL"
               features:
-                - "JCONS"
-                - "LEGAL"
-                - "RG"
+                - "FEATURE_A"
+                - "FEATURE_B"
+                - "FEATURE_C"
               requiredProfiles:
                 - "h2"
               forbiddenProfiles:
@@ -79,11 +79,11 @@ public class LicenseConfigYamlUtilsV1Test {
 
     @Test
     public void test_parse_enterprise() {
-        final LicenseConfigYamlV1 c = LicenseConfigYamlUtils.BASE_YAML_UTILS.to(ENTERPRISE_YAML);
+        final LicenseConfigYaml c = LicenseConfigYamlUtils.BASE_YAML_UTILS.to(ENTERPRISE_YAML);
         assertEquals(1, c.version);
         assertEquals("ACME Aerospace, Inc.", c.license.licensee);
         assertEquals("ENTERPRISE", c.license.edition);
-        assertEquals(List.of("JCONS", "LEGAL", "RG"), c.license.features);
+        assertEquals(List.of("FEATURE_A", "FEATURE_B", "FEATURE_C"), c.license.features);
         assertEquals("P365D", c.license.validityDuration);
         assertNull(c.license.expiresAt);
         assertEquals("ES256", c.signing.algorithm);
@@ -93,7 +93,7 @@ public class LicenseConfigYamlUtilsV1Test {
 
     @Test
     public void test_parse_trialTimeless() {
-        final LicenseConfigYamlV1 c = LicenseConfigYamlUtils.BASE_YAML_UTILS.to(TRIAL_TIMELESS_YAML);
+        final LicenseConfigYaml c = LicenseConfigYamlUtils.BASE_YAML_UTILS.to(TRIAL_TIMELESS_YAML);
         assertEquals("TRIAL", c.license.edition);
         assertNull(c.license.expiresAt);
         assertNull(c.license.validityDuration);
@@ -104,16 +104,16 @@ public class LicenseConfigYamlUtilsV1Test {
     @Test
     public void test_parse_then_build_enterprise() {
         final Instant now = Instant.parse("2026-01-01T00:00:00Z");
-        final LicenseConfigYamlV1 c = LicenseConfigYamlUtils.BASE_YAML_UTILS.to(ENTERPRISE_YAML);
+        final LicenseConfigYaml c = LicenseConfigYamlUtils.BASE_YAML_UTILS.to(ENTERPRISE_YAML);
         final LicenseClaimsV1 claims = LicenseClaimsBuilder.build(c.license, now);
         assertEquals(now.plus(Duration.parse("P365D")), claims.exp);
-        assertEquals(List.of("JCONS", "LEGAL", "RG"), claims.features);
+        assertEquals(List.of("FEATURE_A", "FEATURE_B", "FEATURE_C"), claims.features);
     }
 
     @Test
     public void test_parse_then_build_trialTimeless() {
         final Instant now = Instant.parse("2026-01-01T00:00:00Z");
-        final LicenseConfigYamlV1 c = LicenseConfigYamlUtils.BASE_YAML_UTILS.to(TRIAL_TIMELESS_YAML);
+        final LicenseConfigYaml c = LicenseConfigYamlUtils.BASE_YAML_UTILS.to(TRIAL_TIMELESS_YAML);
         final LicenseClaimsV1 claims = LicenseClaimsBuilder.build(c.license, now);
         assertNull(claims.exp);
         assertEquals(List.of("h2"), claims.requiredProfiles);

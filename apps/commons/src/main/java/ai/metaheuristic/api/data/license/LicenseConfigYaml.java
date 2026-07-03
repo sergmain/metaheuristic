@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.spi.license;
+package ai.metaheuristic.api.data.license;
 
 import ai.metaheuristic.api.data.BaseParams;
 import lombok.Data;
@@ -24,17 +24,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Operator-authored input recipe for the license-signer app. This is NOT the license file.
- *
- * The signer maps the 'license' section into {@link LicenseClaimsV1} and emits a compact JWS;
- * the 'signing' section describes how/where to sign and NEVER enters the token. Versioned via the
- * MH BaseYamlUtils mechanic (top-level 'version' field), so the config schema can evolve
- * independently of the token claim schema.
+ * Version-less (current) license-config schema - the only class business logic works with.
+ * Operator-authored input recipe for the license-signer; NOT the license file. The 'signing'
+ * section governs how/where to sign and never enters the token. MUST hold the same fields as the
+ * highest-numbered LicenseConfigYamlV<N>.
  *
  * @author Serge
  */
 @Data
-public class LicenseConfigYamlV1 implements BaseParams {
+public class LicenseConfigYaml implements BaseParams {
 
     @SuppressWarnings("FieldMayBeStatic")
     public final int version = 1;
@@ -57,29 +55,22 @@ public class LicenseConfigYamlV1 implements BaseParams {
 
         // validity. nbf optional. exp is EITHER 'expiresAt' (absolute ISO-8601 instant)
         // OR 'validityDuration' (ISO-8601 duration added to iat); never both; both absent == timeless.
-        @Nullable
-        public String notBefore;
-        @Nullable
-        public String expiresAt;
-        @Nullable
-        public String validityDuration;
+        @Nullable public String notBefore;
+        @Nullable public String expiresAt;
+        @Nullable public String validityDuration;
 
         // deployment pinning (section 7.7); opaque Spring-profile-name strings.
         public List<String> requiredProfiles = new ArrayList<>();
         public List<String> forbiddenProfiles = new ArrayList<>();
 
-        @Nullable
-        public String installationId;
+        @Nullable public String installationId;
     }
 
     @Data
     public static class Signing {
         public String algorithm = "ES256";
-        // path to the EC P-256 private key (base64-encoded PKCS#8), vendor-held.
         public String privateKeyFile;
-        // JWS 'kid' header; selects the verification public-key constant on the runtime side.
         public String kid;
-        // filesystem path where the .jws license file is written.
         public String outputFile;
     }
 }
