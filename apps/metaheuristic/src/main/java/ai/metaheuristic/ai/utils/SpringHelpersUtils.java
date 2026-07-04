@@ -49,10 +49,11 @@ public class SpringHelpersUtils {
             "processor",
             "quickstart",
             STANDALONE_PROFILE, // standalone это профиль для запуска в режиме приложения на базе electron
-            "external-storage",
-            "disk-storage",
-            "test", "disable-check-frontend",
-            WEBSOCKET_PROFILE,
+            "external-storage", // data of all Variables will be stored in external storage (not in DB)
+            "disk-storage", // disk as external storage
+            "test",
+            "disable-check-frontend",
+            WEBSOCKET_PROFILE, // turn on a notification of Processor by Dispatcher over websockets
             "mcp",
 
             // db's profiles
