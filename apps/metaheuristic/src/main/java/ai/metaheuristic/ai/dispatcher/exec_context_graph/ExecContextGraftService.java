@@ -1,0 +1,209 @@
+/*
+ * Metaheuristic, Copyright (C) 2017-2026, Innovation platforms, LLC
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package ai.metaheuristic.ai.dispatcher.exec_context_graph;
+
+import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
+import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
+import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskStateSyncService;
+import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateSyncService;
+import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
+import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
+import ai.metaheuristic.commons.utils.ContextUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+
+/**
+ * DSL v2 - the MH-owned runtime GRAFT primitive (025-MHSC-DSL-V2-PLAN, Phase 1).
+ *
+ * <p>Plants a compiled body of processes under an existing target task in an ExecContext, in a
+ * fresh isolated {@code taskContextId}, as one event-free write under the EC / Graph / TaskState /
+ * VariableState sync locks. This is a server-side dispatcher service (a peer of the graph services),
+ * NOT an internal function: the graft targets a possibly-FINISHED EC with no running task to host a
+ * function (analysis sec 6). It SUBSUMES RG's hand-minted {@code createTaskForRequirement}; Phase 1
+ * is a relocation + generalization of that proven server-side primitive, seal-stripped into MH.
+ *
+ * <p><b>MH seal.</b> This primitive knows only ExecContext, task, {@code taskContextId}, group, and
+ * variable - it has NO awareness of snapshots, requirements, objection, or governance. It takes a
+ * plain ExecContext id and a plain target task id; everything snapshot/requirement-shaped stays in
+ * the RG consumer (analysis sec 6 seal note; IMMUTABILITY-DESCRIPTION.md sec 2.6).
+ *
+ * <p><b>Phase 1 scope</b> - the FLAT case with the PLACE_NOW driver only: one body level, no inner
+ * dynamic-subprocess descent (that is Phase 2). The body's processContextId is REBASED onto the
+ * target via {@link ContextUtils#getCurrTaskContextIdForSubProcesses} at a fresh sibling line ctx
+ * (Phase 0 rebase decision), the tasks are materialized PRE_INIT, the declared outputs are written
+ * once to fresh keys and registered in {@code ExecContextVariableState}, and the line is marked
+ * SKIPPED terminal. No {@code FindUnassignedTasksAndRegisterInQueueTxEvent} fires during the graft.
+ *
+ * <p>Non-transactional orchestration (SPRING-TX-RULES sec 1/sec 2): resolves context, acquires the
+ * four sync locks, and delegates each write to {@link ExecContextGraftTxService}.
+ *
+ * Error code prefix: {@code 830.}
+ *
+ * @author Sergio Lissner
+ */
+@Service
+@Slf4j
+@Profile("dispatcher")
+@RequiredArgsConstructor(onConstructor_ = {@Autowired})
+public class ExecContextGraftService {
+
+    /** Which half of the primitive runs. PLACE_NOW = graft only, mark SKIPPED terminal (Phase 1).
+     *  RUN_NOW = graft then drive forward via resetTaskAndExecContext (Phase 2). */
+    public enum Driver { PLACE_NOW, RUN_NOW }
+
+    /** The body to graft. v0 (Phase 1): {@code groupName==null} => resolve the body as the target
+     *  task's own sub-processes (the {@code createTaskForRequirement} splitter-0 borrow). v1 (Phase 5):
+     *  a named v6 group looked up by name. */
+    public record GroupRef(@Nullable String groupName) {
+        public static GroupRef fromTargetSubProcesses() {
+            return new GroupRef(null);
+        }
+    }
+
+    /** An outer value bound to a group formal input; written WRITE-ONCE at the fresh line ctx BEFORE
+     *  task creation so the grafted sub-branch is runnable/resolvable. */
+    public record InputBinding(String name, String value) {}
+
+    /** A group output pre-materialized WRITE-ONCE at the fresh line ctx (a PLACE_NOW line never runs,
+     *  so any output its downstream needs must pre-exist). The RG consumer passes requirementId/
+     *  storeReqTaskId here; the MH primitive is agnostic to what they mean. */
+    public record OutputMaterialization(String name, byte[] value) {}
+
+    /** The stable re-entry data of one graft: the body-root (HEAD) task id and the fresh line ctx. */
+    public record GraftResult(Long headTaskId, String lineCtxId) {}
+
+    private final ExecContextCache execContextCache;
+    private final TaskRepository taskRepository;
+    private final InternalFunctionService internalFunctionService;
+    private final ExecContextGraftTxService graftTxService;
+
+    /**
+     * Graft {@code groupRef}'s body under {@code targetTaskId} in {@code execContextId}, flat, PLACE_NOW.
+     *
+     * @param execContextId the EC to graft into (RG hands a STAGE clone; MH does not know that)
+     * @param targetTaskId  the existing task to attach under; also the body source in v0
+     * @param groupRef      the body (v0: {@link GroupRef#fromTargetSubProcesses()})
+     * @param inputBindings outer values written write-once at the line ctx before task creation
+     * @param outputs       group outputs pre-materialized write-once + registered in variable state
+     * @param driver        PLACE_NOW (Phase 1); RUN_NOW arrives in Phase 2
+     * @return the grafted HEAD task id + the fresh line ctx
+     */
+    public GraftResult attachGroup(
+            Long execContextId, Long targetTaskId, GroupRef groupRef,
+            List<InputBinding> inputBindings, List<OutputMaterialization> outputs, Driver driver) {
+
+        TxUtils.checkTxNotExists();
+        if (driver != Driver.PLACE_NOW) {
+            throw new IllegalStateException("830.020 only PLACE_NOW is supported in Phase 1; RUN_NOW arrives in Phase 2");
+        }
+        ExecContextImpl ec = execContextCache.findById(execContextId, true);
+        if (ec == null) {
+            throw new IllegalStateException("830.040 ExecContext #" + execContextId + " not found");
+        }
+        ExecContextApiData.SimpleExecContext sec = ec.asSimple();
+
+        TaskImpl targetTask = taskRepository.findByIdReadOnly(targetTaskId);
+        if (targetTask == null) {
+            throw new IllegalStateException("830.060 target task #" + targetTaskId + " not found in execContext #" + execContextId);
+        }
+        TaskParamsYaml targetTpy = targetTask.getTaskParamsYaml();
+
+        // v0: the body is the target's own sub-processes. By-name (v6) resolution is Phase 5.
+        if (groupRef.groupName() != null) {
+            throw new IllegalStateException("830.080 by-name group resolution (v6) is Phase 5; v0 resolves the body from the target's sub-processes");
+        }
+        InternalFunctionData.ExecutionContextData ecd =
+                internalFunctionService.getSubProcesses(sec, targetTpy, targetTaskId);
+        if (ecd.internalFunctionProcessingResult.processing != Enums.InternalFunctionProcessing.ok) {
+            throw new IllegalStateException("830.100 getSubProcesses failed for target #" + targetTaskId + ": "
+                    + ecd.internalFunctionProcessingResult.processing);
+        }
+        if (ecd.subProcesses.isEmpty()) {
+            throw new IllegalStateException("830.120 target #" + targetTaskId + " has no sub-processes to graft");
+        }
+        // The body root is the first sub-process; its processCode is the grafted line HEAD's identity.
+        String rootProcessCode = ecd.subProcesses.get(0).process;
+
+        // ---- Phase-0 rebase (FLAT regime): body-root level under the target, fresh sibling line ctx.
+        //      The rebase preserves the 1:1 invariant so deriveParentTaskContextId walks a grafted task
+        //      back to the target and the subtree is a normal nested region. ----
+        String base = ContextUtils.getCurrTaskContextIdForSubProcesses(
+                targetTpy.task.taskContextId, ecd.subProcesses.get(0).processContextId);
+        String lineCtxId = ContextUtils.nextSiblingTaskContextId(base, collectCtxIds(execContextId));
+
+        final Long graphId = ec.execContextGraphId;
+        final Long taskStateId = ec.execContextTaskStateId;
+        final Long varStateId = ec.execContextVariableStateId;
+
+        // ---- Stage 1: CREATE the grafted line PRE_INIT at the fresh isolated ctx; wire the tail ONLY
+        //      into the shared downstream terminal (line isolation). createTasksForSubProcesses leaves
+        //      it PRE_INIT, a state neither the dispatcher nor a test driver advances on its own. ----
+        AtomicReference<Long> headRef = new AtomicReference<>();
+        ExecContextSyncService.getWithSyncVoid(execContextId, () ->
+                ExecContextGraphSyncService.getWithSyncVoid(graphId, () ->
+                        ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () ->
+                                headRef.set(graftTxService.createGroupTasksTx(
+                                        sec, ecd, targetTaskId, lineCtxId, rootProcessCode, inputBindings)))));
+        Long headTaskId = headRef.get();
+
+        // ---- Stage 2: WRITE-ONCE materialize the declared outputs at the line ctx + register
+        //      ExecContextVariableState so an objection clone carries them (no 179.120 / 171.520). ----
+        ExecContextSyncService.getWithSyncVoid(execContextId, () ->
+                ExecContextGraphSyncService.getWithSyncVoid(graphId, () ->
+                        ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () ->
+                                ExecContextVariableStateSyncService.getWithSyncVoid(varStateId, () ->
+                                        graftTxService.materializeOutputsTx(sec, headTaskId, lineCtxId, outputs)))));
+
+        // ---- Stage 3: mark the grafted line SKIPPED (terminal) so a shared convergence join FIRES;
+        //      event-free (no dispatcher kick fires during the graft). ----
+        ExecContextSyncService.getWithSyncVoid(execContextId, () ->
+                ExecContextGraphSyncService.getWithSyncVoid(graphId, () ->
+                        ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () ->
+                                graftTxService.markLineSkippedTx(sec, headTaskId, lineCtxId))));
+
+        log.info("830.200 attachGroup PLACE_NOW: grafted flat body under target #{} at ctx {} (head=#{}, {} output(s))",
+                targetTaskId, lineCtxId, headTaskId, outputs.size());
+        return new GraftResult(headTaskId, lineCtxId);
+    }
+
+    private Set<String> collectCtxIds(Long execContextId) {
+        Set<String> ctxIds = new HashSet<>();
+        for (TaskImpl t : taskRepository.findByExecContextIdReadOnly(execContextId)) {
+            String ctxId = t.getTaskParamsYaml().task.taskContextId;
+            if (ctxId != null) {
+                ctxIds.add(ctxId);
+            }
+        }
+        return ctxIds;
+    }
+}
