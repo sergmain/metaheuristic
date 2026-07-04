@@ -27,6 +27,8 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,6 +40,7 @@ import java.nio.file.Path;
  * Date: 5/30/2023
  * Time: 11:16 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class InsertImageTest {
 
     @SuppressWarnings("unused")

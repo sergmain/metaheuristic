@@ -15,6 +15,6 @@
  */
 
 @NullMarked
-package ai.metaheuristic.commons.utils.threads;
+package ai.metaheuristic.commons.graph.source_code_graph;
 
 import org.jspecify.annotations.NullMarked;

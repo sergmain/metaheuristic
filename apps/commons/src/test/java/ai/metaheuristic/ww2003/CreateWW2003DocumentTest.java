@@ -27,6 +27,8 @@ import ai.metaheuristic.ww2003.document.tags.xml.Sect;
 import ai.metaheuristic.ww2003.test_utils.W2003Utils;
 import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +41,7 @@ import java.nio.file.Path;
  * Date: 5/27/2023
  * Time: 10:40 PM
  */
+@Execution(ExecutionMode.CONCURRENT)
 public class CreateWW2003DocumentTest {
 
     @Test

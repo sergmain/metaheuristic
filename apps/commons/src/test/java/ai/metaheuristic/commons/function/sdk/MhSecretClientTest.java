@@ -10,6 +10,7 @@ package ai.metaheuristic.commons.function.sdk;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -33,7 +34,7 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
  *
  * @author Sergio Lissner
  */
-@Execution(SAME_THREAD)
+@Execution(ExecutionMode.CONCURRENT)
 public class MhSecretClientTest {
 
     /** Builds a fake Processor that expects a specific check-code and replies with a specific key. */

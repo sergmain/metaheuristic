@@ -15,6 +15,6 @@
  */
 
 @NullMarked
-package ai.metaheuristic.commons.utils.threads;
+package ai.metaheuristic.ww2003.image;
 
 import org.jspecify.annotations.NullMarked;
