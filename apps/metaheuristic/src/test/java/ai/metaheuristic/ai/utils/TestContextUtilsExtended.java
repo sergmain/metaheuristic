@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import ai.metaheuristic.commons.utils.ContextUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -292,5 +293,169 @@ public class TestContextUtilsExtended {
                 "1,2,5,6|1|0#0 before 1,2#2. Order: " + result);
         assertTrue(idx_1_2_5_p1_hash2 < idx_1_2_hash2,
                 "1,2,5|1#2 before 1,2#2. Order: " + result);
+    }
+
+    // =========================================================================
+    // Phase 0 residual verification (025-MHSC-DSL-V2-PLAN) - graft rebase.
+    //
+    // Characterization (NOT a bug fix): the UNMODIFIED ContextUtils already
+    // supports the DSL-v2 graft, so these are green with zero production change.
+    // attachGroup REBASES a body's processContextId onto the target
+    //   target.processContextId + "," + <freshSlot> + <body suffix>
+    // and instantiates via the SAME descent primitive the splitter uses
+    // (getCurrTaskContextIdForSubProcesses). Asserted:
+    //   (a) every grafted task derives its parent up to the target and resolves
+    //       its own inputs (parent-chain walk == variable-resolution walk, i.e.
+    //       VariableUtils.getParentContext -> deriveParentTaskContextId): no
+    //       orphan (171.520), no sibling-variable / 020 leak;
+    //   (b) two sibling grafts do not collide - different groups (distinct
+    //       freshSlot components) and repeats of the same group (fresh instance
+    //       numbers via nextSiblingTaskContextId).
+    // Body group namespace (own, reusable): root "1", inner splitter "1,2",
+    // splitter child template "1,2,3". Target: a splitter child "1,2#5".
+    // =========================================================================
+
+    /** Rebase a body process onto the target: substitute the body-root prefix with
+     *  target.processContextId + "," + freshSlot, keeping any nested suffix. */
+    private static String rebase(String targetProcessContextId, String freshSlot,
+                                 String bodyRootProcessContextId, String bodyProcessContextId) {
+        String rebasedRoot = targetProcessContextId + "," + freshSlot;
+        if (bodyProcessContextId.equals(bodyRootProcessContextId)) {
+            return rebasedRoot;
+        }
+        String suffix = bodyProcessContextId.substring(bodyRootProcessContextId.length());
+        return rebasedRoot + suffix;
+    }
+
+    /** Walk the parent chain the way the variable engine resolves inputs
+     *  (VariableUtils.getParentContext delegates to deriveParentTaskContextId). */
+    private static java.util.List<String> parentChain(String taskContextId) {
+        java.util.List<String> chain = new java.util.ArrayList<>();
+        String curr = taskContextId;
+        while (curr != null) {
+            chain.add(curr);
+            curr = ContextUtils.deriveParentTaskContextId(curr);
+        }
+        return chain;
+    }
+
+    @Test
+    public void test_graftRebase_rootTaskDerivesParentUpToTarget() {
+        String target = "1,2#5";
+        String targetPcid = ContextUtils.getProcessContextId(ContextUtils.getLevel(target));
+        assertEquals("1,2", targetPcid);
+
+        String rebasedRoot = rebase(targetPcid, "9", "1", "1");
+        assertEquals("1,2,9", rebasedRoot);
+
+        // instantiate via the same primitive the splitter uses
+        String rootLevel = ContextUtils.getCurrTaskContextIdForSubProcesses(target, rebasedRoot);
+        assertEquals("1,2,9|5", rootLevel);
+
+        String rootTask = ContextUtils.buildTaskContextId(rootLevel, "0");
+        assertEquals("1,2,9|5#0", rootTask);
+
+        // the grafted root task walks its parent straight to the target
+        assertEquals(target, ContextUtils.deriveParentTaskContextId(rootTask));
+    }
+
+    @Test
+    public void test_graftRebase_innerSplitterChildDerivesFullChainToTarget() {
+        String target = "1,2#5";
+        String rootTask = "1,2,9|5#0";
+
+        // inner splitter process rebased: body "1,2" -> "1,2,9,2"
+        String rebasedSplitter = rebase("1,2", "9", "1", "1,2");
+        assertEquals("1,2,9,2", rebasedSplitter);
+
+        // splitter descent from the grafted root task (nested dynamic subprocess)
+        String splitterBase = ContextUtils.getCurrTaskContextIdForSubProcesses(rootTask, rebasedSplitter);
+        assertEquals("1,2,9,2|5|0", splitterBase);
+
+        String child0 = ContextUtils.buildTaskContextId(splitterBase, "0");
+        assertEquals("1,2,9,2|5|0#0", child0);
+
+        // the resolution walk reaches the target and terminates at the root - no orphan, no leak
+        java.util.List<String> chain = parentChain(child0);
+        assertEquals(java.util.List.of("1,2,9,2|5|0#0", "1,2,9|5#0", "1,2#5", "1"), chain);
+        assertTrue(chain.contains(target));
+    }
+
+    @Test
+    public void test_graftRebase_differentGroupsSiblingGraftsDoNotCollide() {
+        String target = "1,2#5";
+
+        // different groups at one target => distinct freshSlot components (9 vs 10)
+        String aRoot = ContextUtils.buildTaskContextId(
+                ContextUtils.getCurrTaskContextIdForSubProcesses(target, rebase("1,2", "9", "1", "1")), "0");
+        String bRoot = ContextUtils.buildTaskContextId(
+                ContextUtils.getCurrTaskContextIdForSubProcesses(target, rebase("1,2", "10", "1", "1")), "0");
+        assertEquals("1,2,9|5#0", aRoot);
+        assertEquals("1,2,10|5#0", bRoot);
+        assertNotEquals(aRoot, bRoot);
+
+        String aChild = ContextUtils.buildTaskContextId(
+                ContextUtils.getCurrTaskContextIdForSubProcesses(aRoot, rebase("1,2", "9", "1", "1,2")), "0");
+        String bChild = ContextUtils.buildTaskContextId(
+                ContextUtils.getCurrTaskContextIdForSubProcesses(bRoot, rebase("1,2", "10", "1", "1,2")), "0");
+        assertEquals("1,2,9,2|5|0#0", aChild);
+        assertEquals("1,2,10,2|5|0#0", bChild);
+        assertNotEquals(aChild, bChild);
+
+        // no 020 leak: graft A's resolution chain never visits any of graft B's contexts
+        java.util.List<String> aChainChild = parentChain(aChild);
+        assertFalse(parentChain(aRoot).contains(bRoot));
+        assertFalse(aChainChild.contains(bRoot));
+        assertFalse(aChainChild.contains(bChild));
+        // both grafts still derive up to the shared target
+        assertTrue(aChainChild.contains(target));
+        assertTrue(parentChain(bChild).contains(target));
+    }
+
+    @Test
+    public void test_graftRebase_sameGroupRepeatsDoNotCollide() {
+        String target = "1,2#5";
+        // same group => same freshSlot (9) => graft-root LEVEL identical; instances disambiguate
+        String rootLevel = ContextUtils.getCurrTaskContextIdForSubProcesses(target, rebase("1,2", "9", "1", "1"));
+        assertEquals("1,2,9|5", rootLevel);
+
+        String first = ContextUtils.nextSiblingTaskContextId(rootLevel, java.util.List.of());
+        assertEquals("1,2,9|5#1", first);
+        String second = ContextUtils.nextSiblingTaskContextId(rootLevel, java.util.List.of(first));
+        assertEquals("1,2,9|5#2", second);
+        assertNotEquals(first, second);
+
+        // parent is level-determined (instance-independent): both repeats reach the SAME target
+        assertEquals(target, ContextUtils.deriveParentTaskContextId(first));
+        assertEquals(target, ContextUtils.deriveParentTaskContextId(second));
+
+        // inner subtrees separated by the ancestor-instance segment - no collision
+        String firstChild = ContextUtils.buildTaskContextId(
+                ContextUtils.getCurrTaskContextIdForSubProcesses(first, rebase("1,2", "9", "1", "1,2")), "0");
+        String secondChild = ContextUtils.buildTaskContextId(
+                ContextUtils.getCurrTaskContextIdForSubProcesses(second, rebase("1,2", "9", "1", "1,2")), "0");
+        assertEquals("1,2,9,2|5|1#0", firstChild);
+        assertEquals("1,2,9,2|5|2#0", secondChild);
+        assertNotEquals(firstChild, secondChild);
+        assertEquals(first, ContextUtils.deriveParentTaskContextId(firstChild));
+        assertEquals(second, ContextUtils.deriveParentTaskContextId(secondChild));
+    }
+
+    @Test
+    public void test_graftRebase_unRebasedBodyRootOrphans_documentsRejectedAlternative() {
+        String target = "1,2#5";
+        // REJECTED path: keep the body root at its own single-component processContextId "1"
+        String orphanLevel = ContextUtils.getCurrTaskContextIdForSubProcesses(target, "1");
+        assertEquals("1|5", orphanLevel);
+        String orphanTask = ContextUtils.buildTaskContextId(orphanLevel, "0");
+        assertEquals("1|5#0", orphanTask);
+        // getProcessContextId has no comma => parent derivation returns null => the body orphans
+        assertEquals("1", ContextUtils.getProcessContextId(orphanLevel));
+        assertNull(ContextUtils.deriveParentTaskContextId(orphanTask));
+
+        // the rebased root, by contrast, derives correctly up to the target
+        String rebasedRootTask = ContextUtils.buildTaskContextId(
+                ContextUtils.getCurrTaskContextIdForSubProcesses(target, rebase("1,2", "9", "1", "1")), "0");
+        assertEquals(target, ContextUtils.deriveParentTaskContextId(rebasedRootTask));
     }
 }
