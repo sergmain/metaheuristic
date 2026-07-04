@@ -26,7 +26,9 @@ import ai.metaheuristic.ai.dispatcher.exec_context_task_state.ExecContextTaskSta
 import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVariableStateSyncService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
+import ai.metaheuristic.ai.dispatcher.task.TaskResetService;
 import ai.metaheuristic.ai.utils.TxUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
@@ -57,8 +59,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * plain ExecContext id and a plain target task id; everything snapshot/requirement-shaped stays in
  * the RG consumer (analysis sec 6 seal note; IMMUTABILITY-DESCRIPTION.md sec 2.6).
  *
- * <p><b>Phase 1 scope</b> - the FLAT case with the PLACE_NOW driver only: one body level, no inner
- * dynamic-subprocess descent (that is Phase 2). The body's processContextId is REBASED onto the
+ * <p><b>Scope</b> - the FLAT (sequential) body. PLACE_NOW creates the body PRE_INIT and marks it SKIPPED
+ * terminal; RUN_NOW (Phase 2) drives the grafted line forward by reusing the objection reopen-and-run
+ * primitive (TaskResetService.resetTaskAndExecContext), which also re-expands an inner dynamic
+ * subprocess. The body's processContextId is REBASED onto the
  * target via {@link ContextUtils#getCurrTaskContextIdForSubProcesses} at a fresh sibling line ctx
  * (Phase 0 rebase decision), the tasks are materialized PRE_INIT, the declared outputs are written
  * once to fresh keys and registered in {@code ExecContextVariableState}, and the line is marked
@@ -106,6 +110,7 @@ public class ExecContextGraftService {
     private final TaskRepository taskRepository;
     private final InternalFunctionService internalFunctionService;
     private final ExecContextGraftTxService graftTxService;
+    private final TaskResetService taskResetService;
 
     /**
      * Graft {@code groupRef}'s body under {@code targetTaskId} in {@code execContextId}, flat, PLACE_NOW.
@@ -123,8 +128,9 @@ public class ExecContextGraftService {
             List<InputBinding> inputBindings, List<OutputMaterialization> outputs, Driver driver) {
 
         TxUtils.checkTxNotExists();
-        if (driver != Driver.PLACE_NOW) {
-            throw new IllegalStateException("830.020 only PLACE_NOW is supported in Phase 1; RUN_NOW arrives in Phase 2");
+        if (driver == Driver.RUN_NOW && !outputs.isEmpty()) {
+            throw new IllegalStateException("830.020 RUN_NOW drives the grafted line, whose tasks produce their own "
+                    + "outputs; pass no OutputMaterialization for RUN_NOW (materialization is a PLACE_NOW concern)");
         }
         ExecContextImpl ec = execContextCache.findById(execContextId, true);
         if (ec == null) {
@@ -150,6 +156,13 @@ public class ExecContextGraftService {
         }
         if (ecd.subProcesses.isEmpty()) {
             throw new IllegalStateException("830.120 target #" + targetTaskId + " has no sub-processes to graft");
+        }
+        // Phase 1 = FLAT / sequential only. 'and' (parallel) and or/race bodies are out of scope (O7).
+        // createTasksForSubProcesses places sequential sub-processes AT the line ctx, which the flat
+        // graft relies on; other logics derive a different ctx.
+        if (ecd.process.logic != EnumsApi.SourceCodeSubProcessLogic.sequential) {
+            throw new IllegalStateException("830.140 Phase 1 supports only 'sequential' (flat) group bodies; target #"
+                    + targetTaskId + " has logic=" + ecd.process.logic);
         }
         // The body root is the first sub-process; its processCode is the grafted line HEAD's identity.
         String rootProcessCode = ecd.subProcesses.get(0).process;
@@ -184,15 +197,22 @@ public class ExecContextGraftService {
                                 ExecContextVariableStateSyncService.getWithSyncVoid(varStateId, () ->
                                         graftTxService.materializeOutputsTx(sec, headTaskId, lineCtxId, outputs)))));
 
-        // ---- Stage 3: mark the grafted line SKIPPED (terminal) so a shared convergence join FIRES;
-        //      event-free (no dispatcher kick fires during the graft). ----
-        ExecContextSyncService.getWithSyncVoid(execContextId, () ->
-                ExecContextGraphSyncService.getWithSyncVoid(graphId, () ->
-                        ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () ->
-                                graftTxService.markLineSkippedTx(sec, headTaskId, lineCtxId))));
+        // ---- Stage 3 (driver). PLACE_NOW marks the grafted line SKIPPED terminal, event-free (no
+        //      dispatcher kick during the graft) - a later objection reopens+runs it. RUN_NOW instead
+        //      DRIVES the line forward by REUSING the objection reopen-and-run primitive
+        //      (TaskResetService.resetTaskAndExecContext: EC FINISHED->STARTED, head INIT, descendants
+        //      PRE_INIT + inner dynamic-subprocess re-expansion, one scheduler kick) - the run half is
+        //      reuse, not new code. It acquires its own EC/Graph/TaskState locks (called lock-free here). ----
+        switch (driver) {
+            case PLACE_NOW -> ExecContextSyncService.getWithSyncVoid(execContextId, () ->
+                    ExecContextGraphSyncService.getWithSyncVoid(graphId, () ->
+                            ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () ->
+                                    graftTxService.markLineSkippedTx(sec, headTaskId, lineCtxId))));
+            case RUN_NOW -> taskResetService.resetTaskAndExecContext(execContextId, headTaskId);
+        }
 
-        log.info("830.200 attachGroup PLACE_NOW: grafted flat body under target #{} at ctx {} (head=#{}, {} output(s))",
-                targetTaskId, lineCtxId, headTaskId, outputs.size());
+        log.info("830.200 attachGroup {}: grafted flat body under target #{} at ctx {} (head=#{}, {} output(s))",
+                driver, targetTaskId, lineCtxId, headTaskId, outputs.size());
         return new GraftResult(headTaskId, lineCtxId);
     }
 

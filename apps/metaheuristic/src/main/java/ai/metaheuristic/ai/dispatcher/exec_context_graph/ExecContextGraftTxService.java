@@ -41,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.ByteArrayInputStream;
 import java.util.function.Function;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -100,6 +101,12 @@ public class ExecContextGraftTxService {
 
         // 2. Instantiate the body sub-graph PRE_INIT, parented on the target - the canonical primitive
         //    the splitter itself uses.
+        // Snapshot existing task ids so the newly-created grafted head can be identified afterward.
+        Set<Long> preExisting = new HashSet<>();
+        for (TaskImpl pe : taskRepository.findByExecContextIdReadOnly(sec.execContextId)) {
+            preExisting.add(pe.id);
+        }
+
         ExecContextData.GraphAndStates gas = execContextGraphService.prepareGraphAndStates(
                 sec.execContextGraphId, sec.execContextTaskStateId);
         List<Long> lastIds = new ArrayList<>();
@@ -119,7 +126,7 @@ public class ExecContextGraftTxService {
         execContextGraphService.createEdges(gas.graph(), lastIds, terminalDescendants);
         execContextGraphService.save(gas);
 
-        Long headId = findHeadTaskId(sec.execContextId, lineCtxId, rootProcessCode);
+        Long headId = findHeadTaskId(sec.execContextId, preExisting, rootProcessCode);
         log.info("831.100 grafted {} sub-process(es) at ctx {} under target #{} (head=#{})",
                 ecd.subProcesses.size(), lineCtxId, targetTaskId, headId);
         return headId;
@@ -232,15 +239,20 @@ public class ExecContextGraftTxService {
         return out;
     }
 
-    private Long findHeadTaskId(Long execContextId, String lineCtxId, String rootProcessCode) {
+    private Long findHeadTaskId(Long execContextId, Set<Long> preExistingTaskIds, String rootProcessCode) {
+        // The grafted head is the newly-created (not pre-existing) task carrying the body-root process
+        // code. Identity-by-newness + processCode is robust to how createTasksForSubProcesses derives
+        // the ctx (sequential places it at the line ctx; other logics derive it).
         for (TaskImpl t : taskRepository.findByExecContextIdReadOnly(execContextId)) {
-            TaskParamsYaml tpy = t.getTaskParamsYaml();
-            if (lineCtxId.equals(tpy.task.taskContextId) && rootProcessCode.equals(tpy.task.processCode)) {
+            if (preExistingTaskIds.contains(t.id)) {
+                continue;
+            }
+            if (rootProcessCode.equals(t.getTaskParamsYaml().task.processCode)) {
                 return t.id;
             }
         }
-        throw new IllegalStateException("831.200 grafted head (process '" + rootProcessCode + "') not found at ctx "
-                + lineCtxId + " in execContext #" + execContextId);
+        throw new IllegalStateException("831.200 grafted head (process '" + rootProcessCode
+                + "') not found among newly created tasks in execContext #" + execContextId);
     }
 
     private static ExecContextApiData.VariableInfo outputInfo(Long id, String name) {
