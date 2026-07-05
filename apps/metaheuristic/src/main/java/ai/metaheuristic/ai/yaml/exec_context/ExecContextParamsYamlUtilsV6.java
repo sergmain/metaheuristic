@@ -95,7 +95,20 @@ public class ExecContextParamsYamlUtilsV6
         p.priority = p2.priority;
         p.condition = p2.condition;
         p.triesAfterError = p2.triesAfterError;
+        p.graft = toGraft(p2.graft);
         return p;
+    }
+
+    private static ExecContextParamsYaml.Graft toGraft(ExecContextParamsYamlV6.GraftV6 g2) {
+        if (g2==null) {
+            return null;
+        }
+        ExecContextParamsYaml.Graft g = new ExecContextParamsYaml.Graft(g2.groupName);
+        g.inputBindings.addAll(g2.inputBindings);
+        g.outputBindings.addAll(g2.outputBindings);
+        g.driver = g2.driver;
+        g.at = g2.at;
+        return g;
     }
 
     private static ExecContextParamsYaml.Group toGroup(ExecContextParamsYamlV6.GroupV6 g2) {

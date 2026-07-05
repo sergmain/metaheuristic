@@ -201,6 +201,11 @@ public class ExecContextParamsYaml implements BaseParams {
         @Nullable
         public Integer triesAfterError;
 
+        // DSL v2 - if non-null, this process is an in-band GRAFT node (a native group-call): the dispatcher
+        // expands the named group here via attachGroup instead of producing a task. NOT an internal function.
+        @Nullable
+        public Graft graft;
+
         public Process(String processName, String processCode, String internalContextId, FunctionDefinition function) {
             this.processName = processName;
             this.processCode = processCode;
@@ -224,6 +229,25 @@ public class ExecContextParamsYaml implements BaseParams {
 
         public Group(String name) {
             this.name = name;
+        }
+    }
+
+    // DSL v2 - an in-band graft instruction (a native group-call node): instantiate group `groupName`
+    // at this point in the flow. bindings map outer variable names to the group's declared I/O (positional).
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Graft {
+        public String groupName;
+        public final List<String> inputBindings = new ArrayList<>();
+        public final List<String> outputBindings = new ArrayList<>();
+        @Nullable
+        public String driver;
+        @Nullable
+        public String at;
+
+        public Graft(String groupName) {
+            this.groupName = groupName;
         }
     }
 

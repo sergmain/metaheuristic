@@ -195,6 +195,9 @@ public class ExecContextParamsYamlV6 implements BaseParams {
         @Nullable
         public Integer triesAfterError;
 
+        @Nullable
+        public GraftV6 graft;
+
         public ProcessV6(String processName, String processCode, String internalContextId, FunctionDefinitionV6 function) {
             this.processName = processName;
             this.processCode = processCode;
@@ -218,6 +221,23 @@ public class ExecContextParamsYamlV6 implements BaseParams {
 
         public GroupV6(String name) {
             this.name = name;
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GraftV6 {
+        public String groupName;
+        public final List<String> inputBindings = new ArrayList<>();
+        public final List<String> outputBindings = new ArrayList<>();
+        @Nullable
+        public String driver;
+        @Nullable
+        public String at;
+
+        public GraftV6(String groupName) {
+            this.groupName = groupName;
         }
     }
 

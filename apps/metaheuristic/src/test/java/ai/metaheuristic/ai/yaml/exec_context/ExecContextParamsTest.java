@@ -121,4 +121,32 @@ public class ExecContextParamsTest {
         assertEquals("1,2", g2.internalContextId);
         assertEquals("b#1", g2.resetPointProcessCode);
     }
+
+    @Test
+    public void testV6GraftNodeRoundTrips() {
+        // Phase 6.3b (Option A): an in-band graft node on a Process survives a v6 YAML round-trip.
+        ExecContextParamsYaml py = new ExecContextParamsYaml();
+        ExecContextParamsYaml.Process p = new ExecContextParamsYaml.Process(
+                "graft-node", "graft-node", "1,2", new ExecContextParamsYaml.FunctionDefinition("mh.nop"));
+        ExecContextParamsYaml.Graft graft = new ExecContextParamsYaml.Graft("grp-A");
+        graft.inputBindings.add("inA");
+        graft.inputBindings.add("inB");
+        graft.outputBindings.add("outC");
+        graft.driver = "run-now";
+        graft.at = "root";
+        p.graft = graft;
+        py.processes.add(p);
+
+        String s = ExecContextParamsYamlUtils.BASE_YAML_UTILS.toString(py);
+        ExecContextParamsYaml back = ExecContextParamsYamlUtils.BASE_YAML_UTILS.to(s);
+
+        assertEquals(1, back.processes.size());
+        ExecContextParamsYaml.Graft g2 = back.processes.get(0).graft;
+        assertNotNull(g2);
+        assertEquals("grp-A", g2.groupName);
+        assertEquals(java.util.List.of("inA", "inB"), g2.inputBindings);
+        assertEquals(java.util.List.of("outC"), g2.outputBindings);
+        assertEquals("run-now", g2.driver);
+        assertEquals("root", g2.at);
+    }
 }
