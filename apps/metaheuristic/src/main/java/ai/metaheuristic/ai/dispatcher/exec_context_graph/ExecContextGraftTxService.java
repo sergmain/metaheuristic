@@ -89,7 +89,7 @@ public class ExecContextGraftTxService {
     public Long createGroupTasksTx(
             ExecContextApiData.SimpleExecContext sec, InternalFunctionData.ExecutionContextData ecd,
             Long targetTaskId, String lineCtxId, String rootProcessCode,
-            List<ExecContextGraftService.InputBinding> inputBindings) {
+            List<ExecContextGraftService.InputBinding> inputBindings, List<Long> unwiredTailsOut) {
 
         // 1. Write the bound inputs at the fresh line ctx. The body's tasks declare these as inputs,
         //    so the variables must exist before the sub-branch is created/runnable.
@@ -123,6 +123,14 @@ public class ExecContextGraftTxService {
                     TaskImpl dt = taskRepository.findByIdReadOnly(v.taskId);
                     return dt == null ? null : dt.getTaskParamsYaml().task.taskContextId;
                 });
+        // F1: if this line has NO terminal to wire into at graft time (its target's downstream is wired
+        // LATER by the enclosing block - e.g. the target is the sequential chain tail), report the line's
+        // tail(s) so the in-band RUN_NOW caller can rejoin them into the enclosing block's downstream
+        // (createTasksForSubProcesses -> lastIds). Otherwise createEdges below wires this line's tail into
+        // the shared terminal as usual.
+        if (terminalDescendants.isEmpty()) {
+            unwiredTailsOut.addAll(lastIds);
+        }
         execContextGraphService.createEdges(gas.graph(), lastIds, terminalDescendants);
         execContextGraphService.save(gas);
 

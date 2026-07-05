@@ -41,7 +41,7 @@ public class InBandGraftExpander implements GraftExpander {
     private final ExecContextGraftService execContextGraftService;
 
     @Override
-    public Long expand(Long execContextId, ExecContextParamsYaml.Process graftNode, Long targetTaskId) {
+    public List<Long> expand(Long execContextId, ExecContextParamsYaml.Process graftNode, Long targetTaskId) {
         final ExecContextParamsYaml.Graft graft = graftNode.graft;
         if (graft == null) {
             throw new IllegalStateException("832.020 expand() called on a non-graft process " + graftNode.processCode);
@@ -54,10 +54,15 @@ public class InBandGraftExpander implements GraftExpander {
         final List<ExecContextGraftService.InputBinding> inputs = List.of();
         final String driver = graft.driver == null ? "place-now" : graft.driver;
         return switch (driver) {
+            // run-now: a live line - if it could not terminate at graft time, its unwired tail(s) rejoin
+            // the enclosing block's downstream via the caller's lastIds.
             case "run-now" -> execContextGraftService.attachGroupInBandRunNow(
-                    execContextId, targetTaskId, graft.groupName, inputs).headTaskId();
-            case "place-now" -> execContextGraftService.attachGroupInBandPlaceNow(
-                    execContextId, targetTaskId, graft.groupName, inputs).headTaskId();
+                    execContextId, targetTaskId, graft.groupName, inputs).unwiredTails();
+            // place-now: a SKIPPED (dormant, objection-reopenable) line - it does NOT rejoin the flow.
+            case "place-now" -> {
+                execContextGraftService.attachGroupInBandPlaceNow(execContextId, targetTaskId, graft.groupName, inputs);
+                yield List.of();
+            }
             default -> throw new IllegalStateException(
                     "832.040 unknown graft driver '" + driver + "' on " + graftNode.processCode);
         };

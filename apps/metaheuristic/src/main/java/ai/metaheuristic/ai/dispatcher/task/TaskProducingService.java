@@ -201,7 +201,11 @@ public class TaskProducingService {
                 else {
                     graftTarget = parentTaskIds.get(0);
                 }
-                graftExpander.expand(simpleExecContext.execContextId, p, graftTarget);
+                // F1: a run-now graft that cannot terminate at graft time (its target's downstream is
+                // wired later, e.g. the chain tail) returns its unwired tail(s) to rejoin the enclosing
+                // block's downstream via lastIds; empty for a self-terminating or place-now (SKIPPED) line.
+                List<Long> graftTails = graftExpander.expand(simpleExecContext.execContextId, p, graftTarget);
+                lastIds.addAll(graftTails);
                 continue;
             }
 

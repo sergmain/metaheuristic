@@ -106,7 +106,7 @@ public class ExecContextGraftService {
     public record OutputMaterialization(String name, byte[] value) {}
 
     /** The stable re-entry data of one graft: the body-root (HEAD) task id and the fresh line ctx. */
-    public record GraftResult(Long headTaskId, String lineCtxId) {}
+    public record GraftResult(Long headTaskId, String lineCtxId, List<Long> unwiredTails) {}
 
     /** The lock-free, tx-free resolve+rebase result shared by the locked public {@link #attachGroup}
      *  path and the in-band dispatcher direct-call path (which already holds the Graph + TaskState
@@ -159,7 +159,7 @@ public class ExecContextGraftService {
                 ExecContextGraphSyncService.getWithSyncVoid(graphId, () ->
                         ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () ->
                                 headRef.set(graftTxService.createGroupTasksTx(
-                                        sec, ecd, targetTaskId, lineCtxId, rootProcessCode, inputBindings)))));
+                                        sec, ecd, targetTaskId, lineCtxId, rootProcessCode, inputBindings, new ArrayList<>())))));
         Long headTaskId = headRef.get();
 
         // ---- Stage 2: WRITE-ONCE materialize the declared outputs at the line ctx + register
@@ -186,7 +186,7 @@ public class ExecContextGraftService {
 
         log.info("830.200 attachGroup {}: grafted flat body under target #{} at ctx {} (head=#{}, {} output(s))",
                 driver, targetTaskId, lineCtxId, headTaskId, outputs.size());
-        return new GraftResult(headTaskId, lineCtxId);
+        return new GraftResult(headTaskId, lineCtxId, List.of());
     }
 
     /**
@@ -264,11 +264,11 @@ public class ExecContextGraftService {
         TxUtils.checkTxExists();
         GraftSetup s = graftSetup(execContextId, targetTaskId, new GroupRef(groupName));
         Long head = graftTxService.createGroupTasksTx(
-                s.sec(), s.ecd(), targetTaskId, s.lineCtxId(), s.rootProcessCode(), inputBindings);
+                s.sec(), s.ecd(), targetTaskId, s.lineCtxId(), s.rootProcessCode(), inputBindings, new ArrayList<>());
         graftTxService.markLineSkippedTx(s.sec(), head, s.lineCtxId());
         log.info("830.220 in-band graft PLACE_NOW: group '{}' under target #{} at ctx {} (head=#{})",
                 groupName, targetTaskId, s.lineCtxId(), head);
-        return new GraftResult(head, s.lineCtxId());
+        return new GraftResult(head, s.lineCtxId(), List.of());
     }
 
     /**
@@ -283,11 +283,12 @@ public class ExecContextGraftService {
                                                List<InputBinding> inputBindings) {
         TxUtils.checkTxExists();
         GraftSetup s = graftSetup(execContextId, targetTaskId, new GroupRef(groupName));
+        List<Long> unwiredTails = new ArrayList<>();
         Long head = graftTxService.createGroupTasksTx(
-                s.sec(), s.ecd(), targetTaskId, s.lineCtxId(), s.rootProcessCode(), inputBindings);
+                s.sec(), s.ecd(), targetTaskId, s.lineCtxId(), s.rootProcessCode(), inputBindings, unwiredTails);
         log.info("830.240 in-band graft RUN_NOW: group '{}' under target #{} at ctx {} (head=#{}, live PRE_INIT)",
                 groupName, targetTaskId, s.lineCtxId(), head);
-        return new GraftResult(head, s.lineCtxId());
+        return new GraftResult(head, s.lineCtxId(), unwiredTails);
     }
 
     /**

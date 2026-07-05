@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.dispatcher.exec_context_graph;
 
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 
+import java.util.List;
+
 /**
  * Threaded into {@code TaskProducingService.createTasksForSubProcesses} as a FUNCTION PARAMETER so the
  * task-production loop can expand an in-band graft node (a {@link ExecContextParamsYaml.Process} whose
@@ -28,5 +30,7 @@ import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 @FunctionalInterface
 public interface GraftExpander {
     /** Expand the in-band graft node under {@code targetTaskId}; return the grafted line's head task id. */
-    Long expand(Long execContextId, ExecContextParamsYaml.Process graftNode, Long targetTaskId);
+    // returns the grafted line's UNWIRED tail task ids (to be rejoined into the enclosing block's
+    // downstream by the caller); empty when the line self-terminates or is a dormant SKIPPED (place-now) line.
+    List<Long> expand(Long execContextId, ExecContextParamsYaml.Process graftNode, Long targetTaskId);
 }
