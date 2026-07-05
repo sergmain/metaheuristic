@@ -33,6 +33,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import ai.metaheuristic.commons.utils.ContextUtils;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -77,9 +79,47 @@ public class InternalFunctionService {
         DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph = ExecContextProcessGraphService.importProcessGraph(simpleExecContext.paramsYaml);
         List<ExecContextApiData.ProcessVertex> subProcesses = ExecContextProcessGraphService.findSubProcesses(processGraph, process.processCode);
 
+        // Phase 6a option 2 (B): a grafted group-body process is NOT in the main process graph, so
+        // findSubProcesses returns empty for it. Resolve its DIRECT children from the group body instead,
+        // rebasing each child's context under this task's ACTUAL (rebased) context so the child nests
+        // under it at runtime (deriveParentTaskContextId walks back). For a plain main-pipeline leaf this
+        // is a no-op (no group body has a child of a main process's ctx; group root ctxs are unique).
+        if (subProcesses.isEmpty()) {
+            subProcesses = groupBodySubProcesses(simpleExecContext.paramsYaml, process, taskParamsYaml.task.taskContextId);
+        }
+
         return new InternalFunctionData.ExecutionContextData(
                 new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok),
                 subProcesses, process, simpleExecContext.paramsYaml, descendants);
+    }
+
+
+    /** Phase 6a (B): the DIRECT children of a group-body process, taken from group.body and rebased under
+     *  the running task's process context. Direct child = a body process whose internalContextId extends
+     *  the parent's by exactly one segment. Rebase: runtimeProcessCtx + (childCtx stripped of the parent's
+     *  compiled ctx prefix), e.g. parent compiled '3' running at '1,3' + child '3,7' -> '1,3,7'. */
+    private static List<ExecContextApiData.ProcessVertex> groupBodySubProcesses(
+            ExecContextParamsYaml py, ExecContextParamsYaml.Process process, String runningTaskContextId) {
+        final String parentCompiledCtx = process.internalContextId;
+        final String runtimeProcessCtx = ContextUtils.getProcessContextId(ContextUtils.getLevel(runningTaskContextId));
+        final String childPrefix = parentCompiledCtx + ContextUtils.CONTEXT_DIGIT_SEPARATOR;
+        final List<ExecContextApiData.ProcessVertex> result = new ArrayList<>();
+        long vid = 0;
+        for (ExecContextParamsYaml.Group g : py.groups) {
+            for (ExecContextParamsYaml.Process q : g.body) {
+                final String qCtx = q.internalContextId;
+                if (!qCtx.startsWith(childPrefix)) {
+                    continue;
+                }
+                // direct child only: the remainder after the parent prefix has no further separator
+                if (qCtx.indexOf(ContextUtils.CONTEXT_DIGIT_SEPARATOR, childPrefix.length()) != -1) {
+                    continue;
+                }
+                final String rebasedCtx = runtimeProcessCtx + qCtx.substring(parentCompiledCtx.length());
+                result.add(new ExecContextApiData.ProcessVertex(vid++, q.processCode, rebasedCtx));
+            }
+        }
+        return result;
     }
 
 }

@@ -329,6 +329,16 @@ public class ExecContextGraftService {
         List<ExecContextApiData.ProcessVertex> subProcesses = new ArrayList<>();
         long vid = 0;
         for (ExecContextParamsYaml.Process p : group.body) {
+            // Phase 6a option 2 (A): lay only ROOT-level body processes (ctx == the group root). A deeper-ctx
+            // body process is enclosed by an internal function within the body; it is that function's sub-process
+            // and is expanded at RUNTIME when the enclosing function runs (getSubProcesses, part B) - mirroring
+            // how produceTasksForExecContext defers internal-function sub-processes. Without this, a nested graft
+            // would be laid as a flat sibling at instantiation and hit the fail-fast (375.130).
+            // A group with a NULL root ctx has no declared nesting namespace (a synthetic/flat v0-style
+            // body, e.g. one minted from a target's own sub-processes) - lay its whole body as-is.
+            if (group.internalContextId != null && !p.internalContextId.equals(group.internalContextId)) {
+                continue;
+            }
             // DSL v2: rebase the body's own context namespace UNDER the target's process context so a grafted
             // by-name group NESTS under the target - deriveParentTaskContextId then walks a grafted task back
             // to the target (needed for variable resolution + reset-subtree identity). The group root context
