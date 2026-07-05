@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.GraftExpander;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableUtils;
@@ -61,6 +62,7 @@ public class PermuteVariablesService {
     private final VariableService variableTopLevelService;
     private final ExecContextGraphService execContextGraphService;
     private final TaskProducingService taskProducingService;
+    private final GraftExpander graftExpander;
 
     /**
      * @param simpleExecContext
@@ -160,7 +162,7 @@ public class PermuteVariablesService {
                 variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, true);
 
         taskProducingService.createTasksForSubProcesses(
-            graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
+            graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander);
         return true;
     }
 

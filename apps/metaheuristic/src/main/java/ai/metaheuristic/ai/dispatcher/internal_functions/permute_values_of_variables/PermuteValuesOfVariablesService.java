@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.dispatcher.data.ExecContextData;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.GraftExpander;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.InlineVariable;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
@@ -57,6 +58,7 @@ public class PermuteValuesOfVariablesService {
     private final VariableTxService variableService;
     private final ExecContextGraphService execContextGraphService;
     private final TaskProducingService taskProducingService;
+    private final GraftExpander graftExpander;
 
     @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
     public void createTaskForPermutations(
@@ -77,7 +79,7 @@ public class PermuteValuesOfVariablesService {
                     variableService.createInputVariablesForSubProcess(
                             variableDataSource, simpleExecContext.execContextId, entry.getKey(), currTaskContextId, false);
                 }
-                taskProducingService.createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
+                taskProducingService.createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander);
 
             } catch (BreakFromLambdaException e) {
                 log.error(e.getMessage());

@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.dispatcher.data.VariableData;
 import ai.metaheuristic.ai.dispatcher.event.events.FindUnassignedTasksAndRegisterInQueueTxEvent;
 import ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraphService;
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.GraftExpander;
 import ai.metaheuristic.ai.dispatcher.task.TaskProducingService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.exceptions.BatchProcessingException;
@@ -71,6 +72,7 @@ public class BatchSplitterTxService {
     private final ExecContextGraphService execContextGraphService;
     private final InternalFunctionService internalFunctionService;
     private final TaskProducingService taskProducingService;
+    private final GraftExpander graftExpander;
     private final VariableTxService variableService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -118,7 +120,7 @@ public class BatchSplitterTxService {
                                 variableService.createInputVariablesForSubProcess(
                                         variableDataSource, simpleExecContext.execContextId, variableName, currTaskContextId, true);
 
-                                taskProducingService.createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
+                                taskProducingService.createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander);
 
                             }
                             catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
