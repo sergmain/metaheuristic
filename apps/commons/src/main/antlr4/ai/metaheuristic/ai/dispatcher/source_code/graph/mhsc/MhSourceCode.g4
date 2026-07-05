@@ -35,6 +35,7 @@ sourceElement
     | metasBlock
     | processDecl
     | templateDecl
+    | groupDecl
     | forLoop
     ;
 
@@ -244,6 +245,7 @@ processOrControl
     | forLoop
     | templateCall
     | subProcessBlock
+    | graftDecl
     ;
 
 // --- Templates ---
@@ -274,6 +276,42 @@ forLoop
     : 'for' ID 'in' INT '..' INT '{' processOrControl* '}'
     ;
 
+// --- Groups (DSL v2): a named, I/O-contracted, reset-pointed, reusable body ---
+// group g (<- inA, inB) (-> outC) reset-point head { ... }
+groupDecl
+    : 'group' ID groupInputs? groupOutputs? ('reset-point' idRef)? '{' processOrControl* '}'
+    ;
+
+groupInputs
+    : '(' '<-' varDefList ')'
+    ;
+
+groupOutputs
+    : '(' '->' varDefList ')'
+    ;
+
+// --- Graft (DSL v2): runtime instantiation of a group in the same EC, expanded natively ---
+// graft g bind (inA, inB -> outC) driver run-now at target
+graftDecl
+    : 'graft' idRef graftBind? graftDriver? graftAt?
+    ;
+
+graftBind
+    : 'bind' '(' idRefList? ('->' idRefList)? ')'
+    ;
+
+idRefList
+    : idRef (',' idRef)*
+    ;
+
+graftDriver
+    : 'driver' ('place-now' | 'run-now')
+    ;
+
+graftAt
+    : 'at' idRef
+    ;
+
 // --- Parameterized identifiers ---
 // Supports: simpleId, some{L}, some{L+1}, some.complex.id{L}
 idRef
@@ -295,6 +333,7 @@ keyword
     | 'metas' | 'meta' | 'name' | 'timeout' | 'cache' | 'when' | 'skip'
     | 'tries' | 'tag' | 'priority' | 'pre' | 'post' | 'params'
     | 'sequential' | 'parallel' | 'race' | 'template' | 'for' | 'in'
+    | 'group' | 'reset-point' | 'graft'
     | 'internal' | 'type' | 'ext' | 'nullable' | 'array' | 'parentContext' | 'sourcing' | 'mutable'
     | 'on' | 'off' | 'omitInline' | 'cacheMeta'
     | 'normal' | 'always'

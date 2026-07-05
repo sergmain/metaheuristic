@@ -93,6 +93,12 @@ public class TestMhscParserRules {
     private ParseResult<MhSourceCodeParser.CompilationUnitContext> parseCompilationUnit(String input) {
         List<String> e = new ArrayList<>(); return new ParseResult<>(makeParser(input, e).compilationUnit(), e);
     }
+    private ParseResult<MhSourceCodeParser.GroupDeclContext> parseGroupDecl(String input) {
+        List<String> e = new ArrayList<>(); return new ParseResult<>(makeParser(input, e).groupDecl(), e);
+    }
+    private ParseResult<MhSourceCodeParser.GraftDeclContext> parseGraftDecl(String input) {
+        List<String> e = new ArrayList<>(); return new ParseResult<>(makeParser(input, e).graftDecl(), e);
+    }
 
     // ===================== idRef =====================
 
@@ -779,5 +785,95 @@ public class TestMhscParserRules {
         var r = parseIdRef("variables");
         r.assertNoErrors();
         assertEquals("variables", r.tree.getText());
+    }
+
+    // ===================== groupDecl / graftDecl (DSL v2) =====================
+
+    @Test public void test_groupDecl_full_inputs_outputs_resetPoint_body() {
+        var r = parseGroupDecl(
+            "group grp1 (<- inA, inB) (-> outC) reset-point head {\n" +
+            "    head := internal mh.nop { }\n" +
+            "    split := internal mh.batch-line-splitter { sequential { leaf := internal mh.nop { } } }\n" +
+            "}");
+        r.assertNoErrors();
+        assertEquals("grp1", r.tree.ID().getText());
+        assertNotNull(r.tree.groupInputs());
+        assertNotNull(r.tree.groupOutputs());
+        assertNotNull(r.tree.idRef());
+        assertEquals("head", r.tree.idRef().getText());
+        assertEquals(2, r.tree.processOrControl().size());
+    }
+
+    @Test public void test_groupDecl_minimal_nameAndBodyOnly() {
+        var r = parseGroupDecl("group g1 { p1 := internal mh.nop { } }");
+        r.assertNoErrors();
+        assertEquals("g1", r.tree.ID().getText());
+        assertNull(r.tree.groupInputs());
+        assertNull(r.tree.groupOutputs());
+        assertNull(r.tree.idRef());
+        assertEquals(1, r.tree.processOrControl().size());
+    }
+
+    @Test public void test_groupDecl_inputsOnly() {
+        var r = parseGroupDecl("group g1 (<- a, b) { p1 := internal mh.nop { } }");
+        r.assertNoErrors();
+        assertNotNull(r.tree.groupInputs());
+        assertNull(r.tree.groupOutputs());
+    }
+
+    @Test public void test_graftDecl_full_bind_driver_at() {
+        var r = parseGraftDecl("graft grp1 bind (inA, inB -> outC) driver run-now at target");
+        r.assertNoErrors();
+        assertEquals("grp1", r.tree.idRef().getText());
+        assertNotNull(r.tree.graftBind());
+        assertNotNull(r.tree.graftDriver());
+        assertNotNull(r.tree.graftAt());
+        assertEquals("target", r.tree.graftAt().idRef().getText());
+        assertEquals(2, r.tree.graftBind().idRefList(0).idRef().size());
+        assertEquals(1, r.tree.graftBind().idRefList(1).idRef().size());
+    }
+
+    @Test public void test_graftDecl_minimal_nameOnly() {
+        var r = parseGraftDecl("graft grp1");
+        r.assertNoErrors();
+        assertEquals("grp1", r.tree.idRef().getText());
+        assertNull(r.tree.graftBind());
+        assertNull(r.tree.graftDriver());
+        assertNull(r.tree.graftAt());
+    }
+
+    @Test public void test_graftDecl_driverPlaceNow_noBind_noAt() {
+        var r = parseGraftDecl("graft g1 driver place-now");
+        r.assertNoErrors();
+        assertNotNull(r.tree.graftDriver());
+        assertNull(r.tree.graftBind());
+        assertNull(r.tree.graftAt());
+    }
+
+    @Test public void test_compilationUnit_group_plus_inBand_graft() {
+        var r = parseCompilationUnit(
+            "source \"test-1.0\" {\n" +
+            "    group grp1 (<- inA) (-> outC) reset-point head {\n" +
+            "        head := internal mh.nop { }\n" +
+            "    }\n" +
+            "    root := internal mh.batch-line-splitter {\n" +
+            "        sequential {\n" +
+            "            graft grp1 bind (inA -> outC) driver run-now\n" +
+            "        }\n" +
+            "    }\n" +
+            "}");
+        r.assertNoErrors();
+    }
+
+    @Test public void test_idRef_group_graft_resetPoint_usableAsIdentifiers() {
+        var g = parseIdRef("group");
+        g.assertNoErrors();
+        assertEquals("group", g.tree.getText());
+        var gr = parseIdRef("graft");
+        gr.assertNoErrors();
+        assertEquals("graft", gr.tree.getText());
+        var rp = parseIdRef("reset-point");
+        rp.assertNoErrors();
+        assertEquals("reset-point", rp.tree.getText());
     }
 }
