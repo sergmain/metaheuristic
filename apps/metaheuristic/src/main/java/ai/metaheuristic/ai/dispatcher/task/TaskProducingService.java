@@ -50,6 +50,7 @@ import org.springframework.context.annotation.Profile;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -171,6 +172,9 @@ public class TaskProducingService {
         final String parentTaskContextId = ContextUtils.deriveParentTaskContextId(currTaskContextId);
         int andBranchIndex = 0;
 
+        // DSL v2 follow-on (d): block-local map of tasks created in THIS sub-process block
+        // (processCode -> taskId), so a graft node's `at <idRef>` can re-target a preceding named sibling.
+        final Map<String, Long> createdInBlock = new HashMap<>();
         TaskImpl t = null;
         for (ExecContextApiData.ProcessVertex subProcess : subProcesses) {
             final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(subProcess.process);
@@ -184,7 +188,20 @@ public class TaskProducingService {
                 // self-wires (head parented on the target, tail into the shared terminal via line
                 // isolation), so it does NOT join the outer sequential chain. v1: target = the current
                 // chain parent; 'at' idRef + mid-sequence chaining are follow-ons.
-                graftExpander.expand(simpleExecContext.execContextId, p, parentTaskIds.get(0));
+                // DSL v2 follow-on (d): `at <idRef>` re-targets the graft to a NAMED preceding sibling in
+                // this block (Option A: block-local). Absent `at`, keep the v1 default (chain predecessor).
+                final Long graftTarget;
+                if (p.graft.at != null) {
+                    graftTarget = createdInBlock.get(p.graft.at);
+                    if (graftTarget == null) {
+                        throw new BreakFromLambdaException("375.140 graft 'at " + p.graft.at
+                                + "' did not resolve to a preceding sibling task in this block (group '" + p.graft.groupName + "')");
+                    }
+                }
+                else {
+                    graftTarget = parentTaskIds.get(0);
+                }
+                graftExpander.expand(simpleExecContext.execContextId, p, graftTarget);
                 continue;
             }
 
@@ -217,6 +234,7 @@ public class TaskProducingService {
             }
             List<TaskApiData.TaskWithContext> currTaskIds = List.of(new TaskApiData.TaskWithContext(t.getId(), actualProcessContextId));
             execContextGraphService.addNewTasksToGraph(graphAndStates, parentTaskIds, currTaskIds, targetState);
+            createdInBlock.put(p.processCode, t.getId());
             if (process.logic == EnumsApi.SourceCodeSubProcessLogic.and) {
                 // Parallel: each subprocess branches from the original parent, collect ALL for downstream linking
                 lastIds.add(t.id);
