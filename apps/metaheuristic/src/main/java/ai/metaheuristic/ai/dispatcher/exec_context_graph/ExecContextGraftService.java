@@ -271,6 +271,25 @@ public class ExecContextGraftService {
     }
 
     /**
+     * In-band graft expansion (RUN_NOW) for the dispatcher's task-production path. Same lock/tx contract
+     * as {@link #attachGroupInBandPlaceNow}: the caller already holds Graph + TaskState locks and a tx,
+     * so graftTxService is invoked directly. Unlike the out-of-band RUN_NOW (which resets a FINISHED EC),
+     * an in-band RUN_NOW does NOT reset: the EC is still producing, so the grafted line is laid live
+     * (PRE_INIT, wired as a child of the target and into the shared terminal) and the normal dispatcher
+     * runs it when the target completes. No markLineSkippedTx, no scheduler kick.
+     */
+    public GraftResult attachGroupInBandRunNow(Long execContextId, Long targetTaskId, String groupName,
+                                               List<InputBinding> inputBindings) {
+        TxUtils.checkTxExists();
+        GraftSetup s = graftSetup(execContextId, targetTaskId, new GroupRef(groupName));
+        Long head = graftTxService.createGroupTasksTx(
+                s.sec(), s.ecd(), targetTaskId, s.lineCtxId(), s.rootProcessCode(), inputBindings);
+        log.info("830.240 in-band graft RUN_NOW: group '{}' under target #{} at ctx {} (head=#{}, live PRE_INIT)",
+                groupName, targetTaskId, s.lineCtxId(), head);
+        return new GraftResult(head, s.lineCtxId());
+    }
+
+    /**
      * Phase 5 (O5) - by-name resolution of a first-class v6 {@link ExecContextParamsYaml.Group}.
      * Looks the group up by name in the EC's params and materializes the SAME
      * {@link InternalFunctionData.ExecutionContextData} shape the v0 by-reference path derives from

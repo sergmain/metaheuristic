@@ -37,6 +37,7 @@ import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
 import ai.metaheuristic.commons.utils.MetaUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.GraftExpander;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,6 +69,7 @@ public class BatchLineSplitterTxService {
 
     private final VariableTxService variableService;
     private final InternalFunctionService internalFunctionService;
+    private final GraftExpander graftExpander;
     private final TaskProducingService taskProducingService;
     private final ExecContextGraphService execContextGraphService;
     private final ApplicationEventPublisher eventPublisher;
@@ -151,7 +153,7 @@ public class BatchLineSplitterTxService {
                 throw new BatchResourceProcessingException(es);
             }
             try {
-                taskProducingService.createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
+                taskProducingService.createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander);
 
             } catch (BatchProcessingException | StoreNewFileWithRedirectException e) {
                 throw e;

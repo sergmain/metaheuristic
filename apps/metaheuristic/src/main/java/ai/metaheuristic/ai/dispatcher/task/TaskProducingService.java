@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.VariableRepository;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.dispatcher.variable_global.GlobalVariableTxService;
 import ai.metaheuristic.ai.exceptions.BreakFromLambdaException;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.GraftExpander;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
@@ -122,10 +123,26 @@ public class TaskProducingService {
 
     /**
      */
+    // DSL v2 (025 Phase 6.3b) - fail-fast expander for callers that do not yet support an authored
+    // in-band graft sub-process; the 6-arg overload passes this, the 7-arg overload takes a real one.
+    private static final GraftExpander GRAFT_NOT_SUPPORTED = (ecId, node, target) -> {
+        throw new IllegalStateException("375.130 in-band graft node '" + node.processCode + "' (group '"
+                + (node.graft == null ? "?" : node.graft.groupName) + "') is not supported by this internal "
+                + "function yet (025 v1); an authored in-band graft is supported under mh.batch-line-splitter");
+    };
+
     public void createTasksForSubProcesses(
             ExecContextData.GraphAndStates graphAndStates,
             ExecContextApiData.SimpleExecContext simpleExecContext, InternalFunctionData.ExecutionContextData executionContextData,
             String currTaskContextId, Long parentTaskId, List<Long> lastIds) {
+        createTasksForSubProcesses(graphAndStates, simpleExecContext, executionContextData,
+                currTaskContextId, parentTaskId, lastIds, GRAFT_NOT_SUPPORTED);
+    }
+
+    public void createTasksForSubProcesses(
+            ExecContextData.GraphAndStates graphAndStates,
+            ExecContextApiData.SimpleExecContext simpleExecContext, InternalFunctionData.ExecutionContextData executionContextData,
+            String currTaskContextId, Long parentTaskId, List<Long> lastIds, GraftExpander graftExpander) {
         TxUtils.checkTxExists();
         ExecContextGraphSyncService.checkWriteLockPresent(simpleExecContext.execContextGraphId);
         ExecContextTaskStateSyncService.checkWriteLockPresent(simpleExecContext.execContextTaskStateId);
@@ -159,6 +176,16 @@ public class TaskProducingService {
             final ExecContextParamsYaml.Process p = execContextParamsYaml.findProcess(subProcess.process);
             if (p==null) {
                 throw new BreakFromLambdaException("375.080 Process '" + subProcess.process + "' wasn't found");
+            }
+
+            if (p.graft != null) {
+                // DSL v2 in-band graft node: expand via the expander (which routes to attachGroupInBand*
+                // under the locks/tx we already hold) instead of producing a task. The grafted line
+                // self-wires (head parented on the target, tail into the shared terminal via line
+                // isolation), so it does NOT join the outer sequential chain. v1: target = the current
+                // chain parent; 'at' idRef + mid-sequence chaining are follow-ons.
+                graftExpander.expand(simpleExecContext.execContextId, p, parentTaskIds.get(0));
+                continue;
             }
 
             String actualProcessContextId = switch (process.logic) {
@@ -201,7 +228,7 @@ public class TaskProducingService {
             }
             subProcessContextId = subProcess.processContextId;
         }
-        if (process.logic != EnumsApi.SourceCodeSubProcessLogic.and) {
+        if (process.logic != EnumsApi.SourceCodeSubProcessLogic.and && t != null) {
             // Sequential: only the last task connects downstream
             lastIds.add(t.id);
         }

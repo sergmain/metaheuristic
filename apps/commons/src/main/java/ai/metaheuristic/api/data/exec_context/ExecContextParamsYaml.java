@@ -285,6 +285,13 @@ public class ExecContextParamsYaml implements BaseParams {
     public Process findProcess(String processCode) {
         if (processMap==null) {
             processMap = processes.stream().collect(Collectors.toMap(o->o.processCode, o->o, (a, b) -> b, HashMap::new));
+            // DSL v2: a grafted group body process runs as a real task but lives in groups[].body, not in the
+            // main processes list; index it so the grafted task resolves its process at run time (main wins).
+            for (Group g : groups) {
+                for (Process p : g.body) {
+                    processMap.putIfAbsent(p.processCode, p);
+                }
+            }
         }
         return processMap.get(processCode);
     }

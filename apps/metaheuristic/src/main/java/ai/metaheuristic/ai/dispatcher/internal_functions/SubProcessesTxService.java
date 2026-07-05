@@ -37,6 +37,7 @@ import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
+import ai.metaheuristic.ai.dispatcher.exec_context_graph.GraftExpander;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +62,7 @@ import java.util.stream.Collectors;
 public class SubProcessesTxService {
 
     private final InternalFunctionService internalFunctionService;
+    private final GraftExpander graftExpander;
     private final TaskProducingService taskProducingService;
     private final ExecContextGraphService execContextGraphService;
     private final TaskRepository taskRepository;
@@ -175,7 +177,7 @@ public class SubProcessesTxService {
             }
 
             taskProducingService.createTasksForSubProcesses(
-                graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds);
+                graphAndStates, simpleExecContext, executionContextData, currTaskContextId, taskId, lastIds, graftExpander);
 
             execContextGraphService.createEdges(graphAndStates.graph(), lastIds, filteredDescendants);
 
