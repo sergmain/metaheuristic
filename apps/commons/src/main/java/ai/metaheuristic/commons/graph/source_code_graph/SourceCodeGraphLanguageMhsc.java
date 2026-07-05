@@ -262,9 +262,10 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                     parents = processForLoop(poc.forLoop(), groupRootCtx, parents);
                 } else if (poc.templateCall() != null) {
                     parents = processTemplateCall(poc.templateCall(), groupRootCtx, parents);
+                } else if (poc.graftDecl() != null) {
+                    // recursive in-band graft inside a group body (the when-bounded recursion case)
+                    rejectInBandGraft(poc.graftDecl());
                 }
-                // poc.graftDecl() (in-band graft / recursion) is expanded at instantiation (batch 6.3),
-                // not at group-definition compile time - it is not a body process.
             }
 
             List<ExecContextParamsYaml.Process> bodyProcesses =
@@ -470,6 +471,8 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                     // Nested sub-process block - create a synthetic nop? No, just recurse directly.
                     // Actually this shouldn't happen in current grammar usage.
                     throw new SourceCodeGraphException("564.300 Nested sub-process blocks not directly supported");
+                } else if (poc.graftDecl() != null) {
+                    rejectInBandGraft(poc.graftDecl());
                 }
 
                 if (logic == EnumsApi.SourceCodeSubProcessLogic.and) {
@@ -523,6 +526,8 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                         currentParents = processForLoop(poc.forLoop(), internalContextId, currentParents);
                     } else if (poc.templateCall() != null) {
                         currentParents = processTemplateCall(poc.templateCall(), internalContextId, currentParents);
+                    } else if (poc.graftDecl() != null) {
+                        rejectInBandGraft(poc.graftDecl());
                     }
                 }
             }
@@ -580,6 +585,8 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                     currentParents = processForLoop(poc.forLoop(), internalContextId, currentParents);
                 } else if (poc.templateCall() != null) {
                     currentParents = processTemplateCall(poc.templateCall(), internalContextId, currentParents);
+                } else if (poc.graftDecl() != null) {
+                    rejectInBandGraft(poc.graftDecl());
                 }
             }
 
@@ -605,6 +612,17 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                 return new ExecContextParamsYaml.FunctionDefinition(
                         resolveIdRef(ctx.idRef()), null, EnumsApi.FunctionExecContext.external, EnumsApi.FunctionRefType.code);
             }
+        }
+
+        // In-band graft (DSL v2): an authored `graft <group> ...` inside a pipeline or group body. Its
+        // dispatcher-native expansion (expand the named group here via attachGroup - NO mh.attach-group
+        // task) is 025 Phase 6.3 and depends on the graft-node IR-representation decision. Until that lands
+        // a fail-fast keeps an authored in-band graft from being SILENTLY DROPPED by the tree walk. The
+        // out-of-band service path (attachGroup onto a live EC) is already available and unaffected.
+        private void rejectInBandGraft(MhSourceCodeParser.GraftDeclContext ctx) {
+            throw new SourceCodeGraphException("564.320 in-band 'graft " + resolveIdRef(ctx.idRef())
+                    + "' is authored but its dispatcher-native expansion is not yet enabled (025 Phase 6.3); "
+                    + "instantiate the group via the out-of-band attachGroup service for now");
         }
 
         private void parseInputs(MhSourceCodeParser.InputsDeclContext ctx, ExecContextParamsYaml.Process process) {

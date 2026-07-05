@@ -1422,6 +1422,28 @@ public class TestSourceCodeGraphLanguageMhsc {
         assertNotNull(findVertex(g.processGraph, "root"), "main process vertex must remain");
     }
 
+
+    @Test
+    public void test_inBandGraft_failsFast_notSilentlyDropped() {
+        // In-band graft parses (Phase 6.1) but its dispatcher-native expansion is Phase 6.3; the
+        // compiler must NOT silently drop it - it fails fast with a clear message (564.320).
+        String src =
+            "source \"test-graft-1.0\" {\n" +
+            "    group grp1 (-> outC) reset-point head {\n" +
+            "        head := internal mh.nop { }\n" +
+            "    }\n" +
+            "    root := internal mh.batch-line-splitter {\n" +
+            "        sequential {\n" +
+            "            graft grp1 driver run-now\n" +
+            "        }\n" +
+            "    }\n" +
+            "}";
+        SourceCodeGraphException ex = assertThrows(SourceCodeGraphException.class,
+                () -> SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, src));
+        assertTrue(ex.getMessage().contains("564.320"), "message: " + ex.getMessage());
+        assertTrue(ex.getMessage().contains("grp1"), "message must name the group: " + ex.getMessage());
+    }
+
     private static SourceCodeGraph parseMhsc(String resourcePath) throws IOException {
         String source = IOUtils.resourceToString(resourcePath, StandardCharsets.UTF_8);
         return SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, source);
