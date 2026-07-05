@@ -137,6 +137,12 @@ public class TaskStateService {
                 }
 */
             }
+            // F2: a SKIPPED child (e.g. a place-now grafted line = a dormant, objection-reopenable line) is a
+            // terminal flow-control decision for THIS run; a completing parent must NOT un-skip it back to INIT.
+            TaskImpl subTaskEntity = taskRepository.findByIdReadOnly(subTask.taskId);
+            if (subTaskEntity != null && EnumsApi.TaskExecState.from(subTaskEntity.execState) == EnumsApi.TaskExecState.SKIPPED) {
+                continue;
+            }
             if (nextState) {
                 log.warn("999.050 setting child task #{} to INIT, parent task #{}", subTask.taskId, event.taskId);
                 TaskSyncService.getWithSyncVoid(subTask.taskId,
