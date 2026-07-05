@@ -53,16 +53,15 @@ import java.util.concurrent.atomic.AtomicReference;
  * fresh isolated {@code taskContextId}, as one event-free write under the EC / Graph / TaskState /
  * VariableState sync locks. This is a server-side dispatcher service (a peer of the graph services),
  * NOT an internal function: the graft targets a possibly-FINISHED EC with no running task to host a
- * function (analysis sec 6). It SUBSUMES RG's hand-minted {@code createTaskForRequirement}; Phase 1
- * is a relocation + generalization of that proven server-side primitive, seal-stripped into MH.
+ * function (analysis sec 6). It SUBSUMES a consumer's former hand-minted per-item task machinery;
+ * Phase 1 is a relocation + generalization of that proven server-side primitive, seal-stripped into MH.
  *
  * <p><b>MH seal.</b> This primitive knows only ExecContext, task, {@code taskContextId}, group, and
- * variable - it has NO awareness of snapshots, requirements, objection, or governance. It takes a
- * plain ExecContext id and a plain target task id; everything snapshot/requirement-shaped stays in
- * the RG consumer (analysis sec 6 seal note; IMMUTABILITY-DESCRIPTION.md sec 2.6).
+ * variable - it has NO awareness of any consumer's domain concepts. It takes a plain ExecContext id
+ * and a plain target task id; everything domain-specific stays in the consumer.
  *
  * <p><b>Scope</b> - the FLAT (sequential) body. PLACE_NOW creates the body PRE_INIT and marks it SKIPPED
- * terminal; RUN_NOW (Phase 2) drives the grafted line forward by reusing the objection reopen-and-run
+ * terminal; RUN_NOW (Phase 2) drives the grafted line forward by reusing the reset-driven reopen-and-run
  * primitive (TaskResetService.resetTaskAndExecContext), which also re-expands an inner dynamic
  * subprocess. The body's processContextId is REBASED onto the
  * target via {@link ContextUtils#getCurrTaskContextIdForSubProcesses} at a fresh sibling line ctx
@@ -88,7 +87,7 @@ public class ExecContextGraftService {
     public enum Driver { PLACE_NOW, RUN_NOW }
 
     /** The body to graft. v0 (Phase 1): {@code groupName==null} => resolve the body as the target
-     *  task's own sub-processes (the {@code createTaskForRequirement} splitter-0 borrow). v1 (Phase 5):
+     *  task's own sub-processes (a splitter-0-style sub-process borrow). v1 (Phase 5):
      *  a named v6 group looked up by name. */
     public record GroupRef(@Nullable String groupName) {
         public static GroupRef fromTargetSubProcesses() {
@@ -101,12 +100,14 @@ public class ExecContextGraftService {
     public record InputBinding(String name, String value) {}
 
     /** A group output pre-materialized WRITE-ONCE at the fresh line ctx (a PLACE_NOW line never runs,
-     *  so any output its downstream needs must pre-exist). The RG consumer passes requirementId/
-     *  storeReqTaskId here; the MH primitive is agnostic to what they mean. */
+     *  so any output its downstream needs must pre-exist). The consumer passes whatever outputs it
+     *  needs here; the MH primitive is agnostic to what they mean. */
     public record OutputMaterialization(String name, byte[] value) {}
 
-    /** The stable re-entry data of one graft: the body-root (HEAD) task id and the fresh line ctx. */
-    public record GraftResult(Long headTaskId, String lineCtxId, List<Long> unwiredTails) {}
+    /** The stable re-entry data of one graft: the body-root (HEAD) task id and the fresh line ctx.
+     *  {@code resetPointTaskId} is the grafted task the caller nominated as its reset entry (by
+     *  function code); null when no reset-point was requested (in-band grafts) or none matched. */
+    public record GraftResult(Long headTaskId, String lineCtxId, List<Long> unwiredTails, @Nullable Long resetPointTaskId) {}
 
     /** The lock-free, tx-free resolve+rebase result shared by the locked public {@link #attachGroup}
      *  path and the in-band dispatcher direct-call path (which already holds the Graph + TaskState
@@ -125,7 +126,7 @@ public class ExecContextGraftService {
     /**
      * Graft {@code groupRef}'s body under {@code targetTaskId} in {@code execContextId}, flat, PLACE_NOW.
      *
-     * @param execContextId the EC to graft into (RG hands a STAGE clone; MH does not know that)
+     * @param execContextId the EC to graft into (the consumer may hand a clone; MH does not know that)
      * @param targetTaskId  the existing task to attach under; also the body source in v0
      * @param groupRef      the body (v0: {@link GroupRef#fromTargetSubProcesses()})
      * @param inputBindings outer values written write-once at the line ctx before task creation
@@ -136,6 +137,20 @@ public class ExecContextGraftService {
     public GraftResult attachGroup(
             Long execContextId, Long targetTaskId, GroupRef groupRef,
             List<InputBinding> inputBindings, List<OutputMaterialization> outputs, Driver driver) {
+        // 025 Phase 7A - back-compat overload: no reset-point nomination.
+        return attachGroup(execContextId, targetTaskId, groupRef, inputBindings, outputs, driver, null);
+    }
+
+    /**
+     * 025 Phase 7A - reset-point-aware overload. {@code resetPointFunctionCode} (opaque to MH) names
+     * the grafted task the caller wants back as its reset entry: after the line is created, the task at
+     * the fresh line ctx whose function code equals it is returned on {@link GraftResult#resetPointTaskId()}.
+     * This is the O8 reset-point handle the graft primitive captures at graft time.
+     */
+    public GraftResult attachGroup(
+            Long execContextId, Long targetTaskId, GroupRef groupRef,
+            List<InputBinding> inputBindings, List<OutputMaterialization> outputs, Driver driver,
+            @Nullable String resetPointFunctionCode) {
 
         TxUtils.checkTxNotExists();
         if (driver == Driver.RUN_NOW && !outputs.isEmpty()) {
@@ -163,7 +178,7 @@ public class ExecContextGraftService {
         Long headTaskId = headRef.get();
 
         // ---- Stage 2: WRITE-ONCE materialize the declared outputs at the line ctx + register
-        //      ExecContextVariableState so an objection clone carries them (no 179.120 / 171.520). ----
+        //      ExecContextVariableState so a later clone carries them (no 179.120 / 171.520). ----
         ExecContextSyncService.getWithSyncVoid(execContextId, () ->
                 ExecContextGraphSyncService.getWithSyncVoid(graphId, () ->
                         ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () ->
@@ -171,8 +186,8 @@ public class ExecContextGraftService {
                                         graftTxService.materializeOutputsTx(sec, headTaskId, lineCtxId, outputs)))));
 
         // ---- Stage 3 (driver). PLACE_NOW marks the grafted line SKIPPED terminal, event-free (no
-        //      dispatcher kick during the graft) - a later objection reopens+runs it. RUN_NOW instead
-        //      DRIVES the line forward by REUSING the objection reopen-and-run primitive
+        //      dispatcher kick during the graft) - a later reset reopens+runs it. RUN_NOW instead
+        //      DRIVES the line forward by REUSING the reset-driven reopen-and-run primitive
         //      (TaskResetService.resetTaskAndExecContext: EC FINISHED->STARTED, head INIT, descendants
         //      PRE_INIT + inner dynamic-subprocess re-expansion, one scheduler kick) - the run half is
         //      reuse, not new code. It acquires its own EC/Graph/TaskState locks (called lock-free here). ----
@@ -186,7 +201,33 @@ public class ExecContextGraftService {
 
         log.info("830.200 attachGroup {}: grafted flat body under target #{} at ctx {} (head=#{}, {} output(s))",
                 driver, targetTaskId, lineCtxId, headTaskId, outputs.size());
-        return new GraftResult(headTaskId, lineCtxId, List.of());
+        Long resetPointTaskId = resolveResetPointTaskId(execContextId, lineCtxId, resetPointFunctionCode);
+        return new GraftResult(headTaskId, lineCtxId, List.of(), resetPointTaskId);
+    }
+
+    /**
+     * 025 Phase 7A - MH-generic reset-point resolver. Scans the grafted line for the task whose
+     * FUNCTION code matches the caller-supplied {@code resetPointFunctionCode} (an opaque code the
+     * consumer nominates; MH attaches no meaning to it). Returns null when no code was requested or
+     * none matched (the caller decides whether absence is an error).
+     */
+    @Nullable
+    private Long resolveResetPointTaskId(Long execContextId, String lineCtxId,
+                                         @Nullable String resetPointFunctionCode) {
+        if (resetPointFunctionCode == null) {
+            return null;
+        }
+        for (TaskImpl t : taskRepository.findByExecContextIdReadOnly(execContextId)) {
+            TaskParamsYaml tpy = t.getTaskParamsYaml();
+            if (!lineCtxId.equals(tpy.task.taskContextId)) {
+                continue;
+            }
+            String fnCode = tpy.task.function != null ? tpy.task.function.code : null;
+            if (resetPointFunctionCode.equals(fnCode)) {
+                return t.id;
+            }
+        }
+        return null;
     }
 
     /**
@@ -208,7 +249,7 @@ public class ExecContextGraftService {
         TaskParamsYaml targetTpy = targetTask.getTaskParamsYaml();
 
         // Resolve the body to graft. v0 (groupName==null): the target task's own sub-processes
-        // (the createTaskForRequirement splitter-0 borrow). v1 / Phase 5 (groupName!=null): the
+        // (a splitter-0-style sub-process borrow). v1 / Phase 5 (groupName!=null): the
         // first-class v6 group looked up by name in the EC's params - same downstream graft, only
         // the body source differs (resolveGroupBody yields the identical ExecutionContextData shape).
         final InternalFunctionData.ExecutionContextData ecd;
@@ -257,7 +298,7 @@ public class ExecContextGraftService {
      * *TxService when the locks are already applied. Lays the named group as a fresh sibling SKIPPED
      * line under {@code targetTaskId} - the identical shape attachGroup(PLACE_NOW) produces, minus the
      * lock/tx wrappers (they are the caller's). Reopen-and-run of the SKIPPED line stays a later
-     * objection/driver concern, so no scheduler kick fires here.
+     * reset/driver concern, so no scheduler kick fires here.
      */
     public GraftResult attachGroupInBandPlaceNow(Long execContextId, Long targetTaskId, String groupName,
                                                  List<InputBinding> inputBindings) {
@@ -268,7 +309,7 @@ public class ExecContextGraftService {
         graftTxService.markLineSkippedTx(s.sec(), head, s.lineCtxId());
         log.info("830.220 in-band graft PLACE_NOW: group '{}' under target #{} at ctx {} (head=#{})",
                 groupName, targetTaskId, s.lineCtxId(), head);
-        return new GraftResult(head, s.lineCtxId(), List.of());
+        return new GraftResult(head, s.lineCtxId(), List.of(), null);
     }
 
     /**
@@ -288,7 +329,7 @@ public class ExecContextGraftService {
                 s.sec(), s.ecd(), targetTaskId, s.lineCtxId(), s.rootProcessCode(), inputBindings, unwiredTails);
         log.info("830.240 in-band graft RUN_NOW: group '{}' under target #{} at ctx {} (head=#{}, live PRE_INIT)",
                 groupName, targetTaskId, s.lineCtxId(), head);
-        return new GraftResult(head, s.lineCtxId(), unwiredTails);
+        return new GraftResult(head, s.lineCtxId(), unwiredTails, null);
     }
 
     /**

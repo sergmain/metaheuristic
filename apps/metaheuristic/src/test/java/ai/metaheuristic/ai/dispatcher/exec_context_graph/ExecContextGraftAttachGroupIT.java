@@ -156,5 +156,39 @@ public class ExecContextGraftAttachGroupIT extends PreparingSourceCode {
                 ec.execContextGraphId, ec.execContextTaskStateId, false);
         assertTrue(assignable.stream().noneMatch(x -> x.taskId.equals(headId)),
                 "grafted SKIPPED head must NOT be assignable for dispatch (event-free graft)");
+
+        // 4d. 025 Phase 7A — the primitive OWNS reset-point capture (O8). The 6-arg graft above
+        //     nominated no reset-point, so its handle is null; a sibling graft that nominates the
+        //     head's function code gets that grafted task back on GraftResult.resetPointTaskId().
+        assertNull(gr.resetPointTaskId(),
+                "no reset-point requested (6-arg overload) -> resetPointTaskId must be null");
+        String headFnCode = null;
+        for (TaskImpl t : taskRepository.findByExecContextIdReadOnly(ecId)) {
+            if (t.id.equals(gr.headTaskId())) {
+                headFnCode = t.getTaskParamsYaml().task.function.code;
+                break;
+            }
+        }
+        assertNotNull(headFnCode, "must resolve the grafted head's function code");
+        ExecContextGraftService.GraftResult gr2 = execContextGraftService.attachGroup(
+                ecId, targetTaskId,
+                ExecContextGraftService.GroupRef.fromTargetSubProcesses(),
+                List.of(), List.of(),
+                ExecContextGraftService.Driver.PLACE_NOW,
+                headFnCode);
+        assertNotNull(gr2.resetPointTaskId(),
+                "primitive must surface a reset-point when function code '" + headFnCode + "' is nominated");
+        TaskImpl rp = null;
+        for (TaskImpl t : taskRepository.findByExecContextIdReadOnly(ecId)) {
+            if (t.id.equals(gr2.resetPointTaskId())) {
+                rp = t;
+                break;
+            }
+        }
+        assertNotNull(rp, "reset-point task id must resolve to a real task");
+        assertEquals(gr2.lineCtxId(), rp.getTaskParamsYaml().task.taskContextId,
+                "reset-point task must sit at the grafted line ctx");
+        assertEquals(headFnCode, rp.getTaskParamsYaml().task.function.code,
+                "reset-point task must have the nominated function code");
     }
 }
