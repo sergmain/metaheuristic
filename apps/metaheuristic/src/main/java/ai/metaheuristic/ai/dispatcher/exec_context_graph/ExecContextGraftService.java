@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskResetService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -109,6 +111,7 @@ public class ExecContextGraftService {
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
     private final InternalFunctionService internalFunctionService;
+    private final ExecContextGraphService execContextGraphService;
     private final ExecContextGraftTxService graftTxService;
     private final TaskResetService taskResetService;
 
@@ -144,18 +147,23 @@ public class ExecContextGraftService {
         }
         TaskParamsYaml targetTpy = targetTask.getTaskParamsYaml();
 
-        // v0: the body is the target's own sub-processes. By-name (v6) resolution is Phase 5.
+        // Resolve the body to graft. v0 (groupName==null): the target task's own sub-processes
+        // (the createTaskForRequirement splitter-0 borrow). v1 / Phase 5 (groupName!=null): the
+        // first-class v6 group looked up by name in the EC's params - same downstream graft, only
+        // the body source differs (resolveGroupBody yields the identical ExecutionContextData shape).
+        final InternalFunctionData.ExecutionContextData ecd;
         if (groupRef.groupName() != null) {
-            throw new IllegalStateException("830.080 by-name group resolution (v6) is Phase 5; v0 resolves the body from the target's sub-processes");
+            ecd = resolveGroupBody(sec, targetTaskId, groupRef.groupName());
         }
-        InternalFunctionData.ExecutionContextData ecd =
-                internalFunctionService.getSubProcesses(sec, targetTpy, targetTaskId);
-        if (ecd.internalFunctionProcessingResult.processing != Enums.InternalFunctionProcessing.ok) {
-            throw new IllegalStateException("830.100 getSubProcesses failed for target #" + targetTaskId + ": "
-                    + ecd.internalFunctionProcessingResult.processing);
-        }
-        if (ecd.subProcesses.isEmpty()) {
-            throw new IllegalStateException("830.120 target #" + targetTaskId + " has no sub-processes to graft");
+        else {
+            ecd = internalFunctionService.getSubProcesses(sec, targetTpy, targetTaskId);
+            if (ecd.internalFunctionProcessingResult.processing != Enums.InternalFunctionProcessing.ok) {
+                throw new IllegalStateException("830.100 getSubProcesses failed for target #" + targetTaskId + ": "
+                        + ecd.internalFunctionProcessingResult.processing);
+            }
+            if (ecd.subProcesses.isEmpty()) {
+                throw new IllegalStateException("830.120 target #" + targetTaskId + " has no sub-processes to graft");
+            }
         }
         // Phase 1 = FLAT / sequential only. 'and' (parallel) and or/race bodies are out of scope (O7).
         // createTasksForSubProcesses places sequential sub-processes AT the line ctx, which the flat
@@ -214,6 +222,70 @@ public class ExecContextGraftService {
         log.info("830.200 attachGroup {}: grafted flat body under target #{} at ctx {} (head=#{}, {} output(s))",
                 driver, targetTaskId, lineCtxId, headTaskId, outputs.size());
         return new GraftResult(headTaskId, lineCtxId);
+    }
+
+    /**
+     * Phase 5 (O5) - by-name resolution of a first-class v6 {@link ExecContextParamsYaml.Group}.
+     * Looks the group up by name in the EC's params and materializes the SAME
+     * {@link InternalFunctionData.ExecutionContextData} shape the v0 by-reference path derives from
+     * {@link InternalFunctionService#getSubProcesses}, so the downstream graft is identical - only
+     * the body SOURCE differs:
+     * <ul>
+     *   <li>the group's body processes become the sub-processes (identity = {@code processCode},
+     *       ctx = {@code internalContextId}) - what {@code createTasksForSubProcesses} reads;</li>
+     *   <li>a synthetic {@code sequential} parent carries the FLAT logic (O7: sequential-only in v2.0);
+     *       it is an anchor for the logic check, never itself created;</li>
+     *   <li>a body-scoped {@link ExecContextParamsYaml} makes the body processes resolvable via
+     *       {@code findProcess} and carries {@code inline} + {@code clean} (the only params fields the
+     *       task-creation path reads);</li>
+     *   <li>{@code descendants} stays the TARGET's live direct children - the body source does not
+     *       change what the target flows into (line isolation into the shared terminal is unchanged).</li>
+     * </ul>
+     */
+    private InternalFunctionData.ExecutionContextData resolveGroupBody(
+            ExecContextApiData.SimpleExecContext sec, Long targetTaskId, String groupName) {
+
+        ExecContextParamsYaml.Group group = null;
+        for (ExecContextParamsYaml.Group g : sec.paramsYaml.groups) {
+            if (groupName.equals(g.name)) {
+                group = g;
+                break;
+            }
+        }
+        if (group == null) {
+            throw new IllegalStateException("830.160 group '" + groupName + "' not found in execContext #" + sec.execContextId);
+        }
+        if (group.body.isEmpty()) {
+            throw new IllegalStateException("830.180 group '" + groupName + "' has an empty body");
+        }
+
+        // Body processes -> sub-process vertices (identity = processCode, ctx = internalContextId).
+        List<ExecContextApiData.ProcessVertex> subProcesses = new ArrayList<>();
+        long vid = 0;
+        for (ExecContextParamsYaml.Process p : group.body) {
+            subProcesses.add(new ExecContextApiData.ProcessVertex(vid++, p.processCode, p.internalContextId));
+        }
+
+        // Synthetic sequential parent - the graft is FLAT/sequential (O7); it is an anchor, never created.
+        ExecContextParamsYaml.Process parent = new ExecContextParamsYaml.Process();
+        parent.processCode = "group:" + groupName;
+        parent.logic = EnumsApi.SourceCodeSubProcessLogic.sequential;
+
+        // Body-scoped params: findProcess must resolve the body processes; inline + clean carry over.
+        ExecContextParamsYaml bodyParams = new ExecContextParamsYaml();
+        bodyParams.clean = sec.paramsYaml.clean;
+        bodyParams.variables.inline.putAll(sec.paramsYaml.variables.inline);
+        bodyParams.processes.addAll(group.body);
+
+        InternalFunctionData.ExecutionContextData ecd = new InternalFunctionData.ExecutionContextData(
+                new InternalFunctionData.InternalFunctionProcessingResult(Enums.InternalFunctionProcessing.ok));
+        ecd.subProcesses = subProcesses;
+        ecd.process = parent;
+        ecd.execContextParamsYaml = bodyParams;
+        // descendants: the TARGET's live direct children (same as v0) - the line's tail wires into the
+        // single shared downstream terminal; body source does not change what the target flows into.
+        ecd.descendants = execContextGraphService.findDirectDescendants(sec.execContextGraphId, targetTaskId);
+        return ecd;
     }
 
     private Set<String> collectCtxIds(Long execContextId) {

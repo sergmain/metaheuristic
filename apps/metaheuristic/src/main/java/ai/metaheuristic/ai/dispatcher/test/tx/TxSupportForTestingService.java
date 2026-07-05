@@ -34,6 +34,7 @@ import ai.metaheuristic.ai.dispatcher.task.TaskResetTxService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableSyncService;
 import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -276,6 +277,27 @@ public class TxSupportForTestingService {
         }
         execContextTaskProducingService.produceAndStartAllTasks(sourceCode, execContext);
         execContext.setState(EnumsApi.ExecContextState.STOPPED.code);
+        execContextCache.save(execContext);
+    }
+
+    /**
+     * Only for testing - inject a first-class v6 group into an EC's stored params so a by-name
+     * {@link ai.metaheuristic.ai.dispatcher.exec_context_graph.ExecContextGraftService#attachGroup}
+     * can resolve it (until the Phase 6 grammar authors groups, tests populate a group here). The
+     * caller MUST hold the EC write lock (this method calls execContextCache.save).
+     */
+    @Transactional
+    public void addGroupToExecContextParams(Long execContextId, ExecContextParamsYaml.Group group) {
+        if (!globals.testing) {
+            throw new IllegalStateException("Only for testing");
+        }
+        ExecContextImpl execContext = execContextCache.findById(execContextId);
+        if (execContext==null) {
+            throw new IllegalStateException("execContext #" + execContextId + " not found");
+        }
+        ExecContextParamsYaml ecpy = execContext.getExecContextParamsYaml();
+        ecpy.groups.add(group);
+        execContext.updateParams(ecpy);
         execContextCache.save(execContext);
     }
 
