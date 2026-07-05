@@ -142,19 +142,31 @@ public class ExecContextGraftInBandRunNowIT extends PreparingSourceCode {
                 preparingSourceCodeService.findTaskState(getExecContextForTest(), grpHead.id),
                 "grpHead must not be ERROR");
 
-        // (d) grpHead runs in its OWN fresh isolated line context (instance-numbered '#'), distinct from the
-        //     wrapper's - the group keeps its own namespace (by-name resolveGroupBody). That isolation is what
-        //     prevents a cross-branch (020) variable leak. NOTE: full deriveParent-to-target nesting for a
-        //     BY-NAME group (needed for bind()-input resolution + reset-subtree identity) is a Phase-5
-        //     resolveGroupBody follow-on; not exercised here (the group declares no inputs).
+        // (d) grpHead NESTS under the target: its taskContextId derives up to the wrapper via
+        //     deriveParentTaskContextId (needed for bind()-input resolution + reset-subtree identity),
+        //     and it still runs in its own fresh instance-numbered line (isolated - no 020 cross-branch leak).
         TaskImpl wrapper = tasks.stream()
                 .filter(t -> "wrapper".equals(t.getTaskParamsYaml().task.processCode))
                 .findFirst().orElseThrow(() -> new AssertionError("wrapper task not found"));
         String grpHeadCtx = grpHead.getTaskParamsYaml().task.taskContextId;
         String wrapperCtx = wrapper.getTaskParamsYaml().task.taskContextId;
-        assertNotEquals(wrapperCtx, grpHeadCtx,
-                "grpHead must run in its own line context, not merged into the wrapper's");
-        assertTrue(grpHeadCtx.contains("#"),
-                "grpHead must be laid at a fresh instance-numbered line ctx, got: " + grpHeadCtx);
+        assertNotEquals(wrapperCtx, grpHeadCtx, "grpHead must run in its own line context");
+        assertTrue(grpHeadCtx.contains("#"), "grpHead at a fresh instance-numbered ctx: " + grpHeadCtx);
+        assertTrue(parentChainContains(grpHeadCtx, wrapperCtx),
+                "grpHead ctx=" + grpHeadCtx + " must derive up to the wrapper ctx " + wrapperCtx
+                        + " (by-name group body rebased under the target)");
+    }
+
+    /** Walk childCtx up via deriveParentTaskContextId (the variable-resolution walk); true iff ancestorCtx appears. */
+    private static boolean parentChainContains(String childCtx, String ancestorCtx) {
+        String c = childCtx;
+        int guard = 0;
+        while (c != null && guard++ < 64) {
+            if (ancestorCtx.equals(c)) {
+                return true;
+            }
+            c = ContextUtils.deriveParentTaskContextId(c);
+        }
+        return false;
     }
 }

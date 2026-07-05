@@ -213,7 +213,8 @@ public class ExecContextGraftService {
         // the body source differs (resolveGroupBody yields the identical ExecutionContextData shape).
         final InternalFunctionData.ExecutionContextData ecd;
         if (groupRef.groupName() != null) {
-            ecd = resolveGroupBody(sec, targetTaskId, groupRef.groupName());
+            ecd = resolveGroupBody(sec, targetTaskId, groupRef.groupName(),
+                    ContextUtils.getProcessContextId(ContextUtils.getLevel(targetTpy.task.taskContextId)));
         }
         else {
             ecd = internalFunctionService.getSubProcesses(sec, targetTpy, targetTaskId);
@@ -308,7 +309,7 @@ public class ExecContextGraftService {
      * </ul>
      */
     private InternalFunctionData.ExecutionContextData resolveGroupBody(
-            ExecContextApiData.SimpleExecContext sec, Long targetTaskId, String groupName) {
+            ExecContextApiData.SimpleExecContext sec, Long targetTaskId, String groupName, String targetProcessCtx) {
 
         ExecContextParamsYaml.Group group = null;
         for (ExecContextParamsYaml.Group g : sec.paramsYaml.groups) {
@@ -328,7 +329,13 @@ public class ExecContextGraftService {
         List<ExecContextApiData.ProcessVertex> subProcesses = new ArrayList<>();
         long vid = 0;
         for (ExecContextParamsYaml.Process p : group.body) {
-            subProcesses.add(new ExecContextApiData.ProcessVertex(vid++, p.processCode, p.internalContextId));
+            // DSL v2: rebase the body's own context namespace UNDER the target's process context so a grafted
+            // by-name group NESTS under the target - deriveParentTaskContextId then walks a grafted task back
+            // to the target (needed for variable resolution + reset-subtree identity). The group root context
+            // is a globally-unique counter value (shared contextIdSupplier), so 'targetProcessCtx,groupCtx' is
+            // a fresh path; multiple grafts of one group differ by the #instance the caller (graftSetup) assigns.
+            String rebasedCtx = targetProcessCtx + ContextUtils.CONTEXT_DIGIT_SEPARATOR + p.internalContextId;
+            subProcesses.add(new ExecContextApiData.ProcessVertex(vid++, p.processCode, rebasedCtx));
         }
 
         // Synthetic sequential parent - the graft is FLAT/sequential (O7); it is an anchor, never created.
