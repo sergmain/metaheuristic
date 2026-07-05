@@ -149,6 +149,8 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                         parseSourceMetas(elem.metasBlock());
                     } else if (elem.templateDecl() != null) {
                         visitTemplateDecl(elem.templateDecl());
+                    } else if (elem.groupDecl() != null) {
+                        visitGroupDecl(elem.groupDecl());
                     } else if (elem.forLoop() != null) {
                         processForLoop(elem.forLoop(), currentInternalContextId, parentProcesses);
                     } else if (elem.processDecl() != null) {
@@ -211,6 +213,72 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
         @Override
         public Void visitTemplateDecl(MhSourceCodeParser.TemplateDeclContext ctx) {
             templates.put(ctx.ID().getText(), ctx);
+            return null;
+        }
+
+        // --- Groups (DSL v2): compile a `group` into a first-class v6 group entry (name + declared
+        //     <-/-> I/O contract + own internalContextId namespace + reset-point ref + body). The body
+        //     is NOT part of the pipeline - a group is instantiated at runtime (attachGroup), so its
+        //     processes are moved OUT of the main graph into the group body. ---
+        public Void visitGroupDecl(MhSourceCodeParser.GroupDeclContext ctx) {
+            String groupName = ctx.ID().getText();
+            ExecContextParamsYaml.Group group = new ExecContextParamsYaml.Group(groupName);
+
+            // Declared I/O contract (O6): the group's <- inputs / -> outputs.
+            if (ctx.groupInputs() != null) {
+                for (MhSourceCodeParser.VarDefContext vd : ctx.groupInputs().varDefList().varDef()) {
+                    group.inputs.add(varDefToExecVariable(vd));
+                }
+            }
+            if (ctx.groupOutputs() != null) {
+                for (MhSourceCodeParser.VarDefContext vd : ctx.groupOutputs().varDefList().varDef()) {
+                    group.outputs.add(varDefToExecVariable(vd));
+                }
+            }
+
+            // The group keeps its OWN internalContextId namespace (reusable); only instantiated tasks
+            // are rebased onto a target (attachGroup / Phase 0). Its body root context is fresh.
+            String groupRootCtx = contextIdSupplier.get();
+            group.internalContextId = groupRootCtx;
+
+            // reset-point <processCode> - a stable re-entry handle into the body, stored as a ref only
+            // (the per-instance task id is captured at graft time).
+            if (ctx.idRef() != null) {
+                group.resetPointProcessCode = resolveIdRef(ctx.idRef());
+            }
+
+            // Build the body by reusing the process/subprocess machinery (full attribute + nesting
+            // fidelity), then MOVE the produced processes out of the main graph into group.body. The
+            // delta is a set-difference on the vertex set so nested subprocess vertices are captured
+            // and removed cleanly.
+            int processesBefore = scg.processes.size();
+            Set<ExecContextApiData.ProcessVertex> vertsBefore = new HashSet<>(scg.processGraph.vertexSet());
+
+            Set<ExecContextApiData.ProcessVertex> parents = new HashSet<>();
+            for (MhSourceCodeParser.ProcessOrControlContext poc : ctx.processOrControl()) {
+                if (poc.processDecl() != null) {
+                    parents = processProcessDecl(poc.processDecl(), groupRootCtx, parents);
+                } else if (poc.forLoop() != null) {
+                    parents = processForLoop(poc.forLoop(), groupRootCtx, parents);
+                } else if (poc.templateCall() != null) {
+                    parents = processTemplateCall(poc.templateCall(), groupRootCtx, parents);
+                }
+                // poc.graftDecl() (in-band graft / recursion) is expanded at instantiation (batch 6.3),
+                // not at group-definition compile time - it is not a body process.
+            }
+
+            List<ExecContextParamsYaml.Process> bodyProcesses =
+                    new ArrayList<>(scg.processes.subList(processesBefore, scg.processes.size()));
+            group.body.addAll(bodyProcesses);
+            scg.processes.subList(processesBefore, scg.processes.size()).clear();
+
+            Set<ExecContextApiData.ProcessVertex> newVerts = new HashSet<>(scg.processGraph.vertexSet());
+            newVerts.removeAll(vertsBefore);
+            for (ExecContextApiData.ProcessVertex v : newVerts) {
+                scg.processGraph.removeVertex(v);
+            }
+
+            scg.groups.add(group);
             return null;
         }
 

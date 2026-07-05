@@ -281,6 +281,7 @@ public class ExecContextCreatorService {
         ExecContextParamsYaml params = new ExecContextParamsYaml();
         params.clean = sourceCodeGraph.clean;
         params.processes.addAll(sourceCodeGraph.processes);
+        params.groups.addAll(sourceCodeGraph.groups);
         params.processesGraph = ExecContextProcessGraphService.asString(sourceCodeGraph.processGraph);
         initVariables(sourceCodeGraph.variables, params.variables);
 

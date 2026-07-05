@@ -53,6 +53,7 @@ public class SourceCodeGraph {
     public List<Map<String, String>> metas = new ArrayList<>();
 
     public final List<ExecContextParamsYaml.Process> processes = new ArrayList<>();
+    public final List<ExecContextParamsYaml.Group> groups = new ArrayList<>();
 
     public final ExecContextParamsYaml.VariableDeclaration variables = new ExecContextParamsYaml.VariableDeclaration();
     public final DirectedAcyclicGraph<ExecContextApiData.ProcessVertex, DefaultEdge> processGraph = new DirectedAcyclicGraph<>(DefaultEdge.class);

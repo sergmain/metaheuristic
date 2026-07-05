@@ -1381,6 +1381,47 @@ public class TestSourceCodeGraphLanguageMhsc {
         return SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.yaml, source);
     }
 
+
+    @Test
+    public void test_groupDecl_compilesToV6GroupEntry_bodyMovedOutOfMainGraph() {
+        String src =
+            "source \"test-group-1.0\" {\n" +
+            "    group grp1 (<- inA, inB) (-> outC) reset-point head {\n" +
+            "        head := internal mh.nop { }\n" +
+            "        tail := internal mh.nop { }\n" +
+            "    }\n" +
+            "    root := internal mh.nop { }\n" +
+            "}";
+        SourceCodeGraph g = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, src);
+
+        // exactly one v6 group entry
+        assertEquals(1, g.groups.size());
+        ExecContextParamsYaml.Group grp = g.groups.get(0);
+        assertEquals("grp1", grp.name);
+
+        // declared I/O contract (<- inA, inB) (-> outC)
+        assertEquals(List.of("inA", "inB"), grp.inputs.stream().map(v -> v.name).toList());
+        assertEquals(List.of("outC"), grp.outputs.stream().map(v -> v.name).toList());
+
+        // reset-point ref + own internalContextId namespace
+        assertEquals("head", grp.resetPointProcessCode);
+        assertNotNull(grp.internalContextId);
+
+        // body carries the group's processes in order, sharing the group's root context
+        assertEquals(List.of("head", "tail"), grp.body.stream().map(p -> p.processCode).toList());
+        assertEquals(grp.internalContextId, grp.body.get(0).internalContextId);
+        assertEquals(grp.internalContextId, grp.body.get(1).internalContextId);
+
+        // the body is NOT part of the main pipeline: moved out of processes + graph
+        List<String> mainCodes = g.processes.stream().map(p -> p.processCode).toList();
+        assertTrue(mainCodes.contains("root"), "main process 'root' must remain in the pipeline");
+        assertFalse(mainCodes.contains("head"), "group body must NOT be in main processes");
+        assertFalse(mainCodes.contains("tail"), "group body must NOT be in main processes");
+        assertNull(findVertex(g.processGraph, "head"), "group body vertex must be removed from the main graph");
+        assertNull(findVertex(g.processGraph, "tail"), "group body vertex must be removed from the main graph");
+        assertNotNull(findVertex(g.processGraph, "root"), "main process vertex must remain");
+    }
+
     private static SourceCodeGraph parseMhsc(String resourcePath) throws IOException {
         String source = IOUtils.resourceToString(resourcePath, StandardCharsets.UTF_8);
         return SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, source);
