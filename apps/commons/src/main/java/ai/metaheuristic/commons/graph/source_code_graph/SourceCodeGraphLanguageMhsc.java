@@ -263,8 +263,9 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                 } else if (poc.templateCall() != null) {
                     parents = processTemplateCall(poc.templateCall(), groupRootCtx, parents);
                 } else if (poc.graftDecl() != null) {
-                    // recursive in-band graft inside a group body (the when-bounded recursion case)
-                    rejectInBandGraft(poc.graftDecl());
+                    // in-band graft inside a group body (recursion): built as a graft node; recursive
+                    // expansion at instantiation is a follow-on (top-level grafts expand first).
+                    parents = buildGraftNode(poc.graftDecl(), groupRootCtx, parents);
                 }
             }
 
@@ -472,7 +473,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                     // Actually this shouldn't happen in current grammar usage.
                     throw new SourceCodeGraphException("564.300 Nested sub-process blocks not directly supported");
                 } else if (poc.graftDecl() != null) {
-                    rejectInBandGraft(poc.graftDecl());
+                    tempLastProcesses = buildGraftNode(poc.graftDecl(), subInternalContextId, tempParents);
                 }
 
                 if (logic == EnumsApi.SourceCodeSubProcessLogic.and) {
@@ -527,7 +528,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                     } else if (poc.templateCall() != null) {
                         currentParents = processTemplateCall(poc.templateCall(), internalContextId, currentParents);
                     } else if (poc.graftDecl() != null) {
-                        rejectInBandGraft(poc.graftDecl());
+                        currentParents = buildGraftNode(poc.graftDecl(), internalContextId, currentParents);
                     }
                 }
             }
@@ -586,7 +587,7 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                 } else if (poc.templateCall() != null) {
                     currentParents = processTemplateCall(poc.templateCall(), internalContextId, currentParents);
                 } else if (poc.graftDecl() != null) {
-                    rejectInBandGraft(poc.graftDecl());
+                    currentParents = buildGraftNode(poc.graftDecl(), internalContextId, currentParents);
                 }
             }
 
@@ -619,10 +620,55 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
         // task) is 025 Phase 6.3 and depends on the graft-node IR-representation decision. Until that lands
         // a fail-fast keeps an authored in-band graft from being SILENTLY DROPPED by the tree walk. The
         // out-of-band service path (attachGroup onto a live EC) is already available and unaffected.
-        private void rejectInBandGraft(MhSourceCodeParser.GraftDeclContext ctx) {
-            throw new SourceCodeGraphException("564.320 in-band 'graft " + resolveIdRef(ctx.idRef())
-                    + "' is authored but its dispatcher-native expansion is not yet enabled (025 Phase 6.3); "
-                    + "instantiate the group via the out-of-band attachGroup service for now");
+        // In-band graft (DSL v2): build a native GROUP-CALL NODE - a graph vertex whose Process carries a
+        // Graft tag (groupName + bindings + driver + at). It is NOT an internal function and NOT an
+        // mh.attach-group task; the dispatcher recognizes p.graft!=null, skips task production for it, and
+        // expands the named group here via attachGroup. The placeholder function is never executed.
+        private Set<ExecContextApiData.ProcessVertex> buildGraftNode(
+                MhSourceCodeParser.GraftDeclContext ctx, String internalContextId,
+                Set<ExecContextApiData.ProcessVertex> parents) {
+            String groupName = resolveIdRef(ctx.idRef());
+            String processCode = "mh.graft." + groupName + "." + currId.incrementAndGet();
+            checkProcessCode(processCode);
+
+            ExecContextParamsYaml.Process process = new ExecContextParamsYaml.Process();
+            process.processCode = processCode;
+            process.processName = processCode;
+            process.internalContextId = internalContextId;
+            // placeholder function - never run; the dispatcher expands this node via attachGroup.
+            process.function = new ExecContextParamsYaml.FunctionDefinition(
+                    "mh.nop", null, EnumsApi.FunctionExecContext.internal, EnumsApi.FunctionRefType.code);
+
+            ExecContextParamsYaml.Graft graft = new ExecContextParamsYaml.Graft(groupName);
+            if (ctx.graftBind() != null) {
+                List<MhSourceCodeParser.IdRefListContext> lists = ctx.graftBind().idRefList();
+                if (!lists.isEmpty()) {
+                    for (MhSourceCodeParser.IdRefContext ir : lists.get(0).idRef()) {
+                        graft.inputBindings.add(resolveIdRef(ir));
+                    }
+                }
+                if (lists.size() > 1) {
+                    for (MhSourceCodeParser.IdRefContext ir : lists.get(1).idRef()) {
+                        graft.outputBindings.add(resolveIdRef(ir));
+                    }
+                }
+            }
+            if (ctx.graftDriver() != null) {
+                // graftDriver: 'driver' ('place-now' | 'run-now') -> the 2nd child is the driver value
+                graft.driver = ctx.graftDriver().getChild(1).getText();
+            }
+            if (ctx.graftAt() != null) {
+                graft.at = resolveIdRef(ctx.graftAt().idRef());
+            }
+            process.graft = graft;
+
+            scg.processes.add(process);
+            ExecContextApiData.ProcessVertex vertex = createProcessVertex(processCode, internalContextId);
+            ExecContextProcessGraphService.addProcessVertexToGraph(scg.processGraph, vertex, parents);
+
+            Set<ExecContextApiData.ProcessVertex> result = new HashSet<>();
+            result.add(vertex);
+            return result;
         }
 
         private void parseInputs(MhSourceCodeParser.InputsDeclContext ctx, ExecContextParamsYaml.Process process) {

@@ -108,6 +108,13 @@ public class ExecContextGraftService {
     /** The stable re-entry data of one graft: the body-root (HEAD) task id and the fresh line ctx. */
     public record GraftResult(Long headTaskId, String lineCtxId) {}
 
+    /** The lock-free, tx-free resolve+rebase result shared by the locked public {@link #attachGroup}
+     *  path and the in-band dispatcher direct-call path (which already holds the Graph + TaskState
+     *  locks and a tx, so it invokes graftTxService directly rather than re-acquiring locks). */
+    public record GraftSetup(ExecContextApiData.SimpleExecContext sec,
+                             InternalFunctionData.ExecutionContextData ecd, String lineCtxId,
+                             String rootProcessCode, Long graphId, Long taskStateId, Long varStateId) {}
+
     private final ExecContextCache execContextCache;
     private final TaskRepository taskRepository;
     private final InternalFunctionService internalFunctionService;
@@ -135,6 +142,59 @@ public class ExecContextGraftService {
             throw new IllegalStateException("830.020 RUN_NOW drives the grafted line, whose tasks produce their own "
                     + "outputs; pass no OutputMaterialization for RUN_NOW (materialization is a PLACE_NOW concern)");
         }
+        GraftSetup s = graftSetup(execContextId, targetTaskId, groupRef);
+        final ExecContextApiData.SimpleExecContext sec = s.sec();
+        final InternalFunctionData.ExecutionContextData ecd = s.ecd();
+        final String lineCtxId = s.lineCtxId();
+        final String rootProcessCode = s.rootProcessCode();
+        final Long graphId = s.graphId();
+        final Long taskStateId = s.taskStateId();
+        final Long varStateId = s.varStateId();
+
+        // ---- Stage 1: CREATE the grafted line PRE_INIT at the fresh isolated ctx; wire the tail ONLY
+        //      into the shared downstream terminal (line isolation). createTasksForSubProcesses leaves
+        //      it PRE_INIT, a state neither the dispatcher nor a test driver advances on its own. ----
+        AtomicReference<Long> headRef = new AtomicReference<>();
+        ExecContextSyncService.getWithSyncVoid(execContextId, () ->
+                ExecContextGraphSyncService.getWithSyncVoid(graphId, () ->
+                        ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () ->
+                                headRef.set(graftTxService.createGroupTasksTx(
+                                        sec, ecd, targetTaskId, lineCtxId, rootProcessCode, inputBindings)))));
+        Long headTaskId = headRef.get();
+
+        // ---- Stage 2: WRITE-ONCE materialize the declared outputs at the line ctx + register
+        //      ExecContextVariableState so an objection clone carries them (no 179.120 / 171.520). ----
+        ExecContextSyncService.getWithSyncVoid(execContextId, () ->
+                ExecContextGraphSyncService.getWithSyncVoid(graphId, () ->
+                        ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () ->
+                                ExecContextVariableStateSyncService.getWithSyncVoid(varStateId, () ->
+                                        graftTxService.materializeOutputsTx(sec, headTaskId, lineCtxId, outputs)))));
+
+        // ---- Stage 3 (driver). PLACE_NOW marks the grafted line SKIPPED terminal, event-free (no
+        //      dispatcher kick during the graft) - a later objection reopens+runs it. RUN_NOW instead
+        //      DRIVES the line forward by REUSING the objection reopen-and-run primitive
+        //      (TaskResetService.resetTaskAndExecContext: EC FINISHED->STARTED, head INIT, descendants
+        //      PRE_INIT + inner dynamic-subprocess re-expansion, one scheduler kick) - the run half is
+        //      reuse, not new code. It acquires its own EC/Graph/TaskState locks (called lock-free here). ----
+        switch (driver) {
+            case PLACE_NOW -> ExecContextSyncService.getWithSyncVoid(execContextId, () ->
+                    ExecContextGraphSyncService.getWithSyncVoid(graphId, () ->
+                            ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () ->
+                                    graftTxService.markLineSkippedTx(sec, headTaskId, lineCtxId))));
+            case RUN_NOW -> taskResetService.resetTaskAndExecContext(execContextId, headTaskId);
+        }
+
+        log.info("830.200 attachGroup {}: grafted flat body under target #{} at ctx {} (head=#{}, {} output(s))",
+                driver, targetTaskId, lineCtxId, headTaskId, outputs.size());
+        return new GraftResult(headTaskId, lineCtxId);
+    }
+
+    /**
+     * Resolve the body to graft and compute the fresh isolated line ctx - the lock-free, tx-free
+     * setup shared by {@link #attachGroup} and the in-band dispatcher path. Reads only (findById /
+     * findByIdReadOnly), so it is valid both tx-free (public attachGroup) and inside a tx (in-band).
+     */
+    public GraftSetup graftSetup(Long execContextId, Long targetTaskId, GroupRef groupRef) {
         ExecContextImpl ec = execContextCache.findById(execContextId, true);
         if (ec == null) {
             throw new IllegalStateException("830.040 ExecContext #" + execContextId + " not found");
@@ -185,43 +245,29 @@ public class ExecContextGraftService {
         final Long graphId = ec.execContextGraphId;
         final Long taskStateId = ec.execContextTaskStateId;
         final Long varStateId = ec.execContextVariableStateId;
+        return new GraftSetup(sec, ecd, lineCtxId, rootProcessCode, graphId, taskStateId, varStateId);
+    }
 
-        // ---- Stage 1: CREATE the grafted line PRE_INIT at the fresh isolated ctx; wire the tail ONLY
-        //      into the shared downstream terminal (line isolation). createTasksForSubProcesses leaves
-        //      it PRE_INIT, a state neither the dispatcher nor a test driver advances on its own. ----
-        AtomicReference<Long> headRef = new AtomicReference<>();
-        ExecContextSyncService.getWithSyncVoid(execContextId, () ->
-                ExecContextGraphSyncService.getWithSyncVoid(graphId, () ->
-                        ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () ->
-                                headRef.set(graftTxService.createGroupTasksTx(
-                                        sec, ecd, targetTaskId, lineCtxId, rootProcessCode, inputBindings)))));
-        Long headTaskId = headRef.get();
-
-        // ---- Stage 2: WRITE-ONCE materialize the declared outputs at the line ctx + register
-        //      ExecContextVariableState so an objection clone carries them (no 179.120 / 171.520). ----
-        ExecContextSyncService.getWithSyncVoid(execContextId, () ->
-                ExecContextGraphSyncService.getWithSyncVoid(graphId, () ->
-                        ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () ->
-                                ExecContextVariableStateSyncService.getWithSyncVoid(varStateId, () ->
-                                        graftTxService.materializeOutputsTx(sec, headTaskId, lineCtxId, outputs)))));
-
-        // ---- Stage 3 (driver). PLACE_NOW marks the grafted line SKIPPED terminal, event-free (no
-        //      dispatcher kick during the graft) - a later objection reopens+runs it. RUN_NOW instead
-        //      DRIVES the line forward by REUSING the objection reopen-and-run primitive
-        //      (TaskResetService.resetTaskAndExecContext: EC FINISHED->STARTED, head INIT, descendants
-        //      PRE_INIT + inner dynamic-subprocess re-expansion, one scheduler kick) - the run half is
-        //      reuse, not new code. It acquires its own EC/Graph/TaskState locks (called lock-free here). ----
-        switch (driver) {
-            case PLACE_NOW -> ExecContextSyncService.getWithSyncVoid(execContextId, () ->
-                    ExecContextGraphSyncService.getWithSyncVoid(graphId, () ->
-                            ExecContextTaskStateSyncService.getWithSyncVoidForCreation(taskStateId, () ->
-                                    graftTxService.markLineSkippedTx(sec, headTaskId, lineCtxId))));
-            case RUN_NOW -> taskResetService.resetTaskAndExecContext(execContextId, headTaskId);
-        }
-
-        log.info("830.200 attachGroup {}: grafted flat body under target #{} at ctx {} (head=#{}, {} output(s))",
-                driver, targetTaskId, lineCtxId, headTaskId, outputs.size());
-        return new GraftResult(headTaskId, lineCtxId);
+    /**
+     * In-band graft expansion (PLACE_NOW) for the dispatcher's task-production path. The caller MUST
+     * already hold the Graph + TaskState write locks and be inside a tx (the createTasksForSubProcesses
+     * contract); this invokes graftTxService DIRECTLY (no getWithSync wrapper) so the writes join the
+     * caller's tx under the locks already present - the same pattern a splitter uses to call its own
+     * *TxService when the locks are already applied. Lays the named group as a fresh sibling SKIPPED
+     * line under {@code targetTaskId} - the identical shape attachGroup(PLACE_NOW) produces, minus the
+     * lock/tx wrappers (they are the caller's). Reopen-and-run of the SKIPPED line stays a later
+     * objection/driver concern, so no scheduler kick fires here.
+     */
+    public GraftResult attachGroupInBandPlaceNow(Long execContextId, Long targetTaskId, String groupName,
+                                                 List<InputBinding> inputBindings) {
+        TxUtils.checkTxExists();
+        GraftSetup s = graftSetup(execContextId, targetTaskId, new GroupRef(groupName));
+        Long head = graftTxService.createGroupTasksTx(
+                s.sec(), s.ecd(), targetTaskId, s.lineCtxId(), s.rootProcessCode(), inputBindings);
+        graftTxService.markLineSkippedTx(s.sec(), head, s.lineCtxId());
+        log.info("830.220 in-band graft PLACE_NOW: group '{}' under target #{} at ctx {} (head=#{})",
+                groupName, targetTaskId, s.lineCtxId(), head);
+        return new GraftResult(head, s.lineCtxId());
     }
 
     /**

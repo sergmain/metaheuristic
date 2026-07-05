@@ -1424,9 +1424,11 @@ public class TestSourceCodeGraphLanguageMhsc {
 
 
     @Test
-    public void test_inBandGraft_failsFast_notSilentlyDropped() {
+    public void test_inBandGraft_compilesToGraftNode_notSilentlyDropped() {
         // In-band graft parses (Phase 6.1) but its dispatcher-native expansion is Phase 6.3; the
         // compiler must NOT silently drop it - it fails fast with a clear message (564.320).
+        // 6.3b SUPERSEDES the fail-fast above: the in-band graft now compiles to a native graft
+        // node (a Graft-tagged Process). This test characterizes that compiled representation.
         String src =
             "source \"test-graft-1.0\" {\n" +
             "    group grp1 (-> outC) reset-point head {\n" +
@@ -1438,10 +1440,25 @@ public class TestSourceCodeGraphLanguageMhsc {
             "        }\n" +
             "    }\n" +
             "}";
-        SourceCodeGraphException ex = assertThrows(SourceCodeGraphException.class,
-                () -> SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, src));
-        assertTrue(ex.getMessage().contains("564.320"), "message: " + ex.getMessage());
-        assertTrue(ex.getMessage().contains("grp1"), "message must name the group: " + ex.getMessage());
+        SourceCodeGraph g = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, src);
+
+        // exactly one process carries a non-null graft tag (the native group-call node)
+        List<ExecContextParamsYaml.Process> graftNodes =
+                g.processes.stream().filter(p -> p.graft != null).toList();
+        assertEquals(1, graftNodes.size(), "exactly one in-band graft node expected");
+        ExecContextParamsYaml.Process graftNode = graftNodes.get(0);
+        assertEquals("grp1", graftNode.graft.groupName);
+        assertEquals("run-now", graftNode.graft.driver);
+        assertTrue(graftNode.graft.inputBindings.isEmpty(), "no bind() clause -> no input bindings");
+        assertTrue(graftNode.graft.outputBindings.isEmpty(), "no bind() clause -> no output bindings");
+        assertTrue(graftNode.processCode.startsWith("mh.graft.grp1."),
+                "graft node processCode: " + graftNode.processCode);
+        // the graft node is a real vertex in the main process graph (not dropped)
+        assertNotNull(findVertex(g.processGraph, graftNode.processCode),
+                "graft node must be a vertex in the main graph");
+        // the group body itself stays OUT of the main pipeline (moved into g.groups by visitGroupDecl)
+        assertEquals(1, g.groups.size());
+        assertEquals("grp1", g.groups.get(0).name);
     }
 
     private static SourceCodeGraph parseMhsc(String resourcePath) throws IOException {
