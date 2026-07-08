@@ -1461,6 +1461,53 @@ public class TestSourceCodeGraphLanguageMhsc {
         assertEquals("grp1", g.groups.get(0).name);
     }
 
+    @Test
+    public void test_selfReferentialGraft_recursionCompilesToGroupBodyGraftNode() {
+        // 032 Phase 0 - load-bearing assumption of the group migration: a group body may `graft` ITSELF.
+        // This is a NAME reference resolved at runtime (attachGroup), NOT a compile-time expansion, so it
+        // must compile with no infinite recursion: the recursive graft becomes a Graft-tagged node INSIDE
+        // the group body (moved out of the main graph with the rest of the body by visitGroupDecl).
+        String src =
+            "source \"test-recursion-1.0\" {\n" +
+            "    group rung (<- reqJson) reset-point head {\n" +
+            "        head := internal mh.nop { }\n" +
+            "        split := internal mh.batch-line-splitter {\n" +
+            "            sequential {\n" +
+            "                graft rung driver run-now\n" +
+            "            }\n" +
+            "        }\n" +
+            "    }\n" +
+            "    root := internal mh.batch-line-splitter {\n" +
+            "        sequential {\n" +
+            "            graft rung driver run-now\n" +
+            "        }\n" +
+            "    }\n" +
+            "}";
+        SourceCodeGraph g = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, src);
+
+        assertEquals(1, g.groups.size());
+        ExecContextParamsYaml.Group rung = g.groups.get(0);
+        assertEquals("rung", rung.name);
+        assertEquals("head", rung.resetPointProcessCode);
+
+        // the SELF graft lives INSIDE the group body and references the group's OWN name (recursion)
+        List<ExecContextParamsYaml.Process> bodyGrafts =
+                rung.body.stream().filter(p -> p.graft != null).toList();
+        assertEquals(1, bodyGrafts.size(), "the recursive self-graft must be a node inside the group body");
+        assertEquals("rung", bodyGrafts.get(0).graft.groupName, "body graft references the group itself");
+        assertEquals("run-now", bodyGrafts.get(0).graft.driver);
+
+        // the outer entry graft stays in the main pipeline and also references the group
+        List<ExecContextParamsYaml.Process> mainGrafts =
+                g.processes.stream().filter(p -> p.graft != null).toList();
+        assertEquals(1, mainGrafts.size(), "one entry graft in the main pipeline");
+        assertEquals("rung", mainGrafts.get(0).graft.groupName);
+
+        // the group body (head + split + self-graft) is NOT in the main pipeline
+        List<String> mainCodes = g.processes.stream().map(p -> p.processCode).toList();
+        assertFalse(mainCodes.contains("head"), "group body must not leak into the main pipeline");
+    }
+
     private static SourceCodeGraph parseMhsc(String resourcePath) throws IOException {
         String source = IOUtils.resourceToString(resourcePath, StandardCharsets.UTF_8);
         return SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, source);
