@@ -46,12 +46,11 @@ public class InBandGraftExpander implements GraftExpander {
         if (graft == null) {
             throw new IllegalStateException("832.020 expand() called on a non-graft process " + graftNode.processCode);
         }
-        // v1: bind()-driven input materialization is not yet wired; surface it rather than silently drop.
-        if (!graft.inputBindings.isEmpty()) {
-            log.warn("832.030 graft '{}' declares bind() inputs {} - in-band input materialization is a follow-on (025 v1); ignored",
-                    graft.groupName, graft.inputBindings);
-        }
-        final List<ExecContextGraftService.InputBinding> inputs = List.of();
+        // 032 - materialize the authored bind() inputs write-once at the grafted line ctx (positional
+        // map onto the group's declared formals, value read at the target ctx). Enables a rebind such as
+        // the per-level depth counter (enclosing nextDepth -> child formal depth).
+        final List<ExecContextGraftService.InputBinding> inputs =
+                execContextGraftService.resolveInBandInputBindings(execContextId, targetTaskId, graft);
         final String driver = graft.driver == null ? "place-now" : graft.driver;
         return switch (driver) {
             // run-now: a live line - if it could not terminate at graft time, its unwired tail(s) rejoin

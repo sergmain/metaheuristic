@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.dispatcher.exec_context_graph;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.dispatcher.beans.ExecContextImpl;
 import ai.metaheuristic.ai.dispatcher.beans.TaskImpl;
+import ai.metaheuristic.ai.dispatcher.beans.Variable;
 import ai.metaheuristic.ai.dispatcher.data.InternalFunctionData;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextCache;
 import ai.metaheuristic.ai.dispatcher.exec_context.ExecContextSyncService;
@@ -27,6 +28,7 @@ import ai.metaheuristic.ai.dispatcher.exec_context_variable_state.ExecContextVar
 import ai.metaheuristic.ai.dispatcher.internal_functions.InternalFunctionService;
 import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.dispatcher.task.TaskResetService;
+import ai.metaheuristic.ai.dispatcher.variable.VariableTxService;
 import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
@@ -122,6 +124,7 @@ public class ExecContextGraftService {
     private final ExecContextGraphService execContextGraphService;
     private final ExecContextGraftTxService graftTxService;
     private final TaskResetService taskResetService;
+    private final VariableTxService variableTxService;
 
     /**
      * Graft {@code groupRef}'s body under {@code targetTaskId} in {@code execContextId}, flat, PLACE_NOW.
@@ -300,6 +303,59 @@ public class ExecContextGraftService {
      * lock/tx wrappers (they are the caller's). Reopen-and-run of the SKIPPED line stays a later
      * reset/driver concern, so no scheduler kick fires here.
      */
+    /**
+     * 032 - resolve an in-band graft's authored {@code bind(...)} input names into write-once
+     * {@link InputBinding}s. The i-th authored enclosing var name ({@code graft.inputBindings}) is mapped
+     * POSITIONALLY onto the group's i-th declared formal input ({@code group.inputs}); its current value is
+     * read at the TARGET task's context (ancestry walk). The pair (formalName, value) is later written
+     * write-once at the fresh line ctx by {@code createGroupTasksTx}, so the grafted body resolves its formal
+     * inputs by name - INCLUDING a rebind (formal name != enclosing name), which is what a per-level depth
+     * counter needs (bind {@code nextDepth} onto the child's {@code depth}).
+     */
+    public List<InputBinding> resolveInBandInputBindings(
+            Long execContextId, Long targetTaskId, ExecContextParamsYaml.Graft graft) {
+        if (graft.inputBindings.isEmpty()) {
+            return List.of();
+        }
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        if (ec == null) {
+            throw new IllegalStateException("01.830.300 execContext #" + execContextId + " not found");
+        }
+        ExecContextParamsYaml.Group group = null;
+        for (ExecContextParamsYaml.Group g : ec.getExecContextParamsYaml().groups) {
+            if (graft.groupName.equals(g.name)) {
+                group = g;
+                break;
+            }
+        }
+        if (group == null) {
+            throw new IllegalStateException("01.830.310 group '" + graft.groupName + "' not found in execContext #" + execContextId);
+        }
+        if (graft.inputBindings.size() > group.inputs.size()) {
+            throw new IllegalStateException("01.830.320 graft '" + graft.groupName + "' binds " + graft.inputBindings.size()
+                    + " input(s) but group declares only " + group.inputs.size());
+        }
+        TaskImpl targetTask = taskRepository.findById(targetTaskId).orElse(null);
+        if (targetTask == null) {
+            throw new IllegalStateException("01.830.330 target task #" + targetTaskId + " not found");
+        }
+        final String targetTaskContextId = targetTask.getTaskParamsYaml().task.taskContextId;
+
+        List<InputBinding> result = new ArrayList<>();
+        for (int i = 0; i < graft.inputBindings.size(); i++) {
+            final String enclosingName = graft.inputBindings.get(i);
+            final String formalName = group.inputs.get(i).name;
+            Variable v = variableTxService.findVariableInAllInternalContexts(enclosingName, targetTaskContextId, execContextId);
+            if (v == null) {
+                throw new IllegalStateException("01.830.340 graft '" + graft.groupName + "' bind input '" + enclosingName
+                        + "' not resolvable at ctx " + targetTaskContextId + " of execContext #" + execContextId);
+            }
+            final String value = variableTxService.getVariableDataAsString(v.id);
+            result.add(new InputBinding(formalName, value));
+        }
+        return result;
+    }
+
     public GraftResult attachGroupInBandPlaceNow(Long execContextId, Long targetTaskId, String groupName,
                                                  List<InputBinding> inputBindings) {
         TxUtils.checkTxExists();
