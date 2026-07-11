@@ -41,7 +41,7 @@ public class InBandGraftExpander implements GraftExpander {
     private final ExecContextGraftService execContextGraftService;
 
     @Override
-    public List<Long> expand(Long execContextId, ExecContextParamsYaml.Process graftNode, Long targetTaskId) {
+    public List<Long> expand(Long execContextId, ExecContextParamsYaml.Process graftNode, Long targetTaskId, String currTaskContextId) {
         final ExecContextParamsYaml.Graft graft = graftNode.graft;
         if (graft == null) {
             throw new IllegalStateException("832.020 expand() called on a non-graft process " + graftNode.processCode);
@@ -50,7 +50,7 @@ public class InBandGraftExpander implements GraftExpander {
         // map onto the group's declared formals, value read at the target ctx). Enables a rebind such as
         // the per-level depth counter (enclosing nextDepth -> child formal depth).
         final List<ExecContextGraftService.InputBinding> inputs =
-                execContextGraftService.resolveInBandInputBindings(execContextId, targetTaskId, graft);
+                execContextGraftService.resolveInBandInputBindings(execContextId, currTaskContextId, graft);
         final String driver = graft.driver == null ? "place-now" : graft.driver;
         return switch (driver) {
             // run-now: a live line - if it could not terminate at graft time, its unwired tail(s) rejoin

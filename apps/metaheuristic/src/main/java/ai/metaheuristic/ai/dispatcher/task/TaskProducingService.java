@@ -126,7 +126,7 @@ public class TaskProducingService {
      */
     // DSL v2 (025 Phase 6.3b) - fail-fast expander for callers that do not yet support an authored
     // in-band graft sub-process; the 6-arg overload passes this, the 7-arg overload takes a real one.
-    private static final GraftExpander GRAFT_NOT_SUPPORTED = (ecId, node, target) -> {
+    private static final GraftExpander GRAFT_NOT_SUPPORTED = (ecId, node, target, ctxId) -> {
         throw new IllegalStateException("375.130 in-band graft node '" + node.processCode + "' (group '"
                 + (node.graft == null ? "?" : node.graft.groupName) + "') is not supported by this internal "
                 + "function yet (025 v1); an authored in-band graft is supported under mh.batch-line-splitter");
@@ -204,7 +204,7 @@ public class TaskProducingService {
                 // F1: a run-now graft that cannot terminate at graft time (its target's downstream is
                 // wired later, e.g. the chain tail) returns its unwired tail(s) to rejoin the enclosing
                 // block's downstream via lastIds; empty for a self-terminating or place-now (SKIPPED) line.
-                List<Long> graftTails = graftExpander.expand(simpleExecContext.execContextId, p, graftTarget);
+                List<Long> graftTails = graftExpander.expand(simpleExecContext.execContextId, p, graftTarget, currTaskContextId);
                 lastIds.addAll(graftTails);
                 continue;
             }

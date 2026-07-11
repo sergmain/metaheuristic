@@ -313,7 +313,7 @@ public class ExecContextGraftService {
      * counter needs (bind {@code nextDepth} onto the child's {@code depth}).
      */
     public List<InputBinding> resolveInBandInputBindings(
-            Long execContextId, Long targetTaskId, ExecContextParamsYaml.Graft graft) {
+            Long execContextId, String resolutionTaskContextId, ExecContextParamsYaml.Graft graft) {
         if (graft.inputBindings.isEmpty()) {
             return List.of();
         }
@@ -335,20 +335,14 @@ public class ExecContextGraftService {
             throw new IllegalStateException("01.830.320 graft '" + graft.groupName + "' binds " + graft.inputBindings.size()
                     + " input(s) but group declares only " + group.inputs.size());
         }
-        TaskImpl targetTask = taskRepository.findById(targetTaskId).orElse(null);
-        if (targetTask == null) {
-            throw new IllegalStateException("01.830.330 target task #" + targetTaskId + " not found");
-        }
-        final String targetTaskContextId = targetTask.getTaskParamsYaml().task.taskContextId;
-
         List<InputBinding> result = new ArrayList<>();
         for (int i = 0; i < graft.inputBindings.size(); i++) {
             final String enclosingName = graft.inputBindings.get(i);
             final String formalName = group.inputs.get(i).name;
-            Variable v = variableTxService.findVariableInAllInternalContexts(enclosingName, targetTaskContextId, execContextId);
+            Variable v = variableTxService.findVariableInAllInternalContexts(enclosingName, resolutionTaskContextId, execContextId);
             if (v == null) {
                 throw new IllegalStateException("01.830.340 graft '" + graft.groupName + "' bind input '" + enclosingName
-                        + "' not resolvable at ctx " + targetTaskContextId + " of execContext #" + execContextId);
+                        + "' not resolvable at ctx " + resolutionTaskContextId + " of execContext #" + execContextId);
             }
             final String value = variableTxService.getVariableDataAsString(v.id);
             result.add(new InputBinding(formalName, value));
