@@ -126,7 +126,14 @@ public class ExecContextUtils {
         for (ExecContextApiData.VariableState info : raw.variableStates) {
             map.computeIfAbsent(info.taskContextId, (o) -> new ArrayList<>()).add(info);
         }
-        r.header = raw.processCodes.stream().map(o -> new ExecContextApiData.ColumnHeader(o, o)).toArray(ExecContextApiData.ColumnHeader[]::new);
+        // DSL v2: recursive-group body processes are grafted at runtime and are absent from the static
+        // process topology (raw.processCodes). Append any task processCode not already present so every
+        // grafted task gets a column; otherwise the legacy findOrAssignCol path throws "(idx==-1)".
+        LinkedHashSet<String> effectiveProcessCodes = new LinkedHashSet<>(raw.processCodes);
+        raw.taskStates.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .forEach(e -> effectiveProcessCodes.add(e.getValue().processCode()));
+        r.header = effectiveProcessCodes.stream().map(o -> new ExecContextApiData.ColumnHeader(o, o)).toArray(ExecContextApiData.ColumnHeader[]::new);
 
         // Option 5d: when columnNames is present, override header with dynamic column names
         if (raw.columnNames!=null && !raw.columnNames.isEmpty()) {

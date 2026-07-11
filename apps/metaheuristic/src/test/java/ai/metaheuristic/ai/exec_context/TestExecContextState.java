@@ -445,4 +445,63 @@ class TestExecContextState {
         assertFalse(r.lines[0].cells[3].empty);
         assertEquals(4L, r.lines[0].cells[3].taskId);
     }
+
+    // DSL v2 (EC #26): a recursive-group body process is grafted at runtime and is absent from the
+    // static process topology (raw.processCodes). Characterization of current behavior on the legacy
+    // path (no columnNames): getExecContextStateResult throws IllegalStateException "(idx==-1)" from
+    // findOrAssignCol because the grafted task's processCode has no column.
+    @Test
+    public void test_graftedRecursiveGroupProcess_missingFromTopology() {
+        List<ExecContextApiData.VariableState> infos = List.of(
+                new ExecContextApiData.VariableState(1L, 1111L, 1001L, "1", "mhdg-rg.init", "f-init", null, null),
+                new ExecContextApiData.VariableState(2L, 1111L, 1001L, "1,2", "mhdg-rg.store-req", "f-store", null, null),
+                new ExecContextApiData.VariableState(3L, 1111L, 1001L, "1,2,3|1#0", "mhdg-rg.store-req-r", "f-store", null, null),
+                new ExecContextApiData.VariableState(4L, 1111L, 1001L, "1", "mh.finish", "mh.finish", null, null)
+        );
+
+        Map<Long, TaskApiData.TaskState> states = Map.of(
+                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1", "mhdg-rg.init"),
+                2L, new TaskApiData.TaskState(2L, TaskExecState.OK.value, 0L, false, "1,2", "mhdg-rg.store-req"),
+                3L, new TaskApiData.TaskState(3L, TaskExecState.OK.value, 0L, false, "1,2,3|1#0", "mhdg-rg.store-req-r"),
+                4L, new TaskApiData.TaskState(4L, TaskExecState.OK.value, 0L, false, "1", "mh.finish")
+        );
+
+        // static process topology does NOT contain the grafted recursive-group body process "mhdg-rg.store-req-r"
+        List<String> processCodes = List.of("mhdg-rg.init", "mhdg-rg.store-req", "mh.finish");
+        ExecContextApiData.RawExecContextStateResult raw = new ExecContextApiData.RawExecContextStateResult(
+                1L, infos, processCodes, SourceCodeType.common, "mhdg-rg", true, states);
+
+        // legacy path (no columnNames) — must NOT throw; the grafted process code gets an appended
+        // column after the topology columns, and its task is placed there.
+        ExecContextApiData.ExecContextStateResult r = ExecContextUtils.getExecContextStateResult(26L, raw, true);
+
+        assertNotNull(r);
+        // 3 topology columns + 1 appended grafted column
+        assertEquals(4, r.header.length);
+        assertEquals("mhdg-rg.init", r.header[0].process);
+        assertEquals("mhdg-rg.store-req", r.header[1].process);
+        assertEquals("mh.finish", r.header[2].process);
+        assertEquals("mhdg-rg.store-req-r", r.header[3].process);
+
+        // contexts: "1", "1,2", "1,2,3|1#0"
+        assertEquals(3, r.lines.length);
+        assertEquals("1", r.lines[0].context);
+        assertEquals("1,2", r.lines[1].context);
+        assertEquals("1,2,3|1#0", r.lines[2].context);
+
+        // row "1": init at col 0, finish at col 2
+        assertFalse(r.lines[0].cells[0].empty);
+        assertEquals(1L, r.lines[0].cells[0].taskId);
+        assertFalse(r.lines[0].cells[2].empty);
+        assertEquals(4L, r.lines[0].cells[2].taskId);
+
+        // row "1,2": store-req at col 1
+        assertFalse(r.lines[1].cells[1].empty);
+        assertEquals(2L, r.lines[1].cells[1].taskId);
+
+        // row "1,2,3|1#0": grafted store-req-r at the appended col 3
+        assertFalse(r.lines[2].cells[3].empty);
+        assertEquals(3L, r.lines[2].cells[3].taskId);
+        assertEquals(TaskExecState.OK.toString(), r.lines[2].cells[3].state);
+    }
 }
