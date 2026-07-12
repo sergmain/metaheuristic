@@ -21,6 +21,9 @@ import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DirectedAcyclicGraph;
+import org.jgrapht.traverse.TopologicalOrderIterator;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -129,10 +132,47 @@ public class ExecContextUtils {
         // DSL v2: recursive-group body processes are grafted at runtime and are absent from the static
         // process topology (raw.processCodes). Append any task processCode not already present so every
         // grafted task gets a column; otherwise the legacy findOrAssignCol path throws "(idx==-1)".
-        LinkedHashSet<String> effectiveProcessCodes = new LinkedHashSet<>(raw.processCodes);
-        raw.taskStates.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .forEach(e -> effectiveProcessCodes.add(e.getValue().processCode()));
+        LinkedHashSet<String> effectiveProcessCodes = new LinkedHashSet<>();
+        if (raw.taskEdges != null && !raw.taskEdges.isEmpty()) {
+            // When the real runtime task DAG is available, order the columns by that DAG so grafted
+            // (DSL v2 recursive-group) body processes land at their true topological position and
+            // terminal processes (e.g. mh.finish) end up last — instead of being appended after the
+            // static topology by task-id, which used to push terminal columns into the middle.
+            DirectedAcyclicGraph<Long, DefaultEdge> taskGraph = new DirectedAcyclicGraph<>(DefaultEdge.class);
+            for (Long taskId : raw.taskStates.keySet()) {
+                taskGraph.addVertex(taskId);
+            }
+            for (long[] edge : raw.taskEdges) {
+                taskGraph.addVertex(edge[0]);
+                taskGraph.addVertex(edge[1]);
+                if (edge[0] != edge[1]) {
+                    try {
+                        taskGraph.addEdge(edge[0], edge[1]);
+                    }
+                    catch (IllegalArgumentException e) {
+                        // defensive: skip any edge that would introduce a cycle. The ExecContext task
+                        // graph is a DAG, so this is not expected for real data.
+                    }
+                }
+            }
+            // tie-break by task-id so incomparable (parallel) columns keep a stable, execution-like order
+            TopologicalOrderIterator<Long, DefaultEdge> it = new TopologicalOrderIterator<>(taskGraph, Comparator.naturalOrder());
+            it.forEachRemaining(taskId -> {
+                TaskApiData.TaskState st = raw.taskStates.get(taskId);
+                if (st != null) {
+                    effectiveProcessCodes.add(st.processCode());
+                }
+            });
+            // keep any static process code that never produced a task (e.g. an un-entered branch),
+            // preserving its static relative order, so no column is lost
+            effectiveProcessCodes.addAll(raw.processCodes);
+        }
+        else {
+            effectiveProcessCodes.addAll(raw.processCodes);
+            raw.taskStates.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .forEach(e -> effectiveProcessCodes.add(e.getValue().processCode()));
+        }
         r.header = effectiveProcessCodes.stream().map(o -> new ExecContextApiData.ColumnHeader(o, o)).toArray(ExecContextApiData.ColumnHeader[]::new);
 
         // Option 5d: when columnNames is present, override header with dynamic column names

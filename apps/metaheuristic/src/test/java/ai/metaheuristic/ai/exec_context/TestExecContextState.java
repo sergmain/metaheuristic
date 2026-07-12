@@ -504,4 +504,43 @@ class TestExecContextState {
         assertEquals(3L, r.lines[2].cells[3].taskId);
         assertEquals(TaskExecState.OK.toString(), r.lines[2].cells[3].state);
     }
+    // Green-1 (Characterization Test): documents CURRENT behavior when the real task DAG
+    // (taskEdges) IS available. Today getExecContextStateResult ignores taskEdges for header
+    // ordering, so the grafted recursive-group body process is appended AFTER mh.finish and
+    // mh.finish is NOT the last column. This is the wrong order observed for ExecContext #26.
+    @Test
+    public void test_graftedRecursiveGroupProcess_orderedByTaskDag() {
+        List<ExecContextApiData.VariableState> infos = List.of(
+                new ExecContextApiData.VariableState(1L, 1111L, 1001L, "1", "mhdg-rg.init", "f-init", null, null),
+                new ExecContextApiData.VariableState(2L, 1111L, 1001L, "1,2", "mhdg-rg.store-req", "f-store", null, null),
+                new ExecContextApiData.VariableState(3L, 1111L, 1001L, "1,2,3|1#0", "mhdg-rg.store-req-r", "f-store", null, null),
+                new ExecContextApiData.VariableState(4L, 1111L, 1001L, "1", "mh.finish", "mh.finish", null, null)
+        );
+
+        Map<Long, TaskApiData.TaskState> states = Map.of(
+                1L, new TaskApiData.TaskState(1L, TaskExecState.OK.value, 0L, false, "1", "mhdg-rg.init"),
+                2L, new TaskApiData.TaskState(2L, TaskExecState.OK.value, 0L, false, "1,2", "mhdg-rg.store-req"),
+                3L, new TaskApiData.TaskState(3L, TaskExecState.OK.value, 0L, false, "1,2,3|1#0", "mhdg-rg.store-req-r"),
+                4L, new TaskApiData.TaskState(4L, TaskExecState.OK.value, 0L, false, "1", "mh.finish")
+        );
+
+        // static process topology does NOT contain the grafted recursive-group body process "mhdg-rg.store-req-r"
+        List<String> processCodes = List.of("mhdg-rg.init", "mhdg-rg.store-req", "mh.finish");
+        ExecContextApiData.RawExecContextStateResult raw = new ExecContextApiData.RawExecContextStateResult(
+                1L, infos, processCodes, SourceCodeType.common, "mhdg-rg", true, states);
+
+        // real runtime task DAG: init(1) -> store-req(2) -> store-req-r(3) -> mh.finish(4)
+        raw.taskEdges = List.of(new long[]{1L, 2L}, new long[]{2L, 3L}, new long[]{3L, 4L});
+
+        ExecContextApiData.ExecContextStateResult r = ExecContextUtils.getExecContextStateResult(26L, raw, true);
+
+        assertNotNull(r);
+        assertEquals(4, r.header.length);
+
+        // DESIRED order: columns follow the runtime task DAG; grafted store-req-r comes before mh.finish; mh.finish is LAST
+        assertEquals("mhdg-rg.init", r.header[0].process);
+        assertEquals("mhdg-rg.store-req", r.header[1].process);
+        assertEquals("mhdg-rg.store-req-r", r.header[2].process);
+        assertEquals("mh.finish", r.header[3].process);
+    }
 }
