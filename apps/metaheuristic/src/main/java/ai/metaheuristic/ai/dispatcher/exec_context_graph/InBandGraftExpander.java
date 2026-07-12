@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -50,7 +51,15 @@ public class InBandGraftExpander implements GraftExpander {
         // map onto the group's declared formals, value read at the target ctx). Enables a rebind such as
         // the per-level depth counter (enclosing nextDepth -> child formal depth).
         final List<ExecContextGraftService.InputBinding> inputs =
-                execContextGraftService.resolveInBandInputBindings(execContextId, currTaskContextId, graft);
+                new ArrayList<>(execContextGraftService.resolveInBandInputBindings(execContextId, currTaskContextId, graft));
+        // when the enclosing target is a dynamic batch-line-splitter, carry its per-line output variable
+        // into the isolated grafted line ctx (v1 parity) so a head consuming it by name (e.g. reqJson)
+        // resolves it instead of failing with 179.120
+        final ExecContextGraftService.InputBinding enclosingSplitterBinding =
+                execContextGraftService.resolveEnclosingDynamicSplitterBinding(execContextId, targetTaskId, currTaskContextId);
+        if (enclosingSplitterBinding != null && inputs.stream().noneMatch(b -> b.name().equals(enclosingSplitterBinding.name()))) {
+            inputs.add(enclosingSplitterBinding);
+        }
         final String driver = graft.driver == null ? "place-now" : graft.driver;
         return switch (driver) {
             // run-now: a live line - if it could not terminate at graft time, its unwired tail(s) rejoin

@@ -33,6 +33,8 @@ import ai.metaheuristic.ai.utils.TxUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
 import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
+import ai.metaheuristic.commons.S;
+import ai.metaheuristic.commons.utils.MetaUtils;
 import ai.metaheuristic.commons.utils.ContextUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYaml;
 import lombok.RequiredArgsConstructor;
@@ -348,6 +350,45 @@ public class ExecContextGraftService {
             result.add(new InputBinding(formalName, value));
         }
         return result;
+    }
+
+    /**
+     * When an in-band graft is driven by a dynamic {@code mh.batch-line-splitter} (its target task), the
+     * splitter has already materialized its per-line output variable at the CURRENT (per-line) task ctx.
+     * Because the graft lays its body at a fresh ISOLATED sibling line ctx, a sibling cannot resolve that
+     * per-line variable up the ancestry - so a grafted head that consumes it by name (e.g. mhdg-rg
+     * store-req reading {@code reqJson}) would fail with 179.120. This reproduces, for the graft path, the
+     * v1 binding that direct sub-process expansion did implicitly: read the splitter's per-line output at
+     * {@code currTaskContextId} and carry it as a write-once {@link InputBinding} into the grafted line ctx.
+     * Returns null when the target is not a dynamic splitter (no {@code output-variable} meta) or the
+     * per-line variable is not (yet) resolvable.
+     */
+    @Nullable
+    public InputBinding resolveEnclosingDynamicSplitterBinding(Long execContextId, Long targetTaskId, String currTaskContextId) {
+        TaskImpl targetTask = taskRepository.findByIdReadOnly(targetTaskId);
+        if (targetTask == null) {
+            return null;
+        }
+        final String targetProcessCode = targetTask.getTaskParamsYaml().task.processCode;
+        ExecContextImpl ec = execContextCache.findById(execContextId);
+        if (ec == null) {
+            return null;
+        }
+        ExecContextParamsYaml.Process p = ec.getExecContextParamsYaml().findProcess(targetProcessCode);
+        if (p == null) {
+            return null;
+        }
+        // a dynamic batch-line-splitter declares its per-line output via the 'output-variable' meta
+        final String outputVar = MetaUtils.getValue(p.metas, "output-variable");
+        if (S.b(outputVar)) {
+            return null;
+        }
+        Variable v = variableTxService.findVariableInAllInternalContexts(outputVar, currTaskContextId, execContextId);
+        if (v == null) {
+            return null;
+        }
+        final String value = variableTxService.getVariableDataAsString(v.id);
+        return new InputBinding(outputVar, value);
     }
 
     public GraftResult attachGroupInBandPlaceNow(Long execContextId, Long targetTaskId, String groupName,
