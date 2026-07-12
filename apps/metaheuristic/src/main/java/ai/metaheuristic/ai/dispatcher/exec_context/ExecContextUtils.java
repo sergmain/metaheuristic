@@ -134,10 +134,19 @@ public class ExecContextUtils {
         // grafted task gets a column; otherwise the legacy findOrAssignCol path throws "(idx==-1)".
         LinkedHashSet<String> effectiveProcessCodes = new LinkedHashSet<>();
         if (raw.taskEdges != null && !raw.taskEdges.isEmpty()) {
-            // When the real runtime task DAG is available, order the columns by that DAG so grafted
-            // (DSL v2 recursive-group) body processes land at their true topological position and
-            // terminal processes (e.g. mh.finish) end up last — instead of being appended after the
-            // static topology by task-id, which used to push terminal columns into the middle.
+            // The static topology (raw.processCodes) is authoritative for the relative order of static
+            // processes — it already places control processes (e.g. the graft node, mh.finish) and
+            // mhdg-rg.post-processing correctly. Only runtime-grafted (DSL v2 recursive-group) body
+            // processes are missing from it; each is inserted right after its nearest static ancestor
+            // in the real task DAG, instead of being appended after the terminal columns. This keeps a
+            // static leaf like a graft node in its authored position rather than floating it to the end.
+            List<String> staticOrder = raw.processCodes;
+            Set<String> staticSet = new HashSet<>(staticOrder);
+            Map<String, Integer> staticIndex = new HashMap<>();
+            for (int i = 0; i < staticOrder.size(); i++) {
+                staticIndex.put(staticOrder.get(i), i);
+            }
+
             DirectedAcyclicGraph<Long, DefaultEdge> taskGraph = new DirectedAcyclicGraph<>(DefaultEdge.class);
             for (Long taskId : raw.taskStates.keySet()) {
                 taskGraph.addVertex(taskId);
@@ -155,17 +164,62 @@ public class ExecContextUtils {
                     }
                 }
             }
-            // tie-break by task-id so incomparable (parallel) columns keep a stable, execution-like order
+
+            // Walk tasks in topological order (tie-break by task-id). For each task track the nearest
+            // static process on the path to it; for a grafted process, record the static anchor it
+            // should follow (first occurrence wins). Grafted siblings keep topological discovery order.
+            Map<Long, String> nearestStatic = new HashMap<>();
+            LinkedHashMap<String, String> graftedAnchor = new LinkedHashMap<>();
             TopologicalOrderIterator<Long, DefaultEdge> it = new TopologicalOrderIterator<>(taskGraph, Comparator.naturalOrder());
-            it.forEachRemaining(taskId -> {
+            while (it.hasNext()) {
+                Long taskId = it.next();
                 TaskApiData.TaskState st = raw.taskStates.get(taskId);
-                if (st != null) {
-                    effectiveProcessCodes.add(st.processCode());
+                if (st == null) {
+                    continue;
                 }
-            });
-            // keep any static process code that never produced a task (e.g. an un-entered branch),
-            // preserving its static relative order, so no column is lost
-            effectiveProcessCodes.addAll(raw.processCodes);
+                String proc = st.processCode();
+                if (staticSet.contains(proc)) {
+                    nearestStatic.put(taskId, proc);
+                }
+                else {
+                    // inherit the nearest static ancestor from predecessors — the one latest in static order
+                    String anchor = null;
+                    int bestIdx = -1;
+                    for (DefaultEdge in : taskGraph.incomingEdgesOf(taskId)) {
+                        String ps = nearestStatic.get(taskGraph.getEdgeSource(in));
+                        if (ps != null) {
+                            int idx = staticIndex.getOrDefault(ps, -1);
+                            if (idx > bestIdx) {
+                                bestIdx = idx;
+                                anchor = ps;
+                            }
+                        }
+                    }
+                    nearestStatic.put(taskId, anchor);
+                    if (anchor != null) {
+                        graftedAnchor.putIfAbsent(proc, anchor);
+                    }
+                }
+            }
+
+            // group grafted processes by their static anchor, preserving topological discovery order
+            LinkedHashMap<String, List<String>> byAnchor = new LinkedHashMap<>();
+            for (Map.Entry<String, String> e : graftedAnchor.entrySet()) {
+                byAnchor.computeIfAbsent(e.getValue(), k -> new ArrayList<>()).add(e.getKey());
+            }
+            // emit the static backbone, inserting grafted processes right after their anchor
+            for (String staticProc : staticOrder) {
+                effectiveProcessCodes.add(staticProc);
+                List<String> inserted = byAnchor.get(staticProc);
+                if (inserted != null) {
+                    effectiveProcessCodes.addAll(inserted);
+                }
+            }
+            // safety net: ensure every task process code has a column (grafted with no static ancestor,
+            // or a static process that produced no task) — append any still missing by task-id order
+            raw.taskStates.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .forEach(e -> effectiveProcessCodes.add(e.getValue().processCode()));
         }
         else {
             effectiveProcessCodes.addAll(raw.processCodes);

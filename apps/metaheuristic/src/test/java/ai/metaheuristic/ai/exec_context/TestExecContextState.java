@@ -543,4 +543,103 @@ class TestExecContextState {
         assertEquals("mhdg-rg.store-req-r", r.header[2].process);
         assertEquals("mh.finish", r.header[3].process);
     }
+    // Green-1 (Characterization Test): a STATIC process that produced no task (a graft point such as
+    // mh.graft.req-rung, present in the static topology but never materialised as a task) is currently
+    // shoved to the very END of the header by the "append leftover static processes last" step. This is
+    // the wrong order observed for ExecContext #30 where mh.graft.req-rung ended up as the last column.
+    @Test
+    public void test_staticGraftPointWithoutTask_keepsStaticPosition() {
+        List<ExecContextApiData.VariableState> infos = List.of(
+                new ExecContextApiData.VariableState(10L, 1111L, 1001L, "1", "p-open", "f-open", null, null),
+                new ExecContextApiData.VariableState(11L, 1111L, 1001L, "1", "p-batch", "f-batch", null, null),
+                new ExecContextApiData.VariableState(12L, 1111L, 1001L, "1", "p-post", "f-post", null, null),
+                new ExecContextApiData.VariableState(13L, 1111L, 1001L, "1", "mh.finish", "mh.finish", null, null),
+                new ExecContextApiData.VariableState(20L, 1111L, 1001L, "1,2#1", "p-store", "f-store", null, null),
+                new ExecContextApiData.VariableState(21L, 1111L, 1001L, "1,2#1", "p-set", "f-set", null, null)
+        );
+
+        Map<Long, TaskApiData.TaskState> states = Map.of(
+                10L, new TaskApiData.TaskState(10L, TaskExecState.OK.value, 0L, false, "1", "p-open"),
+                11L, new TaskApiData.TaskState(11L, TaskExecState.OK.value, 0L, false, "1", "p-batch"),
+                12L, new TaskApiData.TaskState(12L, TaskExecState.OK.value, 0L, false, "1", "p-post"),
+                13L, new TaskApiData.TaskState(13L, TaskExecState.OK.value, 0L, false, "1", "mh.finish"),
+                20L, new TaskApiData.TaskState(20L, TaskExecState.OK.value, 0L, false, "1,2#1", "p-store"),
+                21L, new TaskApiData.TaskState(21L, TaskExecState.OK.value, 0L, false, "1,2#1", "p-set")
+        );
+
+        // static topology contains the graft point "mh.graft.req-rung" (between p-batch and p-post) which
+        // produces NO task; the grafted body p-store/p-set are absent from the static topology
+        List<String> processCodes = List.of("p-open", "p-batch", "mh.graft.req-rung", "p-post", "mh.finish");
+        ExecContextApiData.RawExecContextStateResult raw = new ExecContextApiData.RawExecContextStateResult(
+                1L, infos, processCodes, SourceCodeType.common, "mhdg-rg", true, states);
+
+        // real runtime task DAG (mirrors EC #30):
+        //   p-open(10) -> p-batch(11) -> p-post(12) -> mh.finish(13)
+        //   p-batch(11) -> p-store(20) -> p-set(21) -> p-post(12)
+        raw.taskEdges = List.of(
+                new long[]{10L, 11L}, new long[]{11L, 12L}, new long[]{12L, 13L},
+                new long[]{11L, 20L}, new long[]{20L, 21L}, new long[]{21L, 12L});
+
+        ExecContextApiData.ExecContextStateResult r = ExecContextUtils.getExecContextStateResult(30L, raw, true);
+
+        assertNotNull(r);
+        assertEquals(7, r.header.length);
+
+        // CURRENT (buggy) order: the task-less static graft point is appended LAST
+        // DESIRED order: the task-less static graft point keeps its authored static position
+        // (immediately before p-post, its static successor) instead of being appended last
+        assertEquals("p-open", r.header[0].process);
+        assertEquals("p-batch", r.header[1].process);
+        assertEquals("p-store", r.header[2].process);
+        assertEquals("p-set", r.header[3].process);
+        assertEquals("mh.graft.req-rung", r.header[4].process);
+        assertEquals("p-post", r.header[5].process);
+        assertEquals("mh.finish", r.header[6].process);
+    }
+    // Green-1 (Characterization Test): a STATIC control process (here the graft node
+    // "mh.graft.req-rung-0.50", present in raw.processCodes) that is a high-task-id LEAF in the real
+    // task DAG. The current task-DAG topological ordering floats that leaf to the very end, AFTER
+    // mh.finish — the wrong position reported for ExecContext #26. The static topology already places
+    // it correctly (between batch-lin and post-processing), so ordering must not move it.
+    @Test
+    public void test_staticGraftLeafProcess_notPlacedLast() {
+        List<ExecContextApiData.VariableState> infos = List.of(
+                new ExecContextApiData.VariableState(10L, 1111L, 1001L, "1", "mhdg-rg.batch-lin", "f", null, null),
+                new ExecContextApiData.VariableState(11L, 1111L, 1001L, "1,2", "mhdg-rg.store-req-r", "f", null, null),
+                new ExecContextApiData.VariableState(12L, 1111L, 1001L, "1", "mhdg-rg.post-processing", "f", null, null),
+                new ExecContextApiData.VariableState(13L, 1111L, 1001L, "1", "mh.finish", "mh.finish", null, null),
+                new ExecContextApiData.VariableState(99L, 1111L, 1001L, "1", "mh.graft.req-rung-0.50", "mh.graft", null, null)
+        );
+
+        Map<Long, TaskApiData.TaskState> states = Map.of(
+                10L, new TaskApiData.TaskState(10L, TaskExecState.OK.value, 0L, false, "1", "mhdg-rg.batch-lin"),
+                11L, new TaskApiData.TaskState(11L, TaskExecState.OK.value, 0L, false, "1,2", "mhdg-rg.store-req-r"),
+                12L, new TaskApiData.TaskState(12L, TaskExecState.OK.value, 0L, false, "1", "mhdg-rg.post-processing"),
+                13L, new TaskApiData.TaskState(13L, TaskExecState.OK.value, 0L, false, "1", "mh.finish"),
+                99L, new TaskApiData.TaskState(99L, TaskExecState.OK.value, 0L, false, "1", "mh.graft.req-rung-0.50")
+        );
+
+        // static topology contains graft (authored between batch-lin and post-processing); the grafted
+        // recursive-group body process "mhdg-rg.store-req-r" is absent from it
+        List<String> processCodes = List.of("mhdg-rg.batch-lin", "mh.graft.req-rung-0.50", "mhdg-rg.post-processing", "mh.finish");
+        ExecContextApiData.RawExecContextStateResult raw = new ExecContextApiData.RawExecContextStateResult(
+                1L, infos, processCodes, SourceCodeType.common, "mhdg-rg", true, states);
+
+        // real task DAG: batch-lin(10) -> store-req-r(11) -> post(12) -> finish(13);
+        // graft(99) is a high-task-id LEAF hanging off batch-lin (marks the graft point, no descendants)
+        raw.taskEdges = List.of(new long[]{10L, 11L}, new long[]{11L, 12L}, new long[]{12L, 13L}, new long[]{10L, 99L});
+
+        ExecContextApiData.ExecContextStateResult r = ExecContextUtils.getExecContextStateResult(26L, raw, true);
+
+        assertNotNull(r);
+        assertEquals(5, r.header.length);
+
+        // DESIRED order: static topology keeps graft in its authored position (grafted store-req-r
+        // is inserted after its nearest static ancestor batch-lin); graft is NOT last, mh.finish is last
+        assertEquals("mhdg-rg.batch-lin", r.header[0].process);
+        assertEquals("mhdg-rg.store-req-r", r.header[1].process);
+        assertEquals("mh.graft.req-rung-0.50", r.header[2].process);
+        assertEquals("mhdg-rg.post-processing", r.header[3].process);
+        assertEquals("mh.finish", r.header[4].process);
+    }
 }
