@@ -163,19 +163,10 @@ public class TaskFinishingTxService {
 
         if (S.b(task.functionExecResults)) {
             TaskParamsYaml tpy = task.getTaskParamsYaml();
-            FunctionApiData.FunctionExec functionExec = new FunctionApiData.FunctionExec();
-            if (targetState== EnumsApi.TaskExecState.ERROR) {
-                if (functionExec.exec==null) {
-                    if (console==null) {
-                        log.error("319.240 (console==null)");
-                    }
-                    functionExec.exec = new FunctionApiData.SystemExecResult(
-                            tpy.task.function.code, false, -10001, console==null ? "<no console output>" : console);
-                }
+            if (targetState==EnumsApi.TaskExecState.ERROR && console==null) {
+                log.error("319.240 (console==null)");
             }
-            else {
-                functionExec.exec = new FunctionApiData.SystemExecResult(tpy.task.function.code, false, -10001, console);
-            }
+            FunctionApiData.FunctionExec functionExec = TaskFinishingUtils.buildErrorFunctionExec(tpy.task.function.code, console, targetState);
             task.setFunctionExecResults(FunctionExecUtils.toString(functionExec));
         }
         task.setResultReceived(1);

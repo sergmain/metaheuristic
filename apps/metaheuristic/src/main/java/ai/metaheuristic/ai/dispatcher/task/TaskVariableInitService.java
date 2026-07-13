@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.dispatcher.repositories.TaskRepository;
 import ai.metaheuristic.ai.exceptions.TaskCreationException;
 import ai.metaheuristic.ai.exceptions.VariableImmutabilityException;
 import ai.metaheuristic.commons.exceptions.CommonRollbackException;
+import ai.metaheuristic.commons.S;
 import ai.metaheuristic.commons.utils.threads.MultiTenantedQueue;
 import ai.metaheuristic.api.EnumsApi;
 import jakarta.annotation.PreDestroy;
@@ -84,10 +85,11 @@ public class TaskVariableInitService {
         } catch (CommonRollbackException e) {
             //
         } catch (VariableImmutabilityException e) {
-            log.error("179.300 Variable immutability violation for task #{}: {}", event.taskId, e.getMessage());
+            final String es = S.f("179.300 Variable immutability violation for task #%s: %s", event.taskId, e.getMessage());
+            log.error(es);
             try {
                 TaskSyncService.getWithSyncVoid(event.taskId,
-                        () -> taskFinishingTxService.finishWithErrorWithTx(event.taskId, e.getMessage(), EnumsApi.TaskExecState.ERROR));
+                        () -> taskFinishingTxService.finishWithErrorWithTx(event.taskId, es, EnumsApi.TaskExecState.ERROR));
             } catch (Throwable th) {
                 log.error("179.310 Failed to set task #{} to ERROR state after immutability violation", event.taskId, th);
             }
