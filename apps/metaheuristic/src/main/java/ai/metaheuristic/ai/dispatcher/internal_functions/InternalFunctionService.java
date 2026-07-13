@@ -98,7 +98,7 @@ public class InternalFunctionService {
      *  the running task's process context. Direct child = a body process whose internalContextId extends
      *  the parent's by exactly one segment. Rebase: runtimeProcessCtx + (childCtx stripped of the parent's
      *  compiled ctx prefix), e.g. parent compiled '3' running at '1,3' + child '3,7' -> '1,3,7'. */
-    private static List<ExecContextApiData.ProcessVertex> groupBodySubProcesses(
+    static List<ExecContextApiData.ProcessVertex> groupBodySubProcesses(
             ExecContextParamsYaml py, ExecContextParamsYaml.Process process, String runningTaskContextId) {
         final String parentCompiledCtx = process.internalContextId;
         final String runtimeProcessCtx = ContextUtils.getProcessContextId(ContextUtils.getLevel(runningTaskContextId));
@@ -106,18 +106,38 @@ public class InternalFunctionService {
         final List<ExecContextApiData.ProcessVertex> result = new ArrayList<>();
         long vid = 0;
         for (ExecContextParamsYaml.Group g : py.groups) {
-            for (ExecContextParamsYaml.Process q : g.body) {
-                final String qCtx = q.internalContextId;
+            // Locate THIS process in the group body by processCode. The body is stored in DFS pre-order
+            // (compilation order - a process is appended before its own sub-block is compiled), so a
+            // process's whole subtree is the CONTIGUOUS run of entries that immediately follows it and
+            // stays strictly under its ctx. Scoping to that subtree is what keeps a sequential wrapper
+            // from ALSO picking up its sequential SIBLINGS' children: the compiler lays sequential
+            // siblings at one and the same internalContextId, so their respective children would all
+            // match the same 'parentCtx,' prefix - a plain prefix scan cannot tell them apart.
+            int idx = -1;
+            for (int i = 0; i < g.body.size(); i++) {
+                if (g.body.get(i).processCode.equals(process.processCode)) {
+                    idx = i;
+                    break;
+                }
+            }
+            if (idx == -1) {
+                continue;
+            }
+            for (int i = idx + 1; i < g.body.size(); i++) {
+                final String qCtx = g.body.get(i).internalContextId;
                 if (!qCtx.startsWith(childPrefix)) {
-                    continue;
+                    // left THIS process's subtree (pre-order): a sibling (same ctx) or a shallower ctx
+                    // ends the scan. Deeper descendants of a child keep the prefix and do not break here.
+                    break;
                 }
                 // direct child only: the remainder after the parent prefix has no further separator
                 if (qCtx.indexOf(ContextUtils.CONTEXT_DIGIT_SEPARATOR, childPrefix.length()) != -1) {
                     continue;
                 }
                 final String rebasedCtx = runtimeProcessCtx + qCtx.substring(parentCompiledCtx.length());
-                result.add(new ExecContextApiData.ProcessVertex(vid++, q.processCode, rebasedCtx));
+                result.add(new ExecContextApiData.ProcessVertex(vid++, g.body.get(i).processCode, rebasedCtx));
             }
+            return result;
         }
         return result;
     }
