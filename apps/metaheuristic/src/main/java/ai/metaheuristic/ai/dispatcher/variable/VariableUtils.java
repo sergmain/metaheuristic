@@ -132,9 +132,18 @@ public class VariableUtils {
 
             // Check immutability: walk up parent contexts to see if a variable with the same name
             // already exists in an outer context. If it does and variable is not mutable, reject.
+            //
+            // The walk stops at the first dynamic-subprocess instance boundary. A taskContextId that
+            // carries a '#' instance-path was materialized as a fan-out / graft instance, so its
+            // parent belongs to a DIFFERENT runtime instance. Same name + different instance = a
+            // different variable key by construction (splitter fan-out, recursive graft), not a
+            // shadow — so it is NOT an immutability violation (MHSC-DSL-V2-001 §3b-note, §7). Only a
+            // redeclaration WITHIN one instance's lexical scope (no '#' crossed) shadows an
+            // immutable variable and is rejected here.
             if (!Boolean.TRUE.equals(variable.mutable)) {
-                String parentCtxId = VariableUtils.getParentContext(contextId);
-                while (!S.b(parentCtxId)) {
+                String childCtxId = contextId;
+                String parentCtxId = VariableUtils.getParentContext(childCtxId);
+                while (!S.b(parentCtxId) && ContextUtils.getPath(childCtxId) == null) {
                     Long existingInParent = findVariable.find(variable.name, parentCtxId);
                     if (existingInParent != null) {
                         throw new VariableImmutabilityException(
@@ -143,6 +152,7 @@ public class VariableUtils {
                                         variable.name, parentCtxId, contextId),
                                 variable.name, parentCtxId, contextId);
                     }
+                    childCtxId = parentCtxId;
                     parentCtxId = VariableUtils.getParentContext(parentCtxId);
                 }
             }

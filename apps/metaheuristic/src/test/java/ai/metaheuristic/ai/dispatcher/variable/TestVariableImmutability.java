@@ -161,6 +161,50 @@ public class TestVariableImmutability {
     }
 
     /**
+     * Characterization test for the DSL v2 recursive graft (task #1387 failure).
+     *
+     * The recursive group redeclares the SAME output name ("requirementId") at every recursion
+     * level, each in its own fresh dynamic-subprocess instance context. Per the write-once model
+     * (MHSC-DSL-V2-001 §3b-note / §7): same name + different taskContextId = a DIFFERENT key.
+     * Instance isolation is correct by construction — this is recursion, not a shadow.
+     *
+     * Scenario mirrors the real failure:
+     *  - level-0 store-req produces "requirementId" at outer instance "1,2#1"
+     *  - a deep recursion level's store-req produces "requirementId" at
+     *    "1,2,3,6,7,8,9,13|1|0|0|0|0|0#1" — a different instance, reached only by crossing
+     *    '#'/'|' dynamic-subprocess boundaries.
+     *
+     * Current behavior (Green-1, buggy): the immutability walk climbs across the instance
+     * boundary, finds "requirementId" in the outer instance, and throws 171.863 — breaking
+     * recursion.
+     */
+    @Test
+    public void test_recursionGraft_redeclareAcrossInstanceBoundary() {
+        // level-0 store-req: "requirementId" at outer instance "1,2#1"
+        String outerContextId = "1,2#1";
+        List<ExecContextParamsYaml.Variable> outerOutputs = List.of(processOutput("requirementId"));
+        List<TaskParamsYaml.OutputVariable> outerTaskOutputs = new ArrayList<>();
+        VariableUtils.initOutputVariables(outerOutputs, outerTaskOutputs, outerContextId, this::findVariable, this::createVariable);
+        assertEquals(1, outerTaskOutputs.size());
+        Long outerVarId = outerTaskOutputs.getFirst().id;
+        assertNotNull(outerVarId);
+
+        // deep recursion level store-req: "requirementId" at a different instance across '#'/'|'
+        String deepContextId = "1,2,3,6,7,8,9,13|1|0|0|0|0|0#1";
+        List<ExecContextParamsYaml.Variable> deepOutputs = List.of(processOutput("requirementId"));
+        List<TaskParamsYaml.OutputVariable> deepTaskOutputs = new ArrayList<>();
+
+        // Desired behavior (Red -> Green-3): recursion is legitimate. The deep instance creates
+        // its OWN "requirementId" (a distinct key), not a shadow of the outer instance's variable.
+        assertDoesNotThrow(() ->
+                VariableUtils.initOutputVariables(deepOutputs, deepTaskOutputs, deepContextId, this::findVariable, this::createVariable)
+        );
+        assertEquals(1, deepTaskOutputs.size());
+        assertEquals("requirementId", deepTaskOutputs.getFirst().name);
+        assertNotEquals(outerVarId, deepTaskOutputs.getFirst().id);
+    }
+
+    /**
      * Step 2 (Red - Flipped): asserts the DESIRED caller-level behavior.
      *
      * When initOutputVariables throws VariableImmutabilityException, the caller should
@@ -171,14 +215,15 @@ public class TestVariableImmutability {
      */
     @Test
     public void test_caller_pattern_desiredBehavior_exception_caught_and_error_recorded() {
-        // Setup: parent creates "amendmentStatus" at context "1,2#1"
-        String parentContextId = "1,2#1";
+        // Setup: parent creates "amendmentStatus" at context "1,2"
+        String parentContextId = "1,2";
         List<ExecContextParamsYaml.Variable> parentOutputs = List.of(processOutput("amendmentStatus"));
         List<TaskParamsYaml.OutputVariable> parentTaskOutputs = new ArrayList<>();
         VariableUtils.initOutputVariables(parentOutputs, parentTaskOutputs, parentContextId, this::findVariable, this::createVariable);
 
-        // Child at context "1,2,3,4|1|0#0" tries to create "amendmentStatus" (immutable by default)
-        String childContextId = "1,2,3,4|1|0#0";
+        // Lexical child at context "1,2,3" (same instance, no '#'/'|' crossed) tries to create
+        // "amendmentStatus" (immutable by default) — a genuine shadow that must be rejected.
+        String childContextId = "1,2,3";
         List<ExecContextParamsYaml.Variable> childOutputs = List.of(processOutput("amendmentStatus"));
         List<TaskParamsYaml.OutputVariable> childTaskOutputs = new ArrayList<>();
 
