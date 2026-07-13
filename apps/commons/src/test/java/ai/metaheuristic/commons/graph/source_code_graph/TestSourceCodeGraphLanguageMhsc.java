@@ -16,11 +16,12 @@
 
 package ai.metaheuristic.commons.graph.source_code_graph;
 
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.SourceCodeGraph;
 import ai.metaheuristic.api.data.exec_context.ExecContextApiData;
+import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.exceptions.SourceCodeGraphException;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.exec_context.ExecContextParamsYaml;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -28,12 +29,9 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-import ai.metaheuristic.api.data.SourceCodeGraph;
 import static ai.metaheuristic.commons.graph.ExecContextProcessGraphService.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -201,7 +199,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     }
 
     @Test
-    public void test_priority_negative() throws IOException {
+    public void test_priority_negative() {
         String mhsc = """
             source "test" {
                 my-proc := some-func {
@@ -217,7 +215,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     }
 
     @Test
-    public void test_priority_positive() throws IOException {
+    public void test_priority_positive() {
         String mhsc = """
                 source "test" {
                     my-proc := some-func {
@@ -233,7 +231,7 @@ public class TestSourceCodeGraphLanguageMhsc {
     }
 
     @Test
-    public void test_priority_zero() throws IOException {
+    public void test_priority_zero() {
         String mhsc = """
                 source "test" {
                     my-proc := some-func {
@@ -1302,14 +1300,14 @@ public class TestSourceCodeGraphLanguageMhsc {
 
     @Test
     public void test_groupDecl_compilesToV6GroupEntry_bodyMovedOutOfMainGraph() {
-        String src =
-            "source \"test-group-1.0\" {\n" +
-            "    group grp1 (<- inA, inB) (-> outC) reset-point head {\n" +
-            "        head := internal mh.nop { }\n" +
-            "        tail := internal mh.nop { }\n" +
-            "    }\n" +
-            "    root := internal mh.nop { }\n" +
-            "}";
+        String src = """
+            source "test-group-1.0" {
+                group grp1 (<- inA, inB) (-> outC) reset-point head {
+                    head := internal mh.nop { }
+                    tail := internal mh.nop { }
+                }
+                root := internal mh.nop { }
+            }""";
         SourceCodeGraph g = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, src);
 
         // exactly one v6 group entry
@@ -1347,17 +1345,17 @@ public class TestSourceCodeGraphLanguageMhsc {
         // compiler must NOT silently drop it - it fails fast with a clear message (564.320).
         // 6.3b SUPERSEDES the fail-fast above: the in-band graft now compiles to a native graft
         // node (a Graft-tagged Process). This test characterizes that compiled representation.
-        String src =
-            "source \"test-graft-1.0\" {\n" +
-            "    group grp1 (-> outC) reset-point head {\n" +
-            "        head := internal mh.nop { }\n" +
-            "    }\n" +
-            "    root := internal mh.batch-line-splitter {\n" +
-            "        sequential {\n" +
-            "            graft grp1 driver run-now\n" +
-            "        }\n" +
-            "    }\n" +
-            "}";
+        String src = """
+            source "test-graft-1.0" {
+                group grp1 (-> outC) reset-point head {
+                    head := internal mh.nop { }
+                }
+                root := internal mh.batch-line-splitter {
+                    sequential {
+                        graft grp1 driver run-now
+                    }
+                }
+            }""";
         SourceCodeGraph g = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, src);
 
         // exactly one process carries a non-null graft tag (the native group-call node)
@@ -1365,6 +1363,7 @@ public class TestSourceCodeGraphLanguageMhsc {
                 g.processes.stream().filter(p -> p.graft != null).toList();
         assertEquals(1, graftNodes.size(), "exactly one in-band graft node expected");
         ExecContextParamsYaml.Process graftNode = graftNodes.get(0);
+        assertNotNull(graftNode.graft);
         assertEquals("grp1", graftNode.graft.groupName);
         assertEquals("run-now", graftNode.graft.driver);
         assertTrue(graftNode.graft.inputBindings.isEmpty(), "no bind() clause -> no input bindings");
@@ -1385,22 +1384,22 @@ public class TestSourceCodeGraphLanguageMhsc {
         // This is a NAME reference resolved at runtime (attachGroup), NOT a compile-time expansion, so it
         // must compile with no infinite recursion: the recursive graft becomes a Graft-tagged node INSIDE
         // the group body (moved out of the main graph with the rest of the body by visitGroupDecl).
-        String src =
-            "source \"test-recursion-1.0\" {\n" +
-            "    group rung (<- reqJson) reset-point head {\n" +
-            "        head := internal mh.nop { }\n" +
-            "        split := internal mh.batch-line-splitter {\n" +
-            "            sequential {\n" +
-            "                graft rung driver run-now\n" +
-            "            }\n" +
-            "        }\n" +
-            "    }\n" +
-            "    root := internal mh.batch-line-splitter {\n" +
-            "        sequential {\n" +
-            "            graft rung driver run-now\n" +
-            "        }\n" +
-            "    }\n" +
-            "}";
+        String src = """
+            source "test-recursion-1.0" {
+                group rung (<- reqJson) reset-point head {
+                    head := internal mh.nop { }
+                    split := internal mh.batch-line-splitter {
+                        sequential {
+                            graft rung driver run-now
+                        }
+                    }
+                }
+                root := internal mh.batch-line-splitter {
+                    sequential {
+                        graft rung driver run-now
+                    }
+                }
+            }""";
         SourceCodeGraph g = SourceCodeGraphFactory.parse(EnumsApi.SourceCodeLang.mhsc, src);
 
         assertEquals(1, g.groups.size());
@@ -1412,14 +1411,18 @@ public class TestSourceCodeGraphLanguageMhsc {
         List<ExecContextParamsYaml.Process> bodyGrafts =
                 rung.body.stream().filter(p -> p.graft != null).toList();
         assertEquals(1, bodyGrafts.size(), "the recursive self-graft must be a node inside the group body");
-        assertEquals("rung", bodyGrafts.get(0).graft.groupName, "body graft references the group itself");
-        assertEquals("run-now", bodyGrafts.get(0).graft.driver);
+        ExecContextParamsYaml.Graft graft = bodyGrafts.get(0).graft;
+        assertNotNull(graft);
+        assertEquals("rung", graft.groupName, "body graft references the group itself");
+        assertEquals("run-now", graft.driver);
 
         // the outer entry graft stays in the main pipeline and also references the group
         List<ExecContextParamsYaml.Process> mainGrafts =
                 g.processes.stream().filter(p -> p.graft != null).toList();
         assertEquals(1, mainGrafts.size(), "one entry graft in the main pipeline");
-        assertEquals("rung", mainGrafts.get(0).graft.groupName);
+        ExecContextParamsYaml.Graft graft1 = mainGrafts.get(0).graft;
+        assertNotNull(graft1);
+        assertEquals("rung", graft1.groupName);
 
         // the group body (head + split + self-graft) is NOT in the main pipeline
         List<String> mainCodes = g.processes.stream().map(p -> p.processCode).toList();

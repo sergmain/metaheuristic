@@ -16,7 +16,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
+import static org.junit.jupiter.api.parallel.ExecutionMode.CONCURRENT;
 
 /**
  * Tests for {@link PeerPidVerifier}.
@@ -45,7 +45,7 @@ import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
  *
  * @author Sergio Lissner
  */
-@Execution(SAME_THREAD)
+@Execution(CONCURRENT)
 public class PeerPidVerifierTest {
 
     @Test

@@ -22,6 +22,7 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -72,7 +73,7 @@ public class LicenseTokenCodecTest {
                 .issueTime(Date.from(NOW));
     }
 
-    private static Function<String, ECPublicKey> resolver(ECPublicKey pub) {
+    private static Function<String, @Nullable ECPublicKey> resolver(ECPublicKey pub) {
         return kid -> KID.equals(kid) ? pub : null;
     }
 
@@ -146,7 +147,7 @@ public class LicenseTokenCodecTest {
         final String tok = sign((ECPrivateKey) kp.getPrivate(),
                 enterprise().expirationTime(Date.from(NOW.plus(Duration.ofDays(365)))).build());
 
-        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, kid -> null, NOW, Set.of(), null);
+        final LicenseVerificationResult r = LicenseTokenCodec.verify(tok, _ -> null, NOW, Set.of(), null);
 
         assertEquals(LicenseState.SIGNATURE_INVALID, r.state());
     }

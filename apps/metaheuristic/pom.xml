@@ -56,11 +56,13 @@
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.mysql/mysql-connector-j -->
+<!--
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
+-->
 
 <!--
         <dependency>
@@ -296,12 +298,14 @@
         </dependency>
 
         <dependency>
+            <!-- GNU General Public License v2.0, use only for testing-->
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-core</artifactId>
             <version>1.36</version>
             <scope>test</scope>
         </dependency>
         <dependency>
+            <!-- GNU General Public License v2.0, use only for testing-->
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-generator-annprocess</artifactId>
             <version>1.36</version>
@@ -410,11 +414,13 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+<!--
                     <argLine>
-                        --add-opens=java.base/java.net=ALL-UNNAMED
-                        --add-opens=java.base/java.io=ALL-UNNAMED
-                        --enable-native-access=ALL-UNNAMED
+                        &#45;&#45;add-opens=java.base/java.net=ALL-UNNAMED
+                        &#45;&#45;add-opens=java.base/java.io=ALL-UNNAMED
+                        &#45;&#45;enable-native-access=ALL-UNNAMED
                     </argLine>
+-->
                 </configuration>
             </plugin>
         </plugins>
