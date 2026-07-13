@@ -99,6 +99,7 @@ public class SourceCodeParamsYamlV6 implements BaseParams {
         public String ext;
 
         // if true, this variable can be reassigned in sub-contexts
+        @Deprecated(forRemoval = true)
         @Nullable
         public Boolean mutable;
 

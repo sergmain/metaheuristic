@@ -137,7 +137,6 @@ varModifier
     | 'array'
     | 'parentContext'
     | 'sourcing' '=' ID
-    | 'mutable'
     ;
 
 // --- Meta ---
@@ -334,7 +333,7 @@ keyword
     | 'tries' | 'tag' | 'priority' | 'pre' | 'post' | 'params'
     | 'sequential' | 'parallel' | 'race' | 'template' | 'for' | 'in'
     | 'group' | 'reset-point' | 'graft'
-    | 'internal' | 'type' | 'ext' | 'nullable' | 'array' | 'parentContext' | 'sourcing' | 'mutable'
+    | 'internal' | 'type' | 'ext' | 'nullable' | 'array' | 'parentContext' | 'sourcing'
     | 'on' | 'off' | 'omitInline' | 'cacheMeta'
     | 'normal' | 'always'
     | 'def'

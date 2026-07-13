@@ -106,39 +106,6 @@ public class TestVariableImmutability {
     }
 
     /**
-     * When a subprocess output variable is declared with mutable=true, it IS allowed to
-     * shadow a variable with the same name in a parent context.
-     */
-    @Test
-    public void test_mutable_variable_allows_subprocess_shadow() {
-        // Parent process creates output variable "count" at context "1,2"
-        String parentContextId = "1,2";
-        List<ExecContextParamsYaml.Variable> parentOutputs = List.of(processOutput("count"));
-        List<TaskParamsYaml.OutputVariable> parentTaskOutputs = new ArrayList<>();
-
-        VariableUtils.initOutputVariables(parentOutputs, parentTaskOutputs, parentContextId, this::findVariable, this::createVariable);
-
-        assertEquals(1, parentTaskOutputs.size());
-        Long parentVarId = parentTaskOutputs.getFirst().id;
-
-        // Subprocess creates output variable "count" at context "1,2,3" with mutable=true
-        String childContextId = "1,2,3";
-        ExecContextParamsYaml.Variable mutableOutput = processOutput("count");
-        mutableOutput.mutable = true;
-        List<ExecContextParamsYaml.Variable> childOutputs = List.of(mutableOutput);
-        List<TaskParamsYaml.OutputVariable> childTaskOutputs = new ArrayList<>();
-
-        // This should succeed because the child variable is declared mutable
-        assertDoesNotThrow(() ->
-                VariableUtils.initOutputVariables(childOutputs, childTaskOutputs, childContextId, this::findVariable, this::createVariable)
-        );
-
-        assertEquals(1, childTaskOutputs.size());
-        assertEquals("count", childTaskOutputs.getFirst().name);
-        assertNotEquals(parentVarId, childTaskOutputs.getFirst().id);
-    }
-
-    /**
      * When parent and child have different variable names, there should be no conflict
      * even without mutable flag.
      */

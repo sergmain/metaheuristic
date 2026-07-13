@@ -140,21 +140,19 @@ public class VariableUtils {
             // shadow — so it is NOT an immutability violation (MHSC-DSL-V2-001 §3b-note, §7). Only a
             // redeclaration WITHIN one instance's lexical scope (no '#' crossed) shadows an
             // immutable variable and is rejected here.
-            if (!Boolean.TRUE.equals(variable.mutable)) {
-                String childCtxId = contextId;
-                String parentCtxId = VariableUtils.getParentContext(childCtxId);
-                while (!S.b(parentCtxId) && ContextUtils.getPath(childCtxId) == null) {
-                    Long existingInParent = findVariable.find(variable.name, parentCtxId);
-                    if (existingInParent != null) {
-                        throw new VariableImmutabilityException(
-                                S.f("171.863 Variable '%s' already exists in outer context '%s' and cannot be " +
-                                        "redeclared in context '%s'. Variables are immutable by default.",
-                                        variable.name, parentCtxId, contextId),
-                                variable.name, parentCtxId, contextId);
-                    }
-                    childCtxId = parentCtxId;
-                    parentCtxId = VariableUtils.getParentContext(parentCtxId);
+            String childCtxId = contextId;
+            String parentCtxId = VariableUtils.getParentContext(childCtxId);
+            while (!S.b(parentCtxId) && ContextUtils.getPath(childCtxId) == null) {
+                Long existingInParent = findVariable.find(variable.name, parentCtxId);
+                if (existingInParent != null) {
+                    throw new VariableImmutabilityException(
+                            S.f("171.863 Variable '%s' already exists in outer context '%s' and cannot be " +
+                                    "redeclared in context '%s'. Variables are immutable by default.",
+                                    variable.name, parentCtxId, contextId),
+                            variable.name, parentCtxId, contextId);
                 }
+                childCtxId = parentCtxId;
+                parentCtxId = VariableUtils.getParentContext(parentCtxId);
             }
 
             Long variableId = findVariable.find(variable.name, contextId);

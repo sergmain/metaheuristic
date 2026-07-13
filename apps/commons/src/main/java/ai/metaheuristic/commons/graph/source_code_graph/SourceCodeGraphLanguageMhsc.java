@@ -760,7 +760,6 @@ public class SourceCodeGraphLanguageMhsc implements SourceCodeGraphLanguage {
                         }
                         case "parentContext" -> var.parentContext = true;
                         case "sourcing" -> var.setSourcing(EnumsApi.DataSourcing.valueOf(mod.ID().getText()));
-                        case "mutable" -> var.mutable = true;
                     }
                 }
             }
